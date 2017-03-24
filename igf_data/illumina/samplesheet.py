@@ -1,7 +1,7 @@
 import os, re
 from collections import defaultdict, deque
 
-class SampleSheet_processing:
+class SampleSheet:
   '''
   A class for processing SampleSheet files for Illumina sequencing runs
   '''
