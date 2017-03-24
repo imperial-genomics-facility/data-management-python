@@ -1,23 +1,23 @@
-[Header],
-IEMFileVersion,4
-Investigator Name,L3_B4
-Experiment Name,NXX_2X75
-Date,16/03/2017
-Workflow,GenerateFASTQ
-Application,NextSeq FASTQ Only
-Assay,TruSeq LT
-Description,project_1
-Chemistry,Default
+[Header],,,,,,
+IEMFileVersion,4,,,,,
+Investigator Name,L3_B4,,,,,
+Experiment Name,NXX_2X75,,,,,
+Date,16/03/2017,,,,,
+Workflow,GenerateFASTQ,,,,,
+Application,NextSeq FASTQ Only,,,,,
+Assay,TruSeq LT,,,,,
+Description,project_1,,,,,
+Chemistry,Default,,,,,
 
-[Reads],
-76,
-76,
+[Reads],,,,,,
+76,,,,,,
+76,,,,,,
 
-[Settings],
-Adapter,AGATCGGAAGAGCACACGTCTGAACTCCAGTCA
-AdapterRead2,AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT
+[Settings],,,,,,
+Adapter,AGATCGGAAGAGCACACGTCTGAACTCCAGTCA,,,,,
+AdapterRead2,AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT,,,,,
 
-[Data],
+[Data],,,,,,
 Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,Sample_Project,Description
 IGF0001_1,sample_1,,,A007,CAGATC,project_1:user1,
 IGF0001_2,sample_2,,,A003,TTAGGC,project_1:user1,
