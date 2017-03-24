@@ -108,28 +108,32 @@ class SampleSheet:
     # resetting data information
     self._data=filtered_data
 
-  def print_sampleSheet(self):
+  def print_sampleSheet(self, outfile):
     '''
     Function for printing output SampleSheet
     '''
     header_data=self._header_data
     data_header=self._data_header
     data=self._data
-      
-    # formatting output
-    for header_key in header_data.keys():
-      print('[{}]'.format(header_key))
+    
+    # check if output file exists
+    if os.path.exists(outfile): raise IOError('output file {} already present'.format(outfile))
+
+    with open(outfile, 'w') as file:   
+      # formatting output
+      for header_key in header_data.keys():
+        file.write('[{}]\n'.format(header_key))
       for row in header_data[header_key]:
-         print(row)
+         file.write('{}\n'.format(row))
 
-    print('[{}]'.format(self.data_header_name))
-    print(','.join(data_header))
+      file.write('[{}]\n'.format(self.data_header_name))
+      file.write('{}\n'.format(','.join(data_header)))
 
-    for row in data:
-      data_row=list()
-      for h in data_header:
-        data_row.append(row[h])
-      print(','.join(data_row))
+      for row in data:
+        data_row=list()
+        for h in data_header:
+          data_row.append(row[h])
+        file.write('{}\n'.format(','.join(data_row)))
 
   def _load_header(self):
     '''
