@@ -21,20 +21,45 @@ class SampleSheet:
     self._data_header=data_header
     self._data=raw_data
 
-  def get_machine_name(self, section='Header', field='Application'):
+  def get_platform_name(self, section='Header', field='Application'):
     '''
-    Function for getting machine details from samplesheet header
+    Function for getting platform details from samplesheet header
     Default section is 'Header' and field is 'Application'
     '''
 
     header_section_data=self._header_data[section]
     pattern=re.compile('^{},'.format(field), re.IGNORECASE)
+    match=0
     for row in header_section_data:
       if re.search(pattern, row):
-        (field_name, machine_name)=row.split(',')
+        match=1
+        (field_name, machine_name)=row.split(',')[0:2]
         return machine_name
-    
-    
+    if match == 0: raise ValueError('samplesheet {0} doesn\'t have the field {1}'.format(self.infile, field))
+
+  def get_lane_count(self, lane_field='Lane', target_platform='HiSeq'):
+    '''
+    Function for getting the lane information for HiSeq runs
+    It will return 1 for both MiSeq and NextSeq runs
+    '''
+
+    data_header=self._data_header
+    data=self._data
+    platform_name=self.get_platform_name()
+
+    lane=set()
+
+    pattern=re.compile('^{}'.format(target_platform), re.IGNORECASE)
+ 
+    if re.search(pattern, platform_name):
+      for row in data:
+        if lane_field not in list(row.keys()): 
+          raise ValueError('lane field {0} not found for platform, {1}, sample sheet {2}'.format(lane_field, target_platform, self.infile))
+        lane.add(row[lane_field])
+    else:
+      lane.add(1)    
+    return list(lane)
+
   def filter_sample_header(self, section, type, condition_key, condition_value=''):
     '''
     Function for filtering SampleSheet header
@@ -153,7 +178,7 @@ class SampleSheet:
       for i in f:
         row=i.rstrip('\n')
         if row.startswith('['):
-           header=row.strip('[').strip(']')
+           header=row.split(',')[0].strip('[').strip(']')
         else:
            sample_data[header].append(row)
     return sample_data
