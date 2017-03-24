@@ -1,0 +1,44 @@
+[Header],,,,,,,,,
+IEMFileVersion,4,,,,,,,,
+Investigator Name,L4_B3,,,,,,,,
+Experiment Name,MIXX2_2X150,,,,,,,,
+Date,14/03/2017,,,,,,,,
+Workflow,GenerateFASTQ,,,,,,,,
+Application,FASTQ Only,,,,,,,,
+Assay,TruSeq HT,,,,,,,,
+Description,,,,,,,,,
+Chemistry,Amplicon,,,,,,,,
+,,,,,,,,,
+[Reads],,,,,,,,,
+151,,,,,,,,,
+151,,,,,,,,,
+,,,,,,,,,
+[Settings],,,,,,,,,
+ReverseComplement,0,,,,,,,,
+,,,,,,,,,
+[Data],,,,,,,,,
+Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+IGF0001_1,sample1-25,,,N701,TAAGGCGA,E504,AGAGTAGA,project1:user1,hsapiens:GRCh37:dna:nextera:
+IGF0001_2,sample1-26,,,N702,CGTACTAG,E504,AGAGTAGA,project1:user1,hsapiens:GRCh37:dna:nextera:
+IGF0001_8,sample1-32,,,N708,CAGAGAGG,E504,AGAGTAGA,project1:user1,hsapiens:GRCh37:dna:nextera:
+IGF0001_10,sample1-34,,,N710,CGAGGCTG,E504,AGAGTAGA,project1:user1,hsapiens:GRCh37:dna:nextera:
+IGF0002_3,sample1-39,,,N703,AGGCAGAA,E505,GTAAGGAG,project1:user1,hsapiens:GRCh37:dna:nextera:
+IGF0002_4,sample1-40,,,N704,TCCTGAGC,E505,GTAAGGAG,project1:user1,hsapiens:GRCh37:dna:nextera:
+IGF0002_5,sample1-41,,,N705,GGACTCCT,E505,GTAAGGAG,project1:user1,hsapiens:GRCh37:dna:nextera:
+IGF0002_6,sample1-42,,,N706,TAGGCATG,E505,GTAAGGAG,project1:user1,hsapiens:GRCh37:dna:nextera:
+IGF0003_7,sample2-55,,,N707,CTCTCTAC,E506,ACTGCATA,project1:user1,hsapiens:GRCh37:dna:nextera:
+IGF0003_8,sample2-56,,,N708,CAGAGAGG,E506,ACTGCATA,project1:user1,hsapiens:GRCh37:dna:nextera:
+IGF0003_10,sample2-58,,,N710,CGAGGCTG,E506,ACTGCATA,project1:user1,hsapiens:GRCh37:dna:nextera:
+IGF0003_11,sample2-59,,,N711,AAGAGGCA,E506,ACTGCATA,project1:user1,hsapiens:GRCh37:dna:nextera:
+IGF0004_6,sample2-66,,,N706,TAGGCATG,E507,AAGGAGTA,project1:user1,hsapiens:GRCh37:dna:nextera:
+IGF0004_7,sample2-67,,,N707,CTCTCTAC,E507,AAGGAGTA,project1:user1,hsapiens:GRCh37:dna:nextera:
+IGF0004_10,sample2-70,,,N710,CGAGGCTG,E507,AAGGAGTA,project1:user1,hsapiens:GRCh37:dna:nextera:
+IGF0004_12,sample2-72,,,N712,GTAGAGGA,E507,AAGGAGTA,project1:user1,hsapiens:GRCh37:dna:nextera:
+IGF0005_1,sample3-73,,,N701,TAAGGCGA,E508,CTAAGCCT,project1:user1,hsapiens:GRCh37:dna:nextera:
+IGF0005_2,sample3-74,,,N702,CGTACTAG,E508,CTAAGCCT,project1:user1,hsapiens:GRCh37:dna:nextera:
+IGF0005_3,sample3-75,,,N703,AGGCAGAA,E508,CTAAGCCT,project1:user1,hsapiens:GRCh37:dna:nextera:
+IGF0005_9,sample3-81,,,N709,GCTACGCT,E508,CTAAGCCT,project1:user1,hsapiens:GRCh37:dna:nextera:
+IGF0006_1,sample4-1,,,N701,TAAGGCGA,E517,GCGTAAGA,project1:user1,hsapiens:GRCh37:dna:nextera:
+IGF0006_2,sample4-2,,,N702,CGTACTAG,E517,GCGTAAGA,project1:user1,hsapiens:GRCh37:dna:nextera:
+IGF0006_3,sample4-3,,,N703,AGGCAGAA,E517,GCGTAAGA,project1:user1,hsapiens:GRCh37:dna:nextera:
+IGF0006_4,sample4-4,,,N704,TCCTGAGC,E517,GCGTAAGA,project1:user1,hsapiens:GRCh37:dna:nextera:
