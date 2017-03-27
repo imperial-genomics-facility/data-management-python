@@ -1,6 +1,9 @@
 import os, re
 from collections import defaultdict, deque
 
+# Python 2.x specific import 
+from string import maketrans
+
 class SampleSheet:
   '''
   A class for processing SampleSheet files for Illumina sequencing runs
@@ -20,6 +23,25 @@ class SampleSheet:
     data_header, raw_data=self._load_data()
     self._data_header=data_header
     self._data=raw_data
+
+  def get_reverse_complement_index(self, index_field='index2'):
+    '''
+    Function for changing the I5_index present in the index2 field of the 
+    samplesheet to intsreverse complement base
+    '''
+    data=self._data
+
+    for row in data:
+      if index_field not in list(row.keys()):
+        raise ValueError('index field {0} not found in sample sheet {1}'.format(index_field, self.infile))
+    
+      index=row[index_field]
+     
+      # For Python 3.x, use str.maketrans
+      row[index_field]=index.upper().translate(maketrans('ACGT','TGCA'))[::-1] 
+
+    self._data=data
+   
 
   def get_platform_name(self, section='Header', field='Application'):
     '''
