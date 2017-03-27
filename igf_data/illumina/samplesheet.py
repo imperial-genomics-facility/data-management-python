@@ -23,7 +23,29 @@ class SampleSheet:
     data_header, raw_data=self._load_data()
     self._data_header=data_header
     self._data=raw_data
+    self._reformat_project_and_description()
 
+  def _reformat_project_and_description(self, project_field='Sample_Project', description_field='Description' ):
+    '''
+    A Function for removing the user information from Project field and
+    converting ':' to '-' in the description field 
+    '''
+    data=self._data
+    
+    for row in data:
+      if project_field not in list(row.keys()):
+        raise ValueError('project field {0} not found in sample sheet {1}'.format(project_field, self.infile))
+      
+      if description_field not in list(row.keys()):
+        raise ValueError('description field {0} not found in sample sheet {1}'.format(description_field, self.infile))
+
+      project=row[project_field].split(':')[0]
+      row[project_field]=project
+ 
+      description=row[description_field]
+      row[description_field]=description.replace(':','-')
+    self._data=data
+    
   def get_reverse_complement_index(self, index_field='index2'):
     '''
     Function for changing the I5_index present in the index2 field of the 
