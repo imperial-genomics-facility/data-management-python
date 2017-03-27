@@ -1,4 +1,4 @@
-import os, re
+import os, re, copy
 from collections import defaultdict, deque
 
 # Python 2.x specific import 
@@ -25,6 +25,39 @@ class SampleSheet:
     self._data=raw_data
     self._reformat_project_and_description()
 
+  def group_data_by_index_length(self, index_columns=['index','index2']):
+    '''
+    Function for grouping samplesheet rows based on the combined length of index columns
+    Output: A dictionary of samplesheet objects, with combined index length as the key
+    By default, this function removes Ns from the index
+    '''
+
+    data=self._data
+    data_group=defaultdict(list)
+
+    for row in data:
+      index_length=0
+
+      for field in index_columns:
+        if field not in list(row.keys()): raise ValueError('field {0} not present in samplesheet {1}'.format(field, self.infile))
+        
+        index_value=row[field]
+        index_value=index_value.replace('N','')
+        index_value=index_value.replace('n','')
+        row[field]=index_value
+ 
+        index_length = index_length + len(row[field])
+      if index_length:       
+        data_group[index_length].append(row)
+ 
+    for index_length in data_group.keys():
+      self_tmp=copy.copy(self)
+      self_tmp._data=data_group[index_length]
+      data_group[index_length]=self_tmp
+    return data_group
+      
+        
+      
   def _reformat_project_and_description(self, project_field='Sample_Project', description_field='Description' ):
     '''
     A Function for removing the user information from Project field and
