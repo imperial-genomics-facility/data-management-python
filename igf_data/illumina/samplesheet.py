@@ -200,8 +200,8 @@ class SampleSheet:
       # formatting output
       for header_key in header_data.keys():
         file.write('[{}]\n'.format(header_key))
-      for row in header_data[header_key]:
-         file.write('{}\n'.format(row))
+        header_data_section='\n'.join(header_data[header_key])
+        file.write('{}\n'.format(header_data_section))
 
       file.write('[{}]\n'.format(self.data_header_name))
       file.write('{}\n'.format(','.join(data_header)))
