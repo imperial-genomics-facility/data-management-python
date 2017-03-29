@@ -14,7 +14,7 @@ class RunInfo_xml:
     '''
     tree = self._tree
     root = tree.getroot()
-    reads_stats=defaultdict()
+    reads_stats=defaultdict(lambda: defaultdict(dict))
     pattern=re.compile('Number', re.IGNORECASE)
 
     for reads in root.iter('Read'):
@@ -23,7 +23,8 @@ class RunInfo_xml:
         if re.search(pattern, attrib):
           read_number=reads.attrib[attrib]
       if read_number:
-        reads_stats[read_number]=reads
+        for k,v in reads.items():
+          reads_stats[read_number][k]=v
     return reads_stats
            
 

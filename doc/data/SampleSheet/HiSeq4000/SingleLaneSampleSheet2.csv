@@ -1,0 +1,22 @@
+[Header],,,,,,,,,,
+IEMFileVersion,4,,,,,,,,,
+Investigator Name,N6_L4,,,,,,,,,
+Experiment Name,HXX1_2X150,,,,,,,,,
+Date,28/02/2017,,,,,,,,,
+Workflow,GenerateFASTQ,,,,,,,,,
+Application,HiSeq FASTQ Only,,,,,,,,,
+Assay,,,,,,,,,,
+Description,,,,,,,,,,
+Chemistry,,,,,,,,,,
+,,,,,,,,,,
+[Reads],,,,,,,,,,
+151,,,,,,,,,,
+151,,,,,,,,,,
+,,,,,,,,,,
+[Settings],,,,,,,,,,
+ReverseComplement,0,,,,,,,,,
+,,,,,,,,,,
+[Data],,,,,,,,,,
+Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+8,IGF00019,s19,,,1,TAAGGCGA,No_index,NNNNNNNN,project_3:user1,hsapiens:GRCh37:dna:nextera
+8,IGF00020,s20,,,2,CGTACTAG,No_index,NNNNNNNN,project_3:user1,hsapiens:GRCh37:dna:nextera

@@ -56,8 +56,21 @@ class SampleSheet:
       data_group[index_length]=self_tmp
     return data_group
       
-        
-      
+  def get_index_count(self, index_columns=['index','index2']):        
+    '''
+    Function for getting index length counts
+    Output is a dictionary, with the index columns as the key
+    '''
+    data=self._data
+    index_count=defaultdict(lambda: defaultdict(int))
+ 
+    for row in data:
+      for field in index_columns:
+        if field not in list(row.keys()): raise ValueError('field {0} not present in samplesheet {1}'.format(field, self.infile))
+        index_len=len(row[field].replace('N','').replace('n',''))
+        index_count[field][index_len] += 1 
+    return index_count
+ 
   def _reformat_project_and_description(self, project_field='Sample_Project', description_field='Description' ):
     '''
     A Function for removing the user information from Project field and
