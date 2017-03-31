@@ -1,2 +1,2 @@
-# data-management-python [![Build Status](https://travis-ci.org/imperial-genomics-facility/data-management-python.svg?branch=master)](https://travis-ci.org/imperial-genomics-facility/data-management-python)
+# data-management-python [![Build Status](https://travis-ci.org/imperial-genomics-facility/data-management-python.svg?branch=master)](https://travis-ci.org/imperial-genomics-facility/data-management-python)  [![Coverage Status](https://coveralls.io/repos/github/imperial-genomics-facility/data-management-python/badge.svg)](https://coveralls.io/github/imperial-genomics-facility/data-management-python)
 Data management system for NGS data
