@@ -25,7 +25,10 @@ class SampleSheet:
     self._data=raw_data
     self._reformat_project_and_description()
 
-  def group_data_by_index_length(self, index_columns=['index','index2']):
+    # set index column values
+    self.index_columns=self._get_index_columns()
+ 
+  def group_data_by_index_length(self):
     '''
     Function for grouping samplesheet rows based on the combined length of index columns
     Output: A dictionary of samplesheet objects, with combined index length as the key
@@ -33,6 +36,7 @@ class SampleSheet:
     '''
 
     data=self._data
+    index_columns=self.index_columns
     data_group=defaultdict(list)
 
     for row in data:
@@ -47,6 +51,7 @@ class SampleSheet:
         row[field]=index_value
  
         index_length = index_length + len(row[field])
+
       if index_length:       
         data_group[index_length].append(row)
  
@@ -55,13 +60,34 @@ class SampleSheet:
       self_tmp._data=data_group[index_length]
       data_group[index_length]=self_tmp
     return data_group
+ 
+  def _get_index_columns(self):
+    '''
+    An internal function for retrieving the index column names
+    Output: a list of index column names
+    '''
+     
+    data_header=self._data_header
+    pattern=re.compile('^index', re.IGNORECASE)
+ 
+    index_columns=[header for header in data_header if re.search(pattern, header)]
       
-  def get_index_count(self, index_columns=['index','index2']):        
+    if len(index_columns) < 1:
+      raise ValueError('samplesheet {0} doesn\'t have any index column'.format(self.infile))     
+
+    # check for possible errors in the index column name
+    if len(index_columns) != len(set(index_columns)):
+      raise ValueError('samplesheet {0} doesn\'t have unique index column names'.format(self.infile))
+
+    return index_columns
+
+  def get_index_count(self):        
     '''
     Function for getting index length counts
     Output is a dictionary, with the index columns as the key
     '''
     data=self._data
+    index_columns=self.index_columns
     index_count=defaultdict(lambda: defaultdict(int))
  
     for row in data:
@@ -150,6 +176,22 @@ class SampleSheet:
       lane.add(1)    
     return list(lane)
 
+  def check_sample_header(self, section, condition_key):
+    '''
+    Function for checking SampleSheet header
+    Output: zero if its not present or number of occurrence of the term
+    '''
+    header_data=self._header_data
+
+    if not condition_key or not section:
+      raise ValueError('section and condition_key are required for sample header check')
+ 
+    exists=0
+    pattern=re.compile('^{},'.format(condition_key), re.IGNORECASE)
+    exists=len([row for row in header_data[section] if re.search(pattern, row)])
+
+    return exists
+
   def filter_sample_header(self, section, type, condition_key, condition_value=''):
     '''
     Function for filtering SampleSheet header
@@ -159,19 +201,29 @@ class SampleSheet:
    
     header_data=self._header_data
     if ( type.lower().strip() == 'add' ):
+
+      # check if condition key is already present
+      if (self.check_sample_header( section=section, condition_key=condition_key)):
+         raise ValueError('condition_key {} already present for section {}'.format(condition_key, section))
+
+      # can't use the default condition_value
       if not condition_value:
         raise ValueError('condition_value is required for type {} and key {}'.format(type, condition_key))
       else:
         header_data[section].append('{0},{1}'.format(condition_key,condition_value))     
+
     elif ( type.lower().strip() == 'remove' ):
+
       filtered_header_section=list()
-      pattern=re.compile('^{}'.format(condition_key), re.IGNORECASE)
+      pattern=re.compile('^{},'.format(condition_key), re.IGNORECASE)
+
       for row in header_data[section]:
         if re.match( pattern, row ):
           pass
         else:
           filtered_header_section.append(row)
       header_data[section]=filtered_header_section
+
     else:
       raise valueError('type {} not supported'.format(type))
 
@@ -228,6 +280,8 @@ class SampleSheet:
   def _load_header(self):
     '''
     Function for loading SampleSheet header
+    Output: 2 lists , 1st list of column headers for data section, 
+            2nd list of dictionaries containing data
     '''
 
     sample_data=self._sample_data
