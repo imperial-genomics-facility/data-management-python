@@ -5,7 +5,7 @@ install:
   pip install coveralls
 script: 
   - export PYTHONPATH=.
-  - coverage run --source=data-management-python test/samplesheet_test.py 
+  - coverage run test/samplesheet_test.py 
   - python test/runinfo_xml_test.py
 after_success:
   - coveralls
