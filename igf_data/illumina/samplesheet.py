@@ -99,8 +99,8 @@ class SampleSheet:
       raise ValueError('no project information found for samplesheet {0}'.format(self.infile))
 
     project_header=project_header_list[0]
-   
-    project_names=list(set([ project_name for project_name in data[project_header]]))
+     
+    project_names=list(set([ row[project_header] for row in data ]))
 
     if len(project_names)==0:
       raise ValueError('no project name found for samplesheet {0}, column {1}'.format(self.infile, project_header))
@@ -213,14 +213,14 @@ class SampleSheet:
       raise ValueError('section and condition_key are required for sample header check')
  
     exists=0
-    pattern=re.compile('^{},'.format(condition_key), re.IGNORECASE)
-    exists=len([row for row in header_data[section] if re.search(pattern, row)])
+    pattern=re.compile('^{}$'.format(condition_key), re.IGNORECASE)
+    exists=len([row for row in header_data[section] if re.search(pattern, row.split(',')[0])])
 
     return exists
 
-  def filter_sample_header(self, section, type, condition_key, condition_value=''):
+  def modify_sample_header(self, section, type, condition_key, condition_value=''):
     '''
-    Function for filtering SampleSheet header
+    Function for modifying SampleSheet header
     Supported type: 'add' or 'remove'
     condition_value is required for 'add' type
     '''
@@ -241,10 +241,10 @@ class SampleSheet:
     elif ( type.lower().strip() == 'remove' ):
 
       filtered_header_section=list()
-      pattern=re.compile('^{},'.format(condition_key), re.IGNORECASE)
+      pattern=re.compile('^{}$'.format(condition_key), re.IGNORECASE)
 
       for row in header_data[section]:
-        if re.match( pattern, row ):
+        if re.match( pattern, row.split(',')[0] ):
           pass
         else:
           filtered_header_section.append(row)
