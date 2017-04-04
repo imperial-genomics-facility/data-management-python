@@ -81,6 +81,32 @@ class SampleSheet:
 
     return index_columns
 
+  def get_project_names(self, tag='sample_project'):
+    '''
+    Function for retrieving unique project names from samplesheet
+    Output: A list of unique project name
+    Default tag for search: sample_project
+    If there are multiple matching headers, the first column will be used
+    '''
+    data_header=self._data_header
+    data=self._data
+    
+    pattern=re.compile(tag, re.IGNORECASE)
+  
+    project_header_list=list(filter((lambda x: re.search(pattern, x)),data_header))
+
+    if  len(project_header_list)==0:
+      raise ValueError('no project information found for samplesheet {0}'.format(self.infile))
+
+    project_header=project_header_list[0]
+   
+    project_names=list(set([ project_name for project_name in data[project_header]]))
+
+    if len(project_names)==0:
+      raise ValueError('no project name found for samplesheet {0}, column {1}'.format(self.infile, project_header))
+
+    return project_names
+
   def get_index_count(self):        
     '''
     Function for getting index length counts
