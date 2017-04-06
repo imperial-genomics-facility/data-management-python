@@ -1,4 +1,4 @@
-import re, os
+import re, os, warnings
 from collections import defaultdict
 import xml.etree.ElementTree as ET
 
@@ -7,7 +7,7 @@ class RunInfo_xml:
     self.xml_file=xml_file
     self._read_xml()
 
-  def get_reads_stats(self):
+  def get_reads_stats(self, root_tag='Read', number_tag='Number'):
     '''
     Function for getting read and index stats from the RunInfo.xml file
     Output is a dictionary with the read number as the key
@@ -15,17 +15,25 @@ class RunInfo_xml:
     tree = self._tree
     root = tree.getroot()
     reads_stats=defaultdict(lambda: defaultdict(dict))
-    pattern=re.compile('Number', re.IGNORECASE)
+    pattern=re.compile(number_tag, re.IGNORECASE)
 
-    for reads in root.iter('Read'):
-      read_number=0
-      for attrib in reads.attrib.keys():
-        if re.search(pattern, attrib):
-          read_number=reads.attrib[attrib]
-      if read_number:
+    match_count=0
+
+    for reads in root.iter(root_tag):
+      match_count += 1
+      read_numbers=[reads.attrib[attrib] for attrib in reads.attrib.keys() if re.search(pattern, attrib)]
+      if len(read_numbers) != 1:
+        raise ValueError('couldn\'t identify readnumber for file {0} with root tag {1} and number tag {2}'.format(self.xml_file, root_tag, number_tag))
+
+      if read_numbers[0]:
         for k,v in reads.items():
-          reads_stats[read_number][k]=v
+          reads_stats[read_numbers[0]][k]=v
+    
+    if not match_count:
+      raise ValueError('no record found for {0} in file {1}'.format(root_tag, self.xml_file))
+  
     return reads_stats
+    
            
 
   def _read_xml(self):

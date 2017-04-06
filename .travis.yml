@@ -6,6 +6,6 @@ install:
 script: 
   - export PYTHONPATH=.
   - coverage run test/samplesheet_test.py 
-  - python test/runinfo_xml_test.py
+  - coverage run test/runinfo_xml_test.py
 after_success:
   - coveralls
