@@ -4,8 +4,8 @@ python:
 install:
   pip install coveralls
 script: 
-  - coverage run --source=data-management-python test/samplesheet_test.py 
-  - coverage run --source=data-management-python test/runinfo_xml_test.py
-  - coverage run --source=data-management-python test/basesmask_test.py
+  - coverage run --source=. test/samplesheet_test.py 
+  - coverage run --source=. test/runinfo_xml_test.py
+  - coverage run --source=. test/basesmask_test.py
 after_success:
   - coveralls
