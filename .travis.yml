@@ -4,8 +4,8 @@ python:
 install:
   pip install coveralls
 script: 
-  - coverage run --source=igf_data test/samplesheet_test.py 
-  - coverage run --source=igf_data test/runinfo_xml_test.py
-  - coverage run --source=igf_data test/basesmask_test.py
+  - coverage run --source=igf_data.illumina.samplesheet test/samplesheet_test.py 
+  - coverage run --source=igf_data.illumina.runinfo_xml test/runinfo_xml_test.py
+  - coverage run --source=igf_data.illumina.basesMask test/basesmask_test.py
 after_success:
   - coveralls
