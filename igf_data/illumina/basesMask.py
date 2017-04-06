@@ -35,7 +35,8 @@ class BasesMask:
       if index_length > 0: 
         index_length_list.append(index_length)
 
-    if len(set(index_length_list)) > 1: raise ValueError('index lengths are not same in samplesheet {0}'.format( samplesheet_file ))
+    if len(set(index_length_list)) > 1: 
+      raise ValueError('index lengths are not same in samplesheet {0}'.format( samplesheet_file ))
 
     # count non zero indexes in the samplesheet
     samplesheet_index_count = len(index_length_list)  
@@ -57,12 +58,18 @@ class BasesMask:
       # index 
       if runinfo_reads_stats[read_id]['IsIndexedRead'] == 'Y':
         index_count += 1
+
+        # resetting the index_offset if its not provided
+        if not index_offset and allowed_index_length < runinfo_read_length:
+          index_offset=int(runinfo_read_length)-int(allowed_index_length) 
+
         real_index_count = int(runinfo_read_length - index_offset)
       
         # compare index length with samplesheet
         if real_index_count != allowed_index_length: 
           raise ValueError('Index length not matching in {0} and {1}, with offset {2}'.format(samplesheet_file,runinfo_file, index_offset))
-
+        
+          
         # calculate base mask for index
         if ( index_count > samplesheet_index_count ):
 
