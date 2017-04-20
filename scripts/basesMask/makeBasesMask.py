@@ -1,4 +1,5 @@
 import argparse
+from __future__ import print_function
 from igf_data.illumina.basesMask import BasesMask
 
 parser=argparse.ArgumentParser()
@@ -17,4 +18,4 @@ index_offset     = int(args.index_offset)
 bases_mask_object=BasesMask(samplesheet_file=samplesheet_file, runinfo_file=runinfo_file, read_offset=read_offset, index_offset=index_offset)
 bases_mask_value=bases_mask_object.calculate_bases_mask()
 
-print(bases_mask_value)
+print(bases_mask_value, end='')
