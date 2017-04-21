@@ -22,6 +22,11 @@ class Hiseq4000RunInfo(unittest.TestCase):
     with self.assertRaises(ValueError):
       runinfo_data.get_reads_stats(root_tag='NO_Read', number_tag='NO_Number')
 
+  def test_get_platform_number(self):
+    runinfo_data=self.runinfo_data
+    platform_number=runinfo_data.get_platform_number()
+    self.assertEqual(platform_number, 'K00001')
+
   def test_get_reads_stats(self):
     runinfo_data=self.runinfo_data
     reads_stats=runinfo_data.get_reads_stats()

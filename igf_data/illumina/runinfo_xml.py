@@ -34,8 +34,27 @@ class RunInfo_xml:
   
     return reads_stats
     
-           
+  def get_platform_number(self, tag='Instrument'):
+    '''
+    Function for fetching the instrument series number
+    '''           
+    tree = self._tree
+    root = tree.getroot()
+    match_count=0
+    series_number=''
 
+    for series in root.iter(tag):
+      match_count += 1  
+      series_number=series.text
+   
+    if not series_number:
+      raise ValueError('couldn\'t find tag {0}'.format(tag))
+
+    if match_count > 1:
+      raise ValueError('tag {0} present more than once'.format(tag))
+
+    return series_number
+    
   def _read_xml(self):
     '''
     Internal function for reading the xml file is a tree
