@@ -8,5 +8,6 @@ script:
   - coverage run test/samplesheet_test.py 
   - coverage run test/runinfo_xml_test.py
   - coverage run test/basesmask_test.py
+  - coverage run test/moveBclFilesForDemultiplexing_test.py
 after_success:
   - coveralls
