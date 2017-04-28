@@ -13,5 +13,5 @@ output_dir   = args.output_dir
 samplesheet  = args.samplesheet_file
 runinfo_file = args.runinfo_file
 
-move_file=moveBclFilesForDemultiplexing(input_dir=self.input_dir, output_dir=self.output_dir, samplesheet=samplesheet, run_info_xml=runinfo_file)
+move_file=moveBclFilesForDemultiplexing(input_dir=input_dir, output_dir=output_dir, samplesheet=samplesheet, run_info_xml=runinfo_file)
 move_file.copy_bcl_files()
