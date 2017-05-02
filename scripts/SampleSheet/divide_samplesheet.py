@@ -39,5 +39,5 @@ else:
 
 for lane_id in data_group.keys():
   for index_length in data_group[lane_id].keys():
-    output_file=os.path.join(output_dir, 'file_prefix.{0}_{1}'.format(lane_id,index_length))
+    output_file=os.path.join(output_dir, '{0}_{1}_{2}'.format(file_prefix,lane_id,index_length))
     data_group[lane_id][index_length].print_sampleSheet(outfile=output_file)
