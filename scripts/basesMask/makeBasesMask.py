@@ -1,5 +1,5 @@
-import argparse
 from __future__ import print_function
+import argparse
 from igf_data.illumina.basesMask import BasesMask
 
 parser=argparse.ArgumentParser()
