@@ -35,7 +35,8 @@ else:
   '''
   For MiSeq and NextSeq
   '''
-  data_group=samplesheet_data.group_data_by_index_length()
+  data_group[1]=samplesheet_data.group_data_by_index_length()
+
 
 for lane_id in data_group.keys():
   for index_length in data_group[lane_id].keys():
