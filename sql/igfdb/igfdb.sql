@@ -1,8 +1,3 @@
-SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0;
-SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0;
-SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='TRADITIONAL,ALLOW_INVALID_DATES';
-
-
 -- -----------------------------------------------------
 -- Schema igfdb
 -- -----------------------------------------------------
@@ -18,7 +13,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`project` (
   `start_date` DATE NOT NULL,
   `project_requirement` ENUM('FASTQ', 'ALIGNMENT', 'ANALYSIS') NULL DEFAULT NULL,
   PRIMARY KEY (`project_id`))
-ENGINE = InnoDB;
+ENGINE = InnoDB CHARSET=UTF8;
 
 
 -- -----------------------------------------------------
@@ -34,7 +29,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`user` (
   `date_created` DATE NULL DEFAULT NULL,
   PRIMARY KEY (`user_id`),
   UNIQUE INDEX `date_created_UNIQUE` (`date_created` ASC))
-ENGINE = InnoDB;
+ENGINE = InnoDB CHARSET=UTF8;
 
 
 -- -----------------------------------------------------
@@ -57,7 +52,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`project_user` (
     REFERENCES `igfdb`.`user` (`user_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = InnoDB CHARSET=UTF8;
 
 
 -- -----------------------------------------------------
@@ -87,7 +82,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`sample` (
     REFERENCES `igfdb`.`project` (`project_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = InnoDB CHARSET=UTF8;
 
 
 -- -----------------------------------------------------
@@ -102,7 +97,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`platform` (
   `software_version` ENUM('RTA1.18.54', 'RTA1.18.64', 'RTA2') NOT NULL,
   PRIMARY KEY (`platform_id`),
   UNIQUE INDEX `igf_id_UNIQUE` (`igf_id` ASC))
-ENGINE = InnoDB;
+ENGINE = InnoDB CHARSET=UTF8;
 
 
 -- -----------------------------------------------------
@@ -116,7 +111,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`run` (
   `lane_number` ENUM('1', '2', '3', '4', '5', '6', '7', '8') NOT NULL,
   PRIMARY KEY (`run_id`),
   UNIQUE INDEX `igf_id_UNIQUE` (`igf_id` ASC))
-ENGINE = InnoDB;
+ENGINE = InnoDB CHARSET=UTF8;
 
 
 -- -----------------------------------------------------
@@ -152,7 +147,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`experiment` (
     REFERENCES `igfdb`.`platform` (`platform_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = InnoDB CHARSET=UTF8;
 
 
 -- -----------------------------------------------------
@@ -164,7 +159,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`collection` (
   `type` VARCHAR(30) NOT NULL,
   `table` ENUM('sample', 'experiment', 'run', 'file') NOT NULL,
   PRIMARY KEY (`collection_id`))
-ENGINE = InnoDB;
+ENGINE = InnoDB CHARSET=UTF8;
 
 
 -- -----------------------------------------------------
@@ -178,7 +173,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`file` (
   `md5` VARCHAR(33) NULL,
   `size` VARCHAR(15) NULL,
   PRIMARY KEY (`file_id`))
-ENGINE = InnoDB;
+ENGINE = InnoDB CHARSET=UTF8;
 
 
 -- -----------------------------------------------------
@@ -200,7 +195,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`collection_group` (
     REFERENCES `igfdb`.`file` (`file_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = InnoDB CHARSET=UTF8;
 
 
 -- -----------------------------------------------------
@@ -211,7 +206,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`pipeline` (
   `pipeline_name` VARCHAR(50) NOT NULL,
   `is_active` ENUM('Y', 'N') NOT NULL,
   PRIMARY KEY (`pipeline_id`))
-ENGINE = InnoDB;
+ENGINE = InnoDB CHARSET=UTF8;
 
 
 -- -----------------------------------------------------
@@ -222,7 +217,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`hive_db` (
   `dbname` VARCHAR(500) NOT NULL,
   `is_active` ENUM('Y', 'N') NOT NULL,
   PRIMARY KEY (`hive_db_id`))
-ENGINE = InnoDB;
+ENGINE = InnoDB CHARSET=UTF8;
 
 
 -- -----------------------------------------------------
@@ -246,7 +241,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`pipeline_seed` (
     REFERENCES `igfdb`.`hive_db` (`hive_db_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = InnoDB CHARSET=UTF8;
 
 
 -- -----------------------------------------------------
@@ -266,7 +261,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`project_attribute` (
     REFERENCES `igfdb`.`project` (`project_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = InnoDB CHARSET=UTF8;
 
 
 -- -----------------------------------------------------
@@ -286,7 +281,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`experiment_attribute` (
     REFERENCES `igfdb`.`experiment` (`experiment_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = InnoDB CHARSET=UTF8;
 
 
 -- -----------------------------------------------------
@@ -306,7 +301,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`collection_attribute` (
     REFERENCES `igfdb`.`collection` (`collection_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = InnoDB CHARSET=UTF8;
 
 
 -- -----------------------------------------------------
@@ -325,7 +320,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`sample_attribute` (
     REFERENCES `igfdb`.`sample` (`sample_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = InnoDB CHARSET=UTF8;
 
 
 -- -----------------------------------------------------
@@ -344,7 +339,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`run_attribute` (
     REFERENCES `igfdb`.`run` (`run_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = InnoDB CHARSET=UTF8;
 
 
 -- -----------------------------------------------------
@@ -363,9 +358,5 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`file_attribute` (
     REFERENCES `igfdb`.`file` (`file_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
-ENGINE = InnoDB;
+ENGINE = InnoDB CHARSET=UTF8;
 
-
-SET SQL_MODE=@OLD_SQL_MODE;
-SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
-SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
