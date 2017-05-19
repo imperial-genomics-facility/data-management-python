@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`project` (
   `project_name` VARCHAR(100) NULL DEFAULT NULL,
   `start_date` DATE NOT NULL,
   `project_requirement` ENUM('FASTQ', 'ALIGNMENT', 'ANALYSIS') NULL DEFAULT NULL,
+  `description` TEXT,
   PRIMARY KEY (`project_id`))
 ENGINE = InnoDB CHARSET=UTF8;
 
