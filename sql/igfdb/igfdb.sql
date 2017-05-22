@@ -37,8 +37,8 @@ ENGINE = InnoDB CHARSET=UTF8;
 -- Table `igfdb`.`project_user`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `igfdb`.`project_user` (
-  `project_id` INT UNSIGNED  NOT NULL,
-  `user_id` INT UNSIGNED NOT NULL,
+  `project_id` INT UNSIGNED  NULL,
+  `user_id` INT UNSIGNED NULL,
   `data_authority` ENUM('T') NULL,
   UNIQUE INDEX `project_id_UNIQUE` (`project_id` ASC),
   UNIQUE INDEX `data_authority_UNIQUE` (`data_authority` ASC),
@@ -46,13 +46,13 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`project_user` (
   CONSTRAINT `fk_project_user_1`
     FOREIGN KEY (`project_id`)
     REFERENCES `igfdb`.`project` (`project_id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
+    ON DELETE SET NULL
+    ON UPDATE CASCADE,
   CONSTRAINT `fk_project_user_2`
     FOREIGN KEY (`user_id`)
     REFERENCES `igfdb`.`user` (`user_id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE)
 ENGINE = InnoDB CHARSET=UTF8;
 
 
@@ -68,21 +68,21 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`sample` (
   `donor_anonymized_id` VARCHAR(10) NULL DEFAULT NULL,
   `description` VARCHAR(50) NULL DEFAULT NULL,
   `phenotype` VARCHAR(45) NULL DEFAULT NULL,
-  `sex` ENUM('F', 'M', 'O', 'U') NOT NULL,
-  `status` ENUM('ACTIVE', 'FAILED', 'WITHDRAWN') NOT NULL,
-  `biomaterial_type` ENUM('PRIMARY_TISSUE', 'PRIMARY_CELL', 'PRIMARY_CELL_CULTURE', 'CELL_LINE') NOT NULL,
+  `sex` ENUM('FEMALE', 'MALE', 'OTHER', 'UNKNOWN') NOT NULL DEFAULT 'UNKNOWN',
+  `status` ENUM('ACTIVE', 'FAILED', 'WITHDRAWN') NOT NULL DEFAULT 'ACTIVE',
+  `biomaterial_type` ENUM('PRIMARY_TISSUE', 'PRIMARY_CELL', 'PRIMARY_CELL_CULTURE', 'CELL_LINE', 'UNKNOWN') NOT NULL DEFAULT 'UNKNOWN',
   `cell_type` VARCHAR(50) NULL,
   `tissue_type` VARCHAR(50) NULL DEFAULT NULL,
   `cell_line` VARCHAR(50) NULL,
-  `project_id` INT UNSIGNED NOT NULL,
+  `project_id` INT UNSIGNED NULL,
   PRIMARY KEY (`sample_id`),
   UNIQUE INDEX `igf_id_UNIQUE` (`igf_id` ASC),
   INDEX `fk_sample_1_idx` (`project_id` ASC),
   CONSTRAINT `fk_sample_1`
     FOREIGN KEY (`project_id`)
     REFERENCES `igfdb`.`project` (`project_id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE)
 ENGINE = InnoDB CHARSET=UTF8;
 
 
@@ -106,9 +106,9 @@ ENGINE = InnoDB CHARSET=UTF8;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `igfdb`.`run` (
   `run_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `igf_id` VARCHAR(30) NULL DEFAULT NULL,
+  `igf_id` VARCHAR(50) NOT NULL DEFAULT NULL,
   `flowcell_id` VARCHAR(10) NOT NULL,
-  `status` ENUM('ACTIVE', 'FAILED', 'WITHDRAWN') NOT NULL,
+  `status` ENUM('ACTIVE', 'FAILED', 'WITHDRAWN') NOT NULL DEFAULT 'ACTIVE',
   `lane_number` ENUM('1', '2', '3', '4', '5', '6', '7', '8') NOT NULL,
   PRIMARY KEY (`run_id`),
   UNIQUE INDEX `igf_id_UNIQUE` (`igf_id` ASC))
@@ -120,14 +120,14 @@ ENGINE = InnoDB CHARSET=UTF8;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `igfdb`.`experiment` (
   `experiment_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `project_id` INT UNSIGNED NOT NULL,
+  `project_id` INT UNSIGNED NULL,
   `sample_id` INT UNSIGNED NULL DEFAULT NULL,
-  `library_name` VARCHAR(50) NULL,
-  `library_strategy` ENUM('WGS', 'EXOME', 'RNA-SEQ', 'CHIP-SEQ') NOT NULL,
-  `experiment_type` ENUM('POLYA-RNA', 'TOTAL-RNA', 'H3K4ME3', 'WGS', 'EXOME', 'H3k27me3', 'H3K27ac', 'H3K9me3', 'H3K36me3') NOT NULL,
-  `library_layout`  ENUM('SINGLE', 'PAIRED') NOT NULL,
-  `status` ENUM('ACTIVE', 'FAILED', 'WITHDRAWN') NOT NULL,
-  `platform_id` INT UNSIGNED NOT NULL,
+  `library_name` VARCHAR(50) NOT NULL,
+  `library_strategy` ENUM('WGS', 'EXOME', 'RNA-SEQ', 'CHIP-SEQ','UNKNOWN') NOT NULL DEFAULT 'UNKNOWN',
+  `experiment_type` ENUM('POLYA-RNA', 'TOTAL-RNA', 'SMALL_RNA','H3K4ME3', 'WGS', 'EXOME', 'H3k27ME3', 'H3K27AC', 'H3K9ME3', 'H3K36ME3', 'UNKNOWN') NOT NULL DEFAULT 'UNKNOWN',
+  `library_layout`  ENUM('SINGLE', 'PAIRED', 'UNKNOWN') NOT NULL DEFAULT 'UNKNOWN',
+  `status` ENUM('ACTIVE', 'FAILED', 'WITHDRAWN') NOT NULL DEFAULT 'ACTIVE',
+  `platform_id` INT UNSIGNED NULL,
   PRIMARY KEY (`experiment_id`),
   INDEX `fk_library_1_idx` (`platform_id` ASC),
   UNIQUE INDEX `sample_id_UNIQUE` (`sample_id` ASC),
@@ -136,18 +136,18 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`experiment` (
   CONSTRAINT `fk_project_run_1`
     FOREIGN KEY (`project_id`)
     REFERENCES `igfdb`.`project` (`project_id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
+    ON DELETE SET NULL
+    ON UPDATE CASCADE,
   CONSTRAINT `fk_project_run_2`
     FOREIGN KEY (`sample_id`)
     REFERENCES `igfdb`.`sample` (`sample_id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
-  CONSTRAINT `fk_library_1`
+    ON DELETE SET NULL
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_platform_1`
     FOREIGN KEY (`platform_id`)
     REFERENCES `igfdb`.`platform` (`platform_id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE)
 ENGINE = InnoDB CHARSET=UTF8;
 
 
@@ -169,8 +169,8 @@ ENGINE = InnoDB CHARSET=UTF8;
 CREATE TABLE IF NOT EXISTS `igfdb`.`file` (
   `file_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `path` VARCHAR(500) NOT NULL,
-  `location` ENUM('ORWELL', 'HPC_PROJECT', 'ELIOT', 'IRODS') NOT NULL,
-  `type` ENUM('BCL_TAR', 'FASTQ_TAR', 'FASTQC_TAR', 'FASTQ', 'BAM', 'CRAM', 'GFF', 'BED', 'GTF', 'FASTA') NOT NULL,
+  `location` ENUM('ORWELL', 'HPC_PROJECT', 'ELIOT', 'IRODS', 'UNKNOWN') NOT NULL DEFAULT 'UNKNOWN',
+  `type` ENUM('BCL_DIR', 'BCL_TAR', 'FASTQ_TAR', 'FASTQC_TAR', 'FASTQ', 'FASTQGZ', 'BAM', 'CRAM', 'GFF', 'BED', 'GTF', 'FASTA' ,'UNKNOWN') NOT NULL DEFAULT 'UNKNOWN',
   `md5` VARCHAR(33) NULL,
   `size` VARCHAR(15) NULL,
   PRIMARY KEY (`file_id`))
@@ -181,21 +181,21 @@ ENGINE = InnoDB CHARSET=UTF8;
 -- Table `igfdb`.`collection_group`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `igfdb`.`collection_group` (
-  `collection_id` INT UNSIGNED NOT NULL,
-  `file_id` INT UNSIGNED NOT NULL,
+  `collection_id` INT UNSIGNED NULL,
+  `file_id` INT UNSIGNED NULL,
   INDEX `fk_collection_group_2_idx` (`file_id` ASC),
   UNIQUE INDEX `collection_id_UNIQUE` (`collection_id` ASC),
   UNIQUE INDEX `file_id_UNIQUE` (`file_id` ASC),
   CONSTRAINT `fk_collection_group_1`
     FOREIGN KEY (`collection_id`)
     REFERENCES `igfdb`.`collection` (`collection_id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
+    ON DELETE SET NULL
+    ON UPDATE CASCADE,
   CONSTRAINT `fk_collection_group_2`
     FOREIGN KEY (`file_id`)
     REFERENCES `igfdb`.`file` (`file_id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE)
 ENGINE = InnoDB CHARSET=UTF8;
 
 
@@ -226,22 +226,22 @@ ENGINE = InnoDB CHARSET=UTF8;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `igfdb`.`pipeline_seed` (
   `pipeline_seed_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `pipeline_id` INT UNSIGNED NOT NULL,
-  `hive_db_id` INT UNSIGNED NOT NULL,
-  `status` ENUM('SEEDED', 'RUNNING', 'FINISHED', 'FAILED', 'UNKNOWN') NOT NULL,
+  `pipeline_id` INT UNSIGNED NULL,
+  `hive_db_id` INT UNSIGNED NULL,
+  `status` ENUM('SEEDED', 'RUNNING', 'FINISHED', 'FAILED', 'UNKNOWN') NOT NULL DEFAULT 'UNKNOWN',
   PRIMARY KEY (`pipeline_seed_id`),
   INDEX `fk_pipeline_seed_1_idx` (`pipeline_id` ASC),
   INDEX `fk_pipeline_seed_2_idx` (`hive_db_id` ASC),
   CONSTRAINT `fk_pipeline_seed_1`
     FOREIGN KEY (`pipeline_id`)
     REFERENCES `igfdb`.`pipeline` (`pipeline_id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
+    ON DELETE SET NULL
+    ON UPDATE CASCADE,
   CONSTRAINT `fk_pipeline_seed_2`
     FOREIGN KEY (`hive_db_id`)
     REFERENCES `igfdb`.`hive_db` (`hive_db_id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE)
 ENGINE = InnoDB CHARSET=UTF8;
 
 
@@ -252,7 +252,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`project_attribute` (
   `project_attribute_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `project_attribute_name` VARCHAR(50) NULL,
   `project_attribute_value` VARCHAR(50) NULL,
-  `project_id` INT UNSIGNED NOT NULL,
+  `project_id` INT UNSIGNED NULL,
   PRIMARY KEY (`project_attribute_id`),
   UNIQUE INDEX `project_attribute_name_UNIQUE` (`project_attribute_name` ASC),
   INDEX `fk_project_attribute_1_idx` (`project_id` ASC),
@@ -260,8 +260,8 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`project_attribute` (
   CONSTRAINT `fk_project_attribute_1`
     FOREIGN KEY (`project_id`)
     REFERENCES `igfdb`.`project` (`project_id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE)
 ENGINE = InnoDB CHARSET=UTF8;
 
 
@@ -272,7 +272,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`experiment_attribute` (
   `experiment_attribute_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `experiment_attribute_name` VARCHAR(30) NULL,
   `experiment_attribute_value` VARCHAR(50) NULL,
-  `experiment_id` INT UNSIGNED NOT NULL,
+  `experiment_id` INT UNSIGNED NULL,
   PRIMARY KEY (`experiment_attribute_id`),
   UNIQUE INDEX `library_attribute_name_UNIQUE` (`experiment_attribute_name` ASC),
   INDEX `fk_library_attribute_1_idx` (`experiment_id` ASC),
@@ -280,8 +280,8 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`experiment_attribute` (
   CONSTRAINT `fk_library_attribute_1`
     FOREIGN KEY (`experiment_id`)
     REFERENCES `igfdb`.`experiment` (`experiment_id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE)
 ENGINE = InnoDB CHARSET=UTF8;
 
 
@@ -292,7 +292,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`collection_attribute` (
   `collection_attribute_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `collection_attribute_name` VARCHAR(45) NULL,
   `collection_attribute_value` VARCHAR(45) NULL,
-  `collection_id` INT UNSIGNED NOT NULL,
+  `collection_id` INT UNSIGNED NULL,
   PRIMARY KEY (`collection_attribute_id`),
   UNIQUE INDEX `collection_attribute_name_UNIQUE` (`collection_attribute_name` ASC),
   INDEX `fk_collection_attribute_1_idx` (`collection_id` ASC),
@@ -300,8 +300,8 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`collection_attribute` (
   CONSTRAINT `fk_collection_attribute_1`
     FOREIGN KEY (`collection_id`)
     REFERENCES `igfdb`.`collection` (`collection_id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE)
 ENGINE = InnoDB CHARSET=UTF8;
 
 
@@ -312,15 +312,15 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`sample_attribute` (
   `sample_attribute_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `sample_attribute_name` VARCHAR(30) NULL,
   `sample_attribute_value` VARCHAR(50) NULL,
-  `sample_id` INT UNSIGNED NOT NULL,
+  `sample_id` INT UNSIGNED NULL,
   PRIMARY KEY (`sample_attribute_id`),
   UNIQUE INDEX `sample_attribute_name_UNIQUE` (`sample_attribute_name` ASC),
   UNIQUE INDEX `sample_attributecol_UNIQUE` (`sample_id` ASC),
   CONSTRAINT `fk_sample_attribute_1`
     FOREIGN KEY (`sample_id`)
     REFERENCES `igfdb`.`sample` (`sample_id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE)
 ENGINE = InnoDB CHARSET=UTF8;
 
 
@@ -331,15 +331,15 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`run_attribute` (
   `run_attribute_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `run_attribute_name` VARCHAR(30) NULL,
   `run_attribute_value` VARCHAR(50) NULL,
-  `run_id` INT UNSIGNED NOT NULL,
+  `run_id` INT UNSIGNED NULL,
   PRIMARY KEY (`run_attribute_id`),
   UNIQUE INDEX `run_attribute_name_UNIQUE` (`run_attribute_name` ASC),
   UNIQUE INDEX `run_id_UNIQUE` (`run_id` ASC),
   CONSTRAINT `fk_run_attribute_1`
     FOREIGN KEY (`run_id`)
     REFERENCES `igfdb`.`run` (`run_id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE)
 ENGINE = InnoDB CHARSET=UTF8;
 
 
@@ -350,14 +350,14 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`file_attribute` (
   `file_attribute_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `file_attribute_name` VARCHAR(30) NULL,
   `file_attribute_value` VARCHAR(50) NULL,
-  `file_id` INT UNSIGNED NOT NULL,
+  `file_id` INT UNSIGNED NULL,
   PRIMARY KEY (`file_attribute_id`),
   UNIQUE INDEX `file_attribute_name_UNIQUE` (`file_attribute_name` ASC),
   UNIQUE INDEX `file_id_UNIQUE` (`file_id` ASC),
   CONSTRAINT `fk_file_attribute_1`
     FOREIGN KEY (`file_id`)
     REFERENCES `igfdb`.`file` (`file_id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE)
 ENGINE = InnoDB CHARSET=UTF8;
 
