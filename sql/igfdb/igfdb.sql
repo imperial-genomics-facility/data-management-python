@@ -114,6 +114,15 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`run` (
   UNIQUE INDEX `igf_id_UNIQUE` (`igf_id` ASC))
 ENGINE = InnoDB CHARSET=UTF8;
 
+-- -----------------------------------------------------
+-- Table `igfdb`.`rejected_run`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `igfdb`.`rejected_run` (
+  `run_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `igf_id` VARCHAR(50) NOT NULL,
+  PRIMARY KEY (`run_id`),
+  UNIQUE INDEX `igf_id_UNIQUE` (`igf_id` ASC))
+ENGINE = InnoDB CHARSET=UTF8;
 
 -- -----------------------------------------------------
 -- Table `igfdb`.`experiment`
