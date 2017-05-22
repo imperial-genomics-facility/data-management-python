@@ -255,6 +255,17 @@ ENGINE = InnoDB CHARSET=UTF8;
 
 
 -- -----------------------------------------------------
+-- Table `igfdb`.`history`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `igfdb`.`history` (
+  `log_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `log_type` ENUM('CREATED', 'MODIFIED', 'DELETED') NOT NULL,
+  `log_date` DATE NOT NULL,
+  `message` TEXT NULL,
+  PRIMARY KEY (`log_id`))
+ENGINE = InnoDB CHARSET=UTF8;
+
+-- -----------------------------------------------------
 -- Table `igfdb`.`project_attribute`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `igfdb`.`project_attribute` (
