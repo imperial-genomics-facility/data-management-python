@@ -46,7 +46,7 @@ class moveBclFilesForDemultiplexing:
     # set pattern for HiSeq platforms
     hiseq_pattern=re.compile('^HISEQ',re.IGNORECASE)
     nextseq_pattern=re.compile('^NEXTSEQ',re.IGNORECASE)
-    miseq_pattern=re.compile('^MISEQ',re.IGNORECASE)
+    miseq_pattern=re.compile('^FASTQ Only',re.IGNORECASE)
 
     # read the samplesheet info
     samplesheet_data=SampleSheet(infile=self.samplesheet)
@@ -79,7 +79,14 @@ class moveBclFilesForDemultiplexing:
       bcl_files_list=['Data','InterOp','RunInfo.xml','RunParameters.xml']
     elif(re.search(miseq_pattern, platform_name)):
       # MiSeq
-      bcl_files_list=['Data','RunInfo.xml','runParameters.xml']
+      runinfo_data=RunInfo_xml(xml_file=self.run_info_xml)
+      platform_series=runinfo_data.get_platform_number()
+
+      # hack for checking MiSeq platform, need to replace with db check
+      if platform_series.startswith('M'):
+        bcl_files_list=['Data','RunInfo.xml','runParameters.xml']
+      else:
+        raise ValueError('Platform series {0} is not MiSeq'.format(platform_series))
     else:
       raise ValueError('Platform {0} not recognised'.format(platform_name))
     
