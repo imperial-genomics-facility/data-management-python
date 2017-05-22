@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`project` (
   `igf_id` VARCHAR(20) NOT NULL,
   `project_name` VARCHAR(100) NULL DEFAULT NULL,
   `start_date` DATE NOT NULL,
-  `project_requirement` ENUM('FASTQ', 'ALIGNMENT', 'ANALYSIS') NULL DEFAULT NULL,
+  `project_requirement` ENUM('FASTQ', 'ALIGNMENT', 'ANALYSIS') NULL DEFAULT 'FASTQ',
   `description` TEXT,
   PRIMARY KEY (`project_id`))
 ENGINE = InnoDB CHARSET=UTF8;
@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`user` (
   `user_igf_id` VARCHAR(10) NULL,
   `name` VARCHAR(25) NOT NULL,
   `category` ENUM('IMPERIAL_HPC', 'EXTERNAL') NULL DEFAULT NULL,
-  `status` ENUM('ACTIVE', 'BLOCKED', 'WITHDRAWN') NOT NULL,
+  `status` ENUM('ACTIVE', 'BLOCKED', 'WITHDRAWN') NOT NULL DEFAULT 'ACTIVE',
   `email_id` VARCHAR(20) NULL DEFAULT NULL,
   `date_created` DATE NULL DEFAULT NULL,
   PRIMARY KEY (`user_id`),
@@ -91,7 +91,7 @@ ENGINE = InnoDB CHARSET=UTF8;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `igfdb`.`platform` (
   `platform_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `igf_id` VARCHAR(10) NULL DEFAULT NULL,
+  `igf_id` VARCHAR(10) NOT NULL,
   `model_name` ENUM('HISEQ2500', 'HISEQ4000', 'MISEQ', 'NEXTSEQ') NOT NULL,
   `vendor_name` ENUM('ILLUMINA', 'NANOPORE') NOT NULL,
   `software_name` ENUM('RTA') NOT NULL,
@@ -106,7 +106,7 @@ ENGINE = InnoDB CHARSET=UTF8;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `igfdb`.`run` (
   `run_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `igf_id` VARCHAR(50) NOT NULL DEFAULT NULL,
+  `igf_id` VARCHAR(50) NOT NULL,
   `flowcell_id` VARCHAR(10) NOT NULL,
   `status` ENUM('ACTIVE', 'FAILED', 'WITHDRAWN') NOT NULL DEFAULT 'ACTIVE',
   `lane_number` ENUM('1', '2', '3', '4', '5', '6', '7', '8') NOT NULL,
