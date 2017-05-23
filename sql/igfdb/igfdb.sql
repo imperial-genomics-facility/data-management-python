@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`project` (
   `project_name` VARCHAR(100) NULL DEFAULT NULL,
   `start_date` DATE NOT NULL,
   `project_requirement` ENUM('FASTQ', 'ALIGNMENT', 'ANALYSIS') NULL DEFAULT 'FASTQ',
-  `description` TEXT,
+  `description` TEXT NULL,
   PRIMARY KEY (`project_id`),
   UNIQUE INDEX `igf_id_UNIQUE` (`igf_id`))
 ENGINE = InnoDB CHARSET=UTF8;
@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`user` (
   `status` ENUM('ACTIVE', 'BLOCKED', 'WITHDRAWN') NOT NULL DEFAULT 'ACTIVE',
   `email_id` VARCHAR(20) NOT NULL,
   `date_stamp` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `password` VARCHAR(129) NULL,
   PRIMARY KEY (`user_id`),
   UNIQUE INDEX `igf_id_UNIQUE` (`user_igf_id`),
   UNIQUE INDEX `email_id_UNIQUE` (`email_id`))
@@ -394,7 +395,7 @@ DELIMITER //
 DROP TRIGGER IF EXISTS project_update_log //
 CREATE TRIGGER project_update_log AFTER UPDATE ON project
 FOR EACH ROW
-  INSERT INTO history (`log_type`, `table_name`, `message`) value ('MODIFIED', 'PROJECT', CONCAT('OLD:', OLD.project_id, ',', OLD.igf_id,',',OLD.project_name,',',OLD.start_date,',',OLD.project_requirement,',',OLD.description,', NEW:', NEW.project_id, ',', NEW.igf_id,',',NEW.project_name,',',NEW.start_date,',',NEW.project_requirement,',',NEW.description) );
+  INSERT INTO history (`log_type`, `table_name`, `message`) value ('MODIFIED', 'PROJECT', CONCAT('OLD:', OLD.project_id, ',', OLD.igf_id,',',OLD.project_name,',',OLD.start_date,',',OLD.project_requirement,',', IFNULL(OLD.description,'NA'),', NEW:', NEW.project_id, ',', NEW.igf_id,',',NEW.project_name,',',NEW.start_date,',',NEW.project_requirement,',', IFNULL(NEW.description,'NA') ));
 //  
 DELIMITER ;
 
@@ -402,7 +403,7 @@ DELIMITER //
 DROP TRIGGER IF EXISTS project_delete_log //
 CREATE TRIGGER project_delete_log AFTER DELETE ON project
 FOR EACH ROW
-  INSERT INTO history (`log_type`, `table_name`, `message`) value ('DELETED', 'PROJECT', CONCAT('OLD:', OLD.project_id, ',', OLD.igf_id,',',OLD.project_name,',',OLD.start_date,',',OLD.project_requirement,',',OLD.description) );
+  INSERT INTO history (`log_type`, `table_name`, `message`) value ('DELETED', 'PROJECT', CONCAT('OLD:', OLD.project_id, ',', OLD.igf_id,',',OLD.project_name,',',OLD.start_date,',',OLD.project_requirement,',', IFNULL(OLD.description,'NA') ));
 //  
 DELIMITER ;
 
@@ -413,7 +414,7 @@ DELIMITER //
 DROP TRIGGER IF EXISTS user_update_log //
 CREATE TRIGGER user_update_log AFTER UPDATE ON user
 FOR EACH ROW
-  INSERT INTO history (`log_type`, `table_name`, `message`) value ('MODIFIED', 'USER', CONCAT('OLD:', OLD.user_id, ',', OLD.user_igf_id,',', OLD.name,',', OLD.hpc_user_name, ',', OLD.category, ',', OLD.status,',', OLD.email_id,',', OLD.date_stamp,', NEW:', NEW.user_id, ',', NEW.user_igf_id,',', NEW.name,',', NEW.hpc_user_name, ',', NEW.category, ',', NEW.status,',', NEW.email_id,',', NEW.date_stamp ) );
+ INSERT INTO history (`log_type`, `table_name`, `message`) value ('MODIFIED', 'USER', CONCAT('OLD:', OLD.user_id, ',', OLD.user_igf_id, ',', OLD.name, ',', IFNULL(OLD.hpc_user_name,'NA'), ',', OLD.category, ',', OLD.status,',', OLD.email_id, ',', OLD.date_stamp, ', NEW:', NEW.user_id, ',', NEW.user_igf_id, ',', NEW.name, ',', IFNULL(NEW.hpc_user_name,'NA'), ',',  NEW.category, ',', NEW.status, ',', NEW.email_id, ',', NEW.date_stamp ) );
 //
 DELIMITER ;
 
@@ -421,7 +422,7 @@ DELIMITER //
 DROP TRIGGER IF EXISTS user_delete_log // 
 CREATE TRIGGER user_delete_log AFTER DELETE ON user
 FOR EACH ROW
-  INSERT INTO history (`log_type`, `table_name`, `message`) value ('DELETED', 'USER', CONCAT('OLD:',  OLD.user_id, ',', OLD.user_igf_id,',', OLD.name,',', OLD.hpc_user_name, ',', OLD.category, ',', OLD.status,',', OLD.email_id,',', OLD.date_stamp ) );
+  INSERT INTO history (`log_type`, `table_name`, `message`) value ('DELETED', 'USER', CONCAT('OLD:',  OLD.user_id, ',', OLD.user_igf_id,',', OLD.name,',', IFNULL(OLD.hpc_user_name,'NA'), ',', OLD.category, ',', OLD.status,',', OLD.email_id,',', OLD.date_stamp ) );
 //
 DELIMITER ;
 
@@ -432,7 +433,7 @@ DELIMITER //
 DROP TRIGGER IF EXISTS sample_update_log //
 CREATE TRIGGER sample_update_log AFTER UPDATE ON sample
 FOR EACH ROW
-  INSERT INTO history (`log_type`, `table_name`, `message`) value ('MODIFIED', 'SAMPLE', CONCAT('OLD:', OLD.sample_id, ',', OLD.igf_id, ',', OLD.taxon_id, ',', OLD.scientific_name, ',', OLD.common_name, ',', OLD.donor_anonymized_id, ',', OLD.description, ',', OLD.phenotype, ',', OLD.sex ,',', OLD.status, ',', OLD.biomaterial_type, ',', OLD.tissue_type, ',', OLD.cell_line, ',', OLD.project_id ,',NEW:', NEW.sample_id, ',', NEW.igf_id, ',', NEW.taxon_id, ',', NEW.scientific_name, ',', NEW.common_name, ',', NEW.donor_anonymized_id, ',', NEW.description, ',', NEW.phenotype, ',', NEW.sex ,',', NEW.status, ',', NEW.biomaterial_type, ',', NEW.tissue_type, ',', NEW.cell_line, ',', NEW.project_id ) );
+  INSERT INTO history (`log_type`, `table_name`, `message`) value ('MODIFIED', 'SAMPLE', CONCAT('OLD:', OLD.sample_id, ',', OLD.igf_id, ',', IFNULL(OLD.taxon_id, 'NA'), ',', IFNULL(OLD.scientific_name, 'NA'), ',', IFNULL(OLD.common_name,'NA'), ',', IFNULL(OLD.donor_anonymized_id, 'NA'), ',', IFNULL(OLD.description, 'NA'), ',', IFNULL(OLD.phenotype, 'NA'), ',', OLD.sex ,',', OLD.status, ',', OLD.biomaterial_type, ',', IFNULL(OLD.cell_type,'NA'), ',', IFNULL(OLD.tissue_type,'NA'), ',', IFNULL(OLD.cell_line,'NA'), ',', IFNULL(OLD.project_id,'NA') ,',NEW:', NEW.sample_id, ',', NEW.igf_id, ',', IFNULL(NEW.taxon_id,'NA'), ',', IFNULL(NEW.scientific_name,'NA'), ',', IFNULL(NEW.common_name,'NA'), ',', IFNULL(NEW.donor_anonymized_id,'NA'), ',', IFNULL(NEW.description,'NA'), ',', IFNULL(NEW.phenotype,'NA'), ',', NEW.sex ,',', NEW.status, ',', NEW.biomaterial_type, ',', IFNULL(NEW.cell_type, 'NA'), IFNULL(NEW.tissue_type,'NA'), ',', IFNULL(NEW.cell_line,'NA'), ',', IFNULL(NEW.project_id,'NA') ) );
 //
 DELIMITER ;
 
@@ -441,7 +442,7 @@ DELIMITER //
 DROP TRIGGER IF EXISTS sample_delete_log //
 CREATE TRIGGER sample_delete_log AFTER DELETE ON sample
 FOR EACH ROW
-  INSERT INTO history (`log_type`, `table_name`, `message`) value ('DELETED', 'SAMPLE', CONCAT('OLD:', OLD.sample_id, ',', OLD.igf_id, ',', OLD.taxon_id, ',', OLD.scientific_name, ',', OLD.common_name, ',', OLD.donor_anonymized_id, ',', OLD.description, ',', OLD.phenotype, ',', OLD.sex ,',', OLD.status, ',', OLD.biomaterial_type, ',', OLD.tissue_type, ',', OLD.cell_line, ',', OLD.project_id ) );
+  INSERT INTO history (`log_type`, `table_name`, `message`) value ('DELETED', 'SAMPLE', CONCAT('OLD:', OLD.sample_id, ',', OLD.igf_id, ',', IFNULL(OLD.taxon_id,'NA'), ',', IFNULL(OLD.scientific_name,'NA'), ',', IFNULL(OLD.common_name,'NA'), ',', IFNULL(OLD.donor_anonymized_id,'NA'), ',', IFNULL(OLD.description,'NA'), ',', IFNULL(OLD.phenotype,'NA'), ',', OLD.sex ,',', OLD.status, ',', OLD.biomaterial_type, ',', IFNULL(OLD.cell_type,'NA'), IFNULL(OLD.tissue_type,'NA'), ',', IFNULL(OLD.cell_line,'NA'), ',', IFNULL(OLD.project_id,'NA') ) );
 //
 DELIMITER ;
 
@@ -452,7 +453,7 @@ DELIMITER //
 DROP TRIGGER IF EXISTS experiment_update_log //
 CREATE TRIGGER experiment_update_log AFTER UPDATE ON experiment
 FOR EACH ROW
-  INSERT INTO history (`log_type`, `table_name`, `message`) value ('MODIFIED', 'EXPERIMENT', CONCAT('OLD:', OLD.experiment_id, ',', OLD.project_id, ',', OLD.sample_id, ',', OLD.library_name, ',', OLD.library_strategy, ',', OLD.experiment_type, ',', OLD.library_layout, ',', OLD.status, ',', OLD.platform_id, ', NEW:', NEW.experiment_id, ',', NEW.project_id, ',', NEW.sample_id, ',', NEW.library_name, ',', NEW.library_strategy, ',', NEW.experiment_type, ',', NEW.library_layout, ',', NEW.status, ',', NEW.platform_id  ) );
+  INSERT INTO history (`log_type`, `table_name`, `message`) value ('MODIFIED', 'EXPERIMENT', CONCAT('OLD:', OLD.experiment_id, ',', IFNULL(OLD.project_id,'NA'), ',', IFNULL(OLD.sample_id,'NA'), ',', OLD.library_name, ',', OLD.library_strategy, ',', OLD.experiment_type, ',', OLD.library_layout, ',', OLD.status, ',', IFNULL(OLD.platform_id,'NA'), ', NEW:', NEW.experiment_id, ',', IFNULL(NEW.project_id,'NA'), ',', IFNULL(NEW.sample_id,'NA'), ',', NEW.library_name, ',', NEW.library_strategy, ',', NEW.experiment_type, ',', NEW.library_layout, ',', NEW.status, ',', IFNULL(NEW.platform_id,'NA') ));
 //
 DELIMITER ;
 
@@ -460,7 +461,7 @@ DELIMITER //
 DROP TRIGGER IF EXISTS experiment_delete_log //
 CREATE TRIGGER experiment_delete_log AFTER DELETE ON experiment
 FOR EACH ROW
-  INSERT INTO history (`log_type`, `table_name`, `message`) value ('DELETED', 'EXPERIMENT', CONCAT('OLD:', OLD.experiment_id, ',', OLD.project_id, ',', OLD.sample_id, ',', OLD.library_name, ',', OLD.library_strategy, ',', OLD.experiment_type, ',', OLD.library_layout, ',', OLD.status, ',', OLD.platform_id ) );
+  INSERT INTO history (`log_type`, `table_name`, `message`) value ('DELETED', 'EXPERIMENT', CONCAT('OLD:', OLD.experiment_id, ',', IFNULL(OLD.project_id,'NA'), ',', IFNULL(OLD.sample_id,'NA'), ',', OLD.library_name, ',', OLD.library_strategy, ',', OLD.experiment_type, ',', OLD.library_layout, ',', OLD.status, ',', IFNULL(OLD.platform_id,'NA') ) );
 //
 DELIMITER ;
 
@@ -529,7 +530,7 @@ DELIMITER //
 DROP TRIGGER IF EXISTS file_update_log //
 CREATE TRIGGER file_update_log AFTER UPDATE ON file
 FOR EACH ROW
-  INSERT INTO history (`log_type`, `table_name`, `message`) value ('MODIFIED', 'FILE', CONCAT('OLD:', OLD.file_id, ',', OLD.file_path, ',', OLD.location, ',', OLD.type, ',', OLD.md5, ',', OLD.size, ',', OLD.date_updated, ', NEW:', NEW.file_id, ',', NEW.file_path, ',', NEW.location, ',', NEW.type, ',', NEW.md5, ',', NEW.size, ',', NEW.date_updated ) );
+  INSERT INTO history (`log_type`, `table_name`, `message`) value ('MODIFIED', 'FILE', CONCAT('OLD:', OLD.file_id, ',', OLD.file_path, ',', OLD.location, ',', OLD.type, ',', IFNULL(OLD.md5, 'NA'), ',', IFNULL(OLD.size, 'NA'), ',', OLD.date_updated, ', NEW:', NEW.file_id, ',', NEW.file_path, ',', NEW.location, ',', NEW.type, ',', IFNULL(NEW.md5,'NA'), ',', IFNULL(NEW.size,'NA'), ',', NEW.date_updated ) );
 //
 DELIMITER ;
 
@@ -537,7 +538,7 @@ DELIMITER //
 DROP TRIGGER IF EXISTS file_delete_log //
 CREATE TRIGGER file_delete_log AFTER DELETE ON file
 FOR EACH ROW
-  INSERT INTO history (`log_type`, `table_name`, `message`) value ('DELETED', 'FILE', CONCAT('OLD:', OLD.file_id, ',', OLD.file_path, ',', OLD.location, ',', OLD.type, ',', OLD.md5, ',', OLD.size, ',', OLD.date_updated ) );
+  INSERT INTO history (`log_type`, `table_name`, `message`) value ('DELETED', 'FILE', CONCAT('OLD:', OLD.file_id, ',', OLD.file_path, ',', OLD.location, ',', OLD.type, ',', IFNULL(OLD.md5,'NA'), ',', IFNULL(OLD.size, 'NA'), ',', OLD.date_updated ) );
 //
 DELIMITER ;
 
