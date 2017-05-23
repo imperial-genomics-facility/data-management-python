@@ -389,6 +389,30 @@ ENGINE = InnoDB CHARSET=UTF8;
 
 
 -- -----------------------------------------------------
+-- Trigger `igfdb`.`user_pass_sha2`
+-- -----------------------------------------------------
+DELIMITER //
+DROP TRIGGER IF EXISTS user_insert_pass //
+CREATE TRIGGER user_insert_pass BEFORE INSERT ON user
+FOR EACH ROW
+  SET NEW.password=sha2(NEW.PASSWORD, 512)
+//
+DELIMITER ;
+
+DELIMITER //
+DROP TRIGGER IF EXISTS user_update_pass //
+CREATE TRIGGER user_update_pass BEFORE UPDATE ON user
+FOR EACH ROW
+  BEGIN
+    IF ( OLD.password IS NOT NULL AND NEW.password IS NOT NULL AND OLD.password <> NEW.password ) THEN 
+      SET NEW.password=sha2(NEW.PASSWORD, 512);
+    ELSEIF ( OLD.password IS NULL AND NEW.password IS NOT NULL) THEN
+      SET NEW.password=sha2(NEW.PASSWORD, 512);
+    END IF;
+END;//
+DELIMITER ;
+
+-- -----------------------------------------------------
 -- Trigger `igfdb`.`project_log`
 -- -----------------------------------------------------
 DELIMITER //
