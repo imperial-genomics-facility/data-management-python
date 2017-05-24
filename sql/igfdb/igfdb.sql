@@ -9,7 +9,7 @@ USE `igfdb` ;
 CREATE TABLE IF NOT EXISTS `igfdb`.`project` (
   `project_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `igf_id` VARCHAR(20) NOT NULL,
-  `project_name` VARCHAR(100) NULL DEFAULT NULL,
+  `project_name` VARCHAR(100) NULL,
   `start_date` DATE NOT NULL,
   `project_requirement` ENUM('FASTQ', 'ALIGNMENT', 'ANALYSIS') NULL DEFAULT 'FASTQ',
   `description` TEXT NULL,
@@ -23,7 +23,7 @@ ENGINE = InnoDB CHARSET=UTF8;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `igfdb`.`user` (
   `user_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `user_igf_id` VARCHAR(10) NOT NULL,
+  `user_igf_id` VARCHAR(10) NULL,
   `name` VARCHAR(25) NOT NULL,
   `hpc_user_name` VARCHAR(8) NULL,
   `category` ENUM('HPC_USER', 'NON_HPC_USER', 'EXTERNAL') NOT NULL DEFAULT 'NON_HPC_USER',
@@ -42,20 +42,20 @@ ENGINE = InnoDB CHARSET=UTF8;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `igfdb`.`project_user` (
   `project_user_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `project_id` INT UNSIGNED  NULL,
-  `user_id` INT UNSIGNED NULL,
+  `project_id` INT UNSIGNED NOT NULL,
+  `user_id` INT UNSIGNED NOT NULL,
   `data_authority` ENUM('T') NULL,
   PRIMARY KEY (`project_user_id`),
   UNIQUE INDEX `project_data_auth_UNIQUE` (`project_id`, `data_authority`),
   CONSTRAINT `fk_project_user_1`
     FOREIGN KEY (`project_id`)
     REFERENCES `igfdb`.`project` (`project_id`)
-    ON DELETE SET NULL
+    ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `fk_project_user_2`
     FOREIGN KEY (`user_id`)
     REFERENCES `igfdb`.`user` (`user_id`)
-    ON DELETE SET NULL
+    ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB CHARSET=UTF8;
 
@@ -66,18 +66,19 @@ ENGINE = InnoDB CHARSET=UTF8;
 CREATE TABLE IF NOT EXISTS `igfdb`.`sample` (
   `sample_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `igf_id` VARCHAR(10) NOT NULL,
-  `taxon_id` INT NULL DEFAULT NULL,
-  `scientific_name` VARCHAR(50) NULL DEFAULT NULL,
-  `common_name` VARCHAR(50) NULL DEFAULT NULL,
-  `donor_anonymized_id` VARCHAR(10) NULL DEFAULT NULL,
-  `description` VARCHAR(50) NULL DEFAULT NULL,
-  `phenotype` VARCHAR(45) NULL DEFAULT NULL,
+  `taxon_id` INT NULL,
+  `scientific_name` VARCHAR(50) NULL,
+  `common_name` VARCHAR(50) NULL,
+  `donor_anonymized_id` VARCHAR(10) NULL,
+  `description` VARCHAR(50) NULL,
+  `phenotype` VARCHAR(45) NULL,
   `sex` ENUM('FEMALE', 'MALE', 'OTHER', 'UNKNOWN') NOT NULL DEFAULT 'UNKNOWN',
   `status` ENUM('ACTIVE', 'FAILED', 'WITHDRAWN') NOT NULL DEFAULT 'ACTIVE',
   `biomaterial_type` ENUM('PRIMARY_TISSUE', 'PRIMARY_CELL', 'PRIMARY_CELL_CULTURE', 'CELL_LINE', 'UNKNOWN') NOT NULL DEFAULT 'UNKNOWN',
   `cell_type` VARCHAR(50) NULL,
-  `tissue_type` VARCHAR(50) NULL DEFAULT NULL,
+  `tissue_type` VARCHAR(50) NULL,
   `cell_line` VARCHAR(50) NULL,
+  `date_created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `project_id` INT UNSIGNED NULL,
   PRIMARY KEY (`sample_id`),
   UNIQUE INDEX `igf_id_UNIQUE` (`igf_id`),
@@ -99,6 +100,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`platform` (
   `vendor_name` ENUM('ILLUMINA', 'NANOPORE') NOT NULL,
   `software_name` ENUM('RTA') NOT NULL,
   `software_version` ENUM('RTA1.18.54', 'RTA1.18.64', 'RTA2') NOT NULL,
+  `date_created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`platform_id`),
   UNIQUE INDEX `igf_id_UNIQUE` (`igf_id`))
 ENGINE = InnoDB CHARSET=UTF8;
@@ -141,6 +143,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`experiment` (
   `experiment_type` ENUM('POLYA-RNA', 'TOTAL-RNA', 'SMALL_RNA','H3K4ME3', 'WGS', 'EXOME', 'H3k27ME3', 'H3K27AC', 'H3K9ME3', 'H3K36ME3', 'UNKNOWN') NOT NULL DEFAULT 'UNKNOWN',
   `library_layout`  ENUM('SINGLE', 'PAIRED', 'UNKNOWN') NOT NULL DEFAULT 'UNKNOWN',
   `status` ENUM('ACTIVE', 'FAILED', 'WITHDRAWN') NOT NULL DEFAULT 'ACTIVE',
+  `date_created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `platform_id` INT UNSIGNED NULL,
   PRIMARY KEY (`experiment_id`),
   UNIQUE INDEX `sample_lib_plat_UNIQUE` (`sample_id`, `library_name`, `platform_id`),
@@ -196,18 +199,18 @@ ENGINE = InnoDB CHARSET=UTF8;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `igfdb`.`collection_group` (
   `collection_group_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `collection_id` INT UNSIGNED NULL,
-  `file_id` INT UNSIGNED NULL,
+  `collection_id` INT UNSIGNED NOT NULL,
+  `file_id` INT UNSIGNED NOT NULL,
   PRIMARY KEY (`collection_group_id`),
   CONSTRAINT `fk_collection_group_1`
     FOREIGN KEY (`collection_id`)
     REFERENCES `igfdb`.`collection` (`collection_id`)
-    ON DELETE SET NULL
+    ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `fk_collection_group_2`
     FOREIGN KEY (`file_id`)
     REFERENCES `igfdb`.`file` (`file_id`)
-    ON DELETE SET NULL
+    ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB CHARSET=UTF8;
 
@@ -240,7 +243,7 @@ ENGINE = InnoDB CHARSET=UTF8;
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `igfdb`.`pipeline_seed` (
   `pipeline_seed_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `pipeline_id` INT UNSIGNED NULL,
+  `pipeline_id` INT UNSIGNED NOT NULL,
   `hive_db_id` INT UNSIGNED NULL,
   `status` ENUM('SEEDED', 'RUNNING', 'FINISHED', 'FAILED', 'UNKNOWN') NOT NULL DEFAULT 'UNKNOWN',
   PRIMARY KEY (`pipeline_seed_id`),
@@ -249,7 +252,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`pipeline_seed` (
   CONSTRAINT `fk_pipeline_seed_1`
     FOREIGN KEY (`pipeline_id`)
     REFERENCES `igfdb`.`pipeline` (`pipeline_id`)
-    ON DELETE SET NULL
+    ON DELETE CASCADE
     ON UPDATE CASCADE,
   CONSTRAINT `fk_pipeline_seed_2`
     FOREIGN KEY (`hive_db_id`)
@@ -265,7 +268,7 @@ ENGINE = InnoDB CHARSET=UTF8;
 CREATE TABLE IF NOT EXISTS `igfdb`.`history` (
   `log_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `log_type` ENUM('CREATED', 'MODIFIED', 'DELETED') NOT NULL,
-  `table_name` ENUM('PROJECT', 'USER', 'SAMPLE', 'EXPERIMENT', 'RUN', 'COLLECTION', 'FILE', 'PLATFORM') NOT NULL,
+  `table_name` ENUM('PROJECT', 'USER', 'SAMPLE', 'EXPERIMENT', 'RUN', 'COLLECTION', 'FILE', 'PLATFORM', 'PROJECT_ATTRIBUTE', 'EXPERIMENT_ATTRIBUTE', 'COLLECTION_ATTRIBUTE', 'SAMPLE_ATTRIBUTE', 'RUN_ATTRIBUTE', 'FILE_ATTRIBUTE') NOT NULL,
   `log_date` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `message` TEXT NULL,
   PRIMARY KEY (`log_id`))
@@ -278,7 +281,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`project_attribute` (
   `project_attribute_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `project_attribute_name` VARCHAR(50) NULL,
   `project_attribute_value` VARCHAR(50) NULL,
-  `project_id` INT UNSIGNED NULL,
+  `project_id` INT UNSIGNED NOT NULL,
   PRIMARY KEY (`project_attribute_id`),
   UNIQUE INDEX `project_attribute_name_UNIQUE` (`project_attribute_name` ASC),
   INDEX `fk_project_attribute_1_idx` (`project_id` ASC),
@@ -286,7 +289,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`project_attribute` (
   CONSTRAINT `fk_project_attribute_1`
     FOREIGN KEY (`project_id`)
     REFERENCES `igfdb`.`project` (`project_id`)
-    ON DELETE SET NULL
+    ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB CHARSET=UTF8;
 
@@ -298,7 +301,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`experiment_attribute` (
   `experiment_attribute_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `experiment_attribute_name` VARCHAR(30) NULL,
   `experiment_attribute_value` VARCHAR(50) NULL,
-  `experiment_id` INT UNSIGNED NULL,
+  `experiment_id` INT UNSIGNED NOT NULL,
   PRIMARY KEY (`experiment_attribute_id`),
   UNIQUE INDEX `library_attribute_name_UNIQUE` (`experiment_attribute_name` ASC),
   INDEX `fk_library_attribute_1_idx` (`experiment_id` ASC),
@@ -306,7 +309,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`experiment_attribute` (
   CONSTRAINT `fk_library_attribute_1`
     FOREIGN KEY (`experiment_id`)
     REFERENCES `igfdb`.`experiment` (`experiment_id`)
-    ON DELETE SET NULL
+    ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB CHARSET=UTF8;
 
@@ -318,7 +321,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`collection_attribute` (
   `collection_attribute_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `collection_attribute_name` VARCHAR(45) NULL,
   `collection_attribute_value` VARCHAR(45) NULL,
-  `collection_id` INT UNSIGNED NULL,
+  `collection_id` INT UNSIGNED NOT NULL,
   PRIMARY KEY (`collection_attribute_id`),
   UNIQUE INDEX `collection_attribute_name_UNIQUE` (`collection_attribute_name` ASC),
   INDEX `fk_collection_attribute_1_idx` (`collection_id` ASC),
@@ -326,7 +329,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`collection_attribute` (
   CONSTRAINT `fk_collection_attribute_1`
     FOREIGN KEY (`collection_id`)
     REFERENCES `igfdb`.`collection` (`collection_id`)
-    ON DELETE SET NULL
+    ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB CHARSET=UTF8;
 
@@ -338,14 +341,14 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`sample_attribute` (
   `sample_attribute_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `sample_attribute_name` VARCHAR(30) NULL,
   `sample_attribute_value` VARCHAR(50) NULL,
-  `sample_id` INT UNSIGNED NULL,
+  `sample_id` INT UNSIGNED NOT NULL,
   PRIMARY KEY (`sample_attribute_id`),
   UNIQUE INDEX `sample_attribute_name_UNIQUE` (`sample_attribute_name` ASC),
   UNIQUE INDEX `sample_attributecol_UNIQUE` (`sample_id` ASC),
   CONSTRAINT `fk_sample_attribute_1`
     FOREIGN KEY (`sample_id`)
     REFERENCES `igfdb`.`sample` (`sample_id`)
-    ON DELETE SET NULL
+    ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB CHARSET=UTF8;
 
@@ -357,14 +360,14 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`run_attribute` (
   `run_attribute_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `run_attribute_name` VARCHAR(30) NULL,
   `run_attribute_value` VARCHAR(50) NULL,
-  `run_id` INT UNSIGNED NULL,
+  `run_id` INT UNSIGNED NOT NULL,
   PRIMARY KEY (`run_attribute_id`),
   UNIQUE INDEX `run_attribute_name_UNIQUE` (`run_attribute_name` ASC),
   UNIQUE INDEX `run_id_UNIQUE` (`run_id` ASC),
   CONSTRAINT `fk_run_attribute_1`
     FOREIGN KEY (`run_id`)
     REFERENCES `igfdb`.`run` (`run_id`)
-    ON DELETE SET NULL
+    ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB CHARSET=UTF8;
 
@@ -376,14 +379,14 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`file_attribute` (
   `file_attribute_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `file_attribute_name` VARCHAR(30) NULL,
   `file_attribute_value` VARCHAR(50) NULL,
-  `file_id` INT UNSIGNED NULL,
+  `file_id` INT UNSIGNED NOT NULL,
   PRIMARY KEY (`file_attribute_id`),
   UNIQUE INDEX `file_attribute_name_UNIQUE` (`file_attribute_name` ASC),
   UNIQUE INDEX `file_id_UNIQUE` (`file_id` ASC),
   CONSTRAINT `fk_file_attribute_1`
     FOREIGN KEY (`file_id`)
     REFERENCES `igfdb`.`file` (`file_id`)
-    ON DELETE SET NULL
+    ON DELETE CASCADE
     ON UPDATE CASCADE)
 ENGINE = InnoDB CHARSET=UTF8;
 
@@ -563,6 +566,121 @@ DROP TRIGGER IF EXISTS file_delete_log //
 CREATE TRIGGER file_delete_log AFTER DELETE ON file
 FOR EACH ROW
   INSERT INTO history (`log_type`, `table_name`, `message`) value ('DELETED', 'FILE', CONCAT('OLD:', OLD.file_id, ',', OLD.file_path, ',', OLD.location, ',', OLD.type, ',', IFNULL(OLD.md5,'NA'), ',', IFNULL(OLD.size, 'NA'), ',', OLD.date_updated ) );
+//
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- Trigger `igfdb`.`project_attribute_log`
+-- -----------------------------------------------------
+DELIMITER //
+DROP TRIGGER IF EXISTS project_attribute_update_log //
+CREATE TRIGGER project_attribute_update_log AFTER UPDATE ON project_attribute
+FOR EACH ROW
+  INSERT INTO history (`log_type`, `table_name`, `message`) value ('MODIFIED', 'PROJECT_ATTRIBUTE', CONCAT('OLD:', OLD.project_attribute_id, ',', OLD.project_attribute_name, ',', OLD.project_attribute_value, ',', OLD.project_id, ', NEW:',  NEW.project_attribute_id, ',', NEW.project_attribute_name, ',', NEW.project_attribute_value, ',', NEW.project_id) );
+//
+DELIMITER ;
+
+DELIMITER //
+DROP TRIGGER IF EXISTS project_attribute_delete_log //
+CREATE TRIGGER project_attribute_delete_log AFTER DELETE ON project_attribute
+FOR EACH ROW
+  INSERT INTO history (`log_type`, `table_name`, `message`) value ('DELETED', 'PROJECT_ATTRIBUTE', CONCAT('OLD:', OLD.project_attribute_id, ',', OLD.project_attribute_name, ',', OLD.project_attribute_value, ',', OLD.project_id) );
+//
+DELIMITER ;
+
+
+-- -----------------------------------------------------
+-- Trigger `igfdb`.`experiment_attribute_log`
+-- -----------------------------------------------------
+DELIMITER //
+DROP TRIGGER IF EXISTS experiment_attribute_update_log //
+CREATE TRIGGER experiment_attribute_update_log AFTER UPDATE ON experiment_attribute
+FOR EACH ROW
+  INSERT INTO history (`log_type`, `table_name`, `message`) value ('MODIFIED', 'EXPERIMENT_ATTRIBUTE', CONCAT('OLD:', OLD.experiment_attribute_id, ',', OLD.experiment_attribute_name, ',', OLD.experiment_attribute_value, ',', OLD.experiment_id, ', NEW:',  NEW.experiment_attribute_id, ',', NEW.experiment_attribute_name, ',', NEW.experiment_attribute_value, ',', NEW.experiment_id) );
+//
+DELIMITER ;
+
+DELIMITER //
+DROP TRIGGER IF EXISTS experiment_attribute_delete_log //
+CREATE TRIGGER experiment_attribute_delete_log AFTER DELETE ON experiment_attribute
+FOR EACH ROW
+  INSERT INTO history (`log_type`, `table_name`, `message`) value ('DELETED', 'EXPERIMENT_ATTRIBUTE', CONCAT('OLD:', OLD.experiment_attribute_id, ',', OLD.experiment_attribute_name, ',', OLD.experiment_attribute_value, ',', OLD.experiment_id) );
+//
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- Trigger `igfdb`.`collection_attribute_log`
+-- -----------------------------------------------------
+DELIMITER //
+DROP TRIGGER IF EXISTS collection_attribute_update_log //
+CREATE TRIGGER collection_attribute_update_log AFTER UPDATE ON collection_attribute
+FOR EACH ROW
+  INSERT INTO history (`log_type`, `table_name`, `message`) value ('MODIFIED', 'COLLECTION_ATTRIBUTE', CONCAT('OLD:', OLD.collection_attribute_id, ',', OLD.collection_attribute_name, ',', OLD.collection_attribute_value, ',', OLD.collection_id, ', NEW:',  NEW.collection_attribute_id, ',', NEW.collection_attribute_name, ',', NEW.collection_attribute_value, ',', NEW.collection_id) );
+//
+DELIMITER ;
+
+DELIMITER //
+DROP TRIGGER IF EXISTS collection_attribute_delete_log //
+CREATE TRIGGER collection_attribute_delete_log AFTER DELETE ON collection_attribute
+FOR EACH ROW
+  INSERT INTO history (`log_type`, `table_name`, `message`) value ('DELETED', 'COLLECTION_ATTRIBUTE', CONCAT('OLD:', OLD.collection_attribute_id, ',', OLD.collection_attribute_name, ',', OLD.collection_attribute_value, ',', OLD.collection_id) );
+//
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- Trigger `igfdb`.`sample_attribute_log`
+-- -----------------------------------------------------
+DELIMITER //
+DROP TRIGGER IF EXISTS sample_attribute_update_log //
+CREATE TRIGGER sample_attribute_update_log AFTER UPDATE ON sample_attribute
+FOR EACH ROW
+  INSERT INTO history (`log_type`, `table_name`, `message`) value ('MODIFIED', 'SAMPLE_ATTRIBUTE', CONCAT('OLD:', OLD.sample_attribute_id, ',', OLD.sample_attribute_name, ',', OLD.sample_attribute_value, ',', OLD.sample_id, ', NEW:',  NEW.sample_attribute_id, ',', NEW.sample_attribute_name, ',', NEW.sample_attribute_value, ',', NEW.sample_id) );
+//
+DELIMITER ;
+
+DELIMITER //
+DROP TRIGGER IF EXISTS sample_attribute_delete_log //
+CREATE TRIGGER sample_attribute_delete_log AFTER DELETE ON sample_attribute
+FOR EACH ROW
+  INSERT INTO history (`log_type`, `table_name`, `message`) value ('DELETED', 'SAMPLE_ATTRIBUTE', CONCAT('OLD:', OLD.sample_attribute_id, ',', OLD.sample_attribute_name, ',', OLD.sample_attribute_value, ',', OLD.sample_id) );
+//
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- Trigger `igfdb`.`run_attribute_log`
+-- -----------------------------------------------------
+DELIMITER //
+DROP TRIGGER IF EXISTS run_attribute_update_log //
+CREATE TRIGGER run_attribute_update_log AFTER UPDATE ON run_attribute
+FOR EACH ROW
+  INSERT INTO history (`log_type`, `table_name`, `message`) value ('MODIFIED', 'RUN_ATTRIBUTE', CONCAT('OLD:', OLD.run_attribute_id, ',', OLD.run_attribute_name, ',', OLD.run_attribute_value, ',', OLD.run_id, ', NEW:',  NEW.run_attribute_id, ',', NEW.run_attribute_name, ',', NEW.run_attribute_value, ',', NEW.run_id) );
+//
+DELIMITER ;
+
+DELIMITER //
+DROP TRIGGER IF EXISTS run_attribute_delete_log //
+CREATE TRIGGER run_attribute_delete_log AFTER DELETE ON run_attribute
+FOR EACH ROW
+  INSERT INTO history (`log_type`, `table_name`, `message`) value ('DELETED', 'RUN_ATTRIBUTE', CONCAT('OLD:', OLD.run_attribute_id, ',', OLD.run_attribute_name, ',', OLD.run_attribute_value, ',', OLD.run_id) );
+//
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- Trigger `igfdb`.`file_attribute_log`
+-- -----------------------------------------------------
+DELIMITER //
+DROP TRIGGER IF EXISTS file_attribute_update_log //
+CREATE TRIGGER file_attribute_update_log AFTER UPDATE ON file_attribute
+FOR EACH ROW
+  INSERT INTO history (`log_type`, `table_name`, `message`) value ('MODIFIED', 'FILE_ATTRIBUTE', CONCAT('OLD:', OLD.file_attribute_id, ',', OLD.file_attribute_name, ',', OLD.file_attribute_value, ',', OLD.file_id, ', NEW:',  NEW.file_attribute_id, ',', NEW.file_attribute_name, ',', NEW.file_attribute_value, ',', NEW.file_id) );
+//
+DELIMITER ;
+
+DELIMITER //
+DROP TRIGGER IF EXISTS file_attribute_delete_log //
+CREATE TRIGGER file_attribute_delete_log AFTER DELETE ON file_attribute
+FOR EACH ROW
+  INSERT INTO history (`log_type`, `table_name`, `message`) value ('DELETED', 'FILE_ATTRIBUTE', CONCAT('OLD:', OLD.file_attribute_id, ',', OLD.file_attribute_name, ',', OLD.file_attribute_value, ',', OLD.file_id) );
 //
 DELIMITER ;
 
