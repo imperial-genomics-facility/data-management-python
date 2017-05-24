@@ -105,21 +105,6 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`platform` (
   UNIQUE INDEX `igf_id_UNIQUE` (`igf_id`))
 ENGINE = InnoDB CHARSET=UTF8;
 
-
--- -----------------------------------------------------
--- Table `igfdb`.`run`
--- -----------------------------------------------------
-CREATE TABLE IF NOT EXISTS `igfdb`.`run` (
-  `run_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
-  `igf_id` VARCHAR(50) NOT NULL,
-  `flowcell_id` VARCHAR(10) NOT NULL,
-  `status` ENUM('ACTIVE', 'FAILED', 'WITHDRAWN') NOT NULL DEFAULT 'ACTIVE',
-  `lane_number` ENUM('1', '2', '3', '4', '5', '6', '7', '8') NOT NULL,
-  `date_created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`run_id`),
-  UNIQUE INDEX `igf_id_UNIQUE` (`igf_id` ASC))
-ENGINE = InnoDB CHARSET=UTF8;
-
 -- -----------------------------------------------------
 -- Table `igfdb`.`rejected_run`
 -- -----------------------------------------------------
@@ -128,7 +113,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`rejected_run` (
   `igf_id` VARCHAR(50) NOT NULL,
  `date_created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`run_id`),
-  UNIQUE INDEX `igf_id_UNIQUE` (`igf_id` ASC))
+  UNIQUE INDEX `igf_id_UNIQUE` (`igf_id`))
 ENGINE = InnoDB CHARSET=UTF8;
 
 -- -----------------------------------------------------
@@ -164,6 +149,25 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`experiment` (
     ON UPDATE CASCADE)
 ENGINE = InnoDB CHARSET=UTF8;
 
+-- -----------------------------------------------------
+-- Table `igfdb`.`run`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS `igfdb`.`run` (
+  `run_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `igf_id` VARCHAR(50) NOT NULL,
+  `experiment_id` INT UNSIGNED NULL,
+  `flowcell_id` VARCHAR(10) NOT NULL,
+  `status` ENUM('ACTIVE', 'FAILED', 'WITHDRAWN') NOT NULL DEFAULT 'ACTIVE',
+  `lane_number` ENUM('1', '2', '3', '4', '5', '6', '7', '8') NOT NULL,
+  `date_created` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`run_id`),
+  UNIQUE INDEX `igf_id_UNIQUE` (`igf_id`),
+  CONSTRAINT `fk_exp_1`
+    FOREIGN KEY (`experiment_id`)
+    REFERENCES `igfdb`.`experiment` (`experiment_id`)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE)
+ENGINE = InnoDB CHARSET=UTF8;
 
 -- -----------------------------------------------------
 -- Table `igfdb`.`collection`
@@ -247,8 +251,8 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`pipeline_seed` (
   `hive_db_id` INT UNSIGNED NULL,
   `status` ENUM('SEEDED', 'RUNNING', 'FINISHED', 'FAILED', 'UNKNOWN') NOT NULL DEFAULT 'UNKNOWN',
   PRIMARY KEY (`pipeline_seed_id`),
-  INDEX `fk_pipeline_seed_1_idx` (`pipeline_id` ASC),
-  INDEX `fk_pipeline_seed_2_idx` (`hive_db_id` ASC),
+  INDEX `fk_pipeline_seed_1_idx` (`pipeline_id`),
+  INDEX `fk_pipeline_seed_2_idx` (`hive_db_id`),
   CONSTRAINT `fk_pipeline_seed_1`
     FOREIGN KEY (`pipeline_id`)
     REFERENCES `igfdb`.`pipeline` (`pipeline_id`)
@@ -283,9 +287,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`project_attribute` (
   `project_attribute_value` VARCHAR(50) NULL,
   `project_id` INT UNSIGNED NOT NULL,
   PRIMARY KEY (`project_attribute_id`),
-  UNIQUE INDEX `project_attribute_name_UNIQUE` (`project_attribute_name` ASC),
-  INDEX `fk_project_attribute_1_idx` (`project_id` ASC),
-  UNIQUE INDEX `project_id_UNIQUE` (`project_id` ASC),
+  UNIQUE INDEX `project_attribute_name_UNIQUE` (`project_id`, `project_attribute_name` ),
   CONSTRAINT `fk_project_attribute_1`
     FOREIGN KEY (`project_id`)
     REFERENCES `igfdb`.`project` (`project_id`)
@@ -303,9 +305,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`experiment_attribute` (
   `experiment_attribute_value` VARCHAR(50) NULL,
   `experiment_id` INT UNSIGNED NOT NULL,
   PRIMARY KEY (`experiment_attribute_id`),
-  UNIQUE INDEX `library_attribute_name_UNIQUE` (`experiment_attribute_name` ASC),
-  INDEX `fk_library_attribute_1_idx` (`experiment_id` ASC),
-  UNIQUE INDEX `library_id_UNIQUE` (`experiment_id` ASC),
+  UNIQUE INDEX `library_attribute_name_UNIQUE` (`experiment_id`, `experiment_attribute_name` ),
   CONSTRAINT `fk_library_attribute_1`
     FOREIGN KEY (`experiment_id`)
     REFERENCES `igfdb`.`experiment` (`experiment_id`)
@@ -323,9 +323,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`collection_attribute` (
   `collection_attribute_value` VARCHAR(45) NULL,
   `collection_id` INT UNSIGNED NOT NULL,
   PRIMARY KEY (`collection_attribute_id`),
-  UNIQUE INDEX `collection_attribute_name_UNIQUE` (`collection_attribute_name` ASC),
-  INDEX `fk_collection_attribute_1_idx` (`collection_id` ASC),
-  UNIQUE INDEX `collection_id_UNIQUE` (`collection_id` ASC),
+  UNIQUE INDEX `collection_attribute_name_UNIQUE` (`collection_id`, `collection_attribute_name`),
   CONSTRAINT `fk_collection_attribute_1`
     FOREIGN KEY (`collection_id`)
     REFERENCES `igfdb`.`collection` (`collection_id`)
@@ -343,8 +341,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`sample_attribute` (
   `sample_attribute_value` VARCHAR(50) NULL,
   `sample_id` INT UNSIGNED NOT NULL,
   PRIMARY KEY (`sample_attribute_id`),
-  UNIQUE INDEX `sample_attribute_name_UNIQUE` (`sample_attribute_name` ASC),
-  UNIQUE INDEX `sample_attributecol_UNIQUE` (`sample_id` ASC),
+  UNIQUE INDEX `sample_attribute_name_UNIQUE` (`sample_id`, `sample_attribute_name`),
   CONSTRAINT `fk_sample_attribute_1`
     FOREIGN KEY (`sample_id`)
     REFERENCES `igfdb`.`sample` (`sample_id`)
@@ -362,8 +359,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`run_attribute` (
   `run_attribute_value` VARCHAR(50) NULL,
   `run_id` INT UNSIGNED NOT NULL,
   PRIMARY KEY (`run_attribute_id`),
-  UNIQUE INDEX `run_attribute_name_UNIQUE` (`run_attribute_name` ASC),
-  UNIQUE INDEX `run_id_UNIQUE` (`run_id` ASC),
+  UNIQUE INDEX `run_attribute_name_UNIQUE` (`run_id`, `run_attribute_name`),
   CONSTRAINT `fk_run_attribute_1`
     FOREIGN KEY (`run_id`)
     REFERENCES `igfdb`.`run` (`run_id`)
@@ -381,8 +377,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`file_attribute` (
   `file_attribute_value` VARCHAR(50) NULL,
   `file_id` INT UNSIGNED NOT NULL,
   PRIMARY KEY (`file_attribute_id`),
-  UNIQUE INDEX `file_attribute_name_UNIQUE` (`file_attribute_name` ASC),
-  UNIQUE INDEX `file_id_UNIQUE` (`file_id` ASC),
+  UNIQUE INDEX `file_attribute_name_UNIQUE` (`file_id`, `file_attribute_name`),
   CONSTRAINT `fk_file_attribute_1`
     FOREIGN KEY (`file_id`)
     REFERENCES `igfdb`.`file` (`file_id`)
@@ -499,7 +494,7 @@ DELIMITER //
 DROP TRIGGER IF EXISTS run_update_log //
 CREATE TRIGGER run_update_log AFTER UPDATE ON run
 FOR EACH ROW
-  INSERT INTO history (`log_type`, `table_name`, `message`) value ('MODIFIED', 'RUN', CONCAT('OLD:', OLD.run_id, ',', OLD.igf_id, ',', OLD.flowcell_id, ',', OLD.status, ',', OLD.lane_number, ', NEW:', NEW.run_id, ',', NEW.igf_id, ',', NEW.flowcell_id, ',', NEW.status, ',', NEW.lane_number  ) );
+  INSERT INTO history (`log_type`, `table_name`, `message`) value ('MODIFIED', 'RUN', CONCAT('OLD:', OLD.run_id, ',', OLD.igf_id, ',', OLD.flowcell_id, ',', OLD.experiment_id, ',', OLD.status, ',', OLD.lane_number, ', NEW:', NEW.run_id, ',', NEW.igf_id, ',', NEW.flowcell_id, ',', NEW.experiment_id, ',', NEW.status, ',', NEW.lane_number  ) );
 //
 DELIMITER ;
 
@@ -507,7 +502,7 @@ DELIMITER //
 DROP TRIGGER IF EXISTS run_delete_log //
 CREATE TRIGGER run_delete_log AFTER DELETE ON run
 FOR EACH ROW
-  INSERT INTO history (`log_type`, `table_name`, `message`) value ('DELETED', 'RUN', CONCAT('OLD:', OLD.run_id, ',', OLD.igf_id, ',', OLD.flowcell_id, ',', OLD.status, ',', OLD.lane_number ) );
+  INSERT INTO history (`log_type`, `table_name`, `message`) value ('DELETED', 'RUN', CONCAT('OLD:', OLD.run_id, ',', OLD.igf_id, ',', OLD.flowcell_id, ',', OLD.experiment_id, ',', OLD.status, ',', OLD.lane_number ) );
 //
 DELIMITER ;
 
