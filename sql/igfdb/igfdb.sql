@@ -386,6 +386,7 @@ CREATE TABLE IF NOT EXISTS `igfdb`.`file_attribute` (
 ENGINE = InnoDB CHARSET=UTF8;
 
 
+/* REQUIRE GLOBAL log_bin_trust_function_creators AS TRUE
 -- -----------------------------------------------------
 -- Trigger `igfdb`.`user_pass_sha2`
 -- -----------------------------------------------------
@@ -679,3 +680,4 @@ FOR EACH ROW
 //
 DELIMITER ;
 
+*/
