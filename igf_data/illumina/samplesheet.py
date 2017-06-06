@@ -151,16 +151,16 @@ class SampleSheet:
     '''
     data=self._data
 
-    for row in data:
-      if index_field not in list(row.keys()):
-        raise ValueError('index field {0} not found in sample sheet {1}'.format(index_field, self.infile))
-    
+    if index_field in row:
+      '''
+      Only run the reverse complement function if index2 exists
+      '''
       index=row[index_field]
      
       # For Python 3.x, use str.maketrans
       row[index_field]=index.upper().translate(maketrans('ACGT','TGCA'))[::-1] 
 
-    self._data=data
+      self._data=data
    
 
   def get_platform_name(self, section='Header', field='Application'):
