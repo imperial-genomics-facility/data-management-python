@@ -151,17 +151,18 @@ class SampleSheet:
     '''
     data=self._data
 
-    if index_field in row:
-      '''
-      Only run the reverse complement function if index2 exists
-      '''
-      index=row[index_field]
+    for row in data:
+      if index_field in list(row.keys()):
+        '''
+        Only run the reverse complement function if index2 exists
+        '''
+        index=row[index_field]
      
-      # For Python 3.x, use str.maketrans
-      row[index_field]=index.upper().translate(maketrans('ACGT','TGCA'))[::-1] 
-
-      self._data=data
-   
+        # For Python 3.x, use str.maketrans
+        row[index_field]=index.upper().translate(maketrans('ACGT','TGCA'))[::-1] 
+    
+    self._data=data
+    
 
   def get_platform_name(self, section='Header', field='Application'):
     '''
