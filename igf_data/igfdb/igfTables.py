@@ -17,10 +17,19 @@ class Project(Base):
   start_date   = Column('start_date', DATE(), nullable=False)
   description  = Column('description', TEXT())
   requirement  = Column('requirement', Enum('FASTQ', 'ALIGNMENT', 'ANALYSIS'), server_default='FASTQ')
-  projectuser       = relationship('ProjectUser', backref="project", primaryjoin="project.project_id==project_user.project_id")
-  sample            = relationship('Sample', backref="project", primaryjoin="project.project_id==sample.project_id")
-  experiment        = relationship('Experiment', backref="project", primaryjoin="project.project_id==experiment.project_id")
+  projectuser       = relationship('ProjectUser', backref="project")
+  sample            = relationship('Sample', backref="project")
+  experiment        = relationship('Experiment', backref="project")
   project_attribute = relationship('Project_attribute', backref="project")
+
+  def __repr__(self):
+    return "Project(project_id = '{self.project_id}', " \
+                    "igf_id = '{self.igf_id}'," \
+                    "project_name = '{self.project_name}'," \
+                    "start_date = '{self.start_date}'," \
+                    "description = '{self.description}'," \
+                    "requirement = '{self.requirement}')".format(self=self)
+                   
 
 class User(Base):
   __tablename__ = 'user'
@@ -39,6 +48,18 @@ class User(Base):
   date_stamp    = Column('date_stamp', TIMESTAMP(), nullable=False, server_default=text('CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP'))
   password      = Column('password', String(129))
   projectuser   = relationship('ProjectUser', backref="user")
+  
+  def __repr__(self):
+    return "User(user_id = '{self.user_id}'," \
+                 "user_igf_id = '{self.user_igf_id}'," \
+                 "name = '{self.name}', " \
+                 "hpc_user_name = '{self.hpc_user_name}',"\
+                 "category = '{self.category}'," \
+                 "status = '{self.status}'," \
+                 "email_id = '{self.email_id}'," \
+                 "date_stamp = '{self.date_stamp}'," \
+                 "date_stamp = '{self.date_stamp}'," \
+                 "password = '{self.password}')".format(self=self) 
 
 class ProjectUser(Base):
   __tablename__ = 'project_user'
@@ -51,6 +72,11 @@ class ProjectUser(Base):
   user_id         = Column('user_id', Integer, ForeignKey("user.user_id", onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
   data_authority  = Column('data_authority', Enum('T'))
 
+  def __repr__(self):
+    return "ProjectUser(project_user_id = '{self.project_user_id}'," \
+                        "project_id = '{self.project_id}'," \
+                        "user_id = '{self.user_id}'," \
+                        "data_authority = '{self.data_authority}')".format(self=self)
 
 class Sample(Base):
   __tablename__ = 'sample'
