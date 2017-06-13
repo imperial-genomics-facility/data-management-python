@@ -18,8 +18,8 @@ class BaseAdaptor:
     data.setdefault('dbuser', '')
     data.setdefault('dbpass', '')
     data.setdefault('dbname', '')
-    data.setdefault('driver', 'sqlite')
-    data.setdefault('connector', '')
+    data.setdefault('driver', 'mysql')
+    data.setdefault('connector', 'pymysql')
     data.setdefault('supported_drivers', ('mysql', 'sqlite'))
     data.setdefault('engine_config', '')
     
@@ -39,6 +39,7 @@ class BaseAdaptor:
     self._create_session_engine()
     self._configure_session()
     
+
   def _prepare_db_url(self):
     '''
     An internal method for preparing url for database connection
@@ -58,20 +59,14 @@ class BaseAdaptor:
       raise ValueError('driver {0} require dbuser, dbpass and dbhost details'.format(driver)) # check for required parameters
 
     dburl='{0}'.format(driver)
-
     if connector:  
       dburl='{0}+{1}'.format(dburl, connector)
-
     dburl='{0}://'.format(dburl)
- 
     if dbuser and dbpass and dbhost:
       dburl='{0}{1}:{2}@{3}'.format(dburl, dbuser, dbpass, dbhost)
-
     if dbport: 
       dburl='{0}:{1}'.format(dburl, dbport) 
-
     dburl='{0}/{1}'.format(dburl, dbname)
-
     self.dburl=dburl
 
 
@@ -81,23 +76,25 @@ class BaseAdaptor:
     '''
     if not hasattr(self, dburl):
       raise AttributeError('Attribute dburl not found')           # raise exception if attribute dburl is not present
-  
+
     try:
       self.engine = create_engine(self.dburl, self.engine_config) # create engine
     except:
       raise
+
 
   def _configure_session(self):
     '''
     An internal method for preparing and configuring session
     '''
     if not hasattr(self, engine):
-      raise AttributeError('Attribute engine not found')           # raise exception if engine attribute is not assigned
- 
+      raise AttributeError('Attribute engine not found')           # raise exception if engine attribute is not assigned 
+
     try:
       self.session_class=sessionmaker(bind=self.engine)            # create session class
     except:
       raise
+
 
   def start_session(self):
     '''
@@ -110,7 +107,6 @@ class BaseAdaptor:
       raise AttributeError('Attribute session is already present')  # raise exception if session attribute is already present
 
     Session=self.session_class
-
     try:
       self.session=Session()                                        # create session
     except:
@@ -127,7 +123,6 @@ class BaseAdaptor:
       raise AttributeError('Attribute session not found')
  
     session=self.session
-
     try:
       if save_changes:
         session.commit()                                             # commit session
@@ -154,7 +149,6 @@ class BaseAdaptor:
     session=self.session
     data=data.fillna('')
     data_frame_dict=data.to_dict()
-
     try:
       data_frame_dict={ key:value for key, value in data_frame_dict.items() if value} # filter any key with empty value
       mapped_object=table(**data_frame_dict)                                          # map dictionary to table class
@@ -176,7 +170,6 @@ class BaseAdaptor:
       data=data.to_dict(orient='records')
 
     session=self.session
-
     if not isinstance(data, dict):
       raise ValueError('Expecting a dictionary and recieved data type: {0}'.format(type(data)))
  
@@ -202,7 +195,6 @@ class BaseAdaptor:
       raise ValueError('Mode {0} is not recognised'.format(mode))
 
     session=self.session
-
     if mode is 'serial':
       data.apply(lambda x: self._store_record_serial(table=table, data=x), axis=1)   # load data in serial mode
     elif mode is 'bulk':
@@ -222,7 +214,6 @@ class BaseAdaptor:
       raise AttributeError('Attribute session not found')
 
     session=self.session 
-    
     for row in query:
       try:
         for column_name, new_value in update_values.items():
@@ -298,7 +289,6 @@ class BaseAdaptor:
 
     if not query:
       query=self._construct_query(table=table, filter_criteria=filter_criteria)
-
     result=''
     if output_mode == 'dataframe':
       result=self._fetch_records_as_dataframe(query=query)  # result is a dataframe
@@ -326,7 +316,6 @@ class BaseAdaptor:
     session=self.session
     query=session.query(linked_table).join(linked_table)
     filter_criteria=[linked_table.linked_column==db_id]
-
     try:
       result=self.fetch_records(query=query, filter_criteria=filter_criteria)
       return result
