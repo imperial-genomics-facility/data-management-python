@@ -139,57 +139,102 @@ class BaseAdaptor:
     except:
       raise
 
+  def _store_record_serial(self, table, data):
+    '''
+    An internal method for storing dataframe records in serial mode
+    '''
+
+    if not hasattr(self, session):
+      raise AttributeError('Attribute session not found')
     
-  def load_data(self, table, data_frame, mode='serial'):
+    if isinstance(data, dict):
+      data=pd.DataFrame(data)                                                        # convert dicttionary to dataframe
+      
+    if not isinstance(data, pd.DataFrame):
+      raise  ValueError('Expecting a Pandas dataframe and recieved data type: {0}'.format(type(data)))
+
+    session=self.session
+    data=data.fillna('')
+    data_frame_dict=data.to_dict()
+
+    try:
+      data_frame_dict={ key:value for key, value in data_frame_dict.items() if value} # filter any key with empty value
+      mapped_object=table(**data_frame_dict)
+      session.add(mapped_object)
+      session.flush()                                                                 # send data to database
+    except exceptions.SQLAlchemyError:
+      warnings.warn("Couldn't load record to table {0}: {1} ".format(table,json.dumps(data_frame_dict)))
+      session.rollback()
+    
+  def _store_record_bulk(self, table, data):
+    '''
+    An internal method for storing dataframe records in bulk mode
+    '''
+   
+    if not hasattr(self, session):
+      raise AttributeError('Attribute session not found')
+ 
+    if isinstance(data, pd.DataFrame):
+      data=data.to_dict(orient='records')
+
+    session=self.session
+
+    if not isinstance(data, dict):
+      raise ValueError('Expecting a dictionary and recieved data type: {0}'.format(type(data)))
+ 
+    try:
+      session.bulk_insert_mappings(table, data)
+    except exceptions.SQLAlchemyError:
+      warnings.warn("Couldn't load record to table {0}: {1} ".format(table,json.dumps(data)))
+      session.rollback() 
+
+  def store_records(self, table, data, mode='serial'):
     '''
     A method for loading data to table
+    required parameters:
+    table: name of the table class
+    data : pandas dataframe or a list of dictionary
+    mode : serial/bulk
     '''
 
-    if not isinstance(data_frame, pd.DataFrame):
-      raise ValueError('Expected pandas dataframe as input')
+    if not hasattr(self, session):
+      raise AttributeError('Attribute session not found')
 
     if mode not in ('serial', 'bulk'):
-      raise ValueError('Mode {} is not recognised'.format(mode))
+      raise ValueError('Mode {0} is not recognised'.format(mode))
 
-    engine=self.engine
-    Session=sessionmaker(bind=engine)
-    session=Session()
+    session=self.session
 
     if mode is 'serial':
-      data_frame=data_frame.fillna('')
-      data_frame_dict=data_frame.to_dict()
-      
-      try:
-        data_frame_dict={ key:value for key, value in data_frame_dict.items() if value} # filter any empty value
-        mapped_object=table(**data_frame_dict)
-        session.add(mapped_object)
-        session.flush()
-      except exceptions.SQLAlchemyError:
-        session.rollback()
-        warnings.warn("Couldn't load record to table {0}: {1} ".format(table,json.dumps(data_frame_dict)))
-      finally:
-        session.commit()
-
+      data.apply(lambda x: self._store_record_serial(table=table, data=x), axis=1)   # load data in serial mode
     elif mode is 'bulk':
-      data_dict=data_frame.to_dict(orient='records')
+      self._store_record_bulk( table=table, data=data)                               # load data in bulk mode
      
-      try:
-        session.bulk_insert_mappings(table, data_dict)
-        session.flush()
-      except exceptions.SQLAlchemyError:
-        session.rollback()
-        warnings.warn("Couldn't load record to table {0}: {1} ".format(table,json.dumps(data_frame_dict)))
-      finally:
-        session.commit()
+    session.commit()                                                                 # save changes to database
 
-    session.close()    
 
-  def load_attributes(self, attribute_table, data ):
+  def store_attributes(self, attribute_table, data,  mode='serial'):
     '''
     A method for loading data to attribute table
+    required parameters:
+    attribute_table: name of the attribute_table class
+    data : pandas dataframe or a list of dictionary
+    mode : serial/bulk
     '''
-    self.load_data(table=attribute_table)
-    pass 
+
+    try:
+      self.store_records(table=attribute_table, data=data, mode=mode)
+    except:
+      raise
+
+
+  def modify_records(self):
+    pass
+
+
+  def modify_attributes(self):
+    pass
+
 
   def get_table_info_by_igf_id(self, table, igf_id):
     '''
@@ -197,8 +242,11 @@ class BaseAdaptor:
     '''
     pass
 
+
   def get_attributes_by_dbid(self, attribute_table, db_id):
     '''
     A method for fetching attribute records for a specific attribute table with a db_id linked as foreign key
     '''
     pass
+
+
