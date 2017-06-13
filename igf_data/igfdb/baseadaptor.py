@@ -186,7 +186,7 @@ class BaseAdaptor:
     required parameters:
     table: name of the table class
     data : pandas dataframe or a list of dictionary
-    mode : serial/bulk
+    mode : serial / bulk
     '''
     if not hasattr(self, session):
       raise AttributeError('Attribute session not found')
@@ -200,6 +200,25 @@ class BaseAdaptor:
     elif mode is 'bulk':
       self._store_record_bulk( table=table, data=data)                               # load data in bulk mode
     session.commit()                                                                 # save changes to database
+
+
+  def store_attributes(self, attribute_table, linked_column, db_id, data, mode='serial'):
+    '''
+    A method for storing attributes
+    required params:
+    attribute_table: a attribute table name
+    linked_column  : a column name to link the db_id to attribute table
+    db_id          : a db_id to link the attribute records
+    mode           : serial / bulk
+    '''
+    if isinstance(data, dict):
+      data=pd.DataFrame(data)                                                       # converting to dataframe
+     
+    data[linked_column]=db_id                                                       # adding db_id value for the linked column
+    try:
+      self.store_records(table=attribute_table, data=data, mode=mode)               # storing data to attribute table
+    except:
+      raise
 
 
   def modify_records(self, query, update_values):
@@ -297,11 +316,16 @@ class BaseAdaptor:
     return result
 
     
-  def fetch_records_igf_id(self, table, igf_id, output_mode='dataframe'):
+  def fetch_records_by_column(self, table, column_name, column_id, output_mode='dataframe'):
     '''
-    A method for fetching record with the igf_id
+    A method for fetching record with the column
+    required param:
+    table      : table name
+    column_name: a column name
+    column_id  : a column id value
+    output_mode: dataframe / object
     '''
-    filter_criteria=[table.'igf_id'==igf_id]
+    filter_criteria=[table.column_name==column_id]
     try:
       result=self.fetch_records(table=table, filter_criteria)
       return result

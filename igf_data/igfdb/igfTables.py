@@ -39,7 +39,7 @@ class User(Base):
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
   user_id       = Column('user_id', Integer, primary_key=True, nullable=False) 
-  user_igf_id   = Column('user_igf_id', String(10))
+  igf_id        = Column('igf_id', String(10))
   name          = Column('name', String(25), nullable=False)
   hpc_user_name = Column('hpc_user_name', String(8))
   category      = Column('category', Enum('HPC_USER','NON_HPC_USER','EXTERNAL'), nullable=False, server_default='NON_HPC_USER')
@@ -51,7 +51,7 @@ class User(Base):
   
   def __repr__(self):
     return "User(user_id = '{self.user_id}'," \
-                 "user_igf_id = '{self.user_igf_id}'," \
+                 "igf_id = '{self.igf_id}'," \
                  "name = '{self.name}', " \
                  "hpc_user_name = '{self.hpc_user_name}',"\
                  "category = '{self.category}'," \
