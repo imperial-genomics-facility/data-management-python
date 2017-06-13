@@ -79,7 +79,6 @@ class BaseAdaptor:
     '''
     An internal method for creating an database engine required for the session 
     '''
-    
     if not hasattr(self, dburl):
       raise AttributeError('Attribute dburl not found')           # raise exception if attribute dburl is not present
   
@@ -92,7 +91,6 @@ class BaseAdaptor:
     '''
     An internal method for preparing and configuring session
     '''
-    
     if not hasattr(self, engine):
       raise AttributeError('Attribute engine not found')           # raise exception if engine attribute is not assigned
  
@@ -118,13 +116,13 @@ class BaseAdaptor:
     except:
       raise
 
+
   def close_session(self, save_changes=False):
     '''
     A method for closing a session
     It can take an optional parameter for saving 
     changes to database before closing the session
     '''
-
     if not hasattr(self, session):
       raise AttributeError('Attribute session not found')
  
@@ -139,11 +137,11 @@ class BaseAdaptor:
     except:
       raise
 
+
   def _store_record_serial(self, table, data):
     '''
     An internal method for storing dataframe records in serial mode
     '''
-
     if not hasattr(self, session):
       raise AttributeError('Attribute session not found')
     
@@ -159,18 +157,18 @@ class BaseAdaptor:
 
     try:
       data_frame_dict={ key:value for key, value in data_frame_dict.items() if value} # filter any key with empty value
-      mapped_object=table(**data_frame_dict)
-      session.add(mapped_object)
+      mapped_object=table(**data_frame_dict)                                          # map dictionary to table class
+      session.add(mapped_object)                                                      # add data to session
       session.flush()                                                                 # send data to database
     except exceptions.SQLAlchemyError:
       warnings.warn("Couldn't load record to table {0}: {1} ".format(table,json.dumps(data_frame_dict)))
       session.rollback()
     
+
   def _store_record_bulk(self, table, data):
     '''
     An internal method for storing dataframe records in bulk mode
-    '''
-   
+    '''   
     if not hasattr(self, session):
       raise AttributeError('Attribute session not found')
  
@@ -188,6 +186,7 @@ class BaseAdaptor:
       warnings.warn("Couldn't load record to table {0}: {1} ".format(table,json.dumps(data)))
       session.rollback() 
 
+
   def store_records(self, table, data, mode='serial'):
     '''
     A method for loading data to table
@@ -196,7 +195,6 @@ class BaseAdaptor:
     data : pandas dataframe or a list of dictionary
     mode : serial/bulk
     '''
-
     if not hasattr(self, session):
       raise AttributeError('Attribute session not found')
 
@@ -209,44 +207,130 @@ class BaseAdaptor:
       data.apply(lambda x: self._store_record_serial(table=table, data=x), axis=1)   # load data in serial mode
     elif mode is 'bulk':
       self._store_record_bulk( table=table, data=data)                               # load data in bulk mode
-     
     session.commit()                                                                 # save changes to database
 
 
-  def store_attributes(self, attribute_table, data,  mode='serial'):
+  def modify_records(self, query, update_values):
     '''
-    A method for loading data to attribute table
-    required parameters:
-    attribute_table: name of the attribute_table class
-    data : pandas dataframe or a list of dictionary
-    mode : serial/bulk
+    A method for updating table records
+    required params:
+    query: a session.query object with filter criteria
+    update_values: a dictionaries, with key as the column 
+                   name and value as the new updated value
     '''
+    if not hasattr(self, session):
+      raise AttributeError('Attribute session not found')
 
+    session=self.session 
+    
+    for row in query:
+      try:
+        for column_name, new_value in update_values.items():
+          row.column_name=new_value
+        session.commit()
+      except:
+        session.rollback()
+
+
+  def _fetch_records_as_dataframe(self, query):
+    '''
+    An internal method for fetching database records as dataframe
+    '''
+    if not hasattr(self, session):
+      raise AttributeError('Attribute session not found')
+
+    session=self.session
     try:
-      self.store_records(table=attribute_table, data=data, mode=mode)
+      result=pd.read_sql(query.statement, session.bind)
+      return result                                      # return a dataframe
+    except:
+      raise
+  
+ 
+  def _fetch_records_as_object(self, query):
+    '''
+    An internal method for fetching database records as query object
+    '''
+    result=list()
+    for row in query:
+      yield row                                          # return a generator object
+
+
+  def _construct_query(self, table, filter_criteria ):
+    '''
+    An internal method for query construction
+    It doesn't support any join statement
+    required params:
+    table: table name class
+    filter_criteria: a list of criteria
+    return a session.query object
+    '''   
+    if not hasattr(self, session):
+      raise AttributeError('Attribute session not found')
+
+    if not isinstance(filter_criteria, list):
+      raise ValueError('Expecting a list of filter_criteria, received data type: {0}'.format(type(filter_criteria)))
+
+    session=self.session
+    query=session.query(table)
+    for filter_statement in filter_criteria:
+      if filter_statement:
+        query=query.filter(filter_statement)
+    return query  
+
+    
+  def fetch_records(self, table='', filter_criteria='', query='', output_mode='dataframe'):
+    '''
+    A method for fetching records using a query
+    optional parameters:
+    table:
+    filter_criteria: 
+    query:
+    output_mode: dataframe / object
+    
+    returns a pandas dataframe for dataframe mode and a generator object for object mode
+    ''' 
+    if output_mode not in ('dataframe', 'object'):
+      raise ValueError('Expecting output_mode as dataframe or object, no support for {0}'.format(output_mode))
+
+    if not table and not query:
+      raise ValueError('Either query statement or table name is required for fetching data from database')
+
+    if not query:
+      query=self._construct_query(table=table, filter_criteria=filter_criteria)
+
+    result=''
+    if output_mode == 'dataframe':
+      result=self._fetch_records_as_dataframe(query=query)  # result is a dataframe
+    elif output_mode == 'object':
+      result=self._fetch_records_as_object(query=query)     # result is a generator object
+    return result
+
+    
+  def fetch_records_igf_id(self, table, igf_id, output_mode='dataframe'):
+    '''
+    A method for fetching record with the igf_id
+    '''
+    filter_criteria=[table.'igf_id'==igf_id]
+    try:
+      result=self.fetch_records(table=table, filter_criteria)
+      return result
     except:
       raise
 
 
-  def modify_records(self):
-    pass
-
-
-  def modify_attributes(self):
-    pass
-
-
-  def get_table_info_by_igf_id(self, table, igf_id):
-    '''
-    A method for fetching record with the igf_id
-    '''
-    pass
-
-
-  def get_attributes_by_dbid(self, attribute_table, db_id):
+  def get_attributes_by_dbid(self, attribute_table, linked_table, linked_column, db_id):
     '''
     A method for fetching attribute records for a specific attribute table with a db_id linked as foreign key
     '''
-    pass
+    session=self.session
+    query=session.query(linked_table).join(linked_table)
+    filter_criteria=[linked_table.linked_column==db_id]
+
+    try:
+      result=self.fetch_records(query=query, filter_criteria=filter_criteria)
+      return result
+    except:
+      raise
 
 
