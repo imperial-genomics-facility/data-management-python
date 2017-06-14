@@ -10,9 +10,8 @@ class ProjectAdaptor(BaseAdaptor):
     '''
     Load data to Project table
     '''
-    self._check_data_requirements(data)
     try:
-      self.store_records(table=Project, data)
+      self.store_records(table=Project, data=data)
     except:
       raise
 
@@ -59,7 +58,7 @@ class ProjectAdaptor(BaseAdaptor):
      output_mode  : dataframe / object
     '''
     try:
-      projects=super(ProjectAdaptor, self).fetch_records_by_column(table=Project, column_name='igf_id', column_id=project_igf_id, output_mode=output_mode )
+      projects=super(ProjectAdaptor, self).fetch_records_by_column(table=Project, column_name=Project.igf_id, column_id=project_igf_id, output_mode=output_mode )
       return projects  
     except:
       raise
@@ -72,7 +71,7 @@ class ProjectAdaptor(BaseAdaptor):
     project_igf_id: a project igf id
     output_mode   : dataframe / object
     '''
-    if not hasattr(self, session):
+    if not hasattr(self, 'session'):
       raise AttributeError('Attribute session not found')
   
     session=self.session

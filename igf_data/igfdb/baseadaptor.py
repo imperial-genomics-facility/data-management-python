@@ -1,12 +1,9 @@
 import json
 import warnings
 import pandas as pd
-from flask.ext.sqlalchemy import exc
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
  
-exceptions = exc.sa_exc
-
 class BaseAdaptor:
   '''
   The base adaptor class
@@ -21,7 +18,7 @@ class BaseAdaptor:
     data.setdefault('driver', 'mysql')
     data.setdefault('connector', 'pymysql')
     data.setdefault('supported_drivers', ('mysql', 'sqlite'))
-    data.setdefault('engine_config', '')
+    data.setdefault('engine_config', {})
     
    
     self.dbhost    = data['dbhost']
@@ -33,11 +30,10 @@ class BaseAdaptor:
     self.connector = data['connector']
     self.supported_drivers = data['supported_drivers']
     self.engine_config     = data['engine_config']
-  
     # create engine and configure session at start up
-    self._prepare_db_url()
-    self._create_session_engine()
-    self._configure_session()
+    self.dburl         = self._prepare_db_url()        # get dburl for connection
+    self.engine        = self._create_session_engine() # get engine connection
+    self.session_class = self._configure_session()     # get session class
     
 
   def _prepare_db_url(self):
@@ -52,11 +48,12 @@ class BaseAdaptor:
     driver    = self.driver
     connector = self.connector
 
+
     if driver not in self.supported_drivers:
       raise ValueError('Database driver {0} is not supported yet.'.format(driver)) # check for supported databases
 
     if driver != 'sqlite' and (not dbuser or not dbpass or not dbhost):
-      raise ValueError('driver {0} require dbuser, dbpass and dbhost details'.format(driver)) # check for required parameters
+      raise ValueError('driver {0} require dbuser, dbpass and dbhost details, {1},{2},{3}'.format(driver,dbuser,dbpass,dbhost)) # check for required parameters
 
     dburl='{0}'.format(driver)
     if connector:  
@@ -67,18 +64,19 @@ class BaseAdaptor:
     if dbport: 
       dburl='{0}:{1}'.format(dburl, dbport) 
     dburl='{0}/{1}'.format(dburl, dbname)
-    self.dburl=dburl
+    return dburl
 
 
   def _create_session_engine(self):
     '''
     An internal method for creating an database engine required for the session 
     '''
-    if not hasattr(self, dburl):
-      raise AttributeError('Attribute dburl not found')           # raise exception if attribute dburl is not present
-
+    if not hasattr(self, 'dburl'):
+      raise AttributeError('Attribute dburl not defined')
+  
     try:
-      self.engine = create_engine(self.dburl, self.engine_config) # create engine
+      engine = create_engine(self.dburl, **self.engine_config )           # create engine with additional parameter
+      return engine
     except:
       raise
 
@@ -87,11 +85,12 @@ class BaseAdaptor:
     '''
     An internal method for preparing and configuring session
     '''
-    if not hasattr(self, engine):
-      raise AttributeError('Attribute engine not found')           # raise exception if engine attribute is not assigned 
+    if not hasattr(self, 'engine'):
+      raise AttributeError('Attribute engine not defined')
 
     try:
-      self.session_class=sessionmaker(bind=self.engine)            # create session class
+      session_class=sessionmaker(bind=self.engine)                 # create session class
+      return session_class
     except:
       raise
 
@@ -100,27 +99,40 @@ class BaseAdaptor:
     '''
     A method for creating a new session
     '''
-    if not hasattr(self, session_class):
-      raise AttributeError('Attribute session_class not found')     # raise exception if session_class attribute is not present
- 
-    if hasattr(self, session):
-      raise AttributeError('Attribute session is already present')  # raise exception if session attribute is already present
+    if not hasattr(self, 'session_class'):
+      raise AttributeError('Attribute session_class not defined')
+    
+    if hasattr(self, 'session'):
+      raise AttributeError('Attribute session already defined')
 
     Session=self.session_class
     try:
-      self.session=Session()                                        # create session
+      self.session=Session()                                       # create session
     except:
       raise
 
 
+  def commit_session(self):
+    '''
+    A method for saving changes to the database for each transection
+    '''
+    if not hasattr(self, 'session'):
+      raise AttributeError('Attribute session not defined')
+
+    try: 
+      self.session.commit()                                        # commit session
+    except:
+      raise
+
+    
   def close_session(self, save_changes=False):
     '''
     A method for closing a session
     It can take an optional parameter for saving 
     changes to database before closing the session
     '''
-    if not hasattr(self, session):
-      raise AttributeError('Attribute session not found')
+    if not hasattr(self, 'session'):
+      raise AttributeError('Attribute session not defined')
  
     session=self.session
     try:
@@ -131,19 +143,18 @@ class BaseAdaptor:
       del self.session                                               # delete session attribute
     except:
       raise
+    if hasattr(self, 'session'):
+      raise AttributeError('Attribute session not deleted yet')
 
 
   def _store_record_serial(self, table, data):
     '''
     An internal method for storing dataframe records in serial mode
     '''
-    if not hasattr(self, session):
+    if not hasattr(self, 'session'):
       raise AttributeError('Attribute session not found')
     
-    if isinstance(data, dict):
-      data=pd.DataFrame(data)                                                        # convert dicttionary to dataframe
-      
-    if not isinstance(data, pd.DataFrame):
+    if not isinstance(data, pd.Series):
       raise  ValueError('Expecting a Pandas dataframe and recieved data type: {0}'.format(type(data)))
 
     session=self.session
@@ -153,17 +164,15 @@ class BaseAdaptor:
       data_frame_dict={ key:value for key, value in data_frame_dict.items() if value} # filter any key with empty value
       mapped_object=table(**data_frame_dict)                                          # map dictionary to table class
       session.add(mapped_object)                                                      # add data to session
-      session.flush()                                                                 # send data to database
-    except exceptions.SQLAlchemyError:
-      warnings.warn("Couldn't load record to table {0}: {1} ".format(table,json.dumps(data_frame_dict)))
-      session.rollback()
+    except:
+      raise
     
 
   def _store_record_bulk(self, table, data):
     '''
     An internal method for storing dataframe records in bulk mode
     '''   
-    if not hasattr(self, session):
+    if not hasattr(self, 'session'):
       raise AttributeError('Attribute session not found')
  
     if isinstance(data, pd.DataFrame):
@@ -175,9 +184,8 @@ class BaseAdaptor:
  
     try:
       session.bulk_insert_mappings(table, data)
-    except exceptions.SQLAlchemyError:
-      warnings.warn("Couldn't load record to table {0}: {1} ".format(table,json.dumps(data)))
-      session.rollback() 
+    except:
+      raise 
 
 
   def store_records(self, table, data, mode='serial'):
@@ -188,18 +196,25 @@ class BaseAdaptor:
     data : pandas dataframe or a list of dictionary
     mode : serial / bulk
     '''
-    if not hasattr(self, session):
+    if not hasattr(self,'session'):
       raise AttributeError('Attribute session not found')
 
     if mode not in ('serial', 'bulk'):
       raise ValueError('Mode {0} is not recognised'.format(mode))
 
+    if not isinstance(data, pd.DataFrame):
+      data=pd.DataFrame(data)                                                        # convert dicttionary to dataframe
+
     session=self.session
-    if mode is 'serial':
-      data.apply(lambda x: self._store_record_serial(table=table, data=x), axis=1)   # load data in serial mode
-    elif mode is 'bulk':
-      self._store_record_bulk( table=table, data=data)                               # load data in bulk mode
-    session.commit()                                                                 # save changes to database
+    try:
+      if mode is 'serial':
+        data.apply(lambda x: self._store_record_serial(table=table, data=x), axis=1)   # load data in serial mode
+      elif mode is 'bulk':
+        self._store_record_bulk( table=table, data=data)                               # load data in bulk mode
+      session.flush()
+    except:
+        session.rollback()
+        raise
 
 
   def store_attributes(self, attribute_table, linked_column, db_id, data, mode='serial'):
@@ -229,7 +244,7 @@ class BaseAdaptor:
     update_values: a dictionaries, with key as the column 
                    name and value as the new updated value
     '''
-    if not hasattr(self, session):
+    if not hasattr(self, 'session'):
       raise AttributeError('Attribute session not found')
 
     session=self.session 
@@ -246,7 +261,7 @@ class BaseAdaptor:
     '''
     An internal method for fetching database records as dataframe
     '''
-    if not hasattr(self, session):
+    if not hasattr(self, 'session'):
       raise AttributeError('Attribute session not found')
 
     session=self.session
@@ -272,30 +287,30 @@ class BaseAdaptor:
     It doesn't support any join statement
     required params:
     table: table name class
-    filter_criteria: a list of criteria
+    filter_criteria: a list of criteria, each filter statement has three values, column_name, operator and value
     return a session.query object
     '''   
-    if not hasattr(self, session):
+    if not hasattr(self, 'session'):
       raise AttributeError('Attribute session not found')
 
-    if not isinstance(filter_criteria, list):
+    if not isinstance(filter_criteria, tuple) and  not isinstance(filter_criteria, list):
       raise ValueError('Expecting a list of filter_criteria, received data type: {0}'.format(type(filter_criteria)))
 
     session=self.session
     query=session.query(table)
     for filter_statement in filter_criteria:
-      if filter_statement:
-        query=query.filter(filter_statement)
+      if len(filter_statement) != 3:
+        raise ValueError('Expecting three parameters for filter criteria, got {0}'.format(len(filter_statement)))
+
+      if filter_statement[1] == '==':
+        query=query.filter(filter_statement[0] == filter_statement[2])
     return query  
 
     
-  def fetch_records(self, table='', filter_criteria='', query='', output_mode='dataframe'):
+  def fetch_records(self, query, output_mode='dataframe'):
     '''
     A method for fetching records using a query
     optional parameters:
-    table:
-    filter_criteria: 
-    query:
     output_mode: dataframe / object
     
     returns a pandas dataframe for dataframe mode and a generator object for object mode
@@ -303,11 +318,6 @@ class BaseAdaptor:
     if output_mode not in ('dataframe', 'object'):
       raise ValueError('Expecting output_mode as dataframe or object, no support for {0}'.format(output_mode))
 
-    if not table and not query:
-      raise ValueError('Either query statement or table name is required for fetching data from database')
-
-    if not query:
-      query=self._construct_query(table=table, filter_criteria=filter_criteria)
     result=''
     if output_mode == 'dataframe':
       result=self._fetch_records_as_dataframe(query=query)  # result is a dataframe
@@ -325,9 +335,14 @@ class BaseAdaptor:
     column_id  : a column id value
     output_mode: dataframe / object
     '''
-    filter_criteria=[table.column_name==column_id]
+    if not hasattr(self, 'session'):
+      raise AttributeError('Attribute session not found')
+ 
+    print(column_name)
+    session=self.session
+    query=session.query(table).filter(column_name==column_id)
     try:
-      result=self.fetch_records(table=table, filter_criteria)
+      result=self.fetch_records(query=query, output_mode=output_mode)
       return result
     except:
       raise
