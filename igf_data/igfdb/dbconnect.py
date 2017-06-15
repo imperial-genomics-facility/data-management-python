@@ -11,8 +11,8 @@ class DBConnect:
     data.setdefault('dbuser', '')
     data.setdefault('dbpass', '')
     data.setdefault('dbname', '')
-    data.setdefault('driver', 'mysql')
-    data.setdefault('connector', 'pymysql')
+    data.setdefault('driver', 'sqlite')
+    data.setdefault('connector', '')
     data.setdefault('supported_drivers', ('mysql', 'sqlite'))
     data.setdefault('engine_config', {})
 
