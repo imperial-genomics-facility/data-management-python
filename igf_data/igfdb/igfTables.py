@@ -9,15 +9,15 @@ Base = declarative_base()
 class Project(Base):
   __tablename__ = 'project'
   __table_args__ = (
-     UniqueConstraint('igf_id'),
+     UniqueConstraint('project_igf_id'),
      { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  project_id   = Column(Integer, primary_key=True, nullable=False)
-  igf_id       = Column(String(20), nullable=False)
-  project_name = Column(String(100))
-  start_date   = Column(DATE(), nullable=False, default=datetime.date.today())
-  description  = Column(TEXT())
-  deliverable  = Column(Enum('FASTQ', 'ALIGNMENT', 'ANALYSIS'), server_default='FASTQ')
+  project_id     = Column(Integer, primary_key=True, nullable=False)
+  project_igf_id = Column(String(20), nullable=False)
+  project_name   = Column(String(100))
+  start_date     = Column(DATE(), nullable=False, default=datetime.date.today())
+  description    = Column(TEXT())
+  deliverable    = Column(Enum('FASTQ', 'ALIGNMENT', 'ANALYSIS'), server_default='FASTQ')
   projectuser       = relationship('ProjectUser', backref="project")
   sample            = relationship('Sample', backref="project")
   experiment        = relationship('Experiment', backref="project")
@@ -25,7 +25,7 @@ class Project(Base):
 
   def __repr__(self):
     return "Project(project_id = '{self.project_id}', " \
-                    "igf_id = '{self.igf_id}'," \
+                    "project_igf_id = '{self.project_igf_id}'," \
                     "project_name = '{self.project_name}'," \
                     "start_date = '{self.start_date}'," \
                     "description = '{self.description}'," \
@@ -35,12 +35,12 @@ class Project(Base):
 class User(Base):
   __tablename__ = 'user'
   __table_args__ = (
-    UniqueConstraint('igf_id'),
+    UniqueConstraint('user_igf_id'),
     UniqueConstraint('email_id'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
   user_id       = Column(Integer, primary_key=True, nullable=False) 
-  igf_id        = Column(String(10))
+  user_igf_id   = Column(String(10))
   name          = Column(String(25), nullable=False)
   hpc_user_name = Column(String(8))
   category      = Column(Enum('HPC_USER','NON_HPC_USER','EXTERNAL'), nullable=False, server_default='NON_HPC_USER')
@@ -52,15 +52,14 @@ class User(Base):
   
   def __repr__(self):
     return "User(user_id = '{self.user_id}'," \
-                 "igf_id = '{self.igf_id}'," \
-                 "name = '{self.name}', " \
-                 "hpc_user_name = '{self.hpc_user_name}',"\
-                 "category = '{self.category}'," \
-                 "status = '{self.status}'," \
-                 "email_id = '{self.email_id}'," \
-                 "date_stamp = '{self.date_stamp}'," \
-                 "date_stamp = '{self.date_stamp}'," \
-                 "password = '{self.password}')".format(self=self) 
+                "user_igf_id = '{self.user_igf_id}'," \
+                "name = '{self.name}', " \
+                "hpc_user_name = '{self.hpc_user_name}',"\
+                "category = '{self.category}'," \
+                "status = '{self.status}'," \
+                "email_id = '{self.email_id}'," \
+                "date_stamp = '{self.date_stamp}'," \
+                "password = '{self.password}')".format(self=self) 
 
 class ProjectUser(Base):
   __tablename__ = 'project_user'
@@ -75,19 +74,19 @@ class ProjectUser(Base):
 
   def __repr__(self):
     return "ProjectUser(project_user_id = '{self.project_user_id}'," \
-                        "project_id = '{self.project_id}'," \
-                        "user_id = '{self.user_id}'," \
-                        "data_authority = '{self.data_authority}')".format(self=self)
+                       "project_id = '{self.project_id}'," \
+                       "user_id = '{self.user_id}'," \
+                       "data_authority = '{self.data_authority}')".format(self=self)
 
 
 class Sample(Base):
   __tablename__ = 'sample'
   __table_args__ = (
-    UniqueConstraint('igf_id'),
+    UniqueConstraint('sample_igf_id'),
     { 'mysql_engine':'InnoDB','mysql_charset':'utf8' })
 
   sample_id           = Column(Integer, primary_key=True, nullable=False)
-  igf_id              = Column(String(10), nullable=False)
+  sample_igf_id       = Column(String(10), nullable=False)
   taxon_id            = Column(Integer)
   scientific_name     = Column(String(50))
   common_name         = Column(String(50))
@@ -107,7 +106,7 @@ class Sample(Base):
 
   def __repr__(self):
     return "Sample(sample_id = '{self.sample_id}'," \
-                  "igf_id = '{self.igf_id}'," \
+                  "sample_igf_id = '{self.sample_igf_id}'," \
                   "taxon_id = '{self.taxon_id}'," \
                   "scientific_name = '{self.scientific_name}'," \
                   "common_name = '{self.common_name}'," \
@@ -127,11 +126,11 @@ class Sample(Base):
 class Platform(Base):
   __tablename__ = 'platform'
   __table_args__ = (
-    UniqueConstraint('igf_id'),
+    UniqueConstraint('platform_igf_id'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
 
   platform_id      = Column(Integer, primary_key=True, nullable=False)
-  igf_id           = Column(String(10), nullable=False)
+  platform_igf_id  = Column(String(10), nullable=False)
   model_name       = Column(Enum('HISEQ2500', 'HISEQ4000', 'MISEQ', 'NEXTSEQ'), nullable=False)
   vendor_name      = Column(Enum('ILLUMINA', 'NANOPORE'), nullable=False)
   software_name    = Column(Enum('RTA'), nullable=False)
@@ -141,7 +140,7 @@ class Platform(Base):
 
   def __repr__(self):
     return "Platform(platform_id = '{self.platform_id}'," \
-                    "igf_id = '{self.igf_id}'," \
+                    "platform_igf_id = '{self.igf_id}'," \
                     "model_name = '{self.model_name}'," \
                     "vendor_name = '{self.vendor_name}'," \
                     "software_name = '{self.software_name}'," \
@@ -152,16 +151,16 @@ class Platform(Base):
 class Rejected_run(Base):
   __tablename__ = 'rejected_run'
   __table_args__ = (
-    UniqueConstraint('igf_id'),
+    UniqueConstraint('rejected_run_igf_id'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  run_id = Column(Integer, primary_key=True, nullable=False)
-  igf_id = Column(String(50), nullable=False)
-  date_created = Column(TIMESTAMP(), nullable=False, default=datetime.datetime.now, onupdate=datetime.datetime.now)
+  rejected_run_id     = Column(Integer, primary_key=True, nullable=False)
+  rejected_run_igf_id = Column(String(50), nullable=False)
+  date_created        = Column(TIMESTAMP(), nullable=False, default=datetime.datetime.now, onupdate=datetime.datetime.now)
 
   def __repr__(self):
-    return "Rejected_run(run_id = '{self.run_id}'," \
-                        "igf_id = '{self.igf_id}'," \
+    return "Rejected_run(rejected_run_id = '{self.rejected_run_id}'," \
+                        "rejected_run_igf_id = '{self.rejected_run_igf_id}'," \
                         "date_created = '{self.date_created}')".format(self=self)
 
 
@@ -200,12 +199,12 @@ class Experiment(Base):
 class Run(Base):
   __tablename__ = 'run'
   __table_args__ = (
-    UniqueConstraint('igf_id'),
+    UniqueConstraint('run_igf_id'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
   run_id        = Column(Integer, primary_key=True, nullable=False)
   experiment_id = Column(Integer, ForeignKey('experiment.experiment_id', onupdate="CASCADE", ondelete="SET NULL"))
-  igf_id        = Column(String(50), nullable=False)
+  run_igf_id    = Column(String(50), nullable=False)
   flowcell_id   = Column(String(10), nullable=False)
   status        = Column(Enum('ACTIVE', 'FAILED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
   lane_number   = Column(Enum('1', '2', '3', '4', '5', '6', '7', '8'), nullable=False)
@@ -215,7 +214,7 @@ class Run(Base):
   def __repr__(self):
     return "Run(run_id = '{self.run_id}'," \
                "experiment_id = '{self.experiment_id}'," \
-               "igf_id = '{self.igf_id}'," \
+               "run_igf_id = '{self.run_igf_id}'," \
                "flowcell_id = '{self.flowcell_id}'," \
                "status = '{self.status}'," \
                "lane_number = '{self.lane_number}'," \

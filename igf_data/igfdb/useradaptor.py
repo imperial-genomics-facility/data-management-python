@@ -25,7 +25,7 @@ class UserAdaptor(BaseAdaptor):
      output_mode  : dataframe / object
     '''
     try:
-      user=self.fetch_records_by_column(table=User, column_name=User.igf_id, column_id=user_igf_id, output_mode='one' )
+      user=self.fetch_records_by_column(table=User, column_name=User.user_igf_id, column_id=user_igf_id, output_mode='one' )
       return user 
     except:
       raise

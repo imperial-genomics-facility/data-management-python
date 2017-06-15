@@ -1,7 +1,7 @@
 import json
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.useradaptor import UserAdaptor
-from igf_data.igfdb.igfTables import Project, ProjectUser, Project_attribute
+from igf_data.igfdb.igfTables import Project, ProjectUser, Project_attribute, User
 
 class ProjectAdaptor(BaseAdaptor):
   '''
@@ -31,11 +31,11 @@ class ProjectAdaptor(BaseAdaptor):
           E.g.
           [{'project_igf_id': val, 'user_igf_id': val, 'data_authority':True},] 
     '''
+    project_user_data=list()                                                                                              # create an empty list
     for project_user in data:
       if not set(('project_igf_id','user_igf_id')).issubset(set(project_user)):                                             # check for required parameters
         raise ValueError('Missing required value in input data {0}'.format(jason.dumps(project_user))) 
 
-      project_user_data=list()                                                                                              # create an empty list
       try:
         project_igf_id=project_user['project_igf_id']
         user_igf_id=project_user['user_igf_id']
@@ -55,32 +55,12 @@ class ProjectAdaptor(BaseAdaptor):
         raise
 
     try:
+      print(project_user_data)
       self.store_records(table=ProjectUser, data=project_user_data)                                                                       # add to database
     except:
       raise
 
-
-  def _divide_project_user_dataframe(self, data_frame):
-    '''
-    An internal method for dividing dataframe for Project and ProjectUser tables
-    '''
-    pass
-
-
-  def load_project_and_user_data(self, data):
-    '''
-    Load data to Project and ProjectUser tables
-    required parameter:
-    data:  a list of dictionary or a pandas data frame 
-    '''
-    try:
-      (project_data, project_user_data)=self._divide_project_user_dataframe(data=data)
-      self.store_project_data(data=project_data)
-      self.assign_user_to_project(data=project_user_data)
-    except:
-      raise
-
-
+  
   def store_project_attributes(self, data, project_id):
     '''
     A method for storing data to Project_attribute table
@@ -99,13 +79,13 @@ class ProjectAdaptor(BaseAdaptor):
      output_mode  : dataframe / object
     '''
     try:
-      project=self.fetch_records_by_column(table=Project, column_name=Project.igf_id, column_id=project_igf_id, output_mode='one')
+      project=self.fetch_records_by_column(table=Project, column_name=Project.project_igf_id, column_id=project_igf_id, output_mode='one')
       return project  
     except:
       raise
     
 
-  def project_user_info(self, output_mode='dataframe', project_igf_id=''):
+  def get_project_user_info(self, output_mode='dataframe', project_igf_id=''):
     '''
     A method for fetching information from Project, User and ProjectUser table 
     optional params:
@@ -116,12 +96,12 @@ class ProjectAdaptor(BaseAdaptor):
       raise AttributeError('Attribute session not found')
   
     session=self.session
-    query=session.query(Project).join(ProjectUser).join(User)
+    query=session.query(Project, User, ProjectUser.data_authority).join(ProjectUser).join(User)
     if project_igf_id:
-      query=query.filter(Project.igf_id==project_igf_id)
+      query=query.filter(Project.project_igf_id==project_igf_id)
     
     try:    
-      results=super(ProjectAdaptor, self).fetch_records(query=query, output_mode=output_mode)
+      results=self.fetch_records(query=query, output_mode=output_mode)
       return results
     except:
       raise
