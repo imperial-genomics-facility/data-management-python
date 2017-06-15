@@ -69,7 +69,7 @@ class DBConnect:
       raise AttributeError('Attribute dburl not defined')
   
     try:
-      engine = create_engine(self.dburl, **self.engine_config )           # create engine with additional parameter
+      engine = create_engine(self.dburl, **self.engine_config )    # create engine with additional parameter
       return engine
     except:
       raise
@@ -87,6 +87,17 @@ class DBConnect:
       return session_class
     except:
       raise
+
+
+  def get_session_class(self):
+    '''
+    A method for fetching a session class 
+    '''
+    if not hasattr(self, 'session_class'):
+      raise AttributeError('Attribute session_class not defined')
+
+    session_class=self.session_class 
+    return session_class
 
 
   def start_session(self):

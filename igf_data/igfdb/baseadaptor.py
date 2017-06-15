@@ -9,7 +9,12 @@ class BaseAdaptor(DBConnect):
   '''
   
   def __init__(self, **data):
-    if 'session' in data and data['session']:
+    data.setdefault('session_class', '')
+    data.setdefault('session', '')
+
+    if 'session_class' in data and data['session_class']:
+      self.session_class = data['session_class']
+    elif 'session' in data and data['session']:
       self.session = data['session'] 
     else:
       super(BaseAdaptor, self).__init__(**data)
