@@ -152,6 +152,15 @@ class BaseAdaptor(DBConnect):
     for row in query:
       yield row                                          # return a generator object
 
+  def _fetch_records_as_one(self, query):
+    '''
+    An internal method for fetching unique database record
+    '''
+    try:
+      result=query.one()
+      return result
+    except:
+      raise
 
   def _construct_query(self, table, filter_criteria ):
     '''
@@ -183,19 +192,24 @@ class BaseAdaptor(DBConnect):
     '''
     A method for fetching records using a query
     optional parameters:
-    output_mode: dataframe / object
+    output_mode: dataframe / object / one
     
     returns a pandas dataframe for dataframe mode and a generator object for object mode
     ''' 
-    if output_mode not in ('dataframe', 'object'):
+    if output_mode not in ('dataframe', 'object', 'one'):
       raise ValueError('Expecting output_mode as dataframe or object, no support for {0}'.format(output_mode))
 
     result=''
-    if output_mode == 'dataframe':
-      result=self._fetch_records_as_dataframe(query=query)  # result is a dataframe
-    elif output_mode == 'object':
-      result=self._fetch_records_as_object(query=query)     # result is a generator object
-    return result
+    try:
+      if output_mode == 'dataframe':
+        result=self._fetch_records_as_dataframe(query=query)  # result is a dataframe
+      elif output_mode == 'object':
+        result=self._fetch_records_as_object(query=query)     # result is a generator object
+      elif output_mode == 'one':
+        result=self._fetch_records_as_one(query=query)        # fetch record as a unique match
+      return result
+    except:
+      raise 
 
     
   def fetch_records_by_column(self, table, column_name, column_id, output_mode='dataframe'):
@@ -210,7 +224,6 @@ class BaseAdaptor(DBConnect):
     if not hasattr(self, 'session'):
       raise AttributeError('Attribute session not found')
  
-    print(column_name)
     session=self.session
     query=session.query(table).filter(column_name==column_id)
     try:

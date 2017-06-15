@@ -1,5 +1,6 @@
 import json
 from igf_data.igfdb.baseadaptor import BaseAdaptor
+from igf_data.igfdb.useradaptor import UserAdaptor
 from igf_data.igfdb.igfTables import Project, ProjectUser, Project_attribute
 
 class ProjectAdaptor(BaseAdaptor):
@@ -43,16 +44,18 @@ class ProjectAdaptor(BaseAdaptor):
         if 'data_authority' in project_user and  project_user['data_authority']:
           data_authority='T'
 
-        projects=self.fetch_project_records_igf_id(project_igf_id=project_igf_id, output_mode='object')                      # method from project adaptor
-        project_id=projects.next().project_id                                                                                # get project_id from the generator object
-        users=self.fetch_records_by_column(table=User, column_name=User.igf_id, column_id=user_igf_id, output_mode='object') # method from base adaptor
-        user_id=users.next().user_id                                                                                         # get user_id
+        project=self.fetch_project_records_igf_id(project_igf_id=project_igf_id)                                             # method from project adaptor
+        project_id=project.project_id                                                                                        # get project object
+
+        useradaptor=UserAdaptor(**{'session': self.session})                                                               # connect to user adaptor
+        user=useradaptor.fetch_user_records_igf_id(user_igf_id=user_igf_id)                                                  # get user object
+        user_id=user.user_id                                                                                                 # get user_id
         project_user_data.append({'project_id':project_id,'user_id':user_id,'data_authority':data_authority})                # prepare data dictionary and append to list         
       except:
         raise
 
     try:
-      self.store_records(table=ProjectUser, data=data)                                                                       # add to database
+      self.store_records(table=ProjectUser, data=project_user_data)                                                                       # add to database
     except:
       raise
 
@@ -88,7 +91,7 @@ class ProjectAdaptor(BaseAdaptor):
       raise
 
 
-  def fetch_project_records_igf_id(self, project_igf_id, output_mode='dataframe'):
+  def fetch_project_records_igf_id(self, project_igf_id):
     '''
     A method for fetching data for Project table
     required params:
@@ -96,8 +99,8 @@ class ProjectAdaptor(BaseAdaptor):
      output_mode  : dataframe / object
     '''
     try:
-      projects=self.fetch_records_by_column(table=Project, column_name=Project.igf_id, column_id=project_igf_id, output_mode=output_mode )
-      return projects  
+      project=self.fetch_records_by_column(table=Project, column_name=Project.igf_id, column_id=project_igf_id, output_mode='one')
+      return project  
     except:
       raise
     

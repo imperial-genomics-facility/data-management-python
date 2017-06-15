@@ -17,7 +17,7 @@ class UserAdaptor(BaseAdaptor):
       raise
 
 
-  def fetch_user_records_igf_id(self, user_igf_id, output_mode='dataframe'):
+  def fetch_user_records_igf_id(self, user_igf_id):
     '''
     A method for fetching data for User table
     required params:
@@ -25,8 +25,8 @@ class UserAdaptor(BaseAdaptor):
      output_mode  : dataframe / object
     '''
     try:
-      users=self.fetch_records_by_column(table=User, column_name=User.igf_id, column_id=user_igf_id, output_mode=output_mode )
-      return users  
+      user=self.fetch_records_by_column(table=User, column_name=User.igf_id, column_id=user_igf_id, output_mode='one' )
+      return user 
     except:
       raise
 

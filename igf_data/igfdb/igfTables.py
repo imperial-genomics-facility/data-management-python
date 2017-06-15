@@ -29,7 +29,7 @@ class Project(Base):
                     "project_name = '{self.project_name}'," \
                     "start_date = '{self.start_date}'," \
                     "description = '{self.description}'," \
-                    "requirement = '{self.requirement}')".format(self=self)
+                    "deliverable = '{self.deliverable}')".format(self=self)
                    
 
 class User(Base):
