@@ -1,7 +1,8 @@
 import datetime
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Table, Column, Integer, String, Enum, TIMESTAMP, TEXT, ForeignKey, text, DATE, create_engine, ForeignKeyConstraint, UniqueConstraint
+from sqlalchemy.dialects.mysql import INTEGER
+from sqlalchemy import Table, Column, String, Enum, TIMESTAMP, TEXT, ForeignKey, text, DATE, create_engine, ForeignKeyConstraint, UniqueConstraint
 
 
 Base = declarative_base()
@@ -12,7 +13,7 @@ class Project(Base):
      UniqueConstraint('project_igf_id'),
      { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  project_id     = Column(Integer, primary_key=True, nullable=False)
+  project_id     = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   project_igf_id = Column(String(20), nullable=False)
   project_name   = Column(String(100))
   start_date     = Column(DATE(), nullable=False, default=datetime.date.today())
@@ -39,7 +40,7 @@ class User(Base):
     UniqueConstraint('email_id'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  user_id       = Column(Integer, primary_key=True, nullable=False) 
+  user_id       = Column(INTEGER(unsigned=True), primary_key=True, nullable=False) 
   user_igf_id   = Column(String(10))
   name          = Column(String(25), nullable=False)
   hpc_user_name = Column(String(8))
@@ -67,9 +68,9 @@ class ProjectUser(Base):
     UniqueConstraint('project_id','data_authority'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
     
-  project_user_id = Column(Integer, primary_key=True, nullable=False)
-  project_id      = Column(Integer, ForeignKey("project.project_id", onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
-  user_id         = Column(Integer, ForeignKey("user.user_id", onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  project_user_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  project_id      = Column(INTEGER(unsigned=True), ForeignKey("project.project_id", onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  user_id         = Column(INTEGER(unsigned=True), ForeignKey("user.user_id", onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
   data_authority  = Column(Enum('T'))
 
   def __repr__(self):
@@ -85,9 +86,9 @@ class Sample(Base):
     UniqueConstraint('sample_igf_id'),
     { 'mysql_engine':'InnoDB','mysql_charset':'utf8' })
 
-  sample_id           = Column(Integer, primary_key=True, nullable=False)
+  sample_id           = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   sample_igf_id       = Column(String(10), nullable=False)
-  taxon_id            = Column(Integer)
+  taxon_id            = Column(INTEGER(unsigned=True))
   scientific_name     = Column(String(50))
   common_name         = Column(String(50))
   donor_anonymized_id = Column(String(10))
@@ -100,7 +101,7 @@ class Sample(Base):
   tissue_type         = Column(String(50))
   cell_line           = Column(String(50))
   date_created        = Column(TIMESTAMP(), nullable=False, default=datetime.datetime.now)
-  project_id          = Column(Integer, ForeignKey('project.project_id', onupdate="CASCADE", ondelete="SET NULL"))
+  project_id          = Column(INTEGER(unsigned=True), ForeignKey('project.project_id', onupdate="CASCADE", ondelete="SET NULL"))
   experiment          = relationship('Experiment', backref="sample")
   sample_attribute    = relationship('Sample_attribute', backref="sample")
 
@@ -129,7 +130,7 @@ class Platform(Base):
     UniqueConstraint('platform_igf_id'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
 
-  platform_id      = Column(Integer, primary_key=True, nullable=False)
+  platform_id      = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   platform_igf_id  = Column(String(10), nullable=False)
   model_name       = Column(Enum('HISEQ2500', 'HISEQ4000', 'MISEQ', 'NEXTSEQ'), nullable=False)
   vendor_name      = Column(Enum('ILLUMINA', 'NANOPORE'), nullable=False)
@@ -154,7 +155,7 @@ class Rejected_run(Base):
     UniqueConstraint('rejected_run_igf_id'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  rejected_run_id     = Column(Integer, primary_key=True, nullable=False)
+  rejected_run_id     = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   rejected_run_igf_id = Column(String(50), nullable=False)
   date_created        = Column(TIMESTAMP(), nullable=False, default=datetime.datetime.now, onupdate=datetime.datetime.now)
 
@@ -170,16 +171,16 @@ class Experiment(Base):
     UniqueConstraint('sample_id', 'library_name', 'platform_id'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  experiment_id    = Column(Integer, primary_key=True, nullable=False)
-  project_id       = Column(Integer, ForeignKey('project.project_id', onupdate="CASCADE", ondelete="SET NULL"))
-  sample_id        = Column(Integer, ForeignKey('sample.sample_id', onupdate="CASCADE", ondelete="SET NULL"))
+  experiment_id    = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  project_id       = Column(INTEGER(unsigned=True), ForeignKey('project.project_id', onupdate="CASCADE", ondelete="SET NULL"))
+  sample_id        = Column(INTEGER(unsigned=True), ForeignKey('sample.sample_id', onupdate="CASCADE", ondelete="SET NULL"))
   library_name     = Column(String(50), nullable=False)
   library_strategy = Column(Enum('WGS', 'EXOME', 'RNA-SEQ', 'CHIP-SEQ', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   experiment_type  = Column(Enum('POLYA-RNA', 'TOTAL-RNA', 'SMALL_RNA', 'H3K4ME3', 'WGS', 'EXOME', 'H3k27ME3', 'H3K27AC', 'H3K9ME3', 'H3K36ME3', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   library_layout   = Column(Enum('SINGLE', 'PAIRED', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   status           = Column(Enum('ACTIVE', 'FAILED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
   date_created     = Column(TIMESTAMP(), nullable=False, default=datetime.datetime.now, onupdate=datetime.datetime.now)
-  platform_id      = Column(Integer, ForeignKey('platform.platform_id', onupdate="CASCADE", ondelete="SET NULL"))
+  platform_id      = Column(INTEGER(unsigned=True), ForeignKey('platform.platform_id', onupdate="CASCADE", ondelete="SET NULL"))
   experiment            = relationship('Run', backref='experiment')
   experiment_attribute  = relationship('Experiment_attribute', backref='experiment')
 
@@ -202,8 +203,8 @@ class Run(Base):
     UniqueConstraint('run_igf_id'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  run_id        = Column(Integer, primary_key=True, nullable=False)
-  experiment_id = Column(Integer, ForeignKey('experiment.experiment_id', onupdate="CASCADE", ondelete="SET NULL"))
+  run_id        = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  experiment_id = Column(INTEGER(unsigned=True), ForeignKey('experiment.experiment_id', onupdate="CASCADE", ondelete="SET NULL"))
   run_igf_id    = Column(String(50), nullable=False)
   flowcell_id   = Column(String(10), nullable=False)
   status        = Column(Enum('ACTIVE', 'FAILED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
@@ -225,7 +226,7 @@ class Collection(Base):
   __tablename__ = 'collection'
   __table_args__ = ({ 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  collection_id = Column(Integer, primary_key=True, nullable=False)
+  collection_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   name          = Column(String(20), nullable=False)
   type          = Column(String(30), nullable=False)
   table         = Column(Enum('sample', 'experiment', 'run', 'file'), nullable=False)
@@ -245,7 +246,7 @@ class File(Base):
   __tablename__ = 'file'
   __table_args__ = ({ 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  file_id      = Column(Integer, primary_key=True, nullable=False)
+  file_id      = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   file_path    = Column(String(500), nullable=False)
   location     = Column(Enum('ORWELL', 'HPC_PROJECT', 'ELIOT', 'IRODS', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   type         = Column(Enum('BCL_DIR', 'BCL_TAR', 'FASTQ_TAR', 'FASTQC_TAR', 'FASTQ', 'FASTQGZ', 'BAM', 'CRAM', 'GFF', 'BED', 'GTF', 'FASTA', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
@@ -271,9 +272,9 @@ class Collection_group(Base):
   __tablename__ = 'collection_group'
   __table_args__ = ({ 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  collection_group_id = Column(Integer, primary_key=True, nullable=False)
-  collection_id       = Column(Integer, ForeignKey('collection.collection_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
-  file_id             = Column(Integer, ForeignKey('file.file_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  collection_group_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  collection_id       = Column(INTEGER(unsigned=True), ForeignKey('collection.collection_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  file_id             = Column(INTEGER(unsigned=True), ForeignKey('file.file_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
 
   def __repr__(self):
     return "Collection_group(collection_group_id = '{self.collection_group_id}'," \
@@ -285,7 +286,7 @@ class Pipeline(Base):
   __tablename__ = 'pipeline'
   __table_args__ = ( { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  pipeline_id   = Column(Integer, primary_key=True, nullable=False)
+  pipeline_id   = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   pipeline_name = Column(String(50), nullable=False)
   is_active     = Column(Enum('Y', 'N'), nullable=False)
   date_stamp    = Column(TIMESTAMP(), nullable=False, default=datetime.datetime.now, onupdate=datetime.datetime.now)
@@ -302,7 +303,7 @@ class Hive_db(Base):
   __tablename__ = 'hive_db'
   __table_args__ = ( { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  hive_db_id = Column(Integer, primary_key=True, nullable=False)
+  hive_db_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   dbname     = Column(String(100), nullable=False)
   is_active  = Column(Enum('Y', 'N'), nullable=False)
   pipeline_seed = relationship('Pipeline_seed', backref='hive_db')
@@ -317,9 +318,9 @@ class Pipeline_seed(Base):
   __tablename__ = 'pipeline_seed'
   __table_args__ = ({ 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
 
-  pipeline_seed_id = Column(Integer, primary_key=True, nullable=False)
-  pipeline_id      = Column(Integer, ForeignKey('pipeline.pipeline_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
-  hive_db_id       = Column(Integer, ForeignKey('hive_db.hive_db_id', onupdate="CASCADE", ondelete="SET NULL"))
+  pipeline_seed_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  pipeline_id      = Column(INTEGER(unsigned=True), ForeignKey('pipeline.pipeline_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  hive_db_id       = Column(INTEGER(unsigned=True), ForeignKey('hive_db.hive_db_id', onupdate="CASCADE", ondelete="SET NULL"))
   status           = Column(Enum('SEEDED', 'RUNNING', 'FINISHED', 'FAILED', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
  
   def __repr__(self):
@@ -332,7 +333,7 @@ class History(Base):
   __tablename__ = 'history'
   __table_args__ = ( { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  log_id     = Column(Integer, primary_key=True, nullable=False)
+  log_id     = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   log_type   = Column(Enum('CREATED', 'MODIFIED', 'DELETED'), nullable=False)
   table_name = Column(Enum('PROJECT', 'USER', 'SAMPLE', 'EXPERIMENT', 'RUN', 'COLLECTION', 'FILE', 'PLATFORM', 'PROJECT_ATTRIBUTE', 'EXPERIMENT_ATTRIBUTE', 'COLLECTION_ATTRIBUTE', 'SAMPLE_ATTRIBUTE', 'RUN_ATTRIBUTE', 'FILE_ATTRIBUTE'), nullable=False)
   log_date   = Column(TIMESTAMP(), nullable=False, default=datetime.datetime.now, onupdate=datetime.datetime.now)
@@ -351,10 +352,10 @@ class Project_attribute(Base):
     UniqueConstraint('project_id', 'project_attribute_name'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  project_attribute_id    = Column(Integer, primary_key=True, nullable=False)
+  project_attribute_id    = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   project_attribute_name  = Column(String(50))
   project_attribute_value = Column(String(50))
-  project_id              = Column(Integer, ForeignKey('project.project_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  project_id              = Column(INTEGER(unsigned=True), ForeignKey('project.project_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
 
   def __repr__(self):
     return "Project_attribute(project_attribute_id = '{self.project_attribute_id}'," \
@@ -369,10 +370,10 @@ class Experiment_attribute(Base):
     UniqueConstraint('experiment_id', 'experiment_attribute_name'),
     {  'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  experiment_attribute_id    = Column(Integer, primary_key=True, nullable=False)
+  experiment_attribute_id    = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   experiment_attribute_name  = Column(String(30))
   experiment_attribute_value = Column(String(50))
-  experiment_id              = Column(Integer, ForeignKey('experiment.experiment_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  experiment_id              = Column(INTEGER(unsigned=True), ForeignKey('experiment.experiment_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
 
   def __repr__(self):
     return "Experiment_attribute(experiment_attribute_id = '{self.experiment_attribute_id}'," \
@@ -387,10 +388,10 @@ class Collection_attribute(Base):
     UniqueConstraint('collection_id', 'collection_attribute_name'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  collection_attribute_id    = Column(Integer, primary_key=True, nullable=False)
+  collection_attribute_id    = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   collection_attribute_name  = Column(String(45))
   collection_attribute_value = Column(String(45))
-  collection_id              = Column(Integer, ForeignKey('collection.collection_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  collection_id              = Column(INTEGER(unsigned=True), ForeignKey('collection.collection_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
 
   def __repr__(self):
     return "Collection_attribute(collection_attribute_id = '{self.collection_attribute_id}'," \
@@ -405,10 +406,10 @@ class Sample_attribute(Base):
     UniqueConstraint('sample_id', 'sample_attribute_name'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  sample_attribute_id    = Column(Integer, primary_key=True, nullable=False)
+  sample_attribute_id    = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   sample_attribute_name  = Column(String(30))
   sample_attribute_value = Column(String(50))
-  sample_id              = Column(Integer, ForeignKey('sample.sample_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  sample_id              = Column(INTEGER(unsigned=True), ForeignKey('sample.sample_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
 
   def __repr__(self):
     return "Sample_attribute(sample_attribute_id = '{self.sample_attribute_id}'," \
@@ -423,10 +424,10 @@ class Run_attribute(Base):
     UniqueConstraint('run_id', 'run_attribute_name'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  run_attribute_id    = Column(Integer, primary_key=True, nullable=False)
+  run_attribute_id    = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   run_attribute_name  = Column(String(30))
   run_attribute_value = Column(String(50))
-  run_id              = Column(Integer, ForeignKey('run.run_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  run_id              = Column(INTEGER(unsigned=True), ForeignKey('run.run_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
 
   def __repr__(self):
     return "Run_attribute(run_attribute_id = '{self.run_attribute_id}'," \
@@ -441,10 +442,10 @@ class File_attribute(Base):
     UniqueConstraint('file_id', 'file_attribute_name'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
 
-  file_attribute_id    = Column(Integer, primary_key=True, nullable=False)
+  file_attribute_id    = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   file_attribute_name  = Column(String(30))
   file_attribute_value = Column(String(50))
-  file_id              = Column(Integer, ForeignKey('file.file_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  file_id              = Column(INTEGER(unsigned=True), ForeignKey('file.file_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
 
   def __repr__(self):
     return "File_attribute(file_attribute_id = '{self.file_attribute_id}'," \
