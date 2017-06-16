@@ -42,11 +42,12 @@ class User(Base):
 
   user_id       = Column(INTEGER(unsigned=True), primary_key=True, nullable=False) 
   user_igf_id   = Column(String(10))
-  name          = Column(String(25), nullable=False)
-  hpc_user_name = Column(String(8))
+  name          = Column(String(30), nullable=False)
+  email_id      = Column(String(20), nullable=False)
+  username      = Column(String(10))
+  hpc_username  = Column(String(10))
   category      = Column(Enum('HPC_USER','NON_HPC_USER','EXTERNAL'), nullable=False, server_default='NON_HPC_USER')
   status        = Column(Enum('ACTIVE', 'BLOCKED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
-  email_id      = Column(String(20), nullable=False)
   date_created  = Column(TIMESTAMP(), nullable=False, default=datetime.datetime.now, onupdate=datetime.datetime.now)
   password      = Column(String(129))
   projectuser   = relationship('ProjectUser', backref="user")
@@ -55,7 +56,8 @@ class User(Base):
     return "User(user_id = '{self.user_id}'," \
                 "user_igf_id = '{self.user_igf_id}'," \
                 "name = '{self.name}', " \
-                "hpc_user_name = '{self.hpc_user_name}',"\
+                "username = '{self.username}',"\
+                "hpc_username = '{self.hpc_username}',"\
                 "category = '{self.category}'," \
                 "status = '{self.status}'," \
                 "email_id = '{self.email_id}'," \
