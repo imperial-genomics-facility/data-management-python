@@ -8,6 +8,30 @@ class ProjectAdaptor(BaseAdaptor):
   An adaptor class for Project, ProjectUser and Project_attribute tables
   '''
 
+  def get_project_columns(self):
+    '''
+    A method for fetching the columns for table project
+    '''
+    project_column=[column.key for column in Project.__table__.columns if column.key not in ('project_id')]
+    return project_column
+
+
+  def divide_data_to_table_and_attribute(self, data, required_column='project_igf_id'):
+    '''
+    A method for separating data for Project and Project_attribute tables
+    '''
+    if isinstance(data, pd.DataFrame):
+      data=pd.DataFrame(data)
+
+    project_columns=self.get_project_columns()                                       # get required columns for project table
+    project_df=data.ix[:, project_columns]                                           # slice df for project table
+    project_attr_columns=list(set(data.columns).difference(set(project_df.columns))) # assign remaining columns to attribute dataframe
+    project_attr_columns.append(required_column)                                     # add required column name to attribute table
+    project_attr_df=data.ix[:, project_attr_columns]                                 # slice df for project_attribute table
+    return (project_df, project_attr_df)
+    
+    
+
   def store_project_data(self, data):
     '''
     Load data to Project table

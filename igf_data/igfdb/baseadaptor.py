@@ -60,6 +60,20 @@ class BaseAdaptor(DBConnect):
       raise 
 
 
+  def divide_data_to_table_and_attribute(self, data, required_column, table_columns):
+    '''
+    A method for separating data for main and attribute tables
+    '''
+    if isinstance(data, pd.DataFrame):
+      data=pd.DataFrame(data)
+
+    table_df=data.ix[:, table_columns]                                           # slice df for table
+    table_attr_columns=list(set(data.columns).difference(set(table_df.columns))) # assign remaining columns to attribute dataframe
+    table_attr_columns.append(required_column)                                 # add required column name to attribute table
+    table_attr_df=data.ix[:, table_attr_columns]                             # slice df for attribute table
+    return (table_df, table_attr_df)
+
+
   def store_records(self, table, data, mode='serial'):
     '''
     A method for loading data to table
