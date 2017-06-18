@@ -59,18 +59,48 @@ class BaseAdaptor(DBConnect):
     except:
       raise 
 
+  def _flatten_row(self, x):
+    d2=x.to_dict()
+    d4=list()
+    id_name=''
+    id_value=''
+    for key,value in d2.items():
+        d3=dict()
+        if value and key != 'project_igf_id':
+            d3['attribute_name']=key
+            d3['attribute_value']=value
+        elif value and key == 'project_igf_id':
+            id_name=key
+            id_value=value
+        if len(list(d3)) > 0:
+            d4.append(d3)
+    d4_data=pd.DataFrame(d4)
+    d4_data[id_name]=id_value
+    print(d4_data)
 
-  def divide_data_to_table_and_attribute(self, data, required_column, table_columns):
+
+  def divide_data_to_table_and_attribute(self, data, required_column, table_columns, attribute_name_column='attribute_name', attribute_value_column='attribute_value'):
     '''
     A method for separating data for main and attribute tables
     '''
-    if isinstance(data, pd.DataFrame):
+    if not isinstance(data, pd.DataFrame):
       data=pd.DataFrame(data)
 
     table_df=data.ix[:, table_columns]                                           # slice df for table
     table_attr_columns=list(set(data.columns).difference(set(table_df.columns))) # assign remaining columns to attribute dataframe
-    table_attr_columns.append(required_column)                                 # add required column name to attribute table
-    table_attr_df=data.ix[:, table_attr_columns]                             # slice df for attribute table
+    table_attr_df=data.ix[:, table_attr_columns]                                 # slice df for attribute table
+    
+    #table_attr_df=[ dict(zip([attribute_name_column, attribute_value_column], [key, value])) \
+    #  for row in table_attr_df.fillna('').to_dict(orient='records') \
+    #    for key, value in row.items() \
+    #      if value ]                                                             # restructure the attribute dataframe
+
+    #table_attr_df=pd.DataFrame(table_attr_df)
+    if table_attr_df[attribute_name_column] == required_column:                  # add required column name to attribute table
+      table_attr_df[required_column]=table_attr_df[attribute_value_column] 
+      table_attr_df[attribute_name_column].drop() 
+
+    table_attr_df.fillna('').apply(lambda x: self._flatten_row(x), 1)                             
     return (table_df, table_attr_df)
 
 
@@ -103,7 +133,7 @@ class BaseAdaptor(DBConnect):
         raise
 
 
-  def store_attributes(self, attribute_table, linked_column, db_id, data, mode='serial'):
+  def store_attributes(self, attribute_table, data, linked_column='', db_id='',  mode='serial'):
     '''
     A method for storing attributes
     required params:
@@ -114,8 +144,10 @@ class BaseAdaptor(DBConnect):
     '''
     if isinstance(data, dict):
       data=pd.DataFrame(data)                                                       # converting to dataframe
-     
-    data[linked_column]=db_id                                                       # adding db_id value for the linked column
+    
+    if linked_column and db_id: 
+      data[linked_column]=db_id                                                     # adding or reseting db_id value for the linked column
+    
     try:
       self.store_records(table=attribute_table, data=data, mode=mode)               # storing data to attribute table
     except:

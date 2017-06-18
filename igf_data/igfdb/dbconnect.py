@@ -129,7 +129,15 @@ class DBConnect:
     except:
       raise
 
-
+  def rollback_session(self):
+    '''
+    A method for rollback changes for the session
+    '''
+    try:
+      self.session.rollback()
+    except:
+      raise
+      
   def close_session(self, save_changes=False):
     '''
     A method for closing a session

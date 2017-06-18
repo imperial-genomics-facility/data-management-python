@@ -1,4 +1,6 @@
 import json
+import pandas as pd
+from sqlalchemy.sql import table, column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.useradaptor import UserAdaptor
 from igf_data.igfdb.igfTables import Project, ProjectUser, Project_attribute, User
@@ -12,11 +14,26 @@ class ProjectAdaptor(BaseAdaptor):
     '''
     A method for fetching the columns for table project
     '''
-    project_column=[column.key for column in Project.__table__.columns if column.key not in ('project_id')]
+    project_column=[column.key for column in Project.__table__.columns \
+                                 if column.key not in ('project_id')]
     return project_column
 
+  def store_project_and_attribute_data(self, data):
+  	'''
+  	A method for dividing and storing data to project and attribute_table
+  	'''
+  	(project_data, project_attr_data)=self.divide_data_to_table_and_attribute(data=data)
+  	try:
+  	  self.store_project_data(data=project_data)                                            # store project
+  	  project_attr_data.apply(lambda x: self.map_foreign_table_and_store_attribute(data=x), axis=1)      # store project attributes
+  	  self.commit_session()                                                                 # save changes to database
+  	except:
+  	   self.rollback_session()
+  	   raise
+  	
 
-  def divide_data_to_table_and_attribute(self, data, required_column='project_igf_id'):
+
+  def divide_data_to_table_and_attribute(self, data, required_column='project_igf_id', attribute_name_column='attribute_name', attribute_value_column='attribute_value'):
     '''
     A method for separating data for Project and Project_attribute tables
     '''
@@ -24,13 +41,43 @@ class ProjectAdaptor(BaseAdaptor):
       data=pd.DataFrame(data)
 
     project_columns=self.get_project_columns()                                       # get required columns for project table
-    project_df=data.ix[:, project_columns]                                           # slice df for project table
-    project_attr_columns=list(set(data.columns).difference(set(project_df.columns))) # assign remaining columns to attribute dataframe
-    project_attr_columns.append(required_column)                                     # add required column name to attribute table
-    project_attr_df=data.ix[:, project_attr_columns]                                 # slice df for project_attribute table
+    (project_df, project_attr_df)=super(ProjectAdaptor, self).divide_data_to_table_and_attribute( \
+    	                                                          data=data, \
+    	                                                          required_column=required_column, \
+    	                                                          table_columns=project_columns,  \
+                                                                attribute_name_column=attribute_name_column, \
+                                                                attribute_value_column=attribute_value_column
+    	                                                        ) 
+
     return (project_df, project_attr_df)
+  
+
+  def map_foreign_table_and_store_attribute(self, data, lookup_column_name='project_igf_id', target_column_name='project_id', target_table=Project ):
+    '''
+    A method for mapping foreign key id to the new column
+    '''   
+    if not (data, pd.Series):
+      raise ValueError('Expecting a pandas data series for mapping foreign key id')
+
+    lookup_value=data[lookup_column_name]
+    try:
+      lookup_column=[column for column in Project.__table__.columns \
+                       if column.key == lookup_column_name][0]
+
+      target_object=self.fetch_records_by_column(table=target_table, \
+    	                                         column_name=lookup_column, \
+    	                                         column_id=lookup_value, \
+    	                                         output_mode='one')
+
+      target_value=[getattr(target_object,column.key) for column in Project.__table__.columns \
+                       if column.key == target_column_name][0]
     
-    
+      data[target_column_name]=target_value                            # set value for target column
+      data.drop(lookup_column)
+      self.store_project_attributes(data=data)
+    except:
+    	raise
+
 
   def store_project_data(self, data):
     '''
@@ -38,6 +85,16 @@ class ProjectAdaptor(BaseAdaptor):
     '''
     try:
       self.store_records(table=Project, data=data)
+    except:
+      raise
+
+
+  def store_project_attributes(self, data, project_id=''):
+    '''
+    A method for storing data to Project_attribute table
+    '''
+    try:
+      self.store_attributes(attribute_table=Project_attribute, linked_column='project_id', db_id=project_id, data=data)
     except:
       raise
 
@@ -84,26 +141,21 @@ class ProjectAdaptor(BaseAdaptor):
     except:
       raise
 
-  
-  def store_project_attributes(self, data, project_id):
-    '''
-    A method for storing data to Project_attribute table
-    '''
-    try:
-      self.store_attributes(attribute_table=Project_attribute, linked_column='project_id', db_id=project_id, data=data)
-    except:
-      raise
 
-
-  def fetch_project_records_igf_id(self, project_igf_id):
+  def fetch_project_records_igf_id(self, project_igf_id, target_column_name='project_igf_id'):
     '''
     A method for fetching data for Project table
     required params:
     project_igf_id: an igf id
-     output_mode  : dataframe / object
+    output_mode  : dataframe / object
     '''
     try:
-      project=self.fetch_records_by_column(table=Project, column_name=Project.project_igf_id, column_id=project_igf_id, output_mode='one')
+      column=[column for column in Project.__table__.columns \
+                       if column.key == target_column_name][0]
+      project=self.fetch_records_by_column(table=Project, \
+      	                                   column_name=column, \
+      	                                   column_id=project_igf_id, \
+      	                                   output_mode='one')
       return project  
     except:
       raise

@@ -351,107 +351,107 @@ class History(Base):
 class Project_attribute(Base):
   __tablename__ = 'project_attribute'
   __table_args__ = (
-    UniqueConstraint('project_id', 'project_attribute_name'),
+    UniqueConstraint('project_id', 'attribute_name'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  project_attribute_id    = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
-  project_attribute_name  = Column(String(50))
-  project_attribute_value = Column(String(50))
-  project_id              = Column(INTEGER(unsigned=True), ForeignKey('project.project_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  project_attribute_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  attribute_name       = Column(String(50))
+  attribute_value      = Column(String(50))
+  project_id           = Column(INTEGER(unsigned=True), ForeignKey('project.project_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
 
   def __repr__(self):
     return "Project_attribute(project_attribute_id = '{self.project_attribute_id}'," \
-                             "project_attribute_name = '{self.project_attribute_name}'," \
-                             "project_attribute_value = '{self.project_attribute_value}'," \
+                             "attribute_name = '{self.attribute_name}'," \
+                             "attribute_value = '{self.attribute_value}'," \
                              "project_id = '{self.project_id}')".format(self=self)
 
 
 class Experiment_attribute(Base):
   __tablename__ = 'experiment_attribute'
   __table_args__ = (
-    UniqueConstraint('experiment_id', 'experiment_attribute_name'),
+    UniqueConstraint('experiment_id', 'attribute_name'),
     {  'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  experiment_attribute_id    = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
-  experiment_attribute_name  = Column(String(30))
-  experiment_attribute_value = Column(String(50))
-  experiment_id              = Column(INTEGER(unsigned=True), ForeignKey('experiment.experiment_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  experiment_attribute_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  attribute_name          = Column(String(30))
+  attribute_value         = Column(String(50))
+  experiment_id           = Column(INTEGER(unsigned=True), ForeignKey('experiment.experiment_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
 
   def __repr__(self):
     return "Experiment_attribute(experiment_attribute_id = '{self.experiment_attribute_id}'," \
-                                "experiment_attribute_name = '{self.experiment_attribute_name}'," \
-                                "experiment_attribute_value = '{self.experiment_attribute_value}'," \
+                                "attribute_name = '{self.attribute_name}'," \
+                                "attribute_value = '{self.attribute_value}'," \
                                 "experiment_id = '{self.experiment_id}')".format(self=self)
   
 
 class Collection_attribute(Base):
   __tablename__ = 'collection_attribute'
   __table_args__ = (
-    UniqueConstraint('collection_id', 'collection_attribute_name'),
+    UniqueConstraint('collection_id', 'attribute_name'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  collection_attribute_id    = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
-  collection_attribute_name  = Column(String(45))
-  collection_attribute_value = Column(String(45))
-  collection_id              = Column(INTEGER(unsigned=True), ForeignKey('collection.collection_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  collection_attribute_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  attribute_name          = Column(String(45))
+  attribute_value         = Column(String(45))
+  collection_id           = Column(INTEGER(unsigned=True), ForeignKey('collection.collection_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
 
   def __repr__(self):
     return "Collection_attribute(collection_attribute_id = '{self.collection_attribute_id}'," \
-                                "collection_attribute_name = '{self.collection_attribute_name}'," \
-                                "collection_attribute_value = '{self.collection_attribute_value}'," \
+                                "attribute_name = '{self.attribute_name}'," \
+                                "attribute_value = '{self.attribute_value}'," \
                                 "collection_id = '{self.collection_id}')".format(self=self)  
 
 
 class Sample_attribute(Base):
   __tablename__ = 'sample_attribute'
   __table_args__ = (
-    UniqueConstraint('sample_id', 'sample_attribute_name'),
+    UniqueConstraint('sample_id', 'attribute_name'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  sample_attribute_id    = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
-  sample_attribute_name  = Column(String(30))
-  sample_attribute_value = Column(String(50))
-  sample_id              = Column(INTEGER(unsigned=True), ForeignKey('sample.sample_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  sample_attribute_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  attribute_name      = Column(String(30))
+  attribute_value     = Column(String(50))
+  sample_id           = Column(INTEGER(unsigned=True), ForeignKey('sample.sample_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
 
   def __repr__(self):
     return "Sample_attribute(sample_attribute_id = '{self.sample_attribute_id}'," \
-                            "sample_attribute_name = '{self.sample_attribute_name}'," \
-                            "sample_attribute_value = '{self.sample_attribute_value}'," \
+                            "attribute_name = '{self.attribute_name}'," \
+                            "attribute_value = '{self.attribute_value}'," \
                             "sample_id = '{self.sample_id}')".format(self=self)
 
 
 class Run_attribute(Base):
   __tablename__ = 'run_attribute'
   __table_args__ = (
-    UniqueConstraint('run_id', 'run_attribute_name'),
+    UniqueConstraint('run_id', 'attribute_name'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  run_attribute_id    = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
-  run_attribute_name  = Column(String(30))
-  run_attribute_value = Column(String(50))
-  run_id              = Column(INTEGER(unsigned=True), ForeignKey('run.run_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  run_attribute_id  = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  attribute_name    = Column(String(30))
+  attribute_value   = Column(String(50))
+  run_id            = Column(INTEGER(unsigned=True), ForeignKey('run.run_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
 
   def __repr__(self):
     return "Run_attribute(run_attribute_id = '{self.run_attribute_id}'," \
-                         "run_attribute_name = '{self.run_attribute_name}'," \
-                         "run_attribute_value = '{self.run_attribute_value}'," \
+                         "attribute_name = '{self.attribute_name}'," \
+                         "attribute_value = '{self.attribute_value}'," \
                          "run_id = '{self.run_id}')".format(self=self)
 
 
 class File_attribute(Base):
   __tablename__ = 'file_attribute'
   __table_args__ = (
-    UniqueConstraint('file_id', 'file_attribute_name'),
+    UniqueConstraint('file_id', 'attribute_name'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
 
-  file_attribute_id    = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
-  file_attribute_name  = Column(String(30))
-  file_attribute_value = Column(String(50))
-  file_id              = Column(INTEGER(unsigned=True), ForeignKey('file.file_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  file_attribute_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  attribute_name    = Column(String(30))
+  attribute_value   = Column(String(50))
+  file_id           = Column(INTEGER(unsigned=True), ForeignKey('file.file_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
 
   def __repr__(self):
     return "File_attribute(file_attribute_id = '{self.file_attribute_id}'," \
-                          "file_attribute_name = '{self.file_attribute_name}'," \
-                          "file_attribute_value = '{self.file_attribute_value}'," \
+                          "attribute_name = '{self.attribute_name}'," \
+                          "attribute_value = '{self.attribute_value}'," \
                           "file_id = '{self.file_id}')".format(self=self)
   
