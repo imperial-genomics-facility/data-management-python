@@ -19,18 +19,20 @@ class ProjectAdaptor(BaseAdaptor):
     return project_column
 
   def store_project_and_attribute_data(self, data):
-  	'''
-  	A method for dividing and storing data to project and attribute_table
-  	'''
-  	(project_data, project_attr_data)=self.divide_data_to_table_and_attribute(data=data)
-  	try:
-  	  self.store_project_data(data=project_data)                                            # store project
-  	  project_attr_data.apply(lambda x: self.map_foreign_table_and_store_attribute(data=x), axis=1)      # store project attributes
-  	  self.commit_session()                                                                 # save changes to database
-  	except:
-  	   self.rollback_session()
-  	   raise
-  	
+    '''
+    A method for dividing and storing data to project and attribute_table
+    '''
+    (project_data, project_attr_data)=self.divide_data_to_table_and_attribute(data=data)
+    
+    try:
+      self.store_project_data(data=project_data)                                                         # store project
+      new_project_attr_data=project_attr_data.apply(lambda x: self.map_foreign_table_and_store_attribute(data=x), axis=1)      # store project attributes
+      self.store_project_attributes(data=new_project_attr_data)
+      self.commit_session()                                                                              # save changes to database
+    except:
+      self.rollback_session()
+      raise
+     
 
 
   def divide_data_to_table_and_attribute(self, data, required_column='project_igf_id', attribute_name_column='attribute_name', attribute_value_column='attribute_value'):
@@ -40,15 +42,14 @@ class ProjectAdaptor(BaseAdaptor):
     if isinstance(data, pd.DataFrame):
       data=pd.DataFrame(data)
 
-    project_columns=self.get_project_columns()                                       # get required columns for project table
+    project_columns=self.get_project_columns()                                                                 # get required columns for project table
     (project_df, project_attr_df)=super(ProjectAdaptor, self).divide_data_to_table_and_attribute( \
-    	                                                          data=data, \
-    	                                                          required_column=required_column, \
-    	                                                          table_columns=project_columns,  \
-                                                                attribute_name_column=attribute_name_column, \
-                                                                attribute_value_column=attribute_value_column
-    	                                                        ) 
-
+                                                                     data=data, \
+    	                                                             required_column=required_column, \
+    	                                                             table_columns=project_columns,  \
+                                                                     attribute_name_column=attribute_name_column, \
+                                                                     attribute_value_column=attribute_value_column
+    	                                                        )
     return (project_df, project_attr_df)
   
 
@@ -73,8 +74,10 @@ class ProjectAdaptor(BaseAdaptor):
                        if column.key == target_column_name][0]
     
       data[target_column_name]=target_value                            # set value for target column
-      data.drop(lookup_column)
-      self.store_project_attributes(data=data)
+      data=data.to_dict()
+      del data[lookup_column_name]
+      data=pd.Series(data)
+      return data
     except:
     	raise
 
