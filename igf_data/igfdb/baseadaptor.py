@@ -59,49 +59,60 @@ class BaseAdaptor(DBConnect):
     except:
       raise 
 
-  def _flatten_row(self, x):
-    d2=x.to_dict()
-    d4=list()
-    id_name=''
-    id_value=''
-    for key,value in d2.items():
-        d3=dict()
-        if value and key != 'project_igf_id':
-            d3['attribute_name']=key
-            d3['attribute_value']=value
-        elif value and key == 'project_igf_id':
-            id_name=key
-            id_value=value
-        if len(list(d3)) > 0:
-            d4.append(d3)
-    d4_data=pd.DataFrame(d4)
-    d4_data[id_name]=id_value
-    print(d4_data)
+  def _format_attribute_table_row(self, data_series, required_column, attribute_name_column, attribute_value_column ):
+    '''
+    An internal function for converting attribute table dataframe
+    required param:
+    data_series: a row of the attribute dataframe
+    required_column: column to add to the attribute table, it must be part of the data series
+    attribute_name_column: column label for attribute name
+    attribute_value_column: column label for attribute value
+  
+    It returns a pandas series
+    '''
+    data_dict=data_series.to_dict()                            # convert data series to dictionary
+    new_data_dict=dict()                                       # create new empty dictionary
+    for key,value in data_dict.items():                        # add values based on key 
+      if value and key != required_column:
+        new_data_dict[attribute_name_column]=key
+        new_data_dict[attribute_value_column]=value
+      elif value and key == required_column:
+        new_data_dict[key]=value
 
+    new_data_series=pd.Series(new_data_dict)                   # create new pandas series from the dictionary
+    return new_data_series
+    
 
   def divide_data_to_table_and_attribute(self, data, required_column, table_columns, attribute_name_column='attribute_name', attribute_value_column='attribute_value'):
     '''
     A method for separating data for main and attribute tables
+    required params:
+    data: a dictionary or dataframe containing the data
+    required_column: column to add to the attribute table, it must be part of the data
+    table_columns: required columns for the main table
+    attribute_name_column: column label for attribute name
+    attribute_value_column: column label for attribute value
+
+    It returns two pandas dataframes, one for main table and one for attribute tables 
     '''
     if not isinstance(data, pd.DataFrame):
       data=pd.DataFrame(data)
 
     table_df=data.ix[:, table_columns]                                           # slice df for table
     table_attr_columns=list(set(data.columns).difference(set(table_df.columns))) # assign remaining columns to attribute dataframe
+    table_attr_columns.append(required_column)                                   # append required column
     table_attr_df=data.ix[:, table_attr_columns]                                 # slice df for attribute table
+   
+    mod_table_attr_df=pd.DataFrame() 
+  
+    map_function=lambda x: self._format_attribute_table_row( data_series=x, \
+                                                             required_column=required_column, \
+                                                             attribute_name_column=attribute_name_column, \
+                                                             attribute_value_column=attribute_value_column \
+                                                           )                     # define mapping function 
+    new_table_attr_df=table_attr_df.apply(map_function, axis=1)                  # apply function to the dataframe row
+    return (table_df, new_table_attr_df)
     
-    #table_attr_df=[ dict(zip([attribute_name_column, attribute_value_column], [key, value])) \
-    #  for row in table_attr_df.fillna('').to_dict(orient='records') \
-    #    for key, value in row.items() \
-    #      if value ]                                                             # restructure the attribute dataframe
-
-    #table_attr_df=pd.DataFrame(table_attr_df)
-    if table_attr_df[attribute_name_column] == required_column:                  # add required column name to attribute table
-      table_attr_df[required_column]=table_attr_df[attribute_value_column] 
-      table_attr_df[attribute_name_column].drop() 
-
-    table_attr_df.fillna('').apply(lambda x: self._flatten_row(x), 1)                             
-    return (table_df, table_attr_df)
 
 
   def store_records(self, table, data, mode='serial'):
