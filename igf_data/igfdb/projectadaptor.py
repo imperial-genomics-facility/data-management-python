@@ -39,7 +39,7 @@ class ProjectAdaptor(BaseAdaptor):
     '''
     A method for separating data for Project and Project_attribute tables
     '''
-    if isinstance(data, pd.DataFrame):
+    if not isinstance(data, pd.DataFrame):
       data=pd.DataFrame(data)
 
     project_columns=self.get_project_columns()                                                                 # get required columns for project table
@@ -53,7 +53,7 @@ class ProjectAdaptor(BaseAdaptor):
     return (project_df, project_attr_df)
   
 
-  def map_foreign_table_and_store_attribute(self, data, lookup_column_name='project_igf_id', target_column_name='project_id', target_table=Project ):
+  def map_foreign_table_and_store_attribute(self, data, lookup_table=Project, lookup_column_name='project_igf_id', target_column_name='project_id'):
     '''
     A method for mapping foreign key id to the new column
     '''   
@@ -62,15 +62,15 @@ class ProjectAdaptor(BaseAdaptor):
 
     lookup_value=data[lookup_column_name]
     try:
-      lookup_column=[column for column in Project.__table__.columns \
+      lookup_column=[column for column in lookup_table.__table__.columns \
                        if column.key == lookup_column_name][0]
 
-      target_object=self.fetch_records_by_column(table=target_table, \
+      target_object=self.fetch_records_by_column(table=lookup_table, \
     	                                         column_name=lookup_column, \
     	                                         column_id=lookup_value, \
     	                                         output_mode='one')
 
-      target_value=[getattr(target_object,column.key) for column in Project.__table__.columns \
+      target_value=[getattr(target_object,column.key) for column in lookup_table.__table__.columns \
                        if column.key == target_column_name][0]
     
       data[target_column_name]=target_value                            # set value for target column

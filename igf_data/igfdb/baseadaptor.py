@@ -18,6 +18,7 @@ class BaseAdaptor(DBConnect):
       self.session = data['session'] 
     else:
       super(BaseAdaptor, self).__init__(**data)
+
      
   def _store_record_serial(self, table, data):
     '''
@@ -59,29 +60,47 @@ class BaseAdaptor(DBConnect):
     except:
       raise 
 
-  def _format_attribute_table_row(self, data_series, required_column, attribute_name_column, attribute_value_column ):
+
+  def _format_attribute_table_row(self, data, required_column, attribute_name_column, attribute_value_column ):
     '''
     An internal function for converting attribute table dataframe
     required param:
-    data_series: a row of the attribute dataframe
+    data: a attribute dataframe or dictionary
     required_column: column to add to the attribute table, it must be part of the data series
     attribute_name_column: column label for attribute name
     attribute_value_column: column label for attribute value
   
     It returns a pandas series
     '''
-    data_dict=data_series.to_dict()                            # convert data series to dictionary
-    new_data_dict=dict()                                       # create new empty dictionary
-    for key,value in data_dict.items():                        # add values based on key 
-      if value and key != required_column:
-        new_data_dict[attribute_name_column]=key
-        new_data_dict[attribute_value_column]=value
-      elif value and key == required_column:
-        new_data_dict[key]=value
+    if not isinstance(data, pd.DataFrame):
+      data=pd.DataFrame(data)
 
-    new_data_series=pd.Series(new_data_dict)                   # create new pandas series from the dictionary
+    final_list=list()
+    data_dict=data.to_dict(orient='records')
+    for element in data_dict:
+      row_list=list()
+      id_name=''
+      id_value=''
+      for key, value in element.items():
+        row_dict=dict()
+        if value and key != required_column:
+          row_dict[attribute_name_column]=key
+          row_dict[attribute_value_column]=value
+          row_list.append(row_dict)
+        elif value and key == required_column:
+          id_name=key
+          id_value=value
+      row_df=pd.DataFrame(row_list)
+      if not id_name and id_value:
+        raise ValueError('Required id or value not found for column: {0}'.format(required_column))
+
+      row_df[id_name]=id_value
+      row_df_data=row_df.to_dict(orient='records')
+      final_list.extend(row_df_data)
+    new_data_series=pd.DataFrame(final_list)
+    new_data_series=new_data_series.dropna()
     return new_data_series
-    
+
 
   def divide_data_to_table_and_attribute(self, data, required_column, table_columns, attribute_name_column='attribute_name', attribute_value_column='attribute_value'):
     '''
@@ -103,17 +122,13 @@ class BaseAdaptor(DBConnect):
     table_attr_columns.append(required_column)                                   # append required column
     table_attr_df=data.ix[:, table_attr_columns]                                 # slice df for attribute table
    
-    mod_table_attr_df=pd.DataFrame() 
-  
-    map_function=lambda x: self._format_attribute_table_row( data_series=x, \
-                                                             required_column=required_column, \
-                                                             attribute_name_column=attribute_name_column, \
-                                                             attribute_value_column=attribute_value_column \
-                                                           )                     # define mapping function 
-    new_table_attr_df=table_attr_df.apply(map_function, axis=1)                  # apply function to the dataframe row
+    new_table_attr_df=self._format_attribute_table_row(data=table_attr_df, \
+                                                       required_column=required_column, \
+                                                       attribute_name_column=attribute_name_column, \
+                                                       attribute_value_column=attribute_value_column \
+                                                      )    
     return (table_df, new_table_attr_df)
     
-
 
   def store_records(self, table, data, mode='serial'):
     '''
