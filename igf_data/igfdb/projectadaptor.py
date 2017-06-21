@@ -10,14 +10,6 @@ class ProjectAdaptor(BaseAdaptor):
   An adaptor class for Project, ProjectUser and Project_attribute tables
   '''
 
-  def get_project_columns(self):
-    '''
-    A method for fetching the columns for table project
-    '''
-    project_column=[column.key for column in Project.__table__.columns \
-                                 if column.key not in ('project_id')]
-    return project_column
-
   def store_project_and_attribute_data(self, data):
     '''
     A method for dividing and storing data to project and attribute_table
@@ -46,7 +38,7 @@ class ProjectAdaptor(BaseAdaptor):
     if not isinstance(data, pd.DataFrame):
       data=pd.DataFrame(data)
 
-    project_columns=self.get_project_columns()                                                                 # get required columns for project table
+    project_columns=self.get_table_columns(table_name=Project, excluded_columns=['project_id'])                      # get required columns for project table
     (project_df, project_attr_df)=super(ProjectAdaptor, self).divide_data_to_table_and_attribute( \
                                                                      data=data, \
     	                                                             required_column=required_column, \

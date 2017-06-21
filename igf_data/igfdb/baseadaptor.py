@@ -356,4 +356,15 @@ class BaseAdaptor(DBConnect):
     except:
       raise
 
+  def get_table_columns(self, table_name, excluded_columns):
+    '''
+    A method for fetching the columns for table table_name
+    required params:
+    table_name: a table class name
+    excluded_columns: a list of column names to exclude from outpur
+    '''
+    columns=[column.key for column in table_name.__table__.columns \
+                                 if column.key not in excluded_columns]
+    return columns
+
 
