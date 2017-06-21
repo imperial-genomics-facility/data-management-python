@@ -96,7 +96,7 @@ class Sample(Base):
   donor_anonymized_id = Column(String(10))
   description         = Column(String(50))
   phenotype           = Column(String(45))
-  sex                 = Column(Enum('FEMALE', 'MALE', 'OTHER', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
+  sex                 = Column(Enum('FEMALE', 'MALE', 'MIXED', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   status              = Column(Enum('ACTIVE', 'FAILED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
   biomaterial_type    = Column(Enum('PRIMARY_TISSUE', 'PRIMARY_CELL', 'PRIMARY_CELL_CULTURE', 'CELL_LINE', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   cell_type           = Column(String(50))
