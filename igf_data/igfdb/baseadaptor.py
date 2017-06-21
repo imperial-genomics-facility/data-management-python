@@ -47,13 +47,14 @@ class BaseAdaptor(DBConnect):
     '''   
     if not hasattr(self, 'session'):
       raise AttributeError('Attribute session not found')
- 
-    if isinstance(data, pd.DataFrame):
-      data=data.to_dict(orient='records')
+
+    if not isinstance(data, dict):
+      try: 
+        data=data.to_dict(orient='records')
+      except:
+        raise ValueError('Expecting a dictionary and recieved data type: {0}'.format(type(data)))
 
     session=self.session
-    if not isinstance(data, dict):
-      raise ValueError('Expecting a dictionary and recieved data type: {0}'.format(type(data)))
  
     try:
       session.bulk_insert_mappings(table, data)

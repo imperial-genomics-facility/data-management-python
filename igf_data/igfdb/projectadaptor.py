@@ -93,7 +93,7 @@ class ProjectAdaptor(BaseAdaptor):
     project_user_data=list()                                                                                              # create an empty list
     for project_user in data:
       if not set(('project_igf_id','user_igf_id')).issubset(set(project_user)):                                             # check for required parameters
-        raise ValueError('Missing required value in input data {0}'.format(jason.dumps(project_user))) 
+        raise ValueError('Missing required value in input data {0}'.format(json.dumps(project_user))) 
 
       try:
         project_igf_id=project_user['project_igf_id']
@@ -114,9 +114,10 @@ class ProjectAdaptor(BaseAdaptor):
         raise
 
     try:
-      print(project_user_data)
       self.store_records(table=ProjectUser, data=project_user_data)                                                                       # add to database
+      self.commit_session()
     except:
+      self.rollback_session()
       raise
 
 
