@@ -26,8 +26,12 @@ class ProjectAdaptor(BaseAdaptor):
     
     try:
       self.store_project_data(data=project_data)                                                         # store project
-      new_project_attr_data=project_attr_data.apply(lambda x: self.map_foreign_table_and_store_attribute(data=x), axis=1)      # store project attributes
-      self.store_project_attributes(data=new_project_attr_data)
+      map_function=lambda x: self.map_foreign_table_and_store_attribute(data=x, \
+                                                                        lookup_table=Project, \
+                                                                        lookup_column_name='project_igf_id', \
+                                                                        target_column_name='project_id') # prepare the function
+      new_project_attr_data=project_attr_data.apply(map_function, axis=1)                                # map foreign key id
+      self.store_project_attributes(data=new_project_attr_data)                                          # store project attributes
       self.commit_session()                                                                              # save changes to database
     except:
       self.rollback_session()
@@ -52,35 +56,6 @@ class ProjectAdaptor(BaseAdaptor):
     	                                                        )
     return (project_df, project_attr_df)
   
-
-  def map_foreign_table_and_store_attribute(self, data, lookup_table=Project, lookup_column_name='project_igf_id', target_column_name='project_id'):
-    '''
-    A method for mapping foreign key id to the new column
-    '''   
-    if not (data, pd.Series):
-      raise ValueError('Expecting a pandas data series for mapping foreign key id')
-
-    lookup_value=data[lookup_column_name]
-    try:
-      lookup_column=[column for column in lookup_table.__table__.columns \
-                       if column.key == lookup_column_name][0]
-
-      target_object=self.fetch_records_by_column(table=lookup_table, \
-    	                                         column_name=lookup_column, \
-    	                                         column_id=lookup_value, \
-    	                                         output_mode='one')
-
-      target_value=[getattr(target_object,column.key) for column in lookup_table.__table__.columns \
-                       if column.key == target_column_name][0]
-    
-      data[target_column_name]=target_value                            # set value for target column
-      data=data.to_dict()
-      del data[lookup_column_name]
-      data=pd.Series(data)
-      return data
-    except:
-    	raise
-
 
   def store_project_data(self, data):
     '''

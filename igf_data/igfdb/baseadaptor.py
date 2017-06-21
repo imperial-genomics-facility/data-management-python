@@ -128,6 +128,43 @@ class BaseAdaptor(DBConnect):
                                                        attribute_value_column=attribute_value_column \
                                                       )    
     return (table_df, new_table_attr_df)
+
+
+  def map_foreign_table_and_store_attribute(self, data, lookup_table, lookup_column_name, target_column_name):
+    '''
+    A method for mapping foreign key id to the new column
+    required params:
+    data: a data dictionary or pandas series, to be stored in attribute table
+    lookup_table: a table class to look for the foreign key id
+    lookup_column_name: a column name which will be used to link the data frame with lookup_table,
+                        this column will be removed from the output series
+    target_column_name: column name for the foreign key id
+ 
+    It returns a data series
+    '''
+    if not (data, pd.Series):
+      raise ValueError('Expecting a pandas data series for mapping foreign key id')
+
+    lookup_value=data[lookup_column_name]
+    try:
+      lookup_column=[column for column in lookup_table.__table__.columns \
+                       if column.key == lookup_column_name][0]
+
+      target_object=self.fetch_records_by_column(table=lookup_table, \
+                                                 column_name=lookup_column, \
+                                                 column_id=lookup_value, \
+                                                 output_mode='one')
+
+      target_value=[getattr(target_object,column.key) for column in lookup_table.__table__.columns \
+                       if column.key == target_column_name][0]
+
+      data[target_column_name]=target_value                            # set value for target column
+      data=data.to_dict()
+      del data[lookup_column_name]
+      data=pd.Series(data)
+      return data
+    except:
+        raise
     
 
   def store_records(self, table, data, mode='serial'):
