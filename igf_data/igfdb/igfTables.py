@@ -154,16 +154,16 @@ class Platform(Base):
 class Rejected_run(Base):
   __tablename__ = 'rejected_run'
   __table_args__ = (
-    UniqueConstraint('rejected_run_igf_id'),
+    UniqueConstraint('seqrun_igf_id'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  rejected_run_id     = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
-  rejected_run_igf_id = Column(String(50), nullable=False)
-  date_created        = Column(TIMESTAMP(), nullable=False, default=datetime.datetime.now, onupdate=datetime.datetime.now)
+  rejected_run_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  seqrun_igf_id   = Column(String(50), nullable=False)
+  date_created    = Column(TIMESTAMP(), nullable=False, default=datetime.datetime.now, onupdate=datetime.datetime.now)
 
   def __repr__(self):
     return "Rejected_run(rejected_run_id = '{self.rejected_run_id}'," \
-                        "rejected_run_igf_id = '{self.rejected_run_igf_id}'," \
+                        "seqrun_igf_id = '{self.seqrun_igf_id}'," \
                         "date_created = '{self.date_created}')".format(self=self)
 
 
