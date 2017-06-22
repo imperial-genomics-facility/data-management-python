@@ -211,6 +211,7 @@ class Run(Base):
   run_id        = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   experiment_id = Column(INTEGER(unsigned=True), ForeignKey('experiment.experiment_id', onupdate="CASCADE", ondelete="SET NULL"))
   run_igf_id    = Column(String(50), nullable=False)
+  seqrun_igf_id = Column(String(50), nullable=False)
   flowcell_id   = Column(String(10), nullable=False)
   status        = Column(Enum('ACTIVE', 'FAILED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
   lane_number   = Column(Enum('1', '2', '3', '4', '5', '6', '7', '8'), nullable=False)
@@ -221,6 +222,7 @@ class Run(Base):
     return "Run(run_id = '{self.run_id}'," \
                "experiment_id = '{self.experiment_id}'," \
                "run_igf_id = '{self.run_igf_id}'," \
+               "seqrun_igf_id = '{self.seqrun_igf_id}'," \
                "flowcell_id = '{self.flowcell_id}'," \
                "status = '{self.status}'," \
                "lane_number = '{self.lane_number}'," \
