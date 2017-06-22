@@ -171,23 +171,26 @@ class Experiment(Base):
   __tablename__ = 'experiment'
   __table_args__ = (
     UniqueConstraint('sample_id', 'library_name', 'platform_id'),
+    UniqueConstraint('experiment_igf_id'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  experiment_id    = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
-  project_id       = Column(INTEGER(unsigned=True), ForeignKey('project.project_id', onupdate="CASCADE", ondelete="SET NULL"))
-  sample_id        = Column(INTEGER(unsigned=True), ForeignKey('sample.sample_id', onupdate="CASCADE", ondelete="SET NULL"))
-  library_name     = Column(String(50), nullable=False)
-  library_strategy = Column(Enum('WGS', 'EXOME', 'RNA-SEQ', 'CHIP-SEQ', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
-  experiment_type  = Column(Enum('POLYA-RNA', 'TOTAL-RNA', 'SMALL_RNA', 'H3K4ME3', 'WGS', 'EXOME', 'H3k27ME3', 'H3K27AC', 'H3K9ME3', 'H3K36ME3', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
-  library_layout   = Column(Enum('SINGLE', 'PAIRED', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
-  status           = Column(Enum('ACTIVE', 'FAILED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
-  date_created     = Column(TIMESTAMP(), nullable=False, default=datetime.datetime.now, onupdate=datetime.datetime.now)
-  platform_id      = Column(INTEGER(unsigned=True), ForeignKey('platform.platform_id', onupdate="CASCADE", ondelete="SET NULL"))
+  experiment_id     = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  experiment_igf_id = Column(String(30), nullable=False)
+  project_id        = Column(INTEGER(unsigned=True), ForeignKey('project.project_id', onupdate="CASCADE", ondelete="SET NULL"))
+  sample_id         = Column(INTEGER(unsigned=True), ForeignKey('sample.sample_id', onupdate="CASCADE", ondelete="SET NULL"))
+  library_name      = Column(String(50), nullable=False)
+  library_strategy  = Column(Enum('WGS', 'EXOME', 'RNA-SEQ', 'CHIP-SEQ', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
+  experiment_type   = Column(Enum('POLYA-RNA', 'TOTAL-RNA', 'SMALL_RNA', 'H3K4ME3', 'WGS', 'EXOME', 'H3k27ME3', 'H3K27AC', 'H3K9ME3', 'H3K36ME3', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
+  library_layout    = Column(Enum('SINGLE', 'PAIRED', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
+  status            = Column(Enum('ACTIVE', 'FAILED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
+  date_created      = Column(TIMESTAMP(), nullable=False, default=datetime.datetime.now, onupdate=datetime.datetime.now)
+  platform_id       = Column(INTEGER(unsigned=True), ForeignKey('platform.platform_id', onupdate="CASCADE", ondelete="SET NULL"))
   experiment            = relationship('Run', backref='experiment')
   experiment_attribute  = relationship('Experiment_attribute', backref='experiment')
 
   def __repr__(self):
     return "Experiment(experiment_id = '{self.experiment_id}'," \
+                      "experiment_igf_id = '{self.experiment_igf_id}'," \
                       "project_id = '{self.project_id}'," \
                       "sample_id = '{self.sample_id}'," \
                       "library_name = '{self.library_name}'," \
