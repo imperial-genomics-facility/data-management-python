@@ -20,10 +20,10 @@ class ProjectAdaptor(BaseAdaptor):
       self.store_collection_data(data=collection_data)                                                        # store collection data
       map_function=lambda x: self.map_foreign_table_and_store_attribute(data=x, \
                                                                         lookup_table=Collection, \
-                                                                        lookup_column_name=['name', 'type'] \
+                                                                        lookup_column_name=['name', 'type'] \ 
                                                                         target_column_name='collection_id')   # prepare the function
       new_collection_attr_data=collection_attr_data.apply(map_function, axis=1)                               # map foreign key id
-      self.store_collection_attributes(data=new_project_attr_data)                                               # store project attributes 
+      self.store_collection_attributes(data=new_project_attr_data)                                            # store project attributes 
       self.commit_session()                                                                                   # save changes to database
     except:
       self.rollback_session()

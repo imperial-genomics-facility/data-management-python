@@ -137,31 +137,47 @@ class BaseAdaptor(DBConnect):
     required params:
     data: a data dictionary or pandas series, to be stored in attribute table
     lookup_table: a table class to look for the foreign key id
-    lookup_column_name: a column name which will be used to link the data frame with lookup_table,
+    lookup_column_name: a string or a list of column names which will be used 
+                        to link the data frame with lookup_table,
                         this column will be removed from the output series
     target_column_name: column name for the foreign key id
  
     It returns a data series
     '''
-    if not (data, pd.Series):
+    if not isinstance(data, pd.Series):
       raise ValueError('Expecting a pandas data series for mapping foreign key id')
 
-    lookup_value=data[lookup_column_name]
     try:
-      lookup_column=[column for column in lookup_table.__table__.columns \
+      if isinstance(lookup_column_name, list):
+        lookup_values=list()
+        lookup_columns=list()
+        for lookup_column_key in lookup_column_name:
+          value=data[lookup_column_key]
+          lookup_values.append(value)
+          column=[column for column in lookup_table.__table__.columns \
+                       if column.key == lookup_column_key][0]
+          lookup_columns.append(column)
+          del data[lookup_column_key]
+
+        lookup_data=dict(zip(lookup_columns, lookup_values))
+        target_object=self.fetch_records_by_multiple_column(table=lookup_table, column_data=lookup_data, output_mode='one')    
+      elif isinstance(lookup_column_name, str):
+        lookup_value=data[lookup_column_name]
+        lookup_column=[column for column in lookup_table.__table__.columns \
                        if column.key == lookup_column_name][0]
+        target_object=self.fetch_records_by_column(table=lookup_table, \
+                                                   column_name=lookup_column, \
+                                                   column_id=lookup_value, \
+                                                   output_mode='one')
+        del data[lookup_column_name]
+      else:
+        raise TypeError('Expecting a list or a string and found :{}'.format(type(lookup_column_name)))
 
-      target_object=self.fetch_records_by_column(table=lookup_table, \
-                                                 column_name=lookup_column, \
-                                                 column_id=lookup_value, \
-                                                 output_mode='one')
-
+      # get target value from the target_object
       target_value=[getattr(target_object,column.key) for column in lookup_table.__table__.columns \
-                       if column.key == target_column_name][0]
-
+                         if column.key == target_column_name][0]
       data[target_column_name]=target_value                            # set value for target column
       data=data.to_dict()
-      del data[lookup_column_name]
       data=pd.Series(data)
       return data
     except:
@@ -272,6 +288,7 @@ class BaseAdaptor(DBConnect):
     except:
       raise
 
+
   def _construct_query(self, table, filter_criteria ):
     '''
     An internal method for query construction
@@ -322,20 +339,42 @@ class BaseAdaptor(DBConnect):
       raise 
 
     
-  def fetch_records_by_column(self, table, column_name, column_id, output_mode='dataframe'):
+  def fetch_records_by_column(self, table, column_name, column_id, output_mode):
     '''
     A method for fetching record with the column
     required param:
     table      : table name
     column_name: a column name
     column_id  : a column id value
-    output_mode: dataframe / object
+    output_mode: dataframe / object / one
     '''
     if not hasattr(self, 'session'):
       raise AttributeError('Attribute session not found')
  
     session=self.session
     query=session.query(table).filter(column_name==column_id)
+    try:
+      result=self.fetch_records(query=query, output_mode=output_mode)
+      return result
+    except:
+      raise
+
+
+  def fetch_records_by_multiple_column(self, table, column_data, output_mode):
+    '''
+    A method for fetching record with the column
+    required param:
+    table      : table name
+    column_dict: a dictionary of column_names: column_value
+    output_mode: dataframe / object/ one
+    '''
+    if not hasattr(self, 'session'):
+      raise AttributeError('Attribute session not found')
+
+    session=self.session
+    query=session.query(table)
+    for column_name, column_id in column_data.items():
+      query=query.filter(column_name.in_([column_id]))
     try:
       result=self.fetch_records(query=query, output_mode=output_mode)
       return result
@@ -350,11 +389,13 @@ class BaseAdaptor(DBConnect):
     session=self.session
     query=session.query(linked_table).join(linked_table)
     filter_criteria=[linked_table.linked_column==db_id]
+    query.filter(filter_criteria)
     try:
-      result=self.fetch_records(query=query, filter_criteria=filter_criteria)
+      result=self.fetch_records(query=query)
       return result
     except:
       raise
+
 
   def get_table_columns(self, table_name, excluded_columns):
     '''
