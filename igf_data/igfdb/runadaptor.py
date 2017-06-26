@@ -10,7 +10,7 @@ class RunAdaptor(BaseAdaptor):
    An adaptor class for Run and Run_attribute tables
   '''
 
-  def store_project_and_attribute_data(self, data):
+  def store_run_and_attribute_data(self, data):
     '''
     A method for dividing and storing data to run and attribute table
     '''
@@ -78,13 +78,13 @@ class RunAdaptor(BaseAdaptor):
 
   def fetch_run_records_igf_id(self, run_igf_id, target_column_name='run_igf_id'):
     '''
-    A method for fetching data for Project table
+    A method for fetching data for Run table
     required params:
     run_igf_id: an igf id
     target_column_name: a column name, default run_igf_id
     '''
     try:
-      column=[column for column in Project.__table__.columns \
+      column=[column for column in Run.__table__.columns \
                        if column.key == target_column_name][0]
       run=self.fetch_records_by_column(table=Run, \
       	                                   column_name=column, \
