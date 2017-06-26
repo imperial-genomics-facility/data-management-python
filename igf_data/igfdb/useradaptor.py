@@ -8,15 +8,6 @@ class UserAdaptor(BaseAdaptor):
   '''
   An adaptor class for table User
   '''
-
-  def get_user_columns(self):
-    '''
-    A method for fetching the columns for table user
-    '''
-    user_column=[column.key for column in User.__table__.columns]
-    return user_column
-
-
   def _email_check(self, email):
     '''
     An internal function to check if email_id has '@' or not
