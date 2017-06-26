@@ -93,79 +93,63 @@ class CollectionAdaptor(BaseAdaptor):
     except:
       raise
 
-  def _check_and_fetch_collection_group_requirements(self, data_series, table_column='table', file_column='file_path', \
-                                                     sample_column='sample_igf_id', experiment_column='experiment_igf_id' \
-                                                     run_column='run_igf_id', name_column='name', type_column='type' ):
+
+  def create_collection_group(self, data, required_columns=['name','type','file_path']):
     '''
-    An internal function for checking data requirements
-    required param:
-    data_series: a data series
-    optional params:
-    table_column: default table
-    file_column: default file_path
-    sample_column: default sample_igf_id
-    experiment_column: default experiment_igf_id
-    run_column: run_igf_id
-    name_column: default name
-    type_column: default type
-    
-    returns a pandas data series after adding a primary key of the respective table
+    A function for creating collection group, a link between a file and a collection
+    ['name':'a collection name', 'type':'a collection type', 'file_path': 'path']
     '''
-    if not isinstance(data_series, pd.Series):
-      data_series=pd.Series(data_series)
+    collection_group_data=list()
 
-    data_series=data_series.dropna()                                               # delete None values from the series
-    if table_column not in data_series.index: 
-      raise ValueError('A value for column table is required: {0}'.format(json.dumps(data_series.to_dict())))   
-
-    if not name_column in data_series.index or not type_column in data_series.index: 
-       raise ValueError('A value for {0} and {1} is required: {3}'.format(name_column, type_column, json.dumps(data_series.to_dict())))
-      
-    if data_series.table == 'file':                                                # FILE
-      if file_column in data_series.index:
-        raise ValueError('Missing {0}: {1}'.format(file_column, json.dumps(data_series.to_dict())))
-
-      file=self.fetch_file_records_path(file_path=file_path)
-      data_series['file_id']=file.file_id
-      del data_series[file_column]
-    elif data_series.table == 'sample':                                            # SAMPLE
-      if not sample_column in data_series.index:
-        raise ValueError('Missing {0}: {1}'.format(sample_column, json.dumps(data_series.to_dict())))
-
-      sample=self.fetch_sample_records_igf_id(sample_igf_id=sample_igf_id)
-      data_series['sample_id']=sample.sample_id
-      del data_series[sample_column]
-    elif data_series.table == 'experiment':                                        # EXPERIMENT
-      if not experiment_column in data_series.index:
-        raise ValueError('Missing {0}: {1}'.format(experiment_column, json.dumps(data_series.to_dict())))
-      
-      experiment=self.fetch_experiment_records_igf_id(experiment_igf_id=experiment_igf_id)
-      data_series['experiment_id']=experiment.experiment_id
-      del data_series[experiment_column]
-    elif data_series.table == 'run':                                               # RUN
-      if not run_column in data_series.index:
-        raise ValueError('Missing {0}: {1}'.format(run_column, json.dumps(data_series.to_dict())))
-
-      run=self.fetch_run_records_igf_id(run_igf_id=run_igf_id)
-      data_series['run_id']=run.run_id
-      del data_series[run_column]
-    return data_series
-
-
-  def create_collection_group(self, data):
-    '''
-    A function for creating collection group
-    ['name':'a collection name', 'type':'a collection type', 'table':'a table_name', required column: value]
-    Following collumns must be present for the respective table type
-    type : file       => required_column: file_path
-    type : sample     => required_column: sample_igf_id
-    type : experiment => required_column: experiment_igf_id
-    type : run        => required_column: run_igf_id
-    '''
-    if not isinstance(data, pd.DataFrame):
-      data=pd.DataFrame(data)
+    if not isinstance(data, list):
+      raise TypeError('Expecting a list of dictionary and received: {0}'.format(type(data)))
  
-    data.apply(lambda x: self._check_and_fetch_collection_group_requirements(data_series=x))   # check and add required columns in data frame
+    for collection_group in data:
+      if not set(tuple(required_columns)).issubset(set(collection_group)):                                             # check for required parameters
+        raise ValueError('Missing required value in input data {0}'.format(json.dumps(collection_group))) 
     
-     
-      
+      try:
+        collection_name=collection_group['name']
+        collection_type=collection_group['type']
+        file_path=collection_group['file_path']
+        collection=self.fetch_collection_records_name_and_type(collection_name=collection_name, collection_type=collection_type)
+        collection_id=collection.collection_id
+        file_obj=self.fetch_file_records_file_path(file_path=file_path)
+        file_id=file_obj.file_id
+        collection_group_data.append({'collection_id':collection_id, 'file_path':file_path})
+      except:
+        raise
+
+    try:
+      self.store_records(table=Collection_group, data=collection_group_data) 
+      self.commit_session()
+    except:
+      self.rollback_session()
+      raise 
+
+
+  def get_collection_files(self, collection_name, collection_type='', output_mode='dataframe'):
+    '''
+    A method for fetching information from Collection, File, Collection_group tables
+    required params:
+    collection_name: a collection name to fetch the linked files
+    optional params:
+    collection_type: a collection type 
+    output_mode: dataframe / object
+   '''
+   if not hasattr(self, 'session'):
+     raise AttributeError('Attribute session not found')
+
+   session=self.session
+   query=session.query(Collection, File).join(Collection_group).join(File)  # sql join Collection, Collection_group and File tables
+   query=query.filter(Collection.name.in_([collection_name]))               # filter query based on collection_name
+   if collection_type: 
+     query=query.filter(Collection.type.in_([collection_type]))             # filter query on collection_type, if its present
+   
+   try:    
+      results=self.fetch_records(query=query, output_mode=output_mode)      # get results
+      return results
+    except:
+      raise
+
+
