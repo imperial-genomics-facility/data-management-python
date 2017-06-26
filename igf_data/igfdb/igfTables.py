@@ -231,12 +231,14 @@ class Run(Base):
 
 class Collection(Base):
   __tablename__ = 'collection'
-  __table_args__ = ({ 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
+  __table_args__ = (
+    UniqueConstraint('name','type'),
+    { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
   collection_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   name          = Column(String(20), nullable=False)
   type          = Column(String(30), nullable=False)
-  table         = Column(Enum('sample', 'experiment', 'run', 'file'), nullable=False)
+  table         = Column(Enum('sample', 'experiment', 'run', 'file', 'project', 'unknown'), nullable=False, server_default='unknown')
   date_stamp    = Column(TIMESTAMP(), nullable=False, default=datetime.datetime.now, onupdate=datetime.datetime.now) 
   collection_group      = relationship('Collection_group', backref='collection')
   collection_attribute  = relationship('Collection_attribute', backref='collection')
