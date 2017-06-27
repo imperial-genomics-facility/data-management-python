@@ -153,19 +153,22 @@ class Platform(Base):
                     "date_created = '{self.date_created}')".format(self=self)
 
 
-class Rejected_run(Base):
-  __tablename__ = 'rejected_run'
+class Seqrun(Base):
+  __tablename__ = 'seqrun'
   __table_args__ = (
     UniqueConstraint('seqrun_igf_id'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  rejected_run_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  seqrun_id       = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   seqrun_igf_id   = Column(String(50), nullable=False)
+  reject_run      = Column(Enum('Y','N'), nullable=False, server_default='N')
   date_created    = Column(TIMESTAMP(), nullable=False, default=datetime.datetime.now, onupdate=datetime.datetime.now)
+  run             = relationship('Run', backref="seqrun")
 
   def __repr__(self):
-    return "Rejected_run(rejected_run_id = '{self.rejected_run_id}'," \
+    return "Seqrun(seqrun_id = '{self.seqrun_id}'," \
                         "seqrun_igf_id = '{self.seqrun_igf_id}'," \
+                        "reject_run = '{self.reject_run}'," \
                         "date_created = '{self.date_created}')".format(self=self)
 
 
@@ -213,7 +216,7 @@ class Run(Base):
   run_id        = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   experiment_id = Column(INTEGER(unsigned=True), ForeignKey('experiment.experiment_id', onupdate="CASCADE", ondelete="SET NULL"))
   run_igf_id    = Column(String(50), nullable=False)
-  seqrun_igf_id = Column(String(50), nullable=False)
+  seqrun_id     = Column(INTEGER(unsigned=True), ForeignKey('seqrun.seqrun_id', onupdate="CASCADE", ondelete="SET NULL"))
   flowcell_id   = Column(String(10), nullable=False)
   status        = Column(Enum('ACTIVE', 'FAILED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
   lane_number   = Column(Enum('1', '2', '3', '4', '5', '6', '7', '8'), nullable=False)
@@ -224,7 +227,7 @@ class Run(Base):
     return "Run(run_id = '{self.run_id}'," \
                "experiment_id = '{self.experiment_id}'," \
                "run_igf_id = '{self.run_igf_id}'," \
-               "seqrun_igf_id = '{self.seqrun_igf_id}'," \
+               "seqrun_id = '{self.seqrun_id}'," \
                "flowcell_id = '{self.flowcell_id}'," \
                "status = '{self.status}'," \
                "lane_number = '{self.lane_number}'," \
@@ -255,7 +258,9 @@ class Collection(Base):
 
 class File(Base):
   __tablename__ = 'file'
-  __table_args__ = ({ 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
+  __table_args__ = (
+    UniqueConstraint('file_path'),
+    { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
   file_id      = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   file_path    = Column(String(500), nullable=False)
@@ -329,7 +334,9 @@ class Hive_db(Base):
 
 class Pipeline_seed(Base):
   __tablename__ = 'pipeline_seed'
-  __table_args__ = ({ 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
+  __table_args__ = (
+    UniqueConstraint('seed_id','seed_table','pipeline_id'),
+    { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
 
   pipeline_seed_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   seed_id          = Column(INTEGER(unsigned=True), nullable=False)
