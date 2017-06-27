@@ -17,19 +17,27 @@ class RunAdaptor(BaseAdaptor):
     (run_data, run_attr_data)=self.divide_data_to_table_and_attribute(data=data)
 
     try:
-      seqrun_map_function=lambda x: self.map_foreign_table_and_store_attribute(data=x, \
-                                                                               lookup_table=Seqrun, \
-                                                                               lookup_column_name='seqrun_igf_id', \     
-                                                                               target_column_name='seqrun_id')        # prepare seqrun mapping function
-      new_run_data=run_data.apply(seqrun_map_function, axis=1)                                                        # map seqrun id
-      self.store_run_data(data=new_run_data)                                                                              # store run
-      exp_map_function=lambda x: self.map_foreign_table_and_store_attribute(data=x, \
-                                                                            lookup_table=Experiment, \
-                                                                            lookup_column_name='experiment_igf_id', \
-                                                                            target_column_name='experiment_id')       # prepare the function
-      new_run_attr_data=run_attr_data.apply(exp_map_function, axis=1)                                                 # map foreign key id
-      self.store_run_attributes(data=new_run_attr_data)                                                               # store run attributes
-      self.commit_session()                                                                                           # save changes to database
+      seqrun_map_function=lambda x: self.map_foreign_table_and_store_attribute( \
+                                             data=x, \
+                                             lookup_table=Seqrun, \
+                                             lookup_column_name='seqrun_igf_id', \     
+                                             target_column_name='seqrun_id')              # prepare seqrun mapping function
+      new_run_data=run_data.apply(seqrun_map_function, axis=1)                            # map seqrun id
+      exp_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
+                                             data=x, \
+                                             lookup_table=Experiment, \
+                                             lookup_column_name='experiment_igf_id', \
+                                             target_column_name='experiment_id')          # prepare experiment mapping function
+      new_run_data=new_run_data.apply(exp_map_function, axis=1)                           # map experiment id
+      self.store_run_data(data=new_run_data)                                              # store run
+      run_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
+                                             data=x, \
+                                             lookup_table=Run, \
+                                             lookup_column_name='run_igf_id', \
+                                             target_column_name='run_id')                 # prepare run mapping function
+      new_run_attr_data=run_attr_data.apply(run_map_function, axis=1)
+      self.store_run_attributes(data=new_run_attr_data)                                   # store run attributes
+      self.commit_session()                                                               # save changes to database
     except:
       self.rollback_session()
       raise
@@ -49,7 +57,7 @@ class RunAdaptor(BaseAdaptor):
     if not isinstance(data, pd.DataFrame):
       data=pd.DataFrame(data)
 
-    run_columns=self.get_table_columns(table_name=Run, excluded_columns=['run_id', 'seqrun_id'])                      # get required columns for run table
+    run_columns=self.get_table_columns(table_name=Run, excluded_columns=['run_id', 'seqrun_id', 'experiment_id'])     # get required columns for run table
     (run_df, run_attr_df)=super(RunAdaptor, self).divide_data_to_table_and_attribute( \
                                                       data=data, \
     	                                              required_column=required_column, \
