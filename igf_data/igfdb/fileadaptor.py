@@ -15,7 +15,13 @@ class FileAdaptor(BaseAdaptor):
     (file_data, file_attr_data)=self.divide_data_to_table_and_attribute(data=data)
     try:
       self.store_file_data(data=file_data) 
-      self.store_run_attributes(data=file_attr_data) 
+      map_function=lambda x: self.map_foreign_table_and_store_attribute(\
+                                      data=x, \
+                                      lookup_table=File, \
+                                      lookup_column_name='file_path', \
+                                      target_column_name='file_id')                     # prepare the map function for File id
+      new_file_attr_data=file_attr_data.apply(map_function, 1)                          # map file id
+      self.store_file_attributes(data=new_file_attr_data) 
       self.commit_session()
     except:
       self.rollback_session()
