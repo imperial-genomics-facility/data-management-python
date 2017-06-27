@@ -1,6 +1,6 @@
-import json, hashlib
 import pandas as pd
 import numpy as np
+import json, hashlib, os, codecs
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.igfTables import User
 
@@ -20,7 +20,7 @@ class UserAdaptor(BaseAdaptor):
 
   def _preprocess_data(self,data, password_column='password', categoty_column='category', \
                        email_column='email_id', hpc_user_column='hpc_username', hpc_user='HPC_USER',
-                       user_igf_id_column='user_igf_id', username_column='username'):
+                       user_igf_id_column='user_igf_id', username_column='username', salt_column='encryption_salt'):
     '''
     An internal function for preprocess data before loading
     '''
@@ -29,7 +29,10 @@ class UserAdaptor(BaseAdaptor):
       
     try:
       # encrypt password
-      data[password_column]=data[password_column].map(lambda x: x if len(x)==128 else hashlib.sha512(str(x).encode('utf-8')).hexdigest())
+      salt=codecs.encode(os.urandom(32),"hex").decode("utf-8")                                                 # generate encryption salt
+      data[salt_column]=salt                                                                                   # add salt value to dataframe
+      encryption_func=lambda x: x if len(x)==128 else hashlib.sha512(salt+str(x).encode('utf-8')).hexdigest()  # define encryption function
+      data[password_column]=data[password_column].map(encryption_func)                                         # encrypt and add password
       
       # check email id, it should contail '@'
       data[email_column].map(lambda x: self._email_check(email=x))

@@ -40,17 +40,18 @@ class User(Base):
     UniqueConstraint('email_id'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  user_id       = Column(INTEGER(unsigned=True), primary_key=True, nullable=False) 
-  user_igf_id   = Column(String(10))
-  name          = Column(String(30), nullable=False)
-  email_id      = Column(String(20), nullable=False)
-  username      = Column(String(10))
-  hpc_username  = Column(String(10))
-  category      = Column(Enum('HPC_USER','NON_HPC_USER','EXTERNAL'), nullable=False, server_default='NON_HPC_USER')
-  status        = Column(Enum('ACTIVE', 'BLOCKED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
-  date_created  = Column(TIMESTAMP(), nullable=False, default=datetime.datetime.now, onupdate=datetime.datetime.now)
-  password      = Column(String(129))
-  projectuser   = relationship('ProjectUser', backref="user")
+  user_id         = Column(INTEGER(unsigned=True), primary_key=True, nullable=False) 
+  user_igf_id     = Column(String(10))
+  name            = Column(String(30), nullable=False)
+  email_id        = Column(String(20), nullable=False)
+  username        = Column(String(10))
+  hpc_username    = Column(String(10))
+  category        = Column(Enum('HPC_USER','NON_HPC_USER','EXTERNAL'), nullable=False, server_default='NON_HPC_USER')
+  status          = Column(Enum('ACTIVE', 'BLOCKED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
+  date_created    = Column(TIMESTAMP(), nullable=False, default=datetime.datetime.now, onupdate=datetime.datetime.now)
+  password        = Column(String(129))
+  encryption_salt = Column(String(129))
+  projectuser     = relationship('ProjectUser', backref="user")
   
   def __repr__(self):
     return "User(user_id = '{self.user_id}'," \
@@ -62,7 +63,8 @@ class User(Base):
                 "status = '{self.status}'," \
                 "email_id = '{self.email_id}'," \
                 "date_stamp = '{self.date_stamp}'," \
-                "password = '{self.password}')".format(self=self) 
+                "password = '{self.password}'," \
+                "encryption_salt = '{self.encryption_salt}')".format(self=self) 
 
 class ProjectUser(Base):
   __tablename__ = 'project_user'
