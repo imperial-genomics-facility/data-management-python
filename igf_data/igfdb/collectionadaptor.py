@@ -94,38 +94,39 @@ class CollectionAdaptor(BaseAdaptor):
       raise
 
 
-  def create_collection_group(self, data, required_columns=['name','type','file_path']):
+  def create_collection_group(self, data, required_collection_column=['name','type'],required_file_column='file_path'):
     '''
     A function for creating collection group, a link between a file and a collection
-    ['name':'a collection name', 'type':'a collection type', 'file_path': 'path']
+    [{'name':'a collection name', 'type':'a collection type', 'file_path': 'path'},]
     '''
-    collection_group_data=list()
 
-    if not isinstance(data, list):
-      raise TypeError('Expecting a list of dictionary and received: {0}'.format(type(data)))
- 
-    for collection_group in data:
-      if not set(tuple(required_columns)).issubset(set(collection_group)):                                             # check for required parameters
-        raise ValueError('Missing required value in input data {0}'.format(json.dumps(collection_group))) 
-    
-      try:
-        collection_name=collection_group['name']
-        collection_type=collection_group['type']
-        file_path=collection_group['file_path']
-        collection=self.fetch_collection_records_name_and_type(collection_name=collection_name, collection_type=collection_type)
-        collection_id=collection.collection_id
-        file_obj=self.fetch_file_records_file_path(file_path=file_path)
-        file_id=file_obj.file_id
-        collection_group_data.append({'collection_id':collection_id, 'file_path':file_path})
-      except:
-        raise
+    if not isinstance(data, pd.DataFrame):
+      data=pd.DataFrame(data)
+
+    required_columns=required_collection_column
+    required_columns.extend(required_file_column)
+
+    if not set((required_columns)).issubset(set(tuple(data.columns))):                          # check for required parameters
+      raise ValueError('Missing required value in input data {0}'.format(data.columns))    
 
     try:
-      self.store_records(table=Collection_group, data=collection_group_data) 
-      self.commit_session()
+      collection_map_function=lambda x: self.map_foreign_table_and_store_attribute( \
+                                                 data=x, \
+                                                 lookup_table=Collection, \
+                                                 lookup_column_name=required_collection_column \ 
+                                                 target_column_name='collection_id')             # prepare the map function for collection
+      new_data=data.apply(collection_map_function, axis=1)                                       # map collection id
+      file_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
+                                                 data=x, \
+                                                 lookup_table=File, \
+                                                 lookup_column_name=required_file_column, \
+                                                 target_column_name='file_id')                   # prepare the function for file id
+       new_data=new_data.apply(file_map_function, axis=1)                                        # map collection id
+       self.store_records(table=Collection_group, data=new_data)
+       self.commit_session()
     except:
-      self.rollback_session()
-      raise 
+       self.rollback_session()
+       raise
 
 
   def get_collection_files(self, collection_name, collection_type='', output_mode='dataframe'):
