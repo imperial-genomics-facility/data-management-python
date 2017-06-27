@@ -17,14 +17,15 @@ class ProjectAdaptor(BaseAdaptor):
     (project_data, project_attr_data)=self.divide_data_to_table_and_attribute(data=data)
     
     try:
-      self.store_project_data(data=project_data)                                                         # store project
-      map_function=lambda x: self.map_foreign_table_and_store_attribute(data=x, \
-                                                                        lookup_table=Project, \
-                                                                        lookup_column_name='project_igf_id', \
-                                                                        target_column_name='project_id') # prepare the function
-      new_project_attr_data=project_attr_data.apply(map_function, axis=1)                                # map foreign key id
-      self.store_project_attributes(data=new_project_attr_data)                                          # store project attributes
-      self.commit_session()                                                                              # save changes to database
+      self.store_project_data(data=project_data)                                 # store project
+      map_function=lambda x: self.map_foreign_table_and_store_attribute(\
+                                      data=x, \
+                                      lookup_table=Project, \
+                                      lookup_column_name='project_igf_id', \
+                                      target_column_name='project_id')            # prepare the function
+      new_project_attr_data=project_attr_data.apply(map_function, axis=1)         # map foreign key id
+      self.store_project_attributes(data=new_project_attr_data)                   # store project attributes
+      self.commit_session()                                                       # save changes to database
     except:
       self.rollback_session()
       raise
@@ -69,7 +70,7 @@ class ProjectAdaptor(BaseAdaptor):
       raise
 
 
-  def assign_user_to_project(self, data):
+  def assign_user_to_project(self, data, required_project_column='project_igf_id',required_user_column='user_igf_id', data_authority_column='data_authority'):
     '''
     Load data to ProjectUser table
     required parameters:
@@ -82,32 +83,29 @@ class ProjectAdaptor(BaseAdaptor):
           E.g.
           [{'project_igf_id': val, 'user_igf_id': val, 'data_authority':True},] 
     '''
-    project_user_data=list()                                                                                              # create an empty list
-    for project_user in data:
-      if not set(('project_igf_id','user_igf_id')).issubset(set(project_user)):                                             # check for required parameters
-        raise ValueError('Missing required value in input data {0}'.format(json.dumps(project_user))) 
-
-      try:
-        project_igf_id=project_user['project_igf_id']
-        user_igf_id=project_user['user_igf_id']
-        data_authority=''
-
-        if 'data_authority' in project_user and  project_user['data_authority']:
-          data_authority='T'
-
-        project=self.fetch_project_records_igf_id(project_igf_id=project_igf_id)                                             # method from project adaptor
-        project_id=project.project_id                                                                                        # get project object
-
-        useradaptor=UserAdaptor(**{'session': self.session})                                                               # connect to user adaptor
-        user=useradaptor.fetch_user_records_igf_id(user_igf_id=user_igf_id)                                                  # get user object
-        user_id=user.user_id                                                                                                 # get user_id
-        project_user_data.append({'project_id':project_id,'user_id':user_id,'data_authority':data_authority})                # prepare data dictionary and append to list         
-      except:
-        raise
+    if not isinstance(data, pd.DataFrame):
+      data=pd.DataFrame(data)
+ 
+    if not set((required_project_column,required_user_column,data_authority_column)).issubset(set(tuple(data.columns))):          # check for required parameters
+      raise ValueError('Missing required value in input data {0}'.format(data_columns))
 
     try:
-      self.store_records(table=ProjectUser, data=project_user_data)                                                                       # add to database
-      self.commit_session()
+      project_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
+                                              data=x, \
+                                              lookup_table=Project, \
+                                              lookup_column_name=required_project_column, \
+                                              target_column_name='project_id')                  # prepare the function for Project id
+      new_data=data.apply(project_map_function, 1)                                              # map project id
+      user_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
+                                              data=x, \
+                                              lookup_table=User, \
+                                              lookup_column_name=required_user_column, \
+                                              target_column_name='user_id')                     # prepare the function for User id
+      new_data=new_data.apply(user_map_function, 1)                                             # map user id
+      data_authotiry_dict={True:'T'}                                                            # create a mapping dictionary for data authority value
+      new_data[data_authority_column]=new_data[data_authority_column].map(data_authotiry_dict)  # add value for data authority
+      self.store_records(table=ProjectUser, data=new_data)                                      # store the project_user data
+      self.commit_session()                                                                     # save changes to database
     except:
       self.rollback_session()
       raise
