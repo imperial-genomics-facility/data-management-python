@@ -1,5 +1,4 @@
 import pandas as pd
-import numpy as np
 import json, hashlib, os, codecs
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.igfTables import User
@@ -18,6 +17,30 @@ class UserAdaptor(BaseAdaptor):
       raise ValueError('Email id {0} is not correctly formatted'.format(email))
 
 
+  def _encrypt_password(self, series, password_column='password', salt_column='encryption_salt'):
+    '''
+    An internal function for encrypting password
+    '''
+    if not isinstance(series, pd.Series):
+      raise TypeError('Expecting a pandas series, got:{0}'.format(type(series)))
+
+    series.fillna('',inplace=True)
+    if not password_column in series.index or not series[password_column]:
+      raise ValueError('Missing required field password: {0}'.format(json.dumps(series.to_dict())))
+ 
+    salt=codecs.encode(os.urandom(32),"hex").decode("utf-8")                                        # calculate salt value
+    password=series[password_column]                                                                # fetch password
+    if not isinstance(password, str):
+      password=str(series.password_column).encode('utf-8')                                          # encode password if its not a string
+
+    if not len(password)==128:                                                                      # horrible hack for checking already hashed passward
+      key=salt+password                                                                             # construct key using salt and password
+      password=hashlib.sha512(str(key).encode('utf-8')).hexdigest()                                 # create password hash
+      series[password_column]=password                                                              # set hash to data series
+      series[salt_column]=salt                                                                      # set salt to data series
+    return series
+
+
   def _preprocess_data(self,data, password_column='password', categoty_column='category', \
                        email_column='email_id', hpc_user_column='hpc_username', hpc_user='HPC_USER',
                        user_igf_id_column='user_igf_id', username_column='username', salt_column='encryption_salt'):
@@ -29,23 +52,20 @@ class UserAdaptor(BaseAdaptor):
       
     try:
       # encrypt password
-      salt=codecs.encode(os.urandom(32),"hex").decode("utf-8")                                                 # generate encryption salt
-      data[salt_column]=salt                                                                                   # add salt value to dataframe
-      encryption_func=lambda x: x if len(x)==128 else hashlib.sha512(salt+str(x).encode('utf-8')).hexdigest()  # define encryption function
-      data[password_column]=data[password_column].map(encryption_func)                                         # encrypt and add password
-      
+      new_data=data.apply(lambda x: self._encrypt_password(series=x),1) 
+
       # check email id, it should contail '@'
-      data[email_column].map(lambda x: self._email_check(email=x))
+      new_data[email_column].map(lambda x: self._email_check(email=x))
 
       # assign categoty, if user has hpc_username, then its 'HPC_USER'
-      data[categoty_column]=data[hpc_user_column].notnull().map(lambda x: hpc_user if x else None)
+      new_data[categoty_column]=new_data[hpc_user_column].notnull().map(lambda x: hpc_user if x else None)
 
       # check for username, user with igf id should have the username
-      if data[data[user_igf_id_column].notnull() & data[username_column].isnull()][email_column].count() > 0 :
-        raise ValueError('Missing username for a registered user {0}',format(data[user_igf_id_column].astype('str')))
+      if new_data[new_data[user_igf_id_column].notnull() & new_data[username_column].isnull()][email_column].count() > 0 :
+        raise ValueError('Missing username for a registered user {0}'.format(new_data[user_igf_id_column].astype('str')))
 
-      data=data.fillna('')
-      return data
+      new_data=new_data.fillna('')
+      return new_data
     except:
       raise     
 
@@ -78,4 +98,5 @@ class UserAdaptor(BaseAdaptor):
       return user 
     except:
       raise
+
 
