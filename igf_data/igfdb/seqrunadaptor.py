@@ -14,7 +14,9 @@ class SeqrunAdaptor(BaseAdaptor):
     '''
     try:
       self.store_records(table=Seqrun, data=data)
+      self.commit_session()
     except:
+      self.rollback_session()
       raise
 
 
