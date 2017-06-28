@@ -2,9 +2,9 @@ import json
 import pandas as pd
 from sqlalchemy.sql import table, column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
-from igf_data.igfdb.useradaptor import ProjectAdaptor
-from igf_data.igfdb.useradaptor import SampleAdaptor
-from igf_data.igfdb.useradaptor import PlatformAdaptor
+from igf_data.igfdb.projectadaptor import ProjectAdaptor
+from igf_data.igfdb.sampleadaptor import SampleAdaptor
+from igf_data.igfdb.platformadaptor import PlatformAdaptor
 from igf_data.igfdb.igfTables import Project, Sample, Platform, Experiment, Experiment_attribute
 
 class ExperimentAdaptor(BaseAdaptor):
@@ -38,13 +38,15 @@ class ExperimentAdaptor(BaseAdaptor):
       new_experiment_data=new_experiment_data.apply(sample_map_function, axis=1)                # map sample id foreign key id
       new_experiment_data=new_experiment_data.apply(platform_map_function, axis=1)              # map platform id foreign key id
       self.store_experiment_data(data=new_experiment_data)                                      # store experiment data
+
       exp_map_function=lambda x: self.map_foreign_table_and_store_attribute( \
                                               data=x, \
                                               lookup_table=Experiment, \
                                               lookup_column_name='experiment_igf_id', \
                                               target_column_name='experiment_id')               # prepare the function 
-      new_exp_attr_data=exp_attr_data.apply(exp_map_function, axis=1)                           # map foreign key id                                       
-      self.store_exp_attributes(data=new_exp_attr_data)                                         # store run attributes
+      new_experiment_attr_data=experiment_attr_data.apply(exp_map_function, axis=1)             # map foreign key id                                       
+      if len(new_experiment_attr_data.columns) > 0:                                              # check if any attribute is present of not
+        self.store_experiment_attributes(data=new_experiment_attr_data)                         # store run attributes
       self.commit_session() 
     except:
       self.rollback_session()
@@ -66,6 +68,7 @@ class ExperimentAdaptor(BaseAdaptor):
       data=pd.DataFrame(data)
 
     experiment_columns=self.get_table_columns(table_name=Experiment, excluded_columns=['experiment_id', 'project_id', 'sample_id', 'platform_id'])       # get required columns for experiment table
+    experiment_columns.extend(['project_igf_id', 'sample_igf_id', 'platform_igf_id'])                                                                    # add required columns
     (experiment_df, experiment_attr_df)=super(ExperimentAdaptor, self).divide_data_to_table_and_attribute( \
                                                                            data=data, \
     	                                                                   required_column=required_column, \
