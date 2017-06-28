@@ -15,7 +15,9 @@ class PlatformAdaptor(BaseAdaptor):
     '''
     try:
       self.store_records(table=Platform, data=data)
+      self.commit_session()
     except:
+      self.rollback_session()
       raise
 
 
