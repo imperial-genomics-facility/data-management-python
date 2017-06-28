@@ -24,7 +24,8 @@ class ProjectAdaptor(BaseAdaptor):
                                       lookup_column_name='project_igf_id', \
                                       target_column_name='project_id')            # prepare the function
       new_project_attr_data=project_attr_data.apply(map_function, axis=1)         # map foreign key id
-      self.store_project_attributes(data=new_project_attr_data)                   # store project attributes
+      if len(new_project_attr_data.columns) > 0:                                  # check if any attribute is present
+        self.store_project_attributes(data=new_project_attr_data)                  # store project attributes
       self.commit_session()                                                       # save changes to database
     except:
       self.rollback_session()

@@ -30,7 +30,8 @@ class SampleAdaptor(BaseAdaptor):
                                               lookup_column_name='sample_igf_id', \
                                               target_column_name='sample_id')         # prepare the function for sample
       new_sample_attr_data=sample_attr_data.apply(sample_map_function, 1)             # map sample id
-      self.store_sample_attributes(data=new_sample_attr_data)                         # store project attributes
+      if len(new_sample_attr_data.columns) > 0:                                       # check if any attribute is present
+        self.store_sample_attributes(data=new_sample_attr_data)                       # store project attributes
       self.commit_session()
     except:
       self.rollback_session()
