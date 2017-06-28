@@ -2,7 +2,6 @@ import json
 import pandas as pd
 from sqlalchemy.sql import table, column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
-from igf_data.igfdb.useradaptor import ProjectAdaptor
 from igf_data.igfdb.igfTables import Project, Sample, Sample_attribute, Experiment
 
 
@@ -18,20 +17,28 @@ class SampleAdaptor(BaseAdaptor):
     (sample_data, sample_attr_data)=self.divide_data_to_table_and_attribute(data=data)
 
     try:
-      self.store_sample_data(data=sample_data)                                                             # store sample records
-      map_function=lambda x: self.map_foreign_table_and_store_attribute(data=x, \
-                                                                        lookup_table=Sample, \
-                                                                        lookup_column_name='sample_igf_id', \
-                                                                        target_column_name='sample_id')    # prepare the function
-      new_sample_attr_data=sample_attr_data.apply(map_function, axis=1)                                    # map foreign key id
-      self.store_sample_attributes(data=new_sample_attr_data)                                            # store project attributes
+      project_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
+                                              data=x, \
+                                              lookup_table=Project, \
+                                              lookup_column_name='project_igf_id', \
+                                              target_column_name='project_id')        # prepare the function for project
+      new_sample_data=sample_data.apply(project_map_function,1)                       # map project id
+      self.store_sample_data(data=new_sample_data)                                        # store sample records
+      sample_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
+                                              data=x, \
+                                              lookup_table=Sample, \
+                                              lookup_column_name='sample_igf_id', \
+                                              target_column_name='sample_id')         # prepare the function for sample
+      new_sample_attr_data=sample_attr_data.apply(sample_map_function, 1)             # map sample id
+      self.store_sample_attributes(data=new_sample_attr_data)                         # store project attributes
       self.commit_session()
     except:
       self.rollback_session()
       raise
 
 
-  def divide_data_to_table_and_attribute(self, data, required_column='sample_igf_id', attribute_name_column='attribute_name', attribute_value_column='attribute_value'):
+  def divide_data_to_table_and_attribute(self, data, required_column='sample_igf_id', \
+                                         attribute_name_column='attribute_name', attribute_value_column='attribute_value'):
     '''
     A method for separating data for Sample and Sample_attribute tables
     required params:
@@ -44,14 +51,15 @@ class SampleAdaptor(BaseAdaptor):
     if not isinstance(data, pd.DataFrame):
       data=pd.DataFrame(data)
 
-    sample_columns=self.get_table_columns(table_name=Sample, excluded_columns=['sample_id'])
+    sample_columns=self.get_table_columns(table_name=Sample, excluded_columns=['sample_id', 'project_id'])
+    sample_columns.extend(['project_igf_id'])
     (sample_df, sample_attr_df)=super(SampleAdaptor, self).divide_data_to_table_and_attribute( \
-                                                                     data=data, \
-    	                                                             required_column=required_column, \
-    	                                                             table_columns=project_columns,  \
-                                                                     attribute_name_column=attribute_name_column, \
-                                                                     attribute_value_column=attribute_value_column
-                                                                   )
+                                                               data=data, \
+    	                                                       required_column=required_column, \
+    	                                                       table_columns=sample_columns,  \
+                                                               attribute_name_column=attribute_name_column, \
+                                                               attribute_value_column=attribute_value_column
+                                                             )
     return (sample_df, sample_attr_df)
 
 
@@ -60,12 +68,12 @@ class SampleAdaptor(BaseAdaptor):
     Load data to Sample table
     '''
     try:
-      self.store_records(table=Project, data=data)
+      self.store_records(table=Sample, data=data)
     except:
       raise
 
 
-  def store_project_attributes(self, data, sample_id=''):
+  def store_sample_attributes(self, data, sample_id=''):
     '''
     A method for storing data to Sample_attribute table
     required columns:
