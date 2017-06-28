@@ -2,7 +2,6 @@ import json
 import pandas as pd
 from sqlalchemy.sql import table, column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
-from igf_data.igfdb.useradaptor import ExperimentAdaptor
 from igf_data.igfdb.igfTables import Experiment, Run, Run_attribute, Seqrun
 
 class RunAdaptor(BaseAdaptor):
@@ -20,7 +19,7 @@ class RunAdaptor(BaseAdaptor):
       seqrun_map_function=lambda x: self.map_foreign_table_and_store_attribute( \
                                              data=x, \
                                              lookup_table=Seqrun, \
-                                             lookup_column_name='seqrun_igf_id', \     
+                                             lookup_column_name='seqrun_igf_id', \
                                              target_column_name='seqrun_id')              # prepare seqrun mapping function
       new_run_data=run_data.apply(seqrun_map_function, axis=1)                            # map seqrun id
       exp_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
@@ -36,7 +35,8 @@ class RunAdaptor(BaseAdaptor):
                                              lookup_column_name='run_igf_id', \
                                              target_column_name='run_id')                 # prepare run mapping function
       new_run_attr_data=run_attr_data.apply(run_map_function, axis=1)
-      self.store_run_attributes(data=new_run_attr_data)                                   # store run attributes
+      if len(new_run_attr_data.columns)>0:                                                # check if any attribute exists
+        self.store_run_attributes(data=new_run_attr_data)                                 # store run attributes
       self.commit_session()                                                               # save changes to database
     except:
       self.rollback_session()
@@ -58,10 +58,11 @@ class RunAdaptor(BaseAdaptor):
       data=pd.DataFrame(data)
 
     run_columns=self.get_table_columns(table_name=Run, excluded_columns=['run_id', 'seqrun_id', 'experiment_id'])     # get required columns for run table
+    run_columns.extend(['seqrun_igf_id', 'experiment_igf_id'])
     (run_df, run_attr_df)=super(RunAdaptor, self).divide_data_to_table_and_attribute( \
                                                       data=data, \
     	                                              required_column=required_column, \
-    	                                              table_columns=project_columns,  \
+    	                                              table_columns=run_columns,  \
                                                       attribute_name_column=attribute_name_column, \
                                                       attribute_value_column=attribute_value_column \
                                                     )                                                                 # divide data to run and attribute table
