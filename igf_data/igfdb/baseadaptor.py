@@ -82,20 +82,37 @@ class BaseAdaptor(DBConnect):
       row_list=list()
       id_name=''
       id_value=''
+      id_list=dict()
       for key, value in element.items():
         row_dict=dict()
-        if value and key != required_column:
-          row_dict[attribute_name_column]=key
-          row_dict[attribute_value_column]=value
-          row_list.append(row_dict)
-        elif value and key == required_column:
-          id_name=key
-          id_value=value
+        if isinstance(required_column, str):
+          if value and key != required_column:
+            row_dict[attribute_name_column]=key
+            row_dict[attribute_value_column]=value
+            row_list.append(row_dict)
+          elif value and key == required_column:
+            id_name=key
+            id_value=value
+        elif isinstance(required_column, list):
+          if value and key not in required_column:
+            row_dict[attribute_name_column]=key
+            row_dict[attribute_value_column]=value
+            row_list.append(row_dict)
+          elif value and key in required_column:
+            id_name=key
+            id_value=value
+            id_list[key]=value
+        else:
+          raise TypeError('Expecting a string or list and got: {0}'.format(type(required_column)))
       row_df=pd.DataFrame(row_list)
       if not id_name and id_value:
         raise ValueError('Required id or value not found for column: {0}'.format(required_column))
 
-      row_df[id_name]=id_value
+      if isinstance(required_column, str):
+        row_df[id_name]=id_value
+      elif isinstance(required_column, list):
+        for key,value in id_list.items():
+          row_df[key]=value
       row_df_data=row_df.to_dict(orient='records')
       final_list.extend(row_df_data)
     new_data_series=pd.DataFrame(final_list)
@@ -117,12 +134,10 @@ class BaseAdaptor(DBConnect):
     '''
     if not isinstance(data, pd.DataFrame):
       data=pd.DataFrame(data)
-
     table_df=data.ix[:, table_columns]                                           # slice df for table
     table_attr_columns=list(set(data.columns).difference(set(table_df.columns))) # assign remaining columns to attribute dataframe
-    table_attr_columns.append(required_column)                                   # append required column
+    table_attr_columns.extend(required_column)                                   # append required column
     table_attr_df=data.ix[:, table_attr_columns]                                 # slice df for attribute table
-   
     new_table_attr_df=self._format_attribute_table_row(data=table_attr_df, \
                                                        required_column=required_column, \
                                                        attribute_name_column=attribute_name_column, \

@@ -2,8 +2,7 @@ import json
 import pandas as pd
 from sqlalchemy.sql import table, column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
-from igf_data.igfdb.useradaptor import FileAdaptor
-from igf_data.igfdb.igfTables import Collection, File, Collection_group, Collection_attribute, Experiment, Run, Sample
+from igf_data.igfdb.igfTables import Collection, File, Collection_group, Collection_attribute
 
 class CollectionAdaptor(BaseAdaptor):
   '''
@@ -15,15 +14,14 @@ class CollectionAdaptor(BaseAdaptor):
     A method for dividing and storing data to collection and attribute table
     '''
     (collection_data, collection_attr_data)=self.divide_data_to_table_and_attribute(data=data)
-    
     try:
       self.store_collection_data(data=collection_data)                                                        # store collection data
       map_function=lambda x: self.map_foreign_table_and_store_attribute(data=x, \
                                                                         lookup_table=Collection, \
-                                                                        lookup_column_name=['name', 'type'] \ 
+                                                                        lookup_column_name=['name', 'type'], \
                                                                         target_column_name='collection_id')   # prepare the function
       new_collection_attr_data=collection_attr_data.apply(map_function, axis=1)                               # map foreign key id
-      self.store_collection_attributes(data=new_project_attr_data)                                            # store project attributes 
+      self.store_collection_attributes(data=new_collection_attr_data)                                         # store project attributes 
       self.commit_session()                                                                                   # save changes to database
     except:
       self.rollback_session()
@@ -55,7 +53,7 @@ class CollectionAdaptor(BaseAdaptor):
     return (collection_df, collection_attr_df)
 
  
-   def store_collection_data(self, data):
+  def store_collection_data(self, data):
     '''
     Load data to Collection table
     '''
@@ -113,7 +111,7 @@ class CollectionAdaptor(BaseAdaptor):
       collection_map_function=lambda x: self.map_foreign_table_and_store_attribute( \
                                                  data=x, \
                                                  lookup_table=Collection, \
-                                                 lookup_column_name=required_collection_column \ 
+                                                 lookup_column_name=required_collection_column, \
                                                  target_column_name='collection_id')             # prepare the map function for collection
       new_data=data.apply(collection_map_function, axis=1)                                       # map collection id
       file_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
@@ -121,12 +119,12 @@ class CollectionAdaptor(BaseAdaptor):
                                                  lookup_table=File, \
                                                  lookup_column_name=required_file_column, \
                                                  target_column_name='file_id')                   # prepare the function for file id
-       new_data=new_data.apply(file_map_function, axis=1)                                        # map collection id
-       self.store_records(table=Collection_group, data=new_data)
-       self.commit_session()
+      new_data=new_data.apply(file_map_function, axis=1)                                        # map collection id
+      self.store_records(table=Collection_group, data=new_data)
+      self.commit_session()
     except:
-       self.rollback_session()
-       raise
+      self.rollback_session()
+      raise
 
 
   def get_collection_files(self, collection_name, collection_type='', output_mode='dataframe'):
@@ -137,20 +135,20 @@ class CollectionAdaptor(BaseAdaptor):
     optional params:
     collection_type: a collection type 
     output_mode: dataframe / object
-   '''
-   if not hasattr(self, 'session'):
-     raise AttributeError('Attribute session not found')
+    '''
+    if not hasattr(self, 'session'):
+      raise AttributeError('Attribute session not found')
 
-   session=self.session
-   query=session.query(Collection, File).join(Collection_group).join(File)  # sql join Collection, Collection_group and File tables
-   query=query.filter(Collection.name.in_([collection_name]))               # filter query based on collection_name
-   if collection_type: 
-     query=query.filter(Collection.type.in_([collection_type]))             # filter query on collection_type, if its present
+    session=self.session
+    query=session.query(Collection, File).join(Collection_group).join(File)  # sql join Collection, Collection_group and File tables
+    query=query.filter(Collection.name.in_([collection_name]))               # filter query based on collection_name
+    if collection_type: 
+      query=query.filter(Collection.type.in_([collection_type]))             # filter query on collection_type, if its present
    
-   try:    
-      results=self.fetch_records(query=query, output_mode=output_mode)      # get results
-      return results
+    try:    
+       results=self.fetch_records(query=query, output_mode=output_mode)      # get results
+       return results
     except:
-      raise
+       raise
 
 
