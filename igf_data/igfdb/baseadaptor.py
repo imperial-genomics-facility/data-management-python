@@ -113,6 +113,7 @@ class BaseAdaptor(DBConnect):
       elif isinstance(required_column, list):
         for key,value in id_list.items():
           row_df[key]=value
+
       row_df_data=row_df.to_dict(orient='records')
       final_list.extend(row_df_data)
     new_data_series=pd.DataFrame(final_list)
@@ -136,7 +137,13 @@ class BaseAdaptor(DBConnect):
       data=pd.DataFrame(data)
     table_df=data.ix[:, table_columns]                                           # slice df for table
     table_attr_columns=list(set(data.columns).difference(set(table_df.columns))) # assign remaining columns to attribute dataframe
-    table_attr_columns.extend(required_column)                                   # append required column
+    if isinstance(required_column, str):
+      table_attr_columns.append(required_column)                                 # append required column if its a string
+    elif isinstance(required_column, list):
+      table_attr_columns.extend(required_column)                                 # extend required column for a list
+    else:
+      raise TypeError('Expecting a string or list and got: {0}'.format(type(required_column)))
+
     table_attr_df=data.ix[:, table_attr_columns]                                 # slice df for attribute table
     new_table_attr_df=self._format_attribute_table_row(data=table_attr_df, \
                                                        required_column=required_column, \
