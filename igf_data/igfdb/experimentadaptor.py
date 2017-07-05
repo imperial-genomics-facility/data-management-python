@@ -29,14 +29,8 @@ class ExperimentAdaptor(BaseAdaptor):
                                               lookup_table=Sample, \
                                               lookup_column_name='sample_igf_id', \
                                               target_column_name='sample_id')                   # prepare the function for Sample id
-      platform_map_function=lambda x: self.map_foreign_table_and_store_attribute( \
-                                              data=x, \
-                                              lookup_table=Platform, \
-                                              lookup_column_name='platform_igf_id', \
-                                              target_column_name='platform_id')                 # prepare the function for Platform id
       new_experiment_data=experiment_data.apply(project_map_function, axis=1)                   # map project id foreign key id
       new_experiment_data=new_experiment_data.apply(sample_map_function, axis=1)                # map sample id foreign key id
-      new_experiment_data=new_experiment_data.apply(platform_map_function, axis=1)              # map platform id foreign key id
       self.store_experiment_data(data=new_experiment_data)                                      # store experiment data
 
       exp_map_function=lambda x: self.map_foreign_table_and_store_attribute( \
@@ -67,15 +61,15 @@ class ExperimentAdaptor(BaseAdaptor):
     if not isinstance(data, pd.DataFrame):
       data=pd.DataFrame(data)
 
-    experiment_columns=self.get_table_columns(table_name=Experiment, excluded_columns=['experiment_id', 'project_id', 'sample_id', 'platform_id'])       # get required columns for experiment table
-    experiment_columns.extend(['project_igf_id', 'sample_igf_id', 'platform_igf_id'])                                                                    # add required columns
+    experiment_columns=self.get_table_columns(table_name=Experiment, excluded_columns=['experiment_id', 'project_id', 'sample_id' ])    # get required columns for experiment table
+    experiment_columns.extend(['project_igf_id', 'sample_igf_id'])                                                                      # add required columns
     (experiment_df, experiment_attr_df)=super(ExperimentAdaptor, self).divide_data_to_table_and_attribute( \
                                                                            data=data, \
     	                                                                   required_column=required_column, \
     	                                                                   table_columns=experiment_columns,  \
                                                                            attribute_name_column=attribute_name_column, \
                                                                            attribute_value_column=attribute_value_column \
-                                                                         )                                                                               # divide data to experiment and adatpor
+                                                                         )                                                              # divide data to experiment and adatpor
     return (experiment_df, experiment_attr_df)
 
 

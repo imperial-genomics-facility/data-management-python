@@ -137,12 +137,12 @@ class Platform(Base):
 
   platform_id      = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   platform_igf_id  = Column(String(10), nullable=False)
-  model_name       = Column(Enum('HISEQ2500', 'HISEQ4000', 'MISEQ', 'NEXTSEQ'), nullable=False)
+  model_name       = Column(Enum('HISEQ2500', 'HISEQ4000', 'MISEQ', 'NEXTSEQ', 'NANOPORE_MINION'), nullable=False)
   vendor_name      = Column(Enum('ILLUMINA', 'NANOPORE'), nullable=False)
   software_name    = Column(Enum('RTA'), nullable=False)
   software_version = Column(Enum('RTA1.18.54', 'RTA1.18.64', 'RTA2'), nullable=False)
   date_created     = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now )
-  experiment       = relationship('Experiment', backref="platform")
+  experiment       = relationship('Seqrun', backref="platform")
 
   def __repr__(self):
     return "Platform(platform_id = '{self.platform_id}'," \
@@ -164,19 +164,23 @@ class Seqrun(Base):
   seqrun_igf_id   = Column(String(50), nullable=False)
   reject_run      = Column(Enum('Y','N'), nullable=False, server_default='N')
   date_created    = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
+  flowcell_id     = Column(String(10), nullable=False)
+  platform_id     = Column(INTEGER(unsigned=True), ForeignKey('platform.platform_id', onupdate="CASCADE", ondelete="SET NULL"))
   run             = relationship('Run', backref="seqrun")
 
   def __repr__(self):
     return "Seqrun(seqrun_id = '{self.seqrun_id}'," \
                         "seqrun_igf_id = '{self.seqrun_igf_id}'," \
                         "reject_run = '{self.reject_run}'," \
-                        "date_created = '{self.date_created}')".format(self=self)
+                        "flowcell_id = '{self.flowcell_id}'," \
+                        "date_created = '{self.date_created}'," \
+                        "platform_id = '{self.platform_id}')".format(self=self)
 
 
 class Experiment(Base):
   __tablename__ = 'experiment'
   __table_args__ = (
-    UniqueConstraint('sample_id', 'library_name', 'platform_id'),
+    UniqueConstraint('sample_id', 'library_name', 'platform_name'),
     UniqueConstraint('experiment_igf_id'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
@@ -185,12 +189,13 @@ class Experiment(Base):
   project_id        = Column(INTEGER(unsigned=True), ForeignKey('project.project_id', onupdate="CASCADE", ondelete="SET NULL"))
   sample_id         = Column(INTEGER(unsigned=True), ForeignKey('sample.sample_id', onupdate="CASCADE", ondelete="SET NULL"))
   library_name      = Column(String(50), nullable=False)
+  library_source    = Column(Enum('GENOMIC', 'TRANSCRIPTOMIC' ,'GENOMIC_SINGLE_CELL', 'TRANSCRIPTOMIC_SINGLE_CELL', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   library_strategy  = Column(Enum('WGS', 'EXOME', 'RNA-SEQ', 'CHIP-SEQ', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   experiment_type   = Column(Enum('POLYA-RNA', 'TOTAL-RNA', 'SMALL_RNA', 'H3K4ME3', 'WGS', 'EXOME', 'H3k27ME3', 'H3K27AC', 'H3K9ME3', 'H3K36ME3', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   library_layout    = Column(Enum('SINGLE', 'PAIRED', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   status            = Column(Enum('ACTIVE', 'FAILED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
   date_created      = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
-  platform_id       = Column(INTEGER(unsigned=True), ForeignKey('platform.platform_id', onupdate="CASCADE", ondelete="SET NULL"))
+  platform_name     = Column(Enum('HISEQ2500', 'HISEQ4000', 'MISEQ', 'NEXTSEQ', 'NANOPORE_MINION', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   experiment            = relationship('Run', backref='experiment')
   experiment_attribute  = relationship('Experiment_attribute', backref='experiment')
 
@@ -200,12 +205,13 @@ class Experiment(Base):
                       "project_id = '{self.project_id}'," \
                       "sample_id = '{self.sample_id}'," \
                       "library_name = '{self.library_name}'," \
+                      "library_source = '{self.source}'," \
                       "library_strategy = '{self.library_strategy}'," \
                       "experiment_type = '{self.experiment_type}'," \
                       "library_layout = '{self.library_layout}'," \
                       "status = '{self.status}'," \
                       "date_created = '{self.date_created}'," \
-                      "platform_id = '{self.platform_id}')".format(self=self)
+                      "platform_name = '{self.platform_id}')".format(self=self)
 
 
 class Run(Base):
@@ -215,10 +221,9 @@ class Run(Base):
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
   run_id        = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
-  experiment_id = Column(INTEGER(unsigned=True), ForeignKey('experiment.experiment_id', onupdate="CASCADE", ondelete="SET NULL"))
   run_igf_id    = Column(String(50), nullable=False)
+  experiment_id = Column(INTEGER(unsigned=True), ForeignKey('experiment.experiment_id', onupdate="CASCADE", ondelete="SET NULL"))
   seqrun_id     = Column(INTEGER(unsigned=True), ForeignKey('seqrun.seqrun_id', onupdate="CASCADE", ondelete="SET NULL"))
-  flowcell_id   = Column(String(10), nullable=False)
   status        = Column(Enum('ACTIVE', 'FAILED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
   lane_number   = Column(Enum('1', '2', '3', '4', '5', '6', '7', '8'), nullable=False)
   date_created  = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp())
@@ -229,7 +234,6 @@ class Run(Base):
                "experiment_id = '{self.experiment_id}'," \
                "run_igf_id = '{self.run_igf_id}'," \
                "seqrun_id = '{self.seqrun_id}'," \
-               "flowcell_id = '{self.flowcell_id}'," \
                "status = '{self.status}'," \
                "lane_number = '{self.lane_number}'," \
                "date_created = '{self.date_created}')".format(self=self)
