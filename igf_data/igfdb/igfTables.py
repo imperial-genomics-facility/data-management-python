@@ -1,4 +1,5 @@
 import datetime
+from sqlalchemy.sql.functions import current_timestamp
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.dialects.mysql import INTEGER
@@ -13,12 +14,12 @@ class Project(Base):
      UniqueConstraint('project_igf_id'),
      { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  project_id     = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
-  project_igf_id = Column(String(20), nullable=False)
-  project_name   = Column(String(100))
-  start_date     = Column(DATE(), nullable=False, default=datetime.date.today())
-  description    = Column(TEXT())
-  deliverable    = Column(Enum('FASTQ', 'ALIGNMENT', 'ANALYSIS'), server_default='FASTQ')
+  project_id      = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  project_igf_id  = Column(String(20), nullable=False)
+  project_name    = Column(String(100))
+  start_timestamp = Column(TIMESTAMP(), nullable=True, server_default=current_timestamp())
+  description     = Column(TEXT())
+  deliverable     = Column(Enum('FASTQ', 'ALIGNMENT', 'ANALYSIS'), server_default='FASTQ')
   projectuser       = relationship('ProjectUser', backref="project")
   sample            = relationship('Sample', backref="project")
   experiment        = relationship('Experiment', backref="project")
@@ -28,7 +29,7 @@ class Project(Base):
     return "Project(project_id = '{self.project_id}', " \
                     "project_igf_id = '{self.project_igf_id}'," \
                     "project_name = '{self.project_name}'," \
-                    "start_date = '{self.start_date}'," \
+                    "start_timestamp = '{self.start_timestamp}'," \
                     "description = '{self.description}'," \
                     "deliverable = '{self.deliverable}')".format(self=self)
                    
@@ -48,7 +49,7 @@ class User(Base):
   hpc_username    = Column(String(10))
   category        = Column(Enum('HPC_USER','NON_HPC_USER','EXTERNAL'), nullable=False, server_default='NON_HPC_USER')
   status          = Column(Enum('ACTIVE', 'BLOCKED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
-  date_created    = Column(TIMESTAMP(), nullable=False, default=datetime.datetime.now, onupdate=datetime.datetime.now)
+  date_created    = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
   password        = Column(String(129))
   encryption_salt = Column(String(129))
   projectuser     = relationship('ProjectUser', backref="user")
@@ -104,7 +105,7 @@ class Sample(Base):
   cell_type           = Column(String(50))
   tissue_type         = Column(String(50))
   cell_line           = Column(String(50))
-  date_created        = Column(TIMESTAMP(), nullable=False, default=datetime.datetime.now)
+  date_created        = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp())
   project_id          = Column(INTEGER(unsigned=True), ForeignKey('project.project_id', onupdate="CASCADE", ondelete="SET NULL"))
   experiment          = relationship('Experiment', backref="sample")
   sample_attribute    = relationship('Sample_attribute', backref="sample")
@@ -140,7 +141,7 @@ class Platform(Base):
   vendor_name      = Column(Enum('ILLUMINA', 'NANOPORE'), nullable=False)
   software_name    = Column(Enum('RTA'), nullable=False)
   software_version = Column(Enum('RTA1.18.54', 'RTA1.18.64', 'RTA2'), nullable=False)
-  date_created     = Column(TIMESTAMP(), nullable=False, default=datetime.datetime.now, onupdate=datetime.datetime.now )
+  date_created     = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now )
   experiment       = relationship('Experiment', backref="platform")
 
   def __repr__(self):
@@ -162,7 +163,7 @@ class Seqrun(Base):
   seqrun_id       = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   seqrun_igf_id   = Column(String(50), nullable=False)
   reject_run      = Column(Enum('Y','N'), nullable=False, server_default='N')
-  date_created    = Column(TIMESTAMP(), nullable=False, default=datetime.datetime.now, onupdate=datetime.datetime.now)
+  date_created    = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
   run             = relationship('Run', backref="seqrun")
 
   def __repr__(self):
@@ -188,7 +189,7 @@ class Experiment(Base):
   experiment_type   = Column(Enum('POLYA-RNA', 'TOTAL-RNA', 'SMALL_RNA', 'H3K4ME3', 'WGS', 'EXOME', 'H3k27ME3', 'H3K27AC', 'H3K9ME3', 'H3K36ME3', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   library_layout    = Column(Enum('SINGLE', 'PAIRED', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   status            = Column(Enum('ACTIVE', 'FAILED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
-  date_created      = Column(TIMESTAMP(), nullable=False, default=datetime.datetime.now, onupdate=datetime.datetime.now)
+  date_created      = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
   platform_id       = Column(INTEGER(unsigned=True), ForeignKey('platform.platform_id', onupdate="CASCADE", ondelete="SET NULL"))
   experiment            = relationship('Run', backref='experiment')
   experiment_attribute  = relationship('Experiment_attribute', backref='experiment')
@@ -220,7 +221,7 @@ class Run(Base):
   flowcell_id   = Column(String(10), nullable=False)
   status        = Column(Enum('ACTIVE', 'FAILED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
   lane_number   = Column(Enum('1', '2', '3', '4', '5', '6', '7', '8'), nullable=False)
-  date_created  = Column(TIMESTAMP(), nullable=False, default=datetime.datetime.now)
+  date_created  = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp())
   run_attribute = relationship('Run_attribute', backref='run')
 
   def __repr__(self):
@@ -244,7 +245,7 @@ class Collection(Base):
   name          = Column(String(20), nullable=False)
   type          = Column(String(30), nullable=False)
   table         = Column(Enum('sample', 'experiment', 'run', 'file', 'project', 'unknown'), nullable=False, server_default='unknown')
-  date_stamp    = Column(TIMESTAMP(), nullable=False, default=datetime.datetime.now, onupdate=datetime.datetime.now) 
+  date_stamp    = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now) 
   collection_group      = relationship('Collection_group', backref='collection')
   collection_attribute  = relationship('Collection_attribute', backref='collection')
 
@@ -268,8 +269,8 @@ class File(Base):
   type         = Column(Enum('BCL_DIR', 'BCL_TAR', 'FASTQ_TAR', 'FASTQC_TAR', 'FASTQ', 'FASTQGZ', 'BAM', 'CRAM', 'GFF', 'BED', 'GTF', 'FASTA', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   md5          = Column(String(33))
   size         = Column(String(15))
-  date_created = Column(DATE(), nullable=False, default=datetime.date.today())
-  date_updated = Column(TIMESTAMP(), nullable=False, default=datetime.datetime.now, onupdate=datetime.datetime.now )
+  date_created = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp())
+  date_updated = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now )
   collection_group  = relationship('Collection_group', backref='file')
   file_attribute    = relationship('File_attribute', backref='file')
 
@@ -307,7 +308,7 @@ class Pipeline(Base):
   pipeline_id   = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   pipeline_name = Column(String(50), nullable=False)
   is_active     = Column(Enum('Y', 'N'), nullable=False, server_default='Y')
-  date_stamp    = Column(TIMESTAMP(), nullable=False, default=datetime.datetime.now, onupdate=datetime.datetime.now)
+  date_stamp    = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
   pipeline_seed = relationship('Pipeline_seed', backref='pipeline')
 
   def __repr__(self):
@@ -360,7 +361,7 @@ class History(Base):
   log_id     = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   log_type   = Column(Enum('CREATED', 'MODIFIED', 'DELETED'), nullable=False)
   table_name = Column(Enum('PROJECT', 'USER', 'SAMPLE', 'EXPERIMENT', 'RUN', 'COLLECTION', 'FILE', 'PLATFORM', 'PROJECT_ATTRIBUTE', 'EXPERIMENT_ATTRIBUTE', 'COLLECTION_ATTRIBUTE', 'SAMPLE_ATTRIBUTE', 'RUN_ATTRIBUTE', 'FILE_ATTRIBUTE'), nullable=False)
-  log_date   = Column(TIMESTAMP(), nullable=False, default=datetime.datetime.now, onupdate=datetime.datetime.now)
+  log_date   = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
   message    = Column(TEXT())
 
   def __repr__(self):
