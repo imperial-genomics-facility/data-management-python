@@ -166,7 +166,8 @@ class Seqrun(Base):
   date_created    = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
   flowcell_id     = Column(String(10), nullable=False)
   platform_id     = Column(INTEGER(unsigned=True), ForeignKey('platform.platform_id', onupdate="CASCADE", ondelete="SET NULL"))
-  run             = relationship('Run', backref="seqrun")
+  run               = relationship('Run', backref="seqrun")
+  seqrun_attribute  = relationship('Seqrun_attribute', backref='seqrun')
 
   def __repr__(self):
     return "Seqrun(seqrun_id = '{self.seqrun_id}'," \
@@ -375,6 +376,7 @@ class History(Base):
                    "log_date = '{self.log_date}'," \
                    "message = '{self.message}')".format(self=self)
 
+
 class Project_attribute(Base):
   __tablename__ = 'project_attribute'
   __table_args__ = (
@@ -445,6 +447,17 @@ class Sample_attribute(Base):
                             "attribute_name = '{self.attribute_name}'," \
                             "attribute_value = '{self.attribute_value}'," \
                             "sample_id = '{self.sample_id}')".format(self=self)
+
+
+class Seqrun_attribute(Base):
+  __tablename__ = 'seqrun_attribute'
+  __table_args__ = (
+    UniqueConstraint('seqrun_id', 'attribute_name'),
+    { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
+  seqrun_attribute_id  = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  attribute_name       = Column(String(50))
+  attribute_value      = Column(String(100))
+  seqrun_id            = Column(INTEGER(unsigned=True), ForeignKey('seqrun.seqrun_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
 
 
 class Run_attribute(Base):
