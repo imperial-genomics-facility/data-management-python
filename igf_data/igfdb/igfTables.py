@@ -380,7 +380,7 @@ class History(Base):
 class Project_attribute(Base):
   __tablename__ = 'project_attribute'
   __table_args__ = (
-    UniqueConstraint('project_id', 'attribute_name'),
+    UniqueConstraint('project_id', 'attribute_name', 'attribute_value'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
   project_attribute_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
@@ -398,7 +398,7 @@ class Project_attribute(Base):
 class Experiment_attribute(Base):
   __tablename__ = 'experiment_attribute'
   __table_args__ = (
-    UniqueConstraint('experiment_id', 'attribute_name'),
+    UniqueConstraint('experiment_id', 'attribute_name', 'attribute_value'),
     {  'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
   experiment_attribute_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
@@ -416,7 +416,7 @@ class Experiment_attribute(Base):
 class Collection_attribute(Base):
   __tablename__ = 'collection_attribute'
   __table_args__ = (
-    UniqueConstraint('collection_id', 'attribute_name'),
+    UniqueConstraint('collection_id', 'attribute_name', 'attribute_value'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
   collection_attribute_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
@@ -434,7 +434,7 @@ class Collection_attribute(Base):
 class Sample_attribute(Base):
   __tablename__ = 'sample_attribute'
   __table_args__ = (
-    UniqueConstraint('sample_id', 'attribute_name'),
+    UniqueConstraint('sample_id', 'attribute_name', 'attribute_value'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
   sample_attribute_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
@@ -452,7 +452,7 @@ class Sample_attribute(Base):
 class Seqrun_attribute(Base):
   __tablename__ = 'seqrun_attribute'
   __table_args__ = (
-    UniqueConstraint('seqrun_id', 'attribute_name'),
+    UniqueConstraint('seqrun_id', 'attribute_name', 'attribute_value'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
   seqrun_attribute_id  = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   attribute_name       = Column(String(50))
@@ -463,7 +463,7 @@ class Seqrun_attribute(Base):
 class Run_attribute(Base):
   __tablename__ = 'run_attribute'
   __table_args__ = (
-    UniqueConstraint('run_id', 'attribute_name'),
+    UniqueConstraint('run_id', 'attribute_name', 'attribute_value'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
   run_attribute_id  = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
@@ -481,7 +481,7 @@ class Run_attribute(Base):
 class File_attribute(Base):
   __tablename__ = 'file_attribute'
   __table_args__ = (
-    UniqueConstraint('file_id', 'attribute_name'),
+    UniqueConstraint('file_id', 'attribute_name', 'attribute_value'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
 
   file_attribute_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
