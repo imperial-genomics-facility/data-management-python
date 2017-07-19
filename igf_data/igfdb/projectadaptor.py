@@ -17,16 +17,10 @@ class ProjectAdaptor(BaseAdaptor):
     (project_data, project_attr_data)=self.divide_data_to_table_and_attribute(data=data)
     
     try:
-      self.store_project_data(data=project_data)                                 # store project
-      map_function=lambda x: self.map_foreign_table_and_store_attribute(\
-                                      data=x, \
-                                      lookup_table=Project, \
-                                      lookup_column_name='project_igf_id', \
-                                      target_column_name='project_id')            # prepare the function
-      new_project_attr_data=project_attr_data.apply(map_function, axis=1)         # map foreign key id
-      if len(new_project_attr_data.columns) > 0:                                  # check if any attribute is present
-        self.store_project_attributes(data=new_project_attr_data)                 # store project attributes
-      self.commit_session()                                                       # save changes to database
+      self.store_project_data(data=project_data)                              # store project
+      if len(project_attr_data.columns) > 0:                                  # check if any attribute is present
+        self.store_project_attributes(data=project_attr_data)                 # store project attributes
+      self.commit_session()                                                   # save changes to database
     except:
       self.rollback_session()
       raise
@@ -66,7 +60,19 @@ class ProjectAdaptor(BaseAdaptor):
     A method for storing data to Project_attribute table
     '''
     try:
-      self.store_attributes(attribute_table=Project_attribute, linked_column='project_id', db_id=project_id, data=data)
+      if not isinstance(data, pd.DataFrame):
+        data=pd.DataFrame(data)                                                     # convert data to dataframe
+
+      if 'project_igf_id' in data.columns:                                          # map foreign key if project_igf_id is found
+        map_function=lambda x: self.map_foreign_table_and_store_attribute(\
+                                        data=x, \
+                                        lookup_table=Project, \
+                                        lookup_column_name='project_igf_id', \
+                                        target_column_name='project_id')            # prepare the function
+        new_data=data.apply(map_function, axis=1)                                   # map foreign key id
+        data=new_data                                                               # overwrite data   
+       
+      self.store_attributes(attribute_table=Project_attribute, linked_column='project_id', db_id=project_id, data=data)   # store attributes without auto commit
     except:
       raise
 
