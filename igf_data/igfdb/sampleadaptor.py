@@ -17,13 +17,7 @@ class SampleAdaptor(BaseAdaptor):
     (sample_data, sample_attr_data)=self.divide_data_to_table_and_attribute(data=data)
 
     try:
-      project_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
-                                              data=x, \
-                                              lookup_table=Project, \
-                                              lookup_column_name='project_igf_id', \
-                                              target_column_name='project_id')         # prepare the function for project
-      new_sample_data=sample_data.apply(project_map_function,1)                        # map project id
-      self.store_sample_data(data=new_sample_data)                                     # store sample records
+      self.store_sample_data(data=sample_data)                                         # store sample records
       if len(sample_attr_data.columns) > 0:                                            # check if any attribute is present
         self.store_sample_attributes(data=sample_attr_data)                            # store project attributes
       self.commit_session()
@@ -63,7 +57,19 @@ class SampleAdaptor(BaseAdaptor):
     Load data to Sample table
     '''
     try:
-      self.store_records(table=Sample, data=data)
+      if not isinstance(data, pd.DataFrame):
+        data=pd.DataFrame(data)                                                          # convert data to dataframe
+
+      if 'project_igf_id' in data.columns:
+        project_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
+                                                data=x, \
+                                                lookup_table=Project, \
+                                                lookup_column_name='project_igf_id', \
+                                                target_column_name='project_id')         # prepare the function for project
+        new_data=data.apply(project_map_function,1)                                      # map project id
+        data=new_data                                                                    # overwrite data
+
+      self.store_records(table=Sample, data=data)                                        # store data without autocommit
     except:
       raise
 
