@@ -2,7 +2,7 @@ import json
 import pandas as pd
 from sqlalchemy.sql import table, column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
-from igf_data.igfdb.igfTables import File 
+from igf_data.igfdb.igfTables import File, File_attribute
 
 class FileAdaptor(BaseAdaptor):
   '''
@@ -15,13 +15,9 @@ class FileAdaptor(BaseAdaptor):
     (file_data, file_attr_data)=self.divide_data_to_table_and_attribute(data=data)
     try:
       self.store_file_data(data=file_data) 
-      map_function=lambda x: self.map_foreign_table_and_store_attribute(\
-                                      data=x, \
-                                      lookup_table=File, \
-                                      lookup_column_name='file_path', \
-                                      target_column_name='file_id')                     # prepare the map function for File id
-      new_file_attr_data=file_attr_data.apply(map_function, 1)                          # map file id
-      self.store_file_attributes(data=new_file_attr_data) 
+      if len(file_attr_data.columns)>0:                             # check if any attribute exists
+        self.store_file_attributes(data=file_attr_data) 
+
       self.commit_session()
     except:
       self.rollback_session()
@@ -59,10 +55,8 @@ class FileAdaptor(BaseAdaptor):
       data=pd.DataFrame(data)     
 
     try:
-      self.store_records(table=File, data=data, mode='bulk' )
-      self.commit_session()
+      self.store_records(table=File, data=data )                                      # store data without autocommit
     except:
-      self.rollback_session()
       raise
 
 
@@ -71,7 +65,19 @@ class FileAdaptor(BaseAdaptor):
     A method for storing data to File_attribute table
     '''
     try:
-      self.store_attributes(attribute_table=File_attribute, linked_column='file_id', db_id=file_id, data=data)
+      if not isinstance(data, pd.DataFrame):
+        data=pd.DataFrame(data)
+
+      if 'file_path' in data.columns:
+        map_function=lambda x: self.map_foreign_table_and_store_attribute(\
+                                        data=x, \
+                                        lookup_table=File, \
+                                        lookup_column_name='file_path', \
+                                        target_column_name='file_id')                 # prepare the map function for File id
+        new_data=data.apply(map_function, 1)                                          # map file id
+        data=new_data                                                                 # overwrite data
+
+      self.store_attributes(attribute_table=File_attribute, linked_column='file_id', db_id=file_id, data=data) # store data without autocommit
     except:
       raise
 
