@@ -33,14 +33,9 @@ class ExperimentAdaptor(BaseAdaptor):
       new_experiment_data=new_experiment_data.apply(sample_map_function, axis=1)                # map sample id foreign key id
       self.store_experiment_data(data=new_experiment_data)                                      # store experiment data
 
-      exp_map_function=lambda x: self.map_foreign_table_and_store_attribute( \
-                                              data=x, \
-                                              lookup_table=Experiment, \
-                                              lookup_column_name='experiment_igf_id', \
-                                              target_column_name='experiment_id')               # prepare the function 
-      new_experiment_attr_data=experiment_attr_data.apply(exp_map_function, axis=1)             # map foreign key id                                       
-      if len(new_experiment_attr_data.columns) > 0:                                              # check if any attribute is present of not
-        self.store_experiment_attributes(data=new_experiment_attr_data)                         # store run attributes
+      if len(experiment_attr_data.columns) > 0:                                                 # check if any attribute is present of not
+        self.store_experiment_attributes(data=experiment_attr_data)                             # store run attributes
+
       self.commit_session() 
     except:
       self.rollback_session()
@@ -88,7 +83,19 @@ class ExperimentAdaptor(BaseAdaptor):
     A method for storing data to Experiment_attribute table
     '''
     try:
-      self.store_attributes(attribute_table=Experiment_attribute, linked_column='experiment_id', db_id=experiment_id, data=data)
+      if not isinstance(data, pd.DataFrame):
+        data=pd.DataFrame(data)                                                                   # convert data to dataframe
+
+      if 'experiment_igf_id' in data.columns:
+        exp_map_function=lambda x: self.map_foreign_table_and_store_attribute( \
+                                                data=x, \
+                                                lookup_table=Experiment, \
+                                                lookup_column_name='experiment_igf_id', \
+                                                target_column_name='experiment_id')               # prepare the function 
+        new_data=data.apply(exp_map_function, axis=1)                                             # map foreign key id                                       
+        data=new_data                                                                             # overwrite data
+
+      self.store_attributes(attribute_table=Experiment_attribute, linked_column='experiment_id', db_id=experiment_id, data=data) # store without autocommit
     except:
       raise
 
