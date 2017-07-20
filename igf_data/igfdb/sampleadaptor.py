@@ -21,17 +21,9 @@ class SampleAdaptor(BaseAdaptor):
                                               data=x, \
                                               lookup_table=Project, \
                                               lookup_column_name='project_igf_id', \
-                                              target_column_name='project_id')        # prepare the function for project
-      new_sample_data=sample_data.apply(project_map_function,1)                       # map project id
-      self.store_sample_data(data=new_sample_data)                                        # store sample records
-      #sample_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
-      #                                        data=x, \
-      #                                        lookup_table=Sample, \
-      #                                        lookup_column_name='sample_igf_id', \
-      #                                        target_column_name='sample_id')         # prepare the function for sample
-      #new_sample_attr_data=sample_attr_data.apply(sample_map_function, 1)             # map sample id
-      #if len(new_sample_attr_data.columns) > 0:                                       # check if any attribute is present
-        #self.store_sample_attributes(data=new_sample_attr_data)                       # store project attributes
+                                              target_column_name='project_id')         # prepare the function for project
+      new_sample_data=sample_data.apply(project_map_function,1)                        # map project id
+      self.store_sample_data(data=new_sample_data)                                     # store sample records
       if len(sample_attr_data.columns) > 0:                                            # check if any attribute is present
         self.store_sample_attributes(data=sample_attr_data)                            # store project attributes
       self.commit_session()
