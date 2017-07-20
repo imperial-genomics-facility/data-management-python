@@ -16,29 +16,10 @@ class RunAdaptor(BaseAdaptor):
     (run_data, run_attr_data)=self.divide_data_to_table_and_attribute(data=data)
 
     try:
-      seqrun_map_function=lambda x: self.map_foreign_table_and_store_attribute( \
-                                             data=x, \
-                                             lookup_table=Seqrun, \
-                                             lookup_column_name='seqrun_igf_id', \
-                                             target_column_name='seqrun_id')              # prepare seqrun mapping function
-      new_run_data=run_data.apply(seqrun_map_function, axis=1)                            # map seqrun id
-      exp_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
-                                             data=x, \
-                                             lookup_table=Experiment, \
-                                             lookup_column_name='experiment_igf_id', \
-                                             target_column_name='experiment_id')          # prepare experiment mapping function
-      new_run_data=new_run_data.apply(exp_map_function, axis=1)                           # map experiment id
-      self.store_run_data(data=new_run_data)                                              # store run
-      #run_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
-      #                                       data=x, \
-      #                                       lookup_table=Run, \
-      #                                       lookup_column_name='run_igf_id', \
-      #                                       target_column_name='run_id')                 # prepare run mapping function
-      #new_run_attr_data=run_attr_data.apply(run_map_function, axis=1)
-      #if len(new_run_attr_data.columns)>0:                                                # check if any attribute exists
-      #  self.store_run_attributes(data=new_run_attr_data)                                 # store run attributes
+      self.store_run_data(data=run_data)                                                   # store run
       if len(run_attr_data.columns)>0:                                                     # check if any attribute exists
         self.store_run_attributes(data=run_attr_data)                                      # store run attributes
+
       self.commit_session()                                                                # save changes to database
     except:
       self.rollback_session()
@@ -76,7 +57,28 @@ class RunAdaptor(BaseAdaptor):
     Load data to Run table
     '''
     try:
-      self.store_records(table=Run, data=data)
+      if not isinstance(data, pd.DataFrame):
+        data=pd.DataFrame(data)
+
+      if 'seqrun_igf_id' in data.columns:
+        seqrun_map_function=lambda x: self.map_foreign_table_and_store_attribute( \
+                                               data=x, \
+                                               lookup_table=Seqrun, \
+                                               lookup_column_name='seqrun_igf_id', \
+                                               target_column_name='seqrun_id')             # prepare seqrun mapping function
+        new_data=data.apply(seqrun_map_function, axis=1)                                   # map seqrun id
+        data=new_data                                                                      # overwrite data
+
+      if 'experiment_igf_id' in data.columns:
+        exp_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
+                                               data=x, \
+                                               lookup_table=Experiment, \
+                                               lookup_column_name='experiment_igf_id', \
+                                               target_column_name='experiment_id')          # prepare experiment mapping function
+        new_data=data.apply(exp_map_function, axis=1)                                       # map experiment id
+        data=new_data                                                                       # overwrite data
+
+      self.store_records(table=Run, data=data)                                              # store without autocommit
     except:
       raise
 
@@ -87,16 +89,16 @@ class RunAdaptor(BaseAdaptor):
     '''
     try:
       if not isinstance(data, pd.DataFrame):
-        data=pd.DataFrame(data)                                                          # convert data to dataframe
+        data=pd.DataFrame(data)                                                             # convert data to dataframe
 
       if 'run_igf_id' in data.columns:
         run_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
                                                data=x, \
                                                lookup_table=Run, \
                                                lookup_column_name='run_igf_id', \
-                                               target_column_name='run_id')              # prepare run mapping function
+                                               target_column_name='run_id')                 # prepare run mapping function
         new_data=data.apply(run_map_function, axis=1)
-        data=new_data                                                                    # overwrite data    
+        data=new_data                                                                       # overwrite data    
 
       self.store_attributes(attribute_table=Run_attribute, linked_column='run_id', db_id=run_id, data=data) # store without autocommit
     except:
