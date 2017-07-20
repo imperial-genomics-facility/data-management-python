@@ -19,19 +19,7 @@ class ExperimentAdaptor(BaseAdaptor):
     (experiment_data, experiment_attr_data)=self.divide_data_to_table_and_attribute(data=data)
     
     try:
-      project_map_function=lambda x: self.map_foreign_table_and_store_attribute( \
-                                              data=x, \
-                                              lookup_table=Project, \
-                                              lookup_column_name='project_igf_id', \
-                                              target_column_name='project_id')                  # prepare the function for Project id
-      sample_map_function=lambda x: self.map_foreign_table_and_store_attribute( \
-                                              data=x, \
-                                              lookup_table=Sample, \
-                                              lookup_column_name='sample_igf_id', \
-                                              target_column_name='sample_id')                   # prepare the function for Sample id
-      new_experiment_data=experiment_data.apply(project_map_function, axis=1)                   # map project id foreign key id
-      new_experiment_data=new_experiment_data.apply(sample_map_function, axis=1)                # map sample id foreign key id
-      self.store_experiment_data(data=new_experiment_data)                                      # store experiment data
+      self.store_experiment_data(data=experiment_data)                                          # store experiment data
 
       if len(experiment_attr_data.columns) > 0:                                                 # check if any attribute is present of not
         self.store_experiment_attributes(data=experiment_attr_data)                             # store run attributes
@@ -73,7 +61,28 @@ class ExperimentAdaptor(BaseAdaptor):
     Load data to Experiment table
     '''
     try:
-      self.store_records(table=Experiment, data=data)
+      if not isinstance(data, pd.DataFrame):
+        data=pd.DataFrame(data)                                                                   # convert data to dataframe
+
+      if 'project_igf_id' in data.columns:
+        project_map_function=lambda x: self.map_foreign_table_and_store_attribute( \
+                                                data=x, \
+                                                lookup_table=Project, \
+                                                lookup_column_name='project_igf_id', \
+                                                target_column_name='project_id')                  # prepare the function for Project id
+        new_data=data.apply(project_map_function, axis=1)                                         # map project id foreign key id
+        data=new_data                                                                             # overwrite data
+
+      if 'sample_igf_id' in data.columns:
+        sample_map_function=lambda x: self.map_foreign_table_and_store_attribute( \
+                                                data=x, \
+                                                lookup_table=Sample, \
+                                                lookup_column_name='sample_igf_id', \
+                                                target_column_name='sample_id')                   # prepare the function for Sample id
+        new_data=data.apply(sample_map_function, axis=1)                                          # map sample id foreign key id
+        data=new_data
+
+      self.store_records(table=Experiment, data=data)                                             # store without autocommit
     except:
       raise
 
