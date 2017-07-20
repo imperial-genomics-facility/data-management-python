@@ -29,15 +29,17 @@ class RunAdaptor(BaseAdaptor):
                                              target_column_name='experiment_id')          # prepare experiment mapping function
       new_run_data=new_run_data.apply(exp_map_function, axis=1)                           # map experiment id
       self.store_run_data(data=new_run_data)                                              # store run
-      run_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
-                                             data=x, \
-                                             lookup_table=Run, \
-                                             lookup_column_name='run_igf_id', \
-                                             target_column_name='run_id')                 # prepare run mapping function
-      new_run_attr_data=run_attr_data.apply(run_map_function, axis=1)
-      if len(new_run_attr_data.columns)>0:                                                # check if any attribute exists
-        self.store_run_attributes(data=new_run_attr_data)                                 # store run attributes
-      self.commit_session()                                                               # save changes to database
+      #run_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
+      #                                       data=x, \
+      #                                       lookup_table=Run, \
+      #                                       lookup_column_name='run_igf_id', \
+      #                                       target_column_name='run_id')                 # prepare run mapping function
+      #new_run_attr_data=run_attr_data.apply(run_map_function, axis=1)
+      #if len(new_run_attr_data.columns)>0:                                                # check if any attribute exists
+      #  self.store_run_attributes(data=new_run_attr_data)                                 # store run attributes
+      if len(run_attr_data.columns)>0:                                                     # check if any attribute exists
+        self.store_run_attributes(data=run_attr_data)                                      # store run attributes
+      self.commit_session()                                                                # save changes to database
     except:
       self.rollback_session()
       raise
@@ -84,7 +86,19 @@ class RunAdaptor(BaseAdaptor):
     A method for storing data to Run_attribute table
     '''
     try:
-      self.store_attributes(attribute_table=Run_attribute, linked_column='run_id', db_id=run_id, data=data)
+      if not isinstance(data, pd.DataFrame):
+        data=pd.DataFrame(data)                                                          # convert data to dataframe
+
+      if 'run_igf_id' in data.columns:
+        run_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
+                                               data=x, \
+                                               lookup_table=Run, \
+                                               lookup_column_name='run_igf_id', \
+                                               target_column_name='run_id')              # prepare run mapping function
+        new_data=data.apply(run_map_function, axis=1)
+        data=new_data                                                                    # overwrite data    
+
+      self.store_attributes(attribute_table=Run_attribute, linked_column='run_id', db_id=run_id, data=data) # store without autocommit
     except:
       raise
 
