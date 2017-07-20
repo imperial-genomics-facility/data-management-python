@@ -24,14 +24,16 @@ class SampleAdaptor(BaseAdaptor):
                                               target_column_name='project_id')        # prepare the function for project
       new_sample_data=sample_data.apply(project_map_function,1)                       # map project id
       self.store_sample_data(data=new_sample_data)                                        # store sample records
-      sample_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
-                                              data=x, \
-                                              lookup_table=Sample, \
-                                              lookup_column_name='sample_igf_id', \
-                                              target_column_name='sample_id')         # prepare the function for sample
-      new_sample_attr_data=sample_attr_data.apply(sample_map_function, 1)             # map sample id
-      if len(new_sample_attr_data.columns) > 0:                                       # check if any attribute is present
-        self.store_sample_attributes(data=new_sample_attr_data)                       # store project attributes
+      #sample_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
+      #                                        data=x, \
+      #                                        lookup_table=Sample, \
+      #                                        lookup_column_name='sample_igf_id', \
+      #                                        target_column_name='sample_id')         # prepare the function for sample
+      #new_sample_attr_data=sample_attr_data.apply(sample_map_function, 1)             # map sample id
+      #if len(new_sample_attr_data.columns) > 0:                                       # check if any attribute is present
+        #self.store_sample_attributes(data=new_sample_attr_data)                       # store project attributes
+      if len(sample_attr_data.columns) > 0:                                            # check if any attribute is present
+        self.store_sample_attributes(data=sample_attr_data)                            # store project attributes
       self.commit_session()
     except:
       self.rollback_session()
@@ -82,7 +84,19 @@ class SampleAdaptor(BaseAdaptor):
     sample_id: an optional parameter to link the sample attributes to a specific sample
     '''
     try:
-      self.store_attributes(data=data, attribute_table=Sample_attribute, linked_column='sample_id', db_id=sample_id)
+      if not isinstance(data, pd.DataFrame):
+        data=pd.DataFrame(data)                                                         # convert data to dataframe
+
+      if 'sample_igf_id' in data.columns: 
+        sample_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
+                                                data=x, \
+                                                lookup_table=Sample, \
+                                                lookup_column_name='sample_igf_id', \
+                                                target_column_name='sample_id')         # prepare the function for sample
+        new_data=data.apply(sample_map_function, 1)                                     # map sample id
+        data=new_data                                                                   # overwrite data
+
+      self.store_attributes(data=data, attribute_table=Sample_attribute, linked_column='sample_id', db_id=sample_id)  # store without autocommit
     except:
       raise
 
