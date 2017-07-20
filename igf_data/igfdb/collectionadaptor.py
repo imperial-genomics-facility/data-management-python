@@ -16,12 +16,9 @@ class CollectionAdaptor(BaseAdaptor):
     (collection_data, collection_attr_data)=self.divide_data_to_table_and_attribute(data=data)
     try:
       self.store_collection_data(data=collection_data)                                                        # store collection data
-      map_function=lambda x: self.map_foreign_table_and_store_attribute(data=x, \
-                                                                        lookup_table=Collection, \
-                                                                        lookup_column_name=['name', 'type'], \
-                                                                        target_column_name='collection_id')   # prepare the function
-      new_collection_attr_data=collection_attr_data.apply(map_function, axis=1)                               # map foreign key id
-      self.store_collection_attributes(data=new_collection_attr_data)                                         # store project attributes 
+      if len(collection_attr_data.columns) > 0:
+        self.store_collection_attributes(data=collection_attr_data)                                             # store project attributes 
+
       self.commit_session()                                                                                   # save changes to database
     except:
       self.rollback_session()
@@ -68,7 +65,18 @@ class CollectionAdaptor(BaseAdaptor):
     A method for storing data to Collectionm_attribute table
     '''
     try:
-      self.store_attributes(attribute_table=Collection_attribute, linked_column='collection_id', db_id=collection_id, data=data)
+      if not isinstance(data, pd.DataFrame):
+        data=pd.DataFrame(data)                                                                                  # convert data to dataframe
+
+      if 'name' in data.columns and 'type' in data.columns:
+        map_function=lambda x: self.map_foreign_table_and_store_attribute(data=x, \
+                                                                          lookup_table=Collection, \
+                                                                          lookup_column_name=['name', 'type'], \
+                                                                          target_column_name='collection_id')     # prepare the function
+        new_data=data.apply(map_function, axis=1)                                                                 # map foreign key ids
+        data=new_data                                                                                             # overwrite data                 
+
+      self.store_attributes(attribute_table=Collection_attribute, linked_column='collection_id', db_id=collection_id, data=data) # store without autocommit
     except:
       raise
 
