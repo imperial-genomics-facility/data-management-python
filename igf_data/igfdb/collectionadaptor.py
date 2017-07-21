@@ -110,25 +110,24 @@ class CollectionAdaptor(BaseAdaptor):
       data=pd.DataFrame(data)
 
     required_columns=required_collection_column
-    required_columns.extend(required_file_column)
+    required_columns.append(required_file_column)
 
-    if not set((required_columns)).issubset(set(tuple(data.columns))):                          # check for required parameters
-      raise ValueError('Missing required value in input data {0}'.format(data.columns))    
+    if not set((required_columns)).issubset(set(tuple(data.columns))):                                            # check for required parameters
+      raise ValueError('Missing required value in input data {0}, required {1}'.format(tuple(data.columns), required_columns))    
 
     try:
-      collection_map_function=lambda x: self.map_foreign_table_and_store_attribute( \
-                                                 data=x, \
-                                                 lookup_table=Collection, \
-                                                 lookup_column_name=required_collection_column, \
-                                                 target_column_name='collection_id')             # prepare the map function for collection
-      new_data=data.apply(collection_map_function, axis=1)                                       # map collection id
+      collection_map_function=lambda x: self.map_foreign_table_and_store_attribute(data=x, \
+                                                                          lookup_table=Collection, \
+                                                                          lookup_column_name=['name', 'type'], \
+                                                                          target_column_name='collection_id')     # prepare the function
+      new_data=data.apply(collection_map_function, axis=1)                                                        # map collection id
       file_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
                                                  data=x, \
                                                  lookup_table=File, \
                                                  lookup_column_name=required_file_column, \
                                                  target_column_name='file_id')                   # prepare the function for file id
-      new_data=new_data.apply(file_map_function, axis=1)                                        # map collection id
-      self.store_records(table=Collection_group, data=new_data)
+      new_data=new_data.apply(file_map_function, axis=1)                                         # map collection id
+      self.store_records(table=Collection_group, data=new_data.astype(str), mode='serial')       # storing data after converting it to string
       self.commit_session()
     except:
       self.rollback_session()
