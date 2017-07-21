@@ -292,7 +292,9 @@ class File(Base):
 
 class Collection_group(Base):
   __tablename__ = 'collection_group'
-  __table_args__ = ({ 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
+  __table_args__ = (
+    UniqueConstraint('collection_id','file_id'),
+    { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
   collection_group_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   collection_id       = Column(INTEGER(unsigned=True), ForeignKey('collection.collection_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
