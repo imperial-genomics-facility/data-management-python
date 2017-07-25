@@ -1,4 +1,5 @@
 import datetime
+from igf_data.igfdb.datatype import JSONType
 from sqlalchemy.sql.functions import current_timestamp
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
@@ -167,6 +168,7 @@ class Seqrun(Base):
   flowcell_id     = Column(String(10), nullable=False)
   platform_id     = Column(INTEGER(unsigned=True), ForeignKey('platform.platform_id', onupdate="CASCADE", ondelete="SET NULL"))
   run               = relationship('Run', backref="seqrun")
+  seqrun_stats      = relationship('Seqrun_stats', backref="seqrun")
   seqrun_attribute  = relationship('Seqrun_attribute', backref='seqrun')
 
   def __repr__(self):
@@ -176,6 +178,30 @@ class Seqrun(Base):
                         "flowcell_id = '{self.flowcell_id}'," \
                         "date_created = '{self.date_created}'," \
                         "platform_id = '{self.platform_id}')".format(self=self)
+
+
+class Seqrun_stats(Base):
+  __tablename__  = 'seqrun_stats'
+  __table_args__ = (
+    UniqueConstraint('seqrun_id', 'lane_number'),
+    { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
+
+  seqrun_stats_id       = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  seqrun_id             = Column(INTEGER(unsigned=True), ForeignKey('seqrun.seqrun_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  lane_number           = Column(Enum('1', '2', '3', '4', '5', '6', '7', '8'), nullable=False)
+  bases_mask            = Column(String(20))
+  undetermined_barcodes = Column(JSONType)
+  known_barcodes        = Column(JSONType)
+  undetermined_fastqc   = Column(JSONType)
+  
+  def __repr__(self):
+    return "Seqrun_stats(seqrun_stats_id = '{self.seqrun_stats_id}'," \
+                   "seqrun_id = '{self.seqrun_id}'," \
+                   "lane_number = '{self.lane_number}'," \
+                   "bases_mask = '{self.bases_mask}'," \
+                   "undetermined_barcodes = '{self.undetermined_barcodes}'," \
+                   "known_barcodes = '{self.known_barcodes}'," \
+                   "undetermined_fastqc = '{self.undetermined_fastqc}')".format(self=self)
 
 
 class Experiment(Base):
