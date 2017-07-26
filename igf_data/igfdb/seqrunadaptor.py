@@ -2,7 +2,7 @@ import json
 import pandas as pd
 from sqlalchemy.sql import table, column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
-from igf_data.igfdb.igfTables import Seqrun, Run, Platform, Seqrun_attribute
+from igf_data.igfdb.igfTables import Seqrun, Run, Platform, Seqrun_attribute, Seqrun_stats
 
 class SeqrunAdaptor(BaseAdaptor):
   '''
@@ -92,7 +92,31 @@ class SeqrunAdaptor(BaseAdaptor):
       self.store_attributes(attribute_table=Seqrun_attribute, linked_column='seqrun_id', db_id=seqrun_id, data=data) # store without autocommit
     except:
       raise
+      
 
+  def store_seqrun_stats_data(self, data, seqrun_id=''):
+    '''
+    A method for storing data to seqrun_stats table
+    '''
+    try:
+      if not isinstance(data, pd.DataFrame):
+        data=pd.DataFrame(data)                                                             # convert data to dataframe
+
+      if 'seqrun_igf_id' in data.columns:
+        seqrun_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
+                                               data=x, \
+                                               lookup_table=Seqrun, \
+                                               lookup_column_name='seqrun_igf_id', \
+                                               target_column_name='seqrun_id')              # prepare run mapping function
+        new_data=data.apply(seqrun_map_function, axis=1)
+        data=new_data                                                                       # overwrite data    
+
+      self.store_attributes(attribute_table=Seqrun_stats, linked_column='seqrun_id', db_id=seqrun_id, data=data) # store without autocommit
+      self.commit_session()
+    except:
+      self.rollback_session()
+      raise
+      
 
   def fetch_seqrun_records_igf_id(self, seqrun_igf_id, target_column_name='seqrun_igf_id'):
     '''
@@ -111,4 +135,5 @@ class SeqrunAdaptor(BaseAdaptor):
       return seqrun  
     except:
       raise
+
 
