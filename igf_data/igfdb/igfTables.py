@@ -245,6 +245,7 @@ class Run(Base):
   __tablename__ = 'run'
   __table_args__ = (
     UniqueConstraint('run_igf_id'),
+    UniqueConstraint('experiment_id','lane_number'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
   run_id        = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
@@ -273,7 +274,7 @@ class Collection(Base):
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
   collection_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
-  name          = Column(String(20), nullable=False)
+  name          = Column(String(30), nullable=False)
   type          = Column(String(30), nullable=False)
   table         = Column(Enum('sample', 'experiment', 'run', 'file', 'project', 'unknown'), nullable=False, server_default='unknown')
   date_stamp    = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now) 
@@ -338,32 +339,25 @@ class Pipeline(Base):
     UniqueConstraint('pipeline_name'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  pipeline_id   = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
-  pipeline_name = Column(String(50), nullable=False)
-  is_active     = Column(Enum('Y', 'N'), nullable=False, server_default='Y')
-  date_stamp    = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
-  pipeline_seed = relationship('Pipeline_seed', backref='pipeline')
+  pipeline_id        = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  pipeline_name      = Column(String(50), nullable=False)
+  pipeline_db        = Column(String(200), nullable=False)
+  pipeline_init_conf = Column(JSONType)
+  pipeline_run_conf  = Column(JSONType)
+  pipeline_type      = Column(Enum('EHIVE','UNKNOWN'), nullable=False, server_default='EHIVE')
+  is_active          = Column(Enum('Y', 'N'), nullable=False, server_default='Y')
+  date_stamp         = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
+  pipeline_seed      = relationship('Pipeline_seed', backref='pipeline')
 
   def __repr__(self):
     return "Pipeline(pipeline_id = '{self.pipeline_id}'," \
                     "pipeline_name = '{self.pipeline_name}'," \
+                    "pipeline_db = '{self.pipeline_db}'," \
+                    "pipeline_init_conf = '{self.pipeline_init_conf}'," \
+                    "pipeline_run_conf = '{self.pipeline_run_conf}'," \
+                    "pipeline_type = '{self.pipeline_type}'," \
                     "is_active = '{self.is_active}'," \
                     "date_stamp = '{self.date_stamp}')".format(self=self)
-
-
-class Hive_db(Base):
-  __tablename__ = 'hive_db'
-  __table_args__ = ( { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
-
-  hive_db_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
-  dbname     = Column(String(100), nullable=False)
-  is_active  = Column(Enum('Y', 'N'), nullable=False, server_default='Y')
-  pipeline_seed = relationship('Pipeline_seed', backref='hive_db')
-
-  def __repr__(self):
-    return "Hive_db(hive_db_id = '{self.hive_db_id}'," \
-                   "dbname = '{self.dbname}'," \
-                   "is_active = '{self.is_active}')".format(self=self)
 
 
 class Pipeline_seed(Base):
@@ -374,18 +368,18 @@ class Pipeline_seed(Base):
 
   pipeline_seed_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   seed_id          = Column(INTEGER(unsigned=True), nullable=False)
-  seed_table       = Column(Enum('PROJECT','SAMPLE','EXPERIMENT','RUN','FILE', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
+  seed_table       = Column(Enum('PROJECT','SAMPLE','EXPERIMENT','RUN','FILE','SEQRUN','COLLECTION','UNKNOWN'), nullable=False, server_default='UNKNOWN')
   pipeline_id      = Column(INTEGER(unsigned=True), ForeignKey('pipeline.pipeline_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
-  hive_db_id       = Column(INTEGER(unsigned=True), ForeignKey('hive_db.hive_db_id', onupdate="CASCADE", ondelete="SET NULL"))
   status           = Column(Enum('SEEDED', 'RUNNING', 'FINISHED', 'FAILED', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
+  date_stamp       = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
  
   def __repr__(self):
     return "Pipeline_seed(pipeline_seed_id = '{self.pipeline_seed_id}'," \
                          "seed_id = '{self.seed_id}'," \
                          "seed_table = '{self.seed_table}'," \
                          "pipeline_id = '{self.pipeline_id}'," \
-                         "hive_db_id = '{self.hive_db_id}'," \
-                         "status = '{self.status}')".format(self=self)
+                         "status = '{self.status}'," \
+                         "date_stamp = '{self.date_stamp}')".format(self=self)
 
 class History(Base):
   __tablename__ = 'history'
