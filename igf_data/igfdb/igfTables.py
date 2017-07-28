@@ -363,7 +363,7 @@ class Pipeline(Base):
 class Pipeline_seed(Base):
   __tablename__ = 'pipeline_seed'
   __table_args__ = (
-    UniqueConstraint('seed_id','seed_table','pipeline_id'),
+    UniqueConstraint('pipeline_id','seed_id','seed_table'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
 
   pipeline_seed_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
