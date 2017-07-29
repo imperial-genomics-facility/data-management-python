@@ -9,13 +9,14 @@ class PipelineAdaptor(BaseAdaptor):
   '''
   An adaptor class for Pipeline and Pipeline_seed tables
   ''' 
-  def store_pipeline_data(self, data):
+  def store_pipeline_data(self, data, autosave=True):
     '''
     Load data to Pipeline table
     '''
     try:
       self.store_records(table=Pipeline, data=data)
-      self.commit_session()
+      if autosave:
+        self.commit_session()
     except:
       self.rollback_session()
       raise
@@ -73,7 +74,7 @@ class PipelineAdaptor(BaseAdaptor):
     except:
       raise
 
-  def create_pipeline_seed(self, data, required_columns=['pipeline_id', 'seed_id', 'seed_table']):
+  def create_pipeline_seed(self, data, autosave=True, required_columns=['pipeline_id', 'seed_id', 'seed_table']):
     '''
     A method for creating new entry in th pipeline_seed table
     required params:
@@ -91,7 +92,8 @@ class PipelineAdaptor(BaseAdaptor):
         raise valueError('Missing required columns for pipeline seed. required: {0}, got: {1}'.format(required_columns, tuple(data.columns)))
 
       self.store_records(table=Pipeline_seed, data=data)
-      self.commit_session()
+      if autosave:
+        self.commit_session()
     except:
       self.rollback_session()
       raise
@@ -114,7 +116,7 @@ class PipelineAdaptor(BaseAdaptor):
       raise
 
 
-  def update_pipeline_seed(self, data, required_columns=['pipeline_id', 'seed_id', 'seed_table', 'status']):
+  def update_pipeline_seed(self, data, autosave=True, required_columns=['pipeline_id', 'seed_id', 'seed_table', 'status']):
     '''
     A method for updating the seed status in pipeline_seed table
     required params:
@@ -134,80 +136,8 @@ class PipelineAdaptor(BaseAdaptor):
 
       seed_update_func=lambda x: self._map_and_update_pipeline_seed(data_series=x)     # defined update function
       data.apply(seed_update_func, axis=1)                                             # apply function on dataframe
-      self.commit_session()                                                            # commit changes in db
+      if autosave:
+        self.commit_session()                                                          # commit changes in db
     except:
       self.rollback_session()
       raise
-
-     
-
-  #def _map_pipeline_seed_info(self, series, seed_table='seed_table', project_column='project_igf_id', seed_id='seed_id', \
-  #                            sample_column='sample_igf_id', experiment_column='experiment_igf_id', run_column='run_igf_id', \
-  #                            collection_column=['name', 'type'], file_column='file_path'):
-  #  '''
-  #  An internal method for mapping pipeline info
-  #  '''
-  #  if not isinstance(data_series, pd.Series):
-  #    data_series=pd.Series(data_series)
-  #
-  #  if seed_table not in data_series.index:
-  #    raise ValueError('A value for column table is required: {0}'.format(json.dumps(data_series.to_dict())))
-  #
-  #  map_function=''
-  #  temp_column_name=''
-  #  temp_target_column_name=''
-  #
-  #  if project_column in data_series.index and data_series.seed_table == 'PROJECT':   
-  #    temp_column_name=project_column
-  #    temp_target_column_name='project_id'
-  #    table_name=Project
-  #  elif sample_column in data_series.index and data_series.seed_table == 'SAMPLE':  
-  #    temp_column_name=sample_column
-  #    temp_target_column_name='sample_id'
-  #    table_name=Sample
-  #  elif experiment_column in data_series.index and data_series.seed_table == 'EXPERIMENT':
-  #    temp_column_name=experiment_column
-  #    temp_target_column_name='experiment_id'
-  #    table_name=Experiment
-  #  elif run_column in data_series.index and data_series.seed_table == 'RUN':
-  #    temp_column_name=run_column      
-  #    temp_target_column_name='run_id'
-  #    table_name=Run
-  #  elif data_series.seed_table == 'COLLECTION':
-  #    temp_column_name=collection_column
-  #    temp_target_column_name='collection_id'
-  #    table_name=Collection
-  #  elif file_column in data_series.index and data_series.seed_table == 'FILE':
-  #    temp_column_name=file_column
-  #    temp_target_column_name='file_id'
-  #    table_name=File
-  #  else:
-  #    raise ValueError('Seed table {0} not supported'.format(data_series.seed_table))
-  #  
-  #  map_function=lambda x: self.map_foreign_table_and_store_attribute(data=x, \
-  #                                                                    lookup_table=table_name, \
-  #                                                                    lookup_column_name=temp_column_name, \
-  #                                                                    target_column_name=temp_target_column_name)       # prepare the function for project
-  #  data_series.map(map_function)                                                                                       # map project_id
-  #  data_series.reindex({temp_target_column_name:seed_id}, inplace=True)
-  #  return data_series
-  #
-  #
-  #def create_pipeline_seed(self, data):
-  #  '''
-  #  A method for creating the pipeline seed
-  #  '''
-  #  if not isinstance(data, pd.DataFrame):
-  #    data=pd.DataFrame(data)
-  #
-  #  map_function=lambda x: self._map_pipeline_seed_info(series=x)
-  #  data.apply(map_function,1)                                    # map the foreign keys
-  #      
-  #  try:
-  #    self.store_records(table=Pipeline_seed, data=data) 
-  #    self.commit_session()
-  #  except:
-  #    self.rollback_session()
-  #    raise
-
-
