@@ -74,7 +74,7 @@ class PipelineAdaptor(BaseAdaptor):
     except:
       raise
 
-  def create_pipeline_seed(self, data, autosave=True, required_columns=['pipeline_id', 'seed_id', 'seed_table']):
+  def create_pipeline_seed(self, data, autosave=True, status_column='status', seeded_label='SEEDED', required_columns=['pipeline_id', 'seed_id', 'seed_table']):
     '''
     A method for creating new entry in th pipeline_seed table
     required params:
@@ -88,6 +88,7 @@ class PipelineAdaptor(BaseAdaptor):
         data=pd.DataFrame(data)
 
       data=self._map_pipeline_id_to_data(data)                                       # overwrite data
+      data[status_column]=seeded_label                                               # overwrite status as seeded
       if not set((required_columns)).issubset(set(tuple(data.columns))):
         raise valueError('Missing required columns for pipeline seed. required: {0}, got: {1}'.format(required_columns, tuple(data.columns)))
 
