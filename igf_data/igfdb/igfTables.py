@@ -285,6 +285,23 @@ class Run(Base):
                "lane_number = '{self.lane_number}'," \
                "date_created = '{self.date_created}')".format(self=self)
   
+class Analysis(Base):
+  __tablename__ = 'analysis'
+  __table_args__ = (
+    UniqueConstraint('project_id', 'analysis_type'),
+    { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
+
+  analysis_id          = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  project_id           = Column(INTEGER(unsigned=True), ForeignKey('project.project_id', onupdate="CASCADE", ondelete="SET NULL"))
+  analysis_type        = Column(Enum('RNA_DIFFERENTIAL_EXPRESSION','RNA_TIME_SERIES','CHIP_PEAK_CALL','SOMATIC_VARIANT_CALLING','UNKNOWN'), nullable=False, server_default='UNKNOWN')
+  analysis_description = Column(JSONType)
+
+  def __repr__(self):
+    return "Analysis(analysis_id = '{self.analysis_id}'," \
+                    "project_id = '{self.project_id}'," \
+                    "analysis_type = '{self.analysis_type}'," \
+                    "analysis_description = '{self.analysis_description}')".format(self=self)
+
 
 class Collection(Base):
   __tablename__ = 'collection'
