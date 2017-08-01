@@ -143,7 +143,8 @@ class Platform(Base):
   software_name    = Column(Enum('RTA'), nullable=False)
   software_version = Column(Enum('RTA1.18.54', 'RTA1.18.64', 'RTA2'), nullable=False)
   date_created     = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now )
-  experiment       = relationship('Seqrun', backref="platform")
+  seqrun           = relationship('Seqrun', backref="platform")
+  flowcell_rule    = relationship('Flowcell_barcode_rule', backref="platform")
 
   def __repr__(self):
     return "Platform(platform_id = '{self.platform_id}'," \
@@ -153,6 +154,24 @@ class Platform(Base):
                     "software_name = '{self.software_name}'," \
                     "software_version = '{self.software_version}'," \
                     "date_created = '{self.date_created}')".format(self=self)
+
+class Flowcell_barcode_rule(Base):
+  __tablename__ = 'flowcell_barcode_rule'
+  __table_args__ = (
+    { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
+
+  flowcell_rule_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  platform_id      = Column(INTEGER(unsigned=True), ForeignKey('platform.platform_id', onupdate="CASCADE", ondelete="SET NULL"))
+  flowcell_type    = Column(String(50), nullable=False)
+  index_1          = Column(Enum('NO_CHANGE','REVCOMP','UNKNOWN'), nullable=False, server_default='UNKNOWN')
+  index_2          = Column(Enum('NO_CHANGE','REVCOMP','UNKNOWN'), nullable=False, server_default='UNKNOWN')
+
+  def __repr__(self):
+    return "Flowcell_barcode_rule(flowcell_rule_id  = '{self.flowcell_rule_id}'," \
+                                 "platform_id = '{self.platform_id}'," \
+                                 "flowcell_type = '{self.flowcell_type}'," \
+                                 "index_1 = '{self.index_1}'," \
+                                 "index_2 = '{self.index_2}')".format(self=self)
 
 
 class Seqrun(Base):
