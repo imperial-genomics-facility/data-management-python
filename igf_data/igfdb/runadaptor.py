@@ -9,7 +9,7 @@ class RunAdaptor(BaseAdaptor):
    An adaptor class for Run and Run_attribute tables
   '''
 
-  def store_run_and_attribute_data(self, data):
+  def store_run_and_attribute_data(self, data, autosave=True):
     '''
     A method for dividing and storing data to run and attribute table
     '''
@@ -19,10 +19,11 @@ class RunAdaptor(BaseAdaptor):
       self.store_run_data(data=run_data)                                                   # store run
       if len(run_attr_data.columns)>0:                                                     # check if any attribute exists
         self.store_run_attributes(data=run_attr_data)                                      # store run attributes
-
-      self.commit_session()                                                                # save changes to database
+      if autosave:
+        self.commit_session()                                                              # save changes to database
     except:
-      self.rollback_session()
+      if autosave:
+        self.rollback_session()
       raise
 
 
@@ -52,7 +53,7 @@ class RunAdaptor(BaseAdaptor):
     return (run_df, run_attr_df)
    
 
-  def store_run_data(self, data):
+  def store_run_data(self, data, autosave=False):
     '''
     Load data to Run table
     '''
@@ -79,11 +80,15 @@ class RunAdaptor(BaseAdaptor):
         data=new_data                                                                       # overwrite data
 
       self.store_records(table=Run, data=data)                                              # store without autocommit
+      if autosave:
+        self.commit_session()
     except:
+      if autosave:
+        self.rollback_session()
       raise
 
 
-  def store_run_attributes(self, data, run_id=''):
+  def store_run_attributes(self, data, run_id='', autosave=False):
     '''
     A method for storing data to Run_attribute table
     '''
@@ -101,7 +106,11 @@ class RunAdaptor(BaseAdaptor):
         data=new_data                                                                       # overwrite data    
 
       self.store_attributes(attribute_table=Run_attribute, linked_column='run_id', db_id=run_id, data=data) # store without autocommit
+      if autosave:
+        self.commit_session()
     except:
+      if autosave:
+        self.rollback_session()
       raise
 
 

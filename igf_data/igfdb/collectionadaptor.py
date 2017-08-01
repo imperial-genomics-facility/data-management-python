@@ -9,7 +9,7 @@ class CollectionAdaptor(BaseAdaptor):
   An adaptor class for Collection, Collection_group and Collection_attribute tables
   '''
 
-  def store_collection_and_attribute_data(self, data):
+  def store_collection_and_attribute_data(self, data, autosave=True):
     '''
     A method for dividing and storing data to collection and attribute table
     '''
@@ -17,11 +17,13 @@ class CollectionAdaptor(BaseAdaptor):
     try:
       self.store_collection_data(data=collection_data)                                                        # store collection data
       if len(collection_attr_data.columns) > 0:
-        self.store_collection_attributes(data=collection_attr_data)                                             # store project attributes 
+        self.store_collection_attributes(data=collection_attr_data)                                           # store project attributes 
 
-      self.commit_session()                                                                                   # save changes to database
+      if autosave:
+        self.commit_session()                                                                                 # save changes to database
     except:
-      self.rollback_session()
+      if autosave:
+        self.rollback_session()
       raise
 
 
@@ -50,17 +52,21 @@ class CollectionAdaptor(BaseAdaptor):
     return (collection_df, collection_attr_df)
 
  
-  def store_collection_data(self, data):
+  def store_collection_data(self, data, autosave=False):
     '''
     Load data to Collection table
     '''
     try:
       self.store_records(table=Collection, data=data)
+      if autosave:
+        self.commit_session()
     except:
+      if autosave:
+        self.rollback_session()
       raise
 
 
-  def store_collection_attributes(self, data, collection_id=''):
+  def store_collection_attributes(self, data, collection_id='', autosave=False):
     '''
     A method for storing data to Collectionm_attribute table
     '''
@@ -77,7 +83,11 @@ class CollectionAdaptor(BaseAdaptor):
         data=new_data                                                                                             # overwrite data                 
 
       self.store_attributes(attribute_table=Collection_attribute, linked_column='collection_id', db_id=collection_id, data=data) # store without autocommit
+      if autosave:
+        self.commit_session()
     except:
+      if autosave:
+        self.rollback_session()
       raise
 
 
@@ -100,7 +110,7 @@ class CollectionAdaptor(BaseAdaptor):
       raise
 
 
-  def create_collection_group(self, data, required_collection_column=['name','type'],required_file_column='file_path'):
+  def create_collection_group(self, data, autosave=True, required_collection_column=['name','type'],required_file_column='file_path'):
     '''
     A function for creating collection group, a link between a file and a collection
     [{'name':'a collection name', 'type':'a collection type', 'file_path': 'path'},]
@@ -128,9 +138,11 @@ class CollectionAdaptor(BaseAdaptor):
                                                  target_column_name='file_id')                   # prepare the function for file id
       new_data=new_data.apply(file_map_function, axis=1)                                         # map collection id
       self.store_records(table=Collection_group, data=new_data.astype(str), mode='serial')       # storing data after converting it to string
-      self.commit_session()
+      if autosave:
+        self.commit_session()
     except:
-      self.rollback_session()
+      if autosave:
+        self.rollback_session()
       raise
 
 

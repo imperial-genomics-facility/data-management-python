@@ -12,7 +12,7 @@ class ExperimentAdaptor(BaseAdaptor):
   An adaptor class for Experiment and Experiment_attribute tables
   '''
 
-  def store_project_and_attribute_data(self, data):
+  def store_project_and_attribute_data(self, data, autosave=True):
     '''
     A method for dividing and storing data to experiment and attribute table
     '''
@@ -24,9 +24,11 @@ class ExperimentAdaptor(BaseAdaptor):
       if len(experiment_attr_data.columns) > 0:                                                 # check if any attribute is present of not
         self.store_experiment_attributes(data=experiment_attr_data)                             # store run attributes
 
-      self.commit_session() 
+      if autosave:
+        self.commit_session() 
     except:
-      self.rollback_session()
+      if autosave:
+        self.rollback_session()
       raise
 
 
@@ -56,7 +58,7 @@ class ExperimentAdaptor(BaseAdaptor):
     return (experiment_df, experiment_attr_df)
 
 
-  def store_experiment_data(self, data):
+  def store_experiment_data(self, data, autosave=False):
     '''
     Load data to Experiment table
     '''
@@ -83,11 +85,15 @@ class ExperimentAdaptor(BaseAdaptor):
         data=new_data
 
       self.store_records(table=Experiment, data=data)                                             # store without autocommit
+      if autosave:
+        self.commit_session()
     except:
+      if autosave:
+        self.rollback_session()
       raise
 
 
-  def store_experiment_attributes(self, data, experiment_id=''):
+  def store_experiment_attributes(self, data, experiment_id='', autosave=False):
     '''
     A method for storing data to Experiment_attribute table
     '''
@@ -105,7 +111,11 @@ class ExperimentAdaptor(BaseAdaptor):
         data=new_data                                                                             # overwrite data
 
       self.store_attributes(attribute_table=Experiment_attribute, linked_column='experiment_id', db_id=experiment_id, data=data) # store without autocommit
+      if autosave:
+        self.commit_session()
     except:
+      if autosave:
+        self.rollback_session()
       raise
 
 

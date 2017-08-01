@@ -9,7 +9,7 @@ class SeqrunAdaptor(BaseAdaptor):
   An adaptor class for table Seqrun
   '''
 
-  def store_seqrun_and_attribute_data(self, data):
+  def store_seqrun_and_attribute_data(self, data, autosave=True):
     '''
     A method for dividing and storing data to seqrun and attribute table
     '''
@@ -19,10 +19,12 @@ class SeqrunAdaptor(BaseAdaptor):
       self.store_seqrun_data(data=seqrun_data)                                                # store run
       if len(seqrun_attr_data.columns)>0:                                                     # check if any attribute exists
         self.store_seqrun_attributes(data=seqrun_attr_data)                                   # store run attributes
-
-      self.commit_session()                                                                   # save changes to database
+     
+      if autosave:
+        self.commit_session()                                                                 # save changes to database
     except:
-      self.rollback_session()
+      if autosave:
+        self.rollback_session()
       raise
 
 
@@ -50,7 +52,7 @@ class SeqrunAdaptor(BaseAdaptor):
     return (seqrun_df, seqrun_attr_df)
 
 
-  def store_seqrun_data(self, data):
+  def store_seqrun_data(self, data, autosave=False):
     '''
     Load data to Seqrun table
     '''
@@ -68,11 +70,15 @@ class SeqrunAdaptor(BaseAdaptor):
         data=new_data                                                                   # overwrite data
 
       self.store_records(table=Seqrun, data=data)                                       # store without autocommit
+      if autosave:
+        self.commit_session()
     except:
+      if autosave:
+        self.rollback_session()
       raise
 
 
-  def store_seqrun_attributes(self, data, seqrun_id=''):
+  def store_seqrun_attributes(self, data, seqrun_id='', autosave=False):
     '''
     A method for storing data to Seqrun_attribute table
     '''
@@ -90,11 +96,15 @@ class SeqrunAdaptor(BaseAdaptor):
         data=new_data                                                                       # overwrite data    
 
       self.store_attributes(attribute_table=Seqrun_attribute, linked_column='seqrun_id', db_id=seqrun_id, data=data) # store without autocommit
+      if autosave:
+        self.commit_session()
     except:
+      if autosave:
+        self.rollback_session()
       raise
       
 
-  def store_seqrun_stats_data(self, data, seqrun_id=''):
+  def store_seqrun_stats_data(self, data, seqrun_id='', autosave=True):
     '''
     A method for storing data to seqrun_stats table
     '''
@@ -112,9 +122,11 @@ class SeqrunAdaptor(BaseAdaptor):
         data=new_data                                                                       # overwrite data    
 
       self.store_attributes(attribute_table=Seqrun_stats, linked_column='seqrun_id', db_id=seqrun_id, data=data) # store without autocommit
-      self.commit_session()
+      if autosave:
+        self.commit_session()
     except:
-      self.rollback_session()
+      if autosave:
+        self.rollback_session()
       raise
       
 

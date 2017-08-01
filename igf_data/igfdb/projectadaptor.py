@@ -10,7 +10,7 @@ class ProjectAdaptor(BaseAdaptor):
   An adaptor class for Project, ProjectUser and Project_attribute tables
   '''
 
-  def store_project_and_attribute_data(self, data):
+  def store_project_and_attribute_data(self, data, autosave=True):
     '''
     A method for dividing and storing data to project and attribute_table
     '''
@@ -20,9 +20,11 @@ class ProjectAdaptor(BaseAdaptor):
       self.store_project_data(data=project_data)                              # store project
       if len(project_attr_data.columns) > 0:                                  # check if any attribute is present
         self.store_project_attributes(data=project_attr_data)                 # store project attributes
-      self.commit_session()                                                   # save changes to database
+      if autosave:
+        self.commit_session()                                                 # save changes to database
     except:
-      self.rollback_session()
+      if autosave:
+        self.rollback_session()
       raise
      
 
@@ -45,17 +47,21 @@ class ProjectAdaptor(BaseAdaptor):
     return (project_df, project_attr_df)
   
 
-  def store_project_data(self, data):
+  def store_project_data(self, data, autosave=False):
     '''
     Load data to Project table
     '''
     try:
       self.store_records(table=Project, data=data)
+      if autosave:
+        self.commit_session()                                                 # save changes to database
     except:
+      if autosave:
+        self.rollback_session()
       raise
 
 
-  def store_project_attributes(self, data, project_id=''):
+  def store_project_attributes(self, data, project_id='', autosave=False):
     '''
     A method for storing data to Project_attribute table
     '''
@@ -73,11 +79,15 @@ class ProjectAdaptor(BaseAdaptor):
         data=new_data                                                               # overwrite data   
        
       self.store_attributes(attribute_table=Project_attribute, linked_column='project_id', db_id=project_id, data=data)   # store attributes without auto commit
+      if autosave:
+        self.commit_session()                                                 # save changes to database
     except:
+      if autosave:
+        self.rollback_session()
       raise
 
 
-  def assign_user_to_project(self, data, required_project_column='project_igf_id',required_user_column='user_igf_id', data_authority_column='data_authority'):
+  def assign_user_to_project(self, data, required_project_column='project_igf_id',required_user_column='user_igf_id', data_authority_column='data_authority', autosave=True):
     '''
     Load data to ProjectUser table
     required parameters:
@@ -112,9 +122,11 @@ class ProjectAdaptor(BaseAdaptor):
       data_authotiry_dict={True:'T'}                                                            # create a mapping dictionary for data authority value
       new_data[data_authority_column]=new_data[data_authority_column].map(data_authotiry_dict)  # add value for data authority
       self.store_records(table=ProjectUser, data=new_data)                                      # store the project_user data
-      self.commit_session()                                                                     # save changes to database
+      if autosave:
+        self.commit_session()                                                                   # save changes to database
     except:
-      self.rollback_session()
+      if autosave:
+        self.rollback_session()
       raise
 
 

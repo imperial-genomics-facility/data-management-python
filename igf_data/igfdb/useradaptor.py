@@ -90,7 +90,7 @@ class UserAdaptor(BaseAdaptor):
       raise     
 
 
-  def store_user_data(self, data):
+  def store_user_data(self, data, autosave=True):
     '''
     Load data to user table
     '''
@@ -100,9 +100,11 @@ class UserAdaptor(BaseAdaptor):
     try:
       data=self._preprocess_data(data=data)
       self.store_records(table=User, data=data, mode='serial' )
-      self.commit_session()
+      if autosave:
+        self.commit_session()
     except:
-      self.rollback_session()
+      if autosave:
+        self.rollback_session()
       raise
 
 

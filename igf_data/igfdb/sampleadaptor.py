@@ -10,7 +10,7 @@ class SampleAdaptor(BaseAdaptor):
   An adaptor class for Sample and Sample_attribute tables
   '''
 
-  def store_sample_and_attribute_data(self, data):
+  def store_sample_and_attribute_data(self, data, autosave=True):
     '''
     A method for dividing and storing data to sample and attribute table
     '''
@@ -20,9 +20,11 @@ class SampleAdaptor(BaseAdaptor):
       self.store_sample_data(data=sample_data)                                         # store sample records
       if len(sample_attr_data.columns) > 0:                                            # check if any attribute is present
         self.store_sample_attributes(data=sample_attr_data)                            # store project attributes
-      self.commit_session()
+      if autosave:
+        self.commit_session()
     except:
-      self.rollback_session()
+      if autosave:
+        self.rollback_session()
       raise
 
 
@@ -52,7 +54,7 @@ class SampleAdaptor(BaseAdaptor):
     return (sample_df, sample_attr_df)
 
 
-  def store_sample_data(self, data):
+  def store_sample_data(self, data, autosave=False):
     '''
     Load data to Sample table
     '''
@@ -70,11 +72,15 @@ class SampleAdaptor(BaseAdaptor):
         data=new_data                                                                    # overwrite data
 
       self.store_records(table=Sample, data=data)                                        # store data without autocommit
+      if autosave:
+        self.commit_session()
     except:
+      if autosave:
+        self.rollback_session()
       raise
 
 
-  def store_sample_attributes(self, data, sample_id=''):
+  def store_sample_attributes(self, data, sample_id='', autosave=False):
     '''
     A method for storing data to Sample_attribute table
     required columns:
@@ -95,7 +101,11 @@ class SampleAdaptor(BaseAdaptor):
         data=new_data                                                                   # overwrite data
 
       self.store_attributes(data=data, attribute_table=Sample_attribute, linked_column='sample_id', db_id=sample_id)  # store without autocommit
+      if autosave:
+        self.commit_session()
     except:
+      if autosave:
+        self.rollback_session()
       raise
 
 

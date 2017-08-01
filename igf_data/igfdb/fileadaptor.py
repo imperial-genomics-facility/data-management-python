@@ -8,7 +8,7 @@ class FileAdaptor(BaseAdaptor):
   '''
   An adaptor class for File tables
   '''
-  def store_file_and_attribute_data(self, data):
+  def store_file_and_attribute_data(self, data, autosave=True):
     '''
     A method for dividing and storing data to file and attribute table
     '''
@@ -18,9 +18,11 @@ class FileAdaptor(BaseAdaptor):
       if len(file_attr_data.columns)>0:                             # check if any attribute exists
         self.store_file_attributes(data=file_attr_data) 
 
-      self.commit_session()
+      if autosave:
+        self.commit_session()
     except:
-      self.rollback_session()
+      if autosave:
+        self.rollback_session()
       raise
 
 
@@ -47,7 +49,7 @@ class FileAdaptor(BaseAdaptor):
     return (file_df, file_attr_df)
 
 
-  def store_file_data(self, data):
+  def store_file_data(self, data, autosave=False):
     '''
     Load data to file table
     '''
@@ -56,11 +58,15 @@ class FileAdaptor(BaseAdaptor):
 
     try:
       self.store_records(table=File, data=data )                                      # store data without autocommit
+      if autosave:
+        self.commit_session()
     except:
+      if autosave:
+        self.rollback_session()
       raise
 
 
-  def store_file_attributes(self, data, file_id=''):
+  def store_file_attributes(self, data, file_id='', autosave=False):
     '''
     A method for storing data to File_attribute table
     '''
@@ -78,7 +84,11 @@ class FileAdaptor(BaseAdaptor):
         data=new_data                                                                 # overwrite data
 
       self.store_attributes(attribute_table=File_attribute, linked_column='file_id', db_id=file_id, data=data) # store data without autocommit
+      if autosave:
+        self.commit_session()
     except:
+      if autosave:
+        self.rollback_session()
       raise
 
 
