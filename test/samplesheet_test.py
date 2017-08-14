@@ -39,6 +39,11 @@ class Hiseq4000SampleSheet(unittest.TestCase):
     count=samplesheet_data.get_lane_count()
     self.assertEqual(len(count), 1)
 
+  def test_index_format(self):
+    samplesheet_data=self.samplesheet_data
+    indexA=[row['index'] for row in samplesheet_data._data if row['Sample_ID']=='IGF00010'][0]
+    self.assertEqual( indexA, 'CGCTCATT') 
+
   def test_get_reverse_complement_index(self):
     samplesheet_data=self.samplesheet_data
     indexA=[row['index2'] for row in samplesheet_data._data if row['Sample_ID']=='IGF0001'][0]

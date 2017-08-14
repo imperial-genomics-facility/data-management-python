@@ -332,6 +332,7 @@ class SampleSheet:
     sample_data=list()
     for row in data:
       row=row.split(',')
+      row=[row_val.rstrip() for row_val in row]
       row_data=dict(zip(data_header,row))
       sample_data.append(row_data)
     return data_header, sample_data

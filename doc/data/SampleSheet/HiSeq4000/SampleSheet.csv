@@ -27,10 +27,10 @@ Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_I
 4,IGF0005,s5,,,702,TCCGGAGA,506,TAAGATTA,project_1:user1,hsapiens:GRCh37:rna:truseq
 4,IGF0006,s6,,,702,TCCGGAGA,507,ACGTCCTG,project_1:user1,hsapiens:GRCh37:rna:truseq
 4,IGF0007,s7,,,702,TCCGGAGA,508,GTCAGTAC,project_1:user1,hsapiens:GRCh37:rna:truseq
-5,IGF0008,s8,,,702,TCCGGAGA,508,GTCAGTAC,project_1:user1,hsapiens:GRCh37:rna:truseq
-5,IGF0009,s9,,,703,CGCTCATT,501,AGGCTATA,project_1:user1,hsapiens:GRCh37:rna:truseq
-5,IGF00010,s10,,,703,CGCTCATT,502,GCCTCTAT,project_1:user1,hsapiens:GRCh37:rna:truseq
-5,IGF00011,s11,,,703,CGCTCATT,503,AGGATAGG,project_1:user1,hsapiens:GRCh37:rna:truseq
+5,IGF0008,s8,,,702,TCCGGAGA,508,GTCAGTAC ,project_1:user1,hsapiens:GRCh37:rna:truseq
+5,IGF0009,s9,,,703,CGCTCATT ,501,AGGCTATA,project_1:user1,hsapiens:GRCh37:rna:truseq
+5,IGF00010,s10,,,703,CGCTCATT,502,GCCTCTAT ,project_1:user1,hsapiens:GRCh37:rna:truseq
+5,IGF00011,s11,,,703,CGCTCATT ,503,AGGATAGG,project_1:user1,hsapiens:GRCh37:rna:truseq
 6,IGF00012,s12,,,2,AAACATCG,No_index,NNNNNNNN,project_2:user1,hsapiens:GRCh37:dna:truseq
 6,IGF00013,s13,,,3,ATGCCTAA,No_index,NNNNNNNN,project_2:user1,hsapiens:GRCh37:dna:truseq
 6,IGF00014,s14,,,4,AGTGGTCA,No_index,NNNNNNNN,project_2:user1,hsapiens:GRCh37:dna:truseq
