@@ -1,8 +1,12 @@
-import os, re, copy
+import os, re, copy, sys
 from collections import defaultdict, deque
 
-# Python 2.x specific import 
-from string import maketrans
+try:
+  if sys.version_info[0] < 3:
+    # Python 2.x specific import 
+    from string import maketrans
+except:
+  raise
 
 class SampleSheet:
   '''
@@ -158,9 +162,16 @@ class SampleSheet:
         '''
         index=row[index_field]
      
-        # For Python 3.x, use str.maketrans
-        row[index_field]=index.upper().translate(maketrans('ACGT','TGCA'))[::-1] 
-    
+        try:
+          if sys.version_info[0] < 3:
+            # For Python 2.x, use maketrans
+            row[index_field]=index.upper().translate(maketrans('ACGT','TGCA'))[::-1] 
+          else:
+            # For Python 3.x, use str.maketrans
+            row[index_field]=index.upper().translate(str.maketrans('ACGT','TGCA'))[::-1]
+        except:
+          raise
+
     self._data=data
     
 
