@@ -4,7 +4,7 @@ from igf_data.illumina.runinfo_xml import RunInfo_xml
 class Hiseq4000RunInfo(unittest.TestCase):
 
   def setUp(self):
-    r_file='doc/data/Illumina/RunInfo.xml'
+    r_file='/home/vmuser/git_code/data-management-python/doc/data/Illumina/RunInfo.xml'
     self.runinfo_data=RunInfo_xml(xml_file=r_file)
 
   def test_runInfo_wrong_root_tag(self):
