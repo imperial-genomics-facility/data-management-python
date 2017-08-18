@@ -4,3 +4,9 @@ lxml
 bs4
 pandas
 sqlalchemy
+pymysql
+slackclient
+asana
+matplotlib
+unittest2
+jinja2
