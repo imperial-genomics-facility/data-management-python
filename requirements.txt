@@ -1,3 +1,5 @@
 coveralls
+html5lib
+lxml
 bs4
 pandas
