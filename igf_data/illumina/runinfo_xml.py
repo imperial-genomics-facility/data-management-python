@@ -51,5 +51,5 @@ class RunInfo_xml:
     '''
     xml_file=self.xml_file
     with open(xml_file, 'r') as fp:
-      soup = BeautifulSoup(fp)
+      soup = BeautifulSoup(fp, "html5lib")
     self._soup = soup
