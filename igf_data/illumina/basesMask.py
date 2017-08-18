@@ -9,7 +9,7 @@ class BasesMask:
     self.read_offset      = read_offset
     self.index_offset     = index_offset
 
-  def calculate_bases_mask(self):
+  def calculate_bases_mask(self, numcycle_label='numcycles', isindexedread_label='isindexedread'):
     '''
     Function for bases mask value calculation
     '''
@@ -21,17 +21,16 @@ class BasesMask:
 
     samplesheet_data=SampleSheet(infile=samplesheet_file)
     index_length_stats=samplesheet_data.get_index_count()
-
     index_length_list=list()
 
     for index_name in index_length_stats.keys():
       index_type=len(index_length_stats[index_name].keys())
 
       # check if all the index seq are similar or not
-      if index_type > 1: raise ValueError('column {0} has variable lengths'.format( index_field ))
+      if index_type > 1: raise ValueError('column {0} has variable lengths'.format( index_type ))
   
       # adding all non zero index lengths
-      index_length=index_length_stats[index_name].keys()[0]
+      index_length=list(index_length_stats[index_name].keys())[0]
       if index_length > 0: 
         index_length_list.append(index_length)
 
@@ -52,11 +51,11 @@ class BasesMask:
 
     bases_mask_list=list()
 
-    for read_id in sorted(runinfo_reads_stats.keys()):
-      runinfo_read_length = int(runinfo_reads_stats[read_id]['NumCycles'])
+    for read_id in (sorted(runinfo_reads_stats.keys())):
+      runinfo_read_length = int(runinfo_reads_stats[read_id][numcycle_label])
     
       # index 
-      if runinfo_reads_stats[read_id]['IsIndexedRead'] == 'Y':
+      if runinfo_reads_stats[read_id][isindexedread_label] == 'Y':
         index_count += 1
 
         # resetting the index_offset if its not provided
@@ -82,7 +81,7 @@ class BasesMask:
         bases_mask_list.append(mask)
 
       # read
-      elif runinfo_reads_stats[read_id]['IsIndexedRead'] == 'N':
+      elif runinfo_reads_stats[read_id][isindexedread_label] == 'N':
         read_count += 1
         real_read_count = runinfo_read_length - read_offset
    
