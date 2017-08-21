@@ -36,7 +36,6 @@ class Find_seqrun_test1(unittest.TestCase):
       base.close_session()
 
   def tearDown(self):
-     #shutil.copyfile(self.dbname, 'test.db')
      Base.metadata.drop_all(self.engine)
      os.remove(self.dbname)
      shutil.rmtree(self.md5_out_path, ignore_errors=False, onerror=None)
