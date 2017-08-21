@@ -312,7 +312,7 @@ class Collection(Base):
   collection_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   name          = Column(String(30), nullable=False)
   type          = Column(String(30), nullable=False)
-  table         = Column(Enum('sample', 'experiment', 'run', 'file', 'project', 'unknown'), nullable=False, server_default='unknown')
+  table         = Column(Enum('sample', 'experiment', 'run', 'file', 'project', 'seqrun','unknown'), nullable=False, server_default='unknown')
   date_stamp    = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now) 
   collection_group      = relationship('Collection_group', backref='collection')
   collection_attribute  = relationship('Collection_attribute', backref='collection')
