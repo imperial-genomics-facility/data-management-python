@@ -135,7 +135,7 @@ class BaseAdaptor(DBConnect):
     '''
     if not isinstance(data, pd.DataFrame):
       data=pd.DataFrame(data)
-    table_df=data.ix[:, table_columns]                                           # slice df for table
+    table_df=data.loc[:, table_columns]                                           # slice df for table
     table_attr_columns=list(set(data.columns).difference(set(table_df.columns))) # assign remaining columns to attribute dataframe
     if isinstance(required_column, str):
       table_attr_columns.append(required_column)                                 # append required column if its a string
@@ -144,7 +144,7 @@ class BaseAdaptor(DBConnect):
     else:
       raise TypeError('Expecting a string or list and got: {0}'.format(type(required_column)))
 
-    table_attr_df=data.ix[:, table_attr_columns]                                 # slice df for attribute table
+    table_attr_df=data.loc[:, table_attr_columns]                                 # slice df for attribute table
     new_table_attr_df=self._format_attribute_table_row(data=table_attr_df, \
                                                        required_column=required_column, \
                                                        attribute_name_column=attribute_name_column, \
