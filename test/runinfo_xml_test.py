@@ -44,5 +44,11 @@ class Hiseq4000RunInfo(unittest.TestCase):
     self.assertEqual(index_count,2)
     self.assertEqual(read_count,2)
 
+  def test_get_flowcell_name(self):
+    runinfo_data=self.runinfo_data
+    flowcell_name=runinfo_data.get_flowcell_name()
+    self.assertEqual(flowcell_name, 'HXXXXXXXX')
+
+
 if __name__ == '__main__':
   unittest.main()

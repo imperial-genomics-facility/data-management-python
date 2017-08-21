@@ -44,7 +44,18 @@ class RunInfo_xml:
       raise ValueError('couldn\'t find tag {0}'.format('instrument'))
 
     return series_number
-    
+
+  def get_flowcell_name(self):
+    '''
+    A mthod for accessing flowcell name from the runinfo xml file
+    '''
+    flowcell=None
+    flowcell=self._soup.flowcell.contents[0]
+
+    if not flowcell:
+      raise ValueError('couldn\'t find tag {0}'.format('flowcell'))
+    return flowcell
+
   def _read_xml(self):
     '''
     Internal function for reading the xml file using BS4
