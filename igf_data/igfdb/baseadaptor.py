@@ -17,7 +17,7 @@ class BaseAdaptor(DBConnect):
     elif 'session' in data and data['session']:
       self.session = data['session'] 
     else:
-      super(BaseAdaptor, self).__init__(**data)
+      DBConnect.__init__(self,**data)
 
      
   def _store_record_serial(self, table, data):
