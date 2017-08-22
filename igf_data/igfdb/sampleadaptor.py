@@ -44,7 +44,7 @@ class SampleAdaptor(BaseAdaptor):
 
     sample_columns=self.get_table_columns(table_name=Sample, excluded_columns=['sample_id', 'project_id'])
     sample_columns.extend(['project_igf_id'])
-    (sample_df, sample_attr_df)=super(SampleAdaptor, self).divide_data_to_table_and_attribute( \
+    (sample_df, sample_attr_df)=BaseAdaptor.divide_data_to_table_and_attribute(self, \
                                                                data=data, \
     	                                                       required_column=required_column, \
     	                                                       table_columns=sample_columns,  \
