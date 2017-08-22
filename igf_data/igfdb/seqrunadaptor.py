@@ -42,7 +42,7 @@ class SeqrunAdaptor(BaseAdaptor):
 
     seqrun_columns=self.get_table_columns(table_name=Seqrun, excluded_columns=['seqrun_id', 'platform_id'])              # get required columns for run table
     seqrun_columns.extend(['platform_igf_id'])
-    (seqrun_df, seqrun_attr_df)=super(SeqrunAdaptor, self).divide_data_to_table_and_attribute( \
+    (seqrun_df, seqrun_attr_df)=BaseAdaptor.divide_data_to_table_and_attribute(self, \
                                                       data=data, \
     	                                              required_column=required_column, \
     	                                              table_columns=seqrun_columns,  \
