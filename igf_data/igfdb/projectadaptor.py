@@ -37,7 +37,7 @@ class ProjectAdaptor(BaseAdaptor):
       data=pd.DataFrame(data)
 
     project_columns=self.get_table_columns(table_name=Project, excluded_columns=['project_id'])                      # get required columns for project table
-    (project_df, project_attr_df)=super(ProjectAdaptor, self).divide_data_to_table_and_attribute( \
+    (project_df, project_attr_df)=BaseAdaptor.divide_data_to_table_and_attribute(self, \
                                                                      data=data, \
     	                                                             required_column=required_column, \
     	                                                             table_columns=project_columns,  \
@@ -175,7 +175,7 @@ class ProjectAdaptor(BaseAdaptor):
     projects=self.get_project_info(format='object', project_igf_id=project_igf_id)
     project=projects[0]
 
-    project_attributes=super(ProjectAdaptor, self).get_attributes(attribute_table='Project_attribute', db_id=project.project_id )
+    project_attributes=BaseAdaptor.get_attributes(self, attribute_table='Project_attribute', db_id=project.project_id )
     return project_attributes
 
 
