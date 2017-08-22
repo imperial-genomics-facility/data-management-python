@@ -42,7 +42,7 @@ class CollectionAdaptor(BaseAdaptor):
       data=pd.DataFrame(data)
 
     collection_columns=self.get_table_columns(table_name=Collection, excluded_columns=['collection_id'])           # get required columns for collection table    
-    (collection_df, collection_attr_df)=super(CollectionAdaptor, self).divide_data_to_table_and_attribute( \
+    (collection_df, collection_attr_df)=BaseAdaptor.divide_data_to_table_and_attribute(self, \
                                                                      data=data, \
     	                                                             required_column=required_column, \
     	                                                             table_columns=collection_columns,  \
