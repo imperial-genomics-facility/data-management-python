@@ -43,7 +43,7 @@ class RunAdaptor(BaseAdaptor):
 
     run_columns=self.get_table_columns(table_name=Run, excluded_columns=['run_id', 'seqrun_id', 'experiment_id'])     # get required columns for run table
     run_columns.extend(['seqrun_igf_id', 'experiment_igf_id'])
-    (run_df, run_attr_df)=super(RunAdaptor, self).divide_data_to_table_and_attribute( \
+    (run_df, run_attr_df)=BaseAdaptor.divide_data_to_table_and_attribute(self, \
                                                       data=data, \
     	                                              required_column=required_column, \
     	                                              table_columns=run_columns,  \
