@@ -48,7 +48,7 @@ class ExperimentAdaptor(BaseAdaptor):
 
     experiment_columns=self.get_table_columns(table_name=Experiment, excluded_columns=['experiment_id', 'project_id', 'sample_id' ])    # get required columns for experiment table
     experiment_columns.extend(['project_igf_id', 'sample_igf_id'])                                                                      # add required columns
-    (experiment_df, experiment_attr_df)=super(ExperimentAdaptor, self).divide_data_to_table_and_attribute( \
+    (experiment_df, experiment_attr_df)=BaseAdaptor.divide_data_to_table_and_attribute(self, \
                                                                            data=data, \
     	                                                                   required_column=required_column, \
     	                                                                   table_columns=experiment_columns,  \
