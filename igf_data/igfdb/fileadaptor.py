@@ -39,7 +39,7 @@ class FileAdaptor(BaseAdaptor):
       data=pd.DataFrame(data)
  
     file_columns=self.get_table_columns(table_name=File, excluded_columns=['file_id'])                             # get required columns for file table
-    (file_df, file_attr_df)=super(FileAdaptor, self).divide_data_to_table_and_attribute( \
+    (file_df, file_attr_df)=BaseAdaptor.divide_data_to_table_and_attribute(self, \
                                                                      data=data, \
     	                                                             required_column=required_column, \
     	                                                             table_columns=file_columns,  \
