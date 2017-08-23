@@ -30,8 +30,9 @@ class IGF_asana:
     task_name: A task name
     '''
     asana_task_id=None
+    matched_tasks=list()
     try:
-      matched_tasks=[p for p in igf_asana.asanaclient.tasks.find_all({'project':self.asana_project_id}) if p['name']==task_name]
+      matched_tasks=[p for p in self.asanaclient.tasks.find_all({'project':self.asana_project_id}) if p['name']==task_name]
       asana_task_id=matched_tasks[0]['id']
     except:
       pass
@@ -52,7 +53,7 @@ class IGF_asana:
     '''
     task_id=None
     try:
-      results=igf_asana.asanaclient.tasks.create_in_workspace( \
+      results=self.asanaclient.tasks.create_in_workspace( \
                                             self.asana_workspace_id,\
                                             {'name':task_name, \
                                              'projects':self.asana_project_id, \
