@@ -40,6 +40,18 @@ class BasesMask_testC(unittest.TestCase):
     pattern=re.compile('^y150n1,i6n2,n8,y150n1$', re.IGNORECASE)
     self.assertRegexpMatches(bases_mask, pattern)
 
+class BasesMask_testC(unittest.TestCase):
+
+  def setUp(self):
+    r_file='doc/data/Illumina/RunInfo2.xml'
+    s_file='doc/data/SampleSheet/HiSeq4000/SampleSheet4.csv'
+    self.bases_mask_object=BasesMask(samplesheet_file=s_file, runinfo_file=r_file, read_offset=1, index_offset=0 )
+
+  def test_calculate_bases_mask_8(self):
+    bases_mask_data=self.bases_mask_object
+    bases_mask=bases_mask_data.calculate_bases_mask()
+    pattern=re.compile('^y150n1,i8n,y150n1$', re.IGNORECASE)
+    self.assertRegexpMatches(bases_mask, pattern)
 
 if __name__=='__main__':
   unittest.main()
