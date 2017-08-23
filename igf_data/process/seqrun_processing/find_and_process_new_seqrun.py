@@ -58,8 +58,8 @@ def check_seqrun_dir_in_db(all_seqrun_dir,dbconfig):
 def calculate_file_md5(seqrun_info, md5_out, seqrun_path, file_suffix='md5.json'):
   '''
   A method for file md5 calculation for all the sequencing run files
-  Output is a lists of dictionary
-  [{seqrun_name: seqrun_md5_list_path}]
+  Output is a dictionary
+  {seqrun_name: seqrun_md5_list_path}
   '''
   seqrun_and_md5=dict()
   for seqrun_name, seqrun_path in seqrun_info.items():
