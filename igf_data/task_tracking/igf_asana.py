@@ -103,7 +103,7 @@ class IGF_asana:
     '''
     An internal method for checking user given project id
     '''
-    matched_projects=[p for p in igf_asana.asanaclient.projects.\
+    matched_projects=[p for p in self.asanaclient.projects.\
                                    find_all({'workspace':self.asana_workspace_id}) \
                                      if p['id']==int(self.asana_project_id) ]
     if len(matched_projects)==0:
