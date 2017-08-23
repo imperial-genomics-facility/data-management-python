@@ -23,7 +23,8 @@ class IGF_slack:
     self.slack_config=slack_config
     self._read_and_set_slack_config()                  # read config file and set parameters
     self.slackobject = SlackClient(self.slack_token)   # create slackclient instance
-        
+    self.slack_token=None                              # reset slack token 
+      
 
   def post_message_to_channel(self, message, reaction=''):
     '''
