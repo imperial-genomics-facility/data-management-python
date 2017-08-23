@@ -52,7 +52,7 @@ class BasesMask:
 
     bases_mask_list=list()
 
-    for read_id in (runinfo_reads_stats.keys()):
+    for read_id in sorted(runinfo_reads_stats.keys()):
       runinfo_read_length = int(runinfo_reads_stats[read_id]['NumCycles'])
     
       # index 

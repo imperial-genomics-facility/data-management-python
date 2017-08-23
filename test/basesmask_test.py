@@ -50,7 +50,7 @@ class BasesMask_testC(unittest.TestCase):
   def test_calculate_bases_mask_8(self):
     bases_mask_data=self.bases_mask_object
     bases_mask=bases_mask_data.calculate_bases_mask()
-    pattern=re.compile('^y150n1,i8n,y150n1$', re.IGNORECASE)
+    pattern=re.compile('^y150n1,i8,y150n1$', re.IGNORECASE)
     self.assertRegexpMatches(bases_mask, pattern)
 
 if __name__=='__main__':
