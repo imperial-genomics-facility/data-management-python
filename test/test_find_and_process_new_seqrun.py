@@ -4,7 +4,7 @@ from igf_data.igfdb.igfTables import Base
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.platformadaptor import PlatformAdaptor
 from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
-from igf_data.process.seqrun_processing.find_and_process_new_seqrun import find_new_seqrun_dir,calculate_file_md5,load_seqrun_files_to_db
+from igf_data.process.seqrun_processing.find_and_process_new_seqrun import find_new_seqrun_dir,calculate_file_md5,load_seqrun_files_to_db, seed_pipeline_table_for_new_seqrun
 
 class Find_seqrun_test1(unittest.TestCase):
   def setUp(self):
@@ -68,6 +68,9 @@ class Find_seqrun_test1(unittest.TestCase):
     sra.close_session()
     self.assertEqual(sra_data.flowcell_id, 'HXXXXXXXX')
   
+  def test_seed_pipeline_table_for_new_seqrun(self):
+    seed_pipeline_table_for_new_seqrun(pipeline_name=self.pipeline_name, dbconfig=self.dbconfig)
+    
 if __name__=='__main__':
   unittest.main()
 

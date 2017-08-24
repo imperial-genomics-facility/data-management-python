@@ -1,0 +1,1 @@
+[{ "pipeline_name" : "demultiplexing_fastq", "pipeline_db" : "sqlite:////path/bcl2fastq.db" }]
