@@ -149,8 +149,6 @@ class PipelineAdaptor(BaseAdaptor):
     A method for creating seed for new seqruns
     required params:
     pipeline_name: A pipeline name
-    optional:
-    seqrun_attributes: A list of attributes dictionaries, key: attribute_name, value: attribute_value
     '''
     try:
       seeded_seqruns=self.session..query(Seqrun.seqrun_igf_id).\
