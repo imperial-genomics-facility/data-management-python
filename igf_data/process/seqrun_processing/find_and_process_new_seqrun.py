@@ -133,12 +133,11 @@ def prepare_seqrun_for_db(seqrun_name, seqrun_path):
   except:
     raise
 
-def seed_pipeline_table_for_new_seqrun(seqrun_info, pipeline_name, dbconfig):
+
+def seed_pipeline_table_for_new_seqrun(pipeline_name, dbconfig):
   '''
   A method for seeding pipelines for the new seqruns
   required params:
-  seqrun_info: A dictionary, key: seqrun name, value: seqrun path
-               e.g. { seqrun_name : seqrun_path }
   pipeline_name: A pipeline name
   dbconfig: A dbconfig file
   '''
@@ -146,22 +145,14 @@ def seed_pipeline_table_for_new_seqrun(seqrun_info, pipeline_name, dbconfig):
   with open(dbconfig, 'r') as json_data:
     dbparam=json.load(json_data)
 
-  pipeseed_data=list()
   try:
-    base=BaseAdaptor(**dbparam)
-    base.start_session()
-    sra=SeqrunAdaptor(**{'session':base.session})
-    for seqrun_name in seqrun_info.keys():
-      sra_data=sra.fetch_seqrun_records_igf_id(seqrun_igf_id=seqrun_name)
-      pipeseed_data.append({'seed_id':sra_data.seqrun_id, 'seed_table':'SEQRUN','pipeline_name':pipeline_name})
-    
-    pla=PipelineAdaptor(**{'session':base.session})
-    if len(pipeseed_data) > 0:
-      pla.create_pipeline_seed(data=pipeseed_data)
+    pa=PipelineAdaptor(**dbparam)
+    pa.start_session()
+    pa.seed_new_seqruns(pipeline_name=pipeline_name)
   except:
     raise
   finally:
-    base.close_session()
+    pa.close_session()
 
 def load_seqrun_files_to_db(seqrun_info, seqrun_md5_info, dbconfig, file_type='ILLUMINA_BCL_MD5'):
   '''
@@ -212,18 +203,4 @@ def load_seqrun_files_to_db(seqrun_info, seqrun_md5_info, dbconfig, file_type='I
     raise
   finally:
     base.close_session()
-
-
-
-if __name__=='__main__':
-  path='/home/vmuser/git_code/igf-pipelines/data/seqrun_dir'
-  md5_out_path='/home/vmuser/git_code/test_dir'
-  #checksum=calculate_file_checksum(filepath='/home/vmuser/git_code/data-management-python/doc/data/Illumina/RunInfo.xml')
-  #print(checksum)
-
-  dbconfig='/home/vmuser/git_code/igf-pipelines/data/dbconfig.json'
-  new_seqrun=find_new_seqrun_dir(path, dbconfig)
-  new_seqrun_and_md5=calculate_file_md5(seqrun_info=new_seqrun, seqrun_path=path, md5_out=md5_out_path)
-  load_seqrun_files_to_db(seqrun_info=new_seqrun, seqrun_md5_info=new_seqrun_and_md5, dbconfig=dbconfig)
-  
 
