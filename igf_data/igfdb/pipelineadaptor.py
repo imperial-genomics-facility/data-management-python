@@ -3,7 +3,7 @@ import pandas as pd
 from sqlalchemy import update
 from sqlalchemy.sql import table, column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
-from igf_data.igfdb.igfTables import Pipeline, Pipeline_seed, Project, Sample, Experiment, Run, Collection, File
+from igf_data.igfdb.igfTables import Pipeline, Pipeline_seed, Project, Sample, Experiment, Run, Collection, File, Seqrun
 
 class PipelineAdaptor(BaseAdaptor):
   '''
@@ -142,3 +142,38 @@ class PipelineAdaptor(BaseAdaptor):
     except:
       self.rollback_session()
       raise
+
+
+  def seed_new_seqruns(self, pipeline_name, autosave=True, seed_table='SEQRUN'):
+    '''
+    A method for creating seed for new seqruns
+    required params:
+    pipeline_name: A pipeline name
+    optional:
+    seqrun_attributes: A list of attributes dictionaries, key: attribute_name, value: attribute_value
+    '''
+    try:
+      seeded_seqruns=self.session..query(Seqrun.seqrun_igf_id).\
+                   filter(Seqrun.reject_run=='N').\
+                   join(Pipeline_seed,Pipeline_seed.seed_id==Seqrun.seqrun_id).\
+                   filter(Pipeline_seed.seed_table==seed_table).\
+                   join(Pipeline, Pipeline.pipeline_id==Pipeline_seed.pipeline_id).\
+                   filter(Pipeline.pipeline_name==pipeline_name).subquery()               # get list of seqruns which are already seeded for the pipeline
+      
+      seqrun_query=base.session.query(Seqrun.seqrun_id).\
+                   filter(Seqrun.reject_run=='N').\
+                   filter(~Seqrun.seqrun_igf_id.in_(seeded_seqrun))
+
+      new_seqruns=self.fetch_records(query=seqrun_query, output_mode='object')            # get lists of valid seqruns which are not in the previous list
+
+      seqrun_data=list()
+      for seqrun in new_seqruns: 
+        seqrun_data.append({'seed_id':seqrun.seqrun_id, 'seed_table':seed_table,'pipeline_name':pipeline_name})
+ 
+      if len(seqrun_data) > 0:
+        self.create_pipeline_seed(data=seqrun_data, autosave)
+
+    except:
+      raise  
+
+
