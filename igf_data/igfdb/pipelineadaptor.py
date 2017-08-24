@@ -151,16 +151,16 @@ class PipelineAdaptor(BaseAdaptor):
     pipeline_name: A pipeline name
     '''
     try:
-      seeded_seqruns=self.session..query(Seqrun.seqrun_igf_id).\
+      seeded_seqruns=self.session.query(Seqrun.seqrun_igf_id).\
                    filter(Seqrun.reject_run=='N').\
                    join(Pipeline_seed,Pipeline_seed.seed_id==Seqrun.seqrun_id).\
                    filter(Pipeline_seed.seed_table==seed_table).\
                    join(Pipeline, Pipeline.pipeline_id==Pipeline_seed.pipeline_id).\
                    filter(Pipeline.pipeline_name==pipeline_name).subquery()               # get list of seqruns which are already seeded for the pipeline
       
-      seqrun_query=base.session.query(Seqrun.seqrun_id).\
+      seqrun_query=self.session.query(Seqrun.seqrun_id).\
                    filter(Seqrun.reject_run=='N').\
-                   filter(~Seqrun.seqrun_igf_id.in_(seeded_seqrun))
+                   filter(~Seqrun.seqrun_igf_id.in_(seeded_seqruns))
 
       new_seqruns=self.fetch_records(query=seqrun_query, output_mode='object')            # get lists of valid seqruns which are not in the previous list
 
@@ -169,7 +169,7 @@ class PipelineAdaptor(BaseAdaptor):
         seqrun_data.append({'seed_id':seqrun.seqrun_id, 'seed_table':seed_table,'pipeline_name':pipeline_name})
  
       if len(seqrun_data) > 0:
-        self.create_pipeline_seed(data=seqrun_data, autosave)
+        self.create_pipeline_seed(data=seqrun_data, autosave=autosave)
 
     except:
       raise  
