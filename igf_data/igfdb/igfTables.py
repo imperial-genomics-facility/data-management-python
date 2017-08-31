@@ -64,7 +64,7 @@ class User(Base):
                 "category = '{self.category}'," \
                 "status = '{self.status}'," \
                 "email_id = '{self.email_id}'," \
-                "date_stamp = '{self.date_stamp}'," \
+                "date_created = '{self.date_created}'," \
                 "password = '{self.password}'," \
                 "encryption_salt = '{self.encryption_salt}')".format(self=self) 
 
