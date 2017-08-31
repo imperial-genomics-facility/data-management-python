@@ -3,6 +3,27 @@ from igf_data.igfdb.igfTables import Base
 from sqlalchemy import create_engine
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 
+def read_json_data(data_file):
+  '''
+  A method for reading data from json file
+  required params:
+  data_file: A Json format file
+  returns a list of dictionaries
+  '''
+  data=None
+  try:
+    with open(data_file, 'r') as json_data: 
+      data=json.load(json_data)
+  
+    if data is None:
+      raise ValueError('No data found in file {0}'.format(data))
+
+    if not isinstance(data, 'list'):
+      data=[data]                      # convert data dictionary to a list of dictionaries
+    return data
+  except:
+    raise
+
 
 def read_dbconf_json(dbconfig):
   '''
@@ -14,13 +35,15 @@ def read_dbconf_json(dbconfig):
   returns: a dictionary containing dbparms
   '''
   dbparam=dict()
-  with open(dbconfig, 'r') as json_data:
-    dbparam=json.load(json_data)
+  try:
+    with open(dbconfig, 'r') as json_data:
+      dbparam=json.load(json_data)
 
-  if len(dbparam.keys())==0:
-    raise ValueError('No dbconfig paramaters found in file {0}'.format(dbconfig))
-  return dbparam
-
+    if len(dbparam.keys())==0:
+      raise ValueError('No dbconfig paramaters found in file {0}'.format(dbconfig))
+    return dbparam
+  except:
+    raise
 
 def clean_and_rebuild_database(dbconfig):
   '''
