@@ -148,7 +148,7 @@ class Platform(Base):
 
   def __repr__(self):
     return "Platform(platform_id = '{self.platform_id}'," \
-                    "platform_igf_id = '{self.igf_id}'," \
+                    "platform_igf_id = '{self.platform_igf_id}'," \
                     "model_name = '{self.model_name}'," \
                     "vendor_name = '{self.vendor_name}'," \
                     "software_name = '{self.software_name}'," \
