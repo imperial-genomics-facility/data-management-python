@@ -13,11 +13,11 @@ def read_dbconf_json(dbconfig):
 
   returns: a dictionary containing dbparms
   '''
-  dbparam=None
+  dbparam=dict()
   with open(dbconfig, 'r') as json_data:
     dbparam=json.load(json_data)
 
-  if dbparam in None:
+  if len(dbparam.keys())==0:
     raise ValueError('No dbconfig paramaters found in file {0}'.format(dbconfig))
   return dbparam
 
@@ -30,7 +30,7 @@ def clean_and_rebuild_database(dbconfig):
   '''
   try:
     dbparam=read_dbconf_json(dbconfig)
-    base=BaseAdaptor(**dbparams)
+    base=BaseAdaptor(**dbparam)
     base.start_session()
     Base.metadata.drop_all(base.engine)
     Base.metadata.create_all(base.engine)
