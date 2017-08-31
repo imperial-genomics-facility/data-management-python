@@ -1,12 +1,12 @@
 from igf_data.igfdb.platformadaptor import PlatformAdaptor
 from igf_data.utils.dbutils import read_dbconf_json, read_json_data
 
-def load_new_platform_data(data, dbconfig):
+def load_new_platform_data(data_file, dbconfig):
   '''
   A method for loading new data for pipeline table
   '''
   try:
-    formatted_data=read_json_data(data)
+    formatted_data=read_json_data(data_file)
     dbparam=read_dbconf_json(dbconfig)
     pl=PlatformAdaptor(**{dbparam})
     pl.start_session()
