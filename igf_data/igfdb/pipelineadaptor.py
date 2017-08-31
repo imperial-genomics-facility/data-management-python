@@ -34,7 +34,7 @@ class PipelineAdaptor(BaseAdaptor):
                        if column.key == target_column_name][0]
       pipeline=self.fetch_records_by_column(table=Pipeline, \
       	                                   column_name=column, \
-      	                                   column_id=pipeline, \
+      	                                   column_id=pipeline_name, \
       	                                   output_mode='one')
       return pipeline  
     except:
