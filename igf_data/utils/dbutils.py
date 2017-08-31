@@ -45,6 +45,7 @@ def read_dbconf_json(dbconfig):
   except:
     raise
 
+
 def clean_and_rebuild_database(dbconfig):
   '''
   A method for deleting data in database and create empty tables
@@ -54,10 +55,8 @@ def clean_and_rebuild_database(dbconfig):
   try:
     dbparam=read_dbconf_json(dbconfig)
     base=BaseAdaptor(**dbparam)
-    base.start_session()
     Base.metadata.drop_all(base.engine)
     Base.metadata.create_all(base.engine)
-    base.close_session()
   except:
     raise
  
