@@ -275,6 +275,7 @@ class BaseAdaptor(DBConnect):
         session.commit()
       except:
         session.rollback()
+        raise
 
 
   def _fetch_records_as_dataframe(self, query):
