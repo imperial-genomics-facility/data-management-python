@@ -40,7 +40,7 @@ class BasesMask_testC(unittest.TestCase):
     pattern=re.compile('^y150n1,i6n2,n8,y150n1$', re.IGNORECASE)
     self.assertRegexpMatches(bases_mask, pattern)
 
-class BasesMask_testC(unittest.TestCase):
+class BasesMask_testD(unittest.TestCase):
 
   def setUp(self):
     r_file='doc/data/Illumina/RunInfo2.xml'
