@@ -251,7 +251,7 @@ class Experiment(Base):
                       "project_id = '{self.project_id}'," \
                       "sample_id = '{self.sample_id}'," \
                       "library_name = '{self.library_name}'," \
-                      "library_source = '{self.source}'," \
+                      "library_source = '{self.library_source}'," \
                       "library_strategy = '{self.library_strategy}'," \
                       "experiment_type = '{self.experiment_type}'," \
                       "library_layout = '{self.library_layout}'," \
