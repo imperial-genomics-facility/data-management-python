@@ -18,7 +18,7 @@ def read_json_data(data_file):
     if data is None:
       raise ValueError('No data found in file {0}'.format(data))
 
-    if not isinstance(data, 'list'):
+    if not isinstance(data, list):
       data=[data]                      # convert data dictionary to a list of dictionaries
     return data
   except:
