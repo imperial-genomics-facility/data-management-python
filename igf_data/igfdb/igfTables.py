@@ -334,7 +334,6 @@ class File(Base):
   file_id      = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   file_path    = Column(String(500), nullable=False)
   location     = Column(Enum('ORWELL', 'HPC_PROJECT', 'ELIOT', 'IRODS', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
-  type         = Column(Enum('BCL_DIR', 'BCL_TAR', 'FASTQ_TAR', 'FASTQC_TAR', 'FASTQ', 'FASTQGZ', 'BAM', 'CRAM', 'GFF', 'BED', 'GTF', 'FASTA', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   md5          = Column(String(33))
   size         = Column(String(15))
   date_created = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp())
@@ -346,7 +345,6 @@ class File(Base):
     return "File(file_id = '{self.file_id}'," \
                 "file_path = '{self.file_path}'," \
                 "location = '{self.location}'," \
-                "type = '{self.type}'," \
                 "md5 = '{self.md5}'," \
                 "size = '{self.size}'," \
                 "date_created = '{self.date_created}'," \
