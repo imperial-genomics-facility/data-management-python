@@ -8,7 +8,7 @@ def load_new_platform_data(data_file, dbconfig):
   try:
     formatted_data=read_json_data(data_file)
     dbparam=read_dbconf_json(dbconfig)
-    pl=PlatformAdaptor(**{dbparam})
+    pl=PlatformAdaptor(**dbparam)
     pl.start_session()
     pl.store_platform_data(data=formatted_data)
     pl.close_session()
