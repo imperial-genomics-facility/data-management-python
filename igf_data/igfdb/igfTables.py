@@ -184,7 +184,7 @@ class Seqrun(Base):
   seqrun_igf_id   = Column(String(50), nullable=False)
   reject_run      = Column(Enum('Y','N'), nullable=False, server_default='N')
   date_created    = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
-  flowcell_id     = Column(String(10), nullable=False)
+  flowcell_id     = Column(String(20), nullable=False)
   platform_id     = Column(INTEGER(unsigned=True), ForeignKey('platform.platform_id', onupdate="CASCADE", ondelete="SET NULL"))
   run               = relationship('Run', backref="seqrun")
   seqrun_stats      = relationship('Seqrun_stats', backref="seqrun")
