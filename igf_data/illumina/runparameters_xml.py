@@ -16,20 +16,20 @@ class RunParameter_xml:
     self._soup = soup
 
 
-   def get_hiseq_flowcell(self):
-     '''
-     A method for fetching flowcell details for hiseq run
-     It returns None of MiSeq and NextSeq runs
-     '''
-     soup=self._soup
-     try:
-       if soup.flowcell:
-         flowcell=soup.flowcell.contents[0]
-       else:
-         flowcell=None
-       return flowcell
-     except:
-       raise
+  def get_hiseq_flowcell(self):
+    '''
+    A method for fetching flowcell details for hiseq run
+    It returns None of MiSeq and NextSeq runs
+    '''
+    soup=self._soup
+    try:
+      if soup.flowcell:
+        flowcell=soup.flowcell.contents[0]
+      else:
+        flowcell=None
+      return flowcell
+    except:
+      raise
 
 
 
