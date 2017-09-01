@@ -1,6 +1,5 @@
-import json
 import pandas as pd
-from sqlalchemy.sql import table, column
+from sqlalchemy.sql import column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.igfTables import Experiment, Run, Run_attribute, Seqrun
 
