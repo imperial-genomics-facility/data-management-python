@@ -5,6 +5,7 @@ from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
+from igf_data.igfdb.platformadaptor import PlatformAdaptor
 from igf_data.illumina.runinfo_xml import RunInfo_xml
 from igf_data.illumina.runparameters_xml import RunParameter_xml
 
