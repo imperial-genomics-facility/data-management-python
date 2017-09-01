@@ -1,5 +1,3 @@
-import json
-import warnings
 import pandas as pd
 from igf_data.igfdb.dbconnect import DBConnect
  
