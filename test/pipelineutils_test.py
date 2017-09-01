@@ -1,4 +1,4 @@
-import os, unittest, json
+import os, unittest
 from sqlalchemy import create_engine
 from igf_data.igfdb.igfTables import Base, Pipeline
 from igf_data.igfdb.baseadaptor import BaseAdaptor
