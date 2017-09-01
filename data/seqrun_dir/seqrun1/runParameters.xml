@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<RunParameters xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <Setup>
+    <LimsIntegrationMode>false</LimsIntegrationMode>
+    <NumberOfRehybAttemptsRemaining>2</NumberOfRehybAttemptsRemaining>
+    <ExperimentName>ferrer_sandra10X</ExperimentName>
+    <ScanID>-999</ScanID>
+    <FCPosition>A</FCPosition>
+    <WorkFlowType>DUALINDEX</WorkFlowType>
+    <Read1>76</Read1>
+    <IndexRead1>8</IndexRead1>
+    <IndexRead2>8</IndexRead2>
+    <Read2>76</Read2>
+    <OutputFolder>I:\seqrun\illumina</OutputFolder>
+    <PeriodicSave>Save All Thumbnails</PeriodicSave>
+    <Flowcell>HiSeq 3000/4000 PE</Flowcell>
+    <FirstBaseConfirmation>false</FirstBaseConfirmation>
+  </Setup>
+  <Version>1</Version>
+</RunParameters>
