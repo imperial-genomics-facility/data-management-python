@@ -1,7 +1,6 @@
-import json
 import pandas as pd
 from sqlalchemy import update
-from sqlalchemy.sql import table, column
+from sqlalchemy.sql import column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.igfTables import Pipeline, Pipeline_seed, Project, Sample, Experiment, Run, Collection, File, Seqrun
 
