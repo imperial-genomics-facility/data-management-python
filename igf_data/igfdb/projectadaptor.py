@@ -1,4 +1,3 @@
-import json
 import pandas as pd
 from sqlalchemy.sql import table, column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
