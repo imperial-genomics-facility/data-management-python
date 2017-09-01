@@ -1,7 +1,6 @@
 import pandas as pd
 from sqlalchemy.sql import column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
-from igf_data.igfdb.sampleadaptor import SampleAdaptor
 from igf_data.igfdb.igfTables import Project, Sample, Experiment, Experiment_attribute
 
 class ExperimentAdaptor(BaseAdaptor):
