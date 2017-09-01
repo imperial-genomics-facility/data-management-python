@@ -1,1 +1,6 @@
-[{ "pipeline_name" : "demultiplexing_fastq", "pipeline_db" : "sqlite:////path/bcl2fastq.db" }]
+[{ "pipeline_name":"demultiplexing_fastq",
+  "pipeline_db":"sqlite:////data/bcl2fastq.db", 
+  "pipeline_init_conf":{"input_dir":"data/seqrun_dir/",
+                        "output_dir":"data"}, 
+  "pipeline_run_conf":{"output_dir":"data"},
+}]
