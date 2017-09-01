@@ -12,6 +12,7 @@ script:
 - coverage run test/find_and_process_new_seqrun_test.py
 - coverage run test/dbutils_test.py
 - coverage run test/platformutils_test.py
+- coverage run test/pipelineutils_test.py
 after_success:
 - coveralls
 notifications:
