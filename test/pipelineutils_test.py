@@ -14,6 +14,7 @@ class Pipelineutils_test1(unittest.TestCase):
     dbparam=read_dbconf_json(self.dbconfig)
     base = BaseAdaptor(**dbparam)
     self.engine = base.engine
+    self.dbname=dbparam['dbname']
     Base.metadata.create_all(self.engine)
     self.session_class=base.get_session_class()
 
@@ -25,7 +26,7 @@ class Pipelineutils_test1(unittest.TestCase):
 
   def test_load_new_pipeline_data(self): 
     load_new_pipeline_data(data_file=self.data_file, dbconfig=self.dbconfig)
-    pp=PipelineAdaptor(**{'session_class':base.session_class})
+    pp=PipelineAdaptor(**{'session_class': self.session_class})
     pp.start_session()
     data=pp.fetch_pipeline_records_pipeline_name(pipeline_name='demultiplexing_fastq')
     pp.close_session()
