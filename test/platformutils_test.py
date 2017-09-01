@@ -1,6 +1,6 @@
 import os, unittest, json
 from sqlalchemy import create_engine
-from igf_data.igfdb.igfTables import Base, Platform
+from igf_data.igfdb.igfTables import Base
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.platformadaptor import PlatformAdaptor
 from igf_data.utils.dbutils import read_json_data
