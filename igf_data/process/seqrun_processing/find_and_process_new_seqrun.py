@@ -6,6 +6,7 @@ from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.illumina.runinfo_xml import RunInfo_xml
+from igf_data.illumina.runparameters_xml import RunParameter_xml
 
 def find_new_seqrun_dir(path, dbconfig):
   '''
@@ -104,7 +105,7 @@ def calculate_file_checksum(filepath, hasher='md5'):
     raise
 
 
-def prepare_seqrun_for_db(seqrun_name, seqrun_path):
+def prepare_seqrun_for_db(seqrun_name, seqrun_path, session_class):
   '''
   A method for preparing seqrun data for database
   '''
@@ -129,6 +130,21 @@ def prepare_seqrun_for_db(seqrun_name, seqrun_path):
         seqrun_data['read{0}'.format(read_id)]=reads_stats[read_id]['numcycles']
       else:
         raise ValueError('unknown value for isindexedread: {0}'.format(reads_stats[read_id]['isindexedread']))
+
+    pl=PlatformAdaptor(**{'session_class':session_class})
+    pl.start_session()
+    pl_data=pl.fetch_platform_records_igf_id(platform_igf_id=platform_name)
+    pl.close_session()
+
+    if (pl_data.model_name=='HISEQ4000'):
+      runparameters_file=os.path.join(seqrun_path,'runParameters.xml')
+      runparameters_data=RunParameter_xml(xml_file=runparameters_file)
+      flowcell_type=runparameters_data.get_hiseq_flowcell()
+      # add flowcell information for hiseq runs
+      seqrun_data['flowcell']=flowcell_type
+
+      if flowcell_type is None:
+        raise ValueError('unknown flowcell type for sequencing run model {0}'.format(pl_data.model_name))
 
     return seqrun_data
   except:
@@ -168,8 +184,11 @@ def load_seqrun_files_to_db(seqrun_info, seqrun_md5_info, dbconfig, file_type='I
   seqrun_md5_file_data=list()
   seqrun_file_collection=list()
 
+  base=BaseAdaptor(**dbparam)
+  session_class=base.get_session_class()
+
   for seqrun_name, seqrun_path in seqrun_info.items():
-    seqrun_data.append(prepare_seqrun_for_db(seqrun_name, seqrun_path))
+    seqrun_data.append(prepare_seqrun_for_db(seqrun_name, seqrun_path, session_class))
     seqrun_md5_collection_data.append({'name':seqrun_name, 'type':file_type,'table':'seqrun' })
     seqrun_md5_file=seqrun_md5_info[seqrun_name]
     file_md5=calculate_file_checksum(seqrun_md5_file)
@@ -177,10 +196,8 @@ def load_seqrun_files_to_db(seqrun_info, seqrun_md5_info, dbconfig, file_type='I
     seqrun_md5_file_data.append({'file_path':seqrun_md5_file,'location':'ORWELL','md5':file_md5, 'size':file_size})
     seqrun_file_collection.append({'name':seqrun_name, 'type':file_type, 'file_path':seqrun_md5_file})
     
-  base=BaseAdaptor(**dbparam)
-  base.start_session()
-  
   try:
+    base.start_session()
     # store seqrun info
     sra=SeqrunAdaptor(**{'session':base.session})
     sra.store_seqrun_and_attribute_data(data=seqrun_data, autosave=False)
