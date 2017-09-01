@@ -1,11 +1,8 @@
-import json
 import pandas as pd
-from sqlalchemy.sql import table, column
+from sqlalchemy.sql import column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
-from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.igfdb.sampleadaptor import SampleAdaptor
-from igf_data.igfdb.platformadaptor import PlatformAdaptor
-from igf_data.igfdb.igfTables import Project, Sample, Platform, Experiment, Experiment_attribute
+from igf_data.igfdb.igfTables import Project, Sample, Experiment, Experiment_attribute
 
 class ExperimentAdaptor(BaseAdaptor):
   '''
