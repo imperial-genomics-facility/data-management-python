@@ -3,7 +3,7 @@ from igf_data.utils.dbutils import read_dbconf_json, read_json_data
 
 def load_new_platform_data(data_file, dbconfig):
   '''
-  A method for loading new data for pipeline table
+  A method for loading new data for platform table
   '''
   try:
     formatted_data=read_json_data(data_file)
