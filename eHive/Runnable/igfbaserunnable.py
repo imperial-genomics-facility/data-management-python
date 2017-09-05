@@ -5,7 +5,6 @@ from igf_data.task_tracking.igf_asana import IGF_asana
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 
 
-
 class IGFBaseRunnable(eHive.BaseRunnable):
   '''
   Base runnable class for IGF pipelines
@@ -32,4 +31,25 @@ class IGFBaseRunnable(eHive.BaseRunnable):
       asana_project_id = self.param_required('asana_project_id')
       igf_asana = IGF_asana(asana_config=asana_config, asana_project_id=asana_project_id)
       self.param('igf_asana', igf_asana)
+
+
+class IGFBaseJobFactory(IGFBaseRunnable):
+  '''
+  Base jobfactory class for igf pipelines
+  '''
+
+  def write_output(self):
+    sub_tasks = self.param_required('sub_tasks')   
+    self.dataflow(sub_tasks, 2)
+
+
+class IGFBaseProcess(IGFBaseRunnable):
+  '''
+  Base process class for igf pipelines
+  '''
+
+  def write_output(self):
+    sub_tasks = self.param_required('sub_tasks')   
+    self.dataflow(sub_tasks, 1)
+
 
