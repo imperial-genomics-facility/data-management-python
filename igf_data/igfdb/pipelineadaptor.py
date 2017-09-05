@@ -53,6 +53,49 @@ class PipelineAdaptor(BaseAdaptor):
     except:
       raise
 
+
+  def __map_seed_data_to_foreign_table(self, data):
+    '''
+    An internal method for mapping seed records to foreign tables
+    required param:
+    data: a dictionary of a pandas series
+    '''
+    if not isinstance(data, pd.Series):
+      data = pd.Series(data)
+
+    query = None
+    if x.seed_table=='SEQRUN':  
+      query = self.session.query(Seqrun,Platform.platform_igf_id,Platform.model_name,Platform.vendor_name,
+                                 Platform.software_name,Platform.software_version). \
+                           join(Platform).\
+                           filter(Seqrun.seqrun_id==x.seed_id)
+      data=self.fetch_records(query)
+      return data
+    else:
+       raise ValueError('seed_table {0} not supported'.format(x.seed_table))
+
+
+  def fetch_pipeline_seed_with_table_data(self, pipeline_name, status='SEEDED'):
+    '''
+    A method for fetching linked table records for the seeded entires in pipeseed table
+    required params:
+    pipeline_name: a pipeline name
+    optional params:
+    status: default is SEEDED
+    '''
+    try:
+      pipeseed_query = self.session.query(Pipeline_seed). \
+                                    join(Pipeline). \
+                                    filter(Pipeline_seed.status==status). \
+                                    filter(Pipeline.pipeline_name==pipeline_name)
+      pipeseed_data = self.fetch_records(query=pipeseed_query)
+      
+      table_data = pd.concat([self.__map_seed_data_to_foreign_table(data=record) for record in pipeseed_data.to_dict(orient='records')], axis=0) ## transform dataframe to dictionary and map records
+      return ( pipeseed_data, table_data )
+    except:
+      raise
+
+
   def _map_pipeline_id_to_data(self, data):
     '''
     An internal method for mapping pipeline_id to datafame and remove the pipeline_name
