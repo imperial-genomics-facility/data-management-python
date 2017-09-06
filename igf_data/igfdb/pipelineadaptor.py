@@ -90,8 +90,15 @@ class PipelineAdaptor(BaseAdaptor):
                                     filter(Pipeline.pipeline_name==pipeline_name)
       pipeseed_data = self.fetch_records(query=pipeseed_query)
       
-      table_data = pd.concat([self.__map_seed_data_to_foreign_table(data=record) for record in pipeseed_data.to_dict(orient='records')], axis=0) ## transform dataframe to dictionary and map records
-      return ( pipeseed_data, table_data )
+      table_data = pd.concat([self.__map_seed_data_to_foreign_table(data=record) \
+                            for record in pipeseed_data.to_dict(orient='records')], axis=0)  # transform dataframe to dictionary and map records
+      #pipeseeds_data[seed_id] = pipeseeds_data[seed_id].astype(int)
+      #table_data[seqrun_id] = table_data[seqrun_id].astype(int)
+      #merged_data = pd.merge(pipeseeds_data,table_data,how='inner',\
+      #                       on=None,left_on=[seed_id],right_on=[seqrun_id],\
+      #                       left_index=False,right_index=False)                             # join dataframes
+
+      return (pipeseed_data, table_data)
     except:
       raise
 
