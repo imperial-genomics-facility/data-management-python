@@ -14,6 +14,7 @@ script:
 - coverage run test/platformutils_test.py
 - coverage run test/pipelineutils_test.py
 - coverage run test/runparameters_xml_test.py
+- coverage run test/pipelineadaptor_test.py
 after_success:
 - coveralls
 notifications:
