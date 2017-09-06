@@ -2,7 +2,7 @@ import pandas as pd
 from sqlalchemy import update
 from sqlalchemy.sql import column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
-from igf_data.igfdb.igfTables import Pipeline, Pipeline_seed, Project, Sample, Experiment, Run, Collection, File, Seqrun
+from igf_data.igfdb.igfTables import Pipeline, Pipeline_seed, Platform, Project, Sample, Experiment, Run, Collection, File, Seqrun
 
 class PipelineAdaptor(BaseAdaptor):
   '''
@@ -64,15 +64,15 @@ class PipelineAdaptor(BaseAdaptor):
       data = pd.Series(data)
 
     query = None
-    if x.seed_table=='SEQRUN':  
+    if data.seed_table=='SEQRUN':  
       query = self.session.query(Seqrun,Platform.platform_igf_id,Platform.model_name,Platform.vendor_name,
                                  Platform.software_name,Platform.software_version). \
                            join(Platform).\
-                           filter(Seqrun.seqrun_id==x.seed_id)
+                           filter(Seqrun.seqrun_id==data.seed_id)
       data=self.fetch_records(query)
       return data
     else:
-       raise ValueError('seed_table {0} not supported'.format(x.seed_table))
+       raise ValueError('seed_table {0} not supported'.format(data.seed_table))
 
 
   def fetch_pipeline_seed_with_table_data(self, pipeline_name, status='SEEDED'):
@@ -139,7 +139,7 @@ class PipelineAdaptor(BaseAdaptor):
       data=self._map_pipeline_id_to_data(data)                                       # overwrite data
       data[status_column]=seeded_label                                               # overwrite status as seeded
       if not set((required_columns)).issubset(set(tuple(data.columns))):
-        raise valueError('Missing required columns for pipeline seed. required: {0}, got: {1}'.format(required_columns, tuple(data.columns)))
+        raise ValueError('Missing required columns for pipeline seed. required: {0}, got: {1}'.format(required_columns, tuple(data.columns)))
 
       self.store_records(table=Pipeline_seed, data=data)
       if autosave:
@@ -182,7 +182,7 @@ class PipelineAdaptor(BaseAdaptor):
 
       data=self._map_pipeline_id_to_data(data)                                        # overwrite data
       if not set((required_columns)).issubset(set(tuple(data.columns))):
-        raise valueError('Missing required columns for pipeline seed. required: {0}, got: {1}'.format(required_columns, tuple(data.columns)))
+        raise ValueError('Missing required columns for pipeline seed. required: {0}, got: {1}'.format(required_columns, tuple(data.columns)))
 
       seed_update_func=lambda x: self._map_and_update_pipeline_seed(data_series=x)     # defined update function
       data.apply(seed_update_func, axis=1)                                             # apply function on dataframe
