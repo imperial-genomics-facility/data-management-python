@@ -30,7 +30,7 @@ class PipeseedFactory(IGFBaseJobFactory):
                            left_index=False,right_index=False)                             # join dataframes
       seed_data=merged_data.to_dict(orient='records')                                      # convert dataframe to list of dictionaries
       if isinstance(seed_data, list) and len(seed_data)>0:
-        self.param('sub_tasks',table_data)                                                 # set sub_tasks param for the data flow
+        self.param('sub_tasks',seed_data)                                                  # set sub_tasks param for the data flow
         pipeseeds_data['status'].map({'SEEDED':'RUNNING'})                                 # update seed records in pipeseed table, changed status to RUNNING
         pa.update_pipeline_seed(data=pipeseeds_data.to_dict(orient='records'))             # set pipeline seeds as running
       else:
