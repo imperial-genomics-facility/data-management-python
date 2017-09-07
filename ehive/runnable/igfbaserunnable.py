@@ -19,7 +19,8 @@ class IGFBaseRunnable(eHive.BaseRunnable):
     dbconfig = self.param_required('dbconfig')
     dbparams = read_dbconf_json(dbconfig)
     base = BaseAdaptor(**dbparams)
-    self.param('igf_session_class':base.get_session_class())  # set session class for pipeline
+    session_class = base.get_session_class()
+    self.param('igf_session_class', session_class)      # set session class for pipeline
 
     if self.param('log_slack'):
       slack_config = self.param_required('slack_config')

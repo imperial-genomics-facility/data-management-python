@@ -1,5 +1,5 @@
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
-from eHive.runnable.igfbaserunnable import IGFBaseJobFactory
+from ehive.runnable.igfbaserunnable import IGFBaseJobFactory
 
 class PipeseedFactory(IGFBaseJobFactory):
   '''
