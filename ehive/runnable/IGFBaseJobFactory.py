@@ -4,6 +4,9 @@ class IGFBaseJobFactory(IGFBaseRunnable):
   '''
   Base jobfactory class for igf pipelines
   '''
+  def param_defaults(self):
+    return {'sub_tasks':list() }
+
 
   def write_output(self):
     sub_tasks = self.param_required('sub_tasks')   
