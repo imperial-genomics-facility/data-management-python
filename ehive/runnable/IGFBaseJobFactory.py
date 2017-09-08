@@ -9,6 +9,7 @@ class IGFBaseJobFactory(IGFBaseRunnable):
 
 
   def write_output(self):
-    sub_tasks = self.param_required('sub_tasks')   
-    self.dataflow(sub_tasks, 2)
+    if self.param_exists('sub_tasks'):
+      sub_tasks = self.param('sub_tasks')   
+      self.dataflow(sub_tasks, 2)
 

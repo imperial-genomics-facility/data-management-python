@@ -85,20 +85,18 @@ class PipelineAdaptor(BaseAdaptor):
     status: default is SEEDED
     '''
     try:
-      pipeseed_query = self.session.query(Pipeline_seed). \
-                                    join(Pipeline). \
-                                    filter(Pipeline_seed.status==status). \
-                                    filter(Pipeline.pipeline_name==pipeline_name)
-      pipeseed_data = self.fetch_records(query=pipeseed_query)
-      
-      table_data = pd.concat([self.__map_seed_data_to_foreign_table(data=record) \
-                            for record in pipeseed_data.to_dict(orient='records')], axis=0)  # transform dataframe to dictionary and map records
-      #pipeseeds_data[seed_id] = pipeseeds_data[seed_id].astype(int)
-      #table_data[seqrun_id] = table_data[seqrun_id].astype(int)
-      #merged_data = pd.merge(pipeseeds_data,table_data,how='inner',\
-      #                       on=None,left_on=[seed_id],right_on=[seqrun_id],\
-      #                       left_index=False,right_index=False)                             # join dataframes
-
+      pipeseed_query=self.session.query(Pipeline_seed). \
+                                  join(Pipeline). \
+                                  filter(Pipeline_seed.status==status). \
+                                  filter(Pipeline.pipeline_name==pipeline_name)
+      pipeseed_data=self.fetch_records(query=pipeseed_query)
+     
+      if (len(pipeseed_data.to_dict(orient='records'))>0): 
+        table_data=pd.concat([self.__map_seed_data_to_foreign_table(data=record) \
+                             for record in pipeseed_data.to_dict(orient='records')], axis=0)  # transform dataframe to dictionary and map records
+      else:
+        pipeseed_data=pd.DataFrame()
+        table_data=pd.DataFrame()      # create empty dataframes if no dat found
       return (pipeseed_data, table_data)
     except:
       raise

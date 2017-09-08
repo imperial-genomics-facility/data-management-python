@@ -34,6 +34,18 @@ class IGFBaseRunnable(eHive.BaseRunnable):
       self.param('igf_asana', igf_asana)
 
 
+  def post_message_to_slack(self,message,reaction=''):
+    '''
+    A method for posing message to slack channel
+    required params:
+    message: A text message
+    reaction: Optional parameter for slack emoji
+    '''
+    if self.param('log_slack'):
+      igf_slack = self.param_required('igf_slack')
+      igf_slack.post_message_to_channel(message,reaction)
+ 
+
 class IGFBaseJobFactory(IGFBaseRunnable):
   '''
   Base jobfactory class for igf pipelines
