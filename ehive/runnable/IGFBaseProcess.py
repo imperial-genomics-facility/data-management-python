@@ -9,5 +9,6 @@ class IGFBaseProcess(IGFBaseRunnable):
 
 
   def write_output(self):
-    sub_tasks = self.param_required('sub_tasks')   
-    self.dataflow(sub_tasks, 1)
+    if self.param_is_defined('sub_tasks'):
+      sub_tasks = self.param('sub_tasks')   
+      self.dataflow(sub_tasks, 1)
