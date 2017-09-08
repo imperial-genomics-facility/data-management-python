@@ -13,3 +13,5 @@ class IGFBaseJobFactory(IGFBaseRunnable):
       sub_tasks = self.param('sub_tasks')   
       self.dataflow(sub_tasks, 2)
 
+  def test(self):
+      pass
