@@ -68,6 +68,7 @@ class PipelineAdaptor(BaseAdaptor):
       query = self.session.query(Seqrun,Platform.platform_igf_id,Platform.model_name,Platform.vendor_name,
                                  Platform.software_name,Platform.software_version). \
                            join(Platform).\
+                           filter(Seqrun.reject_run=='N').\
                            filter(Seqrun.seqrun_id==data.seed_id)
       data=self.fetch_records(query)
       return data
