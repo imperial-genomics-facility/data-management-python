@@ -1,4 +1,7 @@
+#!/usr/bin/env python
 import os,subprocess
+import pandas as pd
+from igf_data.utils.fileutils import copy_remote_file
 from ehive.runnable.IGFBaseJobFactory import IGFBaseJobFactory
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 
@@ -26,11 +29,12 @@ class SeqrunFileFactory(IGFBaseJobFactory):
       ca.start_session()
       files=ca.get_collection_files(collection_name=seqrun_igf_id,collection_type=seqrun_md5_type)
       files=files.to_dict(orient='records')
+      ca.close_session()
 
       if len(files)>1:
         raise ValueError('sequencing run {0} has more than one md5 json file'.format(seqrun_igf_id))
       if len(files)==0:
-        raise ValueError('sequencing run {0} doesn't have any md5 json file'.format(seqrun_igf_id))
+        raise ValueError('sequencing run {0} does not have any md5 json file'.format(seqrun_igf_id))
       
       md5_json_location=files[0]['location']
       md5_json_path=files[0]['file_path']
