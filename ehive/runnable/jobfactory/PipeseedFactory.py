@@ -9,8 +9,7 @@ class PipeseedFactory(IGFBaseJobFactory):
   def param_defaults(self):
     return {  'seed_id_label':'seed_id',
               'seqrun_id_label':'seqrun_id',
-              'log_slack':True,
-              'log_asana':True,
+              'log_slack':True
            }
 
 

@@ -2,6 +2,10 @@
 import os, subprocess
 from tempfile import mkdtemp
 from shutil import rmtree, move, copy2
+from test.test_decimal import directory
+from setuptools.unicode_utils import filesys_decode
+from tkinter.test.runtktests import this_dir_path
+from pip.__main__ import path
 
 def move_file(source_path,destinationa_path, force=False):
     '''
@@ -67,5 +71,36 @@ def copy_remote_file(source_path,destinationa_path, source_address=None, destina
             raise ValueError('copy method {0} is not supported'.format(copy_method))
         
         subprocess.check_call(cmd)
+    except:
+        raise
+
+
+def get_temp_dir(work_dir, prefix='temp'):
+    '''
+    A function for creating temp directory
+    required params:
+    work_dir: A path for work directory
+    prefix: A prefix for directory path, default 'temp'
+    returns temp_dir
+    '''
+    try:
+        if not os.path.isdir(work_dir):              # check if work directory is present
+            raise IOError('work directory {0} is not present'.format(work_dir))
+        temp_dir=mkdtemp(prefix=prefix,dir=work_dir)  # create a temp dir
+        return temp_dir
+    except:
+        raise
+    
+    
+def remove_dir(dir_path):
+    '''
+    A function for removing directory containing files
+    required params:
+    dir_path: A directory path
+    '''
+    try:
+        if not os.path.isdir(dir_path):
+            raise IOError('directory path {0} is not present'.format(dir_path))
+        rmtree(dir_path)
     except:
         raise
