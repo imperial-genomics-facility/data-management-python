@@ -3,7 +3,7 @@ from collections import defaultdict, deque
 
 try:
   if sys.version_info[0] < 3:
-    # Python 2.x specific import 
+    # Python 2.x specific import
     from string import maketrans
 except:
   raise
@@ -14,8 +14,8 @@ class SampleSheet:
   '''
 
   def __init__(self, infile, data_header_name='Data'):
-    self.infile=infile 
-    self.data_header_name=data_header_name 
+    self.infile=infile
+    self.data_header_name=data_header_name
 
     # reading samplesheet data
     self._sample_data=self._read_samplesheet()
@@ -31,7 +31,7 @@ class SampleSheet:
 
     # set index column values
     self.index_columns=self._get_index_columns()
- 
+
   def group_data_by_index_length(self):
     '''
     Function for grouping samplesheet rows based on the combined length of index columns
@@ -77,7 +77,7 @@ class SampleSheet:
     index_columns=[header for header in data_header if re.search(pattern, header)]
       
     if len(index_columns) < 1:
-      raise ValueError('samplesheet {0} doesn\'t have any index column'.format(self.infile))     
+      raise ValueError('samplesheet {0} doesn\'t have any index column'.format(self.infile))
 
     # check for possible errors in the index column name
     if len(index_columns) != len(set(index_columns)):
@@ -111,7 +111,7 @@ class SampleSheet:
 
     return project_names
 
-  def get_index_count(self):        
+  def get_index_count(self):
     '''
     Function for getting index length counts
     Output is a dictionary, with the index columns as the key
@@ -124,13 +124,13 @@ class SampleSheet:
       for field in index_columns:
         if field not in list(row.keys()): raise ValueError('field {0} not present in samplesheet {1}'.format(field, self.infile))
         index_len=len(row[field].replace('N','').replace('n',''))
-        index_count[field][index_len] += 1 
+        index_count[field][index_len] += 1
     return index_count
  
   def _reformat_project_and_description(self, project_field='Sample_Project', description_field='Description' ):
     '''
     A Function for removing the user information from Project field and
-    converting ':' to '-' in the description field 
+    converting ':' to '-' in the description field
     '''
     data=self._data
     
@@ -157,15 +157,13 @@ class SampleSheet:
 
     for row in data:
       if index_field in list(row.keys()):
-        '''
-        Only run the reverse complement function if index2 exists
-        '''
+        # Only run the reverse complement function if index2 exists
         index=row[index_field]
      
         try:
           if sys.version_info[0] < 3:
             # For Python 2.x, use maketrans
-            row[index_field]=index.upper().translate(maketrans('ACGT','TGCA'))[::-1] 
+            row[index_field]=index.upper().translate(maketrans('ACGT','TGCA'))[::-1]
           else:
             # For Python 3.x, use str.maketrans
             row[index_field]=index.upper().translate(str.maketrans('ACGT','TGCA'))[::-1]
@@ -196,8 +194,6 @@ class SampleSheet:
     Function for getting the lane information for HiSeq runs
     It will return 1 for both MiSeq and NextSeq runs
     '''
-
-    data_header=self._data_header
     data=self._data
     platform_name=self.get_platform_name()
 
@@ -207,11 +203,11 @@ class SampleSheet:
  
     if re.search(pattern, platform_name):
       for row in data:
-        if lane_field not in list(row.keys()): 
+        if lane_field not in list(row.keys()):
           raise ValueError('lane field {0} not found for platform, {1}, sample sheet {2}'.format(lane_field, target_platform, self.infile))
         lane.add(row[lane_field])
     else:
-      lane.add(1)    
+      lane.add(1)
     return list(lane)
 
   def check_sample_header(self, section, condition_key):
@@ -248,7 +244,7 @@ class SampleSheet:
       if not condition_value:
         raise ValueError('condition_value is required for type {} and key {}'.format(type, condition_key))
       else:
-        header_data[section].append('{0},{1}'.format(condition_key,condition_value))     
+        header_data[section].append('{0},{1}'.format(condition_key,condition_value))
 
     elif ( type.lower().strip() == 'remove' ):
 
@@ -266,7 +262,7 @@ class SampleSheet:
       raise valueError('type {} not supported'.format(type))
 
     # resetting the header
-    self._header_data=header_data 
+    self._header_data=header_data
   
    
   def filter_sample_data( self, condition_key, condition_value ):
@@ -299,7 +295,7 @@ class SampleSheet:
     # check if output file exists
     if os.path.exists(outfile): raise IOError('output file {} already present'.format(outfile))
 
-    with open(outfile, 'w') as file:   
+    with open(outfile, 'w') as file:
       # formatting output
       for header_key in header_data.keys():
         file.write('[{}]\n'.format(header_key))
@@ -318,7 +314,7 @@ class SampleSheet:
   def _load_header(self):
     '''
     Function for loading SampleSheet header
-    Output: 2 lists , 1st list of column headers for data section, 
+    Output: 2 lists , 1st list of column headers for data section,
             2nd list of dictionaries containing data
     '''
 
@@ -326,8 +322,8 @@ class SampleSheet:
     header_data=dict()
 
     for keys in sample_data:
-      if keys != self.data_header_name: 
-        header_data[keys]=sample_data[keys]   
+      if keys != self.data_header_name:
+        header_data[keys]=sample_data[keys]
     return header_data
   
   def _load_data(self):
