@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os, subprocess
+import os, subprocess, hashlib
 from tempfile import mkdtemp
 from shutil import rmtree, move, copy2
 
