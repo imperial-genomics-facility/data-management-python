@@ -71,6 +71,27 @@ def copy_remote_file(source_path,destinationa_path, source_address=None, destina
         raise
 
 
+def calculate_file_checksum(filepath, hasher='md5'):
+  '''
+  A method for file checksum calculation
+  required param:
+  filepath: a file path
+  hasher: default is md5, allowed: md5 or sha256
+  '''
+  try:
+    with open(filepath, 'rb') as infile:
+      if hasher=='md5':
+        file_checksum=hashlib.md5(infile.read()).hexdigest()
+        return file_checksum
+      elif hasher=='sha256':
+        file_checksum=hashlib.sha256(infile.read()).hexdigest()
+        return file_checksum
+      else:
+        raise('hasher {0} is not supported'.format(hasher))
+  except:
+    raise
+
+
 def get_temp_dir(work_dir, prefix='temp'):
     '''
     A function for creating temp directory
