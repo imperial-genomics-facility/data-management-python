@@ -25,8 +25,8 @@ class SeqrunFileFactory(IGFBaseJobFactory):
 
       seqrun_path=os.path.join(seqrun_source,seqrun_igf_id) # get new seqrun path
       # check for remote dir
-      subprocess.check_call(['ssh', '{0}@{1}'.format(seqrun_user, seqrun_server),'ls', seqrun_path], \
-                            stderror=None, stdout=None)
+      seqrun_server_login='{0}@{1}'.format(seqrun_user, seqrun_server)
+      subprocess.check_call(['ssh', seqrun_server_login,'ls', seqrun_path], stderror=None, stdout=None)
       # get the md5 list from db
       ca=CollectionAdaptor(**{'session_class':igf_session_class})
       ca.start_session()
@@ -42,7 +42,7 @@ class SeqrunFileFactory(IGFBaseJobFactory):
       md5_json_location=files[0]['location']
       md5_json_path=files[0]['file_path']
       # copy file if its present in remote server
-      if md5_json_location !='HPC':
+      if md5_json_location !='HPC_PROJECT':
         # create a temp directory
         temp_dir=get_temp_dir(work_dir=os.getcwd())
         destination_path=ps.path.join(temp_dir,os.path.basename(md5_json_path))

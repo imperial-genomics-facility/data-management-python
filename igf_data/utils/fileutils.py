@@ -2,10 +2,6 @@
 import os, subprocess
 from tempfile import mkdtemp
 from shutil import rmtree, move, copy2
-from test.test_decimal import directory
-from setuptools.unicode_utils import filesys_decode
-from tkinter.test.runtktests import this_dir_path
-from pip.__main__ import path
 
 def move_file(source_path,destinationa_path, force=False):
     '''
