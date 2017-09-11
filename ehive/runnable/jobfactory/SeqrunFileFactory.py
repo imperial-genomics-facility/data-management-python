@@ -9,7 +9,7 @@ class SeqrunFileFactory(IGFBaseJobFactory):
     return { 'log_slack':True, 
              'log_asana':True,
              'seqrun_md5_type':'ILLUMINA_BCL_MD5',
-             'source_address':'orwell.hh.med.ic.ac.uk'
+             'seqrun_server':'orwell.hh.med.ic.ac.uk'
            } 
 
 
@@ -19,7 +19,6 @@ class SeqrunFileFactory(IGFBaseJobFactory):
       seqrun_source=self.param_required('seqrun_source')
       seqrun_server=self.param_required('seqrun_server')
       seqrun_user=self.param_required('seqrun_user')
-      source_address=self.param_required('source_address')
       igf_session_class=self.param_required('igf_session_class')
       seqrun_md5_type=self.param_required('seqrun_md5_type')
 
@@ -47,7 +46,7 @@ class SeqrunFileFactory(IGFBaseJobFactory):
         temp_dir=get_temp_dir(work_dir=os.getcwd())
         destination_path=ps.path.join(temp_dir,os.path.basename(md5_json_path))
         # copy remote file to temp file
-        copy_remote_file(source_path=md5_json_path, destinationa_path=destination_path, source_address=source_address)
+        copy_remote_file(source_path=md5_json_path, destinationa_path=destination_path, source_address=seqrun_server)
         md5_json_path=destination_path
         
       with open(md5_json_path) as json_data:
