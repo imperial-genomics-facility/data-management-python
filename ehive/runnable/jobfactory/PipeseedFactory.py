@@ -16,7 +16,7 @@ class PipeseedFactory(IGFBaseJobFactory):
 
   def run(self):
     try:
-      igf_session_class = self.param_required('igf_session_class')
+      igf_session_class = self.param_required('igf_session_class') # set by base class
       pipeline_name = self.param_required('pipeline_name')
       seed_id = self.param_required('seed_id_label')
       seqrun_id = self.param_required('seqrun_id_label')
