@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import pandas as pd
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from ehive.runnable.IGFBaseJobFactory import IGFBaseJobFactory
