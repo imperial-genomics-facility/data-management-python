@@ -9,6 +9,8 @@ class IGFBaseProcess(IGFBaseRunnable):
 
 
   def write_output(self):
-    if self.param_is_defined('sub_tasks'):
-      sub_tasks = self.param('sub_tasks')   
-      self.dataflow(sub_tasks, 1)
+    if self.param_is_defined('dataflow_params'):
+      dataflow_params = self.param('dataflow_params')
+      if not isinstance(dataflow_params, dict):
+        raise ValueError('expected a dictionary as the dataflow_param and got {0}'.format(type(dict)))
+      self.dataflow(dataflow_params, 1)
