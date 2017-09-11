@@ -63,7 +63,7 @@ class Find_seqrun_test1(unittest.TestCase):
       md5_data=json.load(json_data)
     shutil.rmtree(self.md5_out_path, ignore_errors=False, onerror=None)
     os.mkdir(self.md5_out_path)
-    md5_value=[md5 for line in md5_data for file,md5 in line.items() if file=='RTAComplete.txt'][0]
+    md5_value=[row['file_md5'] for row in md5_data for file_key,file_val in row.items() if file_key=='seqrun_file_name' and file_val=='RTAComplete.txt'][0]
     self.assertEqual(md5_value, "c514939fdd61df26b103925a5122b356")
 
   def test_load_seqrun_files_to_db(self):
