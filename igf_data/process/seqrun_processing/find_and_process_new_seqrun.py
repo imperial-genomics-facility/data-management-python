@@ -8,6 +8,8 @@ from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.igfdb.platformadaptor import PlatformAdaptor
 from igf_data.illumina.runinfo_xml import RunInfo_xml
 from igf_data.illumina.runparameters_xml import RunParameter_xml
+from igf_data.utils.fileutils import calculate_file_checksum
+
 
 def find_new_seqrun_dir(path, dbconfig):
   '''
@@ -85,27 +87,6 @@ def calculate_file_md5(seqrun_info, md5_out, seqrun_path, file_suffix='md5.json'
 
     seqrun_and_md5[seqrun_name]=output_json_file
   return seqrun_and_md5
-
-
-def calculate_file_checksum(filepath, hasher='md5'):
-  '''
-  A method for file checksum calculation
-  required param:
-  filepath: a file path
-  hasher: default is md5, allowed: md5 or sha256
-  '''
-  try:
-    with open(filepath, 'rb') as infile:
-      if hasher=='md5':
-        file_checksum=hashlib.md5(infile.read()).hexdigest()
-        return file_checksum
-      elif hasher=='sha256':
-        file_checksum=hashlib.sha256(infile.read()).hexdigest()
-        return file_checksum
-      else:
-        raise('hasher {0} is not supported'.format(hasher))
-  except:
-    raise
 
 
 def prepare_seqrun_for_db(seqrun_name, seqrun_path, session_class):
