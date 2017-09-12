@@ -15,6 +15,7 @@ script:
 - coverage run test/pipelineutils_test.py
 - coverage run test/runparameters_xml_test.py
 - coverage run test/pipelineadaptor_test.py
+- coverage run test/flowcell_rules_test.py
 after_success:
 - coveralls
 notifications:

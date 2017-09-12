@@ -23,9 +23,9 @@ class Flowcell_barcode_rule_test1(unittest.TestCase):
       # load platform data
       pl=PlatformAdaptor(**{'session':base.session})
       pl.store_platform_data(data=read_json_data(self.platform_json))
+      pl.store_flowcell_barcode_rule(data=read_json_data(self.flowcell_rules_json))
       # load seqrun data
       sra=SeqrunAdaptor(**{'session':base.session})
-      sra.store_flowcell_barcode_rule(data=read_json_data(self.flowcell_rules_json))
       sra.store_seqrun_and_attribute_data(data=read_json_data(self.seqrun_json))
       base.close_session()
 
@@ -36,9 +36,12 @@ class Flowcell_barcode_rule_test1(unittest.TestCase):
     
     
   def test_fetch_flowcell_barcode_rules_for_seqrun(self):
-      sra=SeqrunAdaptor(**{'session_class': self.session_class})
-      sra.start_session()
-      sra_data=sra.fetch_flowcell_barcode_rules_for_seqrun(seqrun_igf_id='170101_K00001_0001_AHABCDEFGH')
-      sra.close_session()
-      sra_data=sra_data.to_dict(orient='records')[0]
-      self.assertEqual(sra_data['index_2'],'REVCOMP')
+    sra=SeqrunAdaptor(**{'session_class': self.session_class})
+    sra.start_session()
+    sra_data=sra.fetch_flowcell_barcode_rules_for_seqrun(seqrun_igf_id='170101_K00001_0001_AHABCDEFGH')
+    sra.close_session()
+    sra_data=sra_data.to_dict(orient='records')[0]
+    self.assertEqual(sra_data['index_2'],'REVCOMP')
+
+if __name__ == '__main__':
+  unittest.main()
