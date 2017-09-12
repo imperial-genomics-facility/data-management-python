@@ -14,7 +14,8 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
     return {
         'samplesheet_filename':'SampleSheet.csv',
         'index2_label':'index_2',
-        'revcomp_label':'REVCOMP,'
+        'revcomp_label':'REVCOMP',
+        '10X_label':'10X'
       }
   
   
@@ -26,6 +27,7 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
       samplesheet_filename=self.param('samplesheet_filename')
       index2_label=self.param('index2_label')
       revcomp_label=self.param('revcomp_label')
+      tenX_label=self.param('10X_label')
       
       samplesheet_file=os.path.join(seqrun_local_dir, seqrun_igf_id, samplesheet_filename)
       if not os.path.exists(samplesheet_file):
@@ -33,6 +35,7 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
     
       samplesheet=SampleSheet(infile=samplesheet_file) # read samplesheet
       # separate 10X samplesheet
+      samplesheet.filter_sample_data(condition_key='Description', condition_value=tenX_label)
       
       # convert index based on barcode rules
       sa=SeqrunAdaptor(**{'session_class':igf_session_class})
