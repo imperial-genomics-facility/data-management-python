@@ -162,7 +162,7 @@ class Flowcell_barcode_rule(Base):
 
   flowcell_rule_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   platform_id      = Column(INTEGER(unsigned=True), ForeignKey('platform.platform_id', onupdate="CASCADE", ondelete="SET NULL"))
-  flowcell_type    = Column(String(50), nullable=False)
+  flowcell_type    = Column(String(50))
   index_1          = Column(Enum('NO_CHANGE','REVCOMP','UNKNOWN'), nullable=False, server_default='UNKNOWN')
   index_2          = Column(Enum('NO_CHANGE','REVCOMP','UNKNOWN'), nullable=False, server_default='UNKNOWN')
 
