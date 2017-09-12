@@ -1,0 +1,4 @@
+[{"platform_igf_id":"K00001","flowcell_type":"HiSeq 3000/4000 SR","index_1":"NO_CHANGE","index_2":"NO_CHANGE"},
+{"platform_igf_id":"K00001","flowcell_type":"HiSeq 3000/4000 PE","index_1":"NO_CHANGE","index_2":"REVCOMP"},
+{"platform_igf_id":"NB00001","flowcell_type":"NEXTSEQ","index_1":"NO_CHANGE","index_2":"REVCOMP"},
+{"platform_igf_id":"MI00001","flowcell_type":"MISEQ","index_1":"NO_CHANGE","index_2":"NO_CHANGE"}]
