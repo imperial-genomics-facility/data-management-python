@@ -129,7 +129,8 @@ def prepare_seqrun_for_db(seqrun_name, seqrun_path, session_class):
 
       if flowcell_type is None:
         raise ValueError('unknown flowcell type for sequencing run model {0}'.format(pl_data.model_name))
-
+    else:
+      seqrun_data['flowcell']=pl_data.model_name  # adding flowcell info for remaining platforms
     return seqrun_data
   except:
     raise
