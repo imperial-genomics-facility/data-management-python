@@ -265,9 +265,14 @@ class SampleSheet:
     self._header_data=header_data
   
    
-  def filter_sample_data( self, condition_key, condition_value ):
+  def filter_sample_data( self, condition_key, condition_value , method='include'):
     '''
     Function for filtering SampleSheet data based on matching condition
+    required params:
+    condition_key: A samplesheet column name
+    condition_value: A keyword present in the selected column
+    method: 'include' or 'exclude' for adding or removing selected column from the samplesheet
+             default is include
     '''
 
     condition_value=str(condition_value).strip()
@@ -279,8 +284,12 @@ class SampleSheet:
       if condition_key not in list(row.keys()): 
         raise ValueError('key {} not found for {}'.format(condition_key, row))
       else:
-        if row[condition_key] == condition_value: filtered_data.append(row)
-
+        if method=='include':
+          if row[condition_key] == condition_value: filtered_data.append(row)
+        elif method=='exclude':
+          if row[condition_key] != condition_value: filtered_data.append(row)
+        else:
+          raise ValueError('method {0} not supported'.format(method))
     # resetting data information
     self._data=filtered_data
 
