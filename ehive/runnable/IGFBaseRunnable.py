@@ -62,7 +62,7 @@ class IGFBaseRunnable(eHive.BaseRunnable):
     return job_pid
   
   
-  def job_name(selfself):
+  def job_name(self):
     '''
     A method for getting a job name
     '''
