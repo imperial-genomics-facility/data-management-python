@@ -6,11 +6,12 @@ from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 
 class SeqrunFileFactory(IGFBaseJobFactory):
   def param_defaults(seld):
-    return { 'log_slack':True, 
-             'log_asana':True,
+    params_dict=IGFBaseProcess.param_defaults()
+    params_dict.update({ 
              'seqrun_md5_type':'ILLUMINA_BCL_MD5',
              'seqrun_server':'orwell.hh.med.ic.ac.uk'
-           } 
+           })
+    return params_dict
 
 
   def run(self):
@@ -22,14 +23,18 @@ class SeqrunFileFactory(IGFBaseJobFactory):
       igf_session_class=self.param_required('igf_session_class')
       seqrun_md5_type=self.param_required('seqrun_md5_type')
 
-      seqrun_path=os.path.join(seqrun_source,seqrun_igf_id) # get new seqrun path
+      seqrun_path=os.path.join(seqrun_source,seqrun_igf_id)                     # get new seqrun path
       # check for remote dir
       seqrun_server_login='{0}@{1}'.format(seqrun_user, seqrun_server)
-      subprocess.check_call(['ssh', seqrun_server_login,'ls', seqrun_path], stderror=None, stdout=None)
+      subprocess.check_call(['ssh', 
+                             seqrun_server_login,
+                             'ls', 
+                             seqrun_path], stderror=None, stdout=None)          # check remote file
       # get the md5 list from db
       ca=CollectionAdaptor(**{'session_class':igf_session_class})
       ca.start_session()
-      files=ca.get_collection_files(collection_name=seqrun_igf_id,collection_type=seqrun_md5_type)
+      files=ca.get_collection_files(collection_name=seqrun_igf_id,
+                                    collection_type=seqrun_md5_type)            # fetch file collection
       files=files.to_dict(orient='records')
       ca.close_session()
 
@@ -46,12 +51,14 @@ class SeqrunFileFactory(IGFBaseJobFactory):
         temp_dir=get_temp_dir(work_dir=os.getcwd())
         destination_path=ps.path.join(temp_dir,os.path.basename(md5_json_path))
         # copy remote file to temp file
-        copy_remote_file(source_path=md5_json_path, destinationa_path=destination_path, source_address=seqrun_server)
+        copy_remote_file(source_path=md5_json_path, 
+                         destinationa_path=destination_path, 
+                         source_address=seqrun_server)                          # copy remote file to local disk
         md5_json_path=destination_path
         
       with open(md5_json_path) as json_data:
-            md5_json=json.load(json_data)   # read json data, get all file and md5 from json file
-      self.param('sub_tasks',md5_json)      # seed dataflow
+            md5_json=json.load(json_data)                                       # read json data, get all file and md5 from json file
+      self.param('sub_tasks',md5_json)                                          # seed dataflow
       message='seeded {0} files for copy'.format(len(md5_json))
       self.warning(message)
       self.post_message_to_slack(message,reaction='pass')
