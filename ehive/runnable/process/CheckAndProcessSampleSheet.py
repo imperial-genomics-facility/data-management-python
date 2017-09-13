@@ -23,19 +23,21 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
     try:
       igf_session_class = self.param_required('igf_session_class')
       seqrun_igf_id=self.param_required('seqrun_igf_id')
-      seqrun_local_dir=self.patram_required('seqrun_local_dir')
+      seqrun_local_dir=self.param_required('seqrun_local_dir')
+      base_work_dir=self.param_required('base_work_dir')
       samplesheet_filename=self.param('samplesheet_filename')
       index2_label=self.param('index2_label')
       revcomp_label=self.param('revcomp_label')
       tenX_label=self.param('10X_label')
       
+      work_dir=os.path.join(base_work_dir,seqrun_igf_id,)
       samplesheet_file=os.path.join(seqrun_local_dir, seqrun_igf_id, samplesheet_filename)
       if not os.path.exists(samplesheet_file):
         raise IOError('sampleshhet file {0} not found'.format(samplesheet_file))
     
       samplesheet=SampleSheet(infile=samplesheet_file) # read samplesheet
       # separate 10X samplesheet
-      samplesheet.filter_sample_data(condition_key='Description', condition_value=tenX_label)
+      samplesheet.filter_sample_data(condition_key='Description', condition_value=tenX_label, method='exclude')
       
       # convert index based on barcode rules
       sa=SeqrunAdaptor(**{'session_class':igf_session_class})
@@ -47,6 +49,7 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
       
       if rules_data[index2_label]==revcomp_label:
         samplesheet.get_reverse_complement_index(index_field='index2')
+      
       
       # no need to add revcomp method for index1
       
