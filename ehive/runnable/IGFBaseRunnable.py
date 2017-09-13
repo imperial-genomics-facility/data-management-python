@@ -1,4 +1,4 @@
-import eHive
+import os, eHive
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.task_tracking.igf_slack import IGF_slack
 from igf_data.task_tracking.igf_asana import IGF_asana
@@ -34,6 +34,14 @@ class IGFBaseRunnable(eHive.BaseRunnable):
       self.param('igf_asana', igf_asana)
 
 
+  def run(self):
+    pass
+  
+  
+  def write_output(self):
+    pass
+  
+  
   def post_message_to_slack(self,message,reaction=''):
     '''
     A method for posing message to slack channel
@@ -44,13 +52,30 @@ class IGFBaseRunnable(eHive.BaseRunnable):
     if self.param('log_slack'):
       igf_slack = self.param_required('igf_slack')
       igf_slack.post_message_to_channel(message,reaction)
- 
+      
+      
+  def get_job_id(self):
+    '''
+    A method for fetching job process id
+    ''' 
+    job_pid=os.getpid()
+    return job_pid
+  
+  
+  def job_name(selfself):
+    '''
+    A method for getting a job name
+    '''
+    class_name=self.__class__.__name__
+    job_id=self.get_job_id()
+    job_name='{0}_{1}'.format(class_name,job_id)
+    return job_name
+
 
 class IGFBaseJobFactory(IGFBaseRunnable):
   '''
   Base jobfactory class for igf pipelines
-  '''
-
+  '''  
   def write_output(self):
     sub_tasks = self.param_required('sub_tasks')   
     self.dataflow(sub_tasks, 2)
@@ -60,7 +85,6 @@ class IGFBaseProcess(IGFBaseRunnable):
   '''
   Base process class for igf pipelines
   '''
-
   def write_output(self):
     sub_tasks = self.param_required('sub_tasks')   
     self.dataflow(sub_tasks, 1)
