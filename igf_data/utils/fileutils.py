@@ -54,18 +54,18 @@ def copy_remote_file(source_path,destinationa_path, source_address=None, destina
     try:
         if source_address is None and destination_address is None:
             raise ValueError('required a remote source address or a destination address')
-        
+
         if source_address is not None:
             source_path='{0}@{1}'.format(source_address,source_path)
-        
+
         if destination_address is not None:
             destinationa_path='{0}@{1}'.format(destination_address,destinationa_path)
-        
+
         if copy_method == 'rsync':
             cmd=['rsync','-e','ssh',source_path,destinationa_path]
         else:
             raise ValueError('copy method {0} is not supported'.format(copy_method))
-        
+
         subprocess.check_call(cmd)
     except:
         raise
@@ -92,32 +92,32 @@ def calculate_file_checksum(filepath, hasher='md5'):
     raise
 
 
-def get_temp_dir(work_dir, prefix='temp'):
-    '''
-    A function for creating temp directory
-    required params:
-    work_dir: A path for work directory
-    prefix: A prefix for directory path, default 'temp'
-    returns temp_dir
-    '''
-    try:
-        if not os.path.isdir(work_dir):              # check if work directory is present
-            raise IOError('work directory {0} is not present'.format(work_dir))
-        temp_dir=mkdtemp(prefix=prefix,dir=work_dir)  # create a temp dir
-        return temp_dir
-    except:
-        raise
-    
-    
+def get_temp_dir(work_dir=None, prefix='temp'):
+  '''
+  A function for creating temp directory
+  required params:
+  work_dir: A path for work directory, default None
+  prefix: A prefix for directory path, default 'temp'
+  returns temp_dir
+  '''
+  try:
+    if not os.path.isdir(work_dir):              # check if work directory is present
+      raise IOError('work directory {0} is not present'.format(work_dir))
+    temp_dir=mkdtemp(prefix=prefix,dir=work_dir)  # create a temp dir
+    return temp_dir
+  except:
+    raise
+
+
 def remove_dir(dir_path):
-    '''
-    A function for removing directory containing files
-    required params:
-    dir_path: A directory path
-    '''
-    try:
-        if not os.path.isdir(dir_path):
-            raise IOError('directory path {0} is not present'.format(dir_path))
-        rmtree(dir_path)
-    except:
-        raise
+  '''
+  A function for removing directory containing files
+  required params:
+  dir_path: A directory path
+  '''
+  try:
+    if not os.path.isdir(dir_path):
+      raise IOError('directory path {0} is not present'.format(dir_path))
+    rmtree(dir_path)
+  except:
+    raise
