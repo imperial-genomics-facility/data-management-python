@@ -84,6 +84,7 @@ class SampleSheet:
       raise ValueError('samplesheet {0} doesn\'t have unique index column names'.format(self.infile))
 
     return index_columns
+  
 
   def get_project_names(self, tag='sample_project'):
     '''
@@ -126,7 +127,30 @@ class SampleSheet:
         index_len=len(row[field].replace('N','').replace('n',''))
         index_count[field][index_len] += 1
     return index_count
- 
+  
+  
+  def get_indexes(selfself):
+    '''
+    A method for retrieving the indexes from the samplesheet
+    returns a list of indexes
+    '''
+    data=self._data
+    index_columns=self.index_columns
+    indexes=list()
+    
+    for row in data:
+      index_val=None
+      for field in index_columns:
+        if field not in list(row.keys()): 
+          raise ValueError('field {0} not present in samplesheet {1}'.format(field, self.infile))
+        if index_val is None:
+          index_val=row[field]
+        else:
+          index_val='{0}+{1}'.format(index_val,row[field])
+      indexes.append(index_val)
+    return indexes
+    
+    
   def _reformat_project_and_description(self, project_field='Sample_Project', description_field='Description' ):
     '''
     A Function for removing the user information from Project field and
