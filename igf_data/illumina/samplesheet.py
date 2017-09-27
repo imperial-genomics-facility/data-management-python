@@ -121,7 +121,7 @@ class SampleSheet:
     return index_count
 
 
-  def get_indexes(selfself):
+  def get_indexes(self):
     '''
     A method for retrieving the indexes from the samplesheet
     returns a list of indexes
