@@ -273,7 +273,7 @@ class SampleSheet:
     self._header_data=header_data
 
 
-  def filter_sample_data( self, condition_key, condition_value , method='include',lane_header='Lane',lane_default_val=1):
+  def filter_sample_data( self, condition_key, condition_value , method='include',lane_header='Lane',lane_default_val='1'):
     '''
     Function for filtering SampleSheet data based on matching condition
     required params:
@@ -289,11 +289,11 @@ class SampleSheet:
     
     for row in raw_data:
       if condition_key not in list(row.keys()): 
-        if condition_key==lane_header and condition_val==lane_default_val:
+        if condition_key==lane_header and condition_value==lane_default_val:
           # nextseq and miseq samplesheet doesn't have any lane column, default lane number is 1
           filtered_data.append(row)
         else:
-          raise ValueError('key {} not found for {}'.format(condition_key, row))
+          raise ValueError('key {}, value {} not found for {}'.format(condition_key,type(condition_value),row))
       else:
         if method=='include':
           if row[condition_key] == condition_value: filtered_data.append(row)
