@@ -9,6 +9,8 @@ from igf_data.illumina.samplesheet import SampleSheet
 def get_dataframe_from_stats_json(json_file):
   '''
   A method for reading Illumina Stats.json file as dataframes
+  required params:
+  json_file: Stats.json file from sequencing run
   '''
   with open(json_file,'r') as json_data:
     json_stats=json.load(json_data)
@@ -73,6 +75,9 @@ def check_barcode_stats(stats_json, sample_sheet):
   Convert barcode stats json file to dataframes, read samplesheet,
   remove all known barcodes for the flowcell lane from the pool of
   unknown barcodes
+  required params:
+  stats_json: Stats.json file from demultiplexing output
+  sample_sheet: Samplesheet from sequencing run
   '''
   stats_df=pd.DataFrame(columns=['index','lane','reads',
                                  'runid','sample','tag',
@@ -116,6 +121,13 @@ def check_barcode_stats(stats_json, sample_sheet):
 
 
 def validate_barcode_stats(raw_df,summary_df,know_barcode_ratio_cutoff=80):
+  '''
+  Check barcode stats for validating sequencing run
+  required params:
+  raw_df: A dataframe containing the raw barcode stats (from check_barcode_stats)
+  summary_df: A dataframe containing the summary stats (from check_barcode_stats)
+  know_barcode_ratio_cutoff: Lower cut-off for % of known barcode reads
+  '''
     try:
       # check known_pct/unknown_pct
       for runid, grp in summary_df.groupby('id'):
@@ -140,16 +152,21 @@ def validate_barcode_stats(raw_df,summary_df,know_barcode_ratio_cutoff=80):
         raise
 
 
-def generate_barcode_plots(raw_df,summary_df):
+def generate_barcode_plots(raw_df,summary_df,all_barcode_plot,index_plot):
   '''
   Gernerate barcode plot
+  required params:
+  raw_df: A dataframe containing the raw barcode stats (from check_barcode_stats)
+  summary_df: A dataframe containing the summary stats (from check_barcode_stats)
+  all_barcode_plot: A file name for writing the all barcode stats plot
+  index_plot: A file for writing the individual barcode plots
   '''
   summary_df_temp=summary_df.set_index('id')
   fig, ax=plt.subplots()
   summary_df_temp[['known_pct','unknown_pct']].plot(ax=ax,kind='bar',color=['green','orange'],stacked=True)
   plt.xlabel('Sequencing lane id')
   plt.ylabel('% of reads')
-  plt.show()
+  plt.savefig(all_barcode_plot)
   
   raw_df_tmp=raw_df.set_index('index')
   fig, ax=plt.subplots()
@@ -160,4 +177,4 @@ def generate_barcode_plots(raw_df,summary_df):
       ax.scatter(x=gr['log_total_read'],y=gr['mapping_ratio'],color='orange')
   plt.xlabel('Log of total reads')
   plt.ylabel('read % for index barcode')
-  plt.show()
+  plt.savefig(index_plot)
