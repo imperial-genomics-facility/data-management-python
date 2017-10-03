@@ -1,4 +1,4 @@
-import json
+import os, json
 from slackclient import SlackClient
 
 class IGF_slack:
@@ -47,6 +47,29 @@ class IGF_slack:
       raise
     
 
+  def post_file_to_channel(self,filepath,message=None):
+    '''
+    A method for uploading a file to slack
+    required params:
+    filepath: A filepath for upload
+    message: An optional message
+    '''
+    try:
+      if not os.path.exists(filepath):
+        raise IOError('file {0} not found'.format(filepath))
+      
+      if os.stat(filepath).st_size > 5000000:
+        message='skipped uploading file {0}, size {1}'.\
+        format(os.path.basename(filepath),os.stat(filepath).st_size)            # skip uploading files more than 5Mb in size
+      else:
+        self.slackobject.api_call( "files.upload", \
+                                   channels=self.slack_channel_id, \
+                                   initial_comment=message, \
+                                   file=open(os.path.join(filepath),'rb'),)     # share files in slack channel
+    except:
+      raise
+    
+    
   def post_message_to_channel_thread(self, message, thread_id, reaction=''):
     '''
     A method for posting reply message to the slack channel thread
