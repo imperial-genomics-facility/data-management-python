@@ -1,7 +1,6 @@
 import json
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
 import math
 from igf_data.illumina.samplesheet import SampleSheet
@@ -14,9 +13,9 @@ def get_dataframe_from_stats_json(json_file):
   '''
   with open(json_file,'r') as json_data:
     json_stats=json.load(json_data)
-  
+
   data1=list()
-  runid=json_stats['RunId']  
+  runid=json_stats['RunId']
   total_read=None
   for row in json_stats['ConversionResults']:
     lane=row['LaneNumber']
@@ -40,8 +39,6 @@ def get_dataframe_from_stats_json(json_file):
   for row in json_stats['UnknownBarcodes']:
     lane=row['Lane']
     total_read=df1.groupby('lane').get_group(lane)['total_read'].max()
-    max_index=10
-    index_count=0
     for barcode,count in sorted(row['Barcodes'].items(), key=lambda x: x[1], reverse=True):
         data2.append({'lane':lane,
                       'sample':'undetermined',
@@ -49,7 +46,7 @@ def get_dataframe_from_stats_json(json_file):
                       'reads':count,
                       'tag':'unknown',
                       'runid':runid,
-                      'total_read':total_read})     
+                      'total_read':total_read})
         
   df2=pd.DataFrame(data2)
   df=pd.concat([df1,df2])
@@ -84,7 +81,7 @@ def check_barcode_stats(stats_json, sample_sheet):
                                  'total_read','mapping_ratio'])                 # define structure for stats df
   
   json_data=get_dataframe_from_stats_json(json_file=stats_json)                 # get stats json data for each file
-  stats_df=pd.concat([json_data,stats_df])                                      # combine all json files 
+  stats_df=pd.concat([json_data,stats_df])                                      # combine all json files
   raw_df=pd.DataFrame()
     
   for rid, rg in stats_df.groupby('runid'):
@@ -131,7 +128,6 @@ def validate_barcode_stats(raw_df,summary_df,know_barcode_ratio_cutoff=80):
     try:
       # check known_pct/unknown_pct
       for runid, grp in summary_df.groupby('id'):
-          known_barcode_ratio=grp['known_pct'].values[0]/grp['unknown_pct'].values[0]
           if grp['known_pct'].values[0] < know_barcode_ratio_cutoff:
               raise ValueError('{0} failed total barcode check: {1}'.format(runid, grp['known_pct'].values[0]))
           else:
