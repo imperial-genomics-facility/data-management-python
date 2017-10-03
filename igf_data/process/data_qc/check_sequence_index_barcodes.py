@@ -1,10 +1,20 @@
-import json
+import os, json, math
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-import math
 from igf_data.illumina.samplesheet import SampleSheet
 
+
+class IndexBarcodeValidationError(Exception):
+  '''
+  A custom exception class for checking and reporting validation error
+  returns a message and a list of plots file path
+  '''
+  def __init__(self,message,plots):
+    self.message=message
+    self.plots=plots
+    
+    
 class CheckSequenceIndexBarcodes:
   '''
   A class for sequencing run index barcode stats calculation and validation
@@ -15,6 +25,7 @@ class CheckSequenceIndexBarcodes:
   def __init__(self,stats_json_file,samplesheet_file):
     self.stats_json_file=stats_json_file
     self.samplesheet_file=samplesheet_file
+    self._check_barcode_stats()
     
     
   def _get_dataframe_from_stats_json(json_file):
@@ -51,7 +62,8 @@ class CheckSequenceIndexBarcodes:
     for row in json_stats['UnknownBarcodes']:
       lane=row['Lane']
       total_read=df1.groupby('lane').get_group(lane)['total_read'].max()
-      for barcode,count in sorted(row['Barcodes'].items(), key=lambda x: x[1], reverse=True):
+      for barcode,count in sorted(row['Barcodes'].items(), key=lambda x: x[1], \
+                                  reverse=True):
         data2.append({'lane':lane,
                       'sample':'undetermined',
                       'index':barcode,
@@ -80,63 +92,62 @@ class CheckSequenceIndexBarcodes:
 
 
   def _check_barcode_stats(self):
-  '''
-  An internal method for converting barcode stats json file to dataframes, read samplesheet,
-  remove all known barcodes for the flowcell lane from the pool of unknown barcodes
-  required params:
-  stats_json: Stats.json file from demultiplexing output
-  sample_sheet: Samplesheet from sequencing run
-  '''
-  stats_json=self.stats_json_file
-  sample_sheet=self.samplesheet_file
-  stats_df=pd.DataFrame(columns=['index','lane','reads',
-                                 'runid','sample','tag',
-                                 'total_read','mapping_ratio'])                 # define structure for stats df
+    '''
+    An internal method for converting barcode stats json file to dataframes, read samplesheet,
+    remove all known barcodes for the flowcell lane from the pool of unknown barcodes
+    required params:
+    stats_json: Stats.json file from demultiplexing output
+    sample_sheet: Samplesheet from sequencing run
+    '''
+    stats_json=self.stats_json_file
+    sample_sheet=self.samplesheet_file
+    stats_df=pd.DataFrame(columns=['index','lane','reads',
+                                   'runid','sample','tag',
+                                   'total_read','mapping_ratio'])               # define structure for stats df
   
-  json_data=get_dataframe_from_stats_json(json_file=stats_json)                 # get stats json data for each file
-  stats_df=pd.concat([json_data,stats_df])                                      # combine all json files
-  raw_df=pd.DataFrame()
+    json_data=_get_dataframe_from_stats_json(json_file=stats_json)              # get stats json data for each file
+    stats_df=pd.concat([json_data,stats_df])                                    # combine all json files
+    raw_df=pd.DataFrame()
     
-  for rid, rg in stats_df.groupby('runid'):
-    for lid, lg in rg.groupby('lane'):
-      samplesheet_data=SampleSheet(infile=sample_sheet)                         # using the same samplesheet for filter
-      u_stats_df=lg.groupby('tag').get_group('unknown')
-      k_stats_df=lg.groupby('tag').get_group('known')                           # separate known and unknown groups
-      all_lanes=samplesheet_data.get_lane_count()
-      if lid in all_lanes:                                                      # fix for nextseq
-        samplesheet_data.filter_sample_data(condition_key='Lane', \
-                                            condition_value=lid)                # filter samplesheet for the lane dynamically
-        all_known_indexes=samplesheet_data.get_indexes()                        # get all known indexes present on the lane
-        u_stats_df=u_stats_df[u_stats_df['index'].\
-                              isin(all_known_indexes)==False]                   # filter all known barcodes 4m unknown
-        raw_df=pd.concat([k_stats_df,u_stats_df,raw_df])                        # merge dataframe back together
+    for rid, rg in stats_df.groupby('runid'):
+      for lid, lg in rg.groupby('lane'):
+        samplesheet_data=SampleSheet(infile=sample_sheet)                       # using the same samplesheet for filter
+        u_stats_df=lg.groupby('tag').get_group('unknown')
+        k_stats_df=lg.groupby('tag').get_group('known')                         # separate known and unknown groups
+        all_lanes=samplesheet_data.get_lane_count()
+        if lid in all_lanes:                                                    # fix for nextseq, not supporting multiple projects
+          samplesheet_data.filter_sample_data(condition_key='Lane', \
+                                              condition_value=lid)              # filter samplesheet for the lane dynamically
+          all_known_indexes=samplesheet_data.get_indexes()                      # get all known indexes present on the lane
+          u_stats_df=u_stats_df[u_stats_df['index'].\
+                                isin(all_known_indexes)==False]                 # filter all known barcodes from unknown
+          raw_df=pd.concat([k_stats_df,u_stats_df,raw_df])                      # merge dataframe back together
             
-  raw_df['log_total_read']=raw_df['total_read'].map(lambda x: math.log2(x))     # add log2 of total reads in df
-  summary_df=raw_df.pivot_table(values=['reads'],\
-                                index=['tag','lane','runid'], \
-                                aggfunc=np.sum)                                 # create summary df
-  processed_df=pd.DataFrame(columns=['id','known_read','unknown_read'])         # define processed df structure
+    raw_df['log_total_read']=raw_df['total_read'].map(lambda x: math.log2(x))   # add log2 of total reads in df
+    summary_df=raw_df.pivot_table(values=['reads'],\
+                                  index=['tag','lane','runid'], \
+                                  aggfunc=np.sum)                               # create summary df
+    processed_df=pd.DataFrame(columns=['id','known_read','unknown_read'])       # define processed df structure
   
-  for rid, rg in summary_df.groupby('runid'):
-    for lid, lg in rg.groupby('lane'):
-      known_reads=lg.loc['known']['reads'].values[0]
-      unknown_reads=lg.loc['unknown']['reads'].values[0]
-      runid='{0}_{1}'.format(rid, lid)
-      df=pd.DataFrame([{'id':runid,'known_read':known_reads,
-                        'unknown_read':unknown_reads}])
-      processed_df=pd.concat([df,processed_df])                                 # format processed df
+    for rid, rg in summary_df.groupby('runid'):
+      for lid, lg in rg.groupby('lane'):
+        known_reads=lg.loc['known']['reads'].values[0]
+        unknown_reads=lg.loc['unknown']['reads'].values[0]
+        runid='{0}_{1}'.format(rid, lid)
+        df=pd.DataFrame([{'id':runid,'known_read':known_reads,
+                          'unknown_read':unknown_reads}])
+        processed_df=pd.concat([df,processed_df])                               # format processed df
       
-  processed_df=processed_df.apply(lambda x: generate_pct(x), axis=1)            # calculate % of known and unknown barcodes
-  self.raw_df=raw_df
-  self.processed_df=processed_df
+    processed_df=processed_df.apply(lambda x: _generate_pct(x), axis=1)         # calculate % of known and unknown barcodes
+    self.raw_df=raw_df
+    self.processed_df=processed_df
 
 
-  def validate_barcode_stats(self,know_barcode_ratio_cutoff=80, strict_check=True):
+  def validate_barcode_stats(self,work_dir,know_barcode_ratio_cutoff=80, strict_check=True):
     '''
     A method for checking barcode stats for validating sequencing run
     required params:
-    raw_df: A dataframe containing the raw barcode stats (from check_barcode_stats)
-    summary_df: A dataframe containing the summary stats (from check_barcode_stats)
+    work_dir: A path to the work directory
     know_barcode_ratio_cutoff: Lower cut-off for % of known barcode reads, default=80
     strict_check: Parameter to turn on or off the strict checking, default is True
     '''
@@ -147,7 +158,10 @@ class CheckSequenceIndexBarcodes:
       # check known_pct/unknown_pct
       for runid, grp in summary_df.groupby('id'):
         if strict_check and grp['known_pct'].values[0] < know_barcode_ratio_cutoff:
-          raise ValueError('{0} failed total barcode check: {1}'.format(runid, grp['known_pct'].values[0]))
+          (all_barcode_plot,index_plot)=self._generate_barcode_plots            # plot stats
+          raise IndexBarcodeValidationError(message='{0} failed total barcode check: {1}'.\
+                                            format(runid, grp['known_pct'].values[0]), \
+                                            plots=[all_barcode_plot,index_plot])
       # check for individual barcodes mapping ratios
       for rid, rgrp in raw_df.groupby('runid'):
         for lid,lgrp in rgrp.groupby('lane'):
@@ -156,38 +170,49 @@ class CheckSequenceIndexBarcodes:
           unknown_grp=lgrp.groupby('tag').get_group('unknown')
           max_unknown_mpr=unknown_grp['mapping_ratio'].max()
           if strict_check and min_known_mpr < max_unknown_mpr:
-            raise ValueError('{0} {1} failed mapping ratio check'.format(rid, lid))
+            (all_barcode_plot,index_plot)=self._generate_barcode_plots          # plot stats
+            raise IndexBarcodeValidationError(message='{0} {1} failed mapping ratio check'.\
+                                              format(rid, lid), \
+                                              plots=[all_barcode_plot,index_plot])
     except:
         raise
 
 
-  def generate_barcode_plots(self,all_barcode_plot,index_plot):
+  def _generate_barcode_plots(self,work_dir,all_barcode_plot='total_barcodes.png',\
+                              index_plot='individual_barcodes.png'):
     '''
-    A method for plotting barcode stats
+    An internal method for plotting barcode stats
     required params:
-    raw_df: A dataframe containing the raw barcode stats (from check_barcode_stats)
-    summary_df: A dataframe containing the summary stats (from check_barcode_stats)
-    all_barcode_plot: A file name for writing the all barcode stats plot
-    index_plot: A file for writing the individual barcode plots
+    work_dir: A path to the work dir
+    all_barcode_plot: A file for plotting all stats, default total_barcodes.png
+    index_plot: A file for plotting the individual barcodes, default individual_barcodes.png
     '''
     try:
       summary_df=self.processed_df
       raw_df=self.raw_df
       summary_df_temp=summary_df.set_index('id')
       fig, ax=plt.subplots()
-      summary_df_temp[['known_pct','unknown_pct']].plot(ax=ax,kind='bar',color=['green','orange'],stacked=True)
+      summary_df_temp[['known_pct','unknown_pct']].plot(ax=ax,kind='bar', \
+                                                        color=['green','orange'],\
+                                                        stacked=True)
       plt.xlabel('Sequencing lane id')
       plt.ylabel('% of reads')
+      all_barcode_plot=os.path.join(work_dir,all_barcode_plot)
       plt.savefig(all_barcode_plot)
       raw_df_tmp=raw_df.set_index('index')
-      fig, ax=plt.subplots()                                                      # plotting total barcode stats
+      fig, ax=plt.subplots()                                                    # plotting total barcode stats
       for gk,gr in raw_df_tmp.groupby('tag'):
         if gk=='known':
           ax.scatter(x=gr['log_total_read'],y=gr['mapping_ratio'],color='green')
         elif gk=='unknown':
           ax.scatter(x=gr['log_total_read'],y=gr['mapping_ratio'],color='orange')
+        else:
+          raise ValueError('tag {0} is undefined'.format(gk))
+        
       plt.xlabel('Log of total reads')
       plt.ylabel('read % for index barcode')
-      plt.savefig(index_plot)                                                     # plotting individual barcode stats
+      index_plot=os.path.join(work_dir,index_plot)
+      plt.savefig(index_plot)                                                   # plotting individual barcode stats
+      return (all_barcode_plot,index_plot)
     except:
       raise
