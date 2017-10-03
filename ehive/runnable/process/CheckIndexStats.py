@@ -36,8 +36,9 @@ class CheckIndexStats(IGFBaseProcess):
       barcode_stat=CheckSequenceIndexBarcodes(stats_json_file,samplesheet_file) # create check instance
       barcode_stat.validate_barcode_stats(work_dir=work_dir, \
                                           strict_check=strict_check)            # validate seqrun stats
-      self.param('dataflow_params',{'barcode_qc_stats':'PASS'})                 # seed dataflow only of the qc passed lanes
+      self.param('dataflow_params',{'barcode_qc_stats':'PASS'})                 # seed dataflow parame for the qc passed lanes
     except IndexBarcodeValidationError as e:
+      self.param('dataflow_params',{'barcode_qc_stats':'FAIL'})                 # seed dataflow for failed lanes
       for plot_file in e.plots:
         self.post_file_to_slack(message=e.message,file=plot_file)               # posting plot files to slack
         self.upload_file_to_asana_task(task_name=seqrun_name, \
