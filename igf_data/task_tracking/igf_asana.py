@@ -1,4 +1,4 @@
-import asana, json
+import os, asana, json
 
 class IGF_asana:
   '''
@@ -98,6 +98,32 @@ class IGF_asana:
       return res
     except:
       raise
+  
+  
+  def attach_file_to_asana_task(self,task_name, filepath, comment=None):
+    '''
+    A method for uploading files to asana
+    required params:
+    task_name: A task name
+    filepath: A filepath to upload
+    '''
+    try:
+      if not os.path.exists(filepath):
+        raise IOError('file {0} not found'.format(filepath))
+      if comment:
+        res=self.comment_asana_task(task_name,comment)                          # adding comment to asana)
+      asana_task_id=self.fetch_task_id_for_task_name(task_name)                 # get task_id from asana
+      
+      if os.stat(filepath).st_size > 5000000:
+        comment='skipped uploading file {0}, size {1}'.\
+                format(os.path.basename(filepath),os.stat(filepath).st_size)    # skip uploading files more than 5Mb in size
+        res=self.asanaclient.stories.create_on_task(asana_task_id,{'text':comment})
+      else:
+        res=self.asanaclient.attachments.create_on_task(task_id=asana_task_id, \
+                                       file_content=open(os.path.join(filepath),'rb'), \
+                                       file_name=os.path.basename(filepath))    # upload file to task_id
+    except:
+      raise 
     
     
   def _check_project_id(self):
