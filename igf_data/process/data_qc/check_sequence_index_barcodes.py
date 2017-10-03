@@ -34,6 +34,9 @@ class CheckSequenceIndexBarcodes:
     required params:
     json_file: Stats.json file from sequencing run
     '''
+    if not os.path.exists(json_file):
+      raise IOError('file {0} not found'.format(json_file))
+    
     with open(json_file,'r') as json_data:
       json_stats=json.load(json_data)
 
