@@ -54,6 +54,52 @@ class IGFBaseRunnable(eHive.BaseRunnable):
       igf_slack.post_message_to_channel(message,reaction)
       
       
+  def post_file_to_slack(self,filepath,message):
+    '''
+    A method for posting message to slack channel
+    required params:
+    filepath: A filepath
+    message: A message text
+    '''
+    try:
+      if self.param('log_slack'):
+        igf_slack = self.param_required('igf_slack')
+        igf_slack.post_file_to_channel(message=message,file=filepath)
+    except:
+      raise
+  
+  
+  def upload_file_to_asana_task(self,task_name,filepath,comment=None):
+    '''
+    A base method for uploading file to the asana task
+    required params:
+    task_name: A asana task name
+    filepath: A filepath
+    comment: An optional text comment
+    '''
+    try:
+      if self.param('log_asana'):
+        igf_asana=self.param_required('igf_asana')
+        igf_asana.attach_file_to_asana_task(self,task_name, filepath, comment)
+    except:
+      raise
+  
+  
+  def comment_asana_task(self,task_name, comment):
+    '''
+    A base method for commenting asana task
+    required params:
+    task_name: A task name
+    comment: A text comment
+    '''
+    try:
+      if self.param('log_asana'):
+        igf_asana=self.param_required('igf_asana')
+        igf_asana.comment_asana_task(task_name, comment)
+    except:
+      raise
+    
+    
   def get_job_id(self):
     '''
     A method for fetching job process id
