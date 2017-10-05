@@ -1,5 +1,9 @@
 #!/usr/bin/env python
+import os
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
+from shutil import rmtree
+from igf_data.task_tracking import igf_asana, igf_slack
+
 class ValidateAllLanesForProject(IGFBaseProcess):
   '''
   A class for checking barcode stats for all the flowcell lanes
@@ -8,14 +12,24 @@ class ValidateAllLanesForProject(IGFBaseProcess):
   projects with failed qc stats and send messsage to slack channel
   '''
   def run(self):
-    project_fastq=self.param_required('project_fastq')
-    project_status='PASS'                                                       # default status is PASS
-    for fastq_dir,qc_stats in project_fastq.items():
-      if qc_stats=='FAIL':
-        project_status='FAIL'                                               # mark project status as failed if any lane is failed
+    try:
+      project_fastq=self.param_required('project_fastq')
+      project_status='PASS'                                                       # default status is PASS
+      for fastq_dir,qc_stats in project_fastq.items():
+        if qc_stats=='FAIL':
+          project_status='FAIL'                                                   # mark project status as failed if any lane is failed
         
-    if project_status=='PASS':
-    elif project_status=='FAIL':
-    else:
-        raise
-          
+      if project_status=='PASS':
+        self.param('dataflow_params',{'project_fastq':project_fastq})
+      else:
+        for fastq_dir in project_fastq.key():
+          report_dir=os.path.join(fastq_dir,'Reports/html')
+          for flowcell in os.listdir(report_dir):
+            if os.path.isdir(flowcell):
+              all_barcodes_html=os.path.join(flowcell,'all/all/all/laneBarcode.html')
+              if os.path.exists(all_barcodes_html):
+                igf_slack.post_file_to_channel(filepath=all_barcodes_html, \
+                                               message='Failed barcode stats')  # post report file to slack
+          rmtree(fastq_dir)                                                     # delete failed fastq dir
+    except:
+      raise
