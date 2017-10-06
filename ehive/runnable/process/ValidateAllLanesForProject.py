@@ -11,14 +11,22 @@ class ValidateAllLanesForProject(IGFBaseProcess):
   if all the lanes are qc passed. It will remove the fastq data for
   projects with failed qc stats and send messsage to slack channel
   '''
+  def param_defaults(self):
+    params_dict=IGFBaseProcess.param_defaults()
+    params_dict.update({
+        'strict_check':True,
+      })
+    return params_dict
+  
   def run(self):
     try:
       project_fastq=self.param_required('project_fastq')
-      project_status='PASS'                                                       # default status is PASS
+      strict_check=self.param('strict_check')
+      project_status='PASS'                                                     # default status is PASS
       for fastq_dir,qc_stats in project_fastq.items():
         if qc_stats=='FAIL':
-          project_status='FAIL'                                                   # mark project status as failed if any lane is failed
-        
+          project_status='FAIL'                                                 # mark project status as failed if any lane is failed
+          
       if project_status=='PASS':
         self.param('dataflow_params',{'project_fastq':project_fastq})
       else:
@@ -30,6 +38,7 @@ class ValidateAllLanesForProject(IGFBaseProcess):
               if os.path.exists(all_barcodes_html):
                 igf_slack.post_file_to_channel(filepath=all_barcodes_html, \
                                                message='Failed barcode stats')  # post report file to slack
-          rmtree(fastq_dir)                                                     # delete failed fastq dir
+          if strict_check:      
+            rmtree(fastq_dir)                                                   # delete failed fastq dir
     except:
       raise
