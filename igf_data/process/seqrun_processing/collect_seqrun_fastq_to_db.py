@@ -219,49 +219,51 @@ class Collect_seqrun_fastq_to_db:
 
   def _build_and_store_exp_run_and_collection_in_db(self,fastq_files_list, restricted_list=['10X']):
     session_class=self.session_class
-    dataframe=pd.DataFrame(fastq_files_list)
-    # calculate additional detail
-    dataframe=dataframe.apply(lambda data: \
-                              self._calculate_experiment_run_and_file_info(data, 
-                                                               restricted_list),\
-                              axis=1)
-    # get file data
-    file_group_columns=['name','type','location',
-                        'R1','R1_md5','R1_size','R2',
-                        'R2_md5','R2_size']
-    file_group_data=dataframe.loc[:,file_group_columns]
-    file_group_data=file_group_data.drop_duplicates()
-    (file_data,file_group_data)=self._reformat_file_group_data(data=file_group_data)
-    # get base session
-    base=BaseAdaptor(**{'session_class':session_class})
-    base.start_session()
-    # get experiment data
-    experiment_columns=base.get_table_columns(table_name=Experiment, \
-                                              excluded_columns=['experiment_id', 
-                                                                'project_id', 
-                                                                'sample_id' ])
-    experiment_columns.extend(['project_igf_id', 
-                               'sample_igf_id'])
-    exp_data=dataframe.loc[:,experiment_columns]
-    exp_data=exp_data.drop_duplicates()
-    # get run data
-    run_columns=base.get_table_columns(table_name=Run, \
-                                       excluded_columns=['run_id', 
-                                                         'seqrun_id', 
-                                                         'experiment_id',
-                                                         'date_created',
-                                                         'status'
-                                                        ])
-    run_columns.extend(['seqrun_igf_id', 
-                        'experiment_igf_id'])
-    run_data=dataframe.loc[:,run_columns]
-    run_data=run_data.drop_duplicates()
-    # get collection data
-    collection_columns=['name',
-                        'type']
-    collection_data=dataframe.loc[:,collection_columns]
-    collection_data=collection_data.drop_duplicates()
+    db_connected=False
     try:
+      dataframe=pd.DataFrame(fastq_files_list)
+      # calculate additional detail
+      dataframe=dataframe.apply(lambda data: \
+                                self._calculate_experiment_run_and_file_info(data, 
+                                                               restricted_list),\
+                                axis=1)
+      # get file data
+      file_group_columns=['name','type','location',
+                          'R1','R1_md5','R1_size','R2',
+                          'R2_md5','R2_size']
+      file_group_data=dataframe.loc[:,file_group_columns]
+      file_group_data=file_group_data.drop_duplicates()
+      (file_data,file_group_data)=self._reformat_file_group_data(data=file_group_data)
+      # get base session
+      base=BaseAdaptor(**{'session_class':session_class})
+      base.start_session()
+      db_connected=True
+      # get experiment data
+      experiment_columns=base.get_table_columns(table_name=Experiment, \
+                                                excluded_columns=['experiment_id', 
+                                                                  'project_id', 
+                                                                  'sample_id' ])
+      experiment_columns.extend(['project_igf_id', 
+                                 'sample_igf_id'])
+      exp_data=dataframe.loc[:,experiment_columns]
+      exp_data=exp_data.drop_duplicates()
+      # get run data
+      run_columns=base.get_table_columns(table_name=Run, \
+                                         excluded_columns=['run_id', 
+                                                           'seqrun_id', 
+                                                           'experiment_id',
+                                                           'date_created',
+                                                           'status'
+                                                          ])
+      run_columns.extend(['seqrun_igf_id', 
+                          'experiment_igf_id'])
+      run_data=dataframe.loc[:,run_columns]
+      run_data=run_data.drop_duplicates()
+      # get collection data
+      collection_columns=['name',
+                          'type']
+      collection_data=dataframe.loc[:,collection_columns]
+      collection_data=collection_data.drop_duplicates()
       # store experiment to db
       ea=ExperimentAdaptor(**{'session':base.session})
       ea.store_project_and_attribute_data(data=exp_data,autosave=False)
@@ -282,8 +284,10 @@ class Collect_seqrun_fastq_to_db:
       ca.create_collection_group(data=file_group_data,autosave=False)
       base.commit_session()
     except:
-      base.rollback_session()
+      if db_connected:
+        base.rollback_session()
       raise
     finally:
-      base.close_session()
+      if db_connected:
+        base.close_session()
       
