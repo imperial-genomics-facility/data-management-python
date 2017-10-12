@@ -28,5 +28,6 @@ class CollectFastqToDbCollection(IGFBaseProcess):
                                                   samplesheet_filename=samplesheet_filename,
                                                   )
       collect_instance.find_fastq_and_build_db_collection()
+      self.param('dataflow_params',{'fastq_dir':fastq_dir})
     except:
       raise
