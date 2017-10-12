@@ -1,3 +1,4 @@
+from igf_data.process.collect_seqrun_fastq_to_db import Collect_seqrun_fastq_to_db
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 
 class CollectFastqToDbCollection(IGFBaseProcess):
@@ -19,6 +20,13 @@ class CollectFastqToDbCollection(IGFBaseProcess):
       flowcell_id=self.param_required('flowcell_id')
       file_location=self.param('file_location')
       samplesheet_filename=self.param('samplesheet_filename')
-      
+      collect_instance=Collect_seqrun_fastq_to_db(fastq_dir=fastq_dir,
+                                                  igf_session_class=igf_session_class,
+                                                  model_name=model_name,
+                                                  flowcell_id=flowcell_id,
+                                                  file_location=file_location,
+                                                  samplesheet_filename=samplesheet_filename,
+                                                  )
+      collect_instance.find_fastq_and_build_db_collection()
     except:
       raise
