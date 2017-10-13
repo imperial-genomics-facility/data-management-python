@@ -2,7 +2,7 @@ import os, subprocess,json
 
 class IGF_irods_uploader:
   '''
-  A basic python wrapper for uploading files to irods server from HPC cluster CX1
+  A simple wrapper for uploading files to irods server from HPC cluster CX1
   Please run the following commands in the HPC cluster before running this module
   Add irods settings to ~/.irods/irods_environment.json
   > module load irods/4.2.0
