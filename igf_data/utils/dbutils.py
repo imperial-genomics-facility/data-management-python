@@ -1,4 +1,4 @@
-import json
+import os,json
 from igf_data.igfdb.igfTables import Base
 from sqlalchemy import create_engine
 from igf_data.igfdb.baseadaptor import BaseAdaptor
@@ -12,6 +12,9 @@ def read_json_data(data_file):
   '''
   data=None
   try:
+    if not os.path.exists(data_file):
+      raise IOError('file {0} not found'.format(data_file))
+    
     with open(data_file, 'r') as json_data: 
       data=json.load(json_data)
   
