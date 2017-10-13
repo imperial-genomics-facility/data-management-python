@@ -1,4 +1,4 @@
-import os, re
+import os, re, fnmatch
 from collections import defaultdict
 from igf_data.illumina.samplesheet import SampleSheet
 import pandas as pd
@@ -61,10 +61,11 @@ class Collect_seqrun_fastq_to_db:
       if samplesheet_filename in files:
         samplesheet_list.append(os.path.join(root,samplesheet_filename))
         for file in files:
-          if r1_fastq_regex.match(file):
-            r1_fastq_list.append(os.path.join(root,file))
-          elif r2_fastq_regex.match(file):
-            r2_fastq_list.append(os.path.join(root,file))
+          if not fnmatch.fnmatch(file, 'Undetermined_'):
+            if r1_fastq_regex.match(file):
+              r1_fastq_list.append(os.path.join(root,file))
+            elif r2_fastq_regex.match(file):
+              r2_fastq_list.append(os.path.join(root,file))
         
     if len(r2_fastq_list) > 0 and len(r1_fastq_list) != len(r2_fastq_list):
       raise ValueError('R1 {0} and R2 {1}'.format(len(r1_fastq_list),\
