@@ -61,8 +61,22 @@ class RunFastqc(IGFBaseProcess):
         rmdir(os.path.join(fastqc_result_dir,filename))                         # remove fastqc results if its already present
         
       copytree(fastqc_output,fastqc_result_dir)
+      fastqc_zip=None
+      fastqc_html=None
+      
+      fastqc_path=os.path.join(fastqc_result_dir,filename)
+      
+      for root,dirs,files in os.walk(top=fastqc_path):
+        for file in files:
+          if fnmatch.fnmatch(file, '*.zip'):
+            fastqc_zip=os.path.join(root,file)
+          
+          if fnmatch.fnmatch(file, '*.html'):
+            fastqc_html=os.path.join(root,file)
+      
       self.param('dataflow_params',{'fastq_file':fastq_file, \
-                                    'fastqc':os.path.join(fastqc_result_dir, \
-                                                          filename)})           # set dataflow params
+                                    'fastqc':{'fastqc_path':fastqc_path,
+                                              'fastqc_zip':fastqc_zip,
+                                              'fastqc_html':fastqc_html}})      # set dataflow params
     except:
       raise
