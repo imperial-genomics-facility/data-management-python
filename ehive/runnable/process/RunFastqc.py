@@ -39,6 +39,7 @@ class RunFastqc(IGFBaseProcess):
       temp_work_dir=get_temp_dir()                                              # get a temp work dir
       if not os.path.exists(fastq_file):
         raise IOError('fastq file {0} not readable'.format(fastq_file))         # raise if fastq file path is not readable
+      
       filename=os.path.basename(fastq_file)                                     # get fastqfile base name
       filename=filename.replace('.fastq.gz','')                                 # remove file ext
       fastqc_output=os.path.join(temp_work_dir,filename)
