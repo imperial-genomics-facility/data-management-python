@@ -6,7 +6,7 @@ class CopyQCFileToRemote(IGFBaseProcess):
   def param_defaults(self):
     params_dict=IGFBaseProcess.param_defaults()
     params_dict.update({
-      'remote_host':None,
+      'remote_host':'eliot.med.ic.ac.uk',
       'remote_project_path':None,
       'remote_seqrun_path':None,
       'project_igf_id':None,
