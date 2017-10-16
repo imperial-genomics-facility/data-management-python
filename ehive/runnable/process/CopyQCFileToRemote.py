@@ -29,6 +29,7 @@ class CopyQCFileToRemote(IGFBaseProcess):
       run_igf_id=self.param_required('run_igf_id')
       tag=self.param_required('tag')
       lane_id=self.param_required('tag')
+      label=self.param.required('label')
       
       if not os.path.exists(file):
         raise IOError('file {0} not found'.format(file))
@@ -41,7 +42,8 @@ class CopyQCFileToRemote(IGFBaseProcess):
                                              project_igf_id, \
                                              seqrun_date, \
                                              sample_igf_id, \
-                                             run_igf_id )                       # get destination path for known barcodes
+                                             run_igf_id,
+                                             label )                            # get destination path for known barcodes
       elif tag.lower()=='undetermined':
         if lane_id is None:
           raise ValueError('lane_id is required for copying undetermined files')
@@ -50,7 +52,8 @@ class CopyQCFileToRemote(IGFBaseProcess):
                                              remote_seqrun_path, \
                                              seqrun_date, \
                                              seqrun_igf_id, \
-                                             lane_id
+                                             lane_id,
+                                             label
                                             )                                   # get destination path for undetermined barcodes
       else:
         raise ValueError('tag {0} is unknown'.format(tag))
