@@ -1,4 +1,4 @@
-import os, subprocess
+import os, subprocess,fnmatch
 from shutil import copytree
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.fileutils import get_temp_dir,remove_dir
@@ -65,6 +65,26 @@ class RunFastqscreen(IGFBaseProcess):
         
       copytree(fastqscreen_output,fastqscreen_result_dir)                       # copy fastqscreen output files
       fastqscreen_path=os.path.join(fastqscreen_result_dir,filename)
-      self.param('dataflow_params',{'fastqscreen': fastqscreen_path})           # set dataflow params
+      
+      fastqscreen_stat=None
+      fastqscreen_html=None
+      fastqscreen_png=None
+      
+      for root,dirs,files in os.walk(top=fastqscreen_path):
+        for file in files:
+          if fnmatch.fnmatch(file, '*.txt'):
+            fastqscreen_stat=os.path.join(root,file)
+          
+          if fnmatch.fnmatch(file, '*.html'):
+            fastqscreen_html=os.path.join(root,file)
+            
+          if fnmatch.fnmatch(file, '*.png'):
+            fastqscreen_png=os.path.join(root,file)
+            
+      self.param('dataflow_params',{'fastqscreen': \
+                                    {'fastqscreen_path':fastqscreen_path,
+                                     'fastqscreen_stat':fastqscreen_stat,
+                                     'fastqscreen_html':fastqscreen_html,
+                                     'fastqscreen_png':fastqscreen_png}})       # set dataflow params
     except:
       raise
