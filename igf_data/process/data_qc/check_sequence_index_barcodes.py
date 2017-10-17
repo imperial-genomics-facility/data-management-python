@@ -108,7 +108,7 @@ class CheckSequenceIndexBarcodes:
                                    'runid','sample','tag',
                                    'total_read','mapping_ratio'])               # define structure for stats df
   
-    json_data=self._get_dataframe_from_stats_json(json_file=stats_json)              # get stats json data for each file
+    json_data=self._get_dataframe_from_stats_json(json_file=stats_json)         # get stats json data for each file
     stats_df=pd.concat([json_data,stats_df])                                    # combine all json files
     raw_df=pd.DataFrame()
     
@@ -124,8 +124,8 @@ class CheckSequenceIndexBarcodes:
           all_known_indexes=samplesheet_data.get_indexes()                      # get all known indexes present on the lane
           u_stats_df=u_stats_df[u_stats_df['index'].\
                                 isin(all_known_indexes)==False]                 # filter all known barcodes from unknown
-          raw_df=pd.concat([k_stats_df,u_stats_df,raw_df])                      # merge dataframe back together
-            
+        
+        raw_df=pd.concat([k_stats_df,u_stats_df,raw_df])                        # merge dataframe back together
     raw_df['log_total_read']=raw_df['total_read'].map(lambda x: math.log2(x))   # add log2 of total reads in df
     summary_df=raw_df.pivot_table(values=['reads'],\
                                   index=['tag','lane','runid'], \
