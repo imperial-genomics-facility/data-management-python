@@ -12,7 +12,6 @@ class CopyQCFileToRemote(IGFBaseProcess):
       'project_igf_id':None,
       'sample_igf_id':None,
       'run_igf_id':None,
-      'tag':None,
       'lane_id':None
       })
     return params_dict
@@ -28,7 +27,7 @@ class CopyQCFileToRemote(IGFBaseProcess):
       seqrun_igf_id=self.param_required('seqrun_igf_id')
       run_igf_id=self.param_required('run_igf_id')
       tag=self.param_required('tag')
-      lane_id=self.param_required('tag')
+      lane_id=self.param_required('lane_id')
       label=self.param.required('label')
       
       if not os.path.exists(file):
@@ -40,9 +39,13 @@ class CopyQCFileToRemote(IGFBaseProcess):
       if tag.loqwe()=='known':
         destination_outout_path=os.path.join(remote_project_path, \
                                              project_igf_id, \
-                                             seqrun_date, \
+                                             seqrun_date)                       # base destination path for known barcodes
+        if sample_igf_id and run_igf_id:
+          destination_outout_path=os.path.join(destination_outout_path, \
                                              sample_igf_id, \
-                                             run_igf_id,
+                                             run_igf_id)                        # mix for multiqc reports
+          
+        destination_outout_path=os.path.join(destination_outout_path, \
                                              label )                            # get destination path for known barcodes
       elif tag.lower()=='undetermined':
         if lane_id is None:
