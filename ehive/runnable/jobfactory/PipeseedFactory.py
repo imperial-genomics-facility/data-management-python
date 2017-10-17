@@ -32,7 +32,11 @@ class PipeseedFactory(IGFBaseJobFactory):
         merged_data=pd.merge(pipeseeds_data,table_data,how='inner',\
                              on=None,left_on=[seed_id],right_on=[seqrun_id],\
                              left_index=False,right_index=False)                # join dataframes
-        seed_data=merged_data.to_dict(orient='records')                         # convert dataframe to list of dictionaries
+        merged_data['seqrun_date']=merged_data['seqrun_igf_id'].\
+                                   map(lambda x: \
+                                   self._get_date_from_seqrun(seqrun_igf_id=x)) # get seqrun date from seqrun id
+        seed_data=merged_data.applymap(lambda x: str(x)).\
+                              to_dict(orient='records')                         # convert dataframe to string and add as list of dictionaries
         self.param('sub_tasks',seed_data)                                       # set sub_tasks param for the data flow
         message='Total {0} new job found for {1}'.\
                  format(len(seed_data),self.__class__.__name__)                 # format msg for slack
@@ -51,3 +55,11 @@ class PipeseedFactory(IGFBaseJobFactory):
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')
       raise
+    
+  def _get_date_from_seqrun(self,seqrun_igf_id):
+    '''
+    An internal method for extracting sequencing run date from seqrun_igf_id
+    '''
+    seqrun_date=seqrun_igf_id.split('_')[0]                                     # set first part of the string, e.g., 171001_XXX_XXX-XXX
+    seqrun_date=datetime.datetime.strptime(seqrun_date,'%y%m%d').date()         # convert it to date opbect
+    return seqrun_date
