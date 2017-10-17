@@ -27,8 +27,8 @@ class CheckSequenceIndexBarcodes:
     self.samplesheet_file=samplesheet_file
     self._check_barcode_stats()
     
-  @classmethod
-  def _get_dataframe_from_stats_json(cls,json_file):
+ 
+  def _get_dataframe_from_stats_json(self,json_file):
     '''
     A internal method for reading Illumina Stats.json file as dataframes
     required params:
@@ -80,8 +80,8 @@ class CheckSequenceIndexBarcodes:
     df['mapping_ratio']=df['reads'].map(lambda x: x/total_read)
     return df
 
-  @classmethod
-  def _generate_pct(cls,x):
+  
+  def _generate_pct(self,x):
     '''
     calculate percentage values
     '''
@@ -108,7 +108,7 @@ class CheckSequenceIndexBarcodes:
                                    'runid','sample','tag',
                                    'total_read','mapping_ratio'])               # define structure for stats df
   
-    json_data=_get_dataframe_from_stats_json(json_file=stats_json)              # get stats json data for each file
+    json_data=self._get_dataframe_from_stats_json(json_file=stats_json)              # get stats json data for each file
     stats_df=pd.concat([json_data,stats_df])                                    # combine all json files
     raw_df=pd.DataFrame()
     
@@ -141,7 +141,7 @@ class CheckSequenceIndexBarcodes:
                           'unknown_read':unknown_reads}])
         processed_df=pd.concat([df,processed_df])                               # format processed df
       
-    processed_df=processed_df.apply(lambda x: _generate_pct(x), axis=1)         # calculate % of known and unknown barcodes
+    processed_df=processed_df.apply(lambda x: self._generate_pct(x), axis=1)         # calculate % of known and unknown barcodes
     self.raw_df=raw_df
     self.processed_df=processed_df
 
