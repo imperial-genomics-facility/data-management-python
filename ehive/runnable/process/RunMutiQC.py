@@ -2,8 +2,6 @@ import os, subprocess,fnmatch
 from shutil import copy2
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.fileutils import get_temp_dir,remove_dir
-from numpy.distutils.conv_template import file
-
 
 class RunMutiQC(IGFBaseProcess):
   def param_defaults(self):
