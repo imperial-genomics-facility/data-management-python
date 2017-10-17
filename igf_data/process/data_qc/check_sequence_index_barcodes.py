@@ -27,8 +27,8 @@ class CheckSequenceIndexBarcodes:
     self.samplesheet_file=samplesheet_file
     self._check_barcode_stats()
     
-    
-  def _get_dataframe_from_stats_json(json_file):
+  @classmethod
+  def _get_dataframe_from_stats_json(cls,json_file):
     '''
     A internal method for reading Illumina Stats.json file as dataframes
     required params:
@@ -80,8 +80,8 @@ class CheckSequenceIndexBarcodes:
     df['mapping_ratio']=df['reads'].map(lambda x: x/total_read)
     return df
 
-
-  def _generate_pct(x):
+  @classmethod
+  def _generate_pct(cls,x):
     '''
     calculate percentage values
     '''
@@ -93,7 +93,7 @@ class CheckSequenceIndexBarcodes:
     x['unknown_pct']=unknown_pct
     return x
 
-
+  
   def _check_barcode_stats(self):
     '''
     An internal method for converting barcode stats json file to dataframes, read samplesheet,
