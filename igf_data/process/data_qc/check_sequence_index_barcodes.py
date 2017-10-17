@@ -182,7 +182,7 @@ class CheckSequenceIndexBarcodes:
 
 
   def _generate_barcode_plots(self,work_dir,all_barcode_plot='total_barcodes.png',\
-                              index_plot='individual_barcodes.png'):
+                              index_plot='individual_barcodes.png',save_plot=True):
     '''
     An internal method for plotting barcode stats
     required params:
@@ -215,7 +215,10 @@ class CheckSequenceIndexBarcodes:
       plt.xlabel('Log of total reads')
       plt.ylabel('read % for index barcode')
       index_plot=os.path.join(work_dir,index_plot)
-      plt.savefig(index_plot)                                                   # plotting individual barcode stats
-      return (all_barcode_plot,index_plot)
+      if save_plot:
+        plt.savefig(index_plot)                                                 # plotting individual barcode stats
+        return (all_barcode_plot,index_plot)
+      else:
+        plt.show()
     except:
       raise
