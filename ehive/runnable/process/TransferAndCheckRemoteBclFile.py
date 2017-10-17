@@ -2,7 +2,7 @@ import os
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.fileutils import copy_remote_file, calculate_file_checksum
 
-class TransferAndCheckRemoteFile(IGFBaseProcess):
+class TransferAndCheckRemoteBclFile(IGFBaseProcess):
   '''
   A class for transferring files from remote server and checking the file checksum value
   '''
