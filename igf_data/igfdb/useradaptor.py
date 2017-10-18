@@ -22,22 +22,20 @@ class UserAdaptor(BaseAdaptor):
     An internal function for encrypting password
     '''
     if not isinstance(series, pd.Series):
-      raise TypeError('Expecting a pandas series, got:{0}'.format(type(series)))
+      series=pd.DataFrame(series)
 
-    series.fillna('',inplace=True)
-    if not password_column in series.index or not series[password_column]:
-      raise ValueError('Missing required field password: {0}'.format(json.dumps(series.to_dict())))
- 
-    salt=codecs.encode(os.urandom(32),"hex").decode("utf-8")                                        # calculate salt value
-    password=series[password_column]                                                                # fetch password
-    if not isinstance(password, str):
-      password=str(series.password_column).encode('utf-8')                                          # encode password if its not a string
+    if password_column in series.index and series[password_column]:             # password is optional
+      salt=codecs.encode(os.urandom(32),"hex").decode("utf-8")                  # calculate salt value
+      password=series[password_column]                                          # fetch password
+      if not isinstance(password, str):
+        password=str(series.password_column).encode('utf-8')                    # encode password if its not a string
 
-    if password:                                                                                    # always encrypt password
-      key=salt+password                                                                             # construct key using salt and password
-      password=hashlib.sha512(str(key).encode('utf-8')).hexdigest()                                 # create password hash
-      series[password_column]=password                                                              # set hash to data series
-      series[salt_column]=salt                                                                      # set salt to data series
+      if password:                                                              # always encrypt password
+        key=salt+password                                                       # construct key using salt and password
+        password=hashlib.sha512(str(key).encode('utf-8')).hexdigest()           # create password hash
+        series[password_column]=password                                        # set hash to data series
+        series[salt_column]=salt                                                # set salt to data series
+        
     return series
 
 
@@ -48,13 +46,14 @@ class UserAdaptor(BaseAdaptor):
     if not isinstance(data_series, pd.Series):
       data_series=pd.DataFrame(data_series)
 
-    if (data_series[categoty_column] is None or not data_series[categoty_column] ) and \
-       data_series[hpc_user_column] and data_series[hpc_user_column] is not None:
-      data_series[categoty_column]=hpc_user
-    elif (data_series[categoty_column] is None or not data_series[categoty_column]) and \
-         (data_series[hpc_user_column] is None or not data_series[hpc_user_column]):
-      data_series[categoty_column]=non_hpc_user
+    if categoty_column not in data_series.index and not data_series[categoty_column]:
+      if hpc_user_column in data_series.index and data_series[hpc_user_column]:
+        data_series[categoty_column]=hpc_user                                   # assign hpc user
+      else:
+        data_series[categoty_column]=non_hpc_user                               # non hpc user
+      
     return data_series
+
 
   def _preprocess_data(self,data, password_column='password', categoty_column='category',  \
                        email_column='email_id', hpc_user_column='hpc_username', hpc_user='HPC_USER',non_hpc_user='NON_HPC_USER', \
