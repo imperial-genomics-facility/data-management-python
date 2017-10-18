@@ -16,8 +16,8 @@ class Project(Base):
      { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
   project_id      = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
-  project_igf_id  = Column(String(20), nullable=False)
-  project_name    = Column(String(100))
+  project_igf_id  = Column(String(50), nullable=False)
+  project_name    = Column(String(40))
   start_timestamp = Column(TIMESTAMP(), nullable=True, server_default=current_timestamp())
   description     = Column(TEXT())
   deliverable     = Column(Enum('FASTQ', 'ALIGNMENT', 'ANALYSIS'), server_default='FASTQ')
@@ -93,7 +93,7 @@ class Sample(Base):
     { 'mysql_engine':'InnoDB','mysql_charset':'utf8' })
 
   sample_id           = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
-  sample_igf_id       = Column(String(10), nullable=False)
+  sample_igf_id       = Column(String(20), nullable=False)
   taxon_id            = Column(INTEGER(unsigned=True))
   scientific_name     = Column(String(50))
   common_name         = Column(String(50))
@@ -231,7 +231,7 @@ class Experiment(Base):
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
   experiment_id     = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
-  experiment_igf_id = Column(String(30), nullable=False)
+  experiment_igf_id = Column(String(40), nullable=False)
   project_id        = Column(INTEGER(unsigned=True), ForeignKey('project.project_id', onupdate="CASCADE", ondelete="SET NULL"))
   sample_id         = Column(INTEGER(unsigned=True), ForeignKey('sample.sample_id', onupdate="CASCADE", ondelete="SET NULL"))
   library_name      = Column(String(50), nullable=False)
@@ -268,7 +268,7 @@ class Run(Base):
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
   run_id        = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
-  run_igf_id    = Column(String(50), nullable=False)
+  run_igf_id    = Column(String(70), nullable=False)
   experiment_id = Column(INTEGER(unsigned=True), ForeignKey('experiment.experiment_id', onupdate="CASCADE", ondelete="SET NULL"))
   seqrun_id     = Column(INTEGER(unsigned=True), ForeignKey('seqrun.seqrun_id', onupdate="CASCADE", ondelete="SET NULL"))
   status        = Column(Enum('ACTIVE', 'FAILED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
@@ -310,7 +310,7 @@ class Collection(Base):
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
   collection_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
-  name          = Column(String(50), nullable=False)
+  name          = Column(String(70), nullable=False)
   type          = Column(String(50), nullable=False)
   table         = Column(Enum('sample', 'experiment', 'run', 'file', 'project', 'seqrun','unknown'), nullable=False, server_default='unknown')
   date_stamp    = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now) 
