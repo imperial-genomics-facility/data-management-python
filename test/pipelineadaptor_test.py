@@ -29,7 +29,7 @@ class Pipelineadaptor_test1(unittest.TestCase):
     # load platform data
     pla=PipelineAdaptor(**{'session':base.session})
     pla.store_pipeline_data(data=read_json_data(self.pipeline_json))
-    pipeline_seed_data=[{'pipeline_name':'demultiplexing_fastq','seed_id':'1', 'seed_table':'SEQRUN'},]
+    pipeline_seed_data=[{'pipeline_name':'demultiplexing_fastq','seed_id':'1', 'seed_table':'seqrun'},]
     pla.create_pipeline_seed(data=pipeline_seed_data)
     base.close_session()
 
@@ -67,14 +67,14 @@ class Pipelineadaptor_test1(unittest.TestCase):
   def test_update_pipeline_seed(self):
     pl=PipelineAdaptor(**{'session_class': self.session_class})
     pl.start_session()
-    pipeline_seed_data1=[{'pipeline_name':'demultiplexing_fastq','seed_id':'2', 'seed_table':'SEQRUN',},]
+    pipeline_seed_data1=[{'pipeline_name':'demultiplexing_fastq','seed_id':'2', 'seed_table':'seqrun',},]
     with self.assertRaises(ValueError):
       pl.update_pipeline_seed(data=pipeline_seed_data1)
-    pipeline_seed_data2=[{'pipeline_name':'demultiplexing_fastq','seed_id':'2', 'seed_table':'SEQRUN','status':'RUNNING'},]
+    pipeline_seed_data2=[{'pipeline_name':'demultiplexing_fastq','seed_id':'2', 'seed_table':'seqrun','status':'RUNNING'},]
     pl.update_pipeline_seed(data=pipeline_seed_data2)
     (pipe_seed1,table_data1)=pl.fetch_pipeline_seed_with_table_data(pipeline_name='demultiplexing_fastq')
     self.assertEqual(len(table_data1.to_dict(orient='records')), len(pipe_seed1.to_dict(orient='records')))
-    pipeline_seed_data3=[{'pipeline_name':'demultiplexing_fastq','seed_id':'1', 'seed_table':'SEQRUN','status':'RUNNING'},]
+    pipeline_seed_data3=[{'pipeline_name':'demultiplexing_fastq','seed_id':'1', 'seed_table':'seqrun','status':'RUNNING'},]
     pl.update_pipeline_seed(data=pipeline_seed_data3)
     (pipe_seed2,table_data2)=pl.fetch_pipeline_seed_with_table_data(pipeline_name='demultiplexing_fastq',status='RUNNING')
     pl.close_session()

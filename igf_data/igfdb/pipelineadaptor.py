@@ -64,7 +64,7 @@ class PipelineAdaptor(BaseAdaptor):
       data = pd.Series(data)
 
     query = None
-    if data.seed_table=='SEQRUN':  
+    if data.seed_table=='seqrun':  
       query = self.session.query(Seqrun,Platform.platform_igf_id,Platform.model_name,Platform.vendor_name,
                                  Platform.software_name,Platform.software_version). \
                            join(Platform).\
