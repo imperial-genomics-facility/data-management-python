@@ -28,7 +28,7 @@ class PipeseedFactory(IGFBaseJobFactory):
               pa.fetch_pipeline_seed_with_table_data(pipeline_name)             # fetch requires entries as list of dictionaries from table for the seeded entries
       if isinstance(pipeseeds_data.to_dict(orient='records'), list)  \
                     and len(pipeseeds_data.to_dict(orient='records'))>0:
-        pipeseeds_data[seed_id]=pipeseeds_data[seed_id].astype(int)             # convert pipeseed column type
+        pipeseeds_data[seed_id]=pipeseeds_data[seed_id].map(lambda x: int(x))   # convert pipeseed column type
         table_data[seqrun_id]=table_data[seqrun_id].astype(int)                 # convert seqrun data column type
         merged_data=pd.merge(pipeseeds_data,table_data,how='inner',\
                              on=None,left_on=[seed_id],right_on=[seqrun_id],\
