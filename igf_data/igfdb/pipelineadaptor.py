@@ -192,7 +192,7 @@ class PipelineAdaptor(BaseAdaptor):
       raise
 
 
-  def seed_new_seqruns(self, pipeline_name, autosave=True, seed_table='SEQRUN'):
+  def seed_new_seqruns(self, pipeline_name, autosave=True, seed_table='seqrun'):
     '''
     A method for creating seed for new seqruns
     required params:
