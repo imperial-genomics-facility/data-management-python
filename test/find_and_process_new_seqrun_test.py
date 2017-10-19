@@ -93,7 +93,7 @@ class Find_seqrun_test1(unittest.TestCase):
                                    join(Pipeline_seed, Pipeline_seed.seed_id==Seqrun.seqrun_id).\
                                    join(Pipeline, Pipeline.pipeline_id==Pipeline_seed.pipeline_id).\
                                    filter(Pipeline.pipeline_name=='demultiplexing_fastq').\
-                                   filter(Pipeline_seed.seed_table=='SEQRUN'), output_mode='object')
+                                   filter(Pipeline_seed.seed_table=='seqrun'), output_mode='object')
     base.close_session()
     self.assertTrue('seqrun1' in [s.seqrun_igf_id for s in seeds])
  
