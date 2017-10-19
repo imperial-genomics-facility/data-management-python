@@ -402,7 +402,7 @@ class Pipeline_seed(Base):
 
   pipeline_seed_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   seed_id          = Column(INTEGER(unsigned=True), nullable=False)
-  seed_table       = Column(Enum('PROJECT','SAMPLE','EXPERIMENT','RUN','FILE','SEQRUN','COLLECTION','UNKNOWN'), nullable=False, server_default='UNKNOWN')
+  seed_table       = Column(Enum('project','sample','experiment','run','file','seqrun','collection','unknown'), nullable=False, server_default='unknown')
   pipeline_id      = Column(INTEGER(unsigned=True), ForeignKey('pipeline.pipeline_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
   status           = Column(Enum('SEEDED', 'RUNNING', 'FINISHED', 'FAILED', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   date_stamp       = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
