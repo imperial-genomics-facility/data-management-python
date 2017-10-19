@@ -7,9 +7,10 @@ class PipeseedFactory(IGFBaseJobFactory):
   Job factory class for pipeline seed
   '''
   def param_defaults(self):
-    params_dict=IGFBaseProcess.param_defaults()
+    params_dict=IGFBaseJobFactory.param_defaults()
     params_dict.update({ 'seed_id_label':'seed_id',
                          'seqrun_id_label':'seqrun_id',
+                         'sub_tasks':list()
                        })
     return params_dict
 

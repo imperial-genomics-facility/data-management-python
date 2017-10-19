@@ -4,9 +4,6 @@ class IGFBaseProcess(IGFBaseRunnable):
   '''
   Base process class for igf pipelines
   '''
-  def param_defaults(self):
-    return {'sub_tasks':list() }
-
 
   def write_output(self):
     if self.param_is_defined('dataflow_params'):
