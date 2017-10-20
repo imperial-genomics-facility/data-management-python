@@ -7,7 +7,7 @@ class TransferAndCheckRemoteBclFile(IGFBaseProcess):
   A class for transferring files from remote server and checking the file checksum value
   '''
   def param_defaults(self):
-    params_dict=IGFBaseProcess.param_defaults()
+    params_dict=super(IGFBaseProcess,self).param_defaults()
     params_dict.update({
             'seqrun_server':'orwell.hh.med.ic.ac.uk',
             'chacksum_type':'md5',
