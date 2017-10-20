@@ -12,7 +12,8 @@ class TransferAndCheckRemoteBclFile(IGFBaseProcess):
             'seqrun_server':'orwell.hh.med.ic.ac.uk',
             'chacksum_type':'md5',
             'seqrun_local_dir':None,
-            'seqrun_source':None
+            'seqrun_source':None,
+            'seqrun_user':None
            })
     return params_dict
 
@@ -22,6 +23,7 @@ class TransferAndCheckRemoteBclFile(IGFBaseProcess):
       seqrun_igf_id=self.param_required('seqrun_igf_id')
       seqrun_source=self.param_required('seqrun_source')
       seqrun_server=self.param_required('seqrun_server')
+      seqrun_user=self.param_required('seqrun_user')
       seqrun_local_dir=self.param_required('seqrun_local_dir')
       chacksum_type=self.param_required('checksum_type')
       seqrun_file_name=self.param_required('seqrun_file_name')
@@ -37,10 +39,10 @@ class TransferAndCheckRemoteBclFile(IGFBaseProcess):
 
       destination_path=os.path.join(destination_dir,
                                     os.path.basename(seqrun_file_name))         # get destination path
-      
+      source_address='{0}@{1}'.format(seqrun_user,seqrun_server)                # get host username and address
       copy_remote_file(source_path=source_file_path,
                        destinationa_path=destination_path, 
-                       source_address=seqrun_server)                            # copy remote file
+                       source_address=source_address)                           # copy remote file
       if not os.path.exists(destination_path):
         raise IOError('failed to copy file {0} for seqrun {1}'.\
                       format(seqrun_file_name,seqrun_igf_id))                   # check destination file after copy
