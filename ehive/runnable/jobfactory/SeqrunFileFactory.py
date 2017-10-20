@@ -53,7 +53,7 @@ class SeqrunFileFactory(IGFBaseJobFactory):
       md5_json_path=files[0][db_file_path_label]
       if md5_json_location !=hpc_location:
         temp_dir=get_temp_dir(work_dir=os.getcwd())                             # create a temp directory
-        destination_path=ps.path.join(temp_dir,os.path.basename(md5_json_path)) # get destination path for md5 file
+        destination_path=os.path.join(temp_dir,os.path.basename(md5_json_path)) # get destination path for md5 file
         copy_remote_file(source_path=md5_json_path,
                          destinationa_path=destination_path,
                          source_address=seqrun_server)                          # copy remote file to local disk
