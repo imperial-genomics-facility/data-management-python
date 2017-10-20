@@ -56,10 +56,10 @@ def copy_remote_file(source_path,destinationa_path, source_address=None, destina
             raise ValueError('required a remote source address or a destination address')
 
         if source_address is not None:
-            source_path='{0}@{1}'.format(source_address,source_path)
+            source_path='{0}:{1}'.format(source_address,source_path)
 
         if destination_address is not None:
-            destinationa_path='{0}@{1}'.format(destination_address,destinationa_path)
+            destinationa_path='{0}:{1}'.format(destination_address,destinationa_path)
 
         if copy_method == 'rsync':
             cmd=['rsync','-e','ssh',source_path,destinationa_path]

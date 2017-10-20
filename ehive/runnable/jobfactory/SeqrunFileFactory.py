@@ -56,7 +56,7 @@ class SeqrunFileFactory(IGFBaseJobFactory):
         destination_path=os.path.join(temp_dir,os.path.basename(md5_json_path)) # get destination path for md5 file
         copy_remote_file(source_path=md5_json_path,
                          destinationa_path=destination_path,
-                         source_address=seqrun_server)                          # copy remote file to local disk
+                         source_address=seqrun_server_login)                    # copy remote file to local disk
         md5_json_path=destination_path                                          # set md5 json filepath
 
       with open(md5_json_path) as json_data:
