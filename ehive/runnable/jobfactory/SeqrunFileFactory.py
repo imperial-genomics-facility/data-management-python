@@ -33,7 +33,7 @@ class SeqrunFileFactory(IGFBaseJobFactory):
       subprocess.check_call(['ssh', 
                              seqrun_server_login,
                              'ls', 
-                             seqrun_path], stderror=None, stdout=None)          # check remote file
+                             seqrun_path])                                      # check remote file
       ca=CollectionAdaptor(**{'session_class':igf_session_class})               # get the md5 list from db
       ca.start_session()
       files=ca.get_collection_files(collection_name=seqrun_igf_id,
