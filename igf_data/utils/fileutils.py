@@ -63,7 +63,7 @@ def copy_remote_file(source_path,destinationa_path, source_address=None, destina
           subprocess.check_call(dir_cmd)
           destinationa_path='{0}:{1}'.format(destination_address,destinationa_path)
         else:
-          dir_cmd=['mkdir','-p',destinationa_path]
+          dir_cmd=['mkdir','-p',os.path.dirname(destinationa_path)]
           subprocess.check_call(dir_cmd)
 
         if copy_method == 'rsync':
