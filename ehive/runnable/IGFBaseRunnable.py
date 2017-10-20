@@ -11,7 +11,8 @@ class IGFBaseRunnable(eHive.BaseRunnable):
   '''
   def param_defaults(self):
     return { 'log_slack':True,
-             'log_asana':True
+             'log_asana':True,
+             'sub_tasks':list()
            }
 
 
