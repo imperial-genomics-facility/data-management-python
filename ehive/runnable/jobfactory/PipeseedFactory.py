@@ -56,16 +56,18 @@ class PipeseedFactory(IGFBaseJobFactory):
                                  map({seeded_label:running_label})              # update seed records in pipeseed table, changed status to RUNNING
         pa.update_pipeline_seed(data=pipeseeds_data.to_dict(orient='records'))  # set pipeline seeds as running
         
-        message='Total {0} new job found for {1}'.\
-                 format(len(seed_data),self.__class__.__name__)                 # format msg for slack
+        message='Total {0} new job found for {1}, pipeline: {2}'.\
+                 format(len(seed_data),self.__class__.__name__,pipeline_name)   # format msg for slack
         self.post_message_to_slack(message,reaction='pass')                     # send update to slack
       else:
-        message='{0}: no new job created'.format(self.__class__.__name__)       # format msg for failed jobs
+        message='{0}, {1}: no new job created'.format(self.__class__.__name__,\
+                                                      pipeline_name)            # format msg for failed jobs
         self.warning(message)
         self.post_message_to_slack(message,reaction='sleep')                    # post about failed job to slack
 
     except Exception as e:
-      message='Error in {0}: {1}'.format(self.__class__.__name__, e)            # format slack msg
+      message='Error in {0},{1}: {2}'.format(self.__class__.__name__,\
+                                             pipeline_name, e)                  # format slack msg
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # send msg to slack
       raise                                                                     # mark worker as failed
