@@ -5,7 +5,7 @@ from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 
 class SeqrunFileFactory(IGFBaseJobFactory):
   def param_defaults(seld):
-    params_dict=IGFBaseProcess.param_defaults()
+    params_dict=super(IGFBaseJobFactory,self).param_defaults()
     params_dict.update({ 
              'seqrun_md5_type':'ILLUMINA_BCL_MD5',
              'seqrun_server':'orwell.hh.med.ic.ac.uk'
