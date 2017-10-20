@@ -76,13 +76,13 @@ class PipelineAdaptor(BaseAdaptor):
        raise ValueError('seed_table {0} not supported'.format(data.seed_table))
 
 
-  def fetch_pipeline_seed_with_table_data(self, pipeline_name, status='SEEDED'):
+  def fetch_pipeline_seed_with_table_data(self, pipeline_name, status='seeder'):
     '''
     A method for fetching linked table records for the seeded entires in pipeseed table
     required params:
     pipeline_name: a pipeline name
     optional params:
-    status: default is SEEDED
+    status: default is seeded
     '''
     try:
       pipeseed_query=self.session.query(Pipeline_seed). \
