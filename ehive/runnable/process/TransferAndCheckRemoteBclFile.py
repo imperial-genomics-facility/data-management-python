@@ -22,7 +22,7 @@ class TransferAndCheckRemoteBclFile(IGFBaseProcess):
       seqrun_igf_id=self.param_required('seqrun_igf_id')
       seqrun_source=self.param_required('seqrun_source')
       seqrun_server=self.param_required('seqrun_server')
-      seqrun_local_dir=self.seqrun_local_dir('seqrun_local_dir')
+      seqrun_local_dir=self.param_required('seqrun_local_dir')
       chacksum_type=self.param_required('checksum_type')
       seqrun_file_name=self.param_required('seqrun_file_name')
       file_md5_value=self.param_required('file_md5')
