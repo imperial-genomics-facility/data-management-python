@@ -59,10 +59,12 @@ def copy_remote_file(source_path,destinationa_path, source_address=None, destina
             source_path='{0}:{1}'.format(source_address,source_path)
 
         if destination_address is not None:
-          subprocess.check_call(['ssh',destination_address,'mkdir','-p',os.path.dirname(destinationa_path)])
+          dir_cmd=['ssh',destination_address,'mkdir','-p',destinationa_path]
+          subprocess.check_call(dir_cmd)
           destinationa_path='{0}:{1}'.format(destination_address,destinationa_path)
         else:
-          subprocess.check_call(['mkdir','-p',os.path.dirname(destinationa_path)])
+          dir_cmd=['mkdir','-p',destinationa_path]
+          subprocess.check_call(dir_cmd)
 
         if copy_method == 'rsync':
             cmd=['rsync','-e','ssh',source_path,destinationa_path]
