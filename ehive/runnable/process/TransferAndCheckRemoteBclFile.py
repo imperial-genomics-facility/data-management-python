@@ -35,9 +35,9 @@ class TransferAndCheckRemoteBclFile(IGFBaseProcess):
       if not os.path.exists(destination_dir):
         os.mkdir(destination_dir)                                               # create directory is its not present
 
-      destination_path=os.path.join(seqrun_local_dir,
-                                    seqrun_igf_id,
-                                    seqrun_file_name)                           # get destination path
+      destination_path=os.path.join(destination_dir,
+                                    os.path.basename(seqrun_file_name))         # get destination path
+      
       copy_remote_file(source_path=source_file_path,
                        destinationa_path=destination_path, 
                        source_address=seqrun_server)                            # copy remote file
