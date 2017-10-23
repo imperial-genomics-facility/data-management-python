@@ -39,7 +39,7 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
       if not os.path.exists(work_dir):
         os.makedirs(work_dir,mode=0o770)                                        # create work directory
       
-      output_file=os.path,join(work_dir,samplesheet_filename)                   # get name of the output file
+      output_file=os.path.join(work_dir,samplesheet_filename)                   # get name of the output file
       if os.path.exists(output_file):
         raise IOError('seqrun: {0}, reformatted samplesheet {1} already present'.\
                       format(seqrun_igf_id,output_file))
