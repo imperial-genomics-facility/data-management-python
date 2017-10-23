@@ -13,7 +13,7 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
   and converting index barcodes based on flowcell rules table
   '''
   def param_defaults(self):
-    params_dict=IGFBaseProcess.param_defaults()
+    params_dict=super(IGFBaseProcess,self).param_defaults()
     params_dict.update({
         'samplesheet_filename':'SampleSheet.csv',
         'index2_label':'index_2',
@@ -39,13 +39,15 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
       os.mkdir(work_dir)                                                        # create work directory
       output_file=os.path,join(work_dir,samplesheet_filename)                   # get name of the output file
       if os.path.exists(output_file):
-        raise IOError('reformatted samplesheet {0} already present'.format(output_file))
+        raise IOError('seqrun: {0}, reformatted samplesheet {1} already present'.\
+                      format(seqrun_igf_id,output_file))
       
       samplesheet_file=os.path.join(seqrun_local_dir, 
                                     seqrun_igf_id, 
                                     samplesheet_filename)
       if not os.path.exists(samplesheet_file):
-        raise IOError('samplesheet file {0} not found'.format(samplesheet_file))
+        raise IOError('seqrun: {0}, samplesheet file {1} not found'.\
+                      format(seqrun_igf_id,samplesheet_file))
     
       samplesheet=SampleSheet(infile=samplesheet_file)                          # read samplesheet
       samplesheet.filter_sample_data(condition_key='Description', 
@@ -63,5 +65,15 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
                                                                                 # no need to add revcomp method for index1
       samplesheet_data.print_sampleSheet(outfile=output_file)
       self.param('dataflow_params',{'samplesheet':output_file})
-    except:
+      
+      message='seqrun: {0}, reformatted samplesheet:{1}'.format(seqrun_igf_id,\
+                                                               output_file)
+      self.post_message_to_slack(message,reaction='pass')
+      self.comment_asana_task(task_name=seqrun_igf_id, comment=message)
+    except Exception as e:
+      message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
+                                                      e, \
+                                                      seqrun_igf_id)
+      self.warning(message)
+      self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise
