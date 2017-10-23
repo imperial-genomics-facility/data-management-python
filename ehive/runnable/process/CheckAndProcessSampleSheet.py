@@ -60,14 +60,19 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
       rules_data=sa.fetch_flowcell_barcode_rules_for_seqrun(seqrun_igf_id)      # convert index based on barcode rules
       sa.close_session()
       
-      rules_data=rules_data.to_dict(orient='records')[0]                        # convert dataframe to dictionary
-      
-      if rules_data[index2_label]==revcomp_label:
-        samplesheet.get_reverse_complement_index(index_field='index2')          # reverse complement index2 based on the rules
-                                                                                # no need to add revcomp method for index1
-      samplesheet_data.print_sampleSheet(outfile=output_file)
+      rules_data_set=rules_data.to_dict(orient='records')                       # convert dataframe to dictionary
+      if len(rules_data_set) > 0:
+        rules_data=rules_data_set[0]                                            # consider only the first rule
+        if rules_data[index2_label]==revcomp_label:
+          samplesheet.get_reverse_complement_index(index_field='index2')        # reverse complement index2 based on the rules
+      else:
+        message='no rules found for seqrun {0}, using original samplesheet'.\
+                format(seqrun_igf_id)
+        self.post_message_to_slack(message,reaction='pass')
+        self.comment_asana_task(task_name=seqrun_igf_id, comment=message)
+
+      samplesheet.print_sampleSheet(outfile=output_file)
       self.param('dataflow_params',{'samplesheet':output_file})
-      
       message='seqrun: {0}, reformatted samplesheet:{1}'.format(seqrun_igf_id,\
                                                                output_file)
       self.post_message_to_slack(message,reaction='pass')
