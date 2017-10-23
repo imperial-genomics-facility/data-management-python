@@ -36,7 +36,9 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
       
       job_name=self.job_name()
       work_dir=os.path.join(base_work_dir,seqrun_igf_id,job_name)               # get work directory name
-      os.mkdir(work_dir)                                                        # create work directory
+      if not os.path.exists(work_dir):
+        os.makedirs(work_dir,mode=0o770)                                        # create work directory
+      
       output_file=os.path,join(work_dir,samplesheet_filename)                   # get name of the output file
       if os.path.exists(output_file):
         raise IOError('seqrun: {0}, reformatted samplesheet {1} already present'.\
