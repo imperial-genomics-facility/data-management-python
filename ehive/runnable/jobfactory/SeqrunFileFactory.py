@@ -8,7 +8,7 @@ class SeqrunFileFactory(IGFBaseJobFactory):
     params_dict=super(IGFBaseJobFactory,self).param_defaults()
     params_dict.update({ 
              'seqrun_md5_type':'ILLUMINA_BCL_MD5',
-             'seqrun_server':'orwell.hh.med.ic.ac.uk',
+             'seqrun_server':None,
              'hpc_location':'HPC_PROJECT',
              'db_file_location_label':'location',
              'db_file_path_label':'file_path',
