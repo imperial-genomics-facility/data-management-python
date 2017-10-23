@@ -8,10 +8,7 @@ class SampleSheetFlowcellFactory(IGFBaseJobFactory):
   A class for finding all the projects mentioned in the SampleSheet
   '''
   def param_defaults(self):
-    params_dict=IGFBaseJobFactory.param_defaults()
-    params_dict.update({
-        'samplesheet':None
-      })
+    params_dict=super(IGFBaseJobFactory,self).param_defaults()
     return params_dict
   
   def run(self):
@@ -29,5 +26,10 @@ class SampleSheetFlowcellFactory(IGFBaseJobFactory):
       sub_tasks=[{'project_name':project_name,'flowcell_lane':lane} \
                  for lane in flowcell_lanes]                                    # create data structure for sub_tasks
       self.param('sub_tasks',sub_tasks)                                         # seed dataflow  
-    except:
+    except Exception as e:
+      message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
+                                                      e, \
+                                                      seqrun_igf_id)
+      self.warning(message)
+      self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise

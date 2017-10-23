@@ -28,5 +28,10 @@ class SampleSheetProjectFactory(IGFBaseJobFactory):
       project_names=samplesheet.get_project_names()                             # get project names from samplesheet
       sub_tasks=[{'project_name':project_name}for project_name in project_names]# create subtasks data structure
       self.param('sub_tasks',sub_tasks)                                         # seed dataflow
-    except:
+    except Exception as e:
+      message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
+                                                      e, \
+                                                      seqrun_igf_id)
+      self.warning(message)
+      self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise
