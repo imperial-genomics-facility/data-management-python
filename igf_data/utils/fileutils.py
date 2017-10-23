@@ -92,7 +92,7 @@ def calculate_file_checksum(filepath, hasher='md5'):
         file_checksum=hashlib.sha256(infile.read()).hexdigest()
         return file_checksum
       else:
-        raise('hasher {0} is not supported'.format(hasher))
+        raise ValueError('hasher {0} is not supported'.format(hasher))
   except:
     raise
 
