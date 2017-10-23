@@ -66,7 +66,7 @@ class SeqrunFileFactory(IGFBaseJobFactory):
       self.param('sub_tasks',md5_json)                                          # seed dataflow
       remove_dir(temp_dir)                                                      # remove temp dir when its not required
       
-      message='seqrun: {1}, seeded {0} files for copy'.format(seqrun_igf_id, \
+      message='seqrun: {0}, seeded {1} files for copy'.format(seqrun_igf_id, \
                                                               len(md5_json))
       self.warning(message)
       self.post_message_to_slack(message,reaction='pass')
