@@ -100,6 +100,22 @@ class IGF_asana:
       raise
   
   
+  def add_notes_for_task(self,task_name, notes):
+    '''
+    A method for adding comment to the existing or new task
+    required params:
+    task_name: A task name
+    notes: A text note
+    '''
+    try:
+      asana_task_id=self.fetch_task_id_for_task_name(task_name)
+      res=self.asanaclient.stories.update(task=asana_task_id,\
+                                          params={'notes':notes})
+      return res
+    except:
+      raise
+  
+  
   def attach_file_to_asana_task(self,task_name, filepath, comment=None):
     '''
     A method for uploading files to asana
