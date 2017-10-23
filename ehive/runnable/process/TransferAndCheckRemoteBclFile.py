@@ -40,7 +40,8 @@ class TransferAndCheckRemoteBclFile(IGFBaseProcess):
       destination_path=os.path.join(destination_dir,
                                     os.path.basename(seqrun_file_name))         # get destination path
       if seqrun_user is None and seqrun_server is None:
-        raise ValueError('missing required value for seqrun_user or seqrun_server')
+        raise ValueError('seqrun: {0}, missing required value for seqrun_user or seqrun_server'.\
+                         format(seqrun_igf_id))
       
       source_address='{0}@{1}'.format(seqrun_user,seqrun_server)                # get host username and address
       copy_remote_file(source_path=source_file_path,
@@ -53,12 +54,19 @@ class TransferAndCheckRemoteBclFile(IGFBaseProcess):
       new_checksum=calculate_file_checksum(destination_path,\
                                            hasher=chacksum_type)                # calculate checksum of the transferred file
       if new_checksum != file_md5_value:
-        raise ValueError('checksum not matching for file {0}, expected: {1}, got {2}'.\
-                         format(seqrun_file_name,file_md5_value, new_checksum)) # raise error if checksum doesn't match
+        raise ValueError('seqrun:{3}, checksum not matching for file {0}, expected: {1}, got {2}'.\
+                         format(seqrun_file_name, \
+                                file_md5_value, \
+                                new_checksum, \
+                                seqrun_igf_id)) # raise error if checksum doesn't match
 
       self.param('dataflow_params',{'seqrun_file_name':seqrun_file_name})
     except Exception as e:
-      message='Error in {0}: {1}'.format(self.__class__.__name__, e)
+      message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
+                                                      e, \
+                                                      seqrun_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
+      self.comment_asana_task(task_name=seqrun_igf_id, \
+                              comment=message)
       raise
