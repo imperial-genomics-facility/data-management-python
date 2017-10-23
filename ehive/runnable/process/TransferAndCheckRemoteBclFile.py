@@ -9,7 +9,7 @@ class TransferAndCheckRemoteBclFile(IGFBaseProcess):
   def param_defaults(self):
     params_dict=super(IGFBaseProcess,self).param_defaults()
     params_dict.update({
-            'seqrun_server':'orwell.hh.med.ic.ac.uk',
+            'seqrun_server':None,
             'chacksum_type':'md5',
             'seqrun_local_dir':None,
             'seqrun_source':None,
