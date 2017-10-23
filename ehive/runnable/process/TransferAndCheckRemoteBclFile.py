@@ -67,6 +67,4 @@ class TransferAndCheckRemoteBclFile(IGFBaseProcess):
                                                       seqrun_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
-      self.comment_asana_task(task_name=seqrun_igf_id, \
-                              comment=message)
       raise
