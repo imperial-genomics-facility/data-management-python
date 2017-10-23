@@ -1,4 +1,4 @@
-import os, sys, hashlib, json
+import os, sys, hashlib, json, fnmatch
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.igfTables import Seqrun
 from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
@@ -76,11 +76,12 @@ def calculate_file_md5(seqrun_info, md5_out, seqrun_path, file_suffix='md5.json'
       dirs[:]=[ d for d in dirs if d not in exclude_dir ]                                     # exclude listed dires from search
       if len(files)>0:
         for file_name in files:
-          file_path=os.path.join(root_path,file_name)
-          if os.path.exists(file_path):
-            file_md5=calculate_file_checksum(filepath=file_path)                              # calculate file checksum
-            file_rel_path=os.path.relpath(file_path, start=seqrun_path)                       # get relative filepath
-            file_list_with_md5.append({"seqrun_file_name":file_rel_path,"file_md5":file_md5})
+          if not fnmatch.fnmatch(file, '*.fastq.gz'):
+            file_path=os.path.join(root_path,file_name)
+            if os.path.exists(file_path):
+              file_md5=calculate_file_checksum(filepath=file_path)                              # calculate file checksum
+              file_rel_path=os.path.relpath(file_path, start=seqrun_path)                       # get relative filepath
+              file_list_with_md5.append({"seqrun_file_name":file_rel_path,"file_md5":file_md5})
 
     with open(output_json_file, 'w') as output_json:
       json.dump(file_list_with_md5, output_json, indent=4)                                    # write json md5 list
