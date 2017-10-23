@@ -67,7 +67,7 @@ def copy_remote_file(source_path,destinationa_path, source_address=None, destina
           subprocess.check_call(dir_cmd)
 
         if copy_method == 'rsync':
-            cmd=['rsync','-e','ssh',source_path,destinationa_path]
+            cmd=['rsync','-c', '-e','ssh',source_path,destinationa_path]
         else:
             raise ValueError('copy method {0} is not supported'.format(copy_method))
 
