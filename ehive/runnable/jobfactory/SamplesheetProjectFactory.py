@@ -8,9 +8,8 @@ class SampleSheetProjectFactory(IGFBaseJobFactory):
   A class for finding all the projects mentioned in the SampleSheet
   '''
   def param_defaults(self):
-    params_dict=IGFBaseJobFactory.param_defaults()
+    params_dict=super(IGFBaseJobFactory,self).param_defaults()
     params_dict.update({
-        'samplesheet':None,
         '10X_label':'10X'
       })
     return params_dict
