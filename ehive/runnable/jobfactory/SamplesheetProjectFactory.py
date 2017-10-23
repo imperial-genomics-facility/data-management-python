@@ -18,6 +18,8 @@ class SampleSheetProjectFactory(IGFBaseJobFactory):
   def run(self):
     try:
       samplesheet_file=self.param_required('samplesheet')
+      tenX_label=self.param('10X_label')
+      
       if not os.path.exists(samplesheet_file):
         raise IOError('Samplesheet file {0} not found'.format(samplesheet_file))
       
@@ -26,7 +28,8 @@ class SampleSheetProjectFactory(IGFBaseJobFactory):
                                      condition_value=tenX_label, 
                                      method='exclude')                          # separate 10X samplesheet
       project_names=samplesheet.get_project_names()                             # get project names from samplesheet
-      sub_tasks=[{'project_name':project_name}for project_name in project_names]# create subtasks data structure
+      sub_tasks=[{'project_name':project_name} \
+                 for project_name in project_names]                             # create subtasks data structure
       self.param('sub_tasks',sub_tasks)                                         # seed dataflow
     except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
