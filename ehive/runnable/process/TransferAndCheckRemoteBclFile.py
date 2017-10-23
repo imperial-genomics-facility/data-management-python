@@ -13,7 +13,9 @@ class TransferAndCheckRemoteBclFile(IGFBaseProcess):
             'chacksum_type':'md5',
             'seqrun_local_dir':None,
             'seqrun_source':None,
-            'seqrun_user':None
+            'seqrun_user':None,
+            'seqrun_server':None,
+            
            })
     return params_dict
 
@@ -34,11 +36,12 @@ class TransferAndCheckRemoteBclFile(IGFBaseProcess):
                                     seqrun_file_name)                           # get new seqrun path
       dir_name=os.path.dirname(seqrun_file_name)                                # returns dir name or empty strings
       destination_dir=os.path.join(seqrun_local_dir,seqrun_igf_id,dir_name)     # get file copy path 
-      if not os.path.exists(destination_dir):
-        os.mkdir(destination_dir)                                               # create directory is its not present
 
       destination_path=os.path.join(destination_dir,
                                     os.path.basename(seqrun_file_name))         # get destination path
+      if seqrun_user is None and seqrun_server is None:
+        raise ValueError('missing required value for seqrun_user or seqrun_server')
+      
       source_address='{0}@{1}'.format(seqrun_user,seqrun_server)                # get host username and address
       copy_remote_file(source_path=source_file_path,
                        destinationa_path=destination_path, 
