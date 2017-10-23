@@ -11,7 +11,9 @@ class SeqrunFileFactory(IGFBaseJobFactory):
              'seqrun_server':'orwell.hh.med.ic.ac.uk',
              'hpc_location':'HPC_PROJECT',
              'db_file_location_label':'location',
-             'db_file_path_label':'file_path'
+             'db_file_path_label':'file_path',
+             'seqrun_user':None,
+             'seqrun_source':None,
            })
     return params_dict
 
