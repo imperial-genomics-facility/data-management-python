@@ -66,12 +66,19 @@ class SeqrunFileFactory(IGFBaseJobFactory):
       self.param('sub_tasks',md5_json)                                          # seed dataflow
       remove_dir(temp_dir)                                                      # remove temp dir when its not required
       
-      message='seeded {0} files for copy'.format(len(md5_json))
+      message='seqrun: {1}, seeded {0} files for copy'.format(seqrun_igf_id, \
+                                                              len(md5_json))
       self.warning(message)
       self.post_message_to_slack(message,reaction='pass')
+      self.comment_asana_task(task_name=seqrun_igf_id, \
+                              comment=message)
 
     except Exception as e:
-      message='Error in {0}: {1}'.format(self.__class__.__name__, e)
+      message='Error in {0}: {1}, seqrun: {2}'.format(self.__class__.__name__,\
+                                                      e,\
+                                                      seqrun_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')
+      self.comment_asana_task(task_name=seqrun_igf_id, \
+                              comment=message)
       raise
