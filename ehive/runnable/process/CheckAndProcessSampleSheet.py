@@ -18,7 +18,11 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
         'samplesheet_filename':'SampleSheet.csv',
         'index2_label':'index_2',
         'revcomp_label':'REVCOMP',
-        '10X_label':'10X'
+        '10X_label':'10X',
+        'adapter_trim_check':True,
+        'adapter_section':'Settings',
+        'read1_adapter_label':'Adapter',
+        'read2_adapter_label':'AdapterRead2',
       })
     return params_dict
   
@@ -33,6 +37,10 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
       index2_label=self.param('index2_label')
       revcomp_label=self.param('revcomp_label')
       tenX_label=self.param('10X_label')
+      adapter_trim_check=self.param('adapter_trim_check')
+      adapter_section=self.param('adapter_section')
+      read1_adapter_label=self.param('read1_adapter_label')
+      read2_adapter_label=self.param('read2_adapter_label')
       
       job_name=self.job_name()
       work_dir=os.path.join(base_work_dir,seqrun_igf_id,job_name)               # get work directory name
@@ -55,6 +63,17 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
       samplesheet.filter_sample_data(condition_key='Description', 
                                      condition_value=tenX_label, 
                                      method='exclude')                          # separate 10X samplesheet
+      if adapter_trim_check:
+        read1_val=samplesheet.check_sample_header(section=adapter_section,\
+                                                  condition_key=read1_adapter_label)
+        read2_val=samplesheet.check_sample_header(section=adapter_section,\
+                                                  condition_key=read2_adapter_label)
+        if read1_val==0 or read2_val==0:
+          message='{seqrun {0} samplesheet does not have adapter trim option, read1: {1}, read2:{2}'.\
+                  format(seqrun_igf_id,read1_val,read2_val)
+          self.post_message_to_slack(message,reaction='pass')
+          self.comment_asana_task(task_name=seqrun_igf_id, comment=message)     # send info about adapter trip to slack and asana
+        
       sa=SeqrunAdaptor(**{'session_class':igf_session_class})
       sa.start_session()
       rules_data=sa.fetch_flowcell_barcode_rules_for_seqrun(seqrun_igf_id)      # convert index based on barcode rules
