@@ -76,7 +76,7 @@ def calculate_file_md5(seqrun_info, md5_out, seqrun_path, file_suffix='md5.json'
       dirs[:]=[ d for d in dirs if d not in exclude_dir ]                                     # exclude listed dires from search
       if len(files)>0:
         for file_name in files:
-          if not fnmatch.fnmatch(file, '*.fastq.gz'):
+          if not fnmatch.fnmatch(file_name, '*.fastq.gz'):
             file_path=os.path.join(root_path,file_name)
             if os.path.exists(file_path):
               file_md5=calculate_file_checksum(filepath=file_path)                              # calculate file checksum
