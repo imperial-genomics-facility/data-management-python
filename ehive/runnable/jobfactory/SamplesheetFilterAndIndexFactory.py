@@ -67,6 +67,7 @@ class SamplesheetFilterAndIndexFactory(IGFBaseJobFactory):
           sub_tasks.append({'project_name':project_name,
                             'flowcell_lane':lane_id,
                             'index_length':index_length,
+                            'original_samplesheet':samplesheet_file,
                             'samplesheet':output_file})                         # append sub_tasks
       self.param('sub_tasks',sub_tasks)                                         # send sub_tasks to the dataflow
       message='seqrun: {0}, project:{1}, lanes:{2}'.format(seqrun_igf_id,\
