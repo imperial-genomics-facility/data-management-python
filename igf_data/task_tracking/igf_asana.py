@@ -109,7 +109,7 @@ class IGF_asana:
     '''
     try:
       asana_task_id=self.fetch_task_id_for_task_name(task_name)
-      res=self.asanaclient.stories.update(task=asana_task_id,\
+      res=self.asanaclient.tasks.update(task=asana_task_id,\
                                           params={'notes':notes})
       return res
     except:
