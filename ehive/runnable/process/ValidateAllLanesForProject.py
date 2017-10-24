@@ -12,7 +12,7 @@ class ValidateAllLanesForProject(IGFBaseProcess):
   projects with failed qc stats and send messsage to slack channel
   '''
   def param_defaults(self):
-    params_dict=IGFBaseProcess.param_defaults()
+    params_dict=super(IGFBaseProcess,self).param_defaults()
     params_dict.update({
         'strict_check':True,
       })
@@ -22,6 +22,8 @@ class ValidateAllLanesForProject(IGFBaseProcess):
     try:
       project_fastq=self.param_required('project_fastq')
       strict_check=self.param('strict_check')
+      seqrun_igf_id=self.param_required('seqrun_igf_id')
+      
       project_status='PASS'                                                     # default status is PASS
       for fastq_dir,qc_stats in project_fastq.items():
         if qc_stats=='FAIL':
@@ -40,5 +42,10 @@ class ValidateAllLanesForProject(IGFBaseProcess):
                                                message='Failed barcode stats')  # post report file to slack
           if strict_check:      
             rmtree(fastq_dir)                                                   # delete failed fastq dir
-    except:
+    except Exception as e:
+      message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
+                                                      e, \
+                                                      seqrun_igf_id)
+      self.warning(message)
+      self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise
