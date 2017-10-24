@@ -49,8 +49,8 @@ class RunBcl2Fastq(IGFBaseProcess):
         raise IOError('Runinfo file {0} not found'.format(runinfo_file))
       
       lane_index='{0}_{1}'.format(flowcell_lane,index_length)                   # get label for lane and index length
-      output_dir_label=os.path.join(fastq_dir_label,\
-                                    project_name,\
+      output_dir_label=os.path.join(project_name,\
+                                    fastq_dir_label,\
                                     seqrun_date,\
                                     flowcell_id,\
                                     lane_index)                                 # output dir label
