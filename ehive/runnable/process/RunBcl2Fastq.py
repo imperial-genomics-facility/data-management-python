@@ -16,7 +16,6 @@ class RunBcl2Fastq(IGFBaseProcess):
         'runinfo_filename':'RunInfo.xml',
         'fastq_dir_label':'fastq',
         'force_overwrite':True,
-        'bcl2fastq_module':'bcl2fastq/2.18',
         'bcl2fastq_exe':'bcl2fastq',
         'bcl2fastq_options':{'-r':'1','-w':'1','-p':'1','--barcode-mismatches':'1', '--auto-set-to-zero-barcode-mismatches':''},
       })
@@ -36,7 +35,6 @@ class RunBcl2Fastq(IGFBaseProcess):
       base_fastq_dir=self.param_required('base_fastq_dir')
       samplesheet_file=self.param_required('samplesheet')
       runinfo_filename=self.param('runinfo_filename')
-      bcl2fastq_module=self.param('bcl2fastq_module')
       bcl2fastq_exe=self.param('bcl2fastq_exe')
       bcl2fastq_options=self.param('bcl2fastq_options')
       force_overwrite=self.param('force_overwrite')
@@ -72,9 +70,6 @@ class RunBcl2Fastq(IGFBaseProcess):
       move_file.copy_bcl_files()                                                # move files to TMPDIR
       
       output_temp_dir=get_temp_dir()                                            # create a new output directory in TMPDIR
-      bcl2fastq_load_cmd=['module','load',bcl2fastq_module]
-      subprocess.check_call(bcl2fastq_load_cmd)                                 # load module for bcl2fastq
-      
       bcl2fastq_param=[[param,value] if value else [param] 
                        for param, value in bcl2fastq_options.items()]           # remove empty values
       bcl2fastq_param=[col for row in param for col in bcl2fastq_param]         # flatten sub lists
