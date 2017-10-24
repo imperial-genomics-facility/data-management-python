@@ -69,7 +69,7 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
         read2_val=samplesheet.check_sample_header(section=adapter_section,\
                                                   condition_key=read2_adapter_label)
         if read1_val==0 or read2_val==0:
-          message='{seqrun {0} samplesheet does not have adapter trim option, read1: {1}, read2:{2}'.\
+          message='seqrun {0} samplesheet does not have adapter trim option, read1: {1}, read2:{2}'.\
                   format(seqrun_igf_id,read1_val,read2_val)
           self.post_message_to_slack(message,reaction='pass')
           self.comment_asana_task(task_name=seqrun_igf_id, comment=message)     # send info about adapter trip to slack and asana
