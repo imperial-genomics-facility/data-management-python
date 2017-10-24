@@ -96,7 +96,22 @@ class IGFBaseRunnable(eHive.BaseRunnable):
     try:
       if self.param('log_asana'):
         igf_asana=self.param_required('igf_asana')
-        igf_asana.comment_asana_task(task_name, comment)
+        res=igf_asana.comment_asana_task(task_name, comment)
+    except:
+      raise
+    
+    
+  def add_asana_notes(self,task_name,notes):
+    '''
+    A base method for adding asana notes
+    required params:
+    task_name: A task name
+    notes: A set of text notes
+    '''
+    try:
+      if self.param('log_asana'):
+        igf_asana=self.param_required('igf_asana')
+        res=igf_asana.add_notes_for_task(task_name, notes)
     except:
       raise
     
