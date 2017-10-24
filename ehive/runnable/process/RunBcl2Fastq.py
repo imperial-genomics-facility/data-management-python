@@ -25,7 +25,7 @@ class RunBcl2Fastq(IGFBaseProcess):
   def run(self):
     try:
       seqrun_igf_id=self.param_required('seqrun_igf_id')
-      seqrun_date=self.para,_required('seqrun_date')
+      seqrun_date=self.param_required('seqrun_date')
       flowcell_id=self.param_required('flowcell_id')
       flowcell_lane=self.param_required('flowcell_lane')
       project_name=self.param_required('project_name')
