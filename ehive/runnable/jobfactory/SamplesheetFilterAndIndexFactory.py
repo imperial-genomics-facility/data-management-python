@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os
+import os, copy
 from ehive.runnable.IGFBaseJobFactory import IGFBaseJobFactory
 from igf_data.illumina.samplesheet import SampleSheet
 
@@ -20,7 +20,7 @@ class SamplesheetFilterAndIndexFactory(IGFBaseJobFactory):
     try:
       samplesheet_file=self.param_required('samplesheet')
       project_name=self.param_required('project_name')
-      flowcell_lane=self.param_required('flowcell_lane')
+      seqrun_igf_id=self.param_required('seqrun_igf_id')
       base_work_dir=self.param_required('base_work_dir')
       samplesheet_filename=self.param('samplesheet_filename')
       
@@ -38,14 +38,17 @@ class SamplesheetFilterAndIndexFactory(IGFBaseJobFactory):
                                      method='include')                          # keep only selected project
       lanes=samplesheet.get_lane_count()                                        # get samplesheet lanes
       data_group=dict()
+      
       if len(lanes)>1:
-        samplesheet.filter_sample_data(condition_key='Lane', 
-                                     condition_value=flowcell_lane, 
-                                     method='include')                          # keep only selected lane
         for lane_id in lanes:
-          data_group[lane_id]=samplesheet_data_tmp.group_data_by_index_length() # group data by lane
+          samplesheet_project_data=copy.deepcopy(samplesheet)                   # deep copy samplesheet object 
+          samplesheet_project_data.filter_sample_data(condition_key='Lane', \
+                                                      condition_value=lane_id, \
+                                                      method='include')         # keep only selected lane
+          data_group[lane_id]=samplesheet_project_data.\
+                              group_data_by_index_length()                      # group data by lane
       else:
-        data_group[1]=samplesheet_data_tmp.group_data_by_index_length()         # For MiSeq and NextSeq
+        data_group[1]=samplesheet.group_data_by_index_length()                  # For MiSeq and NextSeq
         
       sub_tasks=list()                                                          # create empty sub_tasks data structure
       for lane_id in data_group.keys():
@@ -58,7 +61,7 @@ class SamplesheetFilterAndIndexFactory(IGFBaseJobFactory):
           data_group[lane_id][index_length].\
            print_sampleSheet(outfile=output_file)                               # write output file
           sub_tasks.append({'project_name':project_name,
-                            'flowcell_lane':flowcell_lane,
+                            'flowcell_lane':lane_id,
                             'index_length':index_length,
                             'samplesheet':output_file})                         # append sub_tasks
       self.param('sub_tasks',sub_tasks)                                         # send sub_tasks to the dataflow        
