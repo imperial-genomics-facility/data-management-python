@@ -72,7 +72,8 @@ class RunBcl2Fastq(IGFBaseProcess):
       output_temp_dir=get_temp_dir()                                            # create a new output directory in TMPDIR
       bcl2fastq_param=[[param,value] if value else [param] 
                        for param, value in bcl2fastq_options.items()]           # remove empty values
-      bcl2fastq_param=[col for row in param for col in bcl2fastq_param]         # flatten sub lists
+      bcl2fastq_param=[col for row in bcl2fastq_param \
+                       for col in bcl2fastq_param]                              # flatten sub lists
       bcl2fastq_cmd=[bcl2fastq_exe,
                      '--runfolder-dir',seqrun_temp_dir,
                      '--sample-sheet',samplesheet_file,
