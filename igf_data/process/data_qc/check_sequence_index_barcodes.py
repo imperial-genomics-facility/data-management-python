@@ -22,9 +22,10 @@ class CheckSequenceIndexBarcodes:
   stats_json_file: Stats.json file from demultiplexing run
   samplesheet_file: Samplesheet file containing all sample barcodes (for the lane)
   '''
-  def __init__(self,stats_json_file,samplesheet_file):
+  def __init__(self,stats_json_file,samplesheet_file,platform_name=None):
     self.stats_json_file=stats_json_file
     self.samplesheet_file=samplesheet_file
+    self.platform_name=platform_name
     self._check_barcode_stats()
     
  
@@ -104,6 +105,7 @@ class CheckSequenceIndexBarcodes:
     '''
     stats_json=self.stats_json_file
     sample_sheet=self.samplesheet_file
+    platform_name=self.platform_name
     stats_df=pd.DataFrame(columns=['index','lane','reads',
                                    'runid','sample','tag',
                                    'total_read','mapping_ratio'])               # define structure for stats df
@@ -118,9 +120,14 @@ class CheckSequenceIndexBarcodes:
         u_stats_df=lg.groupby('tag').get_group('unknown')
         k_stats_df=lg.groupby('tag').get_group('known')                         # separate known and unknown groups
         all_lanes=samplesheet_data.get_lane_count()
-        if lid in all_lanes:                                                    # fix for nextseq, not supporting multiple projects
-          samplesheet_data.filter_sample_data(condition_key='Lane', \
-                                              condition_value=lid)              # filter samplesheet for the lane dynamically
+        if lid in all_lanes:
+          if platform_name=='NEXTSEQ':
+            samplesheet_data.add_pseudo_lane_for_nextseq()                      # add pseudo lane info for NextSeq
+            samplesheet_data.filter_sample_data(condition_key='PseudoLane', \
+                                                condition_value=lid)            # filter samplesheet for the Pseudolane dynamically
+          else:
+            samplesheet_data.filter_sample_data(condition_key='Lane', \
+                                                condition_value=lid)            # filter samplesheet for the lane dynamically
           all_known_indexes=samplesheet_data.get_indexes()                      # get all known indexes present on the lane
           u_stats_df=u_stats_df[u_stats_df['index'].\
                                 isin(all_known_indexes)==False]                 # filter all known barcodes from unknown
