@@ -143,6 +143,22 @@ class SampleSheet:
     return indexes
 
 
+  def add_pseudo_lane_for_nextseq(self):
+    '''
+    A method for adding pseudo lane information for the nextseq platform
+    '''
+    try:
+      data=self._data
+      newdata=list()
+      for row in data:
+        for lane in (1,2,3,4):
+          row['PseudoLane']=lane
+          newdata.append(row)
+      self._data=newdata
+    except:
+      raise
+  
+      
   def _reformat_project_and_description(self, project_field='Sample_Project', description_field='Description' ):
     '''
     A Function for removing the user information from Project field and
