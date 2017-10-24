@@ -293,7 +293,7 @@ class SampleSheet:
           # nextseq and miseq samplesheet doesn't have any lane column, default lane number is 1
           filtered_data.append(row)
         else:
-          raise ValueError('key {}, value {} not found for {}'.format(condition_key,type(condition_value),row))
+          raise ValueError('key {}, value {} not found for {}'.format(condition_key,condition_value,row))
       else:
         if method=='include':
           if row[condition_key] == condition_value: filtered_data.append(row)
