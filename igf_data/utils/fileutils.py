@@ -106,8 +106,9 @@ def get_temp_dir(work_dir=None, prefix='temp'):
   returns temp_dir
   '''
   try:
-    if not os.path.isdir(work_dir):              # check if work directory is present
+    if work_dir is not None and not os.path.isdir(work_dir):                    # check if work directory is present
       raise IOError('work directory {0} is not present'.format(work_dir))
+    
     temp_dir=mkdtemp(prefix=prefix,dir=work_dir)  # create a temp dir
     return temp_dir
   except:
