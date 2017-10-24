@@ -9,7 +9,7 @@ class CheckIndexStats(IGFBaseProcess):
   A ehive process class for checking barcode stats and report to slack and asana
   '''
   def param_defaults(self):
-    params_dict=IGFBaseProcess.param_defaults()
+    params_dict=super(IGFBaseProcess,self).param_defaults()
     params_dict.update({
       'stats_filename':'Stats/Stats.json',
       'strict_check':True,
@@ -19,13 +19,13 @@ class CheckIndexStats(IGFBaseProcess):
   def run(self):
     try:
       samplesheet_file=self.param_required('original_samplesheet')
+      seqrun_igf_id=self.param_required('seqrun_igf_id')
       fastq_dir=self.param_required('fastq_dir')
       stats_filename=self.param('stats_filename')
       seqrun_local_dir=self.param_required('seqrun_local_dir')
       strict_check=self.param('strict_check')
       
-      work_dir=get_temp_dir                                                     # get work directory name
-      seqrun_name=os.path.basename(seqrun_local_dir)                            # get seqrun name
+      work_dir=get_temp_dir()                                                   # get work directory name
       stats_json_file=os.path.join(fastq_dir,stats_filename)                    # get stats file path
       barcode_stat=CheckSequenceIndexBarcodes(stats_json_file,samplesheet_file) # create check instance
       barcode_stat.validate_barcode_stats(work_dir=work_dir, \
@@ -35,8 +35,13 @@ class CheckIndexStats(IGFBaseProcess):
       self.param('dataflow_params',{'barcode_qc_stats':'FAIL'})                 # seed dataflow for failed lanes
       for plot_file in e.plots:
         self.post_file_to_slack(message=e.message,filepath=plot_file)           # posting plot files to slack
-        self.upload_file_to_asana_task(task_name=seqrun_name, \
+        self.upload_file_to_asana_task(task_name=seqrun_igf_id, \
                                        filepath=plot_file, \
                                        comment=e.message)                       # upload plots to asana
-    except Exception:
-          raise
+    except Exception as e:
+      message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
+                                                      e, \
+                                                      seqrun_igf_id)
+      self.warning(message)
+      self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
+      raise
