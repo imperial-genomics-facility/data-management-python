@@ -39,9 +39,13 @@ class SamplesheetFilterAndIndexFactory(IGFBaseJobFactory):
       lanes=samplesheet.get_lane_count()                                        # get samplesheet lanes
       data_group=dict()
       
+      if not len(lanes)>0:
+        raise ValueError('project {0} is not present in the samplesheet {1}'.\
+                         format(project_name,samplesheet_file))
+        
       if len(lanes)>1:
         for lane_id in lanes:
-          samplesheet_project_data=copy.deepcopy(samplesheet)                   # deep copy samplesheet object 
+          samplesheet_project_data=copy.deepcopy(samplesheet)                   # deep copy samplesheet object
           samplesheet_project_data.filter_sample_data(condition_key='Lane', \
                                                       condition_value=lane_id, \
                                                       method='include')         # keep only selected lane
@@ -64,7 +68,12 @@ class SamplesheetFilterAndIndexFactory(IGFBaseJobFactory):
                             'flowcell_lane':lane_id,
                             'index_length':index_length,
                             'samplesheet':output_file})                         # append sub_tasks
-      self.param('sub_tasks',sub_tasks)                                         # send sub_tasks to the dataflow        
+      self.param('sub_tasks',sub_tasks)                                         # send sub_tasks to the dataflow
+      message='seqrun: {0}, project:{1}, lanes:{2}'.format(seqrun_igf_id,\
+                                                           project_name,\
+                                                           ','.join(lanes))
+      self.post_message_to_slack(message,reaction='pass')                       # send log to slack
+      self.comment_asana_task(task_name=seqrun_igf_id, comment=message)         # send log to asana
     except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
