@@ -9,7 +9,7 @@ class SamplesheetFilterAndIndexFactory(IGFBaseJobFactory):
   It creates a job factory and pass on the output samplesheet names
   '''
   def param_defaults(self):
-    params_dict=IGFBaseJobFactory.param_defaults()
+    params_dict=super(IGFBaseJobFactory,self).param_defaults()
     params_dict.update({
         'samplesheet_filename':'SampleSheet.csv',
       })
@@ -62,5 +62,10 @@ class SamplesheetFilterAndIndexFactory(IGFBaseJobFactory):
                             'index_length':index_length,
                             'samplesheet':output_file})                         # append sub_tasks
       self.param('sub_tasks',sub_tasks)                                         # send sub_tasks to the dataflow        
-    except:
+    except Exception as e:
+      message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
+                                                      e, \
+                                                      seqrun_igf_id)
+      self.warning(message)
+      self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise
