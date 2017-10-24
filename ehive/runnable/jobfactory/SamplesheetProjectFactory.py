@@ -18,6 +18,7 @@ class SampleSheetProjectFactory(IGFBaseJobFactory):
   def run(self):
     try:
       samplesheet_file=self.param_required('samplesheet')
+      seqrun_igf_id=self.param_required('seqrun_igf_id')
       tenX_label=self.param('10X_label')
       
       if not os.path.exists(samplesheet_file):
@@ -31,6 +32,8 @@ class SampleSheetProjectFactory(IGFBaseJobFactory):
       sub_tasks=[{'project_name':project_name} \
                  for project_name in project_names]                             # create subtasks data structure
       self.param('sub_tasks',sub_tasks)                                         # seed dataflow
+      self.add_asana_notes(task_name=seqrun_igf_id,\
+                           notes='\n'.join(project_names))                      # add project names to asana notes
     except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
