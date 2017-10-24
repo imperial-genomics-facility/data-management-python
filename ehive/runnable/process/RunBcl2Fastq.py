@@ -31,7 +31,7 @@ class RunBcl2Fastq(IGFBaseProcess):
       project_name=self.param_required('project_name')
       index_length=self.param_required('index_length')
       seqrun_local_dir=self.param_required('seqrun_local_dir')
-      bases_mask=self.param_required('bases_mask')
+      bases_mask=self.param_required('basesmask')
       base_work_dir=self.param_required('base_work_dir')
       base_fastq_dir=self.param_required('base_fastq_dir')
       samplesheet_file=self.param_required('samplesheet')
