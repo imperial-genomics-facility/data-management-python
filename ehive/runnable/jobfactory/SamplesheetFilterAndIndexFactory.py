@@ -72,7 +72,7 @@ class SamplesheetFilterAndIndexFactory(IGFBaseJobFactory):
       self.param('sub_tasks',sub_tasks)                                         # send sub_tasks to the dataflow
       message='seqrun: {0}, project:{1}, lanes:{2}'.format(seqrun_igf_id,\
                                                            project_name,\
-                                                           ','.join(lanes))
+                                                           lanes)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
       self.comment_asana_task(task_name=seqrun_igf_id, comment=message)         # send log to asana
     except Exception as e:
