@@ -54,14 +54,11 @@ class RunBcl2Fastq(IGFBaseProcess):
                                     seqrun_date,\
                                     flowcell_id,\
                                     lane_index)                                 # output dir label
-      output_fastq_dir=os.path.join(base_work_dir,output_dir_label)             # output fastq dir
+      output_fastq_dir=os.path.join(base_fastq_dir,output_dir_label)             # output fastq dir
       
       if os.path.exists(output_fastq_dir) and force_overwrite:
         remove_dir(output_fastq_dir)                                            # remove fastq directory if its already present
-        
-      if not os.path.exists(output_fastq_dir):
-        os.makedirs(name=output_fastq_dir, mode=0o777)                          # create new output dir
-      
+              
       seqrun_temp_dir=get_temp_dir()                                            # create a new input directory in TMPDIR
       move_file=moveBclFilesForDemultiplexing(input_dir=seqrun_dir,
                                               output_dir=seqrun_temp_dir,
@@ -72,8 +69,7 @@ class RunBcl2Fastq(IGFBaseProcess):
       output_temp_dir=get_temp_dir()                                            # create a new output directory in TMPDIR
       bcl2fastq_param=[[param,value] if value else [param] 
                        for param, value in bcl2fastq_options.items()]           # remove empty values
-      bcl2fastq_param=[col for row in bcl2fastq_param \
-                       for col in bcl2fastq_param]                              # flatten sub lists
+      bcl2fastq_param=[col for row in bcl2fastq_param for col in row]           # flatten sub lists
       bcl2fastq_cmd=[bcl2fastq_exe,
                      '--runfolder-dir',seqrun_temp_dir,
                      '--sample-sheet',samplesheet_file,
