@@ -138,7 +138,8 @@ class SampleSheet:
         if index_val is None:
           index_val=row[field]
         else:
-          index_val='{0}+{1}'.format(index_val,row[field])
+          if row[field] is not None or row[field] !='':
+            index_val='{0}+{1}'.format(index_val,row[field])
       indexes.append(index_val)
     return indexes
 
