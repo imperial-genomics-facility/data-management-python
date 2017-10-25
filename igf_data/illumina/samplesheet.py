@@ -151,7 +151,7 @@ class SampleSheet:
       data=self._data
       newdata=list()
       for row in data:
-        for lane in (1,2,3,4):
+        for lane in ('1','2','3','4'):
           temp_row=copy.deepcopy(row)
           temp_row['PseudoLane']=lane
           newdata.append(temp_row)
