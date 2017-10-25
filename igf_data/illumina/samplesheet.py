@@ -1,5 +1,6 @@
 import os, re, copy, sys
 from collections import defaultdict, deque
+from pandas.core.dtypes.missing import isnull
 
 try:
   if sys.version_info[0] < 3:
@@ -135,11 +136,13 @@ class SampleSheet:
       for field in index_columns:
         if field not in list(row.keys()): 
           raise ValueError('field {0} not present in samplesheet {1}'.format(field, self.infile))
-        if index_val is None:
-          index_val=row[field]
-        else:
-          if row[field] is not None or row[field] !='':
-            index_val='{0}+{1}'.format(index_val,row[field])
+        index_seq=row[field]
+        index_seq=index_seq.strip().strip('\n')
+        if index_seq and index_seq is not None:
+          if index_val is None:
+            index_val=index_seq
+          else:
+            index_val='{0}+{1}'.format(index_val,index_seq)
       indexes.append(index_val)
     return indexes
 
