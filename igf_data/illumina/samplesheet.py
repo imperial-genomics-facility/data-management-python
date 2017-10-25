@@ -152,8 +152,9 @@ class SampleSheet:
       newdata=list()
       for row in data:
         for lane in (1,2,3,4):
-          row['PseudoLane']=lane
-          newdata.append(row)
+          temp_row=copy.deepcopy(row)
+          temp_row['PseudoLane']=lane
+          newdata.append(temp_row)
       self._data=newdata
     except:
       raise
