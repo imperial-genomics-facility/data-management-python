@@ -128,6 +128,7 @@ class CheckSequenceIndexBarcodes:
           else:
             samplesheet_data.filter_sample_data(condition_key='Lane', \
                                                 condition_value=lid)            # filter samplesheet for the lane dynamically
+            
           all_known_indexes=samplesheet_data.get_indexes()                      # get all known indexes present on the lane
           u_stats_df=u_stats_df[u_stats_df['index'].\
                                 isin(all_known_indexes)==False]                 # filter all known barcodes from unknown with exact match
@@ -154,7 +155,7 @@ class CheckSequenceIndexBarcodes:
                           'unknown_read':unknown_reads}])
         processed_df=pd.concat([df,processed_df])                               # format processed df
       
-    processed_df=processed_df.apply(lambda x: self._generate_pct(x), axis=1)         # calculate % of known and unknown barcodes
+    processed_df=processed_df.apply(lambda x: self._generate_pct(x), axis=1)    # calculate % of known and unknown barcodes
     self.raw_df=raw_df
     self.processed_df=processed_df
 
