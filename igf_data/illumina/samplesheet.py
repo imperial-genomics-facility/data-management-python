@@ -324,10 +324,10 @@ class SampleSheet:
     
     for row in raw_data:
       if condition_key not in list(row.keys()): 
-        if condition_key==lane_header and condition_value==lane_default_val:
-          # nextseq and miseq samplesheet doesn't have any lane column, default lane number is 1
-          filtered_data.append(row)
-        else:
+        #if condition_key==lane_header and condition_value==lane_default_val:
+        #  # nextseq and miseq samplesheet doesn't have any lane column, default lane number is 1
+        #  filtered_data.append(row)
+        #else:
           raise ValueError('key {}, value {} not found for {}'.format(condition_key,condition_value,row))
       else:
         if method=='include':
