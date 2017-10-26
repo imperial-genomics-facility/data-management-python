@@ -145,8 +145,7 @@ class SampleSheet:
       indexes.append(index_val)
     return indexes
 
-
-  def add_pseudo_lane_for_nextseq(self):
+  def add_pseudo_lane_for_miseq(self,lane='1'):
     '''
     A method for adding pseudo lane information for the nextseq platform
     '''
@@ -154,7 +153,23 @@ class SampleSheet:
       data=self._data
       newdata=list()
       for row in data:
-        for lane in ('1','2','3','4'):
+        temp_row=copy.deepcopy(row)
+        temp_row['PseudoLane']=lane
+        newdata.append(temp_row)
+      self._data=newdata
+    except:
+      raise
+    
+    
+  def add_pseudo_lane_for_nextseq(self,lanes=['1','2','3','4']):
+    '''
+    A method for adding pseudo lane information for the nextseq platform
+    '''
+    try:
+      data=self._data
+      newdata=list()
+      for row in data:
+        for lane in lanes:
           temp_row=copy.deepcopy(row)
           temp_row['PseudoLane']=lane
           newdata.append(temp_row)
