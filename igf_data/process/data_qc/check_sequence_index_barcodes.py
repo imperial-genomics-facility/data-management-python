@@ -177,24 +177,47 @@ class CheckSequenceIndexBarcodes:
       # check known_pct/unknown_pct
       for runid, grp in summary_df.groupby('id'):
         if strict_check and grp['known_pct'].values[0] < know_barcode_ratio_cutoff:
-          (all_barcode_plot,index_plot)=self._generate_barcode_plots            # plot stats
+          (all_barcode_plot,index_plot)=self._generate_barcode_plots(work_dir=work_dir)                 # plot stats
           raise IndexBarcodeValidationError(message='{0} failed total barcode check: {1}'.\
                                             format(runid, grp['known_pct'].values[0]), \
                                             plots=[all_barcode_plot,index_plot])
       # check for individual barcodes mapping ratios
       for rid, rgrp in raw_df.groupby('runid'):
         for lid,lgrp in rgrp.groupby('lane'):
+          all_tag_groups=lgrp.groupby('tag').groups.keys()
+          if 'known' not in all_tag_groups and \
+             'unknown' not in all_tag_groups:
+            raise ValueError('tag known and unknown not found:{0}'.\
+                             format(all_tag_groups))
+          if 'index_1_revcomp' in all_tag_groups:
+            raise IndexBarcodeValidationError(message='{0} {1} found index_1_revcomp'.\
+                                              format(rid, lid), \
+                                              plots=[])
+          if 'only_index_1_revcomp' in all_tag_groups:
+            raise IndexBarcodeValidationError(message='{0} {1} found only_index_1_revcomp'.\
+                                              format(rid, lid), \
+                                              plots=[])
+            
+          if 'index_1_and_index_2_revcomp' in all_tag_groups:
+            raise IndexBarcodeValidationError(message='{0} {1} found index_1_and_index_2_revcomp'.\
+                                              format(rid, lid), \
+                                              plots=[])
+          
+          if 'only_index_2_revcomp' in all_tag_groups:
+            raise IndexBarcodeValidationError(message='{0} {1} found only_index_2_revcomp'.\
+                                              format(rid, lid), \
+                                              plots=[])
+            
           known_grp=lgrp.groupby('tag').get_group('known')
           min_known_mpr=known_grp['mapping_ratio'].min()
           unknown_grp=lgrp.groupby('tag').get_group('unknown')
           max_unknown_mpr=unknown_grp['mapping_ratio'].max()
           if strict_check and min_known_mpr < max_unknown_mpr:
-            (all_barcode_plot,index_plot)=self._generate_barcode_plots          # plot stats
+            (all_barcode_plot,index_plot)=self._generate_barcode_plots(work_dir=work_dir)            # plot stats
             raise IndexBarcodeValidationError(message='{0} {1} failed mapping ratio check'.\
                                               format(rid, lid), \
-                                              plots=[all_barcode_plot,index_plot])
-          
-          
+                                              plots=[all_barcode_plot,index_plot])                   # report about the first issue
+            
     except:
         raise
 
@@ -280,7 +303,7 @@ class CheckSequenceIndexBarcodes:
               tag='only_index_1_revcomp'                                        # modify tag if index 2 is exact match
             elif unknown_index_2 and known_index_2 and \
                  rev_comp(unknown_index_2) == known_index_2:
-              tag='index_1_and index_2_revcomp'                                 # modify tag if both reads are revcomp
+              tag='index_1_and_index_2_revcomp'                                 # modify tag if both reads are revcomp
           
           # CASE 5: index 1 is exact match but index 2 is reverse complement
           elif unknown_index_2 and known_index_2 and \
@@ -314,7 +337,12 @@ class CheckSequenceIndexBarcodes:
       plt.xlabel('Sequencing lane id')
       plt.ylabel('% of reads')
       all_barcode_plot=os.path.join(work_dir,all_barcode_plot)
-      plt.savefig(all_barcode_plot)
+      
+      if save_plot:
+        if os.path.exists(all_barcode_plot):
+          os.remove(all_barcode_plot)
+        plt.savefig(all_barcode_plot)
+        
       raw_df_tmp=raw_df.set_index('index')
       fig, ax=plt.subplots()                                                    # plotting total barcode stats
       for gk,gr in raw_df_tmp.groupby('tag'):
@@ -328,6 +356,8 @@ class CheckSequenceIndexBarcodes:
       plt.ylabel('read % for index barcode')
       index_plot=os.path.join(work_dir,index_plot)
       if save_plot:
+        if os.path.exists(index_plot):
+          os.remove(index_plot)
         plt.savefig(index_plot)                                                 # plotting individual barcode stats
         return (all_barcode_plot,index_plot)
       else:
