@@ -7,7 +7,7 @@ try:
 except:
   raise
 
-def revcomp(input_seq):
+def rev_comp(input_seq):
   '''
   A function for converting nucleotide sequence to its reverse complement
   required params:
