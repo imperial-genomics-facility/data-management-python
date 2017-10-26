@@ -1,6 +1,5 @@
 import os, re, copy, sys
 from collections import defaultdict, deque
-from pandas.core.dtypes.missing import isnull
 
 try:
   if sys.version_info[0] < 3:
