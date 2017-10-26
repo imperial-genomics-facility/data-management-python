@@ -95,7 +95,7 @@ class CheckSequenceIndexBarcodes:
     return x
 
   
-  def _check_barcode_stats(self):
+  def _check_barcode_stats(self, nextseq_label='NEXTSEQ'):
     '''
     An internal method for converting barcode stats json file to dataframes, read samplesheet,
     remove all known barcodes for the flowcell lane from the pool of unknown barcodes
@@ -119,12 +119,13 @@ class CheckSequenceIndexBarcodes:
         samplesheet_data=SampleSheet(infile=sample_sheet)                       # using the same samplesheet for filter
         u_stats_df=lg.groupby('tag').get_group('unknown')
         k_stats_df=lg.groupby('tag').get_group('known')                         # separate known and unknown groups
-        #all_lanes=samplesheet_data.get_lane_count()
-        all_lanes=[1,2,3,4] if platform_name=='NEXTSEQ' \
-                            else samplesheet_data.get_lane_count();
-        if lid in all_lanes:
-          if platform_name=='NEXTSEQ':
+        all_lanes=[1,2,3,4] if platform_name==nextseq_label \
+                            else samplesheet_data.get_lane_count();             # nextseq in weird
+        if platform_name==nextseq_label:
             samplesheet_data.add_pseudo_lane_for_nextseq()                      # add pseudo lane info for NextSeq
+            
+        if lid in all_lanes:
+          if platform_name==nextseq_label:
             samplesheet_data.filter_sample_data(condition_key='PseudoLane', \
                                                 condition_value=lid)            # filter samplesheet for the Pseudolane dynamically
           else:
@@ -192,6 +193,8 @@ class CheckSequenceIndexBarcodes:
             raise IndexBarcodeValidationError(message='{0} {1} failed mapping ratio check'.\
                                               format(rid, lid), \
                                               plots=[all_barcode_plot,index_plot])
+          
+          
     except:
         raise
 
