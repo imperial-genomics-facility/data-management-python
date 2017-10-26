@@ -139,7 +139,6 @@ class CheckSequenceIndexBarcodes:
                                       (data_series=x,\
                                        index_vals=all_known_indexes),\
                                       axis=1)                                   # check and modify tags for unknown indexes
-          u_stats_df=u_stats_df[u_stats_df['tag']=='unknown']                   # only keep the unknown indexes
         
         raw_df=pd.concat([k_stats_df,u_stats_df,raw_df])                        # merge dataframe back together
     raw_df['log_total_read']=raw_df['total_read'].map(lambda x: math.log2(x))   # add log2 of total reads in df
@@ -320,8 +319,7 @@ class CheckSequenceIndexBarcodes:
           ax.scatter(x=gr['log_total_read'],y=gr['mapping_ratio'],color='green')
         elif gk=='unknown':
           ax.scatter(x=gr['log_total_read'],y=gr['mapping_ratio'],color='orange')
-        else:
-          raise ValueError('tag {0} is undefined'.format(gk))
+       
         
       plt.xlabel('Log of total reads')
       plt.ylabel('read % for index barcode')
