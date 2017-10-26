@@ -21,6 +21,7 @@ class CheckIndexStats(IGFBaseProcess):
       samplesheet_file=self.param_required('original_samplesheet')
       seqrun_igf_id=self.param_required('seqrun_igf_id')
       fastq_dir=self.param_required('fastq_dir')
+      model_name=self.param_required('model_name')
       stats_filename=self.param('stats_filename')
       seqrun_local_dir=self.param_required('seqrun_local_dir')
       strict_check=self.param('strict_check')
