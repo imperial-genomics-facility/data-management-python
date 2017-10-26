@@ -3,7 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 from igf_data.illumina.samplesheet import SampleSheet
-
+from igf_data.utils.sequtils import rev_comp
 
 class IndexBarcodeValidationError(Exception):
   '''
@@ -130,7 +130,12 @@ class CheckSequenceIndexBarcodes:
                                                 condition_value=lid)            # filter samplesheet for the lane dynamically
           all_known_indexes=samplesheet_data.get_indexes()                      # get all known indexes present on the lane
           u_stats_df=u_stats_df[u_stats_df['index'].\
-                                isin(all_known_indexes)==False]                 # filter all known barcodes from unknown
+                                isin(all_known_indexes)==False]                 # filter all known barcodes from unknown with exact match
+          u_stats_df=u_stats_df.apply(lambda x: \
+                                      self._check_index_for_match\
+                                      (data_series=x,\
+                                       index_vals=all_known_indexes),\
+                                      axis=1)                                   # check and modify tags for unknown indexes
         
         raw_df=pd.concat([k_stats_df,u_stats_df,raw_df])                        # merge dataframe back together
     raw_df['log_total_read']=raw_df['total_read'].map(lambda x: math.log2(x))   # add log2 of total reads in df
@@ -277,8 +282,8 @@ class CheckSequenceIndexBarcodes:
                unknown_index_1==known_index_1:
             tag='only_index_2_revcomp'                                          # only index 2 is revcomp
             
-        data_series['tag']=tag                                                  # reset tag in data series
-        return data_series
+      data_series['tag']=tag                                                    # reset tag in data series
+      return data_series
     except:
       raise
     
