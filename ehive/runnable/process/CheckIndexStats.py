@@ -27,7 +27,9 @@ class CheckIndexStats(IGFBaseProcess):
       
       work_dir=get_temp_dir()                                                   # get work directory name
       stats_json_file=os.path.join(fastq_dir,stats_filename)                    # get stats file path
-      barcode_stat=CheckSequenceIndexBarcodes(stats_json_file,samplesheet_file) # create check instance
+      barcode_stat=CheckSequenceIndexBarcodes(stats_json_file=stats_json_file,\
+                                              samplesheet_file=samplesheet_file,
+                                              platform_name=model_name)         # create check instance
       barcode_stat.validate_barcode_stats(work_dir=work_dir, \
                                           strict_check=strict_check)            # validate seqrun stats
       self.param('dataflow_params',{'barcode_qc_stats':'PASS'})                 # seed dataflow parame for the qc passed lanes
