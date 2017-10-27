@@ -13,14 +13,14 @@ class ChangePipelineSeedStatus(IGFBaseProcess):
       seqrun_igf_id=self.param_required('seqrun_igf_id')
       seed_id=self.param_required('seed_id')
       seed_table=self.param_required('seed_table')
-      status=self.param_required('status')
+      new_status=self.param_required('new_status')
       
       pa=PipelineAdaptor(**{'session_class':igf_session_class})
       pa.start_session()                                                        # connect to db
-      pa.update_pipeline_seed(data={'pipeline_name':pipeline_name,\
-                                    'seed_id':seed_id,\
-                                    'seed_table':seed_table,
-                                    'status':status.upper()})                   # update seed record in db
+      pa.update_pipeline_seed(data=[{'pipeline_name':pipeline_name,\
+                                    'seed_id':int(seed_id),\
+                                    'seed_table':seed_table,\
+                                    'status':new_status.upper()}])              # update seed record in db
       pa.close_session()                                                        # close db connection
       self.post_message_to_slack(message='changing status in {0} for seed {1} as {2}'.\
                                  format(pipeline_name,\
