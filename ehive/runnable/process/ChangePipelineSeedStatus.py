@@ -22,11 +22,12 @@ class ChangePipelineSeedStatus(IGFBaseProcess):
                                     'seed_table':seed_table,\
                                     'status':new_status.upper()}])              # update seed record in db
       pa.close_session()                                                        # close db connection
-      self.post_message_to_slack(message='changing status in {0} for seed {1} as {2}'.\
+      message='changing status in {0} for seed {1} as {2}'.\
                                  format(pipeline_name,\
                                         seed_id,\
-                                        status.upper()),\
-                                 reaction='pass')
+                                        new_status.upper())                     # format message
+      self.post_message_to_slack(message, reaction='pass')                      # send message to slack
+      self.comment_asana_task(task_name=seqrun_igf_id, comment=message)         # send message to asana
     except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
