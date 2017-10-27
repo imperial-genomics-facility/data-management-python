@@ -1,8 +1,9 @@
-import os, eHive
+import os, eHive, json
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.task_tracking.igf_slack import IGF_slack
 from igf_data.task_tracking.igf_asana import IGF_asana
 from igf_data.igfdb.baseadaptor import BaseAdaptor
+from numpy import isin
 
 
 class IGFBaseRunnable(eHive.BaseRunnable):
@@ -134,21 +135,28 @@ class IGFBaseRunnable(eHive.BaseRunnable):
     return job_name
 
 
-class IGFBaseJobFactory(IGFBaseRunnable):
-  '''
-  Base jobfactory class for igf pipelines
-  '''  
-  def write_output(self):
-    sub_tasks = self.param_required('sub_tasks')   
-    self.dataflow(sub_tasks, 2)
-
-
-class IGFBaseProcess(IGFBaseRunnable):
-  '''
-  Base process class for igf pipelines
-  '''
-  def write_output(self):
-    sub_tasks = self.param_required('sub_tasks')   
-    self.dataflow(sub_tasks, 1)
-
-
+  def format_tool_options(self,option):
+    '''
+    A method for formatting tool options
+    before running commands tools via 
+    subprocess module
+    required params:
+    option: A dictionary or json text as string
+    returns a formatted list
+    '''
+    try:
+      option_list=list()
+      if isinstance(option, str):
+        option=json.loads(option.replace('\'','"'))                             # replace ' with " and convert ot json dict
+        
+      if not isinstance(option, dict):
+        raise ValueError('expecting param options as dictionary, got {0}'.\
+                         format(type(option)))
+        
+      option_list=[[param,value] if value else [param]
+                       for param, value in option.items()]                      # remove empty values
+      option_list=[col for row in option_list for col in row]                   # flatten sub lists
+      option_list=list(map(lambda x: str(x),option_list))                       # convert lists values to string
+      return option_list
+    except:
+      raise
