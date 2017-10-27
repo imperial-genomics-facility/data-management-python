@@ -67,14 +67,15 @@ class RunBcl2Fastq(IGFBaseProcess):
       move_file.copy_bcl_files()                                                # move files to TMPDIR
       
       output_temp_dir=get_temp_dir()                                            # create a new output directory in TMPDIR
-      bcl2fastq_param=[[param,value] if value else [param] 
-                       for param, value in bcl2fastq_options.items()]           # remove empty values
-      bcl2fastq_param=[col for row in bcl2fastq_param for col in row]           # flatten sub lists
+      #bcl2fastq_param=[[param,value] if value else [param] 
+      #                 for param, value in bcl2fastq_options.items()]           # remove empty values
+      #bcl2fastq_param=[col for row in bcl2fastq_param for col in row]           # flatten sub lists
       bcl2fastq_cmd=[bcl2fastq_exe,
                      '--runfolder-dir',seqrun_temp_dir,
                      '--sample-sheet',samplesheet_file,
                      '--output-dir',output_temp_dir,
                      ]                                                          # bcl2fastq base parameters
+      bcl2fastq_param=self.format_tool_options(bcl2fastq_param)                 # format bcl2fastq params
       bcl2fastq_cmd.extend(bcl2fastq_param)                                     # add additional parameters
       subprocess.check_call(bcl2fastq_cmd)                                      # run bcl2fastq
       
