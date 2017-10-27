@@ -75,7 +75,7 @@ class RunBcl2Fastq(IGFBaseProcess):
                      '--sample-sheet',samplesheet_file,
                      '--output-dir',output_temp_dir,
                      ]                                                          # bcl2fastq base parameters
-      bcl2fastq_param=self.format_tool_options(bcl2fastq_param)                 # format bcl2fastq params
+      bcl2fastq_param=self.format_tool_options(bcl2fastq_options)               # format bcl2fastq params
       bcl2fastq_cmd.extend(bcl2fastq_param)                                     # add additional parameters
       subprocess.check_call(bcl2fastq_cmd)                                      # run bcl2fastq
       
