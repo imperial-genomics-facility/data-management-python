@@ -7,7 +7,7 @@ from igf_data.igfdb.projectadaptor import ProjectAdaptor
 
 class UploadFastqToIrods(IGFBaseProcess):
   def param_defaults(self):
-    params_dict=IGFBaseProcess.param_defaults()
+    params_dict=super(IGFBaseProcess,self).param_defaults()
     params_dict.update({
         'samplesheet_filename':'SampleSheet.csv',
         'report_html':'*all/all/all/laneBarcode.html',
@@ -18,7 +18,7 @@ class UploadFastqToIrods(IGFBaseProcess):
     try:
       fastq_dir=self.param_required('fastq_dir')
       seqrun_igf_id=self.param_required('seqrun_igf_id')
-      project_igf_id=self.param_required('project_igf_id')
+      project_igf_id=self.param_required('project_name')
       igf_session_class=self.param_required('igf_session_class')
       samplesheet_filename=self.param('samplesheet_filename')
       report_html=self.param('report_html')
@@ -75,5 +75,10 @@ class UploadFastqToIrods(IGFBaseProcess):
                                                           seqrun_date=seqrun_date,\
                                                           )                     # upload fastq data to irods
       remove_dir(temp_work_dir)                                                 # remove temp dir once data uoload is done
-    except:
+    except Exception as e:
+      message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
+                                                      e, \
+                                                      seqrun_igf_id)
+      self.warning(message)
+      self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise
