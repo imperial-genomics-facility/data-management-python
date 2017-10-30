@@ -40,12 +40,12 @@ class CheckIndexStats(IGFBaseProcess):
       if len(e.plots)==0:
         self.post_message_to_slack(message=e.message,reaction='fail')           # only post msg to slack if no plots
         self.comment_asana_task(task_name=seqrun_igf_id, comment=e.message)     # log to asana task
-        
-      for plot_file in e.plots:
-        self.post_file_to_slack(message=e.message,filepath=plot_file)           # posting plot files to slack
-        self.upload_file_to_asana_task(task_name=seqrun_igf_id, \
-                                       filepath=plot_file, \
-                                       comment=e.message)                       # upload plots to asana
+      else:
+        for plot_file in e.plots:
+          self.post_file_to_slack(message=e.message,filepath=plot_file)         # posting plot files to slack
+          self.upload_file_to_asana_task(task_name=seqrun_igf_id, \
+                                         filepath=plot_file, \
+                                         comment=e.message)                     # upload plots to asana
     except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
