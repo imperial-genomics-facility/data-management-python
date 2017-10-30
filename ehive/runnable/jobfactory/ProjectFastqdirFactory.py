@@ -4,6 +4,11 @@ class ProjectFastqdirFactory(IGFBaseJobFactory):
   '''
   A job factory for all the fastq dir for a project
   '''
+  
+  def param_defaults(self):
+    params_dict=super(IGFBaseJobFactory,self).param_defaults()
+    return params_dict
+  
   def run(self):
     try:
       project_fastq=self.param_required('project_fastq')
