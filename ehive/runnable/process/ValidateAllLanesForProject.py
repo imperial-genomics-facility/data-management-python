@@ -23,6 +23,8 @@ class ValidateAllLanesForProject(IGFBaseProcess):
       project_fastq=self.param_required('project_fastq')
       strict_check=self.param('strict_check')
       seqrun_igf_id=self.param_required('seqrun_igf_id')
+      flowcell_lane=self.param_required('flowcell_lane')
+      index_length=self.param_required('index_length')
       
       project_status='PASS'                                                     # default status is PASS
       for fastq_dir,qc_stats in project_fastq.items():
@@ -32,8 +34,9 @@ class ValidateAllLanesForProject(IGFBaseProcess):
       if project_status=='PASS':
         self.param('dataflow_params',{'project_fastq':project_fastq})
       else:
+        lane_index='{0}_{1}'.format(flowcell_lane,index_length)                   # get label for lane and index length
         for fastq_dir in project_fastq.keys():
-          report_dir=os.path.join(fastq_dir,'Reports/html')
+          report_dir=os.path.join(fastq_dir,lane_index,'Reports/html')
           for flowcell in os.listdir(report_dir):
             if os.path.isdir(flowcell):
               all_barcodes_html=os.path.join(flowcell,'all/all/all/laneBarcode.html')
