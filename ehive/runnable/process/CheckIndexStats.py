@@ -22,6 +22,7 @@ class CheckIndexStats(IGFBaseProcess):
       seqrun_igf_id=self.param_required('seqrun_igf_id')
       fastq_dir=self.param_required('fastq_dir')
       model_name=self.param_required('model_name')
+      project_name=self.param_required('project_name')
       stats_filename=self.param('stats_filename')
       seqrun_local_dir=self.param_required('seqrun_local_dir')
       strict_check=self.param('strict_check')
@@ -36,16 +37,16 @@ class CheckIndexStats(IGFBaseProcess):
       self.param('dataflow_params',{'barcode_qc_stats':'PASS'})                 # seed dataflow parame for the qc passed lanes
     except IndexBarcodeValidationError as e:
       self.param('dataflow_params',{'barcode_qc_stats':'FAIL'})                 # seed dataflow for failed lanes
-      
+      message='project: {0}, message:{1}'.format(e.message)
       if len(e.plots)==0:
         self.post_message_to_slack(message=e.message,reaction='fail')           # only post msg to slack if no plots
         self.comment_asana_task(task_name=seqrun_igf_id, comment=e.message)     # log to asana task
       else:
         for plot_file in e.plots:
-          self.post_file_to_slack(message=e.message,filepath=plot_file)         # posting plot files to slack
+          self.post_file_to_slack(message=message,filepath=plot_file)           # posting plot files to slack
           self.upload_file_to_asana_task(task_name=seqrun_igf_id, \
                                          filepath=plot_file, \
-                                         comment=e.message)                     # upload plots to asana
+                                         comment=message)                       # upload plots to asana
     except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
