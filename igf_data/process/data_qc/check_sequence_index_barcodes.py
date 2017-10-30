@@ -1,9 +1,11 @@
 import os, json, math, re
 import pandas as pd
-import matplotlib.pyplot as plt
 import numpy as np
 from igf_data.illumina.samplesheet import SampleSheet
 from igf_data.utils.sequtils import rev_comp
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 
 class IndexBarcodeValidationError(Exception):
   '''
