@@ -33,10 +33,11 @@ class ValidateAllLanesForProject(IGFBaseProcess):
         self.param('dataflow_params',{'project_fastq':project_fastq})
       else:
         for fastq_dir in project_fastq.keys():
-          report_dir=os.path.join(fastq_dir,'Reports/html')
+          report_dir=os.path.join(fastq_dir,'Reports','html')
           for flowcell in os.listdir(report_dir):
-            if os.path.isdir(flowcell):
-              all_barcodes_html=os.path.join(flowcell,'all/all/all/laneBarcode.html')
+            flowcell_dir=os.path.join(report_dir,flowcell_dir)
+            if os.path.isdir(flowcell_dir):
+              all_barcodes_html=os.path.join(flowcell_dir,'all','all','all','laneBarcode.html')
               if os.path.exists(all_barcodes_html):
                 message='Failed barcode stats for seqrun: {0}, project: {1}'.\
                          format(seqrun_igf_id,project_name)
