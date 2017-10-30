@@ -96,7 +96,7 @@ class Collect_seqrun_fastq_to_db:
           m=r2_regex.match(os.path.basename(file2))
           lane_id=m.group(1).strip('0')
           sample_files[lane_id]['R2']=file2
-  return sample_files
+    return sample_files
 
 
   def _collect_fastq_and_sample_info(self):
