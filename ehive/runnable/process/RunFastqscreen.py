@@ -5,7 +5,7 @@ from igf_data.utils.fileutils import get_temp_dir,remove_dir
 
 class RunFastqscreen(IGFBaseProcess):
   def param_defaults(self):
-    params_dict=IGFBaseProcess.param_defaults()
+    params_dict=super(IGFBaseProcess,self).param_defaults()
     params_dict.update({
       'overwrite_output':True,
       'fastqscreen_dir_label':'fastqscreen',
@@ -22,6 +22,7 @@ class RunFastqscreen(IGFBaseProcess):
   def run(self):
     try:
       fastq_file=self.param_required('fastq_file')
+      seqrun_igf_id=self.param_required('seqrun_igf_id')
       base_results_dir=self.param_required('base_results_dir')
       project_name=self.param_required('project_name')
       sample_igf_id=self.param_required('sample_igf_id')
@@ -86,5 +87,10 @@ class RunFastqscreen(IGFBaseProcess):
                                      'fastqscreen_stat':fastqscreen_stat,
                                      'fastqscreen_html':fastqscreen_html,
                                      'fastqscreen_png':fastqscreen_png}})       # set dataflow params
-    except:
+    except Exception as e:
+      message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
+                                                      e, \
+                                                      seqrun_igf_id)
+      self.warning(message)
+      self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise
