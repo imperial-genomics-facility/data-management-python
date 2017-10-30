@@ -191,37 +191,37 @@ class CheckSequenceIndexBarcodes:
       for rid, rgrp in raw_df.groupby('runid'):
         for lid,lgrp in rgrp.groupby('lane'):
           all_tag_groups=lgrp.groupby('tag').groups.keys()
+          extra_message=None                                                    # default extra message is none
           if 'known' not in all_tag_groups and \
              'unknown' not in all_tag_groups:
             raise ValueError('tag known and unknown not found:{0}'.\
                              format(all_tag_groups))
           if 'index_1_revcomp' in all_tag_groups:
-            raise IndexBarcodeValidationError(message='{0} {1} found index_1_revcomp'.\
-                                              format(rid, lid), \
-                                              plots=[])
+            message='{0} {1} found index_1_revcomp'.format(rid, lid)
+            extra_message += ', '+message
+          
           if 'only_index_1_revcomp' in all_tag_groups:
-            raise IndexBarcodeValidationError(message='{0} {1} found only_index_1_revcomp'.\
-                                              format(rid, lid), \
-                                              plots=[])
+            message='{0} {1} found only_index_1_revcomp'.format(rid, lid)
+            extra_message += ', '+message
             
           if 'index_1_and_index_2_revcomp' in all_tag_groups:
-            raise IndexBarcodeValidationError(message='{0} {1} found index_1_and_index_2_revcomp'.\
-                                              format(rid, lid), \
-                                              plots=[])
+            message='{0} {1} found index_1_and_index_2_revcomp'.\
+                                              format(rid, lid)
+            extra_message += ', '+message
           
           if 'only_index_2_revcomp' in all_tag_groups:
-            raise IndexBarcodeValidationError(message='{0} {1} found only_index_2_revcomp'.\
-                                              format(rid, lid), \
-                                              plots=[])
-            
+            message='{0} {1} found only_index_2_revcomp'.\
+                                              format(rid, lid)
+            extra_message += ', '+message
+                        
           known_grp=lgrp.groupby('tag').get_group('known')
           min_known_mpr=known_grp['mapping_ratio'].min()
           unknown_grp=lgrp.groupby('tag').get_group('unknown')
           max_unknown_mpr=unknown_grp['mapping_ratio'].max()
           if strict_check and min_known_mpr < max_unknown_mpr:
             (all_barcode_plot,index_plot)=self._generate_barcode_plots(work_dir=work_dir)            # plot stats
-            raise IndexBarcodeValidationError(message='{0} {1} failed mapping ratio check'.\
-                                              format(rid, lid), \
+            raise IndexBarcodeValidationError(message='{0} {1} failed mapping ratio check, {2}'.\
+                                              format(rid, lid,extra_message), \
                                               plots=[all_barcode_plot,index_plot])                   # report about the first issue
             
     except:
