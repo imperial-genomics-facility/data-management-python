@@ -82,7 +82,9 @@ class IGFBaseRunnable(eHive.BaseRunnable):
     try:
       if self.param('log_asana'):
         igf_asana=self.param_required('igf_asana')
-        igf_asana.attach_file_to_asana_task(self,task_name, filepath, comment)
+        igf_asana.attach_file_to_asana_task(task_name=task_name, \
+                                            filepath=filepath, \
+                                            comment=comment)
     except:
       raise
   
