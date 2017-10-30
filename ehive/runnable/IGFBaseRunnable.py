@@ -66,7 +66,7 @@ class IGFBaseRunnable(eHive.BaseRunnable):
     try:
       if self.param('log_slack'):
         igf_slack = self.param_required('igf_slack')
-        igf_slack.post_file_to_channel(message=message,file=filepath)
+        igf_slack.post_file_to_channel(message=message,filepath=filepath)
     except:
       raise
   
