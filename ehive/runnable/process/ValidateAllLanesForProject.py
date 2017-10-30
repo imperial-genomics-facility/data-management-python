@@ -32,7 +32,7 @@ class ValidateAllLanesForProject(IGFBaseProcess):
       if project_status=='PASS':
         self.param('dataflow_params',{'project_fastq':project_fastq})
       else:
-        for fastq_dir in project_fastq.key():
+        for fastq_dir in project_fastq.keys():
           report_dir=os.path.join(fastq_dir,'Reports/html')
           for flowcell in os.listdir(report_dir):
             if os.path.isdir(flowcell):
