@@ -4,7 +4,7 @@ from igf_data.utils.fileutils import copy_remote_file
 
 class CopyQCFileToRemote(IGFBaseProcess):
   def param_defaults(self):
-    params_dict=IGFBaseProcess.param_defaults()
+    params_dict=super(IGFBaseProcess,self).param_defaults()
     params_dict.update({
       'remote_host':'eliot.med.ic.ac.uk',
       'remote_project_path':None,
@@ -19,6 +19,7 @@ class CopyQCFileToRemote(IGFBaseProcess):
   def run(self):
     try:
       file=self.param_required('file')
+      seqrun_igf_id=self.param_required('seqrun_igf_id')
       remote_host=self.param_required('remote_host')
       remote_project_path=self.param_required('remote_project_path')
       remote_seqrun_path=self.param_required('remote_seqrun_path')
@@ -66,5 +67,10 @@ class CopyQCFileToRemote(IGFBaseProcess):
                        destinationa_path=destination_outout_path, \
                        destination_address=remote_host)                         # copy file to remote
       self.param('dataflow_params',{'file':file, 'status': 'done'})             # add dataflow params
-    except:
+    except Exception as e:
+      message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
+                                                      e, \
+                                                      seqrun_igf_id)
+      self.warning(message)
+      self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise 
