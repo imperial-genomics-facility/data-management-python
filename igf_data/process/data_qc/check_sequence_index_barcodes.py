@@ -182,13 +182,6 @@ class CheckSequenceIndexBarcodes:
       summary_df=self.processed_df
       raw_df=self.raw_df
       
-      # check known_pct/unknown_pct
-      for runid, grp in summary_df.groupby('id'):
-        if strict_check and grp['known_pct'].values[0] < know_barcode_ratio_cutoff:
-          (all_barcode_plot,index_plot)=self._generate_barcode_plots(work_dir=work_dir)                 # plot stats
-          raise IndexBarcodeValidationError(message='{0} failed total barcode check: {1}'.\
-                                            format(runid, grp['known_pct'].values[0]), \
-                                            plots=[all_barcode_plot,index_plot])
       # check for individual barcodes mapping ratios
       for rid, rgrp in raw_df.groupby('runid'):
         for lid,lgrp in rgrp.groupby('lane'):
@@ -226,6 +219,13 @@ class CheckSequenceIndexBarcodes:
                                               format(rid, lid,extra_message), \
                                               plots=[all_barcode_plot,index_plot])                   # report about the first issue
             
+      # check known_pct/unknown_pct
+      for runid, grp in summary_df.groupby('id'):
+        if strict_check and grp['known_pct'].values[0] < know_barcode_ratio_cutoff:
+          (all_barcode_plot,index_plot)=self._generate_barcode_plots(work_dir=work_dir)              # plot stats
+          raise IndexBarcodeValidationError(message='{0} failed total barcode check: {1}'.\
+                                            format(runid, grp['known_pct'].values[0]), \
+                                            plots=[all_barcode_plot,index_plot])
     except:
         raise
 
