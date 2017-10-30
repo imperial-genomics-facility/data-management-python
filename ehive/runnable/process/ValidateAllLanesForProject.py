@@ -35,7 +35,7 @@ class ValidateAllLanesForProject(IGFBaseProcess):
         for fastq_dir in project_fastq.keys():
           report_dir=os.path.join(fastq_dir,'Reports','html')
           for flowcell in os.listdir(report_dir):
-            flowcell_dir=os.path.join(report_dir,flowcell_dir)
+            flowcell_dir=os.path.join(report_dir,flowcell)
             if os.path.isdir(flowcell_dir):
               all_barcodes_html=os.path.join(flowcell_dir,'all','all','all','laneBarcode.html')
               if os.path.exists(all_barcodes_html):
