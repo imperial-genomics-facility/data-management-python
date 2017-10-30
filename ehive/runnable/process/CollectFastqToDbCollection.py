@@ -7,13 +7,16 @@ class CollectFastqToDbCollection(IGFBaseProcess):
   as the experiment and runs
   '''
   def param_defaults(self):
-    params_dict=IGFBaseProcess.param_defaults()
+    params_dict=super(IGFBaseProcess,self).param_defaults()
     params_dict.update({'file_location':'HPC_PROJECT',
                         'samplesheet_filename':'SampleSheet.csv',
                       })
+    return params_dict
     
   def run(self):
     try:
+      seqrun_igf_id=self.param_required('seqrun_igf_id')
+      project_name=self.param_required('project_name')
       fastq_dir=self.param_required('fastq_dir')
       igf_session_class=self.param_required('igf_session_class')
       model_name=self.param_required('model_name')
@@ -29,5 +32,10 @@ class CollectFastqToDbCollection(IGFBaseProcess):
                                                   )
       collect_instance.find_fastq_and_build_db_collection()
       self.param('dataflow_params',{'fastq_dir':fastq_dir})
-    except:
+    except Exception as e:
+      message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
+                                                      e, \
+                                                      seqrun_igf_id)
+      self.warning(message)
+      self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise
