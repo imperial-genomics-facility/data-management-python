@@ -193,7 +193,7 @@ class CheckSequenceIndexBarcodes:
       for rid, rgrp in raw_df.groupby('runid'):
         for lid,lgrp in rgrp.groupby('lane'):
           all_tag_groups=lgrp.groupby('tag').groups.keys()
-          extra_message=None                                                    # default extra message is none
+          extra_message=''                                                      # default extra message is empty
           if 'known' not in all_tag_groups and \
              'unknown' not in all_tag_groups:
             raise ValueError('tag known and unknown not found:{0}'.\
