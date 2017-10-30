@@ -6,7 +6,7 @@ class FastqFileFactory(IGFBaseJobFactory):
   A job factory class for creating fan jobs for demultilexed fastq files
   '''
   def param_defaults(self):
-    params_dict=IGFBaseProcess.param_defaults()
+    params_dict=super(IGFBaseJobFactory,self).param_defaults()
     params_dict.update({
         'required_keyword':None,
         'filter_keyword':None,
@@ -17,6 +17,7 @@ class FastqFileFactory(IGFBaseJobFactory):
   def run(self):
     try:
       fastq_dir=self.param_required('fastq_dir')
+      seqrun_igf_id=self.param_required('seqrun_igf_id')
       required_keyword=self.param_required('required_keyword')
       filter_keyword=self.param_required('filter_keyword')
       
@@ -33,5 +34,10 @@ class FastqFileFactory(IGFBaseJobFactory):
             fastq_list.append({'fastq_file':os.path.join(root,file)})           # add fastq file to the list if its not a match
             
       self.param('sub_tasks',fastq_list)                                        # add fastq files to the dataflow
-    except:
+    except Exception as e:
+      message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
+                                                      e, \
+                                                      seqrun_igf_id)
+      self.warning(message)
+      self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise
