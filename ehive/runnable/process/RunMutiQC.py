@@ -5,7 +5,7 @@ from igf_data.utils.fileutils import get_temp_dir,remove_dir
 
 class RunMutiQC(IGFBaseProcess):
   def param_defaults(self):
-    params_dict=IGFBaseProcess.param_defaults()
+    params_dict=super(IGFBaseProcess,self).param_defaults()
     params_dict.update({
       'overwrite_output':True,
       'multiqc_dir_label':'multiqc',
@@ -17,6 +17,7 @@ class RunMutiQC(IGFBaseProcess):
   
   def run(self):
     try:
+      seqrun_igf_id=self.param_required('seqrun_igf_id')
       demultiplexing_stats_file=self.param_required('demultiplexing_stats_file')
       fastqc_files=self.param_required('fastqc_files')
       fastqscreen_files=self.param_required('fastqscreen_files')
@@ -97,5 +98,10 @@ class RunMutiQC(IGFBaseProcess):
       
       self.param('dataflow_params',{'multiqc_html':multiqc_html, \
                                     'multiqc_data':multiqc_data})
-    except:
+    except Exception as e:
+      message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
+                                                      e, \
+                                                      seqrun_igf_id)
+      self.warning(message)
+      self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise
