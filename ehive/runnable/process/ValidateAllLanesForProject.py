@@ -2,7 +2,6 @@
 import os
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from shutil import rmtree
-from igf_data.task_tracking import igf_asana, igf_slack
 
 class ValidateAllLanesForProject(IGFBaseProcess):
   '''
@@ -23,8 +22,7 @@ class ValidateAllLanesForProject(IGFBaseProcess):
       project_fastq=self.param_required('project_fastq')
       strict_check=self.param('strict_check')
       seqrun_igf_id=self.param_required('seqrun_igf_id')
-      flowcell_lane=self.param_required('flowcell_lane')
-      index_length=self.param_required('index_length')
+      project_name=self.param_required('project_name')
       
       project_status='PASS'                                                     # default status is PASS
       for fastq_dir,qc_stats in project_fastq.items():
@@ -34,16 +32,22 @@ class ValidateAllLanesForProject(IGFBaseProcess):
       if project_status=='PASS':
         self.param('dataflow_params',{'project_fastq':project_fastq})
       else:
-        lane_index='{0}_{1}'.format(flowcell_lane,index_length)                   # get label for lane and index length
         for fastq_dir in project_fastq.keys():
-          report_dir=os.path.join(fastq_dir,lane_index,'Reports/html')
+          report_dir=os.path.join(fastq_dir,'Reports/html')
           for flowcell in os.listdir(report_dir):
             if os.path.isdir(flowcell):
               all_barcodes_html=os.path.join(flowcell,'all/all/all/laneBarcode.html')
               if os.path.exists(all_barcodes_html):
-                igf_slack.post_file_to_channel(filepath=all_barcodes_html, \
-                                               message='Failed barcode stats')  # post report file to slack
-          if strict_check:      
+                message='Failed barcode stats for seqrun: {0}, project: {1}'.\
+                         format(seqrun_igf_id,project_name)
+                self.post_file_to_slack(filepath=filepath,message=message)      # post report file to slack
+                self.upload_file_to_asana_task(task_name=seqrun_igf_id, \
+                                               filepath=filepath,\
+                                               comment=message)                 # attach html page to asana ticket
+          if strict_check:
+            self.post_message_to_slack(message='removing fastq dir {0}'.\
+                                               format(fastq_dir), \
+                                      reaction='pass')
             rmtree(fastq_dir)                                                   # delete failed fastq dir
     except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
