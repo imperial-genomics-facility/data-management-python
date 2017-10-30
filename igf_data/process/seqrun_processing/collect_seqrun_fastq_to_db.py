@@ -14,8 +14,8 @@ from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_data.utils.fileutils import calculate_file_checksum
 
 class Collect_seqrun_fastq_to_db:
-  def __init__(self,fastq_dir,model_name,samplesheet_filename='SampleSheet.csv', \
-               seqrun_igf_id,session_class,collection_type='demultiplexed_fastq',\
+  def __init__(self,fastq_dir,model_name,seqrun_igf_id,session_class,\
+               samplesheet_filename='SampleSheet.csv',collection_type='demultiplexed_fastq',\
                file_location='HPC_PROJECT'):
     self.fastq_dir=fastq_dir
     self.samplesheet_filename=samplesheet_filename
