@@ -41,9 +41,10 @@ class ValidateAllLanesForProject(IGFBaseProcess):
               if os.path.exists(all_barcodes_html):
                 message='Failed barcode stats for seqrun: {0}, project: {1}'.\
                          format(seqrun_igf_id,project_name)
-                self.post_file_to_slack(filepath=filepath,message=message)      # post report file to slack
+                self.post_file_to_slack(filepath=all_barcodes_html,\
+                                        message=message)                        # post report file to slack
                 self.upload_file_to_asana_task(task_name=seqrun_igf_id, \
-                                               filepath=filepath,\
+                                               filepath=all_barcodes_html,\
                                                comment=message)                 # attach html page to asana ticket
           if strict_check:
             self.post_message_to_slack(message='removing fastq dir {0}'.\
