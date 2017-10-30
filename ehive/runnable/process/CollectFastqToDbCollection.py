@@ -1,4 +1,4 @@
-from igf_data.process.collect_seqrun_fastq_to_db import Collect_seqrun_fastq_to_db
+from igf_data.process.seqrun_processing.collect_seqrun_fastq_to_db import Collect_seqrun_fastq_to_db
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 
 class CollectFastqToDbCollection(IGFBaseProcess):
