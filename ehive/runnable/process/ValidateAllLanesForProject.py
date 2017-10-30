@@ -30,8 +30,11 @@ class ValidateAllLanesForProject(IGFBaseProcess):
           project_status='FAIL'                                                 # mark project status as failed if any lane is failed
           
       if project_status=='PASS':
-        self.param('dataflow_params',{'project_fastq':project_fastq})
+        self.param('dataflow_params',{'project_fastq':project_fastq,
+                                      'project_status':project_status})
       else:
+        self.param('dataflow_params',{'project_status':project_status})
+        
         for fastq_dir in project_fastq.keys():
           report_dir=os.path.join(fastq_dir,'Reports','html')
           for flowcell in os.listdir(report_dir):
