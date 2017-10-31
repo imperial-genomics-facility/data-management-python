@@ -24,7 +24,7 @@ class CollectFastqToDbCollection(IGFBaseProcess):
       file_location=self.param('file_location')
       samplesheet_filename=self.param('samplesheet_filename')
       collect_instance=Collect_seqrun_fastq_to_db(fastq_dir=fastq_dir,
-                                                  igf_session_class=igf_session_class,
+                                                  session_class=igf_session_class,
                                                   model_name=model_name,
                                                   flowcell_id=flowcell_id,
                                                   file_location=file_location,
