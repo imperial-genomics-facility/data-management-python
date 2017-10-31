@@ -14,10 +14,11 @@ from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_data.utils.fileutils import calculate_file_checksum
 
 class Collect_seqrun_fastq_to_db:
-  def __init__(self,fastq_dir,model_name,seqrun_igf_id,session_class,\
+  def __init__(self,fastq_dir,model_name,seqrun_igf_id,session_class,samplesheet_file=None,\
                samplesheet_filename='SampleSheet.csv',collection_type='demultiplexed_fastq',\
                file_location='HPC_PROJECT'):
     self.fastq_dir=fastq_dir
+    self.samplesheet_file=samplesheet_file
     self.samplesheet_filename=samplesheet_filename
     self.seqrun_igf_id=seqrun_igf_id
     self.model_name=model_name
@@ -51,6 +52,7 @@ class Collect_seqrun_fastq_to_db:
     
   def _get_fastq_and_samplesheet(self):
     fastq_dir=self.fastq_dir
+    samplesheet_file=self.samplesheet_file
     samplesheet_filename=self.samplesheet_filename
     r1_fastq_regex=re.compile(r'\S+_R1_\d+\.fastq(\.gz)?', re.IGNORECASE)
     r2_fastq_regex=re.compile(r'\S+_R2_\d+\.fastq(\.gz)?', re.IGNORECASE)
@@ -71,11 +73,18 @@ class Collect_seqrun_fastq_to_db:
       raise ValueError('R1 {0} and R2 {1}'.format(len(r1_fastq_list),\
                                                   len(r2_fastq_list)))
   
+    if samplesheet_file is None and len(samplesheet_list)==1:
+        self.samplesheet_file=samplesheet_list[0]                               # set samplesheet file name
+        
     if len(samplesheet_list) > 1:
       raise ValueError('Found more than one samplesheet file for fastq dir {0}'.\
                        format(fastq_dir))
+         
+    if samplesheet_file is None and len(samplesheet_list)==0:
+      raise ValueError('No samplesheet file for fastq dir {0}'.\
+                       format(fastq_dir))
   
-    return samplesheet_list[0], r1_fastq_list, r2_fastq_list
+    return r1_fastq_list, r2_fastq_list
 
 
   def _link_fastq_file_to_sample(self,sample_name,r1_fastq_list, r2_fastq_list):
@@ -104,8 +113,9 @@ class Collect_seqrun_fastq_to_db:
     samplesheet_filename=self.samplesheet_filename
     seqrun_igf_id=self.seqrun_igf_id
     model_name=self.model_name
-    (samplesheet_file, r1_fastq_list, r2_fastq_list)=\
+    (r1_fastq_list, r2_fastq_list)=\
         self._get_fastq_and_samplesheet()
+    samplesheet_file=self.samplesheet_file
     samplesheet_data=SampleSheet(infile=samplesheet_file)
     fastq_files_list=list()
     for row in samplesheet_data._data:
