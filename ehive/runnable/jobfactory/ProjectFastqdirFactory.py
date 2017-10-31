@@ -12,6 +12,7 @@ class ProjectFastqdirFactory(IGFBaseJobFactory):
   def run(self):
     try:
       project_fastq=self.param_required('project_fastq')
+      seqrun_igf_id=self.param_required('seqrun_igf_id')
       seed_data=[{'fastq_dir':fastq_dir} for fastq_dir in project_fastq.key()]  # define seed data
       self.param('sub_tasks',seed_data)                                         # add param for dataflow
     except Exception as e:
