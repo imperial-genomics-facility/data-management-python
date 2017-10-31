@@ -37,7 +37,7 @@ class CheckIndexStats(IGFBaseProcess):
       self.param('dataflow_params',{'barcode_qc_stats':'PASS'})                 # seed dataflow parame for the qc passed lanes
     except IndexBarcodeValidationError as e:
       self.param('dataflow_params',{'barcode_qc_stats':'FAIL'})                 # seed dataflow for failed lanes
-      message='project: {0}, message:{1}'.format(e.message)
+      message='project: {0}, message:{1}'.format(project_name,e.message)
       if len(e.plots)==0:
         self.post_message_to_slack(message=e.message,reaction='fail')           # only post msg to slack if no plots
         self.comment_asana_task(task_name=seqrun_igf_id, comment=e.message)     # log to asana task
