@@ -2,6 +2,7 @@ import os, re, fnmatch
 from collections import defaultdict
 from igf_data.illumina.samplesheet import SampleSheet
 import pandas as pd
+from igf_data.igfdb.igfTables import Experiment, Run
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.platformadaptor import PlatformAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
@@ -14,9 +15,9 @@ from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_data.utils.fileutils import calculate_file_checksum
 
 class Collect_seqrun_fastq_to_db:
-  def __init__(self,fastq_dir,model_name,seqrun_igf_id,session_class,samplesheet_file=None,\
-               samplesheet_filename='SampleSheet.csv',collection_type='demultiplexed_fastq',\
-               file_location='HPC_PROJECT'):
+  def __init__(self,fastq_dir,model_name,seqrun_igf_id,session_class,flowcell_id,\
+               samplesheet_file=None,samplesheet_filename='SampleSheet.csv',\
+               collection_type='demultiplexed_fastq',file_location='HPC_PROJECT'):
     self.fastq_dir=fastq_dir
     self.samplesheet_file=samplesheet_file
     self.samplesheet_filename=samplesheet_filename
@@ -25,6 +26,7 @@ class Collect_seqrun_fastq_to_db:
     self.session_class=session_class
     self.collection_type=collection_type
     self.file_location=file_location
+    self.flowcell_id=flowcell_id
     
     
   def find_fastq_and_build_db_collection(self):
@@ -59,15 +61,16 @@ class Collect_seqrun_fastq_to_db:
     samplesheet_list=list()
     r1_fastq_list=list()
     r2_fastq_list=list()
-    for root, dirs, files in os.walk(top=fastq_dir, topdown=True):
+    for root, dirs, files in os.walk(top=fastq_dir):
       if samplesheet_filename in files:
         samplesheet_list.append(os.path.join(root,samplesheet_filename))
-        for file in files:
-          if not fnmatch.fnmatch(file, 'Undetermined_'):
-            if r1_fastq_regex.match(file):
-              r1_fastq_list.append(os.path.join(root,file))
-            elif r2_fastq_regex.match(file):
-              r2_fastq_list.append(os.path.join(root,file))
+        
+      for file in files:
+        if not fnmatch.fnmatch(file, 'Undetermined_'):
+          if r1_fastq_regex.match(file):
+            r1_fastq_list.append(os.path.join(root,file))
+          elif r2_fastq_regex.match(file):
+            r2_fastq_list.append(os.path.join(root,file))
         
     if len(r2_fastq_list) > 0 and len(r1_fastq_list) != len(r2_fastq_list):
       raise ValueError('R1 {0} and R2 {1}'.format(len(r1_fastq_list),\
@@ -113,6 +116,7 @@ class Collect_seqrun_fastq_to_db:
     samplesheet_filename=self.samplesheet_filename
     seqrun_igf_id=self.seqrun_igf_id
     model_name=self.model_name
+    flowcell_id=self.flowcell_id
     (r1_fastq_list, r2_fastq_list)=\
         self._get_fastq_and_samplesheet()
     samplesheet_file=self.samplesheet_file
@@ -162,7 +166,7 @@ class Collect_seqrun_fastq_to_db:
     data['run_igf_id']=run_igf_id
     # set collection name and type
     data['name']=run_igf_id
-    data['type']==self.collection_type
+    data['type']=self.collection_type
     data['location']=self.file_location
     # set file md5 and size
     if 'R1' in data:
@@ -243,7 +247,7 @@ class Collect_seqrun_fastq_to_db:
                           'R1','R1_md5','R1_size','R2',
                           'R2_md5','R2_size']
       file_group_data=dataframe.loc[:,file_group_columns]
-      file_group_data=file_group_data.drop_duplicates()
+      file_group_data=file_group_data.drop_duplicates().dropna()
       (file_data,file_group_data)=self._reformat_file_group_data(data=file_group_data)
       # get base session
       base=BaseAdaptor(**{'session_class':session_class})
