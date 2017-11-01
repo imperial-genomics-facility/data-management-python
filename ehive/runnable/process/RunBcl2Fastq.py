@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import os, subprocess
-from shutil import copytree
+from shutil import copytree, copy2
 from igf_data.utils.fileutils import get_temp_dir,remove_dir
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.process.moveBclFilesForDemultiplexing import moveBclFilesForDemultiplexing
@@ -14,6 +14,7 @@ class RunBcl2Fastq(IGFBaseProcess):
     params_dict=super(IGFBaseProcess,self).param_defaults()
     params_dict.update({
         'runinfo_filename':'RunInfo.xml',
+        'samplesheet_filename':'SampleSheet.csv',
         'fastq_dir_label':'fastq',
         'force_overwrite':True,
         'bcl2fastq_exe':'bcl2fastq',
@@ -39,6 +40,7 @@ class RunBcl2Fastq(IGFBaseProcess):
       bcl2fastq_options=self.param('bcl2fastq_options')
       force_overwrite=self.param('force_overwrite')
       fastq_dir_label=self.param('fastq_dir_label')
+      samplesheet_filename=self.param('samplesheet_filename')
       
       seqrun_dir=os.path.join(seqrun_local_dir,seqrun_igf_id)                   # local seqrun dir
       runinfo_file=os.path.join(seqrun_dir,runinfo_filename)                    # seqrun runinfo file
@@ -80,6 +82,8 @@ class RunBcl2Fastq(IGFBaseProcess):
       subprocess.check_call(bcl2fastq_cmd)                                      # run bcl2fastq
       
       copytree(output_temp_dir,output_fastq_dir)                                # copy output from TMPDIR
+      copy2(samplesheet_file,os.path.join(output_fastq_dir,\
+                                          samplesheet_filename))                # add samplesheet to output dir
       self.param('dataflow_params',{'fastq_dir':output_fastq_dir})              # set dataflow params
       message='seqrun: {0}, project: {1}, lane: {2}, index: {3}, fastq: {4}'.\
               format(seqrun_igf_id,project_name,flowcell_id,\
