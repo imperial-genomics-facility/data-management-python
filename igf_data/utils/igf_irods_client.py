@@ -10,7 +10,7 @@ class IGF_irods_uploader:
   Authenticate irods settings using your password
   The above command will generate a file containing your iRODS password in a 'scrambled form'
   '''
-  def __init__(self,irods_exe_dir,host="eliot.med.ic.ac.uk",zone="igfZone",
+  def __init__(self,irods_exe_dir,host="eliot.med.ic.ac.uk",zone="/igfZone",
                port=1247,igf_user='igf', irods_resource='woolfResc'):
     self.irods_exe_dir=irods_exe_dir
     self.host=host
@@ -18,7 +18,6 @@ class IGF_irods_uploader:
     self.port=port
     self.igf_user=igf_user
     self.irods_resource=irods_resource
-    self.irods_module=irods_module
 
 
   def upload_fastqfile_and_create_collection(self,filepath,irods_user,project_name, \
@@ -28,12 +27,11 @@ class IGF_irods_uploader:
     A method for uploading files to irods server and creating collections with metadata
     '''
     try:
-      if not os.path.exists(path)(filepath) or not os.path.isdir(filepath):
+      if not os.path.exists(filepath) or os.path.isdir(filepath):
         raise IOError('filepath {0} not found or its not a file'.format(filepath))
       
       irods_exe_dir=self.irods_exe_dir
       file_name=os.path.basename(filepath)                                      # get file name
-      self._load_irods_module_for_cx1()                                         # load irods env settings
       irods_dir=os.path.join(self.zone,'home',irods_user,project_name,data_type,\
                              seqrun_date)                                       # configure destination path
       irods_filepath=os.path.join(irods_dir,file_name)                          # get the destination filepath
@@ -50,7 +48,7 @@ class IGF_irods_uploader:
       imeta_add_cmd=['{0}/{1}'.format(irods_exe_dir,'imeta'),'add','-C',
                      irods_dir,'run_name', seqrun_igf_id]
       subprocess.check_call(imeta_add_cmd)                                      # set run_name metadata for new dir
-      iput_cmd=['{0}/{1}'.format(irods_exe_dir,'iput'),'-k','-f','-N',1,'-R',
+      iput_cmd=['{0}/{1}'.format(irods_exe_dir,'iput'),'-k','-f','-N','1','-R',
                 self.irods_resource, filepath, irods_dir]
       subprocess.check_call(iput_cmd)                                           # upload file to irods dir, calculate md5sub and overwrite
       meta_30d=['{0}/{1}'.format(irods_exe_dir,'isysmeta'),'mod', 
