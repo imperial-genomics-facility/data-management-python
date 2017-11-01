@@ -104,33 +104,33 @@ class Collect_fastq_test1(unittest.TestCase):
     Base.metadata.drop_all(self.engine)
     os.remove(self.dbname)
     
-  #def test__get_fastq_and_samplesheet(self):
-  #  ci=Collect_seqrun_fastq_to_db(fastq_dir=self.fastq_dir,
-  #                                session_class=self.session_class,
-  #                                seqrun_igf_id=self.seqrun_igf_id,
-  #                                flowcell_id=self.flowcell_id,
-  #                                model_name=self.model_name,
-  #                                file_location=self.file_location,
-  #                                samplesheet_file=self.samplesheet_file,
-  #                               )
-  #  (r1_fastq_list, r2_fastq_list)=ci._get_fastq_and_samplesheet()
-  #  self.assertEqual(len(r1_fastq_list), 5)
-  #  self.assertEqual(len(r2_fastq_list), 0)
+  def test__get_fastq_and_samplesheet(self):
+    ci=Collect_seqrun_fastq_to_db(fastq_dir=self.fastq_dir,
+                                  session_class=self.session_class,
+                                  seqrun_igf_id=self.seqrun_igf_id,
+                                  flowcell_id=self.flowcell_id,
+                                  model_name=self.model_name,
+                                  file_location=self.file_location,
+                                  samplesheet_file=self.samplesheet_file,
+                                 )
+    (r1_fastq_list, r2_fastq_list)=ci._get_fastq_and_samplesheet()
+    self.assertEqual(len(r1_fastq_list), 5)
+    self.assertEqual(len(r2_fastq_list), 0)
     
-  #def test_collect_fastq_and_sample_info(self):
-  #  ci=Collect_seqrun_fastq_to_db(fastq_dir=self.fastq_dir,
-  #                                session_class=self.session_class,
-  #                                seqrun_igf_id=self.seqrun_igf_id,
-  #                                flowcell_id=self.flowcell_id,
-  #                                model_name=self.model_name,
-  #                                file_location=self.file_location,
-  #                                samplesheet_file=self.samplesheet_file,
-  #                               )
-  #  fastq_files_list=ci._collect_fastq_and_sample_info()
-  #  for fastq_file in fastq_files_list:
-  #    if fastq_file['sample_igf_id']=='IGF00002':
-  #      self.assertEqual(fastq_file['R1'],\
-  #      'data/collect_fastq_dir/1_16/IGFP0001_test_22-8-2017_rna/IGF00002/IGF00002-2_S1_L001_R1_001.fastq.gz')
+  def test_collect_fastq_and_sample_info(self):
+    ci=Collect_seqrun_fastq_to_db(fastq_dir=self.fastq_dir,
+                                  session_class=self.session_class,
+                                  seqrun_igf_id=self.seqrun_igf_id,
+                                  flowcell_id=self.flowcell_id,
+                                  model_name=self.model_name,
+                                  file_location=self.file_location,
+                                  samplesheet_file=self.samplesheet_file,
+                                 )
+    fastq_files_list=ci._collect_fastq_and_sample_info()
+    for fastq_file in fastq_files_list:
+      if fastq_file['sample_igf_id']=='IGF00002':
+        self.assertEqual(fastq_file['R1'],\
+        'data/collect_fastq_dir/1_16/IGFP0001_test_22-8-2017_rna/IGF00002/IGF00002-2_S1_L001_R1_001.fastq.gz')
     
   def test_find_fastq_and_build_db_collection(self):
     ci=Collect_seqrun_fastq_to_db(fastq_dir=self.fastq_dir,
@@ -144,69 +144,68 @@ class Collect_fastq_test1(unittest.TestCase):
     ci.find_fastq_and_build_db_collection()
     ca=CollectionAdaptor(**{'session_class':self.session_class})
   
-  #def test_calculate_experiment_run_and_file_info(self):
-  #  data={'lane_number': '1', 
-  #         'seqrun_igf_id': '171003_M00001_0089_000000000-TEST', 
-  #         'description': '', 
-  #         'project_igf_id': 'IGFP0001_test_22-8-2017_rna', 
-  #         'sample_igf_id': 'IGF00001', 
-  #         'sample_name': 'IGF00001-1', 
-  #         'R1': 'data/collect_fastq_dir/1_16/IGFP0001_test_22-8-2017_rna/IGF00001/IGF00001-1_S1_L001_R1_001.fastq.gz',
-  #         'platform_name': 'MISEQ',
-  #         'flowcell_id': '000000000-D0YLK'}
-  #  
-  #  ci=Collect_seqrun_fastq_to_db(fastq_dir=self.fastq_dir,
-  #                                session_class=self.session_class,
-  #                                seqrun_igf_id=self.seqrun_igf_id,
-  #                                flowcell_id=self.flowcell_id,
-  #                                model_name=self.model_name,
-  #                                file_location=self.file_location,
-  #                                samplesheet_file=self.samplesheet_file,
-  #                               )
-  #  data=ci._calculate_experiment_run_and_file_info(data=data,restricted_list=['10X'])
-  #  data=data.to_dict()
-  #  self.assertEqual(data['experiment_igf_id'],'IGF00001_MISEQ')
-  #  self.assertEqual(data['run_igf_id'],'IGF00001_MISEQ_000000000-D0YLK_1')
-  #  self.assertEqual(data['name'],'IGF00001_MISEQ_000000000-D0YLK_1')
-  #  self.assertEqual(data['type'],'demultiplexed_fastq')
-
-  #def test_reformat_file_group_data(self):
-  #  ci=Collect_seqrun_fastq_to_db(fastq_dir=self.fastq_dir,
-  #                                session_class=self.session_class,
-  #                                seqrun_igf_id=self.seqrun_igf_id,
-  #                                flowcell_id=self.flowcell_id,
-  #                                model_name=self.model_name,
-  #                                file_location=self.file_location,
-  #                                samplesheet_file=self.samplesheet_file,
-  #                               )
-  #  data=[{'location': 'HPC_PROJECT',
-  #        'sample_igf_id': 'IGF00001', 
-  #        'sample_name': 'IGF00001-1',
-  #        'lane_number': '1', 
-  #        'run_igf_id': 'IGF00001_MISEQ_000000000-D0YLK_1', 
-  #        'R1_md5': '767adf23d195c31b014c875a2cdd191f', 
-  #        'experiment_igf_id': 'IGF00001_MISEQ', 
-  #        'project_igf_id': 'IGFP0001_test_22-8-2017_rna',
-  #        'flowcell_id': '000000000-D0YLK',
-  #        'R1_size': 34,
-  #        'type': 'demultiplexed_fastq',
-  #        'description': '',
-  #        'seqrun_igf_id': '171003_M00001_0089_000000000-TEST',
-  #        'library_name': 'IGF00001',
-  #        'library_layout': 'SINGLE',
-  #        'platform_name': 'MISEQ',
-  #        'name': 'IGF00001_MISEQ_000000000-D0YLK_1',
-  #        'R1': 'data/collect_fastq_dir/1_16/IGFP0001_test_22-8-2017_rna/IGF00001/IGF00001-1_S1_L001_R1_001.fastq.gz'}]
-  #  (file_data,file_group_data)=ci._reformat_file_group_data(data=data)
-  #  file_data=file_data.to_dict(orient='records')
-  #  file_data=file_data[0]
-  #  self.assertEqual(file_data['md5'],'767adf23d195c31b014c875a2cdd191f')
-  #  self.assertEqual(file_data['file_path'],'data/collect_fastq_dir/1_16/IGFP0001_test_22-8-2017_rna/IGF00001/IGF00001-1_S1_L001_R1_001.fastq.gz')
-  #  file_group_data=file_group_data.to_dict(orient='records')
-  #  file_group_data=file_group_data[0]
-  #  self.assertEqual(file_group_data['file_path'],'data/collect_fastq_dir/1_16/IGFP0001_test_22-8-2017_rna/IGF00001/IGF00001-1_S1_L001_R1_001.fastq.gz')
-  #  self.assertEqual(file_group_data['name'],'IGF00001_MISEQ_000000000-D0YLK_1')
-
+  def test_calculate_experiment_run_and_file_info(self):
+    data={'lane_number': '1', 
+           'seqrun_igf_id': '171003_M00001_0089_000000000-TEST', 
+           'description': '', 
+           'project_igf_id': 'IGFP0001_test_22-8-2017_rna', 
+           'sample_igf_id': 'IGF00001', 
+           'sample_name': 'IGF00001-1', 
+           'R1': 'data/collect_fastq_dir/1_16/IGFP0001_test_22-8-2017_rna/IGF00001/IGF00001-1_S1_L001_R1_001.fastq.gz',
+           'platform_name': 'MISEQ',
+           'flowcell_id': '000000000-D0YLK'}
     
+    ci=Collect_seqrun_fastq_to_db(fastq_dir=self.fastq_dir,
+                                  session_class=self.session_class,
+                                  seqrun_igf_id=self.seqrun_igf_id,
+                                  flowcell_id=self.flowcell_id,
+                                  model_name=self.model_name,
+                                  file_location=self.file_location,
+                                  samplesheet_file=self.samplesheet_file,
+                                 )
+    data=ci._calculate_experiment_run_and_file_info(data=data,restricted_list=['10X'])
+    data=data.to_dict()
+    self.assertEqual(data['experiment_igf_id'],'IGF00001_MISEQ')
+    self.assertEqual(data['run_igf_id'],'IGF00001_MISEQ_000000000-D0YLK_1')
+    self.assertEqual(data['name'],'IGF00001_MISEQ_000000000-D0YLK_1')
+    self.assertEqual(data['type'],'demultiplexed_fastq')
+
+  def test_reformat_file_group_data(self):
+    ci=Collect_seqrun_fastq_to_db(fastq_dir=self.fastq_dir,
+                                  session_class=self.session_class,
+                                  seqrun_igf_id=self.seqrun_igf_id,
+                                  flowcell_id=self.flowcell_id,
+                                  model_name=self.model_name,
+                                  file_location=self.file_location,
+                                  samplesheet_file=self.samplesheet_file,
+                                 )
+    data=[{'location': 'HPC_PROJECT',
+          'sample_igf_id': 'IGF00001', 
+          'sample_name': 'IGF00001-1',
+          'lane_number': '1', 
+          'run_igf_id': 'IGF00001_MISEQ_000000000-D0YLK_1', 
+          'R1_md5': '767adf23d195c31b014c875a2cdd191f', 
+          'experiment_igf_id': 'IGF00001_MISEQ', 
+          'project_igf_id': 'IGFP0001_test_22-8-2017_rna',
+          'flowcell_id': '000000000-D0YLK',
+          'R1_size': 34,
+          'type': 'demultiplexed_fastq',
+          'description': '',
+          'seqrun_igf_id': '171003_M00001_0089_000000000-TEST',
+          'library_name': 'IGF00001',
+          'library_layout': 'SINGLE',
+          'platform_name': 'MISEQ',
+          'name': 'IGF00001_MISEQ_000000000-D0YLK_1',
+          'R1': 'data/collect_fastq_dir/1_16/IGFP0001_test_22-8-2017_rna/IGF00001/IGF00001-1_S1_L001_R1_001.fastq.gz'}]
+    (file_data,file_group_data)=ci._reformat_file_group_data(data=data)
+    file_data=file_data.to_dict(orient='records')
+    file_data=file_data[0]
+    self.assertEqual(file_data['md5'],'767adf23d195c31b014c875a2cdd191f')
+    self.assertEqual(file_data['file_path'],'data/collect_fastq_dir/1_16/IGFP0001_test_22-8-2017_rna/IGF00001/IGF00001-1_S1_L001_R1_001.fastq.gz')
+    file_group_data=file_group_data.to_dict(orient='records')
+    file_group_data=file_group_data[0]
+    self.assertEqual(file_group_data['file_path'],'data/collect_fastq_dir/1_16/IGFP0001_test_22-8-2017_rna/IGF00001/IGF00001-1_S1_L001_R1_001.fastq.gz')
+    self.assertEqual(file_group_data['name'],'IGF00001_MISEQ_000000000-D0YLK_1')
+
 if __name__=='__main__':
   unittest.main()
