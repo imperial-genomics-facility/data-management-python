@@ -26,6 +26,7 @@ class CollectFastqToDbCollection(IGFBaseProcess):
       collect_instance=Collect_seqrun_fastq_to_db(fastq_dir=fastq_dir,
                                                   session_class=igf_session_class,
                                                   model_name=model_name,
+                                                  seqrun_igf_id=seqrun_igf_id,
                                                   flowcell_id=flowcell_id,
                                                   file_location=file_location,
                                                   samplesheet_filename=samplesheet_filename,
