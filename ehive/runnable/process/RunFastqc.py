@@ -7,11 +7,11 @@ class RunFastqc(IGFBaseProcess):
   def param_defaults(self):
     params_dict=super(IGFBaseProcess,self).param_defaults()
     params_dict.update({
-      'overwrite_output':True,
+      'force_overwrite':True,
       'fastqc_dir_label':'fastqc',
-      'fastqc_module':'fastqc/0.11.2',
       'fastqc_exe':'fastqc',
-      'fastqc_options':{'-q':'','--noextract':'','-f':'fastq','-k':7,'-t':1},
+      'fastqc_options':{'-q':'','--noextract':'','-f':'fastq','-k':'7','-t':'1'},
+      'tag':None,
       })
     return params_dict
   
@@ -19,21 +19,33 @@ class RunFastqc(IGFBaseProcess):
     try:
       fastq_file=self.param_required('fastq_file')
       fastqc_exe=self.param_required('fastqc_exe')
+      tag=self.param_required('tag')
       seqrun_igf_id=self.param_required('seqrun_igf_id')
+      seqrun_date=self.param_required('seqrun_date')
+      flowcell_id=self.param_required('flowcell_id')
       fastqc_module=self.param('fastqc_module')
       fastqc_options=self.param('fastqc_options')
       base_results_dir=self.param_required('base_results_dir')
       project_name=self.param_required('project_name')
-      sample_igf_id=self.param_required('sample_igf_id')
-      run_igf_id=self.param_required('run_igf_id')
-      overwrite_output=self.param('overwrite_output')
+      force_overwrite=self.param('force_overwrite')
       fastqc_dir_label=self.param('fastqc_dir_label')
+      
+      lane_index_info=os.path.basename(os.path.dirname(fastq_file))             # get the lane and index length info
+      fastq_file_label=os.path.basename(fastq_file).replace('.fastq.gz','')
+      fastqc_result_dir=None
       
       fastqc_result_dir=os.path.join(base_results_dir, \
                                      project_name, \
                                      fastqc_dir_label, \
-                                     sample_igf_id, \
-                                     run_igf_id)
+                                     seqrun_date, \
+                                     flowcell_id, \
+                                     lane_index_info,\
+                                     tag,\
+                                     fastq_file_label)                          # result dir path is generic
+      
+      if os.path.exists(fastqc_result_dir) and force_overwrite:
+        remove_dir(fastqc_result_dir)                                           # remove existing output dir if force_overwrite is true
+        
       if not os.path.exists(fastqc_result_dir):
         os.mkdir(fastqc_result_dir)                                             # create output dir if its not present
         
@@ -41,33 +53,20 @@ class RunFastqc(IGFBaseProcess):
       if not os.path.exists(fastq_file):
         raise IOError('fastq file {0} not readable'.format(fastq_file))         # raise if fastq file path is not readable
       
-      filename=os.path.basename(fastq_file)                                     # get fastqfile base name
-      filename=filename.replace('.fastq.gz','')                                 # remove file ext
+      filename=os.path.basename(fastq_file).replace('.fastq.gz','')             # get fastqfile base name and remove file ext
       fastqc_output=os.path.join(temp_work_dir,filename)
       os.mkdir(fastqc_output)                                                   # create fastqc output dir
-      
-      subprocess.check_call(['module','load',fastqc_module])                    # load fastqc specific settings
-      fastqc_param=[[param,value] if value else [param] \
-                       for param, value in fastqc_options.items()]              # remove empty values
-      fastqc_param=[col for row in param for col in fastqc_param]               # flatten sub lists
-      fastqc_cmd=[fastqc_exe,
-                     '-o',fastqc_output,
-                     '-d',temp_work_dir,
-                     ]                                                          # fastqc base parameters
+      fastqc_param=self.format_tool_options(fastqc_options)                     # format fastqc params
+      fastqc_cmd=[fastqc_exe, '-o',fastqc_output, '-d',temp_work_dir ]          # fastqc base parameters
       fastqc_cmd.extend(fastqc_param)                                           # add additional parameters
       fastqc_cmd.extend(fastq_file)                                             # fastqc input file
       subprocess.check_call(fastqc_cmd)                                         # run fastqc
       
-      if overwrite_output:
-        rmdir(os.path.join(fastqc_result_dir,filename))                         # remove fastqc results if its already present
-        
       copytree(fastqc_output,fastqc_result_dir)
       fastqc_zip=None
       fastqc_html=None
       
-      fastqc_path=os.path.join(fastqc_result_dir,filename)
-      
-      for root,dirs,files in os.walk(top=fastqc_path):
+      for root,dirs,files in os.walk(top=fastqc_result_dir):
         for file in files:
           if fnmatch.fnmatch(file, '*.zip'):
             fastqc_zip=os.path.join(root,file)
@@ -76,7 +75,7 @@ class RunFastqc(IGFBaseProcess):
             fastqc_html=os.path.join(root,file)
       
       self.param('dataflow_params',{'fastq_file':fastq_file, \
-                                    'fastqc':{'fastqc_path':fastqc_path,
+                                    'fastqc':{'fastqc_path':fastqc_result_dir,
                                               'fastqc_zip':fastqc_zip,
                                               'fastqc_html':fastqc_html}})      # set dataflow params
     except Exception as e:
