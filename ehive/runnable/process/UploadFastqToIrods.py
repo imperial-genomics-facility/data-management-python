@@ -11,6 +11,7 @@ class UploadFastqToIrods(IGFBaseProcess):
     params_dict.update({
         'samplesheet_filename':'SampleSheet.csv',
         'report_html':'*all/all/all/laneBarcode.html',
+        'irods_exe_dir':None,
       })
     return params_dict
   
@@ -20,6 +21,7 @@ class UploadFastqToIrods(IGFBaseProcess):
       seqrun_igf_id=self.param_required('seqrun_igf_id')
       project_igf_id=self.param_required('project_name')
       igf_session_class=self.param_required('igf_session_class')
+      irods_exe_dir=self.param_required('irods_exe_dir')
       samplesheet_filename=self.param('samplesheet_filename')
       report_html=self.param('report_html')
       
@@ -39,7 +41,7 @@ class UploadFastqToIrods(IGFBaseProcess):
       seqrun_date=seqrun_igf_id.split('_')[0]                                   # collect seqrun date from igf id
       seqrun_date=datetime.datetime.strptime(seqrun_date,'%y%m%d').date()       # identify actual date
       seqrun_date=str(seqrun_date)                                              # convert object to string
-      irods_upload=IGF_irods_uploader()                                         # create instance for irods upload
+      irods_upload=IGF_irods_uploader(irods_exe_dir)                            # create instance for irods upload
       base_seq_dir=os.path.basename(fastq_dir)                                  # get base name for the source dir
       tarfile_name='{0}_{1}_{2}.tar'.format(project_name,base_seq_dir,\
                                             seqrun_date)                        # construct name of the tarfile
