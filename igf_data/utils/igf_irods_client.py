@@ -10,8 +10,9 @@ class IGF_irods_uploader:
   Authenticate irods settings using your password
   The above command will generate a file containing your iRODS password in a 'scrambled form'
   '''
-  def __init__(self,host="eliot.med.ic.ac.uk",zone="igfZone",port=1247,\
-               igf_user='igf', irods_resource='woolfResc',irods_module='irods/4.2.0'):
+  def __init__(self,irods_exe_dir,host="eliot.med.ic.ac.uk",zone="igfZone",
+               port=1247,igf_user='igf', irods_resource='woolfResc'):
+    self.irods_exe_dir=irods_exe_dir
     self.host=host
     self.zone=zone
     self.port=port
@@ -30,6 +31,7 @@ class IGF_irods_uploader:
       if not os.path.exists(path)(filepath) or not os.path.isdir(filepath):
         raise IOError('filepath {0} not found or its not a file'.format(filepath))
       
+      irods_exe_dir=self.irods_exe_dir
       file_name=os.path.basename(filepath)                                      # get file name
       self._load_irods_module_for_cx1()                                         # load irods env settings
       irods_dir=os.path.join(self.zone,'home',irods_user,project_name,data_type,\
@@ -37,30 +39,32 @@ class IGF_irods_uploader:
       irods_filepath=os.path.join(irods_dir,file_name)                          # get the destination filepath
       file_meta_info='{0}-{1}-{2}'.format(seqrun_date,data_type,project_name)   # meatdata for irods file
       
-      subprocess.check_call(['imkdir','-p',irods_dir])                          # create destination dir
-      subprocess.check_call(['ichmod','-M','own',self.igf_user, irods_dir])     # change directory ownership
-      subprocess.check_call(['ichmod','-r', 'inherit', irods_dir])              # inherit new directory
-      subprocess.check_call(['imeta','add','-C',irods_dir,'run_name',\
-                             seqrun_igf_id])                                    # set run_name metadata for new dir
-      subprocess.check_call(['iput','-k','-f','-N',1,'-R',self.irods_resource,\
-                             filepath, irods_dir])                              # upload file to irods dir, calculate md5sub and overwrite
-      subprocess.check_call(['isysmeta','mod', irods_filepath,'"+30d"'])        # add metadata for file
-      subprocess.check_call(['imeta','add','-d',irods_filepath,file_meta_info, \
-                             irods_user,'iRODSUserTagging:Star'])               # add more metadata to file
-      subprocess.check_call(['imeta','add','-d',irods_filepath,\
-                             'retention "30" "days"'])                          # adding file retaintion info
+      make_dir_cmd=['{0}/{1}'.format(irods_exe_dir,'imkdir'), '-p',irods_dir]
+      subprocess.check_call(make_dir_cmd)                                       # create destination dir
+      chmod_cmd=['{0}/{1}'.format(irods_exe_dir,'ichmod'),'-M','own', 
+                 self.igf_user, irods_dir]
+      subprocess.check_call(chmod_cmd)                                          # change directory ownership
+      inherit_cmd=['{0}/{1}'.format(irods_exe_dir,'ichmod'),'-r', 'inherit', 
+                   irods_dir]
+      subprocess.check_call(inherit_cmd)                                        # inherit new directory
+      imeta_add_cmd=['{0}/{1}'.format(irods_exe_dir,'imeta'),'add','-C',
+                     irods_dir,'run_name', seqrun_igf_id]
+      subprocess.check_call(imeta_add_cmd)                                      # set run_name metadata for new dir
+      iput_cmd=['{0}/{1}'.format(irods_exe_dir,'iput'),'-k','-f','-N',1,'-R',
+                self.irods_resource, filepath, irods_dir]
+      subprocess.check_call(iput_cmd)                                           # upload file to irods dir, calculate md5sub and overwrite
+      meta_30d=['{0}/{1}'.format(irods_exe_dir,'isysmeta'),'mod', 
+                irods_filepath,'"+30d"']
+      subprocess.check_call(meta_30d)                                           # add metadata for file
+      meta_project_user=['{0}/{1}'.format(irods_exe_dir,'imeta'),'add','-d',
+                         irods_filepath,file_meta_info, irods_user,'iRODSUserTagging:Star']
+      subprocess.check_call(meta_project_user)                                  # add more metadata to file
+      meta_file_retentaion=['{0}/{1}'.format(irods_exe_dir,'imeta'),'add','-d',
+                            irods_filepath, 'retention "30" "days"']
+      subprocess.check_call(meta_file_retentaion)                               # adding file retaintion info
       
     except:
       raise
-    
-  
-  def _load_irods_module_for_cx1(self):
-    '''
-    An internal module for loading irods setting for cx1 cluster
-    '''
-    try:
-      subprocess.check_call(['module','load',self.irods_module])
-    except:
-      raise
+
 
     
