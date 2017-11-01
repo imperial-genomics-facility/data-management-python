@@ -17,7 +17,8 @@ from igf_data.utils.fileutils import calculate_file_checksum
 class Collect_seqrun_fastq_to_db:
   def __init__(self,fastq_dir,model_name,seqrun_igf_id,session_class,flowcell_id,\
                samplesheet_file=None,samplesheet_filename='SampleSheet.csv',\
-               collection_type='demultiplexed_fastq',file_location='HPC_PROJECT'):
+               collection_type='demultiplexed_fastq',file_location='HPC_PROJECT',\
+               collection_table='run'):
     self.fastq_dir=fastq_dir
     self.samplesheet_file=samplesheet_file
     self.samplesheet_filename=samplesheet_filename
@@ -27,6 +28,7 @@ class Collect_seqrun_fastq_to_db:
     self.collection_type=collection_type
     self.file_location=file_location
     self.flowcell_id=flowcell_id
+    self.collection_table=collection_table
     
     
   def find_fastq_and_build_db_collection(self):
@@ -167,6 +169,7 @@ class Collect_seqrun_fastq_to_db:
     # set collection name and type
     data['name']=run_igf_id
     data['type']=self.collection_type
+    data['table']=self.collection_table
     data['location']=self.file_location
     # set file md5 and size
     if 'R1' in data:
@@ -229,7 +232,11 @@ class Collect_seqrun_fastq_to_db:
         reformatted_file_group_data.append({'name':collection_name,
                                             'type':collection_type,
                                             'file_path':r2_file_path})
-    return pd.DataFrame(reformatted_file_data), pd.DataFrame(reformatted_file_group_data)
+    file_data=pd.DataFrame(reformatted_file_data)
+    file_data=file_data.dropna()                                                # removing rows witn None values
+    file_group_data=pd.DataFrame(reformatted_file_group_data)
+    file_group_data=file_group_data.dropna()                                    # removing rows with None values
+    return file_data, file_group_data
 
 
   def _build_and_store_exp_run_and_collection_in_db(self,fastq_files_list, restricted_list=['10X']):
@@ -247,7 +254,7 @@ class Collect_seqrun_fastq_to_db:
                           'R1','R1_md5','R1_size','R2',
                           'R2_md5','R2_size']
       file_group_data=dataframe.loc[:,file_group_columns]
-      file_group_data=file_group_data.drop_duplicates().dropna()
+      file_group_data=file_group_data.drop_duplicates()
       (file_data,file_group_data)=self._reformat_file_group_data(data=file_group_data)
       # get base session
       base=BaseAdaptor(**{'session_class':session_class})
@@ -275,8 +282,7 @@ class Collect_seqrun_fastq_to_db:
       run_data=dataframe.loc[:,run_columns]
       run_data=run_data.drop_duplicates()
       # get collection data
-      collection_columns=['name',
-                          'type']
+      collection_columns=['name','type','table']
       collection_data=dataframe.loc[:,collection_columns]
       collection_data=collection_data.drop_duplicates()
       # store experiment to db
@@ -288,6 +294,7 @@ class Collect_seqrun_fastq_to_db:
       ra.store_run_and_attribute_data(data=run_data,autosave=False)
       base.session.flush()
       # store file to db
+      
       fa=FileAdaptor(**{'session':base.session})
       fa.store_file_and_attribute_data(data=file_data,autosave=False)
       base.session.flush()
