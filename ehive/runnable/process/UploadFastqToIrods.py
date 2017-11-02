@@ -74,8 +74,8 @@ class UploadFastqToIrods(IGFBaseProcess):
       irods_upload.upload_fastqfile_and_create_collection(filepath=tarfile_name,\
                                                           irods_user=username, \
                                                           project_name=project_igf_id, \
-                                                          seqrun_igf_id=seqrun_igf_id, \
-                                                          seqrun_date=seqrun_date,\
+                                                          run_igf_id=seqrun_igf_id, \
+                                                          run_date=seqrun_date,\
                                                           )                     # upload fastq data to irods
       remove_dir(temp_work_dir)                                                 # remove temp dir once data uoload is done
     except Exception as e:
