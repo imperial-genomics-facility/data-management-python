@@ -7,10 +7,11 @@ class RunMutiQC(IGFBaseProcess):
   def param_defaults(self):
     params_dict=super(IGFBaseProcess,self).param_defaults()
     params_dict.update({
-      'overwrite_output':True,
+      'force_overwrite':True,
       'multiqc_dir_label':'multiqc',
       'multiqc_exe':'multiqc',
       'multiqc_options':{'--zip-data-dir':''},
+      'demultiplexing_stats_file':'Stats/Stats.json'
       })
     return params_dict
   
@@ -19,36 +20,43 @@ class RunMutiQC(IGFBaseProcess):
     try:
       seqrun_igf_id=self.param_required('seqrun_igf_id')
       demultiplexing_stats_file=self.param_required('demultiplexing_stats_file')
+      fastq_dir=self.param_required('fastq_dir')
       fastqc_files=self.param_required('fastqc_files')
       fastqscreen_files=self.param_required('fastqscreen_files')
       multiqc_exe=self.param('multiqc_exe')
       multiqc_options=self.param('multiqc_options')
       multiqc_dir_label=self.param('multiqc_dir_label')
-      overwrite_output=self.param('overwrite_output')
+      force_overwrite=self.param('force_overwrite')
       base_results_dir=self.param_required('base_results_dir')
       project_name=self.param_required('project_name')
-      seqrun_igf_id=self.param('seqrun_igf_id')
-      lane_id=self.param('lane_id')
-      status_tag=self.para,_required('status_tag')                              
+      seqrun_date=self.param_required('seqrun_date')
+      flowcell_id=self.param_required('flowcell_id')
+      tag=self.para,_required('tag')
       
-      seqrun_date=seqrun_igf_id.split('_')[0]                                   # collect seqrun date from igf id
-      seqrun_date=datetime.datetime.strptime(seqrun_date,'%y%m%d').date()       # identify actual date
+      if tag not in ['known','undetermined']:
+        raise ValueError('unknown status tag {0}'.format(tag))                  # check valid status tags
       
-      if status_tag not in ['known_smaples','undetermined_reads']:
-        raise ValueError('unknown status tag {0}'.format(status_tag))           # check valid status tags
-      
+      lane_index_info=os.path.basename(fastq_dir)                               # get lane and index info
       multiqc_result_dir=os.path.join(base_results_dir, \
                                       project_name, \
-                                      lane_id, \
-                                      fastqscreen_dir_label, \
-                                      seqrun_date )                             # get multiqc final output path
+                                      multiqc_dir_label, \
+                                      seqrun_date, \
+                                      flowcell_id, \
+                                      lane_index_info,\
+                                      tag
+                                     )                                          # get multiqc final output path
       
+      if os.path.exists(multiqc_result_dir) and force_overwrite:
+        remove_dir(multiqc_result_dir)                                      # remove existing output dir if force_overwrite is true
+        
       if not os.path.exists(multiqc_result_dir):
         os.mkdir(multiqc_result_dir)                                            # create output dir if its not present
         
       temp_work_dir=get_temp_dir()                                              # get a temp work dir
       multiqc_input_list=os.path.join(temp_work_dir,'multiqc_input_file.txt')   # get name of multiqc input file
       
+      demultiplexing_stats_file=oa.path.join(fastq_dir,
+                                             demultiplexing_stats_file)
       with open(multiqc_input_list,'w') as multiqc_input_file:                  # writing multiqc input
         if not os.path.exists(demultiplexing_stats_file):
           raise IOError('demultiplexing stats file {0} not found'.\
@@ -75,9 +83,7 @@ class RunMutiQC(IGFBaseProcess):
                                   seqrun_date,\
                                   lane_id,\
                                   status_tag)                                   # get multiqc report title and filename
-      multiqc_param=[[param,value] if value else [param] \
-                         for param, value in multiqc_options.items()]           # remove empty values
-      multiqc_param=[col for row in param for col in multiqc_param]             # flatten sub lists
+      multiqc_param=self.format_tool_options(multiqc_options)                   # format multiqc params
       multiqc_cmd=[multiqc_exe,
                        '--file-list',multiqc_input_file,
                        '--outdir',temp_work_dir,
@@ -91,10 +97,10 @@ class RunMutiQC(IGFBaseProcess):
         for file in files:
           if fnmatch.fnmatch(file, '*.html'):
             copy2(os.path.join(root,file),multiqc_result_dir)
-            multiqc_html=os.path.join(multiqc_result_dir,file)                                              # get multiqc html path
+            multiqc_html=os.path.join(multiqc_result_dir,file)                  # get multiqc html path
           elif fnmatch.fnmatch(file, '*.zip'):
             copy2(os.path.join(root,file),multiqc_result_dir)
-            multiqc_data=os.path.join(multiqc_result_dir,file)                                           # get multiqc data path
+            multiqc_data=os.path.join(multiqc_result_dir,file)                  # get multiqc data path
       
       self.param('dataflow_params',{'multiqc_html':multiqc_html, \
                                     'multiqc_data':multiqc_data})
