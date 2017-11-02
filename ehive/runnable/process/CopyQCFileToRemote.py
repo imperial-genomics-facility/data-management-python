@@ -9,10 +9,6 @@ class CopyQCFileToRemote(IGFBaseProcess):
       'remote_host':'eliot.med.ic.ac.uk',
       'remote_project_path':None,
       'remote_seqrun_path':None,
-      'project_igf_id':None,
-      'sample_igf_id':None,
-      'run_igf_id':None,
-      'lane_id':None
       })
     return params_dict
   
@@ -22,14 +18,11 @@ class CopyQCFileToRemote(IGFBaseProcess):
       seqrun_igf_id=self.param_required('seqrun_igf_id')
       remote_host=self.param_required('remote_host')
       remote_project_path=self.param_required('remote_project_path')
-      remote_seqrun_path=self.param_required('remote_seqrun_path')
-      project_igf_id=self.param_required('project_igf_id')
-      sample_igf_id=self.param_required('sample_igf_id')
-      seqrun_igf_id=self.param_required('seqrun_igf_id')
-      run_igf_id=self.param_required('run_igf_id')
+      project_name=self.param_required('project_name')
+      seqrun_date=self.param_required('seqrun_date')
+      flowcell_id=self.param_required('flowcell_id')
       tag=self.param_required('tag')
-      lane_id=self.param_required('lane_id')
-      label=self.param.required('label')
+      analysis_label=self.param_required('analysis_label')
       
       if not os.path.exists(file):
         raise IOError('file {0} not found'.format(file))
@@ -37,32 +30,20 @@ class CopyQCFileToRemote(IGFBaseProcess):
       seqrun_date=seqrun_igf_id.split('_')[0]                                   # collect seqrun date from igf id
       seqrun_date=datetime.datetime.strptime(seqrun_date,'%y%m%d').date()       # identify actual date
       
-      if tag.loqwe()=='known':
-        destination_outout_path=os.path.join(remote_project_path, \
-                                             project_igf_id, \
-                                             seqrun_date)                       # base destination path for known barcodes
-        if sample_igf_id and run_igf_id:
-          destination_outout_path=os.path.join(destination_outout_path, \
-                                             sample_igf_id, \
-                                             run_igf_id)                        # mix for multiqc reports
-          
-        destination_outout_path=os.path.join(destination_outout_path, \
-                                             label )                            # get destination path for known barcodes
-      elif tag.lower()=='undetermined':
-        if lane_id is None:
-          raise ValueError('lane_id is required for copying undetermined files')
-        
-        destination_outout_path=os.path.join(remote_project_path, \
-                                             remote_seqrun_path, \
-                                             seqrun_date, \
-                                             seqrun_igf_id, \
-                                             lane_id,
-                                             label
-                                            )                                   # get destination path for undetermined barcodes
-      else:
-        raise ValueError('tag {0} is unknown'.format(tag))
+      lane_index_info=os.path.basename(os.path.dirname(fastq_file))             # get the lane and index length info
+      fastq_file_label=os.path.basename(fastq_file).replace('.fastq.gz','')
       
-      subprocess.check_call(['mkdir','-p',destination_outout_path])             # create destination path
+      destination_outout_path=os.path.join(remote_project_path, \
+                                          project_name, \
+                                          analysis_label, \
+                                          seqrun_date, \
+                                          flowcell_id, \
+                                          lane_index_info,\
+                                          tag,\
+                                          fastq_file_label)                     # result dir path is generic
+      
+      remote_mkdir_cmd=['mkdir','-p',destination_outout_path]
+      subprocess.check_call(remote_mkdir_cmd)                                   # create destination path
       copy_remote_file(source_path=file, \
                        destinationa_path=destination_outout_path, \
                        destination_address=remote_host)                         # copy file to remote
@@ -73,4 +54,4 @@ class CopyQCFileToRemote(IGFBaseProcess):
                                                       seqrun_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
-      raise 
+      raise
