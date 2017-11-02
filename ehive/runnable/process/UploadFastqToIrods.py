@@ -71,12 +71,13 @@ class UploadFastqToIrods(IGFBaseProcess):
               tar.add(fastq_file_path,arcname=os.path.relpath(fastq_file_path,\
                                                               start=fastq_dir)) # add fastq file to tar
               
-      irods_upload.upload_fastqfile_and_create_collection(filepath=tarfile_name,\
-                                                          irods_user=username, \
-                                                          project_name=project_igf_id, \
-                                                          run_igf_id=seqrun_igf_id, \
-                                                          run_date=seqrun_date,\
-                                                          )                     # upload fastq data to irods
+      irods_upload.\
+      upload_fastqfile_and_create_collection(filepath=tarfile_name,\
+                                             irods_user=username, \
+                                             project_name=project_igf_id, \
+                                             run_igf_id=seqrun_igf_id, \
+                                             run_date=seqrun_date,\
+                                            )                                   # upload fastq data to irods
       remove_dir(temp_work_dir)                                                 # remove temp dir once data uoload is done
     except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
