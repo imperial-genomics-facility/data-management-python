@@ -87,7 +87,8 @@ class RunFastqscreen(IGFBaseProcess):
           if fnmatch.fnmatch(file, '*.png'):
             fastqscreen_png=os.path.join(root,file)
             
-      self.param('dataflow_params',{'fastqscreen': \
+      self.param('dataflow_params',{'fastqscreen_html':fastqscreen_html, \
+                                    'fastqscreen': \
                                     {'fastqscreen_path':fastqscreen_result_dir,
                                      'fastqscreen_stat':fastqscreen_stat,
                                      'fastqscreen_html':fastqscreen_html,
