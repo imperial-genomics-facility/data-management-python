@@ -23,7 +23,6 @@ class RunFastqc(IGFBaseProcess):
       seqrun_igf_id=self.param_required('seqrun_igf_id')
       seqrun_date=self.param_required('seqrun_date')
       flowcell_id=self.param_required('flowcell_id')
-      fastqc_module=self.param('fastqc_module')
       fastqc_options=self.param('fastqc_options')
       base_results_dir=self.param_required('base_results_dir')
       project_name=self.param_required('project_name')
@@ -32,7 +31,6 @@ class RunFastqc(IGFBaseProcess):
       
       lane_index_info=os.path.basename(os.path.dirname(fastq_file))             # get the lane and index length info
       fastq_file_label=os.path.basename(fastq_file).replace('.fastq.gz','')
-      fastqc_result_dir=None
       
       fastqc_result_dir=os.path.join(base_results_dir, \
                                      project_name, \
