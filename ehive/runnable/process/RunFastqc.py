@@ -72,7 +72,7 @@ class RunFastqc(IGFBaseProcess):
           if fnmatch.fnmatch(file, '*.html'):
             fastqc_html=os.path.join(root,file)
       
-      self.param('dataflow_params',{'fastq_file':fastq_file, \
+      self.param('dataflow_params',{'fastqc_html':fastqc_html, \
                                     'fastqc':{'fastqc_path':fastqc_result_dir,
                                               'fastqc_zip':fastqc_zip,
                                               'fastqc_html':fastqc_html}})      # set dataflow params
