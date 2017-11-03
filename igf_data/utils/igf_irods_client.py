@@ -78,6 +78,16 @@ class IGF_irods_uploader:
                        run_igf_id]
         subprocess.check_call(imeta_add_cmd)                                    # set run_name metadata for new dir
         
+      file_chk_cmd=['{0}/{1}'.format(irods_exe_dir,'ils'), \
+                    irods_filepath]
+      file_response=subprocess.call(file_chk_cmd)                               # check for existing file in irods
+      
+      if file_response==0:
+        file_rm_cmd=['{0}/{1}'.format(irods_exe_dir,'irm'), \
+                     '-rf', \
+                     irods_filepath]
+        subprocess.check_call(file_rm_cmd)                                      # remove existing file to prevent any clash
+        
       iput_cmd=['{0}/{1}'.format(irods_exe_dir,'iput'),\
                 '-k',\
                 '-f',\
