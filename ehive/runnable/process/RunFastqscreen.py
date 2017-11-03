@@ -1,5 +1,5 @@
 import os, subprocess,fnmatch
-from shutil import copytree
+from shutil import copy2
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.fileutils import get_temp_dir,remove_dir
 
@@ -44,11 +44,11 @@ class RunFastqscreen(IGFBaseProcess):
                                           seqrun_date, \
                                           flowcell_id, \
                                           lane_index_info,\
-                                          tag)                                  # result dir path is generic
+                                          tag,
+                                          fastq_file_label)                     # result dir path is generic
       
-      if os.path.exists(os.path.join(fastqscreen_result_dir,fastq_file_label)) \
-         and force_overwrite:
-        remove_dir(os.path.join(fastqscreen_result_dir,fastq_file_label))       # remove existing output dir if force_overwrite is true
+      if os.path.exists(fastqscreen_result_dir) and force_overwrite:
+        remove_dir(fastqscreen_result_dir)                                      # remove existing output dir if force_overwrite is true
       
       if not os.path.exists(fastqscreen_result_dir):
         os.makedirs(fastqscreen_result_dir,mode=0o775)                          # create output dir if its not present
@@ -69,24 +69,35 @@ class RunFastqscreen(IGFBaseProcess):
       fastqscreen_cmd.extend(fastq_file)                                        # fastqscreen input file
       subprocess.check_call(fastqscreen_cmd)                                    # run fastqscreen
       
-      copytree(fastqscreen_output,\
-               os.path.join(fastqscreen_result_dir,fastq_file_label))           # copy fastqscreen output files
-      
       fastqscreen_stat=None
       fastqscreen_html=None
       fastqscreen_png=None
       
-      for root,dirs,files in os.walk(top=fastqscreen_result_dir):
+      for root,dirs,files in os.walk(top=fastqscreen_output):
         for file in files:
           if fnmatch.fnmatch(file, '*.txt'):
-            fastqscreen_stat=os.path.join(root,file)
-          
+            input_fastqs_txt=os.path.join(root,file)
+            copy2(input_fastqs_txt,fastqscreen_result_dir)
+            fastqscreen_stat=os.path.join(fastqscreen_result_dir,file)
+            
           if fnmatch.fnmatch(file, '*.html'):
-            fastqscreen_html=os.path.join(root,file)
-            
+            input_fastqs_html=os.path.join(root,file)
+            copy2(input_fastqs_html,fastqscreen_result_dir)
+            fastqscreen_html=os.path.join(fastqscreen_result_dir,file)
+          
           if fnmatch.fnmatch(file, '*.png'):
-            fastqscreen_png=os.path.join(root,file)
+            input_fastqs_png=os.path.join(root,file)
+            copy2(input_fastqs_png,fastqscreen_result_dir)
+            fastqscreen_png=os.path.join(fastqscreen_result_dir,file)
             
+      if fastqscreen_stat is None or fastqscreen_html is None or \
+         fastqscreen_png is None:
+        raise ValueError('Missing required file, stat: {0}, html: {1}, png: {2}'.\
+                         format(fastqscreen_stat, \
+                                fastqscreen_html, \
+                                fastqscreen_png))
+      
+      
       self.param('dataflow_params',{'fastqscreen_html':fastqscreen_html, \
                                     'fastqscreen': \
                                     {'fastqscreen_path':fastqscreen_result_dir,
