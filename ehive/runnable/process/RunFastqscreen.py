@@ -69,7 +69,8 @@ class RunFastqscreen(IGFBaseProcess):
       fastqscreen_cmd.extend(fastq_file)                                        # fastqscreen input file
       subprocess.check_call(fastqscreen_cmd)                                    # run fastqscreen
       
-      copytree(fastqscreen_output,fastqscreen_result_dir)                       # copy fastqscreen output files
+      copytree(fastqscreen_output,\
+               os.path.join(fastqscreen_result_dir,fastq_file_label))           # copy fastqscreen output files
       
       fastqscreen_stat=None
       fastqscreen_html=None

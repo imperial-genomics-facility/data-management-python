@@ -59,7 +59,7 @@ class RunFastqc(IGFBaseProcess):
       fastqc_cmd.extend(fastq_file)                                             # fastqc input file
       subprocess.check_call(fastqc_cmd)                                         # run fastqc
       
-      copytree(fastqc_output,fastqc_result_dir)
+      copytree(fastqc_output,os.path.join(fastqc_result_dir,fastq_file_label))
       fastqc_zip=None
       fastqc_html=None
       
