@@ -19,7 +19,7 @@ class UploadFastqToIrods(IGFBaseProcess):
     try:
       fastq_dir=self.param_required('fastq_dir')
       seqrun_igf_id=self.param_required('seqrun_igf_id')
-      project_igf_id=self.param_required('project_name')
+      project_name=self.param_required('project_name')
       igf_session_class=self.param_required('igf_session_class')
       irods_exe_dir=self.param_required('irods_exe_dir')
       samplesheet_filename=self.param('samplesheet_filename')
@@ -27,13 +27,13 @@ class UploadFastqToIrods(IGFBaseProcess):
       
       pa=ProjectAdaptor(**{'session_class':igf_session_class})
       pa.start_session()
-      user_info=pa.get_project_user_info(project_igf_id=project_igf_id)         # fetch user info from db
+      user_info=pa.get_project_user_info(project_igf_id=project_name)         # fetch user info from db
       pa.close_session()
       
       user_info=user_info[user_info['data_authority']=='T']                     # filter dataframe for data authority
       user_info=user_info.to_dict(orient='records')                             # convert dataframe to list of dictionaries
       if len(user_info) == 0:
-        raise ValueError('No user found for project {0}'.format(project_igf_id)) 
+        raise ValueError('No user found for project {0}'.format(project_name)) 
     
       user_info=user_info[0]
       username=user_info['username']                                            # get username for irods
@@ -74,7 +74,7 @@ class UploadFastqToIrods(IGFBaseProcess):
       irods_upload.\
       upload_fastqfile_and_create_collection(filepath=tarfile_name,\
                                              irods_user=username, \
-                                             project_name=project_igf_id, \
+                                             project_name=project_name, \
                                              run_igf_id=seqrun_igf_id, \
                                              run_date=seqrun_date,\
                                             )                                   # upload fastq data to irods
