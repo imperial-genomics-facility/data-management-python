@@ -26,10 +26,7 @@ class CopyQCFileToRemote(IGFBaseProcess):
       
       if not os.path.exists(file):
         raise IOError('file {0} not found'.format(file))
-      
-      seqrun_date=seqrun_igf_id.split('_')[0]                                   # collect seqrun date from igf id
-      seqrun_date=datetime.datetime.strptime(seqrun_date,'%y%m%d').date()       # identify actual date
-      
+
       lane_info=os.path.basename(os.path.dirname(file))                         # get the lane and index length info
       fastq_file_label=os.path.basename(file).replace('.fastq.gz','')
       
