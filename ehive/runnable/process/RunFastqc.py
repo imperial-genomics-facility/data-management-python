@@ -42,7 +42,7 @@ class RunFastqc(IGFBaseProcess):
       
       if os.path.exists(os.path.join(fastqc_result_dir,fastq_file_label)) and \
          force_overwrite:
-        remove_dir(fastqc_result_dir)                                           # remove existing output dir if force_overwrite is true
+        remove_dir(os.path.join(fastqc_result_dir,fastq_file_label))            # remove existing output dir if force_overwrite is true
         
       if not os.path.exists(fastqc_result_dir):
         os.makedirs(fastqc_result_dir,mode=0o775)                               # create output dir if its not present
