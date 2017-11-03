@@ -27,11 +27,12 @@ class FastqFileFactory(IGFBaseJobFactory):
       
       for root, dirs, files in os.walk(top=fastq_dir):
         for file in files:
-          if required_keyword and fnmatch.fnmatch(file, required_keyword ):
-            fastq_list.append({'fastq_file':os.path.join(root,file)})           # add fastq file to the list if its amatch
+          if fnmatch.fnmatch(file, '*.fastq.gz'):                               # only consider fastq.gz files for now
+            if required_keyword and fnmatch.fnmatch(file, required_keyword ):
+              fastq_list.append({'fastq_file':os.path.join(root,file)})         # add fastq file to the list if its amatch
             
-          elif filter_keyword and not fnmatch.fnmatch(file, filter_keyword ):
-            fastq_list.append({'fastq_file':os.path.join(root,file)})           # add fastq file to the list if its not a match
+            elif filter_keyword and not fnmatch.fnmatch(file, filter_keyword ):
+              fastq_list.append({'fastq_file':os.path.join(root,file)})         # add fastq file to the list if its not a match
             
       self.param('sub_tasks',fastq_list)                                        # add fastq files to the dataflow
     except Exception as e:
