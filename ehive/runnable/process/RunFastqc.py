@@ -38,10 +38,10 @@ class RunFastqc(IGFBaseProcess):
                                      seqrun_date, \
                                      flowcell_id, \
                                      lane_index_info,\
-                                     tag,\
-                                     fastq_file_label)                          # result dir path is generic
+                                     tag)                                       # result dir path is generic
       
-      if os.path.exists(fastqc_result_dir) and force_overwrite:
+      if os.path.exists(os.path.join(fastqc_result_dir,fastq_file_label)) and \
+         force_overwrite:
         remove_dir(fastqc_result_dir)                                           # remove existing output dir if force_overwrite is true
         
       if not os.path.exists(fastqc_result_dir):
@@ -51,8 +51,7 @@ class RunFastqc(IGFBaseProcess):
       if not os.path.exists(fastq_file):
         raise IOError('fastq file {0} not readable'.format(fastq_file))         # raise if fastq file path is not readable
       
-      filename=os.path.basename(fastq_file).replace('.fastq.gz','')             # get fastqfile base name and remove file ext
-      fastqc_output=os.path.join(temp_work_dir,filename)
+      fastqc_output=os.path.join(temp_work_dir,fastq_file_label)
       os.mkdir(fastqc_output)                                                   # create fastqc output dir
       fastqc_param=self.format_tool_options(fastqc_options)                     # format fastqc params
       fastqc_cmd=[fastqc_exe, '-o',fastqc_output, '-d',temp_work_dir ]          # fastqc base parameters
