@@ -56,7 +56,7 @@ class RunFastqc(IGFBaseProcess):
       fastqc_param=self.format_tool_options(fastqc_options)                     # format fastqc params
       fastqc_cmd=[fastqc_exe, '-o',fastqc_output, '-d',temp_work_dir ]          # fastqc base parameters
       fastqc_cmd.extend(fastqc_param)                                           # add additional parameters
-      fastqc_cmd.extend(fastq_file)                                             # fastqc input file
+      fastqc_cmd.append(fastq_file)                                             # fastqc input file
       subprocess.check_call(fastqc_cmd)                                         # run fastqc
       
       fastqc_zip=None

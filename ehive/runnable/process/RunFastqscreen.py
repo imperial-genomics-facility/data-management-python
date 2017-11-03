@@ -66,7 +66,7 @@ class RunFastqscreen(IGFBaseProcess):
                        '--outdir',fastqscreen_output,
                       ]                                                         # fastqscreen base parameters
       fastqscreen_cmd.extend(fastqscreen_param)                                 # add additional parameters
-      fastqscreen_cmd.extend(fastq_file)                                        # fastqscreen input file
+      fastqscreen_cmd.append(fastq_file)                                        # fastqscreen input file
       subprocess.check_call(fastqscreen_cmd)                                    # run fastqscreen
       
       fastqscreen_stat=None
