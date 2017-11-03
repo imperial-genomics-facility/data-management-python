@@ -47,10 +47,10 @@ class RunMutiQC(IGFBaseProcess):
                                      )                                          # get multiqc final output path
       
       if os.path.exists(multiqc_result_dir) and force_overwrite:
-        remove_dir(multiqc_result_dir)                                      # remove existing output dir if force_overwrite is true
+        remove_dir(multiqc_result_dir)                                          # remove existing output dir if force_overwrite is true
         
       if not os.path.exists(multiqc_result_dir):
-        os.mkdir(multiqc_result_dir)                                            # create output dir if its not present
+        os.makedirs(multiqc_result_dir,mode=0o775)                              # create output dir if its not present
         
       temp_work_dir=get_temp_dir()                                              # get a temp work dir
       multiqc_input_list=os.path.join(temp_work_dir,'multiqc_input_file.txt')   # get name of multiqc input file
