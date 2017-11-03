@@ -1,5 +1,5 @@
 import os, subprocess,fnmatch
-from shutil import copytree
+from shutil import copy2
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.fileutils import get_temp_dir,remove_dir
 
@@ -38,11 +38,11 @@ class RunFastqc(IGFBaseProcess):
                                      seqrun_date, \
                                      flowcell_id, \
                                      lane_index_info,\
-                                     tag)                                       # result dir path is generic
+                                     tag,\
+                                     fastq_file_label)                          # result dir path is generic
       
-      if os.path.exists(os.path.join(fastqc_result_dir,fastq_file_label)) and \
-         force_overwrite:
-        remove_dir(os.path.join(fastqc_result_dir,fastq_file_label))            # remove existing output dir if force_overwrite is true
+      if os.path.exists(fastqc_result_dir) and force_overwrite:
+        remove_dir(fastqc_result_dir)                                           # remove existing output dir if force_overwrite is true
         
       if not os.path.exists(fastqc_result_dir):
         os.makedirs(fastqc_result_dir,mode=0o775)                               # create output dir if its not present
@@ -59,17 +59,24 @@ class RunFastqc(IGFBaseProcess):
       fastqc_cmd.extend(fastq_file)                                             # fastqc input file
       subprocess.check_call(fastqc_cmd)                                         # run fastqc
       
-      copytree(fastqc_output,os.path.join(fastqc_result_dir,fastq_file_label))
       fastqc_zip=None
       fastqc_html=None
       
-      for root,dirs,files in os.walk(top=fastqc_result_dir):
+      for root, dirs, files in os.walk(top=fastqc_output):
         for file in files:
           if fnmatch.fnmatch(file, '*.zip'):
-            fastqc_zip=os.path.join(root,file)
+            input_fastqc_zip=os.path.join(root,file)
+            copy2(input_fastqc_zip,fastqc_result_dir)
+            fastqc_zip=os.path.join(fastqc_result_dir,file)
           
           if fnmatch.fnmatch(file, '*.html'):
-            fastqc_html=os.path.join(root,file)
+            input_fastqc_html=os.path.join(root,file)
+            copy2(input_fastqc_html,fastqc_result_dir)
+            fastqc_html=os.path.join(fastqc_result_dir,file)
+          
+      if fastqc_html is None or fastqc_zip is None:
+        raise ValueError('Missing required values, fastqc zip: {0}, fastqc html: {1}'.\
+                         format(fastqc_zip,fastqc_html))
       
       self.param('dataflow_params',{'fastqc_html':fastqc_html, \
                                     'fastqc':{'fastqc_path':fastqc_result_dir,
