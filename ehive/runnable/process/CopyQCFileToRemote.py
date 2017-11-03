@@ -1,4 +1,4 @@
-import os,datetime,subprocess
+import os,datetime,subprocess, re
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.fileutils import copy_remote_file
 
@@ -28,7 +28,13 @@ class CopyQCFileToRemote(IGFBaseProcess):
         raise IOError('file {0} not found'.format(file))
 
       lane_info=os.path.basename(os.path.dirname(file))                         # get the lane and index length info
-      fastq_file_label=os.path.basename(file).replace('.fastq.gz','')
+      
+      file_name=os.path.basename(file) 
+      match=re.match(re.compile(r'(\S+)(\.)(\S?)'),file_name)
+      if match:
+        file_label=match.group(1)
+      else:
+        file_label=file_name
       
       destination_outout_path=os.path.join(remote_project_path, \
                                           project_name, \
@@ -37,7 +43,7 @@ class CopyQCFileToRemote(IGFBaseProcess):
                                           flowcell_id, \
                                           lane_info,\
                                           tag,\
-                                          fastq_file_label)                     # result dir path is generic
+                                          file_label)                           # result dir path is generic
       
       remote_mkdir_cmd=['mkdir','-p',destination_outout_path]
       subprocess.check_call(remote_mkdir_cmd)                                   # create destination path
