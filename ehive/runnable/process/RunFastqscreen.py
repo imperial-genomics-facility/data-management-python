@@ -51,7 +51,7 @@ class RunFastqscreen(IGFBaseProcess):
         remove_dir(fastqscreen_result_dir)                                      # remove existing output dir if force_overwrite is true
       
       if not os.path.exists(fastqscreen_result_dir):
-        os.mkdir(fastqscreen_result_dir)                                        # create output dir if its not present
+        os.makedirs(fastqscreen_result_dir,mode=0o775)                          # create output dir if its not present
       
       temp_work_dir=get_temp_dir()                                              # get a temp work dir
       if not os.path.exists(fastq_file):
