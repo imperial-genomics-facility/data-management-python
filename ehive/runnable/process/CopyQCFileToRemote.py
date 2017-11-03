@@ -30,7 +30,7 @@ class CopyQCFileToRemote(IGFBaseProcess):
       seqrun_date=seqrun_igf_id.split('_')[0]                                   # collect seqrun date from igf id
       seqrun_date=datetime.datetime.strptime(seqrun_date,'%y%m%d').date()       # identify actual date
       
-      lane_index_info=os.path.basename(os.path.dirname(fastq_file))             # get the lane and index length info
+      lane_info=os.path.basename(os.path.dirname(file))                         # get the lane and index length info
       fastq_file_label=os.path.basename(fastq_file).replace('.fastq.gz','')
       
       destination_outout_path=os.path.join(remote_project_path, \
@@ -38,7 +38,7 @@ class CopyQCFileToRemote(IGFBaseProcess):
                                           analysis_label, \
                                           seqrun_date, \
                                           flowcell_id, \
-                                          lane_index_info,\
+                                          lane_info,\
                                           tag,\
                                           fastq_file_label)                     # result dir path is generic
       
