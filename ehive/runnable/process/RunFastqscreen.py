@@ -44,11 +44,11 @@ class RunFastqscreen(IGFBaseProcess):
                                           seqrun_date, \
                                           flowcell_id, \
                                           lane_index_info,\
-                                          tag,\
-                                          fastq_file_label)                     # result dir path is generic
+                                          tag)                                  # result dir path is generic
       
-      if os.path.exists(fastqscreen_result_dir) and force_overwrite:
-        remove_dir(fastqscreen_result_dir)                                      # remove existing output dir if force_overwrite is true
+      if os.path.exists(os.path.join(fastqscreen_result_dir,fastq_file_label)) \
+         and force_overwrite:
+        remove_dir(os.path.join(fastqscreen_result_dir,fastq_file_label))       # remove existing output dir if force_overwrite is true
       
       if not os.path.exists(fastqscreen_result_dir):
         os.makedirs(fastqscreen_result_dir,mode=0o775)                          # create output dir if its not present
@@ -57,8 +57,7 @@ class RunFastqscreen(IGFBaseProcess):
       if not os.path.exists(fastq_file):
         raise IOError('fastq file {0} not readable'.format(fastq_file))         # raise if fastq file path is not readable
       
-      filename=os.path.basename(fastq_file).replace('.fastq.gz','')             # get fastqfile base name and remove file ext
-      fastqscreen_output=os.path.join(temp_work_dir,filename)
+      fastqscreen_output=os.path.join(temp_work_dir,fastq_file_label)
       os.mkdir(fastqscreen_output)                                              # create fastqc output dir
       
       fastqscreen_param=self.format_tool_options(fastqscreen_options)           # format fastqc params
