@@ -87,11 +87,11 @@ class IGF_irods_uploader:
                 filepath, \
                 irods_dir]
       subprocess.check_call(iput_cmd)                                           # upload file to irods dir, calculate md5sub and overwrite
-      meta_30d=['{0}/{1}'.format(irods_exe_dir,'isysmeta'),\
-                'mod', \
-                irods_filepath,\
-                '"+30d"']
-      subprocess.check_call(meta_30d)                                           # add metadata for file
+     # meta_30d=['{0}/{1}'.format(irods_exe_dir,'isysmeta'),\
+     #           'mod', \
+     #           irods_filepath,\
+     #           '"+30d"']
+     # subprocess.check_call(meta_30d)                                           # add metadata for file
       meta_project_user=['{0}/{1}'.format(irods_exe_dir,'imeta'),\
                          'add',\
                          '-d',\
