@@ -16,6 +16,7 @@ class CopyQCFileToRemote(IGFBaseProcess):
     try:
       file=self.param_required('file')
       seqrun_igf_id=self.param_required('seqrun_igf_id')
+      remote_user=self.param_required('remote_user')
       remote_host=self.param_required('remote_host')
       remote_project_path=self.param_required('remote_project_path')
       project_name=self.param_required('project_name')
@@ -45,7 +46,11 @@ class CopyQCFileToRemote(IGFBaseProcess):
                                           tag,\
                                           file_label)                           # result dir path is generic
       
-      remote_mkdir_cmd=['mkdir','-p',destination_outout_path]
+      remote_mkdir_cmd=['ssh',\
+                        destination_address,\
+                        'mkdir',\
+                        '-p',\
+                        destination_outout_path]
       subprocess.check_call(remote_mkdir_cmd)                                   # create destination path
       copy_remote_file(source_path=file, \
                        destinationa_path=destination_outout_path, \
