@@ -12,10 +12,10 @@ class RunFastqscreen(IGFBaseProcess):
       'fastqscreen_dir_label':'fastqscreen',
       'fastqscreen_exe':'fastqscreen',
       'fastqscreen_conf':None,
-      'fastqscreen_options':{'--aligner':'bowtie2',
-                             '--force':'',
-                             '--quiet':'',
-                             '--subset':'100000',
+      'fastqscreen_options':{'--aligner':'bowtie2', \
+                             '--force':'', \
+                             '--quiet':'', \
+                             '--subset':'100000', \
                              '--threads':'1'},
       })
     return params_dict
