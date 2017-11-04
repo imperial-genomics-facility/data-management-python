@@ -47,6 +47,7 @@ class CopyQCFileToRemote(IGFBaseProcess):
                                           file_label)                           # result dir path is generic
       
       remote_mkdir_cmd=['ssh',\
+                        remote_user@remote_host:\
                         destination_address,\
                         'mkdir',\
                         '-p',\
