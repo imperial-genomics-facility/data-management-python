@@ -1,7 +1,7 @@
 import pandas as pd
 from sqlalchemy.sql import column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
-from igf_data.igfdb.igfTables import Experiment, Run, Run_attribute, Seqrun
+from igf_data.igfdb.igfTables import Experiment, Run, Run_attribute, Seqrun, Sample
 
 class RunAdaptor(BaseAdaptor):
   '''
@@ -44,8 +44,8 @@ class RunAdaptor(BaseAdaptor):
     run_columns.extend(['seqrun_igf_id', 'experiment_igf_id'])
     (run_df, run_attr_df)=BaseAdaptor.divide_data_to_table_and_attribute(self, \
                                                       data=data, \
-    	                                              required_column=required_column, \
-    	                                              table_columns=run_columns,  \
+                                                    required_column=required_column, \
+                                                    table_columns=run_columns,  \
                                                       attribute_name_column=attribute_name_column, \
                                                       attribute_value_column=attribute_value_column \
                                                     )                                                                 # divide data to run and attribute table
@@ -124,11 +124,28 @@ class RunAdaptor(BaseAdaptor):
       column=[column for column in Run.__table__.columns \
                        if column.key == target_column_name][0]
       run=self.fetch_records_by_column(table=Run, \
-      	                                   column_name=column, \
-      	                                   column_id=run_igf_id, \
-      	                                   output_mode='one')
+                                           column_name=column, \
+                                           column_id=run_igf_id, \
+                                           output_mode='one')
       return run  
     except:
       raise
-
-
+  
+  
+  def fetch_sample_info_for_run(self,run_igf_id):
+    '''
+    A method for fetching sample information linked to a run_igf_id
+    required params:
+    run_igf_id: A run_igf_id to search database
+    '''
+    try:
+      session=self.session
+      query=session.query(Sample).\
+                    join(Experiment).\
+                    join(Run).\
+                    filter(Run.run_igf_id==run_igf_id)
+      samples=self.fetch_records(query=query, output_mode='dataframe')          # get results     
+      samples=samples.to_dict(orient='records')
+      return samples[0]
+    except:
+      raise
