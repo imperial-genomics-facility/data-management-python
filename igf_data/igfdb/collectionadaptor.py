@@ -184,7 +184,7 @@ class CollectionAdaptor(BaseAdaptor):
         collection_table=results[0]['table']
       else:
         raise  ValueError('No collection found for file: {0}'.\
-                          format(len(results))
+                          format(len(results)))
     except:      
       raise   
       
