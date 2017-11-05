@@ -1,6 +1,9 @@
+import os
 import pandas as pd
 from sqlalchemy.sql import column
+from igf_data.utils.fileutils import calculate_file_checksum
 from igf_data.igfdb.baseadaptor import BaseAdaptor
+from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_data.igfdb.igfTables import Collection, File, Collection_group, Collection_attribute
 
 class CollectionAdaptor(BaseAdaptor):
@@ -43,11 +46,11 @@ class CollectionAdaptor(BaseAdaptor):
     collection_columns=self.get_table_columns(table_name=Collection, excluded_columns=['collection_id'])           # get required columns for collection table    
     (collection_df, collection_attr_df)=BaseAdaptor.divide_data_to_table_and_attribute(self, \
                                                                      data=data, \
-    	                                                             required_column=required_column, \
-    	                                                             table_columns=collection_columns,  \
+                                                                   required_column=required_column, \
+                                                                   table_columns=collection_columns,  \
                                                                      attribute_name_column=attribute_name_column, \
                                                                      attribute_value_column=attribute_value_column
-    	                                                        )
+                                                              )
     return (collection_df, collection_attr_df)
 
  
@@ -108,6 +111,55 @@ class CollectionAdaptor(BaseAdaptor):
     except:
       raise
 
+
+  def load_file_and_create_collection(self,data,autovase=True, hasher='md5', \
+                                      required_coumns=['name','type','table',\
+                                                       'file_path','location']):
+    '''
+    A function for loading files to db and creating collections
+    required params:
+    data: A list of dictionary or a Pandas dataframe
+    autosave: Save data to db, default: True
+    required_coumns: List of required columns
+    hasher: Method for file checksum, default: md5
+    '''
+    try:
+      if isinstance(data, pd.DataFrame):
+        data=pd.DataFrame(data)
+      
+      if set(data.columns).issubset(set(required_coumns)):
+        raise ValueError('missing required columns: {0}'.\
+                         format(data.columns))
+      
+      data['md5']=data['file_path'].map(lambda x: \
+                                        calculate_file_checksum(filepath=x, \
+                                                              hasher=hasher))   # calculate file checksum
+      data['size']=data['file_path'].map(lambda x: os.path.getsize(x))          # calculate file size 
+    
+      file_columns=['file_path','md5','size','location']
+      file_data=data.loc[:,file_columns]
+      file_data=file_data.drop_duplicates()
+    
+      collection_columns=['name','type','table']
+      collection_data=data.loc[:,collection_columns]
+      collection_data=collection_data.drop_duplicates()
+    
+      file_group_column=['name','type','file_path']
+      file_group_data=data.loc[:,file_group_column]
+      file_group_data=file_group_data.drop_duplicates()
+    
+      fa=FileAdaptor(**{'session':self.session})
+      fa.store_file_and_attribute_data(data=file_data,autosave=False)
+      self.session.flush()
+      self.store_collection_and_attribute_data(data=collection_data,\
+                                               autosave=False)
+      self.session.flush()
+      self.create_collection_group(data=file_group_data,autosave=False)
+      if autosave:
+        self.commit_session()
+    except:
+      raise
+  
 
   def create_collection_group(self, data, autosave=True, required_collection_column=['name','type'],required_file_column='file_path'):
     '''
