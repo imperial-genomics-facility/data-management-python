@@ -161,6 +161,34 @@ class CollectionAdaptor(BaseAdaptor):
       raise
   
 
+  def fetch_collection_name_and_table_from_file_path(self,file_path):
+    '''
+    A method for fetching collection name and collection_table info using the
+    file_path information. It will return None if the file doesn't have any 
+    collection present in the database
+    required params:
+    file_path: A filepath info
+    '''
+    try:
+      collection_name=None
+      collection_table=None
+      session.self.session
+      query=session.query(Collection, File).\
+                    join(Collection_group).\
+                    join(File).\
+                    filter(File.file_path==file_path)
+      results=self.fetch_records(query=query, output_mode='dataframe')          # get results
+      results=results.to_dict(orient='records')
+      if len(results)>0:
+        collection_name=results[0]['name']
+        collection_table=results[0]['table']
+      else:
+        raise  ValueError('No collection found for file: {0}'.\
+                          format(len(results))
+    except:      
+      raise   
+      
+      
   def create_collection_group(self, data, autosave=True, required_collection_column=['name','type'],required_file_column='file_path'):
     '''
     A function for creating collection group, a link between a file and a collection
