@@ -193,22 +193,27 @@ class CheckSequenceIndexBarcodes:
                              format(all_tag_groups))
           if 'index_1_revcomp' in all_tag_groups:
             message='{0} {1} found index_1_revcomp'.format(rid, lid)
-            extra_message += ', '+message
+            
+            
+            extra_message = extra_message+', '+message if extra_message \
+                            else message
           
           if 'only_index_1_revcomp' in all_tag_groups:
             message='{0} {1} found only_index_1_revcomp'.format(rid, lid)
-            extra_message += ', '+message
+            extra_message = extra_message+', '+message if extra_message \
+                            else message
             
           if 'index_1_and_index_2_revcomp' in all_tag_groups:
             message='{0} {1} found index_1_and_index_2_revcomp'.\
                                               format(rid, lid)
-            extra_message += ', '+message
+            extra_message = extra_message+', '+message if extra_message \
+                            else message
           
           if 'only_index_2_revcomp' in all_tag_groups:
             message='{0} {1} found only_index_2_revcomp'.\
                                               format(rid, lid)
-            extra_message += ', '+message
-                        
+            extra_message = extra_message+', '+message if extra_message \
+                            else message
           known_grp=lgrp.groupby('tag').get_group('known')
           min_known_mpr=known_grp['mapping_ratio'].min()
           unknown_grp=lgrp.groupby('tag').get_group('unknown')
