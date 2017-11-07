@@ -9,12 +9,15 @@ class CopyQCFileToRemote(IGFBaseProcess):
       'remote_host':'eliot.med.ic.ac.uk',
       'remote_project_path':None,
       'remote_seqrun_path':None,
+      'force_overwrite':True,
+      'dir_label':None,
       })
     return params_dict
   
   def run(self):
     try:
       file=self.param_required('file')
+      
       seqrun_igf_id=self.param_required('seqrun_igf_id')
       remote_user=self.param_required('remote_user')
       remote_host=self.param_required('remote_host')
@@ -22,30 +25,46 @@ class CopyQCFileToRemote(IGFBaseProcess):
       project_name=self.param_required('project_name')
       seqrun_date=self.param_required('seqrun_date')
       flowcell_id=self.param_required('flowcell_id')
+      dir_label=self.param_required('dir_label')
       tag=self.param_required('tag')
       analysis_label=self.param_required('analysis_label')
+      force_overwrite=self.param('force_overwrite')
       
       if not os.path.exists(file):
         raise IOError('file {0} not found'.format(file))
 
-      lane_info=os.path.basename(os.path.dirname(file))                         # get the lane and index length info
+      if dir_label is None:
+        dir_label=os.path.basename(os.path.dirname(file))                       # get the lane and index length info, FIXIT
       
-      file_name=os.path.basename(file) 
-      match=re.match(re.compile(r'(\S+)(\.)(\S?)'),file_name)
-      if match:
-        file_label=match.group(1)
-      else:
-        file_label=file_name
+      file_name=os.path.basename(file)
       
       destination_outout_path=os.path.join(remote_project_path, \
                                           project_name, \
                                           analysis_label, \
                                           seqrun_date, \
                                           flowcell_id, \
-                                          lane_info,\
-                                          tag,\
-                                          file_label)                           # result dir path is generic
+                                          dir_label,\
+                                          tag)                                  # result dir path is generic
       
+      file_check_cmd=['ssh',\
+                      '{0}@{1}'.\
+                      format(remote_user,\
+                             remote_host),\
+                      'ls',\
+                      os.path.join(destination_outout_path,\
+                                   file_name)]
+      response=subprocess.call(file_check_cmd)
+      if response==0:
+        file_rm_cmd=['ssh',\
+                      '{0}@{1}'.\
+                      format(remote_user,\
+                             remote_host),\
+                      'rm', \
+                      '-f',\
+                      os.path.join(destination_outout_path,\
+                                   file_name)]
+        subprocess.check_call(file_rm_cmd)                                      # remove remote file if its already present
+        
       remote_mkdir_cmd=['ssh',\
                         '{0}@{1}'.\
                         format(remote_user,\
