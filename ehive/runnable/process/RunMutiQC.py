@@ -21,8 +21,9 @@ class RunMutiQC(IGFBaseProcess):
       seqrun_igf_id=self.param_required('seqrun_igf_id')
       demultiplexing_stats_file=self.param_required('demultiplexing_stats_file')
       fastq_dir=self.param_required('fastq_dir')
-      fastqc_files=self.param_required('fastqc_files')
-      fastqscreen_files=self.param_required('fastqscreen_files')
+      qc_files=self.param('qc_files')
+      #fastqc_files=self.param_required('fastqc_files')
+      #fastqscreen_files=self.param_required('fastqscreen_files')
       multiqc_exe=self.param('multiqc_exe')
       multiqc_options=self.param('multiqc_options')
       multiqc_dir_label=self.param('multiqc_dir_label')
@@ -36,6 +37,13 @@ class RunMutiQC(IGFBaseProcess):
       if tag not in ['known','undetermined']:
         raise ValueError('unknown status tag {0}'.format(tag))                  # check valid status tags
       
+      fastqc_files=list()
+      fastqscreen_files=list()
+      for qcs in qc_files:
+        qc_output=qcs['qc_outputs']
+        fastqc_files.append(qc_output['fastqc'])
+        fastqscreen_files.append(qc_output['fastqscreen'])
+        
       lane_index_info=os.path.basename(fastq_dir)                               # get lane and index info
       multiqc_result_dir=os.path.join(base_results_dir, \
                                       project_name, \
