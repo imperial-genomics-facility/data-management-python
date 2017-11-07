@@ -2,7 +2,7 @@ from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 
 class CollectQcForFastqDir(IGFBaseProcess):
   def param_defaults(self):
-    params_dict=IGFBaseProcess.param_defaults()
+    params_dict=super(IGFBaseProcess,self).param_defaults()
     return params_dict
   
   def run(self):
