@@ -112,7 +112,7 @@ class CollectionAdaptor(BaseAdaptor):
       raise
 
 
-  def load_file_and_create_collection(self,data,autovase=True, hasher='md5', \
+  def load_file_and_create_collection(self,data,autosave=True, hasher='md5', \
                                       required_coumns=['name','type','table',\
                                                        'file_path','location']):
     '''
@@ -124,10 +124,10 @@ class CollectionAdaptor(BaseAdaptor):
     hasher: Method for file checksum, default: md5
     '''
     try:
-      if isinstance(data, pd.DataFrame):
+      if not isinstance(data, pd.DataFrame):
         data=pd.DataFrame(data)
       
-      if set(data.columns).issubset(set(required_coumns)):
+      if not set(data.columns).issubset(set(required_coumns)):
         raise ValueError('missing required columns: {0}'.\
                          format(data.columns))
       
