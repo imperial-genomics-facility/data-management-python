@@ -16,6 +16,7 @@ script:
 - coverage run test/pipelineadaptor_test.py
 - coverage run test/flowcell_rules_test.py
 - coverage run test/collect_seqrun_fastq_to_db_test.py
+- coverage run test/collectionadaptor_test.py
 after_success:
 - coveralls
 notifications:
