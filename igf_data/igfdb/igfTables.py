@@ -334,6 +334,7 @@ class File(Base):
   file_id      = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   file_path    = Column(String(500), nullable=False)
   location     = Column(Enum('ORWELL', 'HPC_PROJECT', 'ELIOT', 'IRODS', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
+  status       = Column(Enum('ACTIVE', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
   md5          = Column(String(33))
   size         = Column(String(15))
   date_created = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp())
@@ -345,6 +346,7 @@ class File(Base):
     return "File(file_id = '{self.file_id}'," \
                 "file_path = '{self.file_path}'," \
                 "location = '{self.location}'," \
+                "status = '{self.status}'," \
                 "md5 = '{self.md5}'," \
                 "size = '{self.size}'," \
                 "date_created = '{self.date_created}'," \
