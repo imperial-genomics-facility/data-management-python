@@ -39,5 +39,19 @@ class CollectionAdaptor_test1(unittest.TestCase):
     file_md5=file_data.md5
     self.assertEqual(file_md5, 'a925b61b8b7622c94b8fddcaa1e6e5a6')
     
+  def test_fetch_collection_name_and_table_from_file_path(self):
+    file_path='data/collect_fastq_dir/1_16/IGFP0001_test_22-8-2017_rna/IGF00002/IGF00002-2_S1_L001_R1_001.fastq.gz'
+    data=[{'name':'IGF00001_MISEQ_000000000-D0YLK_1',\
+           'type':'demultiplexed_fastq',\
+           'table':'run',\
+           'file_path':file_path,\
+           'location':'HPC_PROJECT'}]
+    ca=CollectionAdaptor(**{'session_class':self.session_class})
+    ca.start_session()
+    ca.load_file_and_create_collection(data)
+    (name,table)=ca.fetch_collection_name_and_table_from_file_path(file_path)
+    ca.close_session()
+    self.assertEqual(name, 'IGF00001_MISEQ_000000000-D0YLK_1')
+    
 if __name__=='__main__':
   unittest.main()

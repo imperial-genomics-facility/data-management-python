@@ -172,7 +172,7 @@ class CollectionAdaptor(BaseAdaptor):
     try:
       collection_name=None
       collection_table=None
-      session.self.session
+      session=self.session
       query=session.query(Collection, File).\
                     join(Collection_group).\
                     join(File).\
@@ -182,6 +182,7 @@ class CollectionAdaptor(BaseAdaptor):
       if len(results)>0:
         collection_name=results[0]['name']
         collection_table=results[0]['table']
+        return collection_name, collection_table
       else:
         raise  ValueError('No collection found for file: {0}'.\
                           format(len(results)))
