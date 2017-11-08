@@ -2,22 +2,30 @@ import os, subprocess,fnmatch
 from shutil import copy2
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.fileutils import get_temp_dir,remove_dir
+from igf_data.igfdb.baseadaptor import BaseAdaptor
+from igf_data.igfdb.collectionadaptor import CollectionAdaptor
+from igf_data.igfdb.runadaptor import RunAdaptor
+
 
 class RunFastqc(IGFBaseProcess):
   def param_defaults(self):
     params_dict=super(IGFBaseProcess,self).param_defaults()
     params_dict.update({
+      'required_collection_table':'run',
       'force_overwrite':True,
       'fastqc_dir_label':'fastqc',
       'fastqc_exe':'fastqc',
       'fastqc_options':{'-q':'','--noextract':'','-f':'fastq','-k':'7','-t':'1'},
       'tag':None,
+      'sample_name':None,
       })
     return params_dict
   
   def run(self):
     try:
       fastq_file=self.param_required('fastq_file')
+      fastq_dir=self.param_required('fastq_dir')
+      igf_session_class=self.param_required('igf_session_class')
       fastqc_exe=self.param_required('fastqc_exe')
       tag=self.param_required('tag')
       seqrun_igf_id=self.param_required('seqrun_igf_id')
@@ -28,10 +36,29 @@ class RunFastqc(IGFBaseProcess):
       project_name=self.param_required('project_name')
       force_overwrite=self.param('force_overwrite')
       fastqc_dir_label=self.param('fastqc_dir_label')
+      required_collection_table=self.param('required_collection_table')
+      sample_name=self.param('sample_name')
       
-      lane_index_info=os.path.basename(os.path.dirname(fastq_file))             # get the lane and index length info
+      lane_index_info=os.path.basename(os.path.dirname(fastq_dir))              # get the lane and index length info
       fastq_file_label=os.path.basename(fastq_file).replace('.fastq.gz','')
       
+      if sample_name is None:                                                   # fetch sample name if its not defined
+        base=BaseAdaptor(**{'session_class':igf_session_class})
+        base.start_session()                                                    # connect to db
+      
+        ca=CollectionAdaptor(**{'session':base.session})
+        (collection_name,collection_table)=\
+        ca.fetch_collection_name_and_table_from_file_path(file_path=fastq_file) # fetch collection name and table info
+        
+        if collection_table != required_collection_table:
+          raise ValueError('Expected collection table {0} and got {1}, {2}'.\
+                           format(required_collection_table,collection_table,fastq_file))
+          
+        ra=RunAdaptor(**{'session':base.session})
+        sample=ra.fetch_sample_info_for_run(run_igf_id=collection_name)
+        sample_name=sample['sample_igf_id']
+        base.close_session()
+        
       fastqc_result_dir=os.path.join(base_results_dir, \
                                      project_name, \
                                      fastqc_dir_label, \
@@ -39,7 +66,7 @@ class RunFastqc(IGFBaseProcess):
                                      flowcell_id, \
                                      lane_index_info,\
                                      tag,\
-                                     fastq_file_label)                          # result dir path is generic
+                                     sample_name)                               # result dir path is generic
       
       if os.path.exists(fastqc_result_dir) and force_overwrite:
         remove_dir(fastqc_result_dir)                                           # remove existing output dir if force_overwrite is true
@@ -79,6 +106,8 @@ class RunFastqc(IGFBaseProcess):
                          format(fastqc_zip,fastqc_html))
       
       self.param('dataflow_params',{'fastqc_html':fastqc_html, \
+                                    'lane_index_info':lane_index_info,\
+                                    'sample_name':sample_name,\
                                     'fastqc':{'fastqc_path':fastqc_result_dir,
                                               'fastqc_zip':fastqc_zip,
                                               'fastqc_html':fastqc_html}})      # set dataflow params
