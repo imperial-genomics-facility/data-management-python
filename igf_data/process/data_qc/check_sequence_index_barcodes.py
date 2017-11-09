@@ -120,7 +120,7 @@ class CheckSequenceIndexBarcodes:
         samplesheet_data=SampleSheet(infile=sample_sheet)                       # using the same samplesheet for filter
         u_stats_df=lg.groupby('tag').get_group('unknown')
         k_stats_df=lg.groupby('tag').get_group('known')                         # separate known and unknown groups
-        all_lanes=[1,2,3,4] if platform_name==nextseq_label \
+        all_lanes=['1','2','3','4'] if platform_name==nextseq_label \
                             else samplesheet_data.get_lane_count();             # nextseq in weird
         if platform_name==nextseq_label:
           samplesheet_data.add_pseudo_lane_for_nextseq()                        # add pseudo lane info for NextSeq
