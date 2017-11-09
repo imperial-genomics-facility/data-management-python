@@ -10,6 +10,7 @@ class RunFastqscreen(IGFBaseProcess):
       'force_overwrite':True,
       'tag':None,
       'sample_name':None,
+      'lane_index_info':None,
       'fastqscreen_dir_label':'fastqscreen',
       'fastqscreen_exe':'fastqscreen',
       'fastqscreen_conf':None,
@@ -55,6 +56,9 @@ class RunFastqscreen(IGFBaseProcess):
       if sample_name is not None:
         fastqscreen_result_dir=os.path.join(fastqscreen_result_dir, \
                                             sample_name)                        # add sample name to dir path only if its available
+      
+      fastqscreen_result_dir=os.path.join(fastqscreen_result_dir, \
+                                          fastq_file_label)                     # keep multiple files under same dir
       
       if os.path.exists(fastqscreen_result_dir) and force_overwrite:
         remove_dir(fastqscreen_result_dir)                                      # remove existing output dir if force_overwrite is true

@@ -67,8 +67,11 @@ class RunFastqc(IGFBaseProcess):
                                      lane_index_info,\
                                      tag)                                       # result dir path is generic
       if sample_name is not None:
-        fastqc_result_dir=os.path.join(fastqc_result_dir,
+        fastqc_result_dir=os.path.join(fastqc_result_dir, \
                                        sample_name)                             # add sample name to dir path if its available
+      
+      fastqc_result_dir=os.path.join(fastqc_result_dir, \
+                                     fastq_file_label)                          # keep multiple files under same dir
       
       if os.path.exists(fastqc_result_dir) and force_overwrite:
         remove_dir(fastqc_result_dir)                                           # remove existing output dir if force_overwrite is true
