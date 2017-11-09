@@ -9,6 +9,7 @@ class RunFastqscreen(IGFBaseProcess):
     params_dict.update({
       'force_overwrite':True,
       'tag':None,
+      'sample_name':None,
       'fastqscreen_dir_label':'fastqscreen',
       'fastqscreen_exe':'fastqscreen',
       'fastqscreen_conf':None,
@@ -23,6 +24,7 @@ class RunFastqscreen(IGFBaseProcess):
   def run(self):
     try:
       fastq_file=self.param_required('fastq_file')
+      fastq_dir=self.param_required('fastq_dir')
       seqrun_igf_id=self.param_required('seqrun_igf_id')
       base_results_dir=self.param_required('base_results_dir')
       project_name=self.param_required('project_name')
@@ -31,11 +33,15 @@ class RunFastqscreen(IGFBaseProcess):
       fastqscreen_exe=self.param_required('fastqscreen_exe')
       fastqscreen_conf=self.param_required('fastqscreen_conf')
       tag=self.param_required('tag')
+      lane_index_info=self.param_requuired('lane_index_info')
+      sample_name=self.param('sample_name')
       fastqscreen_options=self.param('fastqscreen_options')
       force_overwrite=self.param('force_overwrite')
       fastqscreen_dir_label=self.param('fastqscreen_dir_label')
       
-      lane_index_info=os.path.basename(os.path.dirname(fastq_file))             # get the lane and index length info
+      if lane_index_info is None:
+        lane_index_info=os.path.basename(os.path.dirname(fastq_dir))            # get the lane and index length info
+        
       fastq_file_label=os.path.basename(fastq_file).replace('.fastq.gz','')
       
       fastqscreen_result_dir=os.path.join(base_results_dir, \
@@ -44,8 +50,11 @@ class RunFastqscreen(IGFBaseProcess):
                                           seqrun_date, \
                                           flowcell_id, \
                                           lane_index_info,\
-                                          tag,
-                                          fastq_file_label)                     # result dir path is generic
+                                          tag)                                  # result dir path is generic
+      
+      if sample_name is not None:
+        fastqscreen_result_dir=os.path.join(fastqscreen_result_dir, \
+                                            sample_name)                        # add sample name to dir path only if its available
       
       if os.path.exists(fastqscreen_result_dir) and force_overwrite:
         remove_dir(fastqscreen_result_dir)                                      # remove existing output dir if force_overwrite is true
@@ -99,6 +108,8 @@ class RunFastqscreen(IGFBaseProcess):
       
       
       self.param('dataflow_params',{'fastqscreen_html':fastqscreen_html, \
+                                    'lane_index_info':lane_index_info,\
+                                    'sample_name':sample_name,\
                                     'fastqscreen': \
                                     {'fastqscreen_path':fastqscreen_result_dir,
                                      'fastqscreen_stat':fastqscreen_stat,
