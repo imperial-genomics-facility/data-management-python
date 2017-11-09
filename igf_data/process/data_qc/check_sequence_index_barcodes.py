@@ -215,6 +215,13 @@ class CheckSequenceIndexBarcodes:
                                               format(rid, lid)
             extra_message = extra_message+', '+message if extra_message \
                             else message
+                            
+          if 'index_1_G_homopolymer' in all_tag_groups:
+            message='{0} {1} found G homopolymer index1'.\
+                                              format(rid, lid)
+            extra_message = extra_message+', '+message if extra_message \
+                            else message
+                            
           known_grp=lgrp.groupby('tag').get_group('known')
           min_known_mpr=known_grp['mapping_ratio'].min()
           unknown_grp=lgrp.groupby('tag').get_group('unknown')
@@ -232,6 +239,7 @@ class CheckSequenceIndexBarcodes:
           raise IndexBarcodeValidationError(message='{0} failed total barcode check: {1}'.\
                                             format(runid, grp['known_pct'].values[0]), \
                                             plots=[all_barcode_plot,index_plot])
+          
     except:
         raise
 
@@ -325,7 +333,13 @@ class CheckSequenceIndexBarcodes:
                  rev_comp(unknown_index_2) == known_index_2 and \
                  unknown_index_1==known_index_1:
               tag='only_index_2_revcomp'                                          # only index 2 is revcomp
-            
+              
+            # CASE 6: Index is GGGGG homopolymer
+            elif tag=='unknown':
+              homo_G_match=re.match(re.compile(r'^[G]+$'),unknown_index_1)
+              if homo_G_match:
+                tag='index_1_G_homopolymer'
+              
         data_series['tag']=tag                                                    # reset tag in data series
       return data_series
     except:
