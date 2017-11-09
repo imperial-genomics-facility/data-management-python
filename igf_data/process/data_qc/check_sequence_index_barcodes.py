@@ -28,7 +28,6 @@ class CheckSequenceIndexBarcodes:
     self.stats_json_file=stats_json_file
     self.samplesheet_file=samplesheet_file
     self.platform_name=platform_name
-    self._check_barcode_stats()
     
  
   def _get_dataframe_from_stats_json(self,json_file):
@@ -179,6 +178,8 @@ class CheckSequenceIndexBarcodes:
     strict_check: Parameter to turn on or off the strict checking, default is True
     '''
     try:
+      self._check_barcode_stats()
+      
       summary_df=self.processed_df
       raw_df=self.raw_df
       
