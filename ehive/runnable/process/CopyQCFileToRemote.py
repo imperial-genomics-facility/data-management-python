@@ -11,6 +11,7 @@ class CopyQCFileToRemote(IGFBaseProcess):
       'remote_seqrun_path':None,
       'force_overwrite':True,
       'dir_label':None,
+      'sample_label':None,
       })
     return params_dict
   
@@ -26,6 +27,7 @@ class CopyQCFileToRemote(IGFBaseProcess):
       seqrun_date=self.param_required('seqrun_date')
       flowcell_id=self.param_required('flowcell_id')
       dir_label=self.param_required('dir_label')
+      sample_label=self.param('sample_label')
       tag=self.param_required('tag')
       analysis_label=self.param_required('analysis_label')
       force_overwrite=self.param('force_overwrite')
@@ -45,6 +47,9 @@ class CopyQCFileToRemote(IGFBaseProcess):
                                           flowcell_id, \
                                           dir_label,\
                                           tag)                                  # result dir path is generic
+      if sample_label is not None:
+        destination_outout_path=os.path.join(destination_outout_path, \
+                                             sample_label)                      # adding sample label only if its present
       
       file_check_cmd=['ssh',\
                       '{0}@{1}'.\
@@ -54,7 +59,7 @@ class CopyQCFileToRemote(IGFBaseProcess):
                       os.path.join(destination_outout_path,\
                                    file_name)]
       response=subprocess.call(file_check_cmd)
-      if response==0:
+      if force_overwrite and response==0:
         file_rm_cmd=['ssh',\
                       '{0}@{1}'.\
                       format(remote_user,\
