@@ -42,7 +42,6 @@ class CopyQCFileToRemote(IGFBaseProcess):
       
       destination_outout_path=os.path.join(remote_project_path, \
                                           project_name, \
-                                          analysis_label, \
                                           seqrun_date, \
                                           flowcell_id, \
                                           dir_label,\
@@ -50,7 +49,9 @@ class CopyQCFileToRemote(IGFBaseProcess):
       if sample_label is not None:
         destination_outout_path=os.path.join(destination_outout_path, \
                                              sample_label)                      # adding sample label only if its present
-      
+        
+      destination_outout_path=os.path.join(destination_outout_path,\
+                                           analysis_label)
       file_check_cmd=['ssh',\
                       '{0}@{1}'.\
                       format(remote_user,\
