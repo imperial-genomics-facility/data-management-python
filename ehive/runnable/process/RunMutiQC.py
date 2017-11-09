@@ -47,12 +47,11 @@ class RunMutiQC(IGFBaseProcess):
       lane_index_info=os.path.basename(fastq_dir)                               # get lane and index info
       multiqc_result_dir=os.path.join(base_results_dir, \
                                       project_name, \
-                                      multiqc_dir_label, \
                                       seqrun_date, \
                                       flowcell_id, \
                                       lane_index_info,\
-                                      tag
-                                     )                                          # get multiqc final output path
+                                      tag, \
+                                      multiqc_dir_label)                        # get multiqc final output path
       
       if os.path.exists(multiqc_result_dir) and force_overwrite:
         remove_dir(multiqc_result_dir)                                          # remove existing output dir if force_overwrite is true
