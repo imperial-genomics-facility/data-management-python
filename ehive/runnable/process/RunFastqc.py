@@ -42,7 +42,7 @@ class RunFastqc(IGFBaseProcess):
       lane_index_info=os.path.basename(os.path.dirname(fastq_dir))              # get the lane and index length info
       fastq_file_label=os.path.basename(fastq_file).replace('.fastq.gz','')
       
-      if sample_name is None:                                                   # fetch sample name if its not defined
+      if sample_name is None and tag=='known':                                  # fetch sample name for known fastq, if its not defined
         base=BaseAdaptor(**{'session_class':igf_session_class})
         base.start_session()                                                    # connect to db
       
@@ -65,8 +65,10 @@ class RunFastqc(IGFBaseProcess):
                                      seqrun_date, \
                                      flowcell_id, \
                                      lane_index_info,\
-                                     tag,\
-                                     sample_name)                               # result dir path is generic
+                                     tag)                                       # result dir path is generic
+      if sample_name is not None:
+        fastqc_result_dir=os.path.join(fastqc_result_dir,
+                                       sample_name)                             # add sample name to dir path if its available
       
       if os.path.exists(fastqc_result_dir) and force_overwrite:
         remove_dir(fastqc_result_dir)                                           # remove existing output dir if force_overwrite is true
