@@ -61,7 +61,6 @@ class RunFastqc(IGFBaseProcess):
         
       fastqc_result_dir=os.path.join(base_results_dir, \
                                      project_name, \
-                                     fastqc_dir_label, \
                                      seqrun_date, \
                                      flowcell_id, \
                                      lane_index_info,\
@@ -71,7 +70,8 @@ class RunFastqc(IGFBaseProcess):
                                        sample_name)                             # add sample name to dir path if its available
       
       fastqc_result_dir=os.path.join(fastqc_result_dir, \
-                                     fastq_file_label)                          # keep multiple files under same dir
+                                     fastq_file_label,\
+                                     fastqc_dir_label)                          # keep multiple files under same dir
       
       if os.path.exists(fastqc_result_dir) and force_overwrite:
         remove_dir(fastqc_result_dir)                                           # remove existing output dir if force_overwrite is true
