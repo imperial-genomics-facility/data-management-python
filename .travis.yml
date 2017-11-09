@@ -18,6 +18,7 @@ script:
 - coverage run test/collect_seqrun_fastq_to_db_test.py
 - coverage run test/collectionadaptor_test.py
 - coverage run test/runadaptor_test.py
+- coverage run test/checksequenceIndexbarcodes_test.py
 after_success:
 - coveralls
 notifications:
