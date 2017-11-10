@@ -4,21 +4,21 @@ python:
 install: "pip install -r requirements.txt"
 script:
 - export PYTHONPATH=.
-- coverage run test/samplesheet_test.py
-- coverage run test/runinfo_xml_test.py
-- coverage run test/basesmask_test.py
-- coverage run test/moveBclFilesForDemultiplexing_test.py
-- coverage run test/find_and_process_new_seqrun_test.py
-- coverage run test/dbutils_test.py
-- coverage run test/platformutils_test.py
-- coverage run test/pipelineutils_test.py
-- coverage run test/runparameters_xml_test.py
-- coverage run test/pipelineadaptor_test.py
-- coverage run test/flowcell_rules_test.py
-- coverage run test/collect_seqrun_fastq_to_db_test.py
-- coverage run test/collectionadaptor_test.py
-- coverage run test/runadaptor_test.py
-- coverage run test/checksequenceIndexbarcodes_test.py
+- coverage run --source=igf_data test/samplesheet_test.py
+- coverage run --source=igf_data test/runinfo_xml_test.py
+- coverage run --source=igf_data test/basesmask_test.py
+- coverage run --source=igf_data test/moveBclFilesForDemultiplexing_test.py
+- coverage run --source=igf_data test/find_and_process_new_seqrun_test.py
+- coverage run --source=igf_data test/dbutils_test.py
+- coverage run --source=igf_data test/platformutils_test.py
+- coverage run --source=igf_data test/pipelineutils_test.py
+- coverage run --source=igf_data test/runparameters_xml_test.py
+- coverage run --source=igf_data test/pipelineadaptor_test.py
+- coverage run --source=igf_data test/flowcell_rules_test.py
+- coverage run --source=igf_data test/collect_seqrun_fastq_to_db_test.py
+- coverage run --source=igf_data test/collectionadaptor_test.py
+- coverage run --source=igf_data test/runadaptor_test.py
+- coverage run --source=igf_data test/checksequenceIndexbarcodes_test.py
 after_success:
 - coveralls
 notifications:
