@@ -26,7 +26,7 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Software Development :: Testing',
     ],
-    packages = ["data-management-python"],
+    packages = ["igf_data"],
     zip_safe = False,
     tests_require = tests_require,
     test_suite = "tests.get_tests",
