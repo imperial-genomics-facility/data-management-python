@@ -20,6 +20,7 @@ script:
 - coverage run --source=igf_data test/runadaptor_test.py
 - coverage run --source=igf_data test/checksequenceIndexbarcodes_test.py
 after_success:
+- coverage combine
 - coveralls
 notifications:
   slack:
