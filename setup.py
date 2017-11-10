@@ -2,7 +2,7 @@ import os
 import sys
 from setuptools import setup
 
-tests_require = ["unittest"]
+tests_require = ["unittest2"]
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 
