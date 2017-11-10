@@ -4,21 +4,21 @@ python:
 install: "pip install -r requirements.txt"
 script:
 - export PYTHONPATH=.
-- coverage run --source=igf_data test/samplesheet_test.py
-- coverage run --source=igf_data test/runinfo_xml_test.py
-- coverage run --source=igf_data test/basesmask_test.py
-- coverage run --source=igf_data test/moveBclFilesForDemultiplexing_test.py
-- coverage run --source=igf_data test/find_and_process_new_seqrun_test.py
-- coverage run --source=igf_data test/dbutils_test.py
-- coverage run --source=igf_data test/platformutils_test.py
-- coverage run --source=igf_data test/pipelineutils_test.py
-- coverage run --source=igf_data test/runparameters_xml_test.py
-- coverage run --source=igf_data test/pipelineadaptor_test.py
-- coverage run --source=igf_data test/flowcell_rules_test.py
-- coverage run --source=igf_data test/collect_seqrun_fastq_to_db_test.py
-- coverage run --source=igf_data test/collectionadaptor_test.py
-- coverage run --source=igf_data test/runadaptor_test.py
-- coverage run --source=igf_data test/checksequenceIndexbarcodes_test.py
+- coverage run --source=igf_data.illumina.samplesheet test/samplesheet_test.py
+- coverage run --source=igf_data.illumina.runinfo_xml test/runinfo_xml_test.py
+- coverage run --source=igf_data.illumina.basesMask test/basesmask_test.py
+- coverage run --source=igf_data.process.moveBclFilesForDemultiplexing test/moveBclFilesForDemultiplexing_test.py
+- coverage run --source=igf_data.process.seqrun_processing.find_and_process_new_seqrun test/find_and_process_new_seqrun_test.py
+- coverage run --source=igf_data.utils.dbutils test/dbutils_test.py
+- coverage run --source=igf_data.utils.platformutils test/platformutils_test.py
+- coverage run --source=igf_data.utils.pipelineutils test/pipelineutils_test.py
+- coverage run --source=igf_data.illumina.runparameters_xml test/runparameters_xml_test.py
+- coverage run --source=igf_data.igfdb.pipelineadaptor test/pipelineadaptor_test.py
+- coverage run --source=igf_data.igfdb.seqrunadaptor,igf_data.igfdb.platformadaptor test/flowcell_rules_test.py
+- coverage run --source=igf_data.process.seqrun_processing.collect_seqrun_fastq_to_db test/collect_seqrun_fastq_to_db_test.py
+- coverage run --source=igf_data.igfdb.collectionadaptor test/collectionadaptor_test.py
+- coverage run --source=igf_data.igfdb.runadaptor test/runadaptor_test.py
+- coverage run --source=igf_data.process.data_qc.check_sequence_index_barcodes test/checksequenceIndexbarcodes_test.py
 after_success:
 - coveralls
 notifications:
