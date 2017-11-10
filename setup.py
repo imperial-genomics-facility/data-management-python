@@ -29,5 +29,5 @@ setup(
     packages = ["igf_data"],
     zip_safe = False,
     tests_require = tests_require,
-    test_suite = "tests.get_tests",
+    test_suite = "test.get_tests",
 )
