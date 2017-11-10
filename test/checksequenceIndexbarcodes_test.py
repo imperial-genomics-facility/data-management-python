@@ -2,7 +2,7 @@ import unittest, json, os, shutil
 from igf_data.illumina.samplesheet import SampleSheet
 from igf_data.process.data_qc.check_sequence_index_barcodes import CheckSequenceIndexBarcodes, IndexBarcodeValidationError
 
-class RunAdaptor_test1(unittest.TestCase):
+class CheckSequenceIndexBarcodes_test1(unittest.TestCase):
   def setUp(self):
     self.samplesheet_file='data/check_index_qc/SampleSheet.csv'
     self.stats_json_file='data/check_index_qc/Stats.json'
