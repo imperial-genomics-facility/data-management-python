@@ -4,21 +4,21 @@ python:
 install: "pip install -r requirements.txt"
 script:
 - export PYTHONPATH=.
-- coverage run --source=. test/samplesheet_test.py
-- coverage run --source=. test/runinfo_xml_test.py
-- coverage run --source=. test/basesmask_test.py
-- coverage run --source=. test/moveBclFilesForDemultiplexing_test.py
-- coverage run --source=. test/find_and_process_new_seqrun_test.py
-- coverage run --source=. test/dbutils_test.py
-- coverage run --source=. test/platformutils_test.py
-- coverage run --source=. test/pipelineutils_test.py
-- coverage run --source=. test/runparameters_xml_test.py
-- coverage run --source=. test/pipelineadaptor_test.py
-- coverage run --source=. test/flowcell_rules_test.py
-- coverage run --source=. test/collect_seqrun_fastq_to_db_test.py
-- coverage run --source=. test/collectionadaptor_test.py
-- coverage run --source=. test/runadaptor_test.py
-- coverage run --source=. test/checksequenceIndexbarcodes_test.py
+- coverage run --source=igf_data test/samplesheet_test.py
+- coverage run --source=igf_data test/runinfo_xml_test.py
+- coverage run --source=igf_data test/basesmask_test.py
+- coverage run --source=igf_data test/moveBclFilesForDemultiplexing_test.py
+- coverage run --source=igf_data test/find_and_process_new_seqrun_test.py
+- coverage run --source=igf_data test/dbutils_test.py
+- coverage run --source=igf_data test/platformutils_test.py
+- coverage run --source=igf_data test/pipelineutils_test.py
+- coverage run --source=igf_data test/runparameters_xml_test.py
+- coverage run --source=igf_data test/pipelineadaptor_test.py
+- coverage run --source=igf_data test/flowcell_rules_test.py
+- coverage run --source=igf_data test/collect_seqrun_fastq_to_db_test.py
+- coverage run --source=igf_data test/collectionadaptor_test.py
+- coverage run --source=igf_data test/runadaptor_test.py
+- coverage run --source=igf_data test/checksequenceIndexbarcodes_test.py
 after_success:
 - coveralls
 notifications:
