@@ -127,7 +127,7 @@ class CheckSequenceIndexBarcodes:
         
         if platform_name==miseq_label:
           samplesheet_data.add_pseudo_lane_for_miseq()                          # add pseudo lane info for NextSeq
-        
+        all_lanes=map(lambda x: str(x),all_lanes)                               # converting lane numbers to str
         if str(lid) in all_lanes:
           if platform_name==nextseq_label:
             samplesheet_data.filter_sample_data(condition_key='PseudoLane', \
