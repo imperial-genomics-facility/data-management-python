@@ -34,7 +34,7 @@ class RunFastqscreen(IGFBaseProcess):
       fastqscreen_exe=self.param_required('fastqscreen_exe')
       fastqscreen_conf=self.param_required('fastqscreen_conf')
       tag=self.param_required('tag')
-      lane_index_info=self.param_requuired('lane_index_info')
+      lane_index_info=self.param_required('lane_index_info')
       sample_name=self.param('sample_name')
       fastqscreen_options=self.param('fastqscreen_options')
       force_overwrite=self.param('force_overwrite')
