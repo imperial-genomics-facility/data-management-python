@@ -43,8 +43,8 @@ class RunMutiQC(IGFBaseProcess):
       fastqc_files=list()
       fastqscreen_files=list()
       for fastq_dir, qc_output in qc_files.items():
-        fastqc_files.extend([fqc_dir for fqc_dir in qc_output['fastqc'].keys()])
-        fastqscreen_files.extend([fsr_dir for fsr_dir in qc_output['fastqscreen'].keys()])
+        fastqc_files.extend([fqc_dir for fqc_dir in qc_output['fastqc']])
+        fastqscreen_files.extend([fsr_dir for fsr_dir in qc_output['fastqscreen']])
         
       lane_index_info=os.path.basename(fastq_dir)                               # get lane and index info
       multiqc_result_dir=os.path.join(base_results_dir, \
