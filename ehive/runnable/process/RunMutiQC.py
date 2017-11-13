@@ -113,7 +113,8 @@ class RunMutiQC(IGFBaseProcess):
             multiqc_data=os.path.join(multiqc_result_dir,file)                  # get multiqc data path
       
       self.param('dataflow_params',{'multiqc_html':multiqc_html, \
-                                    'multiqc_data':multiqc_data})
+                                    'multiqc_data':multiqc_data, \
+                                    'lane_index_info':lane_index_info})
     except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
