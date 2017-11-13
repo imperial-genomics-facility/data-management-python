@@ -20,10 +20,7 @@ class RunMutiQC(IGFBaseProcess):
     try:
       seqrun_igf_id=self.param_required('seqrun_igf_id')
       demultiplexing_stats_file=self.param_required('demultiplexing_stats_file')
-      fastq_dir=self.param_required('fastq_dir')
-      qc_files=self.param('qc_files')
-      #fastqc_files=self.param_required('fastqc_files')
-      #fastqscreen_files=self.param_required('fastqscreen_files')
+      qc_files_name=self.param('qc_files_name')
       multiqc_exe=self.param('multiqc_exe')
       multiqc_options=self.param('multiqc_options')
       multiqc_dir_label=self.param('multiqc_dir_label')
@@ -37,12 +34,17 @@ class RunMutiQC(IGFBaseProcess):
       if tag not in ['known','undetermined']:
         raise ValueError('unknown status tag {0}'.format(tag))                  # check valid status tags
       
+      if qc_files_name not in ['qc_known','qc_undetermined']:
+        raise ValueError('unknown status tag {0}'.format(tag))                  # check valid qc files
+      
+      qc_files=self.param_required(qc_files_name)                               # get specific qc files
+      fastq_dir=[f_dir for f_dir in qc_files.keys()][0]                         # consider only the first fastq dir
+      
       fastqc_files=list()
       fastqscreen_files=list()
-      for qcs in qc_files:
-        qc_output=qcs['qc_outputs']
-        fastqc_files.append(qc_output['fastqc'])
-        fastqscreen_files.append(qc_output['fastqscreen'])
+      for fastq_dir, qc_output in qc_files.items():
+        fastqc_files.extend([fqc_dir for fqc_dir in qc_output['fastqc'].keys()])
+        fastqscreen_files.extend([fsr_dir for fsr_dir in qc_output['fastqscreen'].keys()])
         
       lane_index_info=os.path.basename(fastq_dir)                               # get lane and index info
       multiqc_result_dir=os.path.join(base_results_dir, \
@@ -69,31 +71,32 @@ class RunMutiQC(IGFBaseProcess):
           raise IOError('demultiplexing stats file {0} not found'.\
                         format(demultiplexing_stats_file))                      # check demultiplexing stats file
         
-        multiqc_input_file.write(demultiplexing_stats_file)                     # add demultiplexing stat to list
+        multiqc_input_file.write('{}\n'.format(demultiplexing_stats_file))      # add demultiplexing stat to list
         
         for fastqc_file in fastqc_files:
-          if not os.path.exists(fastqc_file['fastqc_zip']):
+          if not os.path.exists(fastqc_file):
             raise IOError('fasqc file {0} not found'.\
-                        format(fastqc_file['fastqc_zip']))                      # check fastqc file
+                        format(fastqc_file))                                    # check fastqc file
             
-          multiqc_input_file.write(fastqc_file['fastqc_zip'])                   # add fastqc file to list
+          multiqc_input_file.write('{}\n'.format(fastqc_file))                  # add fastqc file to list
       
         for fastqscreen_file in fastqscreen_files:
-          if not os.path.exists(fastqscreen_file['fastqscreen_stat']):
+          if not os.path.exists(fastqscreen_file):
             raise IOError('fastqscreen file {0} not found'.\
-                        format(fastqscreen_file['fastqscreen_stat']))           # check fastqscreen file
+                        format(fastqscreen_file))                               # check fastqscreen file
             
-          multiqc_input_file.write(fastqscreen_file['fastqscreen_stat'])        # add fastqscreen file to list
+          multiqc_input_file.write('{}\n'.format(fastqscreen_file))             # add fastqscreen file to list
       
       multiqc_report_title='Project:{0},Sequencing_date:{1},Flowcell_lane:{2},status:{0}'.\
                            format(project_name, \
                                   seqrun_date,\
-                                  lane_id,\
-                                  status_tag)                                   # get multiqc report title and filename
+                                  lane_index_info,\
+                                  tag)                                          # get multiqc report title and filename
       multiqc_param=self.format_tool_options(multiqc_options)                   # format multiqc params
       multiqc_cmd=[multiqc_exe,
-                       '--file-list',multiqc_input_file,
+                       '--file-list',multiqc_input_list,
                        '--outdir',temp_work_dir,
+                       '--title',multiqc_report_title,
                       ]                                                         # multiqc base parameters
       multiqc_cmd.extend(multiqc_param)                                         # add additional parameters
       subprocess.check_call(multiqc_cmd)                                        # run multiqc
