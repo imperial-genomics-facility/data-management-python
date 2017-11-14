@@ -64,7 +64,7 @@ class RunMutiQC(IGFBaseProcess):
       temp_work_dir=get_temp_dir()                                              # get a temp work dir
       multiqc_input_list=os.path.join(temp_work_dir,'multiqc_input_file.txt')   # get name of multiqc input file
       
-      demultiplexing_stats_file=oa.path.join(fastq_dir,
+      demultiplexing_stats_file=os.path.join(fastq_dir,
                                              demultiplexing_stats_file)
       with open(multiqc_input_list,'w') as multiqc_input_file:                  # writing multiqc input
         if not os.path.exists(demultiplexing_stats_file):
