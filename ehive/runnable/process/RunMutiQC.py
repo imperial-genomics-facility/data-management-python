@@ -29,7 +29,7 @@ class RunMutiQC(IGFBaseProcess):
       project_name=self.param_required('project_name')
       seqrun_date=self.param_required('seqrun_date')
       flowcell_id=self.param_required('flowcell_id')
-      tag=self.para,_required('tag')
+      tag=self.param_required('tag')
       
       if tag not in ['known','undetermined']:
         raise ValueError('unknown status tag {0}'.format(tag))                  # check valid status tags
