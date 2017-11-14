@@ -18,7 +18,6 @@ class CopyQCFileToRemote(IGFBaseProcess):
   def run(self):
     try:
       file=self.param_required('file')
-      
       seqrun_igf_id=self.param_required('seqrun_igf_id')
       remote_user=self.param_required('remote_user')
       remote_host=self.param_required('remote_host')
