@@ -35,7 +35,7 @@ class RunMutiQC(IGFBaseProcess):
         raise ValueError('unknown status tag {0}'.format(tag))                  # check valid status tags
       
       if qc_files_name not in ['qc_known','qc_undetermined']:
-        raise ValueError('unknown status tag {0}'.format(tag))                  # check valid qc files
+        raise ValueError('unknown status tag {0}'.format(qc_files_name))        # check valid qc files
       
       qc_files=self.param_required(qc_files_name)                               # get specific qc files
       fastq_dir=[f_dir for f_dir in qc_files.keys()][0]                         # consider only the first fastq dir
