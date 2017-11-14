@@ -82,11 +82,12 @@ class RunMutiQC(IGFBaseProcess):
           multiqc_input_file.write('{}\n'.format(fastqc_zip))                   # add fastqc file to list
       
         for fastqscreen_file in fastqscreen_files:
-          if not os.path.exists(fastqscreen_file):
+          fastqscreen_stat=fastqscreen_file['fastqscreen_stat']
+          if not os.path.exists(fastqscreen_stat):
             raise IOError('fastqscreen file {0} not found'.\
-                        format(fastqscreen_file))                               # check fastqscreen file
+                        format(fastqscreen_stat))                               # check fastqscreen file
             
-          multiqc_input_file.write('{}\n'.format(fastqscreen_file))             # add fastqscreen file to list
+          multiqc_input_file.write('{}\n'.format(fastqscreen_stat))             # add fastqscreen file to list
       
       multiqc_report_title='Project:{0},Sequencing_date:{1},Flowcell_lane:{2},status:{0}'.\
                            format(project_name, \
