@@ -89,7 +89,7 @@ class RunMutiQC(IGFBaseProcess):
             
           multiqc_input_file.write('{}\n'.format(fastqscreen_stat))             # add fastqscreen file to list
       
-      multiqc_report_title='Project:{0},Sequencing_date:{1},Flowcell_lane:{2},status:{0}'.\
+      multiqc_report_title='Project:{0},Sequencing_date:{1},Flowcell_lane:{2},status:{3}'.\
                            format(project_name, \
                                   seqrun_date,\
                                   lane_index_info,\
