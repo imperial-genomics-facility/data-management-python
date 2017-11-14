@@ -74,11 +74,12 @@ class RunMutiQC(IGFBaseProcess):
         multiqc_input_file.write('{}\n'.format(demultiplexing_stats_file))      # add demultiplexing stat to list
         
         for fastqc_file in fastqc_files:
-          if not os.path.exists(fastqc_file):
+          fastqc_zip=fastqc_file['fastqc_zip']
+          if not os.path.exists(fastqc_zip):
             raise IOError('fasqc file {0} not found'.\
-                        format(fastqc_file))                                    # check fastqc file
+                        format(fastqc_zip))                                     # check fastqc file
             
-          multiqc_input_file.write('{}\n'.format(fastqc_file))                  # add fastqc file to list
+          multiqc_input_file.write('{}\n'.format(fastqc_zip))                   # add fastqc file to list
       
         for fastqscreen_file in fastqscreen_files:
           if not os.path.exists(fastqscreen_file):
