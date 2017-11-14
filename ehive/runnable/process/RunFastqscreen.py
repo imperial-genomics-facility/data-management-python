@@ -41,7 +41,7 @@ class RunFastqscreen(IGFBaseProcess):
       fastqscreen_dir_label=self.param('fastqscreen_dir_label')
       
       if lane_index_info is None:
-        lane_index_info=os.path.basename(os.path.dirname(fastq_dir))            # get the lane and index length info
+        lane_index_info=os.path.basename(fastq_dir)                             # get the lane and index length info
         
       fastq_file_label=os.path.basename(fastq_file).replace('.fastq.gz','')
       

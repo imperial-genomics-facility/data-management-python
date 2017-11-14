@@ -39,7 +39,7 @@ class RunFastqc(IGFBaseProcess):
       required_collection_table=self.param('required_collection_table')
       sample_name=self.param('sample_name')
       
-      lane_index_info=os.path.basename(os.path.dirname(fastq_dir))              # get the lane and index length info
+      lane_index_info=os.path.basename(fastq_dir)                               # get the lane and index length info
       fastq_file_label=os.path.basename(fastq_file).replace('.fastq.gz','')
       
       if sample_name is None and tag=='known':                                  # fetch sample name for known fastq, if its not defined
