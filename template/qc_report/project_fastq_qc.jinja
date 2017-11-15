@@ -15,7 +15,11 @@
       <tr>
       {% for column_name in headerdata %}
         {% if row[column_name].endswith('html') %}
-          <td><a href="{{ row[column_name] }}">{{ row[column_name] }}</a></td>
+          {% if row[column_name].split('/')[1] %}
+            <td><a href="{{ row[column_name] }}">{{ (row[column_name].split('/'))[-1] }}</a></td>
+          {% else %}
+            <td><a href="{{ row[column_name] }}">{{ row[column_name] }}</a></td>
+          {% endif %}
         {% else %}
           <td>{{ row[column_name] }}</td>
         {% endif %}
