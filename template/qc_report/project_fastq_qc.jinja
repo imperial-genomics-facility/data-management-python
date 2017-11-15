@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <title>Project: {{ ProjectName }}, Date:{{ SeqrunDate }} Fastq QC page</title>
+    <title>Project: {{ ProjectName }}, Date:{{ SeqrunDate }}, Flowcell id:{{ FlowcellId }} Fastq QC page</title>
 </head>
 <body>
+  <h2>Project: {{ ProjectName }}, Date:{{ SeqrunDate }}, Flowcell id:{{ FlowcellId }}  Fastq QC page</h2>
   <table>
     <tr>
       {% for column in headerdata %}
