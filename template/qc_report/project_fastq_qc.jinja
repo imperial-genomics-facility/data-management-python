@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Project: {{ ProjectName }}, Date:{{ SeqrunDate }} Fastq QC page</title>
+</head>
+<body>
+  <table>
+    <tr>
+      {% for column in headerdata %}
+        <td>{{ column }}</td>
+      {% endfor %}
+    </tr>
+    {% for row in qcmain %}
+      <tr>
+      {% for column_name in headerdata %}
+        {% if row[column_name].endswith('html') %}
+          <td><a href="{{ row[column_name] }}">{{ row[column_name] }}</a></td>
+        {% else %}
+          <td>{{ row[column_name] }}</td>
+        {% endif %}
+      {% endfor %}
+      </tr>
+    {% endfor %}
+  </table>
+</body>
+</html>
