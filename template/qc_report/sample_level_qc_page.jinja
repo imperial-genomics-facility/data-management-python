@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Project: {{ ProjectName }}, Date:{{ SeqrunDate }}, Flowcell id:{{ FlowcellId }}, Lane:{{ Lane }}, Index Barcode Length:{{ IndexBarcodeLength }} Fastq QC page</title>
+</head>
+<body>
+  <h2>Project: {{ ProjectName }}, Date:{{ SeqrunDate }}, Flowcell id:{{ FlowcellId }}, Lane:{{ Lane }}, Index Barcode Length:{{ IndexBarcodeLength }} Fastq QC page</h2>
+  <table>
+    <tr>
+      {% for column in headerdata %}
+        <td>{{ column }}</td>
+      {% endfor %}
+    </tr>
+    {% for row in qcmain %}
+      <tr>
+      {% for column_name in headerdata %}
+        {% if row[column_name].endswith('html') %}
+          {% if row[column_name].split('/')[1] %}
+            <td><a href="{{ row[column_name] }}">{{ (row[column_name].split('/'))[-1] }}</a></td>
+          {% else %}
+            <td><a href="{{ row[column_name] }}">{{ row[column_name] }}</a></td>
+          {% endif %}
+        {% else %}
+          <td>{{ row[column_name] }}</td>
+        {% endif %}
+      {% endfor %}
+      </tr>
+    {% endfor %}
+  </table>
+</body>
+</html>
