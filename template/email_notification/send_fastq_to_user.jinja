@@ -1,0 +1,76 @@
+To: igf@imperial.ac.uk
+Cc: igf@imperial.ac.uk
+Subject: [Imperial BRC Genomics Facility] Sequencing data available for download - {{ projectName }}
+From: igf@imperial.ac.uk
+MIME-Version: 1.0
+Content-Type: text/plain
+
+EMAIL FOR {{ customerEmail }}
+
+Dear {{ customerName }},
+
+Your sequencing data is available for download from:
+
+http://eliot.med.ic.ac.uk:8080/idrop-web
+
+Follow this path
+
+{{ projectName }}/fastq/{{ projectRunDate }}
+
+User Name: {{ customerUsername }}
+Password: {{ customerPasswd }}
+Authentication Type: Standard
+
+You can download your data via a web browser or via the icommand client on cx1 configured appropriately 
+
++ Configuration (Only the first time):
+        - connect to cx1
+        - create directory mkdir .irods
+        - cd .irods
+        - create a file called irods_environment.json which contains
+
+        {
+                "irods_host": "eliot.med.ic.ac.uk",
+                "irods_port":1247,
+                "irods_default_resource": "woolfResc",
+                "irods_user_name": "{{ customerUsername }}",
+                "irods_zone_name": "igfZone",
+        }
+
+        - module load irods/4.2.0
+        - execute the command iinit
+        - specify your password
+
++ Download your data:
+        - connect to cx1
+        - module load irods/4.2.0
+        - iget -Pr /igfZone/home/{{ customerUsername }}/{{ projectName }}/fastq/{{ projectRunDate }}
+
+
+The data will be available for one month from the date of this e-mail.
+
+Please refer to the sample sheet extracts in the sample folders for facility sample ID to user sample name mappings.
+
+You can check the report of some quality control checks on raw sequence data coming from high throughput sequencing pipelines performed by FastQC, Fastqscreen and MultiQC tools.
+
+http://eliot.med.ic.ac.uk/report/project/{{ projectName }}/{{ projectRunDate }}
+
+Please use your username and password to access these qc reports.
+
+Kind regards
+
+-- 
+
+Imperial BRC Genomics Facility
+Imperial College London
+
+Commonwealth Building
+Room 4N5
+Du Cane Road
+London, W12 0NN
+United Kingdom
+
+phone +44 (0)20 7594 9107
+Twitter @ImperialGF
+
+www.imperial.ac.uk/genomicsfacility
