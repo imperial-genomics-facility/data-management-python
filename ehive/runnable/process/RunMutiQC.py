@@ -20,7 +20,8 @@ class RunMutiQC(IGFBaseProcess):
     try:
       seqrun_igf_id=self.param_required('seqrun_igf_id')
       demultiplexing_stats_file=self.param_required('demultiplexing_stats_file')
-      qc_files_name=self.param('qc_files_name')
+      qc_files=self.param_required('qc_files')
+      fastq_dir=self.param_required('fastq_dir')
       multiqc_exe=self.param('multiqc_exe')
       multiqc_options=self.param('multiqc_options')
       multiqc_dir_label=self.param('multiqc_dir_label')
@@ -34,19 +35,21 @@ class RunMutiQC(IGFBaseProcess):
       if tag not in ['known','undetermined']:
         raise ValueError('unknown status tag {0}'.format(tag))                  # check valid status tags
       
-      if qc_files_name not in ['qc_known','qc_undetermined']:
-        raise ValueError('unknown status tag {0}'.format(qc_files_name))        # check valid qc files
+      #if qc_files_name not in ['qc_known','qc_undetermined']:
+      #  raise ValueError('unknown status tag {0}'.format(qc_files_name))        # check valid qc files
       
-      qc_files=self.param_required(qc_files_name)                               # get specific qc files
-      fastq_dir=[f_dir for f_dir in qc_files.keys()][0]                         # consider only the first fastq dir
+      #qc_files=self.param_required(qc_files_name)                               # get specific qc files
+      #fastq_dir=[f_dir for f_dir in qc_files.keys()][0]                         # consider only the first fastq dir
       lane_index_info=os.path.basename(fastq_dir)                               # get lane and index info
       
       fastqc_files=list()
       fastqscreen_files=list()
-      for fastq_dir, qc_output in qc_files.items():
-        fastqc_files.extend([fqc_dir for fqc_dir in qc_output['fastqc']])
-        fastqscreen_files.extend([fsr_dir for fsr_dir in qc_output['fastqscreen']])
-        
+      #for fastq_dir, qc_output in qc_files.items():
+      #  fastqc_files.extend([fqc_dir for fqc_dir in qc_output['fastqc']])
+      #  fastqscreen_files.extend([fsr_dir for fsr_dir in qc_output['fastqscreen']])
+      fastqc_files.extend([fqc_dir for fqc_dir in qc_files['fastqc']])
+      fastqscreen_files.extend([fsr_dir for fsr_dir in qc_files['fastqscreen']])
+       
       multiqc_result_dir=os.path.join(base_results_dir, \
                                       project_name, \
                                       seqrun_date, \

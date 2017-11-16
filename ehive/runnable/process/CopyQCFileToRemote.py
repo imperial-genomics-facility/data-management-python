@@ -95,7 +95,10 @@ class CopyQCFileToRemote(IGFBaseProcess):
       copy_remote_file(source_path=os.path.join(temp_work_dir,remote_file_name), \
                        destinationa_path=destination_outout_path, \
                        destination_address=remote_host)                         # copy file to remote
-      self.param('dataflow_params',{'file':file, 'status': 'done'})             # add dataflow params
+      self.param('dataflow_params',{'file':file, \
+                                    'status': 'done', \
+                                    'remote_file':os.path.join(destination_outout_path, \
+                                                               remote_file_name)}) # add dataflow params
     except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
