@@ -1,5 +1,5 @@
 import pandas as pd
-import json, hashlib, os, codecs
+import json, hashlib, os, codecs, base64
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.igfTables import User
 
@@ -17,7 +17,7 @@ class UserAdaptor(BaseAdaptor):
       raise ValueError('Email id {0} is not correctly formatted'.format(email))
 
 
-  def _encrypt_password(self, series, password_column='password', salt_column='encryption_salt'):
+  def _encrypt_password(self, series, password_column='password', salt_column='encryption_salt', ht_pass_column='ht_password'):
     '''
     An internal function for encrypting password
     '''
@@ -31,11 +31,14 @@ class UserAdaptor(BaseAdaptor):
         password=str(series.password_column).encode('utf-8')                    # encode password if its not a string
 
       if password:                                                              # always encrypt password
+        ht_pass='{0}{1}'.format('{SHA}',base64.b64encode(\
+                                        hashlib.sha1(password.encode('utf-8')).\
+                                        digest()).decode())                     # calculate sha1 for htaccess password
+        series[ht_pass_column]=ht_pass                                          # set htaccess password
         key=salt+password                                                       # construct key using salt and password
         password=hashlib.sha512(str(key).encode('utf-8')).hexdigest()           # create password hash
         series[password_column]=password                                        # set hash to data series
         series[salt_column]=salt                                                # set salt to data series
-        
     return series
 
 
