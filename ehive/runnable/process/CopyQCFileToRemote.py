@@ -1,4 +1,6 @@
 import os,datetime,subprocess, re
+from shutil import copy2
+from igf_data.utils.fileutils import get_temp_dir
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.fileutils import copy_remote_file
 
@@ -37,7 +39,15 @@ class CopyQCFileToRemote(IGFBaseProcess):
       if dir_label is None:
         dir_label=os.path.basename(os.path.dirname(file))                       # get the lane and index length info, FIXIT
       
+      file_suffix=None
       file_name=os.path.basename(file)
+      file_name_list=file_name.split('.')
+      if len(file_name_list) > 1:
+        (file_label,file_suffix)=(file_name_list[0],file_name_list[-1])           # get file_label and suffix
+      else:
+        file_label=file_name_list[0]
+        
+      remote_file_name='{0}.{1}'.format(analysis_label,file_suffix)             # simplify remote filename for report page
       
       destination_outout_path=os.path.join(remote_project_path, \
                                           project_name, \
@@ -50,14 +60,15 @@ class CopyQCFileToRemote(IGFBaseProcess):
                                              sample_label)                      # adding sample label only if its present
         
       destination_outout_path=os.path.join(destination_outout_path,\
-                                           analysis_label)
+                                           analysis_label, \
+                                           file_label)                          # adding file label to the destination path
       file_check_cmd=['ssh',\
                       '{0}@{1}'.\
                       format(remote_user,\
                              remote_host),\
                       'ls',\
                       os.path.join(destination_outout_path,\
-                                   file_name)]
+                                   remote_file_name)]
       response=subprocess.call(file_check_cmd)
       if force_overwrite and response==0:
         file_rm_cmd=['ssh',\
@@ -67,9 +78,12 @@ class CopyQCFileToRemote(IGFBaseProcess):
                       'rm', \
                       '-f',\
                       os.path.join(destination_outout_path,\
-                                   file_name)]
+                                   remote_file_name)]
         subprocess.check_call(file_rm_cmd)                                      # remove remote file if its already present
         
+      temp_work_dir=get_temp_dir()                                              # get a temp work dir
+      copy2(file,os.path.join(temp_work_dir,remote_file_name))                  # copy file to a temp dir and rename it
+      
       remote_mkdir_cmd=['ssh',\
                         '{0}@{1}'.\
                         format(remote_user,\
@@ -78,7 +92,7 @@ class CopyQCFileToRemote(IGFBaseProcess):
                         '-p',\
                         destination_outout_path]
       subprocess.check_call(remote_mkdir_cmd)                                   # create destination path
-      copy_remote_file(source_path=file, \
+      copy_remote_file(source_path=os.path.join(temp_work_dir,remote_file_name), \
                        destinationa_path=destination_outout_path, \
                        destination_address=remote_host)                         # copy file to remote
       self.param('dataflow_params',{'file':file, 'status': 'done'})             # add dataflow params
