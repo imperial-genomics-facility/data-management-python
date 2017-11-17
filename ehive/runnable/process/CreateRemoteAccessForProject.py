@@ -97,6 +97,7 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
                           format(remote_user,\
                                  remote_host),\
                           'ls',\
+                          '-a', \
                           os.path.join(remote_project_dir,htaccess_filename)]
       response=subprocess.call(check_htaccess_cmd)
       if response !=0:
@@ -117,6 +118,7 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
                           format(remote_user,\
                                  remote_host),\
                           'ls',\
+                          '-a', \
                           os.path.join(remote_project_dir,htpasswd_filename)]
       response=subprocess.call(check_htpasswd_cmd)
       if response !=0:
