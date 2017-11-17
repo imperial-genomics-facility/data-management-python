@@ -132,7 +132,7 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       copy_remote_file(source_path=htpasswd_output, \
                        destinationa_path=remote_project_dir, \
                        destination_address=remote_host)                         # copy file to remote
-      
+      self.param('dataflow_params',{'remote_dir_status':'done'})
     except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
