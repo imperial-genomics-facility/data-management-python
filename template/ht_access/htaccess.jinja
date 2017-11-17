@@ -3,5 +3,5 @@ AuthType Basic
 AuthBasicProvider ldap file
 AuthzLDAPAuthoritative on
 AuthLDAPUrl ldap://unixldap.cc.ic.ac.uk/ou=everyone,dc=ic,dc=ac,dc=uk?uid
-AuthUserFile {{ remote_project_dir }}/{{ project_tag }}/.htpasswd
+AuthUserFile {{ remote_project_dir }}/{{ project_tag }}/{{ htpasswd_filename }}
 Require user igf {{ customerUsernameList }}
