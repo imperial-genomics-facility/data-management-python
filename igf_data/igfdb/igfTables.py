@@ -96,6 +96,7 @@ class Sample(Base):
 
   sample_id           = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   sample_igf_id       = Column(String(20), nullable=False)
+  sample_submitter_id = Column(String(40))
   taxon_id            = Column(INTEGER(unsigned=True))
   scientific_name     = Column(String(50))
   common_name         = Column(String(50))
@@ -116,6 +117,7 @@ class Sample(Base):
   def __repr__(self):
     return "Sample(sample_id = '{self.sample_id}'," \
                   "sample_igf_id = '{self.sample_igf_id}'," \
+                  "sample_submitter_id = '{self.sample_submitter_id}', " \
                   "taxon_id = '{self.taxon_id}'," \
                   "scientific_name = '{self.scientific_name}'," \
                   "common_name = '{self.common_name}'," \
