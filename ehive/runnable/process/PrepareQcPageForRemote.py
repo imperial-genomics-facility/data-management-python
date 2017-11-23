@@ -46,23 +46,85 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       if page_type not in ['project','sample']:
         raise ValueError('Project type {0} is not defined yet'.format(page_type))
       
+      qc_template_path=os.path.join(template_dir,qc_template_path)
       remote_file_path=os.path.join(remote_project_path,\
                                       project_name, \
                                       seqrun_date, \
                                       flowcell_id,\
                                       lane_index_info)                          # generic remote path, lane info is none for project
       
+      template_env=Environment(loader=FileSystemLoader(searchpath=qc_template_path), \
+                               autoescape=select_autoescape(['xml']))           # set template env
+      
+      remote_chk_cmd=['ssh',\
+                      '{0}@{1}'.\
+                      format(remote_user,\
+                             remote_host),\
+                      'ls']
+      
+      remote_rm_cmd=['ssh',\
+                      '{0}@{1}'.\
+                      format(remote_user,\
+                             remote_host),\
+                      'rm', \
+                      '-f']
+      
+      temp_work_dir=get_temp_dir()                                              # get a temp dir
+      
+      report_output_file=None
       if page_type == 'project':                                                # prepare project page
-        template_file=os.path.join(template_dir,\
-                                   qc_template_path,\
-                                   project_template)
-
+        template_file=template_env.get_template(project_template)
+        report_output_file=os.path.join(temp_work_dir,project_filename)
+        template_file.\
+        stream(ProjectName=project_name, \
+               SeqrunDate=seqrun_date, \
+               FlowcellId=flowcell_id, \
+               headerdata=None, \
+               qcmain=None, \
+              ).\
+        dump(report_output_file)
+        os.chmod(report_output_file, mode=0o754)
+        
+        remote_chk_cmd.append(os.path.join(remote_file_path,project_filename))
+        remote_rm_cmd.append(os.path.join(remote_file_path,project_filename))
         
       elif page_type == 'sample':                                               # prepare sample page
-        template_file=os.path.join(template_dir,\
-                                   qc_template_path,\
-                                   sample_template)
-       
+        if lane_index_info is None:
+          raise ValueError('Missing lane and index information')
+        
+        (lane_id,index_length)=lane_index_info.split('_',1)                     # get lane and index info
+        
+        template_file=template_env.get_template(sample_template)
+        report_output_file=os.path.join(temp_work_dir,sample_filename)
+        template_file.\
+        stream(ProjectName=project_name, \
+               SeqrunDate=seqrun_date, \
+               FlowcellId=flowcell_id, \
+               Lane=lane_id, \
+               IndexBarcodeLength=index_length, \
+               headerdata=None, \
+               qcmain=None, \
+              ).\
+        dump(report_output_file)
+        os.chmod(report_output_file, mode=0o754)
+        
+        remote_chk_cmd.append(os.path.join(remote_file_path,sample_filename))
+        remote_rm_cmd.append(os.path.join(remote_file_path,sample_filename))
+        
+      response=subprocess.call(remote_chk_cmd)
+      if response!=0:
+        subprocess.check_call(remote_rm_cmd)                                    # remove existing remote file
+      
+      if not os.path.exists(report_output_file):
+        raise IOError('file {0} not found'.format(report_output_file))
+      
+      copy_remote_file(source_path=report_output_file, \
+                       destinationa_path=remote_file_path, \
+                       destination_address='{0}@{1}'.format(remote_user,\
+                                                            remote_host))       # copy file to remote
+      self.param('dataflow_params',{'remote_qc_page':\
+                                    os.path.join(remote_file_path,
+                                                 os.path.basename(report_output_file))})
     except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
