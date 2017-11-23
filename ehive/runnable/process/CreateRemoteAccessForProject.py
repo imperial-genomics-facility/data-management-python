@@ -29,6 +29,8 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
     try:
       seqrun_igf_id=self.param_required('seqrun_igf_id')
       project_name=self.param_required('project_name')
+      seqrun_date=self.param_required('seqrun_date')
+      flowcell_id=self.param_required('flowcell_id')
       remote_project_path=self.param_Required('remote_project_path')
       remote_user=self.param_required('remote_user')
       remote_host=self.param_required('remote_host')
@@ -82,7 +84,10 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       dump(htpasswd_output)                                                     # write new htpass file
       os.chmod(htpasswd_output, mode=0o770)
       
-      remote_project_dir=os.path.join(remote_project_path,project_name)
+      remote_project_dir=os.path.join(remote_project_path,\
+                                      project_name,\
+                                      seqrun_date,
+                                      flowcell_id)
       remote_mkdir_cmd=['ssh',\
                        '{0}@{1}'.\
                        format(remote_user,\
