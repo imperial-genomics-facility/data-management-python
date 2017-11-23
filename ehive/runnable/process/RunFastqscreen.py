@@ -2,6 +2,9 @@ import os, subprocess,fnmatch
 from shutil import copy2
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.fileutils import get_temp_dir,remove_dir
+from igf_data.igfdb.baseadaptor import BaseAdaptor
+from igf_data.igfdb.collectionadaptor import CollectionAdaptor
+from igf_data.igfdb.runadaptor import RunAdaptor
 
 class RunFastqscreen(IGFBaseProcess):
   def param_defaults(self):
@@ -13,6 +16,8 @@ class RunFastqscreen(IGFBaseProcess):
       'lane_index_info':None,
       'fastqscreen_dir_label':'fastqscreen',
       'fastqscreen_exe':'fastqscreen',
+      'fastqs_collection_type':'FASTQSCREEN',
+      'hpc_location':'HPC_PROJECT',
       'fastqscreen_conf':None,
       'fastqscreen_options':{'--aligner':'bowtie2', \
                              '--force':'', \
@@ -26,6 +31,7 @@ class RunFastqscreen(IGFBaseProcess):
     try:
       fastq_file=self.param_required('fastq_file')
       fastq_dir=self.param_required('fastq_dir')
+      igf_session_class=self.param_required('igf_session_class')
       seqrun_igf_id=self.param_required('seqrun_igf_id')
       base_results_dir=self.param_required('base_results_dir')
       project_name=self.param_required('project_name')
@@ -39,12 +45,31 @@ class RunFastqscreen(IGFBaseProcess):
       fastqscreen_options=self.param('fastqscreen_options')
       force_overwrite=self.param('force_overwrite')
       fastqscreen_dir_label=self.param('fastqscreen_dir_label')
+      fastqs_collection_type=self.param('fastqs_collection_type')
+      hpc_location=self.param('hpc_location')
       
       if lane_index_info is None:
         lane_index_info=os.path.basename(fastq_dir)                             # get the lane and index length info
         
       fastq_file_label=os.path.basename(fastq_file).replace('.fastq.gz','')
       
+      if tag=='known':                                  # fetch sample name for known fastq, if its not defined
+        base=BaseAdaptor(**{'session_class':igf_session_class})
+        base.start_session()                                                    # connect to db
+      
+        ca=CollectionAdaptor(**{'session':base.session})
+        (collection_name,collection_table)=\
+        ca.fetch_collection_name_and_table_from_file_path(file_path=fastq_file) # fetch collection name and table info
+        
+        if collection_table != required_collection_table:
+          raise ValueError('Expected collection table {0} and got {1}, {2}'.\
+                           format(required_collection_table,collection_table,fastq_file))
+          
+        ra=RunAdaptor(**{'session':base.session})
+        sample=ra.fetch_sample_info_for_run(run_igf_id=collection_name)
+        sample_name=sample['sample_igf_id']
+        base.close_session()
+        
       fastqscreen_result_dir=os.path.join(base_results_dir, \
                                           project_name, \
                                           seqrun_date, \
@@ -110,7 +135,28 @@ class RunFastqscreen(IGFBaseProcess):
                                 fastqscreen_html, \
                                 fastqscreen_png))
       
-      
+      if tag=='known':
+        fastqs_files=[{'name':collection_name,\
+                       'type':fastqs_collection_type,\
+                       'table':required_collection_table,\
+                       'file_path':fastqscreen_stat,\
+                       'location':hpc_location},
+                      {'name':collection_name,\
+                       'type':fastqs_collection_type,\
+                       'table':required_collection_table,\
+                       'file_path':fastqscreen_html,\
+                       'location':hpc_location},
+                      {'name':collection_name,\
+                       'type':fastqs_collection_type,\
+                       'table':required_collection_table,\
+                       'file_path':fastqscreen_png,\
+                       'location':hpc_location},
+                     ]
+        ca=CollectionAdaptor(**{'session_class':igf_session_class})
+        ca.start_session()
+        ca.load_file_and_create_collection(data=fastqs_files)                   # store fastqs files to db
+        ca.close_session()
+        
       self.param('dataflow_params',{'fastqscreen_html':fastqscreen_html, \
                                     'lane_index_info':lane_index_info,\
                                     'sample_name':sample_name,\
