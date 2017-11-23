@@ -18,6 +18,8 @@ class RunFastqc(IGFBaseProcess):
       'fastqc_options':{'-q':'','--noextract':'','-f':'fastq','-k':'7','-t':'1'},
       'tag':None,
       'sample_name':None,
+      'hpc_location':'HPC_PROJECT',
+      'fastqc_collection_type':'FASTQC',
       })
     return params_dict
   
@@ -38,6 +40,8 @@ class RunFastqc(IGFBaseProcess):
       fastqc_dir_label=self.param('fastqc_dir_label')
       required_collection_table=self.param('required_collection_table')
       sample_name=self.param('sample_name')
+      hpc_location=self.param('hpc_location')
+      fastqc_collection_type=self.param('fastqc_collection_type')
       
       lane_index_info=os.path.basename(fastq_dir)                               # get the lane and index length info
       fastq_file_label=os.path.basename(fastq_file).replace('.fastq.gz','')
@@ -109,6 +113,23 @@ class RunFastqc(IGFBaseProcess):
       if fastqc_html is None or fastqc_zip is None:
         raise ValueError('Missing required values, fastqc zip: {0}, fastqc html: {1}'.\
                          format(fastqc_zip,fastqc_html))
+      
+      if sample_name is None and tag=='known':
+        fastqc_files=[{'name':collection_name,\
+                       'type':fastqc_collection_type,\
+                       'table':required_collection_table,\
+                       'file_path':fastqc_zip,\
+                       'location':hpc_location},
+                      {'name':collection_name,\
+                       'type':fastqc_collection_type,\
+                       'table':required_collection_table,\
+                       'file_path':fastqc_html,\
+                       'location':hpc_location},
+                     ]
+        ca=CollectionAdaptor(**{'session_class':igf_session_class})
+        ca.start_session()
+        ca.load_file_and_create_collection(data=fastqc_files)                   # store fastqc files to db
+        ca.close_session()
       
       self.param('dataflow_params',{'fastqc_html':fastqc_html, \
                                     'lane_index_info':lane_index_info,\
