@@ -114,7 +114,7 @@ class RunFastqc(IGFBaseProcess):
         raise ValueError('Missing required values, fastqc zip: {0}, fastqc html: {1}'.\
                          format(fastqc_zip,fastqc_html))
       
-      if sample_name is None and tag=='known':
+      if tag=='known':
         fastqc_files=[{'name':collection_name,\
                        'type':fastqc_collection_type,\
                        'table':required_collection_table,\
