@@ -2,7 +2,9 @@ import os, subprocess
 from jinja2 import Template,Environment, FileSystemLoader
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.fileutils import get_temp_dir
+from igf_data.utils.fastqc_utils import get_fastq_info_from_fastq_zip
 from igf_data.utils.fileutils import copy_remote_file
+from aifc import data
 
 class PrepareQcPageForRemote(IGFBaseProcess):
   '''
@@ -20,9 +22,13 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       'remote_project_path':None,
       'remote_user':None,
       'remote_host':None,
-      'lane_index_info':None
+      'lane_index_info':None,
+      'fastq_dir':None,
+      'qc_files':None,
+      'samplesheet_filename':'SampleSheet.csv',
     })
     return params_dict
+  
   
   def run(self):
     try:
@@ -35,6 +41,9 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       remote_host=self.param_required('remote_host')
       template_dir=self.param_required('template_dir')
       page_type=self.param_required('page_type')
+      fastq_dir=self.param_required('fastq_dir')
+      qc_files=self.param_required('qc_files')
+      samplesheet_filename=self.param('samplesheet_filename')
       lane_index_info=self.param_required('lane_index_info') 
       qc_template_path=self.param('qc_template_path')
       project_template=self.param('project_template')
@@ -92,7 +101,12 @@ class PrepareQcPageForRemote(IGFBaseProcess):
         if lane_index_info is None:
           raise ValueError('Missing lane and index information')
         
+        (headerdata,qcmain)=self._process_samples_data()
+        
+        
+
         (lane_id,index_length)=lane_index_info.split('_',1)                     # get lane and index info
+        
         
         template_file=template_env.get_template(sample_template)
         report_output_file=os.path.join(temp_work_dir,sample_filename)
@@ -132,3 +146,23 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise
+    
+    
+  def _process_samples_data(self):
+    '''
+    An internal method for processing samples data
+    '''
+    try:
+      fastq_dir=self.param_required('fastq_dir')
+      qc_files=self.param_required('qc_files')
+      samplesheet_filename=self.param('samplesheet_filename')
+      
+      for fastq_file in qc_files[fastq_dir]['fastqc']:                          # get fastqc files for fastq_dir
+        fastqc_zip=fastq_file['fastqc_zip']
+        (total_reads, fastq_filename)=get_fastq_info_from_fastq_zip(fastqc_zip)
+        
+      samplesheet_file=os.path.join(fastq_dir,samplesheet_filename)
+      if not os.path.exists(samplesheet_file):
+          raise IOError('samplesheet file {0} not found'.format(samplesheet_file))
+    except:
+      raise    
