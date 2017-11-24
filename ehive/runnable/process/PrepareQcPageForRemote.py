@@ -212,7 +212,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
                                            start=remote_path)                   # get relative path
         (total_reads, fastq_filename)=get_fastq_info_from_fastq_zip(fastqc_zip)
         (collection_name,collection_table)=\
-        ca.fetch_collection_name_and_table_from_file_path(file_path=fastqc_zip) # fetch collection name and table info
+        ca.fetch_collection_name_and_table_from_file_path(file_path=fastq_file) # fetch collection name and table info
         sample=ra.fetch_sample_info_for_run(run_igf_id=collection_name)
         sample_name=sample['sample_igf_id']
         fastqc_data.append({'Sample_ID':sample_name,\
