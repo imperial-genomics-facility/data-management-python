@@ -8,6 +8,7 @@ from igf_data.utils.fileutils import copy_remote_file
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.runadaptor import RunAdaptor
+from igf_data.illumina.samplesheet import SampleSheet
 
 class PrepareQcPageForRemote(IGFBaseProcess):
   '''
@@ -185,13 +186,12 @@ class PrepareQcPageForRemote(IGFBaseProcess):
         remote_fastqc_path=fastqc_file['remote_fastqc_path']
         remote_fastqc_path=os.path.relpath(remote_fastqc_path, \
                                            start=remote_path)                   # get relative path
-        
         (total_reads, fastq_filename)=get_fastq_info_from_fastq_zip(fastqc_zip)
         (collection_name,collection_table)=\
         ca.fetch_collection_name_and_table_from_file_path(file_path=fastqc_zip) # fetch collection name and table info
         sample=ra.fetch_sample_info_for_run(run_igf_id=collection_name)
         sample_name=sample['sample_igf_id']
-        fastqc_data.append({'SampleId':sample_name,\
+        fastqc_data.append({'Sample_ID':sample_name,\
                             'Fastqc':remote_fastqc_path, \
                             'FastqFile':fastq_file, \
                             'TotalReads':total_reads})
@@ -199,28 +199,51 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       base.close_session()                                                      # close db connection
       fastqs_data=list()
       for fastqs_file in qc_files[fastq_dir]['fastqscreen']:                    # get fastqs files for fastq_dir
-        fastqs_zip=fastqs_file['fastqscreen_zip']
         fastq_file=fastqs_file['fastq_file']
         remote_fastqs_path=fastqs_file['remote_fastqc_path']
         remote_fastqs_path=os.path.relpath(remote_fastqs_path, \
                                            start=remote_path)                   # get relative path
-        
         fastqs_data.append({'Fastqscreen':remote_fastqs_path, \
                             'FastqFile':fastq_file})
-        
-     
       
       if len(fastqc_data)==0 or len(fastqs_data)==0:
         raise ValueError('Value not found for fastqc: {0} or fastqscreen:{1}'.\
-                         format(fastqc_data, fastqs_data))
+                         format(len(fastqc_data), len(fastqs_data)))
       
-      fastqc_data=pd.DataFrame(fastqc_data).set_index('FastqFile')
+      fastqc_data=pd.DataFrame(fastqc_data)
       fastqs_data=pd.DataFrame(fastqs_data).set_index('FastqFile')              # convert to dataframe
-      merged_info=fastqc_data.join(fastqs_data)                                 # merge fastqc and fastqscreen info
-      
+      merged_qc_info=fastqc_data.join(fastqs_data, \
+                                      how='inner', \
+                                      on='FastqFile', \
+                                      lsuffix='', \
+                                      rsuffix='_s'
+                                     )                                          # merge fastqc and fastqscreen info
+      if len(merged_qc_info)==0:
+        raise ValueError('No QC data found for merging, fastqc:{0}, fastqscreen: {1}'.\
+                         format(len(fastqc_data), len(fastqs_data)))
       
       samplesheet_file=os.path.join(fastq_dir,samplesheet_filename)
       if not os.path.exists(samplesheet_file):
           raise IOError('samplesheet file {0} not found'.format(samplesheet_file))
+        
+      sa=SampleSheet(infile=samplesheet_file)
+      sample_data=pd.DataFrame(sa._data).set_index('Sample_ID')                 # get sample infor from Samplesheet
+      merged_data=merged_qc_info.join(sample_data, \
+                                      how='inner', \
+                                      on='Sample_ID', \
+                                      lsuffix='', \
+                                      rsuffix='_sa')                            # merge sample data with qc data
+      required_headers=['Sample_ID',
+                        'Sample_Name',
+                        'TotalReads',
+                        'index']
+      if 'index2' in list(sample_data.columns):
+        required_headers.append('index2')
+        
+      required_headers.extend(['Fastqc',
+                               'Fastqscreen'])                                  # create header order
+      qc_merged_data=merged_data.loc[:,required_headers].\
+                                 to_dict(orient='records')                      #  extract final data
+      return required_headers, qc_merged_data
     except:
       raise    
