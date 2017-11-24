@@ -18,6 +18,7 @@ class RunFastqscreen(IGFBaseProcess):
       'fastqscreen_exe':'fastqscreen',
       'fastqs_collection_type':'FASTQSCREEN',
       'hpc_location':'HPC_PROJECT',
+      'store_file':False,
       'fastqscreen_conf':None,
       'fastqscreen_options':{'--aligner':'bowtie2', \
                              '--force':'', \
@@ -47,13 +48,14 @@ class RunFastqscreen(IGFBaseProcess):
       fastqscreen_dir_label=self.param('fastqscreen_dir_label')
       fastqs_collection_type=self.param('fastqs_collection_type')
       hpc_location=self.param('hpc_location')
+      store_file=self.param('store_file')
       
       if lane_index_info is None:
         lane_index_info=os.path.basename(fastq_dir)                             # get the lane and index length info
         
       fastq_file_label=os.path.basename(fastq_file).replace('.fastq.gz','')
       
-      if tag=='known':                                  # fetch sample name for known fastq, if its not defined
+      if tag=='known' and store_file:                                  # fetch sample name for known fastq, if its not defined
         base=BaseAdaptor(**{'session_class':igf_session_class})
         base.start_session()                                                    # connect to db
       
