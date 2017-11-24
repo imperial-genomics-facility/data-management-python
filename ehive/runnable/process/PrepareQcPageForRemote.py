@@ -1,10 +1,13 @@
 import os, subprocess
+import pandas as pd
 from jinja2 import Template,Environment, FileSystemLoader
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.fileutils import get_temp_dir
 from igf_data.utils.fastqc_utils import get_fastq_info_from_fastq_zip
 from igf_data.utils.fileutils import copy_remote_file
-from aifc import data
+from igf_data.igfdb.baseadaptor import BaseAdaptor
+from igf_data.igfdb.collectionadaptor import CollectionAdaptor
+from igf_data.igfdb.runadaptor import RunAdaptor
 
 class PrepareQcPageForRemote(IGFBaseProcess):
   '''
@@ -44,7 +47,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       fastq_dir=self.param_required('fastq_dir')
       qc_files=self.param_required('qc_files')
       samplesheet_filename=self.param('samplesheet_filename')
-      lane_index_info=self.param_required('lane_index_info') 
+      lane_index_info=self.param_required('lane_index_info')
       qc_template_path=self.param('qc_template_path')
       project_template=self.param('project_template')
       sample_template=self.param('sample_template')
@@ -156,15 +159,66 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       fastq_dir=self.param_required('fastq_dir')
       qc_files=self.param_required('qc_files')
       samplesheet_filename=self.param('samplesheet_filename')
+      igf_session_class=self.param_required('igf_session_class')
+      remote_project_path=self.param_required('remote_project_path')
+      project_name=self.param_required('project_name')
+      seqrun_date=self.param_required('seqrun_date')
+      flowcell_id=self.param_required('flowcell_id')
+      lane_index_info=self.param_required('lane_index_info')
       
+      remote_path=os.path.join(remote_project_path, \
+                               project_name, \
+                               seqrun_date, \
+                               flowcell_id, \
+                               lane_index_info)                                 # get remote base path
+      
+      base=BaseAdaptor(**{'session_class':igf_session_class})
+      base.start_session()                                                      # connect to db
+      
+      ca=CollectionAdaptor(**{'session':base.session})
+      ra=RunAdaptor(**{'session':base.session})
+      
+      fastqc_data=list()
       for fastqc_file in qc_files[fastq_dir]['fastqc']:                         # get fastqc files for fastq_dir
         fastqc_zip=fastqc_file['fastqc_zip']
-        remote_fastqc_path=fastq_file['remote_fastqc_path']
+        fastq_file=fastqs_file['fastq_file']
+        remote_fastqc_path=fastqc_file['remote_fastqc_path']
+        remote_fastqc_path=os.path.relpath(remote_fastqc_path, \
+                                           start=remote_path)                   # get relative path
+        
         (total_reads, fastq_filename)=get_fastq_info_from_fastq_zip(fastqc_zip)
+        (collection_name,collection_table)=\
+        ca.fetch_collection_name_and_table_from_file_path(file_path=fastqc_zip) # fetch collection name and table info
+        sample=ra.fetch_sample_info_for_run(run_igf_id=collection_name)
+        sample_name=sample['sample_igf_id']
+        fastqc_data.append({'SampleId':sample_name,\
+                            'Fastqc':remote_fastqc_path, \
+                            'FastqFile':fastq_file, \
+                            'TotalReads':total_reads})
         
+      base.close_session()                                                      # close db connection
+      fastqs_data=list()
       for fastqs_file in qc_files[fastq_dir]['fastqscreen']:                    # get fastqs files for fastq_dir
+        fastqs_zip=fastqs_file['fastqscreen_zip']
+        fastq_file=fastqs_file['fastq_file']
         remote_fastqs_path=fastqs_file['remote_fastqc_path']
+        remote_fastqs_path=os.path.relpath(remote_fastqs_path, \
+                                           start=remote_path)                   # get relative path
         
+        fastqs_data.append({'Fastqscreen':remote_fastqs_path, \
+                            'FastqFile':fastq_file})
+        
+     
+      
+      if len(fastqc_data)==0 or len(fastqs_data)==0:
+        raise ValueError('Value not found for fastqc: {0} or fastqscreen:{1}'.\
+                         format(fastqc_data, fastqs_data))
+      
+      fastqc_data=pd.DataFrame(fastqc_data).set_index('FastqFile')
+      fastqs_data=pd.DataFrame(fastqs_data).set_index('FastqFile')              # convert to dataframe
+      merged_info=fastqc_data.join(fastqs_data)                                 # merge fastqc and fastqscreen info
+      
+      
       samplesheet_file=os.path.join(fastq_dir,samplesheet_filename)
       if not os.path.exists(samplesheet_file):
           raise IOError('samplesheet file {0} not found'.format(samplesheet_file))
