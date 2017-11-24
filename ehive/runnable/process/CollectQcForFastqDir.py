@@ -16,7 +16,20 @@ class CollectQcForFastqDir(IGFBaseProcess):
       remote_fastqc_info=self.param('remote_fastqc_info')
       remote_fastqs_info=self.param('remote_fastqs_info')                       # remote file info available only for the known fq
       
+      if remote_fastqc_info is not None:
+        for fq_file, fqc_file in fastqc_info.items():
+          if fq_file in remote_fastqc_info.keys():
+            remote_fqc_file=list(remote_fastqc_info[fq_file].keys())[0]         # only one remote fqc filepath per fastq file
+            fqc_file.update({'remote_fastqc_path':remote_fqc_file})             # add remote fastqc path
+          
       fastqc_files=[fqc_file for fqc_file in fastqc_info.values()]
+      
+      if remote_fastqs_info is not None:
+        for fq_file, fqs_file in fastqscreen_info.items():
+          if fq_file in remote_fastqs_info.keys():
+            remote_fqs_file=list(remote_fastqs_info[fq_file].keys())[0]         # only one remote fqs filepath per fastq file
+            fqs_file.update({'remote_fastqscreen_path':remote_fqs_file})        # add remote fastqscreen path
+            
       fastqscreen_files=[fsr_file for fsr_file in fastqscreen_info.values()]
       
       self.param('dataflow_params',{'qc_outputs': \
