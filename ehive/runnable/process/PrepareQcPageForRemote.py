@@ -85,8 +85,12 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       
       temp_work_dir=get_temp_dir()                                              # get a temp dir
       report_output_file=None
-      dataflow_data=dict()
-      
+      qc_file_info=dict()
+      qc_file_info.update({
+        'project_name':project_name, \
+        'flowcell': flowcell_id, \
+        
+        })
       if page_type == 'project':                                                # prepare project page
         template_file=template_env.get_template(project_template)
         report_output_file=os.path.join(temp_work_dir,project_filename)
@@ -141,16 +145,12 @@ class PrepareQcPageForRemote(IGFBaseProcess):
         multiqc_file=list(multiqc_remote_file[fastq_dir].keys())[0]             # one multiqc file per fastq dir
         multiqc_file=os.path.relpath(multiqc_file, \
                                      start=remote_path)                         # relative path for multiqc
-        dataflow_data.update({'qc_sample':
-                               {'flowcell': flowcell_id, \
-                                'lane_id':lane_id, \
-                                'index_length':index_length,
-                                'sample_qc_page':remote_sample_qc_path, \
-                                'multiqc_page':multiqc_remote_file, \
-                               },
-                              'fastq_dir':fastq_dir, \
-                              'project_name':project_name, \
-                             })
+        qc_file_info={'lane_id':lane_id, \
+                      'index_length':index_length,
+                      'sample_qc_page':remote_sample_qc_path, \
+                      'multiqc_page':multiqc_remote_file, \
+                      'fastq_dir':fastq_dir, \
+                     }
         
       response=subprocess.call(remote_chk_cmd)
       if response!=0:
@@ -163,10 +163,10 @@ class PrepareQcPageForRemote(IGFBaseProcess):
                        destinationa_path=remote_file_path, \
                        destination_address='{0}@{1}'.format(remote_user,\
                                                             remote_host))       # copy file to remote
-      dataflow_data.update({'remote_qc_page':\
+      qc_file_info.update({'remote_qc_page':\
                             os.path.join(remote_file_path, \
                                          os.path.basename(report_output_file))})
-      self.param('dataflow_params',dataflow_data)
+      self.param('dataflow_params',{'qc_file_info':qc_file_info})
     except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
