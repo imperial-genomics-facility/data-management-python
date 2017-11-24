@@ -157,9 +157,13 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       qc_files=self.param_required('qc_files')
       samplesheet_filename=self.param('samplesheet_filename')
       
-      for fastq_file in qc_files[fastq_dir]['fastqc']:                          # get fastqc files for fastq_dir
-        fastqc_zip=fastq_file['fastqc_zip']
+      for fastqc_file in qc_files[fastq_dir]['fastqc']:                         # get fastqc files for fastq_dir
+        fastqc_zip=fastqc_file['fastqc_zip']
+        remote_fastqc_path=fastq_file['remote_fastqc_path']
         (total_reads, fastq_filename)=get_fastq_info_from_fastq_zip(fastqc_zip)
+        
+      for fastqs_file in qc_files[fastq_dir]['fastqscreen']:                    # get fastqs files for fastq_dir
+        remote_fastqs_path=fastqs_file['remote_fastqc_path']
         
       samplesheet_file=os.path.join(fastq_dir,samplesheet_filename)
       if not os.path.exists(samplesheet_file):
