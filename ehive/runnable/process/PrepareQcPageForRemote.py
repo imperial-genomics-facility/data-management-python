@@ -55,7 +55,6 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       project_filename=self.param('project_filename')
       sample_filename=self.param('sample_filename')
      
-      
       if page_type not in ['project','sample']:
         raise ValueError('Project type {0} is not defined yet'.format(page_type))
       
@@ -83,7 +82,6 @@ class PrepareQcPageForRemote(IGFBaseProcess):
                       '-f']
       
       temp_work_dir=get_temp_dir()                                              # get a temp dir
-      
       report_output_file=None
       if page_type == 'project':                                                # prepare project page
         template_file=template_env.get_template(project_template)
@@ -105,14 +103,9 @@ class PrepareQcPageForRemote(IGFBaseProcess):
         if lane_index_info is None:
           raise ValueError('Missing lane and index information')
         
-        (headerdata,qcmain)=self._process_samples_data()
-        
-        
-
+        (headerdata, qcmain)=self._process_samples_data()                       # get required data for sample qc page
         (lane_id,index_length)=lane_index_info.split('_',1)                     # get lane and index info
-        
-        
-        template_file=template_env.get_template(sample_template)
+        template_file=template_env.get_template(sample_template)                # get template file
         report_output_file=os.path.join(temp_work_dir,sample_filename)
         template_file.\
         stream(ProjectName=project_name, \
@@ -123,7 +116,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
                headerdata=None, \
                qcmain=None, \
               ).\
-        dump(report_output_file)
+        dump(report_output_file)                                                # dump data to template file
         os.chmod(report_output_file, mode=0o754)
         
         remote_chk_cmd.append(os.path.join(remote_file_path,sample_filename))
