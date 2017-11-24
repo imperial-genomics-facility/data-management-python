@@ -29,6 +29,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       'lane_index_info':None,
       'fastq_dir':None,
       'qc_files':None,
+      'multiqc_remote_file':None,
       'samplesheet_filename':'SampleSheet.csv',
     })
     return params_dict
@@ -47,6 +48,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       page_type=self.param_required('page_type')
       fastq_dir=self.param_required('fastq_dir')
       qc_files=self.param_required('qc_files')
+      multiqc_remote_file=self.param_required('multiqc_remote_file')
       samplesheet_filename=self.param('samplesheet_filename')
       lane_index_info=self.param_required('lane_index_info')
       qc_template_path=self.param('qc_template_path')
@@ -83,6 +85,8 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       
       temp_work_dir=get_temp_dir()                                              # get a temp dir
       report_output_file=None
+      dataflow_data=dict()
+      
       if page_type == 'project':                                                # prepare project page
         template_file=template_env.get_template(project_template)
         report_output_file=os.path.join(temp_work_dir,project_filename)
@@ -122,6 +126,32 @@ class PrepareQcPageForRemote(IGFBaseProcess):
         remote_chk_cmd.append(os.path.join(remote_file_path,sample_filename))
         remote_rm_cmd.append(os.path.join(remote_file_path,sample_filename))
         
+        remote_sample_qc_path=os.path.join(remote_file_path, \
+                                           os.path.basename(report_output_file))
+        if multiqc_remote_file is None:
+          raise ValueError('required a valid path for remote multiqc')
+        
+        remote_path=os.path.join(remote_project_path, \
+                                 project_name, \
+                                 seqrun_date, \
+                                 flowcell_id, \
+                                 )                                              # get remote base path
+        remote_sample_qc_path=os.path.relpath(remote_sample_qc_path, \
+                                              start=remote_path)                # elative path for sample qc
+        multiqc_file=list(multiqc_remote_file[fastq_dir].keys())[0]             # one multiqc file per fastq dir
+        multiqc_file=os.path.relpath(multiqc_file, \
+                                     start=remote_path)                         # relative path for multiqc
+        dataflow_data.update({'qc_sample':
+                               {'flowcell': flowcell_id, \
+                                'lane_id':lane_id, \
+                                'index_length':index_length,
+                                'sample_qc_page':remote_sample_qc_path, \
+                                'multiqc_page':multiqc_remote_file, \
+                               },
+                              'fastq_dir':fastq_dir, \
+                              'project_name':project_name, \
+                             })
+        
       response=subprocess.call(remote_chk_cmd)
       if response!=0:
         subprocess.check_call(remote_rm_cmd)                                    # remove existing remote file
@@ -133,9 +163,10 @@ class PrepareQcPageForRemote(IGFBaseProcess):
                        destinationa_path=remote_file_path, \
                        destination_address='{0}@{1}'.format(remote_user,\
                                                             remote_host))       # copy file to remote
-      self.param('dataflow_params',{'remote_qc_page':\
-                                    os.path.join(remote_file_path,
-                                                 os.path.basename(report_output_file))})
+      dataflow_data.update({'remote_qc_page':\
+                            os.path.join(remote_file_path, \
+                                         os.path.basename(report_output_file))})
+      self.param('dataflow_params',dataflow_data)
     except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
