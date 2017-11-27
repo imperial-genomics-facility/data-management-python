@@ -94,6 +94,8 @@ class PrepareQcPageForRemote(IGFBaseProcess):
         
         })
       if page_type == 'project':                                                # prepare project page
+        (headerdata, qcmain)=self._process_projects_data()                      # get required data for sample qc page
+        
         template_file=template_env.get_template(project_template)
         report_output_file=os.path.join(temp_work_dir,project_filename)
         template_file.\
@@ -173,6 +175,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
                       'multiqc_page':multiqc_remote_file, \
                       'demultiplexing_report':remote_report_file,\
                       'fastq_dir':fastq_dir, \
+                      'project_name':project_name,
                      }
         
       response=subprocess.call(remote_chk_cmd)
@@ -197,6 +200,14 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise
+    
+  def _process_projects_data(self):
+    '''
+    An internal method for processing projects data
+    '''
+    qc_files=self.param_required('qc_files')
+    project_name=self.param_required('project_name')
+    
     
     
   def _process_samples_data(self):
