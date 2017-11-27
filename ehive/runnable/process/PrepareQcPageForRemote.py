@@ -201,6 +201,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise
     
+    
   def _process_projects_data(self):
     '''
     An internal method for processing projects data
@@ -208,6 +209,23 @@ class PrepareQcPageForRemote(IGFBaseProcess):
     qc_files=self.param_required('qc_files')
     project_name=self.param_required('project_name')
     
+    required_header=['LaneID',\
+                     'Index_Length',\
+                     'MultiQC',\
+                     'SampleQC',\
+                     'Demultiplexing_Report',\
+                    ]
+    qc_data=list()
+    for fastq_dir, sample_data in qc_files.items():
+      sample_project=sample_data['project_name']
+      if sample_project==project_name:                                          # additional checks for project name
+        qc_data.append({'LaneID':sample_data['lane_id'],\
+                        'Index_Length':sample_data['index_length'],\
+                        'MultiQC':sample_data['multiqc_page'],\
+                        'SampleQC':sample_data['sample_qc_page'],\
+                        'Demultiplexing_Report':sample_data['demultiplexing_report'],\
+                      })                                                        # adding data for qc page
+    return required_header, qc_data
     
     
   def _process_samples_data(self):
