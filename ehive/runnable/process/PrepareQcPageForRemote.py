@@ -31,6 +31,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       'qc_files':None,
       'multiqc_remote_file':None,
       'samplesheet_filename':'SampleSheet.csv',
+      'report_html':'*all/all/all/laneBarcode.html',
     })
     return params_dict
   
@@ -56,6 +57,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       sample_template=self.param('sample_template')
       project_filename=self.param('project_filename')
       sample_filename=self.param('sample_filename')
+      report_html=self.param('report_html')
      
       if page_type not in ['project','sample']:
         raise ValueError('Project type {0} is not defined yet'.format(page_type))
@@ -145,10 +147,31 @@ class PrepareQcPageForRemote(IGFBaseProcess):
         multiqc_file=list(multiqc_remote_file[fastq_dir].keys())[0]             # one multiqc file per fastq dir
         multiqc_file=os.path.relpath(multiqc_file, \
                                      start=remote_path)                         # relative path for multiqc
+        
+        report_htmlname=os.path.basename(report_html)
+        for root,dirs, files in os.walk(top=fastq_dir):
+          if report_htmlname in files:
+            reports=[os.path.join(os.path.abspath(root),file) \
+                       for file in files \
+                         if fnmatch.fnmatch(os.path.join(root,file),report_html)] # get all html reports
+        if len(reports)==0:
+          raise ValueError('No demultiplexing report found for fastq dir {0}'.\
+                           format(fastq_dir))
+        
+        copy_remote_file(source_path=reports[0], \
+                       destinationa_path=remote_file_path, \
+                       destination_address='{0}@{1}'.format(remote_user,\
+                                                            remote_host))       # copy file to remote
+        remote_report_file=os.path.join(remote_file_path,\
+                                        os.path.basename(reports[0]))           # get remote path for report file
+        remote_report_file=os.path.relpath(remote_report_file, \
+                                              start=remote_path)                # get relative path for demultiplexing report
+        
         qc_file_info={'lane_id':lane_id, \
                       'index_length':index_length,
                       'sample_qc_page':remote_sample_qc_path, \
                       'multiqc_page':multiqc_remote_file, \
+                      'demultiplexing_report':remote_report_file,\
                       'fastq_dir':fastq_dir, \
                      }
         
