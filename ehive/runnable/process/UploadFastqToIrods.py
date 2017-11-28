@@ -22,6 +22,7 @@ class UploadFastqToIrods(IGFBaseProcess):
       project_name=self.param_required('project_name')
       igf_session_class=self.param_required('igf_session_class')
       irods_exe_dir=self.param_required('irods_exe_dir')
+      flowcell_id=self.param_required('flowcell_id')
       samplesheet_filename=self.param('samplesheet_filename')
       report_html=self.param('report_html')
       
@@ -76,6 +77,7 @@ class UploadFastqToIrods(IGFBaseProcess):
                                              irods_user=username, \
                                              project_name=project_name, \
                                              run_igf_id=seqrun_igf_id, \
+                                             flowcell_id=flowcell_id, \
                                              run_date=seqrun_date,\
                                             )                                   # upload fastq data to irods
       remove_dir(temp_work_dir)                                                 # remove temp dir once data uoload is done
