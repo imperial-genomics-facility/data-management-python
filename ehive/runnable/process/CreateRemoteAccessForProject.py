@@ -35,6 +35,7 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       remote_user=self.param_required('remote_user')
       remote_host=self.param_required('remote_host')
       template_dir=self.param_required('template_dir')
+      igf_session_class=self.param_required('igf_session_class')
       htaccess_template_path=self.param('htaccess_template_path')
       htaccess_template=self.param('htaccess_template')
       htpasswd_template=self.param('htpasswd_template')
