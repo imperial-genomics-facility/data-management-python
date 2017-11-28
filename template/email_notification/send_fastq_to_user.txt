@@ -55,7 +55,7 @@ You can download your data via a web browser or via the icommand client on cx1 c
 + Download your data:
         - connect to cx1
         - module load irods/4.2.0
-        - iget -Pr /igfZone/home/{{ customerUsername }}/{{ projectName }}/fastq/{{ projectRunDate }}
+        - iget -Pr /igfZone/home/{{ customerUsername }}/{{ projectName }}/fastq/{{ projectRunDate }}/{{ flowcellId }}
 
 
 The data will be available for one month from the date of this e-mail.
