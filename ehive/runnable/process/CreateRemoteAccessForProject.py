@@ -1,9 +1,9 @@
 import os, subprocess
-from jinja2 import Template,Environment, FileSystemLoader
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.utils.fileutils import get_temp_dir
 from igf_data.utils.fileutils import copy_remote_file
+from jinja2 import Template,Environment, FileSystemLoader, select_autoescape
 
 
 class CreateRemoteAccessForProject(IGFBaseProcess):
