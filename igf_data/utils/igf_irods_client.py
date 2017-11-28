@@ -23,7 +23,7 @@ class IGF_irods_uploader:
 
 
   def upload_fastqfile_and_create_collection(self,filepath,irods_user,project_name, \
-                                             run_igf_id, run_date, \
+                                             run_igf_id, run_date, flowcell_id=None, \
                                              data_type='fastq'):
     '''
     A method for uploading files to irods server and creating collections with metadata
@@ -47,6 +47,9 @@ class IGF_irods_uploader:
                              project_name, \
                              data_type, \
                              run_date)                                          # configure destination path
+      if flowcell_id is not None:
+        irods_dir=os.path.join(irods_dir,flowcell_id)                           # adding flowcell id to fastq path
+        
       irods_filepath=os.path.join(irods_dir,file_name)                          # get the destination filepath
       file_meta_info='{0}-{1}-{2}'.format(run_date,\
                                           data_type,\
