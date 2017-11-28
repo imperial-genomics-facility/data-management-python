@@ -27,6 +27,9 @@ class SendEmailToUser(IGFBaseProcess):
       flowcell_id=self.param_required('flowcell_id')
       igf_session_class=self.param_required('igf_session_class')
       template_dir=self.param_required('template_dir')
+      remote_user=self.param_required('remote_user')
+      remote_host=self.param_required('remote_host')
+      user_info_file=self.param_required('user_info_file')
       email_template_path=self.param('email_template_path')
       email_template=self.param('email_template')
       
@@ -44,6 +47,7 @@ class SendEmailToUser(IGFBaseProcess):
       user_name=user_info['name']                                               # get username for irods
       user_email=user_info['email_id']
       
+      user_passwd=self._get_user_passwd(user_email)                             # method for user passwd, replace it after moving to the unified user registration system
       email_template_path=os.path.join(template_dir, \
                                        email_template_path)
       template_env=Environment(loader=FileSystemLoader(searchpath=email_template_path), \
@@ -68,4 +72,36 @@ class SendEmailToUser(IGFBaseProcess):
                                                       seqrun_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
+      raise
+    
+    
+  def _get_user_passwd(self,user_email):
+    '''
+    An internal method for fetching the user passwd
+    '''
+    try:
+      remote_user=self.param_required('remote_user')
+      remote_host=self.param_required('remote_host')
+      user_info_file=self.param_required('user_info_file')
+      
+      cmd=['ssh',\
+           '{0}@{1}'.format(remote_user, remote_host), \
+           'grep', \
+           '-w',\
+           user_email,
+           user_info_file
+          ]
+      proc1=subprocess.Popen(cmd,stdout=subprocess.PIPE)
+      user_info=proc1.communicate()[0]
+      user_info=user_info.decode('UTF-8')
+      if user_info is '':
+        raise ValueError('No information was found for user email {0}'.\
+                         format(user_email))
+      
+      (name,user,passwd,email,date,info)=user_info.split(',')
+      if email != user_email:
+        raise ValueError('couldn\'t resolve email ids: {0}, {1}'.\
+                         format(email,user_email))
+      return passwd
+    except:
       raise
