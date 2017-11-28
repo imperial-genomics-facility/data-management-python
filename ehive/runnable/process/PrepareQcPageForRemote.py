@@ -18,7 +18,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
   def param_defaults(self):
     params_dict=super(IGFBaseProcess,self).param_defaults()
     params_dict.update({
-      'qc_template_path':'q_report',
+      'qc_template_path':'qc_report',
       'project_template':'index.html',
       'sample_template':'sample_level_qc.html',
       'project_filename':'index.html',
