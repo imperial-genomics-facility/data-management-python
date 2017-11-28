@@ -15,11 +15,16 @@ http://eliot.med.ic.ac.uk:8080/idrop-web
 
 Follow this path
 
-{{ projectName }}/fastq/{{ projectRunDate }}
+{{ projectName }}/fastq/{{ projectRunDate }}/{{ flowcellId }}
 
-User Name: {{ customerUsername }}
-Password: {{ customerPasswd }}
-Authentication Type: Standard
+  User Name: {{ customerUsername }}
+{% if customerPasswd is not None %}
+  Password: {{ customerPasswd }}
+  Authentication Type: Standard
+{% else %}
+  Password: Your account password
+  Authentication Type: PAM
+{% endif %}
 
 You can download your data via a web browser or via the icommand client on cx1 configured appropriately 
 
@@ -35,6 +40,12 @@ You can download your data via a web browser or via the icommand client on cx1 c
                 "irods_default_resource": "woolfResc",
                 "irods_user_name": "{{ customerUsername }}",
                 "irods_zone_name": "igfZone",
+            {% if customerPasswd is None %}
+                "irods_ssl_ca_certificate_file": "/apps/irods/certs/igf-chain.pem",
+                "irods_ssl_ca_certificate_path": "/apps/irods/certs",
+                "irods_ssl_verify_server": "cert",
+                "irods_authentication_scheme": "PAM" 
+            {% endif %}
         }
 
         - module load irods/4.2.0
@@ -53,17 +64,15 @@ Please refer to the sample sheet extracts in the sample folders for facility sam
 
 You can check the report of some quality control checks on raw sequence data coming from high throughput sequencing pipelines performed by FastQC, Fastqscreen and MultiQC tools.
 
-http://eliot.med.ic.ac.uk/report/project/{{ projectName }}/{{ projectRunDate }}
+http://eliot.med.ic.ac.uk/report/project/{{ projectName }}/{{ projectRunDate }}/{{ flowcellId }}
 
 Please use your username and password to access these qc reports.
 
 Kind regards
 
--- 
-
 Imperial BRC Genomics Facility
-Imperial College London
 
+Imperial College London
 Commonwealth Building
 Room 4N5
 Du Cane Road
@@ -71,6 +80,6 @@ London, W12 0NN
 United Kingdom
 
 phone +44 (0)20 7594 9107
-Twitter @ImperialGF
+Twitter https://twitter.com/ImperialGF
 
 www.imperial.ac.uk/genomicsfacility
