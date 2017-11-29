@@ -173,11 +173,12 @@ class PrepareQcPageForRemote(IGFBaseProcess):
                                             start=remote_path)                  # relative path for multiqc
         
         report_htmlname=os.path.basename(report_html)
+        reports=list()
         for root,dirs, files in os.walk(top=fastq_dir):
           if report_htmlname in files:
-            reports=[os.path.join(os.path.abspath(root),file) \
+            reports.extend([os.path.join(os.path.abspath(root),file) \
                        for file in files \
-                         if fnmatch.fnmatch(os.path.join(root,file),report_html)] # get all html reports
+                         if fnmatch.fnmatch(os.path.join(root,file),report_html)]) # get all html reports
         if len(reports)==0:
           raise ValueError('No demultiplexing report found for fastq dir {0}'.\
                            format(fastq_dir))
