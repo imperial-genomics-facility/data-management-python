@@ -48,6 +48,8 @@ class RunFastqc(IGFBaseProcess):
       lane_index_info=os.path.basename(fastq_dir)                               # get the lane and index length info
       fastq_file_label=os.path.basename(fastq_file).replace('.fastq.gz','')
       
+      collection_name=None
+      collection_table=None
       if tag=='known' and store_file:                                  # fetch sample name for known fastq, if its not defined
         base=BaseAdaptor(**{'session_class':igf_session_class})
         base.start_session()                                                    # connect to db
