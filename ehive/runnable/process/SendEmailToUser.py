@@ -2,7 +2,7 @@ import os, subprocess
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from jinja2 import Template,Environment, FileSystemLoader,select_autoescape
-from igf_data.utils.fileutils import get_temp_dir
+from igf_data.utils.fileutils import get_temp_dir, remove_dir
 
 class SendEmailToUser(IGFBaseProcess):
   '''
@@ -41,10 +41,11 @@ class SendEmailToUser(IGFBaseProcess):
       user_info=user_info[user_info['data_authority']=='T']                     # filter dataframe for data authority
       user_info=user_info.to_dict(orient='records')                             # convert dataframe to list of dictionaries
       if len(user_info) == 0:
-        raise ValueError('No user found for project {0}'.format(project_name)) 
+        raise ValueError('No user found for project {0}'.format(project_name))
     
       user_info=user_info[0]
       user_name=user_info['name']                                               # get username for irods
+      login_name=user_info['username']
       user_email=user_info['email_id']
       
       user_passwd=self._get_user_passwd(user_email)                             # method for user passwd, replace it after moving to the unified user registration system
@@ -59,16 +60,22 @@ class SendEmailToUser(IGFBaseProcess):
         stream(projectName=project_name, \
                customerEmail=user_email, \
                customerName=user_name, \
+               customerUsername=login_name,\
                projectRunDate=seqrun_date, \
                flowcellId=flowcell_id, \
                customerPasswd=user_passwd,\
               ).\
         dump(report_output_file)
+      proc=subprocess.Popen(['cat',\
+                             report_output_file
+                            ], \
+                            stdout=subprocess.PIPE)
       sendmail_cmd=['sendmail',\
                     '-t',\
-                    report_output_file,\
                    ]
-      subprocess.check_call(sendmail_cmd)
+      subprocess.check_call(sendmail_cmd,stdin=proc.stdout)
+      proc.stdout.close()
+      remove_dir(temp_work_dir)
       message='finished data processing for seqrun: {0}, project: {0}, sent mail to igf'.\
               format(seqrun_igf_id, project_name)
       self.post_message_to_slack(message,reaction='pass')
