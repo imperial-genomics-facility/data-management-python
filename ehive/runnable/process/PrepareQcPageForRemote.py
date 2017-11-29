@@ -20,9 +20,11 @@ class PrepareQcPageForRemote(IGFBaseProcess):
     params_dict.update({
       'qc_template_path':'qc_report',
       'project_template':'index.html',
+      'undetermined_template':'undetermined.html',
       'sample_template':'sample_level_qc.html',
       'project_filename':'index.html',
       'sample_filename':'sampleQC.html',
+      'undetermined_filename':'undetermined.html',
       'remote_project_path':None,
       'remote_user':None,
       'remote_host':None,
@@ -54,12 +56,14 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       lane_index_info=self.param_required('lane_index_info')
       qc_template_path=self.param('qc_template_path')
       project_template=self.param('project_template')
+      undetermined_template=self.param('undetermined_template')
       sample_template=self.param('sample_template')
       project_filename=self.param('project_filename')
       sample_filename=self.param('sample_filename')
+      undetermined_filename=self.param('undetermined_filename')
       report_html=self.param('report_html')
      
-      if page_type not in ['project','sample']:
+      if page_type not in ['project','sample','undetermined']:
         raise ValueError('Project type {0} is not defined yet'.format(page_type))
       
       qc_template_path=os.path.join(template_dir,qc_template_path)
@@ -93,8 +97,8 @@ class PrepareQcPageForRemote(IGFBaseProcess):
         'flowcell': flowcell_id, \
         
         })
-      if page_type == 'project':                                                # prepare project page
-        (headerdata, qcmain)=self._process_projects_data()                      # get required data for sample qc page
+      if page_type=='project':                                                  # prepare project page
+        (headerdata, qcmain)=self._process_projects_data()                      # get required data for project qc page
         
         template_file=template_env.get_template(project_template)
         report_output_file=os.path.join(temp_work_dir,project_filename)
@@ -102,8 +106,8 @@ class PrepareQcPageForRemote(IGFBaseProcess):
         stream(ProjectName=project_name, \
                SeqrunDate=seqrun_date, \
                FlowcellId=flowcell_id, \
-               headerdata=None, \
-               qcmain=None, \
+               headerdata=headerdata, \
+               qcmain=qcmain, \
               ).\
         dump(report_output_file)
         os.chmod(report_output_file, mode=0o754)
@@ -111,7 +115,23 @@ class PrepareQcPageForRemote(IGFBaseProcess):
         remote_chk_cmd.append(os.path.join(remote_file_path,project_filename))
         remote_rm_cmd.append(os.path.join(remote_file_path,project_filename))
         
-      elif page_type == 'sample':                                               # prepare sample page
+      elif page_type=='undetermined':                                           # prepare undetermined fastq page
+        (headerdata, qcmain)=self._process_undetermined_data()                  # get required data for undetermined qc page
+        template_file=template_env.get_template(undetermined_template)
+        report_output_file=os.path.join(temp_work_dir,undetermined_filename)
+        template_file.\
+        stream(ProjectName=project_name, \
+               SeqrunDate=seqrun_date, \
+               FlowcellId=flowcell_id, \
+               headerdata=headerdata, \
+               qcmain=qcmain, \
+              ).\
+        dump(report_output_file)
+        os.chmod(report_output_file, mode=0o754)
+        remote_chk_cmd.append(os.path.join(remote_file_path,undetermined_filename))
+        remote_rm_cmd.append(os.path.join(remote_file_path,undetermined_filename))
+        
+      elif page_type=='sample':                                                 # prepare sample page
         if lane_index_info is None:
           raise ValueError('Missing lane and index information')
         
@@ -125,8 +145,8 @@ class PrepareQcPageForRemote(IGFBaseProcess):
                FlowcellId=flowcell_id, \
                Lane=lane_id, \
                IndexBarcodeLength=index_length, \
-               headerdata=None, \
-               qcmain=None, \
+               headerdata=headerdata, \
+               qcmain=qcmain, \
               ).\
         dump(report_output_file)                                                # dump data to template file
         os.chmod(report_output_file, mode=0o754)
@@ -226,6 +246,15 @@ class PrepareQcPageForRemote(IGFBaseProcess):
                         'Demultiplexing_Report':sample_data['demultiplexing_report'],\
                       })                                                        # adding data for qc page
     return required_header, qc_data
+    
+  def _process_undetermined_data(self):
+    '''
+    An internal method for processing undetermined data
+    '''
+    try:
+      pass
+    except:
+      raise
     
     
   def _process_samples_data(self):
