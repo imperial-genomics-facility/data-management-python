@@ -137,7 +137,7 @@ class RunFastqscreen(IGFBaseProcess):
                                 fastqscreen_html, \
                                 fastqscreen_png))
       
-      if tag=='known':
+      if tag=='known' and store_file:
         fastqs_files=[{'name':collection_name,\
                        'type':fastqs_collection_type,\
                        'table':required_collection_table,\
