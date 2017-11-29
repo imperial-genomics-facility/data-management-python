@@ -71,6 +71,9 @@ class PrepareQcPageForRemote(IGFBaseProcess):
                                       project_name, \
                                       seqrun_date, \
                                       flowcell_id,\
+                                    )
+      if lane_index_info is not None:
+        remote_file_path=os.path.join(remote_file_path,
                                       lane_index_info)                          # generic remote path, lane info is none for project
       
       template_env=Environment(loader=FileSystemLoader(searchpath=qc_template_path), \
