@@ -64,8 +64,14 @@ class SendEmailToUser(IGFBaseProcess):
                customerPasswd=customer_passwd,\
               ).\
         dump(report_output_file)
-      
-      
+      sendmail_cmd=['sendmail',\
+                    '-t',\
+                    report_output_file,\
+                   ]
+      subprocess.check_call(sendmail_cmd)
+      message='finished data processing for seqrun: {0}, project: {0}, sent mail to igf'.\
+              format(seqrun_igf_id, project_name)
+      self.post_message_to_slack(message,reaction='pass')
     except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
