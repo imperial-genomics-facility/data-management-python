@@ -1,7 +1,7 @@
 import os, subprocess
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
-from jinja2 import Template,Environment, FileSystemLoader
+from jinja2 import Template,Environment, FileSystemLoader,select_autoescape
 from igf_data.utils.fileutils import get_temp_dir
 
 class SendEmailToUser(IGFBaseProcess):
