@@ -61,7 +61,7 @@ class SendEmailToUser(IGFBaseProcess):
                customerName=user_name, \
                projectRunDate=seqrun_date, \
                flowcellId=flowcell_id, \
-               customerPasswd=customer_passwd,\
+               customerPasswd=user_passwd,\
               ).\
         dump(report_output_file)
       sendmail_cmd=['sendmail',\
