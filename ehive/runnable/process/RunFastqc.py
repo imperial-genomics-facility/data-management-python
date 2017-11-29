@@ -50,7 +50,7 @@ class RunFastqc(IGFBaseProcess):
       
       collection_name=None
       collection_table=None
-      if tag=='known' and store_file:                                  # fetch sample name for known fastq, if its not defined
+      if tag=='known' and store_file:                                           # fetch sample name for known fastq, if its not defined
         base=BaseAdaptor(**{'session_class':igf_session_class})
         base.start_session()                                                    # connect to db
       
@@ -118,7 +118,11 @@ class RunFastqc(IGFBaseProcess):
         raise ValueError('Missing required values, fastqc zip: {0}, fastqc html: {1}'.\
                          format(fastqc_zip,fastqc_html))
       
-      if tag=='known':
+      if tag=='known' and store_file:
+        if collection_name is None:
+          raise ValueError('couldn\'t retrieve collection name for {0}'.\
+                           format(fastq_file))
+          
         fastqc_files=[{'name':collection_name,\
                        'type':fastqc_collection_type,\
                        'table':required_collection_table,\
@@ -132,7 +136,7 @@ class RunFastqc(IGFBaseProcess):
                      ]
         ca=CollectionAdaptor(**{'session_class':igf_session_class})
         ca.start_session()
-        ca.load_file_and_create_collection(data=fastqc_files)                   # store fastqc files to db
+        ca.load_file_and_create_collection(data=fastqc_files)                 # store fastqc files to db
         ca.close_session()
       
       self.param('dataflow_params',{'fastqc_html':fastqc_html, \
