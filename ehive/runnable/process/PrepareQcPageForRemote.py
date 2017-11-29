@@ -169,9 +169,8 @@ class PrepareQcPageForRemote(IGFBaseProcess):
                                  )                                              # get remote base path
         remote_sample_qc_path=os.path.relpath(remote_sample_qc_path, \
                                               start=remote_path)                # elative path for sample qc
-        multiqc_file=list(multiqc_remote_file[fastq_dir].keys())[0]             # one multiqc file per fastq dir
-        multiqc_file=os.path.relpath(multiqc_file, \
-                                     start=remote_path)                         # relative path for multiqc
+        multiqc_remote_file=os.path.relpath(multiqc_remote_file, \
+                                            start=remote_path)                  # relative path for multiqc
         
         report_htmlname=os.path.basename(report_html)
         for root,dirs, files in os.walk(top=fastq_dir):
