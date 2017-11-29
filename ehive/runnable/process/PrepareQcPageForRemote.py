@@ -116,7 +116,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
         remote_rm_cmd.append(os.path.join(remote_file_path,project_filename))
         
       elif page_type=='undetermined':                                           # prepare undetermined fastq page
-        (headerdata, qcmain)=self._process_undetermined_data()                  # get required data for undetermined qc page
+        (headerdata, qcmain)=self._process_undetermined_data(remote_file_path)  # get required data for undetermined qc page
         template_file=template_env.get_template(undetermined_template)
         report_output_file=os.path.join(temp_work_dir,undetermined_filename)
         template_file.\
@@ -247,12 +247,28 @@ class PrepareQcPageForRemote(IGFBaseProcess):
                       })                                                        # adding data for qc page
     return required_header, qc_data
     
-  def _process_undetermined_data(self):
+    
+  def _process_undetermined_data(self,remote_file_path):
     '''
     An internal method for processing undetermined data
     '''
     try:
-      pass
+      qc_files=self.param_required('qc_files')
+      required_header=['LaneID',\
+                       'Index_Length',\
+                       'Undetermined_MultiQC',\
+                      ]
+      qc_data=list()
+      for fastq_dir, remote_multiqc_path in qc_files.items():
+        lane_index=os.path.basename(fastq_dir)
+        (lane_id, index_length)=lane_index(split('_',1))
+        remote_multiqc_path=os.path.relpath(remote_multiqc_path,\
+                                            start=remote_file_path)            # get relative path for remote file
+        qc_data.append({'LaneID':lane_id,\
+                        'Index_Length':index_length,\
+                        'Undetermined_MultiQC':remote_multiqc_path,\
+                       })
+      return required_header, qc_data
     except:
       raise
     
