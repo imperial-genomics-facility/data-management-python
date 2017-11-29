@@ -324,7 +324,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       fastqs_data=list()
       for fastqs_file in qc_files['fastqscreen']:                               # get fastqs files for fastq_dir
         fastq_file=fastqs_file['fastq_file']
-        remote_fastqs_path=fastqs_file['remote_fastqc_path']
+        remote_fastqs_path=fastqs_file['remote_fastqscreen_path']
         remote_fastqs_path=os.path.relpath(remote_fastqs_path, \
                                            start=remote_path)                   # get relative path
         fastqs_data.append({'Fastqscreen':remote_fastqs_path, \
