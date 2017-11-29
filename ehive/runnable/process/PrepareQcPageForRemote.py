@@ -1,6 +1,6 @@
 import os, subprocess
 import pandas as pd
-from jinja2 import Template,Environment, FileSystemLoader
+from jinja2 import Template,Environment, FileSystemLoader,select_autoescape
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.fileutils import get_temp_dir
 from igf_data.utils.fastqc_utils import get_fastq_info_from_fastq_zip
