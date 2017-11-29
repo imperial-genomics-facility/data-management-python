@@ -304,7 +304,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       ra=RunAdaptor(**{'session':base.session})
       
       fastqc_data=list()
-      for fastqc_file in qc_files[fastq_dir]['fastqc']:                         # get fastqc files for fastq_dir
+      for fastqc_file in qc_files['fastqc']:                                    # get fastqc files for fastq_dir
         fastqc_zip=fastqc_file['fastqc_zip']
         fastq_file=fastqs_file['fastq_file']
         remote_fastqc_path=fastqc_file['remote_fastqc_path']
@@ -322,7 +322,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
         
       base.close_session()                                                      # close db connection
       fastqs_data=list()
-      for fastqs_file in qc_files[fastq_dir]['fastqscreen']:                    # get fastqs files for fastq_dir
+      for fastqs_file in qc_files['fastqscreen']:                               # get fastqs files for fastq_dir
         fastq_file=fastqs_file['fastq_file']
         remote_fastqs_path=fastqs_file['remote_fastqc_path']
         remote_fastqs_path=os.path.relpath(remote_fastqs_path, \
