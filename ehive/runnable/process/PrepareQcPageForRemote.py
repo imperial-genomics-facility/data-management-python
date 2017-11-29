@@ -264,7 +264,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       qc_data=list()
       for fastq_dir, remote_multiqc_path in qc_files.items():
         lane_index=os.path.basename(fastq_dir)
-        (lane_id, index_length)=lane_index(split('_',1))
+        (lane_id, index_length)=lane_index.split('_',1)
         remote_multiqc_path=os.path.relpath(remote_multiqc_path,\
                                             start=remote_file_path)            # get relative path for remote file
         qc_data.append({'LaneID':lane_id,\
