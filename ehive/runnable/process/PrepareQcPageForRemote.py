@@ -242,8 +242,8 @@ class PrepareQcPageForRemote(IGFBaseProcess):
     for fastq_dir, sample_data in qc_files.items():
       sample_project=sample_data['project_name']
       if sample_project==project_name:                                          # additional checks for project name
-        qc_data.append({'LaneID':sample_data['lane_id'],\
-                        'Index_Length':sample_data['index_length'],\
+        qc_data.append({'LaneID':str(sample_data['lane_id']),\
+                        'Index_Length':str(sample_data['index_length']),\
                         'MultiQC':sample_data['multiqc_page'],\
                         'SampleQC':sample_data['sample_qc_page'],\
                         'Demultiplexing_Report':sample_data['demultiplexing_report'],\
