@@ -18,6 +18,7 @@ class RunBcl2Fastq(IGFBaseProcess):
         'fastq_dir_label':'fastq',
         'force_overwrite':True,
         'bcl2fastq_exe':'bcl2fastq',
+        'model_name':None,
         'bcl2fastq_options':{'-r':'1','-w':'1','-p':'1','--barcode-mismatches':'1', '--auto-set-to-zero-barcode-mismatches':''},
       })
     return params_dict
@@ -41,6 +42,7 @@ class RunBcl2Fastq(IGFBaseProcess):
       force_overwrite=self.param('force_overwrite')
       fastq_dir_label=self.param('fastq_dir_label')
       samplesheet_filename=self.param('samplesheet_filename')
+      model_name=self.param('model_name')
       
       seqrun_dir=os.path.join(seqrun_local_dir,seqrun_igf_id)                   # local seqrun dir
       runinfo_file=os.path.join(seqrun_dir,runinfo_filename)                    # seqrun runinfo file
@@ -65,7 +67,8 @@ class RunBcl2Fastq(IGFBaseProcess):
       move_file=moveBclFilesForDemultiplexing(input_dir=seqrun_dir,
                                               output_dir=seqrun_temp_dir,
                                               samplesheet=samplesheet_file,
-                                              run_info_xml=runinfo_file)        # get lists of files to move to TMPDIR
+                                              run_info_xml=runinfo_file,
+                                              platform_model=model_name)        # get lists of files to move to TMPDIR
       move_file.copy_bcl_files()                                                # move files to TMPDIR
       
       output_temp_dir=get_temp_dir()                                            # create a new output directory in TMPDIR
