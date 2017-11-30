@@ -86,9 +86,8 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       os.chmod(htpasswd_output, mode=0o770)
       
       remote_project_dir=os.path.join(remote_project_path,\
-                                      project_name,\
-                                      seqrun_date,
-                                      flowcell_id)
+                                      project_name
+                                     )
       remote_mkdir_cmd=['ssh',\
                        '{0}@{1}'.\
                        format(remote_user,\
