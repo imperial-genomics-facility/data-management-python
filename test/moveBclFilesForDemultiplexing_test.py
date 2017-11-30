@@ -21,13 +21,14 @@ class MiSeqRunInfo(unittest.TestCase):
     move_file=self.move_file
     bcl_file_list=move_file._generate_platform_specific_list()
     bcl_file_list.sort()
-    test_list=['Data','RunInfo.xml','runParameters.xml']
+    test_list=['Data','RunInfo.xml','InterOp','runParameters.xml']
     test_list.sort()
     self.assertListEqual(bcl_file_list, test_list)
 
   def test_copy_bcl_files(self):
     # create dir structure
     os.makedirs(os.path.join(self.input_dir,'Data/Intensities/'))
+    os.makedirs(os.path.join(self.input_dir,'InterOp'))
     open(os.path.join(self.input_dir,'Data/Intensities/s.locs'),'a').close()
     os.makedirs(os.path.join(self.input_dir,'Data/Intensities/BaseCalls'))
     open(os.path.join(self.input_dir,'RunInfo.xml'),'a').close()
@@ -62,13 +63,14 @@ class Hiseq4000RunInfo(unittest.TestCase):
     move_file=self.move_file
     bcl_file_list=move_file._generate_platform_specific_list()
     bcl_file_list.sort()
-    test_list=['Data/Intensities/s.locs','Data/Intensities/BaseCalls/L003','RunInfo.xml','runParameters.xml']
+    test_list=['Data/Intensities/s.locs','Data/Intensities/BaseCalls/L003','InterOp','RunInfo.xml','runParameters.xml']
     test_list.sort()
     self.assertListEqual(bcl_file_list, test_list)
 
   def test_copy_bcl_files(self):
     # create dir structure
     os.makedirs(os.path.join(self.input_dir,'Data/Intensities/'))
+    os.makedirs(os.path.join(self.input_dir,'InterOp'))
     open(os.path.join(self.input_dir,'Data/Intensities/s.locs'),'a').close()
     os.makedirs(os.path.join(self.input_dir,'Data/Intensities/BaseCalls/L003'))
     open(os.path.join(self.input_dir,'RunInfo.xml'),'a').close()

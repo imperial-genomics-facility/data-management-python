@@ -4,11 +4,13 @@ from igf_data.illumina.samplesheet import SampleSheet
 from igf_data.illumina.runinfo_xml import RunInfo_xml
 
 class moveBclFilesForDemultiplexing:
-  def __init__(self,input_dir,output_dir,samplesheet,run_info_xml):
+  def __init__(self,input_dir,output_dir,samplesheet,run_info_xml,platform_model=None):
     self.input_dir    = input_dir
     self.output_dir   = output_dir
     self.samplesheet  = samplesheet
     self.run_info_xml = run_info_xml
+    self.platform_model=platform_model
+
 
   def copy_bcl_files(self):
     '''
@@ -36,59 +38,68 @@ class moveBclFilesForDemultiplexing:
           os.makedirs(output_target)
         # copy file
         copy(input_target, output_target)
+        
          
   def _generate_platform_specific_list(self, lane_list=[]):
     '''
     An internal function for getting list of files and directories specific for each platform
     Returns a list
     '''
+    platform_model=self.platform_model
+    if platform_model is None:
+      # set pattern for HiSeq platforms
+      hiseq_pattern=re.compile('^HISEQ',re.IGNORECASE)
+      nextseq_pattern=re.compile('^NEXTSEQ',re.IGNORECASE)
+      miseq_pattern=re.compile('^FASTQ Only',re.IGNORECASE)
 
-    # set pattern for HiSeq platforms
-    hiseq_pattern=re.compile('^HISEQ',re.IGNORECASE)
-    nextseq_pattern=re.compile('^NEXTSEQ',re.IGNORECASE)
-    miseq_pattern=re.compile('^FASTQ Only',re.IGNORECASE)
-
-    # read the samplesheet info
-    samplesheet_data=SampleSheet(infile=self.samplesheet)
-    platform_name=samplesheet_data.get_platform_name()
-    
-    bcl_files_list=list()
-
-    if (re.search(hiseq_pattern, platform_name)):
-      # check for hiseq4000
+      # read the samplesheet info
+      samplesheet_data=SampleSheet(infile=self.samplesheet)
+      platform_name=samplesheet_data.get_platform_name()
       runinfo_data=RunInfo_xml(xml_file=self.run_info_xml)
       platform_series=runinfo_data.get_platform_number()
       
-      # hack for checking 4000 platform, need to replace with db check
-      if platform_series.startswith('K'):
-        # hiseq4000
-        bcl_files_list=['Data/Intensities/s.locs', 'RunInfo.xml','runParameters.xml']
- 
-        if len(lane_list):
-          # need to change the following lines if there are more than 9 lanes
-          for lane in lane_list:
-            bcl_files_list.append('Data/Intensities/BaseCalls/L00{0}'.format(lane))
+      if (re.search(hiseq_pattern, platform_name)):
+        if platform_series.startswith('K'):
+          platform_model='HISEQ4000'                                            # assign platform model for HISEQ4000
         else:
-          for lane in samplesheet_data.get_lane_count():
-            bcl_files_list.append('Data/Intensities/BaseCalls/L00{0}'.format(lane))
+          platform_model='HISEQ2500'                                            # or may be its HISEQ2500
+          raise ValueError('no method of for hiseq 2500')
+      elif(re.search(nextseq_pattern, platform_name)):
+        platform_model='NEXTSEQ'                                                # assign platform model for 'NEXTSEQ'
+      elif(re.search(miseq_pattern, platform_name)):
+        if platform_series.startswith('M'):
+          platform_model='MISEQ'
+        else:
+          raise ValueError('Platform series {0} is not MiSeq'.\
+                           format(platform_series))
       else:
-        # hiseq2500
-        raise ValueError('no method of for hiseq 2500'.format())
-    elif(re.search(nextseq_pattern, platform_name)):
-      # NextSeq
-      bcl_files_list=['Data','InterOp','RunInfo.xml','RunParameters.xml']
-    elif(re.search(miseq_pattern, platform_name)):
-      # MiSeq
-      runinfo_data=RunInfo_xml(xml_file=self.run_info_xml)
-      platform_series=runinfo_data.get_platform_number()
+        raise ValueError('Platform {0} not recognised'.format(platform_name))
+      
+        
+        
+    bcl_files_list=list()
 
-      # hack for checking MiSeq platform, need to replace with db check
-      if platform_series.startswith('M'):
-        bcl_files_list=['Data','RunInfo.xml','runParameters.xml']
+    if platform_model=='HISEQ4000':
+      bcl_files_list=['Data/Intensities/s.locs', \
+                      'InterOp', \
+                      'RunInfo.xml', \
+                      'runParameters.xml']
+      if len(lane_list):
+        # need to change the following lines if there are more than 9 lanes
+        for lane in lane_list:
+          bcl_files_list.append('Data/Intensities/BaseCalls/L00{0}'.format(lane))
       else:
-        raise ValueError('Platform series {0} is not MiSeq'.format(platform_series))
-    else:
-      raise ValueError('Platform {0} not recognised'.format(platform_name))
-    
+        for lane in samplesheet_data.get_lane_count():
+          bcl_files_list.append('Data/Intensities/BaseCalls/L00{0}'.format(lane))
+    elif platform_model=='NEXTSEQ':
+      bcl_files_list=['Data', \
+                      'InterOp', \
+                      'RunInfo.xml', \
+                      'RunParameters.xml']
+    elif platform_model=='MISEQ':
+      bcl_files_list=['Data', \
+                      'InterOp', \
+                      'RunInfo.xml', \
+                      'runParameters.xml']
     return bcl_files_list
   
