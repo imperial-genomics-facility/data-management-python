@@ -62,7 +62,10 @@ class RunBcl2Fastq(IGFBaseProcess):
       
       if os.path.exists(output_fastq_dir) and force_overwrite:
         remove_dir(output_fastq_dir)                                            # remove fastq directory if its already present
-              
+      
+      message='started fastq conversion for {0}, {1} : {2}_{3}'.\
+              format(seqrun_igf_id,project_name,flowcell_lane,index_length)
+      self.post_message_to_slack(message,reaction='pass')                       # send log to slack
       seqrun_temp_dir=get_temp_dir()                                            # create a new input directory in TMPDIR
       move_file=moveBclFilesForDemultiplexing(input_dir=seqrun_dir,
                                               output_dir=seqrun_temp_dir,
