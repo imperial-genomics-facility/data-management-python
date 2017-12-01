@@ -67,7 +67,7 @@ class UploadFastqToIrods(IGFBaseProcess):
         
           for file in files:
             if fnmatch.fnmatch(file, '*.fastq.gz') and \
-              not fnmatch.fnmatch(file, 'Undetermined_'):
+              not fnmatch.fnmatch(file, 'Undetermined_*'):
               fastq_file_path=os.path.join(os.path.abspath(root),file)          # get filepath for the fastq files
               tar.add(fastq_file_path,arcname=os.path.relpath(fastq_file_path,\
                                                               start=fastq_dir)) # add fastq file to tar
