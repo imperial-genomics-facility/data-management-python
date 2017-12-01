@@ -17,7 +17,7 @@ class RunBcl2Fastq(IGFBaseProcess):
         'samplesheet_filename':'SampleSheet.csv',
         'fastq_dir_label':'fastq',
         'force_overwrite':True,
-        'bcl2fastq_exe':'bcl2fastq',
+        'bcl2fastq_exe':None,
         'model_name':None,
         'bcl2fastq_options':{'-r':'1','-w':'1','-p':'1','--barcode-mismatches':'1', '--auto-set-to-zero-barcode-mismatches':''},
       })
@@ -36,8 +36,8 @@ class RunBcl2Fastq(IGFBaseProcess):
       base_work_dir=self.param_required('base_work_dir')
       base_fastq_dir=self.param_required('base_fastq_dir')
       samplesheet_file=self.param_required('samplesheet')
+      bcl2fastq_exe=self.param_required('bcl2fastq_exe')
       runinfo_filename=self.param('runinfo_filename')
-      bcl2fastq_exe=self.param('bcl2fastq_exe')
       bcl2fastq_options=self.param('bcl2fastq_options')
       force_overwrite=self.param('force_overwrite')
       fastq_dir_label=self.param('fastq_dir_label')
