@@ -19,7 +19,9 @@ class RunBcl2Fastq(IGFBaseProcess):
         'force_overwrite':True,
         'bcl2fastq_exe':None,
         'model_name':None,
-        'bcl2fastq_options':{'-r':'1','-w':'1','-p':'1','--barcode-mismatches':'1', '--auto-set-to-zero-barcode-mismatches':''},
+        'bcl2fastq_options':{'-r':'1','-w':'1','-p':'1','--barcode-mismatches':'1', \
+                             '--auto-set-to-zero-barcode-mismatches':'',\
+                             '--create-fastq-for-index-reads':''},
       })
     return params_dict
   
