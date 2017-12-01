@@ -88,8 +88,8 @@ class RunBcl2Fastq(IGFBaseProcess):
       copy2(samplesheet_file,os.path.join(output_fastq_dir,\
                                           samplesheet_filename))                # add samplesheet to output dir
       self.param('dataflow_params',{'fastq_dir':output_fastq_dir})              # set dataflow params
-      message='seqrun: {0}, project: {1}, lane: {2}, index: {3}, fastq: {4}'.\
-              format(seqrun_igf_id,project_name,flowcell_id,\
+      message='Fastq conversion done for {0},{1}:{2}_{3}, fastq: {4}'.\
+              format(seqrun_igf_id,project_name,flowcell_lane,\
                      index_length,output_fastq_dir)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
       self.comment_asana_task(task_name=seqrun_igf_id, comment=message)         # send log to asana
