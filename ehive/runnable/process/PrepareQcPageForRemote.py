@@ -34,6 +34,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       'multiqc_remote_file':None,
       'samplesheet_filename':'SampleSheet.csv',
       'report_html':'*all/all/all/laneBarcode.html',
+      'remote_ftp_base':'/www/html',
     })
     return params_dict
   
@@ -62,6 +63,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       sample_filename=self.param('sample_filename')
       undetermined_filename=self.param('undetermined_filename')
       report_html=self.param('report_html')
+      remote_ftp_base=self.param('remote_ftp_base')
      
       if page_type not in ['project','sample','undetermined']:
         raise ValueError('Project type {0} is not defined yet'.format(page_type))
@@ -212,10 +214,22 @@ class PrepareQcPageForRemote(IGFBaseProcess):
                        destinationa_path=remote_file_path, \
                        destination_address='{0}@{1}'.format(remote_user,\
                                                             remote_host))       # copy file to remote
-      qc_file_info.update({'remote_qc_page':\
-                            os.path.join(remote_file_path, \
-                                         os.path.basename(report_output_file))})
+      remote_qc_page=os.path.join(remote_file_path, \
+                                  os.path.basename(report_output_file))
+      qc_file_info.update({'remote_qc_page':remote_qc_page})
       self.param('dataflow_params',{'qc_file_info':qc_file_info})
+      
+      remote_url_path='http://{0}/{1}'.format(remote_host,\
+                                              os.path.relpath(remote_qc_page,\
+                                                              start=remote_ftp_base))
+      message='QC page {0}, {1},{2}: {3}'.\
+              format(seqrun_igf_id, \
+                     project_name, \
+                     page_type, \
+                     remote_url_path,
+                    )
+      self.post_message_to_slack(message,reaction='pass')                       # send msg to slack
+      self.comment_asana_task(task_name=seqrun_igf_id, comment=message)         # send msg to asana
     except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
