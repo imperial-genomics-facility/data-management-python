@@ -139,6 +139,9 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       elif page_type=='sample':                                                 # prepare sample page
         if lane_index_info is None:
           raise ValueError('Missing lane and index information')
+      
+        if fastq_dir is None:
+            raise ValueError('Missing required fastq_dir')
         
         (headerdata, qcmain)=self._process_samples_data()                       # get required data for sample qc page
         (lane_id,index_length)=lane_index_info.split('_',1)                     # get lane and index info
@@ -321,28 +324,34 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       for fastqc_file in qc_files['fastqc']:                                    # get fastqc files for fastq_dir
         fastqc_zip=fastqc_file['fastqc_zip']
         fastq_file=fastqc_file['fastq_file']
-        remote_fastqc_path=fastqc_file['remote_fastqc_path']
-        remote_fastqc_path=os.path.relpath(remote_fastqc_path, \
+        qc_fastq_dir=fastqc_file['fastq_dir']
+        
+        if fastqc_file==qc_fastq_dir:                                           # check for fastq dir
+          remote_fastqc_path=fastqc_file['remote_fastqc_path']
+          remote_fastqc_path=os.path.relpath(remote_fastqc_path, \
                                            start=remote_path)                   # get relative path
-        (total_reads, fastq_filename)=get_fastq_info_from_fastq_zip(fastqc_zip)
-        (collection_name,collection_table)=\
-        ca.fetch_collection_name_and_table_from_file_path(file_path=fastq_file) # fetch collection name and table info
-        sample=ra.fetch_sample_info_for_run(run_igf_id=collection_name)
-        sample_name=sample['sample_igf_id']
-        fastqc_data.append({'Sample_ID':sample_name,\
-                            'Fastqc':remote_fastqc_path, \
-                            'FastqFile':fastq_file, \
-                            'TotalReads':total_reads})
+          (total_reads, fastq_filename)=get_fastq_info_from_fastq_zip(fastqc_zip)
+          (collection_name,collection_table)=\
+          ca.fetch_collection_name_and_table_from_file_path(file_path=fastq_file) # fetch collection name and table info
+          sample=ra.fetch_sample_info_for_run(run_igf_id=collection_name)
+          sample_name=sample['sample_igf_id']
+          fastqc_data.append({'Sample_ID':sample_name,\
+                              'Fastqc':remote_fastqc_path, \
+                              'FastqFile':fastq_file, \
+                              'TotalReads':total_reads})
         
       base.close_session()                                                      # close db connection
       fastqs_data=list()
       for fastqs_file in qc_files['fastqscreen']:                               # get fastqs files for fastq_dir
         fastq_file=fastqs_file['fastq_file']
         remote_fastqs_path=fastqs_file['remote_fastqscreen_path']
-        remote_fastqs_path=os.path.relpath(remote_fastqs_path, \
-                                           start=remote_path)                   # get relative path
-        fastqs_data.append({'Fastqscreen':remote_fastqs_path, \
-                            'FastqFile':fastq_file})
+        qs_fastq_dir=fastqc_file['fastq_dir']
+        
+        if qs_fastq_dir==fastq_dir:                                             # check for accu data
+          remote_fastqs_path=os.path.relpath(remote_fastqs_path, \
+                                             start=remote_path)                   # get relative path
+          fastqs_data.append({'Fastqscreen':remote_fastqs_path, \
+                              'FastqFile':fastq_file})
       
       if len(fastqc_data)==0 or len(fastqs_data)==0:
         raise ValueError('Value not found for fastqc: {0} or fastqscreen:{1}'.\
