@@ -163,10 +163,10 @@ class RunFastqscreen(IGFBaseProcess):
                                     'lane_index_info':lane_index_info,\
                                     'sample_name':sample_name,\
                                     'fastqscreen': \
-                                    {'fastqscreen_path':fastqscreen_result_dir,
+                                    {'fastq_dir':fastq_dir,
                                      'fastqscreen_stat':fastqscreen_stat,
                                      'fastqscreen_html':fastqscreen_html,
-                                     'fastqscreen_png':fastqscreen_png}})       # set dataflow params
+                                    }})                                         # set dataflow params
     except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
