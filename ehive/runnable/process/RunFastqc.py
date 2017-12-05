@@ -142,7 +142,7 @@ class RunFastqc(IGFBaseProcess):
       self.param('dataflow_params',{'fastqc_html':fastqc_html, \
                                     'lane_index_info':lane_index_info,\
                                     'sample_name':sample_name,\
-                                    'fastqc':{'fastqc_path':fastqc_result_dir,
+                                    'fastqc':{'fastq_dir':fastq_dir,
                                               'fastqc_zip':fastqc_zip,
                                               'fastqc_html':fastqc_html}})      # set dataflow params
     except Exception as e:
