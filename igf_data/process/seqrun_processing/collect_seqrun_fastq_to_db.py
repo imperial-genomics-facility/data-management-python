@@ -14,11 +14,12 @@ from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_data.utils.fileutils import calculate_file_checksum
 
+
 class Collect_seqrun_fastq_to_db:
   def __init__(self,fastq_dir,model_name,seqrun_igf_id,session_class,flowcell_id,\
                samplesheet_file=None,samplesheet_filename='SampleSheet.csv',\
                collection_type='demultiplexed_fastq',file_location='HPC_PROJECT',\
-               collection_table='run'):
+               collection_table='run', manifest_name='file_manifest.csv'):
     self.fastq_dir=fastq_dir
     self.samplesheet_file=samplesheet_file
     self.samplesheet_filename=samplesheet_filename
@@ -29,6 +30,7 @@ class Collect_seqrun_fastq_to_db:
     self.file_location=file_location
     self.flowcell_id=flowcell_id
     self.collection_table=collection_table
+    self.manifest_name=manifest_name
     
     
   def find_fastq_and_build_db_collection(self):
@@ -239,6 +241,30 @@ class Collect_seqrun_fastq_to_db:
     return file_data, file_group_data
 
 
+  def _write_manifest_file(file_data):
+    '''
+    An internal method for writing file data to the manifest file
+    '''
+    try:
+      manifest_name=self.manifest_name
+      fastq_dir=self.fastq_dir
+      manifest_path=os.path.join(fastq_dir,manifest_name)
+    
+      if os.path.exists(manifest_path):
+        raise ValueError('manifest file {0} already present'.\
+                         format(manifest_path))
+    
+      if isinstance(file_data, list):
+        file_data=pd.DataFrame(file_data)                                       # convert file data to dataframe
+      
+      file_data['file_path']=file_data['file_path'].\
+                             map(lambda x: os.path.relpath(x, start=fastq_dir)) # replace filepath with relative path
+      file_data=file_data.drop('location')                                      # remove file location info
+      file_data.to_csv(manifest_path, sep='\t', encoding='utf-8')               # write data to manifest file
+    except:
+      raise
+    
+    
   def _build_and_store_exp_run_and_collection_in_db(self,fastq_files_list, restricted_list=['10X']):
     session_class=self.session_class
     db_connected=False
@@ -305,6 +331,7 @@ class Collect_seqrun_fastq_to_db:
       base.session.flush()
       ca.create_collection_group(data=file_group_data,autosave=False)
       base.commit_session()
+      self._write_manifest_file(file_data=file_data)
     except:
       if db_connected:
         base.rollback_session()
