@@ -10,6 +10,7 @@ class CollectFastqToDbCollection(IGFBaseProcess):
     params_dict=super(IGFBaseProcess,self).param_defaults()
     params_dict.update({'file_location':'HPC_PROJECT',
                         'samplesheet_filename':'SampleSheet.csv',
+                        'manifest_name': 'file_manifest.csv',
                       })
     return params_dict
     
@@ -23,6 +24,7 @@ class CollectFastqToDbCollection(IGFBaseProcess):
       flowcell_id=self.param_required('flowcell_id')
       file_location=self.param('file_location')
       samplesheet_filename=self.param('samplesheet_filename')
+      manifest_name=self.param_required('manifest_name')
       collect_instance=Collect_seqrun_fastq_to_db(fastq_dir=fastq_dir,
                                                   session_class=igf_session_class,
                                                   model_name=model_name,
@@ -30,9 +32,10 @@ class CollectFastqToDbCollection(IGFBaseProcess):
                                                   flowcell_id=flowcell_id,
                                                   file_location=file_location,
                                                   samplesheet_filename=samplesheet_filename,
+                                                  manifest_name=manifest_name,
                                                   )
       collect_instance.find_fastq_and_build_db_collection()
-      self.param('dataflow_params',{'fastq_dir':fastq_dir})
+      self.param('dataflow_params',{'fastq_dir':fastq_dir,'manifest_name':manifest_name})
     except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
