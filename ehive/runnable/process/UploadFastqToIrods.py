@@ -24,6 +24,7 @@ class UploadFastqToIrods(IGFBaseProcess):
       irods_exe_dir=self.param_required('irods_exe_dir')
       flowcell_id=self.param_required('flowcell_id')
       samplesheet_filename=self.param('samplesheet_filename')
+      manifest_name=self.param_required('manifest_name')
       report_html=self.param('report_html')
       
       pa=ProjectAdaptor(**{'session_class':igf_session_class})
@@ -64,6 +65,12 @@ class UploadFastqToIrods(IGFBaseProcess):
                 reports=os.path.join(os.path.abspath(root),file)                # get filepath for the report
                 tar.add(reports,arcname=os.path.relpath(reports[0],\
                                                         start=fastq_dir))       # add demultiplexing report to tar
+                
+          if manifest_name in files:
+            manifest_file=os.path.join(os.path.abspath(root),\
+                                       manifest_name)                           # get samplesheet filepath
+            tar.add(manifest_file,arcname=os.path.relpath(manifest_file,\
+                                                             start=fastq_dir))  # add samplesheet file to tar
         
           for file in files:
             if fnmatch.fnmatch(file, '*.fastq.gz') and \
