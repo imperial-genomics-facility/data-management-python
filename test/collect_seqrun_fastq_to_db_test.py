@@ -19,6 +19,7 @@ class Collect_fastq_test1(unittest.TestCase):
     self.file_location='HPC_PROJECT'
     self.samplesheet_file='data/collect_fastq_dir/1_16/SampleSheet.csv'
     self.samplesheet_filename='SampleSheet.csv'
+    self.manifest_name='file_manifest.csv'
     
     dbparam = None
     with open(self.dbconfig, 'r') as json_data:
@@ -103,6 +104,10 @@ class Collect_fastq_test1(unittest.TestCase):
   def tearDown(self):
     Base.metadata.drop_all(self.engine)
     os.remove(self.dbname)
+    manifest_path=os.path.join(self.fastq_dir,self.manifest_name)
+    if os.path.exists(manifest_path):
+      os.remove(manifest_path)
+      
     
   def test__get_fastq_and_samplesheet(self):
     ci=Collect_seqrun_fastq_to_db(fastq_dir=self.fastq_dir,
@@ -112,6 +117,7 @@ class Collect_fastq_test1(unittest.TestCase):
                                   model_name=self.model_name,
                                   file_location=self.file_location,
                                   samplesheet_file=self.samplesheet_file,
+                                  manifest_name=self.manifest_name,
                                  )
     (r1_fastq_list, r2_fastq_list)=ci._get_fastq_and_samplesheet()
     self.assertEqual(len(r1_fastq_list), 5)
@@ -125,6 +131,7 @@ class Collect_fastq_test1(unittest.TestCase):
                                   model_name=self.model_name,
                                   file_location=self.file_location,
                                   samplesheet_file=self.samplesheet_file,
+                                  manifest_name=self.manifest_name,
                                  )
     fastq_files_list=ci._collect_fastq_and_sample_info()
     for fastq_file in fastq_files_list:
@@ -140,6 +147,7 @@ class Collect_fastq_test1(unittest.TestCase):
                                   model_name=self.model_name,
                                   file_location=self.file_location,
                                   samplesheet_file=self.samplesheet_file,
+                                  manifest_name=self.manifest_name,
                                  )
     ci.find_fastq_and_build_db_collection()
     ca=CollectionAdaptor(**{'session_class':self.session_class})
@@ -162,6 +170,7 @@ class Collect_fastq_test1(unittest.TestCase):
                                   model_name=self.model_name,
                                   file_location=self.file_location,
                                   samplesheet_file=self.samplesheet_file,
+                                  manifest_name=self.manifest_name,
                                  )
     data=ci._calculate_experiment_run_and_file_info(data=data,restricted_list=['10X'])
     data=data.to_dict()
@@ -178,6 +187,7 @@ class Collect_fastq_test1(unittest.TestCase):
                                   model_name=self.model_name,
                                   file_location=self.file_location,
                                   samplesheet_file=self.samplesheet_file,
+                                  manifest_name=self.manifest_name,
                                  )
     data=[{'location': 'HPC_PROJECT',
           'sample_igf_id': 'IGF00001', 
