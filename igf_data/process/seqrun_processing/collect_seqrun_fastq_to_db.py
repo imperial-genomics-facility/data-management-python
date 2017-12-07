@@ -259,13 +259,20 @@ class Collect_seqrun_fastq_to_db:
       
       file_data['file_path']=file_data['file_path'].\
                              map(lambda x: os.path.relpath(x, start=fastq_dir)) # replace filepath with relative path
-      file_data=file_data.drop(['location'],axis=1)                                      # remove file location info
-      file_data.to_csv(manifest_path, sep='\t', encoding='utf-8')               # write data to manifest file
+      file_data=file_data.drop(['location'],axis=1)                             # remove file location info
+      file_data.to_csv(manifest_path, \
+                       sep='\t', \
+                       encoding='utf-8', \
+                       index=False)                                             # write data to manifest file
     except:
       raise
     
     
-  def _build_and_store_exp_run_and_collection_in_db(self,fastq_files_list, restricted_list=['10X']):
+  def _build_and_store_exp_run_and_collection_in_db(self,fastq_files_list, \
+                                                    restricted_list=['10X']):
+    '''
+    An internal method for building db collections for the raw fastq files
+    '''
     session_class=self.session_class
     db_connected=False
     try:
