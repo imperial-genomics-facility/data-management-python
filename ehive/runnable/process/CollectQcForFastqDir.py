@@ -11,6 +11,7 @@ class CollectQcForFastqDir(IGFBaseProcess):
   
   def run(self):
     try:
+      fastq_dir=self.param_required('fastq_dir')
       fastqc_info=self.param_required('fastqc_info')
       fastqscreen_info=self.param_required('fastqscreen_info')
       remote_fastqc_info=self.param('remote_fastqc_info')
