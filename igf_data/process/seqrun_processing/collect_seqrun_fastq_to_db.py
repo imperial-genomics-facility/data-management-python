@@ -241,7 +241,7 @@ class Collect_seqrun_fastq_to_db:
     return file_data, file_group_data
 
 
-  def _write_manifest_file(file_data):
+  def _write_manifest_file(self,file_data):
     '''
     An internal method for writing file data to the manifest file
     '''
@@ -259,7 +259,7 @@ class Collect_seqrun_fastq_to_db:
       
       file_data['file_path']=file_data['file_path'].\
                              map(lambda x: os.path.relpath(x, start=fastq_dir)) # replace filepath with relative path
-      file_data=file_data.drop('location')                                      # remove file location info
+      file_data=file_data.drop(['location'],axis=1)                                      # remove file location info
       file_data.to_csv(manifest_path, sep='\t', encoding='utf-8')               # write data to manifest file
     except:
       raise
@@ -331,7 +331,7 @@ class Collect_seqrun_fastq_to_db:
       base.session.flush()
       ca.create_collection_group(data=file_group_data,autosave=False)
       base.commit_session()
-      self._write_manifest_file(file_data=file_data)
+      self._write_manifest_file(file_data)
     except:
       if db_connected:
         base.rollback_session()
