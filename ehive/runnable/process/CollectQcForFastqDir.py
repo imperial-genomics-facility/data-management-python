@@ -26,6 +26,9 @@ class CollectQcForFastqDir(IGFBaseProcess):
           
       fastqc_files=[fqc_file for fqc_file in fastqc_info.values() \
                                 if fqc_file['fastq_dir']==fastq_dir]            # filter fastqc for fastq dir
+      if len(fastqc_files)==0:
+        raise ValueError('No fastqc files found for fastq dir {0}'.\
+                         format(fastq_dir))
       
       if remote_fastqs_info is not None:
         for fq_file, fqs_file in fastqscreen_info.items():
@@ -36,6 +39,9 @@ class CollectQcForFastqDir(IGFBaseProcess):
             
       fastqscreen_files=[fsr_file for fsr_file in fastqscreen_info.values() \
                                     if fsr_file['fastq_dir']==fastq_dir]        # filter fastqscreen for fastq_dir
+      if len(fastqscreen_files)==0:
+        raise ValueError('No fastqscreen files found for fastq dir {0}'.\
+                         format(fastq_dir))
       
       self.param('dataflow_params',{'qc_outputs': \
                                     {'fastqc':fastqc_files,\
