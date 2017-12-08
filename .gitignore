@@ -89,4 +89,6 @@ ENV/
 .ropeproject
 .project
 .pydevproject
-.settings
+.settings/
+/de.loskutov.anyedit.AnyEditTools.prefs
+
