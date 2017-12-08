@@ -46,8 +46,9 @@ class User(Base):
   user_igf_id     = Column(String(10))
   name            = Column(String(30), nullable=False)
   email_id        = Column(String(20), nullable=False)
-  username        = Column(String(10))
-  hpc_username    = Column(String(10))
+  username        = Column(String(20))
+  hpc_username    = Column(String(20))
+  twitter_user    = Column(String(20))
   category        = Column(Enum('HPC_USER','NON_HPC_USER','EXTERNAL'), nullable=False, server_default='NON_HPC_USER')
   status          = Column(Enum('ACTIVE', 'BLOCKED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
   date_created    = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
@@ -60,8 +61,9 @@ class User(Base):
     return "User(user_id = '{self.user_id}'," \
                 "user_igf_id = '{self.user_igf_id}'," \
                 "name = '{self.name}', " \
-                "username = '{self.username}',"\
-                "hpc_username = '{self.hpc_username}',"\
+                "username = '{self.username}'," \
+                "hpc_username = '{self.hpc_username}'," \
+                "twitter_user = '{self.twitter_user}, " \
                 "category = '{self.category}'," \
                 "status = '{self.status}'," \
                 "email_id = '{self.email_id}'," \
