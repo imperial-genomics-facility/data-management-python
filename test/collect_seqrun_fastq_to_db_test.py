@@ -1,5 +1,4 @@
-import unittest, json, os, shutil
-from sqlalchemy import create_engine
+import unittest, json, os
 from igf_data.igfdb.igfTables import Base
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
@@ -20,7 +19,6 @@ class Collect_fastq_test1(unittest.TestCase):
     self.samplesheet_file='data/collect_fastq_dir/1_16/SampleSheet.csv'
     self.samplesheet_filename='SampleSheet.csv'
     self.manifest_name='file_manifest.csv'
-    
     dbparam = None
     with open(self.dbconfig, 'r') as json_data:
       dbparam = json.load(json_data)
@@ -68,7 +66,6 @@ class Collect_fastq_test1(unittest.TestCase):
     pl=PlatformAdaptor(**{'session':base.session})
     pl.store_platform_data(data=platform_data)
     pl.store_flowcell_barcode_rule(data=flowcell_rule_data)
- 
     project_data=[{'project_igf_id':'IGFP0001_test_22-8-2017_rna',
                    'project_name':'test_22-8-2017_rna',
                    'description':'Its project 1',
@@ -77,7 +74,6 @@ class Collect_fastq_test1(unittest.TestCase):
                  }]
     pa=ProjectAdaptor(**{'session':base.session})
     pa.store_project_and_attribute_data(data=project_data)
-    
     sample_data=[{'sample_igf_id':'IGF00001',
                   'project_igf_id':'IGFP0001_test_22-8-2017_rna',},
                  {'sample_igf_id':'IGF00002',
@@ -100,15 +96,15 @@ class Collect_fastq_test1(unittest.TestCase):
     sra=SeqrunAdaptor(**{'session':base.session})
     sra.store_seqrun_and_attribute_data(data=seqrun_data)
     base.close_session()
-    
+
   def tearDown(self):
     Base.metadata.drop_all(self.engine)
     os.remove(self.dbname)
     manifest_path=os.path.join(self.fastq_dir,self.manifest_name)
     if os.path.exists(manifest_path):
       os.remove(manifest_path)
-      
-    
+
+
   def test__get_fastq_and_samplesheet(self):
     ci=Collect_seqrun_fastq_to_db(fastq_dir=self.fastq_dir,
                                   session_class=self.session_class,
@@ -122,7 +118,8 @@ class Collect_fastq_test1(unittest.TestCase):
     (r1_fastq_list, r2_fastq_list)=ci._get_fastq_and_samplesheet()
     self.assertEqual(len(r1_fastq_list), 5)
     self.assertEqual(len(r2_fastq_list), 0)
-    
+
+
   def test_collect_fastq_and_sample_info(self):
     ci=Collect_seqrun_fastq_to_db(fastq_dir=self.fastq_dir,
                                   session_class=self.session_class,
@@ -138,7 +135,8 @@ class Collect_fastq_test1(unittest.TestCase):
       if fastq_file['sample_igf_id']=='IGF00002':
         self.assertEqual(fastq_file['R1'],\
         'data/collect_fastq_dir/1_16/IGFP0001_test_22-8-2017_rna/IGF00002/IGF00002-2_S1_L001_R1_001.fastq.gz')
-    
+
+
   def test_find_fastq_and_build_db_collection(self):
     ci=Collect_seqrun_fastq_to_db(fastq_dir=self.fastq_dir,
                                   session_class=self.session_class,
@@ -150,19 +148,19 @@ class Collect_fastq_test1(unittest.TestCase):
                                   manifest_name=self.manifest_name,
                                  )
     ci.find_fastq_and_build_db_collection()
-    ca=CollectionAdaptor(**{'session_class':self.session_class})
-  
+    #ca=CollectionAdaptor(**{'session_class':self.session_class})               # fix me , check collection table
+
+
   def test_calculate_experiment_run_and_file_info(self):
     data={'lane_number': '1', 
-           'seqrun_igf_id': '171003_M00001_0089_000000000-TEST', 
-           'description': '', 
-           'project_igf_id': 'IGFP0001_test_22-8-2017_rna', 
-           'sample_igf_id': 'IGF00001', 
-           'sample_name': 'IGF00001-1', 
+           'seqrun_igf_id': '171003_M00001_0089_000000000-TEST',
+           'description': '',
+           'project_igf_id': 'IGFP0001_test_22-8-2017_rna',
+           'sample_igf_id': 'IGF00001',
+           'sample_name': 'IGF00001-1',
            'R1': 'data/collect_fastq_dir/1_16/IGFP0001_test_22-8-2017_rna/IGF00001/IGF00001-1_S1_L001_R1_001.fastq.gz',
            'platform_name': 'MISEQ',
            'flowcell_id': '000000000-D0YLK'}
-    
     ci=Collect_seqrun_fastq_to_db(fastq_dir=self.fastq_dir,
                                   session_class=self.session_class,
                                   seqrun_igf_id=self.seqrun_igf_id,
@@ -179,6 +177,7 @@ class Collect_fastq_test1(unittest.TestCase):
     self.assertEqual(data['name'],'IGF00001_MISEQ_000000000-D0YLK_1')
     self.assertEqual(data['type'],'demultiplexed_fastq')
 
+
   def test_reformat_file_group_data(self):
     ci=Collect_seqrun_fastq_to_db(fastq_dir=self.fastq_dir,
                                   session_class=self.session_class,
@@ -190,12 +189,12 @@ class Collect_fastq_test1(unittest.TestCase):
                                   manifest_name=self.manifest_name,
                                  )
     data=[{'location': 'HPC_PROJECT',
-          'sample_igf_id': 'IGF00001', 
+          'sample_igf_id': 'IGF00001',
           'sample_name': 'IGF00001-1',
-          'lane_number': '1', 
-          'run_igf_id': 'IGF00001_MISEQ_000000000-D0YLK_1', 
-          'R1_md5': '767adf23d195c31b014c875a2cdd191f', 
-          'experiment_igf_id': 'IGF00001_MISEQ', 
+          'lane_number': '1',
+          'run_igf_id': 'IGF00001_MISEQ_000000000-D0YLK_1',
+          'R1_md5': '767adf23d195c31b014c875a2cdd191f',
+          'experiment_igf_id': 'IGF00001_MISEQ',
           'project_igf_id': 'IGFP0001_test_22-8-2017_rna',
           'flowcell_id': '000000000-D0YLK',
           'R1_size': 34,
