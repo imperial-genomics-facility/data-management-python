@@ -4,6 +4,7 @@ import numpy as np
 from igf_data.illumina.samplesheet import SampleSheet
 from igf_data.utils.sequtils import rev_comp
 import matplotlib
+from platform import platform
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
@@ -244,25 +245,31 @@ class CheckSequenceIndexBarcodes:
         raise
 
 
-  def _check_index_for_match(self,data_series,index_vals,index_tag='index', mapping_ratio_th=0.0001):
+  def _check_index_for_match(self,data_series,index_vals,index_tag='index', \
+                             mapping_ratio_th=0.0001, \
+                             platform_list=['NEXTSEQ','NOVASEQ6000']):
     '''
     An internal method for checking unknown indexes
     required params:
     data_series: A Pandas series containing the row of raw_df
     index_vals: A list of indexes present in the reformatted samplesheet
+    index_tag: default is index
+    mapping_ratio: cut-off threshold for mapping ratio, default is 0.0001
+    platform_list: List of the platform with new two-color chemistry,
+                   default NEXTSEQ and NOVASEQ6000
     '''
     try:
       if not isinstance(data_series, pd.Series):
         data_series=pd.Series(data_series)
       
       if data_series['mapping_ratio'] > mapping_ratio_th:                       # ignore barcodes with low mapping ratio
-        index_pattern=re.compile(r'([ATGCN]+)(\+)?([ATCGN]+)?')                   # define pattern for index reads
+        index_pattern=re.compile(r'([ATGCN]+)(\+)?([ATCGN]+)?')                 # define pattern for index reads
         tag=data_series['tag']
-        if tag=='unknown':                                                        # check only unknown indexes
+        if tag=='unknown':                                                      # check only unknown indexes
           unknown_index=data_series[index_tag]
-          unknown_index=unknown_index.strip().strip('\n')                         # remove space and new line
+          unknown_index=unknown_index.strip().strip('\n')                       # remove space and new line
           unknown_index_1=False
-          unknown_index_2=False                                                   # define index reads for unknown index 
+          unknown_index_2=False                                                 # define index reads for unknown index 
           unknown_index_match=index_pattern.match(unknown_index)
           if unknown_index_match.group(2) and unknown_index_match.group(2)=='+':
             unknown_index_1=unknown_index_match.group(1)
@@ -271,7 +278,7 @@ class CheckSequenceIndexBarcodes:
             unknown_index_1=unknown_index_match.group(1)
           
           for index_seq in index_vals:
-            index_seq=index_seq.strip().strip('\n')                               # remove all white space and new line
+            index_seq=index_seq.strip().strip('\n')                             # remove all white space and new line
             known_index_1=False
             known_index_2=False
             known_index_match=index_pattern.match(index_seq)
@@ -285,62 +292,63 @@ class CheckSequenceIndexBarcodes:
             if len(unknown_index_1) == len(known_index_1) and \
                unknown_index_1==known_index_1:
               if unknown_index_2 is False or known_index_2 is False:
-                tag='mix_index_match'                                             # its safe to assume about the possible mixed barcode issue
+                tag='mix_index_match'                                           # its safe to assume about the possible mixed barcode issue
               elif unknown_index_2 and known_index_2 and \
                    unknown_index_2==known_index_2:
-                tag='known'                                                       # assign tag as known
+                tag='known'                                                     # assign tag as known
               
             # CASE 2: unknown index is 6 or 6+6 and knonw_index from other project is 8 or 8+8
             elif len(unknown_index_1) < len(known_index_1):
-              temp_known_index_1=known_index_1[0:len(unknown_index_1)]            # slice known index 1
+              temp_known_index_1=known_index_1[0:len(unknown_index_1)]          # slice known index 1
               if unknown_index_2 and known_index_2:
                 temp_known_index_2=known_index_2[0:len(unknown_index_2)] \
                                  if len(unknown_index_2) < len(known_index_2) \
                                  else  known_index_2                            # slice known index 2, if its shorter too
                 if unknown_index_1==temp_known_index_1 and \
-                   unknown_index_2==temp_known_index_2:                           # both indexes are dual index
+                   unknown_index_2==temp_known_index_2:                         # both indexes are dual index
                   tag='mix_index_match'
               else:
-                if unknown_index_1==temp_known_index_1:                           # one of the index is single index
+                if unknown_index_1==temp_known_index_1:                         # one of the index is single index
                   tag='mix_index_match'
             
             # CASE 3: unknown index is 8 or 8+8 and known_index is 6 or 6+6
             elif len(unknown_index_1) > len(known_index_1):
-              temp_unknown_index_1=unknown_index_1[0:len(known_index_1)]          # slice unknown index 1
+              temp_unknown_index_1=unknown_index_1[0:len(known_index_1)]        # slice unknown index 1
               if unknown_index_2 and known_index_2:
                 temp_unknown_index_2=unknown_index_2[0:len(known_index_2)]  \
                                    if len(unknown_index_2) > len(known_index_2)\
                                    else  unknown_index_2                        # slice unknown index 2, , if its shorter too
                 if temp_unknown_index_1==known_index_1 and \
-                   temp_unknown_index_2==known_index_2:                           # both indexes are dual index
+                   temp_unknown_index_2==known_index_2:                         # both indexes are dual index
                   tag='mix_index_match'
               else:
-                if temp_unknown_index_1==known_index_1:                           # one index is single index
+                if temp_unknown_index_1==known_index_1:                         # one index is single index
                   tag='mix_index_match'
                 
             # CASE 4: index 1 or index 1 and index 2 are both reverse complement
             elif rev_comp(unknown_index_1) == known_index_1:
-              tag='index_1_revcomp'                                               # add initial tag if index 1 is revcomp
+              tag='index_1_revcomp'                                             # add initial tag if index 1 is revcomp
               if unknown_index_2 and known_index_2 and \
                  unknown_index_2 == known_index_2:
-                tag='only_index_1_revcomp'                                        # modify tag if index 2 is exact match
+                tag='only_index_1_revcomp'                                      # modify tag if index 2 is exact match
               elif unknown_index_2 and known_index_2 and \
                  rev_comp(unknown_index_2) == known_index_2:
-                tag='index_1_and_index_2_revcomp'                                 # modify tag if both reads are revcomp
+                tag='index_1_and_index_2_revcomp'                               # modify tag if both reads are revcomp
           
             # CASE 5: index 1 is exact match but index 2 is reverse complement
             elif unknown_index_2 and known_index_2 and \
                  rev_comp(unknown_index_2) == known_index_2 and \
                  unknown_index_1==known_index_1:
-              tag='only_index_2_revcomp'                                          # only index 2 is revcomp
+              tag='only_index_2_revcomp'                                        # only index 2 is revcomp
               
             # CASE 6: Index is GGGGG homopolymer
             elif tag=='unknown':
-              homo_G_match=re.match(re.compile(r'^[G]+$'),unknown_index_1)
-              if homo_G_match:
-                tag='index_1_G_homopolymer'
+              if self.platform_name in platform_list:                           # NextSeq and NovaSeq have poly Gs for empty cycles
+                homo_G_match=re.match(re.compile(r'^[G]+$'),unknown_index_1)
+                if homo_G_match:
+                  tag='index_1_G_homopolymer'
               
-        data_series['tag']=tag                                                    # reset tag in data series
+        data_series['tag']=tag                                                  # reset tag in data series
       return data_series
     except:
       raise
