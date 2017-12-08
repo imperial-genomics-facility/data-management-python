@@ -144,10 +144,10 @@ class Platform(Base):
 
   platform_id      = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   platform_igf_id  = Column(String(10), nullable=False)
-  model_name       = Column(Enum('HISEQ2500', 'HISEQ4000', 'MISEQ', 'NEXTSEQ', 'NANOPORE_MINION'), nullable=False)
-  vendor_name      = Column(Enum('ILLUMINA', 'NANOPORE'), nullable=False)
+  model_name       = Column(Enum('HISEQ2500','HISEQ4000','MISEQ','NEXTSEQ','NOVASEQ6000','NANOPORE_MINION'), nullable=False)
+  vendor_name      = Column(Enum('ILLUMINA','NANOPORE'), nullable=False)
   software_name    = Column(Enum('RTA'), nullable=False)
-  software_version = Column(Enum('RTA1.18.54', 'RTA1.18.64', 'RTA2'), nullable=False)
+  software_version = Column(Enum('RTA1.18.54','RTA1.18.64','RTA2'), nullable=False)
   date_created     = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now )
   seqrun           = relationship('Seqrun', backref="platform")
   flowcell_rule    = relationship('Flowcell_barcode_rule', backref="platform")
