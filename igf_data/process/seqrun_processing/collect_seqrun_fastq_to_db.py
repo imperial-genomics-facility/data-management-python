@@ -4,10 +4,6 @@ from igf_data.illumina.samplesheet import SampleSheet
 import pandas as pd
 from igf_data.igfdb.igfTables import Experiment, Run
 from igf_data.igfdb.baseadaptor import BaseAdaptor
-from igf_data.igfdb.platformadaptor import PlatformAdaptor
-from igf_data.igfdb.projectadaptor import ProjectAdaptor
-from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
-from igf_data.igfdb.sampleadaptor import SampleAdaptor
 from igf_data.igfdb.experimentadaptor import ExperimentAdaptor
 from igf_data.igfdb.runadaptor import RunAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
@@ -31,8 +27,8 @@ class Collect_seqrun_fastq_to_db:
     self.flowcell_id=flowcell_id
     self.collection_table=collection_table
     self.manifest_name=manifest_name
-    
-    
+
+
   def find_fastq_and_build_db_collection(self):
     '''
     A method for finding fastq files and samplesheet under a run directory
@@ -54,8 +50,8 @@ class Collect_seqrun_fastq_to_db:
       self._build_and_store_exp_run_and_collection_in_db(fastq_files_list=fastq_files_list)
     except:
       raise
-    
-    
+
+
   def _get_fastq_and_samplesheet(self):
     fastq_dir=self.fastq_dir
     samplesheet_file=self.samplesheet_file
@@ -116,8 +112,9 @@ class Collect_seqrun_fastq_to_db:
 
 
   def _collect_fastq_and_sample_info(self):
-    fastq_dir=self.fastq_dir
-    samplesheet_filename=self.samplesheet_filename
+    '''
+    An internal method for collecting fastq and sample info
+    '''
     seqrun_igf_id=self.seqrun_igf_id
     model_name=self.model_name
     flowcell_id=self.flowcell_id
@@ -155,12 +152,12 @@ class Collect_seqrun_fastq_to_db:
     # set library id
     library_id=None
     if data.description and data.description not in restricted_list:
-      library_id=data.description                                    
+      library_id=data.description
     else:
-      library_id=data.sample_igf_id                                      
+      library_id=data.sample_igf_id
   
     # calcaulate experiment id
-    experiment_id='{0}_{1}'.format(library_id,data.platform_name)         
+    experiment_id='{0}_{1}'.format(library_id,data.platform_name)
     data['library_name']=library_id
     data['experiment_igf_id']=experiment_id
     # calculate run id
@@ -279,7 +276,7 @@ class Collect_seqrun_fastq_to_db:
       dataframe=pd.DataFrame(fastq_files_list)
       # calculate additional detail
       dataframe=dataframe.apply(lambda data: \
-                                self._calculate_experiment_run_and_file_info(data, 
+                                self._calculate_experiment_run_and_file_info(data,
                                                                restricted_list),\
                                 axis=1)
       # get file data
@@ -295,8 +292,8 @@ class Collect_seqrun_fastq_to_db:
       db_connected=True
       # get experiment data
       experiment_columns=base.get_table_columns(table_name=Experiment, \
-                                                excluded_columns=['experiment_id', 
-                                                                  'project_id', 
+                                                excluded_columns=['experiment_id',
+                                                                  'project_id',
                                                                   'sample_id' ])
       experiment_columns.extend(['project_igf_id', 
                                  'sample_igf_id'])
@@ -304,13 +301,13 @@ class Collect_seqrun_fastq_to_db:
       exp_data=exp_data.drop_duplicates()
       # get run data
       run_columns=base.get_table_columns(table_name=Run, \
-                                         excluded_columns=['run_id', 
-                                                           'seqrun_id', 
+                                         excluded_columns=['run_id',
+                                                           'seqrun_id',
                                                            'experiment_id',
                                                            'date_created',
                                                            'status'
                                                           ])
-      run_columns.extend(['seqrun_igf_id', 
+      run_columns.extend(['seqrun_igf_id',
                           'experiment_igf_id'])
       run_data=dataframe.loc[:,run_columns]
       run_data=run_data.drop_duplicates()
