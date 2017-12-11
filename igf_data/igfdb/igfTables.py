@@ -101,7 +101,7 @@ class Sample(Base):
   sample_submitter_id = Column(String(40))
   taxon_id            = Column(INTEGER(unsigned=True))
   scientific_name     = Column(String(50))
-  common_name         = Column(String(50))
+  species_name        = Column(String(50))
   donor_anonymized_id = Column(String(10))
   description         = Column(String(50))
   phenotype           = Column(String(45))
@@ -122,7 +122,7 @@ class Sample(Base):
                   "sample_submitter_id = '{self.sample_submitter_id}', " \
                   "taxon_id = '{self.taxon_id}'," \
                   "scientific_name = '{self.scientific_name}'," \
-                  "common_name = '{self.common_name}'," \
+                  "species_name = '{self.species_name}'," \
                   "donor_anonymized_id = '{self.donor_anonymized_id}'," \
                   "description = '{self.description}'," \
                   "phenotype = '{self.phenotype}'," \
