@@ -83,7 +83,8 @@ class CopyQCFileToRemote(IGFBaseProcess):
         
       temp_work_dir=get_temp_dir()                                              # get a temp work dir
       copy2(file,os.path.join(temp_work_dir,remote_file_name))                  # copy file to a temp dir and rename it
-      
+      os.chmod(os.path.join(temp_work_dir,remote_file_name),
+               mode=0o754)                                                      # set file permission
       remote_mkdir_cmd=['ssh',\
                         '{0}@{1}'.\
                         format(remote_user,\
