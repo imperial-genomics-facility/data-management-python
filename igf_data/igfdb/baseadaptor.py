@@ -310,6 +310,17 @@ class BaseAdaptor(DBConnect):
       raise
 
 
+  def _fetch_records_as_one_or_none(self,query):
+    '''
+    An internal function for fetching record using one_or_none() method
+    '''
+    try:
+      result=query.one_or_none()
+      return result
+    except:
+      raise
+    
+    
   def _construct_query(self, table, filter_criteria ):
     '''
     An internal method for query construction
@@ -344,17 +355,19 @@ class BaseAdaptor(DBConnect):
     
     returns a pandas dataframe for dataframe mode and a generator object for object mode
     ''' 
-    if output_mode not in ('dataframe', 'object', 'one'):
+    if output_mode not in ('dataframe','object','one','one_or_none'):
       raise ValueError('Expecting output_mode as dataframe or object, no support for {0}'.format(output_mode))
 
     result=''
     try:
       if output_mode == 'dataframe':
-        result=self._fetch_records_as_dataframe(query=query)  # result is a dataframe
+        result=self._fetch_records_as_dataframe(query=query)                    # result is a dataframe
       elif output_mode == 'object':
-        result=self._fetch_records_as_object(query=query)     # result is a generator object
+        result=self._fetch_records_as_object(query=query)                       # result is a generator object
       elif output_mode == 'one':
-        result=self._fetch_records_as_one(query=query)        # fetch record as a unique match
+        result=self._fetch_records_as_one(query=query)                          # fetch record as a unique match
+      elif output_mode == 'one_or_none':
+        result=self._fetch_records_as_one_or_none(query=query)                  # fetch record as a unique match or None
       return result
     except:
       raise 
@@ -367,7 +380,7 @@ class BaseAdaptor(DBConnect):
     table      : table name
     column_name: a column name
     column_id  : a column id value
-    output_mode: dataframe / object / one
+    output_mode: dataframe / object / one / one_or_none
     '''
     if not hasattr(self, 'session'):
       raise AttributeError('Attribute session not found')
@@ -387,7 +400,7 @@ class BaseAdaptor(DBConnect):
     required param:
     table      : table name
     column_dict: a dictionary of column_names: column_value
-    output_mode: dataframe / object/ one
+    output_mode: dataframe / object/ one / one_or_none
     '''
     if not hasattr(self, 'session'):
       raise AttributeError('Attribute session not found')
