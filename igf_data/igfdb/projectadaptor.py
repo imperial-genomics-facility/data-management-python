@@ -85,7 +85,7 @@ class ProjectAdaptor(BaseAdaptor):
       raise
 
 
-  def assign_user_to_project(self, data, required_project_column='project_igf_id',required_user_column='user_igf_id', data_authority_column='data_authority', autosave=True):
+  def assign_user_to_project(self, data, required_project_column='project_igf_id',required_user_column='email_id', data_authority_column='data_authority', autosave=True):
     '''
     Load data to ProjectUser table
     required parameters:
@@ -96,7 +96,7 @@ class ProjectAdaptor(BaseAdaptor):
           boolean value can be provided to set the user 
           as the data authority of the project
           E.g.
-          [{'project_igf_id': val, 'user_igf_id': val, 'data_authority':True},] 
+          [{'project_igf_id': val, 'email_id': val, 'data_authority':True},] 
     '''
     if not isinstance(data, pd.DataFrame):
       data=pd.DataFrame(data)
