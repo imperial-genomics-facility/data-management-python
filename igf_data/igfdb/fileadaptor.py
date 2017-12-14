@@ -102,5 +102,21 @@ class FileAdaptor(BaseAdaptor):
       return file_obj
     except:
       raise
+    
+  def check_file_records_file_path(self,file_path):
+    '''
+    A method for checking file information in database
+    required params:
+    file_path: A absolute filepath
+    It returns True if the file is present in db or False if its not
+    '''
+    try:
+      file_check=False
+      file_obj=self.fetch_records_by_column(table=File, column_name=File.file_path, column_id=file_path, output_mode='one_or_none')
+      if file_obj:
+        file_check=True
+      return file_check
+    except:
+      raise
 
 
