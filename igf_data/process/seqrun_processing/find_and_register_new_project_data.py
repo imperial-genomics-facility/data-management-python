@@ -99,9 +99,9 @@ class Find_and_register_new_project_data:
         if data[self.user_lookup_column] and \
            data[self.user_lookup_column] == '':
           user_email=data[self.user_lookup_column]
-          ua=UserAdaptor(**{'session':dbsession})                               # connect to project adaptor
+          ua=UserAdaptor(**{'session':dbsession})                               # connect to user adaptor
           user_exists=us.check_user_records_email_id(email_id=user_email)
-          if not user_exists:                                                   # store data only if project is not existing
+          if not user_exists:                                                   # store data only if user is not existing
             data[check_column]=True
           else:
             data[check_column]=False
@@ -110,7 +110,19 @@ class Find_and_register_new_project_data:
           raise ValueError('Missing or empty required column {0}'.\
                            format(self.user_lookup_column))
       elif table_name=='sample':
-        pass
+        if data[self.sample_lookup_column] and \
+           data[self.sample_lookup_column] == '':
+          sample_igf_id=data[self.sample_lookup_column]
+          sa=SampleAdaptor(**{'session':dbsession})                             # connect to sample adaptor
+          sample_exists=sa.check_sample_records_igf_id(sample_igf_id)
+          if not sample_exists:                                                 # store data only if sample is not existing
+            data[check_column]=True
+          else:
+            data[check_column]=False
+          return data
+        else:
+          raise ValueError('Missing or empty required column {0}'.\
+                           format(self.sample_lookup_column))
       else:
         raise ValueError('table {0} not supported'.format(table_name))
     except:
@@ -146,10 +158,19 @@ class Find_and_register_new_project_data:
                             dbsession=base.session, \
                             table_name='user',
                             check_column='EXISTS'),\
-                      axis=1)
+                      axis=1)                                                   # get user map
       user_data=user_data[user_data['EXISTS']==False]                           # filter existing users
       del user_data['EXISTS']                                                   # remove extra column
-      
+      sample_data=sample_data.\
+                   apply(lambda x: \
+                         self._check_existing_data(\
+                            data=x,\
+                            dbsession=base.session, \
+                            table_name='sample',
+                            check_column='EXISTS'),\
+                         axis=1)                                                # get sample map
+      sample_data=sample_data[sample_data['EXISTS']==False]                     # filter existing samples
+      del sample_data['EXISTS']                                                 # remove extra column
     except:
       if db_connected:
         base.rollback_session()
