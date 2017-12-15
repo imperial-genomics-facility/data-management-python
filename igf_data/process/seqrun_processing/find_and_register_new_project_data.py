@@ -16,6 +16,8 @@ class Find_and_register_new_project_data:
   projet_info_path: A directory path for project info files
   dbconfig: A json dbconfig file
   user_account_template: A template file for user account activation email
+  log_slack: Enable or disable sending message to slack, default: True
+  slack_config: A slack config json file, required if log_slack is True
   '''
   def __init__(self,projet_info_path,dbconfig,user_account_template, \
                log_slack=True, slack_config=None):
