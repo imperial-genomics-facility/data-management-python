@@ -84,10 +84,10 @@ class Find_and_register_new_project_data:
                                                                'project_id'])   # get sample columns
       required_project_user_columns=['project_igf_id','email_id']               # get project user columns
       required_sample_columns.append('project_igf_id')
-      project_data=project_info_data.loc[:,required_project_columns]
-      user_data=project_info_data.loc[:,required_user_columns]
-      project_user_data=project_info_data.loc[:,required_project_user_columns]
-      sample_data=project_info_data.loc[:,required_sample_columns]
+      project_data=project_info_data.loc[:,required_project_columns]            # get data from project table
+      user_data=project_info_data.loc[:,required_user_columns]                  # get data from user table
+      project_user_data=project_info_data.loc[:,required_project_user_columns]  # get data for project user table
+      sample_data=project_info_data.loc[:,required_sample_columns]              # get data for sample table
     except:
       raise
     
