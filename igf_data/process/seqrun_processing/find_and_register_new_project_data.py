@@ -8,6 +8,7 @@ from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.igfdb.sampleadaptor import SampleAdaptor
 from igf_data.task_tracking.igf_slack import IGF_slack
 from igf_data.igfdb.igfTables import Project, User, Sample
+from igf_data.igfdb.useradaptor import UserAdaptor
 
 class Find_and_register_new_project_data:
   '''
@@ -73,37 +74,56 @@ class Find_and_register_new_project_data:
       raise
     
     
-  def _check_existing_project_data(self,data,dbsession,check_column='EXISTS'):
+  def _check_existing_data(self,data,dbsession,table_name,check_column='EXISTS'):
     '''
     An internal function for checking and registering project info
     '''
     try:
       if not isinstance(data, pd.Seriese):
         raise ValueError('Expecting a data series and got {0}'.format(type(data)))
-      if data[self.project_lookup_column] and \
-         data[self.project_lookup_column] == '':
-        project_igf_id=data[self.project_lookup_column]
-        pa=ProjectAdaptor(**{'session':dbsession})                              # connect to project adaptor
-        project_exists=pa.check_project_records_igf_id(project_igf_id)
-        if not project_exists:                                                  # store dat only if project is not existing
-          data[check_column]=True
+      if table_name=='project':
+        if data[self.project_lookup_column] and \
+           data[self.project_lookup_column] == '':
+          project_igf_id=data[self.project_lookup_column]
+          pa=ProjectAdaptor(**{'session':dbsession})                            # connect to project adaptor
+          project_exists=pa.check_project_records_igf_id(project_igf_id)
+          if not project_exists:                                                # store data only if project is not existing
+            data[check_column]=True
+          else:
+            data[check_column]=False
+          return data
         else:
-          data[check_column]=False
-        return data
+          raise ValueError('Missing or empty required column {0}'.\
+                           format(self.project_lookup_column))
+      elif table_name=='user':
+        if data[self.user_lookup_column] and \
+           data[self.user_lookup_column] == '':
+          user_email=data[self.user_lookup_column]
+          ua=UserAdaptor(**{'session':dbsession})                               # connect to project adaptor
+          user_exists=us.check_user_records_email_id(email_id=user_email)
+          if not user_exists:                                                   # store data only if project is not existing
+            data[check_column]=True
+          else:
+            data[check_column]=False
+          return data
+        else:
+          raise ValueError('Missing or empty required column {0}'.\
+                           format(self.user_lookup_column))
+      elif table_name=='sample':
+        pass
       else:
-        raise ValueError('Missing or empty required column {0}'.\
-                         format(self.project_lookup_column))
+        raise ValueError('table {0} not supported'.format(table_name))
     except:
       raise
     
-    
-  def _check_and_data_in_db(self,data):
+  
+  def _check_and_register_data(self,data):
     '''
     An internal method for checking and registering data
     '''
     try:
       project_data=data['project_data']
-      user_daa=data['user_data']
+      user_data=data['user_data']
       project_user_data=data['project_user_data']
       sample_data=data['sample_data']
       db_connected=False
@@ -111,13 +131,25 @@ class Find_and_register_new_project_data:
       base.start_session()                                                      # connect_to db
       project_data=project_data.\
                    apply(lambda x: \
-                         self._check_existing_project_data(\
+                         self._check_existing_data(\
                             data=x,\
                             dbsession=base.session, \
+                            table_name='project',
                             check_column='EXISTS'),\
                          axis=1)                                                # get project map
       project_data=project_data[project_data['EXISTS']==False]                  # filter existing projects
       del project_data['EXISTS']                                                # remove extra column
+      user_data=user_data.\
+                apply(lambda x: \
+                      self._check_existing_data(\
+                            data=x,\
+                            dbsession=base.session, \
+                            table_name='user',
+                            check_column='EXISTS'),\
+                      axis=1)
+      user_data=user_data[user_data['EXISTS']==False]                           # filter existing users
+      del user_data['EXISTS']                                                   # remove extra column
+      
     except:
       if db_connected:
         base.rollback_session()
