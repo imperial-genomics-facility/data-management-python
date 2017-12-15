@@ -72,19 +72,52 @@ class Find_and_register_new_project_data:
         self.igf_slack.post_message_to_channel(message,reaction='fail')
       raise
     
-  
-  def _check_and_register_data(self,data):
+    
+  def _check_existing_project_data(self,data,dbsession,check_column='EXISTS'):
+    '''
+    An internal function for checking and registering project info
+    '''
+    try:
+      if not isinstance(data, pd.Seriese):
+        raise ValueError('Expecting a data series and got {0}'.format(type(data)))
+      if data[self.project_lookup_column] and \
+         data[self.project_lookup_column] == '':
+        project_igf_id=data[self.project_lookup_column]
+        pa=ProjectAdaptor(**{'session':dbsession})                              # connect to project adaptor
+        project_exists=pa.check_project_records_igf_id(project_igf_id)
+        if not project_exists:                                                  # store dat only if project is not existing
+          data[check_column]=True
+        else:
+          data[check_column]=False
+        return data
+      else:
+        raise ValueError('Missing or empty required column {0}'.\
+                         format(self.project_lookup_column))
+    except:
+      raise
+    
+    
+  def _check_and_data_in_db(self,data):
     '''
     An internal method for checking and registering data
     '''
     try:
       project_data=data['project_data']
-      user_data=data['user_data']
+      user_daa=data['user_data']
       project_user_data=data['project_user_data']
       sample_data=data['sample_data']
       db_connected=False
       base=BaseAdaptor(**{'session_class':self.session_class})
-      
+      base.start_session()                                                      # connect_to db
+      project_data=project_data.\
+                   apply(lambda x: \
+                         self._check_existing_project_data(\
+                            data=x,\
+                            dbsession=base.session, \
+                            check_column='EXISTS'),\
+                         axis=1)                                                # get project map
+      project_data=project_data[project_data['EXISTS']==False]                  # filter existing projects
+      del project_data['EXISTS']                                                # remove extra column
     except:
       if db_connected:
         base.rollback_session()
@@ -127,13 +160,13 @@ class Find_and_register_new_project_data:
       user_data=user_data.drop_duplicates()
       project_user_data=project_user_data.drop_duplicates()
       sample_data=sample_data.drop_duplicates()                                 # remove duplicate entries
-      if self.project_lookup_column not in project_data.index:
+      if self.project_lookup_column not in project_data.column:
         raise ValueError('Missing required column: {0}'.\
                          format(self.project_lookup_column))
-      if self.user_lookup_column not in user_data.index:
+      if self.user_lookup_column not in user_data.column:
         raise ValueError('Missing required column: {0}'.\
                          format(self.user_lookup_column))
-      if self.sample_lookup_column not in sample_data.index:
+      if self.sample_lookup_column not in sample_data.column:
         raise ValueError('Missing required column: {0}'.\
                          format(self.sample_lookup_column))                     # check if required columns are present in the dataframe
         
