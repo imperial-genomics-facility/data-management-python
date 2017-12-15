@@ -123,6 +123,25 @@ class Find_and_register_new_project_data:
         else:
           raise ValueError('Missing or empty required column {0}'.\
                            format(self.sample_lookup_column))
+      elif table_name=='project_user':
+        if (data[self.user_lookup_column] and \
+           data[self.user_lookup_column] == '') or \
+           (data[self.project_lookup_column] and \
+           data[self.project_lookup_column] == ''):
+          project_igf_id=data[self.project_lookup_column]
+          user_email=data[self.user_lookup_column]
+          pa=ProjectAdaptor(**{'session':dbsession})                            # connect to project adaptor
+          project_user_exists=pa.check_existing_project_user(project_igf_id=project_igf_id,\
+                                                             email_id=user_email)
+          if not project_user_exists:                                                 # store data only if sample is not existing
+            data[check_column]=True
+          else:
+            data[check_column]=False
+          return data
+        else:
+          raise ValueError('Missing or empty required column {0}, {1}'.\
+                           format(self.project_lookup_column,\
+                                  self.user_lookup_column))
       else:
         raise ValueError('table {0} not supported'.format(table_name))
     except:
@@ -171,6 +190,16 @@ class Find_and_register_new_project_data:
                          axis=1)                                                # get sample map
       sample_data=sample_data[sample_data['EXISTS']==False]                     # filter existing samples
       del sample_data['EXISTS']                                                 # remove extra column
+      project_user_data=project_user_data.\
+                        apply(lambda x: \
+                         self._check_existing_data(\
+                            data=x,\
+                            dbsession=base.session, \
+                            table_name='project_user',
+                            check_column='EXISTS'),\
+                         axis=1)                                                # get project user map
+      project_user_data=project_user_data[project_user_data['EXISTS']==False]   # filter existing project user
+      del project_user_data['EXISTS']                                           # remove extra column
     except:
       if db_connected:
         base.rollback_session()
