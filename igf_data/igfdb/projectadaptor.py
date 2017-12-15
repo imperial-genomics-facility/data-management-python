@@ -180,7 +180,10 @@ class ProjectAdaptor(BaseAdaptor):
       raise AttributeError('Attribute session not found')
   
     session=self.session
-    query=session.query(Project, User, ProjectUser.data_authority).join(ProjectUser).join(User)
+    query=session.\
+          query(Project, User, ProjectUser.data_authority).\
+          join(ProjectUser).\
+          join(User)
     if project_igf_id:
       query=query.filter(Project.project_igf_id==project_igf_id)
     
@@ -190,12 +193,41 @@ class ProjectAdaptor(BaseAdaptor):
     except:
       raise
      
+     
+  def check_existing_project_user(self,project_igf_id,email_id):
+    '''
+    A method for checking existing project use info in database
+    required params:
+    project_igf_id: A project_igf_id
+    email_id: An email_id
+    It returns True if the file is present in db or False if its not
+    '''
+    try:
+      project_user_check=True
+      session=self.session
+      query=session.\
+            query(Project, User, ProjectUser.data_authority).\
+            join(ProjectUser).\
+            join(User).\
+            filter(Project.project_igf_id==project_igf_id).\
+            filter(User.email_id==email_id)
+      results=self.fetch_records(query=query, \
+                                 output_mode='one_or_none')
+      if results:
+        project_user_check=True
+      return project_user_check
+    except:
+      raise
+    
 
   def get_project_attributes(self, project_igf_id, attribute_name=''): 
     projects=self.get_project_info(format='object', project_igf_id=project_igf_id)
     project=projects[0]
 
-    project_attributes=BaseAdaptor.get_attributes(self, attribute_table='Project_attribute', db_id=project.project_id )
+    project_attributes=BaseAdaptor.\
+                       get_attributes(self, \
+                                      attribute_table='Project_attribute', \
+                                      db_id=project.project_id )
     return project_attributes
 
 
