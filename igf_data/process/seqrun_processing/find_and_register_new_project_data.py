@@ -4,6 +4,8 @@ import os,subprocess,fnmatch, warnings
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
+from igf_data.igfdb.projectadaptor import ProjectAdaptor
+from igf_data.igfdb.sampleadaptor import SampleAdaptor
 from igf_data.task_tracking.igf_slack import IGF_slack
 from igf_data.igfdb.igfTables import Project, User, Sample
 
@@ -18,15 +20,24 @@ class Find_and_register_new_project_data:
   user_account_template: A template file for user account activation email
   log_slack: Enable or disable sending message to slack, default: True
   slack_config: A slack config json file, required if log_slack is True
+  project_lookup_column: project data lookup column, default project_igf_id
+  user_lookup_column: user data lookup column, default email_id
+  sample_lookup_column: sample data lookup column, default sample_igf_id
   '''
   def __init__(self,projet_info_path,dbconfig,user_account_template, \
-               log_slack=True, slack_config=None):
+               log_slack=True, slack_config=None,\
+               project_lookup_column='project_igf_id',\
+               user_lookup_column='email_id',\
+               sample_lookup_column='sample_igf_id'):
     self.projet_info_path=projet_info_path
     self.user_account_template=user_account_template
+    self.project_lookup_column=project_lookup_column
+    self.user_lookup_column=user_lookup_column
+    self.sample_lookup_column=sample_lookup_column
+    self.log_slack=log_slack
     dbparams = read_dbconf_json(dbconfig)
     base=BaseAdaptor(**dbparam)
     self.session_class = base.get_session_class()
-    self.log_slack=log_slack
     if log_slack:
       if slack_config is None:
         raise ValueError('Missing slack config file')
@@ -47,8 +58,8 @@ class Find_and_register_new_project_data:
           
       for project_info_file in new_project_info_list:
         try:
-          (new_project_info,new_user_info,new_sample_info)=\
-            self._read_project_info_and_get_new_entries(project_info_file)      # get new project, user and samples information
+          new_data=self._read_project_info_and_get_new_entries(project_info_file) # get new project, user and samples information
+          self._check_and_register_data(data=new_data)
         except Exception as e:                                                  # if error found in one file, skip the file
           message='skipped project info file {0}, got error {1}'.\
                   format(project_info_file,e)
@@ -61,7 +72,31 @@ class Find_and_register_new_project_data:
         self.igf_slack.post_message_to_channel(message,reaction='fail')
       raise
     
-    
+  
+  def _check_and_register_data(self,data):
+    '''
+    An internal method for checking and registering data
+    '''
+    try:
+      project_data=data['project_data']
+      user_data=data['user_data']
+      project_user_data=data['project_user_data']
+      sample_data=data['sample_data']
+      db_connected=False
+      base=BaseAdaptor(**{'session_class':self.session_class})
+      
+    except:
+      if db_connected:
+        base.rollback_session()
+      raise
+    else:
+      if db_connected:
+        base.commit_session()
+    finally:
+      if db_connected:
+        base.close_session()
+  
+
   def _read_project_info_and_get_new_entries(self,project_info_file):
     '''
     An internal method for processing project info data
@@ -88,6 +123,24 @@ class Find_and_register_new_project_data:
       user_data=project_info_data.loc[:,required_user_columns]                  # get data from user table
       project_user_data=project_info_data.loc[:,required_project_user_columns]  # get data for project user table
       sample_data=project_info_data.loc[:,required_sample_columns]              # get data for sample table
+      project_data=project_data.drop_duplicates()
+      user_data=user_data.drop_duplicates()
+      project_user_data=project_user_data.drop_duplicates()
+      sample_data=sample_data.drop_duplicates()                                 # remove duplicate entries
+      if self.project_lookup_column not in project_data.index:
+        raise ValueError('Missing required column: {0}'.\
+                         format(self.project_lookup_column))
+      if self.user_lookup_column not in user_data.index:
+        raise ValueError('Missing required column: {0}'.\
+                         format(self.user_lookup_column))
+      if self.sample_lookup_column not in sample_data.index:
+        raise ValueError('Missing required column: {0}'.\
+                         format(self.sample_lookup_column))                     # check if required columns are present in the dataframe
+        
+      return {'project_data':project_data,\
+              'user_data':user_data,\
+              'project_user_data':project_user_data,\
+              'sample_data':sample_data}
     except:
       raise
     
