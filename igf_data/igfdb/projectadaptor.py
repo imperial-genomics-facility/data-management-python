@@ -128,6 +128,28 @@ class ProjectAdaptor(BaseAdaptor):
       raise
 
 
+  def check_project_records_igf_id(self, project_igf_id, target_column_name='project_igf_id'):
+    '''
+    A method for checking existing data for Project table
+    required params:
+    project_igf_id: an igf id
+    It returns True if the file is present in db or False if its not
+    '''
+    try:
+      project_check=False
+      column=[column for column in Project.__table__.columns \
+                       if column.key == target_column_name][0]
+      project_obj=self.fetch_records_by_column(table=Project, \
+                                            column_name=column, \
+                                            column_id=project_igf_id, \
+                                            output_mode='one_or_none')
+      if project_obj:
+        project_check=True
+      return project_check
+    except:
+      raise
+    
+    
   def fetch_project_records_igf_id(self, project_igf_id, target_column_name='project_igf_id'):
     '''
     A method for fetching data for Project table
