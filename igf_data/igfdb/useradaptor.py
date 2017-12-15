@@ -122,5 +122,25 @@ class UserAdaptor(BaseAdaptor):
       return user 
     except:
       raise
-
-
+  
+  
+  def check_user_records_email_id(self,email_id):
+    '''
+    A method for checking existing user data in db
+    required columns:
+    email_id: An email id
+    It returns True if the file is present in db or False if its not
+    '''
+    try:
+      user_check=False
+      user_obj=self.fetch_records_by_column(table=User, \
+                                        column_name=User.user_igf_id, \
+                                        column_id=email_id, \
+                                        output_mode='one_or_none' )
+      if user_obj:
+        user_check=True
+      return user_check
+    except:
+      raise
+  
+  
