@@ -1,9 +1,10 @@
 import pandas as pd
 from sqlalchemy.sql import column
-import os,subprocess,fnmatch
+import os,subprocess,fnmatch, warnings
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
+from igf_data.task_tracking.igf_slack import IGF_slack
 from igf_data.igfdb.igfTables import Project, User, Sample
 
 class Find_and_register_new_project_data:
@@ -16,12 +17,18 @@ class Find_and_register_new_project_data:
   dbconfig: A json dbconfig file
   user_account_template: A template file for user account activation email
   '''
-  def __init__(self,projet_info_path,dbconfig,user_account_template):
+  def __init__(self,projet_info_path,dbconfig,user_account_template, \
+               log_slack=True, slack_config=None):
     self.projet_info_path=projet_info_path
     self.user_account_template=user_account_template
     dbparams = read_dbconf_json(dbconfig)
     base=BaseAdaptor(**dbparam)
     self.session_class = base.get_session_class()
+    self.log_slack=log_slack
+    if log_slack:
+      if slack_config is None:
+        raise ValueError('Missing slack config file')
+      self.igf_slack = IGF_slack(slack_config=slack_config)
   
   
   def process_project_data_and_account(self):
@@ -31,10 +38,25 @@ class Find_and_register_new_project_data:
     '''
     try:
       new_project_info_list=self._find_new_project_info()
+      if len(new_project_info_list) == 0:
+        if log_slack:
+          self.igf_slack.post_message_to_channel(message='No project info found',\
+                                                 reaction='sleep')
+          
       for project_info_file in new_project_info_list:
-        (new_project_info,new_user_info,new_sample_info)=\
-          self._read_project_info_and_get_new_entries(project_info_file)        # get new project, user and samples information
-    except:
+        try:
+          (new_project_info,new_user_info,new_sample_info)=\
+            self._read_project_info_and_get_new_entries(project_info_file)      # get new project, user and samples information
+        except Exception as e:                                                  # if error found in one file, skip the file
+          message='skipped project info file {0}, got error {1}'.\
+                  format(project_info_file,e)
+          warnings.warn(message)
+          if log_slack:
+            self.igf_slack.post_message_to_channel(message,reaction='fail')     # send message to slack
+    except Exception as e:
+      if log_slack:
+        message='Error in registering project info: {0}'.format(e)
+        self.igf_slack.post_message_to_channel(message,reaction='fail')
       raise
     
     
