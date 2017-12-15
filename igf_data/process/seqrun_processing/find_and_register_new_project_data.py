@@ -131,9 +131,9 @@ class Find_and_register_new_project_data:
           project_igf_id=data[self.project_lookup_column]
           user_email=data[self.user_lookup_column]
           pa=ProjectAdaptor(**{'session':dbsession})                            # connect to project adaptor
-          project_user_exists=pa.check_existing_project_user(project_igf_id=project_igf_id,\
+          project_user_exists=pa.check_existing_project_user(project_igf_id,\
                                                              email_id=user_email)
-          if not project_user_exists:                                                 # store data only if sample is not existing
+          if not project_user_exists:                                           # store data only if sample is not existing
             data[check_column]=True
           else:
             data[check_column]=False
