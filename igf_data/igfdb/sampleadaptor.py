@@ -126,5 +126,26 @@ class SampleAdaptor(BaseAdaptor):
       return sample  
     except:
       raise
+    
+  def check_sample_records_igf_id(self, sample_igf_id, target_column_name='sample_igf_id'):
+    '''
+    A method for checking existing data for sample table
+    required params:
+    sample_igf_id: an igf id
+    It returns True if the file is present in db or False if its not
+    '''
+    try:
+      sample_check=False
+      column=[column for column in Sample.__table__.columns \
+                       if column.key == target_column_name][0]
+      sample_obj=self.fetch_records_by_column(table=Sample, \
+                                              column_name=column, \
+                                              column_id=sample_igf_id, \
+                                              output_mode='one_or_none')
+      if sample_obj:
+        sample_check=True
+      return sample_check
+    except:
+      raise
 
 
