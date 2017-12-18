@@ -179,7 +179,29 @@ class Find_and_register_new_project_data:
     except:
       raise
     
-  
+    
+  @staticmethod
+  def _setup_irods_account(username, password=None):
+    '''
+    An internal staticmethod for creating new user account in irods
+    '''
+    try:
+      pass
+    except:
+      raise
+
+
+  @staticmethod
+  def _get_hpc_username(username):
+    '''
+    An internal staticmethod for checking hpc accounts for new users
+    '''
+    try:
+      pass
+    except:
+      raise
+    
+    
   def _assign_username_and_password(self,data):
     '''
     An internal method for assigning new user account and password
