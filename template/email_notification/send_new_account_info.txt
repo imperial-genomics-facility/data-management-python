@@ -1,0 +1,31 @@
+To: {{ userEmail }}
+Cc: igf@imperial.ac.uk
+Subject: New user account created for your sequencing data
+From: igf@imperial.ac.uk
+MIME-Version: 1.0
+Content-Type: text/plain
+
+Dear {{ fullName }},
+
+A new user account has been created for you at Imperial BRC Genomics Facility. Please DO NOT DELETE this login information as you will need them for accessing your sequencing data from facility server.
+
+username: {{ userName }}
+password: {{ userPass }}
+
+You’ve received this email because you requested for a new sequencing project with this email address. If you didn’t intend to, please let us know as soon as possible.
+
+Kind regards
+
+Imperial BRC Genomics Facility
+
+Imperial College London
+Commonwealth Building
+Room 4N5
+Du Cane Road
+London, W12 0NN
+United Kingdom
+
+phone +44 (0)20 7594 9107
+Twitter https://twitter.com/ImperialGF
+
+www.imperial.ac.uk/genomicsfacility
