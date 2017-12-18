@@ -18,6 +18,9 @@ class Find_and_register_new_project_data:
   required params:
   projet_info_path: A directory path for project info files
   dbconfig: A json dbconfig file
+  check_hpc_user: Guess the hpc user name, True or False, default: False
+  hpc_user: A hpc user name, default is None
+  hpc_address: A hpc host address, default is None
   user_account_template: A template file for user account activation email
   log_slack: Enable or disable sending message to slack, default: True
   slack_config: A slack config json file, required if log_slack is True
@@ -27,6 +30,7 @@ class Find_and_register_new_project_data:
   '''
   def __init__(self,projet_info_path,dbconfig,user_account_template, \
                log_slack=True, slack_config=None,\
+               check_hpc_user=False, hpc_user=None,hpc_address=None,\
                project_lookup_column='project_igf_id',\
                user_lookup_column='email_id',\
                sample_lookup_column='sample_igf_id'):
@@ -43,6 +47,10 @@ class Find_and_register_new_project_data:
       if slack_config is None:
         raise ValueError('Missing slack config file')
       self.igf_slack = IGF_slack(slack_config=slack_config)
+      
+    if check_hpc_user and (hpc_user is None or hpc_address is None):
+      raise ValueError('Hpc user {0} and address {1} are required for check_hpc_user'.\
+                       format(hpc_user,hpc_address))
   
   
   def process_project_data_and_account(self):
@@ -191,10 +199,9 @@ class Find_and_register_new_project_data:
       raise
 
 
-  @staticmethod
-  def _get_hpc_username(username):
+  def _get_hpc_username(self,username):
     '''
-    An internal staticmethod for checking hpc accounts for new users
+    An internal method for checking hpc accounts for new users
     '''
     try:
       pass
