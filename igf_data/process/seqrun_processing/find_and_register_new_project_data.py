@@ -21,6 +21,7 @@ class Find_and_register_new_project_data:
   check_hpc_user: Guess the hpc user name, True or False, default: False
   hpc_user: A hpc user name, default is None
   hpc_address: A hpc host address, default is None
+  ldap_server: A ldap server address for search, default is None
   user_account_template: A template file for user account activation email
   log_slack: Enable or disable sending message to slack, default: True
   slack_config: A slack config json file, required if log_slack is True
@@ -31,6 +32,7 @@ class Find_and_register_new_project_data:
   def __init__(self,projet_info_path,dbconfig,user_account_template, \
                log_slack=True, slack_config=None,\
                check_hpc_user=False, hpc_user=None,hpc_address=None,\
+               ldap_server=None,\
                project_lookup_column='project_igf_id',\
                user_lookup_column='email_id',\
                sample_lookup_column='sample_igf_id'):
@@ -49,9 +51,11 @@ class Find_and_register_new_project_data:
       elif log_slack and slack_config:
         self.igf_slack = IGF_slack(slack_config=slack_config)
       
-      if check_hpc_user and (hpc_user is None or hpc_address is None):
-        raise ValueError('Hpc user {0} and address {1} are required for check_hpc_user'.\
-                         format(hpc_user,hpc_address))
+      if check_hpc_user and (hpc_user is None or \
+                             hpc_address is None or \
+                             ldap_server is None):
+        raise ValueError('Hpc user {0} address {1}, and ldap server {2} are required for check_hpc_user'.\
+                         format(hpc_user,hpc_address,ldap_server))
     except:
       raise
   
@@ -207,7 +211,24 @@ class Find_and_register_new_project_data:
     An internal method for checking hpc accounts for new users
     '''
     try:
-      pass
+      cmd1=['ssh', \
+           '{0}@{1}'.format(self.hpc_username,self.hpc_address), \
+           '"ldapsearch -x -h {0}"'.format(self.ldap_server), \
+          ]
+      cmd2=['grep',\
+            '-w',\
+            '"uid: {0}"'.format(username), \
+           ]
+      proc1=subprocess.Popen(cmd1,stdout=subprocess.PIPE)
+      proc2=subprocess.Popen(cmd2,stdin=proc1.stdout,stdout=subprocess.PIPE)
+      proc1.stdout.close()
+      result=proc2.communicate()[0]
+      result=result.decode('UTF-8').split('\n')
+      if len(result)>0:
+        hpc_user=username
+      else:
+        hpc_user=None
+      return hpc_user
     except:
       raise
     
