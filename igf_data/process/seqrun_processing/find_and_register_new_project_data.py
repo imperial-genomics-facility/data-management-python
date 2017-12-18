@@ -34,23 +34,26 @@ class Find_and_register_new_project_data:
                project_lookup_column='project_igf_id',\
                user_lookup_column='email_id',\
                sample_lookup_column='sample_igf_id'):
-    self.projet_info_path=projet_info_path
-    self.user_account_template=user_account_template
-    self.project_lookup_column=project_lookup_column
-    self.user_lookup_column=user_lookup_column
-    self.sample_lookup_column=sample_lookup_column
-    self.log_slack=log_slack
-    dbparams = read_dbconf_json(dbconfig)
-    base=BaseAdaptor(**dbparam)
-    self.session_class = base.get_session_class()
-    if log_slack:
-      if slack_config is None:
+    try:
+      self.projet_info_path=projet_info_path
+      self.user_account_template=user_account_template
+      self.project_lookup_column=project_lookup_column
+      self.user_lookup_column=user_lookup_column
+      self.sample_lookup_column=sample_lookup_column
+      self.log_slack=log_slack
+      dbparams = read_dbconf_json(dbconfig)
+      base=BaseAdaptor(**dbparam)
+      self.session_class = base.get_session_class()
+      if log_slack and slack_config is None:
         raise ValueError('Missing slack config file')
-      self.igf_slack = IGF_slack(slack_config=slack_config)
+      elif log_slack and slack_config:
+        self.igf_slack = IGF_slack(slack_config=slack_config)
       
-    if check_hpc_user and (hpc_user is None or hpc_address is None):
-      raise ValueError('Hpc user {0} and address {1} are required for check_hpc_user'.\
-                       format(hpc_user,hpc_address))
+      if check_hpc_user and (hpc_user is None or hpc_address is None):
+        raise ValueError('Hpc user {0} and address {1} are required for check_hpc_user'.\
+                         format(hpc_user,hpc_address))
+    except:
+      raise
   
   
   def process_project_data_and_account(self):
