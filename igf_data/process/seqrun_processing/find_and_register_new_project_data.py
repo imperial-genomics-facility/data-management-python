@@ -1,6 +1,6 @@
 import pandas as pd
 from sqlalchemy.sql import column
-import os,subprocess,fnmatch, warnings
+import os,subprocess,fnmatch,warnings,string
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
@@ -161,7 +161,28 @@ class Find_and_register_new_project_data:
     '''
     pass
   
-  
+  @staticmethod
+  def _get_user_password(password_length=12):
+    '''
+    An internal staticmethod for generating random password
+    '''
+    try:
+      new_password=None                                                         # default value of the new password is None
+      symbols='^&%$@#!'                                                         # allowed symbols in password
+      chars=string.ascii_lowercase+\
+            string.ascii_uppercase+\
+            string.digits+\
+            symbols                                                             # a string of lower case and upper case letters, digits and symbols
+      while new_password is None or \
+            new_password[0] in string.digits or \
+            new_password[0] in symbols:
+        new_password=''.join([chars[ord(os.urandom(1)) % len(chars)] \
+                              for i in range(password_length)])                 # assign a new random password
+      return new_password
+    except:
+      raise
+    
+    
   def _check_and_register_data(self,data):
     '''
     An internal method for checking and registering data
