@@ -148,18 +148,15 @@ class Find_and_register_new_project_data:
       raise
   
   
-  def _assign_username_and_password(self,data):
-    '''
-    An internal method for assigning new user account and password
-    '''
-    pass
-  
-  
   def _notify_about_new_user_account(self,data):
     '''
     An internal method for sending mail to new user with their password
     '''
-    pass
+    try:
+      pass
+    except:
+      raise
+  
   
   @staticmethod
   def _get_user_password(password_length=12):
@@ -175,14 +172,24 @@ class Find_and_register_new_project_data:
             symbols                                                             # a string of lower case and upper case letters, digits and symbols
       while new_password is None or \
             new_password[0] in string.digits or \
-            new_password[0] in symbols:
+            new_password[0] in symbols:                                         # password can't be None or starts with digit or a symbol
         new_password=''.join([chars[ord(os.urandom(1)) % len(chars)] \
                               for i in range(password_length)])                 # assign a new random password
       return new_password
     except:
       raise
     
-    
+  
+  def _assign_username_and_password(self,data):
+    '''
+    An internal method for assigning new user account and password
+    '''
+    try:
+      pass
+    except:
+      raise
+  
+  
   def _check_and_register_data(self,data):
     '''
     An internal method for checking and registering data
