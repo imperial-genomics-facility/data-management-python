@@ -212,12 +212,35 @@ class Find_and_register_new_project_data:
       raise
     
     
-  def _assign_username_and_password(self,data):
+  def _assign_username_and_password(self,data,user_col='username',\
+                                    hpc_user_col='hpc_username',\
+                                    password_col='password',\
+                                    email_col='email_id'):
     '''
     An internal method for assigning new user account and password
     '''
     try:
-      pass
+      if not isinstance(data, pd.Series):
+        raise ValueError('Expecting a pandas series and got {0}'.\
+                         format(type(data)))
+      
+      if user_col not in data or data[user_col].isnull():                       # assign username from email id
+        username,_=data[email_col].split('@',1)                                 # get username from email id
+        if len(username)>10:
+          username=username[:10]                                                # allowing only first 10 chars of the email id
+          
+        data[user_col]=username                                                 # set username
+       
+      if (hpc_user_col not in data or data[hpc_user_col].isnull()) \
+         and check_hpc_user:                                                    # assign hpc username
+        hpc_username=self._get_hpc_username(username=data[user_col])
+        data[hpc_user_col]=hpc_username                                         # set hpc username
+      
+      if hpc_user_col not in data or data[hpc_user_col].isnull():
+        if password_col not in data or data[password_col].isnull():
+          data[password_col]=self._get_user_password()                          # assign a random password if its not supplied
+          
+      return data
     except:
       raise
   
