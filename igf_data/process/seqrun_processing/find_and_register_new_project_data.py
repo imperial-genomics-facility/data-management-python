@@ -192,7 +192,7 @@ class Find_and_register_new_project_data:
     
     
   @staticmethod
-  def _setup_irods_account(username, password=None):
+  def _setup_irods_account(data):
     '''
     An internal staticmethod for creating new user account in irods
     '''
@@ -314,6 +314,7 @@ class Find_and_register_new_project_data:
       if len(sample_data.index) > 0:                                            # store new samples
         pass
       
+      user_data.apply(lambda x: self._setup_irods_account(data))                # create irods account
     except:
       if db_connected:
         base.rollback_session()
