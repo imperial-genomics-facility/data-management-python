@@ -196,12 +196,37 @@ class Find_and_register_new_project_data:
     
     
   @staticmethod
-  def _setup_irods_account(data):
+  def _setup_irods_account(data,user_col='username',\
+                           password_col='password',\
+                           hpc_user_col='hpc_username',\
+                          ):
     '''
     An internal staticmethod for creating new user account in irods
     '''
     try:
-      pass
+      if not isinstance(data, pd.Series):
+        raise ValueError('Expecting a pandas series and got {0}'.\
+                         format(type(data)))
+      username=data[user_col]
+      hpc_username=data[hpc_user_col]
+      password=data[password_col]
+      
+      if username is None:
+        raise ValueError('Missing required username')
+      
+      if hpc_username is None and password is None:
+        raise ValueError('Missing required field password for non-hpc user {0}'.\
+                         format(username))
+      
+      check_cmd1=['iadmin','lu']
+      check_cmd2=['grep','-w',username]
+      c_proc1=subprocess.Popen(check_cmd1,stdout=subprocess.PIPE)
+      c_proc2=subprocess.Popen(check_cmd2,stdin=c_proc1.stdout,stdout=subprocess.PIPE)
+      c_proc1.stdout.close()
+      result=c_proc2.communicate()[0]
+      result=result.decode('UTF-8').split('\n')
+      if len(result) >0:
+        raise ValueError('IRODS account exists for user {0}'.format(username))
     except:
       raise
 
