@@ -146,7 +146,21 @@ class Find_and_register_new_project_data:
         raise ValueError('table {0} not supported'.format(table_name))
     except:
       raise
-    
+  
+  
+  def _assign_username_and_password(self,data):
+    '''
+    An internal method for assigning new user account and password
+    '''
+    pass
+  
+  
+  def _notify_about_new_user_account(self,data):
+    '''
+    An internal method for sending mail to new user with their password
+    '''
+    pass
+  
   
   def _check_and_register_data(self,data):
     '''
@@ -157,9 +171,13 @@ class Find_and_register_new_project_data:
       user_data=data['user_data']
       project_user_data=data['project_user_data']
       sample_data=data['sample_data']
+      user_data=user_data.apply(lambda x: \
+                                self._assign_username_and_password(x), \
+                                axis=1)                                         # check for use account and password
       db_connected=False
       base=BaseAdaptor(**{'session_class':self.session_class})
       base.start_session()                                                      # connect_to db
+      db_connected=True
       project_data=project_data.\
                    apply(lambda x: \
                          self._check_existing_data(\
@@ -200,6 +218,19 @@ class Find_and_register_new_project_data:
                          axis=1)                                                # get project user map
       project_user_data=project_user_data[project_user_data['EXISTS']==False]   # filter existing project user
       del project_user_data['EXISTS']                                           # remove extra column
+      
+      if len(project_data.index) > 0:                                           # store new projects
+        pass
+      
+      if len(user_data.index) > 0:                                              # store new users
+        pass
+      
+      if len(project_user_data.index) > 0:                                      # store new project users
+        pass
+      
+      if len(sample_data.index) > 0:                                            # store new samples
+        pass
+      
     except:
       if db_connected:
         base.rollback_session()
@@ -207,6 +238,9 @@ class Find_and_register_new_project_data:
     else:
       if db_connected:
         base.commit_session()
+        if len(user_data.index) > 0:
+          user_data.apply(lambda x: self._notify_about_new_user_account(x),\
+                          axis=1)                                               # send mail to new user with their password and forget it
     finally:
       if db_connected:
         base.close_session()
