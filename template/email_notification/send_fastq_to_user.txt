@@ -1,6 +1,6 @@
 To: igf@imperial.ac.uk
 Cc: igf@imperial.ac.uk
-Subject: [Imperial BRC Genomics Facility] Sequencing data available for download - {{ projectName }}
+Subject: {{ projectName }} - Sequencing data available for download
 From: igf@imperial.ac.uk
 MIME-Version: 1.0
 Content-Type: text/plain
