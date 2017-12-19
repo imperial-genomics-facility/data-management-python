@@ -450,7 +450,8 @@ class Find_and_register_new_project_data:
       del project_user_data['EXISTS']                                           # remove extra column
       
       if len(project_data.index) > 0:                                           # store new projects
-        pass
+        pa1=ProjectAdaptor(**{'session':base.session})                          # connect to project adaptor
+        pa1.store_project_and_attribute_data(data=project_data,autosave=False)  # load project data
       
       if len(user_data.index) > 0:                                              # store new users
         pass
