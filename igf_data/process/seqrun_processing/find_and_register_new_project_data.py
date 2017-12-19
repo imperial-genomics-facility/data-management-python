@@ -243,14 +243,20 @@ class Find_and_register_new_project_data:
                          format(username))
       irods_mkuser_cmd=['iadmin', 'mkuser', \
                         '{0}#igfZone'.format(username), 'rodsuser']
-      subprocess.check_call(irods_mkuser_cmd)
+      subprocess.check_call(irods_mkuser_cmd)                                   # create irods user
       irods_chmod_cmd=['ichmod', '-M', 'own', 'igf', \
                        '/igfZone/home/{0}'.format(username)]
-      subprocess.check_call(irods_chmod_cmd)
+      subprocess.check_call(irods_chmod_cmd)                                    # change permission for irods user
       irods_inherit_cmd=['ichmod','-r', 'inherit', \
                          '/igfZone/home/{0}'.format(username)]
-      subprocess.check_call(irods_inherit_cmd)
+      subprocess.check_call(irods_inherit_cmd)                                  # inherit irods user
       
+      if (hpc_username is None or hpc_username == '' ) and password:
+        irods_passwd_cmd=['iadmin', 'moduser', \
+                          '{0}#igfZone'.format(username), \
+                          'password', ''.format(password)]
+        subprocess.check_call(irods_passwd_cmd)                                 # set password for non-hpc user
+        
     except:
       raise
 
