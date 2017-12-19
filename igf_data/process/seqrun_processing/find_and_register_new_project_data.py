@@ -104,9 +104,14 @@ class Find_and_register_new_project_data:
   def _check_existing_data(self,data,dbsession,table_name,check_column='EXISTS'):
     '''
     An internal function for checking and registering project info
+    required params:
+    data: A pandas data series
+    dbsession: A sqlalchemy database session object
+    table_name: A database table name
+    check_column: Column name for existing data
     '''
     try:
-      if not isinstance(data, pd.Seriese):
+      if not isinstance(data, pd.Series):
         raise ValueError('Expecting a data series and got {0}'.format(type(data)))
       if table_name=='project':
         if data[self.project_lookup_column] and \
@@ -180,6 +185,13 @@ class Find_and_register_new_project_data:
                            name_col='name',email_id_col='email_id'):
     '''
     An internal method for sending mail to new user with their password
+    required params:
+    data: A pandas series containing user data
+    user_col: Column name for username, default username
+    password_col: Column name for password, default password
+    hpc_user_col: Column name for hpc_username, default hpc_username
+    name_col: Column name for name, default name
+    email_id_col: Column name for email id, default email_id
     '''
     try:
       if not isinstance(data, pd.Series):
@@ -219,6 +231,8 @@ class Find_and_register_new_project_data:
   def _get_user_password(password_length=12):
     '''
     An internal staticmethod for generating random password
+    required params:
+    password_length: Required length of password, default 12
     '''
     try:
       new_password=None                                                         # default value of the new password is None
@@ -244,6 +258,11 @@ class Find_and_register_new_project_data:
                           ):
     '''
     An internal staticmethod for creating new user account in irods
+    required params:
+    data: A pandas series containing user data
+    user_col: Column name for username, deffault username
+    password_col: Column name for password, default password
+    hpc_user_col: Column name for hpc_username, default hpc_username
     '''
     try:
       if not isinstance(data, pd.Series):
@@ -296,6 +315,8 @@ class Find_and_register_new_project_data:
   def _get_hpc_username(self,username):
     '''
     An internal method for checking hpc accounts for new users
+    required params:
+    username: A username string
     '''
     try:
       cmd1=['ssh', \
@@ -326,6 +347,12 @@ class Find_and_register_new_project_data:
                                     email_col='email_id'):
     '''
     An internal method for assigning new user account and password
+    required params:
+    data: A pandas series containing user data
+    user_col: Column name for username, deffault username
+    password_col: Column name for password, default password
+    hpc_user_col: Column name for hpc_username, default hpc_username
+    email_id_col: Column name for email id, default email_id
     '''
     try:
       if not isinstance(data, pd.Series):
@@ -360,6 +387,12 @@ class Find_and_register_new_project_data:
   def _check_and_register_data(self,data):
     '''
     An internal method for checking and registering data
+    required params:
+    data: A dictionary containing following keys
+          project_data
+          user_data
+          project_user_data
+          sample_data
     '''
     try:
       project_data=data['project_data']
@@ -448,10 +481,12 @@ class Find_and_register_new_project_data:
     An internal method for processing project info data
     required params:
     project_info_file: A filepath for project_info csv files
-    It returns following information
-    new_project_info
-    new_user_info
-    new_sample_info
+    
+    It returns a dictionary with following keys
+          project_data
+          user_data
+          project_user_data
+          sample_data
     '''
     try:
       project_info_data=pd.read_csv(project_info_file)                          # read project info data
