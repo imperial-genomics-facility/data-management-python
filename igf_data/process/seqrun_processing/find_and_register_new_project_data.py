@@ -30,6 +30,7 @@ class Find_and_register_new_project_data:
   project_lookup_column: project data lookup column, default project_igf_id
   user_lookup_column: user data lookup column, default email_id
   sample_lookup_column: sample data lookup column, default sample_igf_id
+  data_authority_column: data authority column name, default data_authority
   setup_irods: Setup irods account for user, default is True
   notify_user: Send email notification to user, default is True
   '''
@@ -41,6 +42,7 @@ class Find_and_register_new_project_data:
                notify_user=True,\
                project_lookup_column='project_igf_id',\
                user_lookup_column='email_id',\
+               data_authority_column='data_authority',\
                sample_lookup_column='sample_igf_id'):
     try:
       self.projet_info_path=projet_info_path
@@ -48,6 +50,7 @@ class Find_and_register_new_project_data:
       self.project_lookup_column=project_lookup_column
       self.user_lookup_column=user_lookup_column
       self.sample_lookup_column=sample_lookup_column
+      self.data_authority_column=data_authority_column
       self.log_slack=log_slack
       dbparams = read_dbconf_json(dbconfig)
       base=BaseAdaptor(**dbparam)
@@ -165,6 +168,10 @@ class Find_and_register_new_project_data:
           pa=ProjectAdaptor(**{'session':dbsession})                            # connect to project adaptor
           project_user_exists=pa.check_existing_project_user(project_igf_id,\
                                                              email_id=user_email)
+          if self.data_authority_column not in data or \
+             data[self.data_authority_column].isnull():
+            data[self.data_authority_column]='T'                                # set user as data authority
+            
           if not project_user_exists:                                           # store data only if sample is not existing
             data[check_column]=True
           else:
@@ -454,29 +461,34 @@ class Find_and_register_new_project_data:
         pa1.store_project_and_attribute_data(data=project_data,autosave=False)  # load project data
       
       if len(user_data.index) > 0:                                              # store new users
-        pass
+        ua=UserAdaptor(**{'session':base.session})
+        ua.store_user_data(data=user_data,autosave=False)                       # load user data
       
       if len(project_user_data.index) > 0:                                      # store new project users
-        pass
+        pa2=ProjectAdaptor(**{'session':base.session})                          # connect to project adaptor
+        project_user_data=project_user_data.to_dict(orient='records')           # convert dataframe to dictionary
+        pa2.assign_user_to_project(data=project_user_data, autosave=False)      # load project user data
       
       if len(sample_data.index) > 0:                                            # store new samples
-        pass
+        sa=SampleAdaptor(**{'session':base.session})                            # connect to sample adaptor
+        sa.store_sample_and_attribute_data(data=sample_data,autosave=False)     # load samples data
       
       if self.setup_irods:
         user_data.apply(lambda x: self._setup_irods_account(data))              # create irods account
+        
     except:
       if db_connected:
-        base.rollback_session()
+        base.rollback_session()                                                 # rollback session
       raise
     else:
       if db_connected:
-        base.commit_session()
+        base.commit_session()                                                   # commit changes to db
         if len(user_data.index) > 0 and self.notify_user:
           user_data.apply(lambda x: self._notify_about_new_user_account(x),\
                           axis=1)                                               # send mail to new user with their password and forget it
     finally:
       if db_connected:
-        base.close_session()
+        base.close_session()                                                    # close db connection
   
 
   def _read_project_info_and_get_new_entries(self,project_info_file):
