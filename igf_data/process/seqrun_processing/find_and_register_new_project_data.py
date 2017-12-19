@@ -28,11 +28,15 @@ class Find_and_register_new_project_data:
   project_lookup_column: project data lookup column, default project_igf_id
   user_lookup_column: user data lookup column, default email_id
   sample_lookup_column: sample data lookup column, default sample_igf_id
+  setup_irods: Setup irods account for user, default is True
+  notify_user: Send email notification to user, default is True
   '''
   def __init__(self,projet_info_path,dbconfig,user_account_template, \
                log_slack=True, slack_config=None,\
                check_hpc_user=False, hpc_user=None,hpc_address=None,\
                ldap_server=None,\
+               setup_irods=True,\
+               notify_user=True,\
                project_lookup_column='project_igf_id',\
                user_lookup_column='email_id',\
                sample_lookup_column='sample_igf_id'):
@@ -46,6 +50,12 @@ class Find_and_register_new_project_data:
       dbparams = read_dbconf_json(dbconfig)
       base=BaseAdaptor(**dbparam)
       self.session_class = base.get_session_class()
+      self.setup_irods=setup_irods
+      self.notify_user=notify_user
+      self.check_hpc_user=check_hpc_user
+      self.hpc_user=hpc_user
+      self.hpc_address=hpc_address
+      self.ldap_server=ldap_server
       if log_slack and slack_config is None:
         raise ValueError('Missing slack config file')
       elif log_slack and slack_config:
@@ -231,6 +241,16 @@ class Find_and_register_new_project_data:
       if len(result)>1:
         raise ValueError('Failed to correctly identify existing irods user for {0}'.\
                          format(username))
+      irods_mkuser_cmd=['iadmin', 'mkuser', \
+                        '{0}#igfZone'.format(username), 'rodsuser']
+      subprocess.check_call(irods_mkuser_cmd)
+      irods_chmod_cmd=['ichmod', '-M', 'own', 'igf', \
+                       '/igfZone/home/{0}'.format(username)]
+      subprocess.check_call(irods_chmod_cmd)
+      irods_inherit_cmd=['ichmod','-r', 'inherit', \
+                         '/igfZone/home/{0}'.format(username)]
+      subprocess.check_call(irods_inherit_cmd)
+      
     except:
       raise
 
@@ -276,11 +296,15 @@ class Find_and_register_new_project_data:
       
       if user_col not in data or data[user_col].isnull():                       # assign username from email id
         username,_=data[email_col].split('@',1)                                 # get username from email id
-        if len(username)>10:
-          username=username[:10]                                                # allowing only first 10 chars of the email id
-          
-        data[user_col]=username                                                 # set username
+        data[user_col]=username[:10] if len(username)>10 \
+                                     else username                              # allowing only first 10 chars of the email id
        
+      if user_col in data and not data[user_col].isnull() and \
+         hpc_user_col in data and not data[hpc_user_col].isnull() and \
+         data[user_col] != data[hpc_user_col]:                                  # if user name and hpc username both are present, they should be same
+        raise ValueError('username {0} and hpc_username {1} should be same'.\
+                         format(data[user_col],data[hpc_user_col]))
+        
       if (hpc_user_col not in data or data[hpc_user_col].isnull()) \
          and check_hpc_user:                                                    # assign hpc username
         hpc_username=self._get_hpc_username(username=data[user_col])
