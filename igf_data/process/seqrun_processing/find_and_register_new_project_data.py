@@ -1,5 +1,6 @@
 import pandas as pd
 from sqlalchemy.sql import column
+from shlex import quote
 import os,subprocess,fnmatch,warnings,string
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.igfdb.baseadaptor import BaseAdaptor
@@ -224,7 +225,7 @@ class Find_and_register_new_project_data:
                  userPass=password,\
                 ).\
           dump(report_output_file)
-        read_cmd=['cat', report_output_file]
+        read_cmd=['cat', quote(report_output_file)]
         proc=subprocess.Popen(read_cmd, stdout=subprocess.PIPE)
         sendmail_cmd=['sendmail', '-t']
         subprocess.check_call(sendmail_cmd,stdin=proc.stdout)
@@ -289,7 +290,7 @@ class Find_and_register_new_project_data:
       password=data[password_col]
       
       check_cmd1=['iadmin','lu']
-      check_cmd2=['grep','-w',username]
+      check_cmd2=['grep','-w',quote(username)]
       c_proc1=subprocess.Popen(check_cmd1,stdout=subprocess.PIPE)
       c_proc2=subprocess.Popen(check_cmd2,stdin=c_proc1.stdout,stdout=subprocess.PIPE)
       c_proc1.stdout.close()
@@ -302,19 +303,19 @@ class Find_and_register_new_project_data:
         raise ValueError('Failed to correctly identify existing irods user for {0}'.\
                          format(username))
       irods_mkuser_cmd=['iadmin', 'mkuser', \
-                        '{0}#igfZone'.format(username), 'rodsuser']
+                        '{0}#igfZone'.format(quote(username)), 'rodsuser']
       subprocess.check_call(irods_mkuser_cmd)                                   # create irods user
       irods_chmod_cmd=['ichmod', '-M', 'own', 'igf', \
-                       '/igfZone/home/{0}'.format(username)]
+                       '/igfZone/home/{0}'.format(quote(username))]
       subprocess.check_call(irods_chmod_cmd)                                    # change permission for irods user
       irods_inherit_cmd=['ichmod','-r', 'inherit', \
-                         '/igfZone/home/{0}'.format(username)]
+                         '/igfZone/home/{0}'.format(quote(username))]
       subprocess.check_call(irods_inherit_cmd)                                  # inherit irods user
       
       if (hpc_username is None or hpc_username == '' ) and password:
         irods_passwd_cmd=['iadmin', 'moduser', \
-                          '{0}#igfZone'.format(username), \
-                          'password', ''.format(password)]
+                          '{0}#igfZone'.format(quote(username)), \
+                          'password', ''.format(quote(password))]
         subprocess.check_call(irods_passwd_cmd)                                 # set password for non-hpc user
         
     except:
@@ -329,12 +330,12 @@ class Find_and_register_new_project_data:
     '''
     try:
       cmd1=['ssh', \
-           '{0}@{1}'.format(self.hpc_username,self.hpc_address), \
-           '"ldapsearch -x -h {0}"'.format(self.ldap_server), \
+           '{0}@{1}'.format(quote(self.hpc_username),quote(self.hpc_address)), \
+           '"ldapsearch -x -h {0}"'.format(quote(self.ldap_server)), \
           ]
       cmd2=['grep',\
             '-w',\
-            '"uid: {0}"'.format(username), \
+            '"uid: {0}"'.format(quote(username)), \
            ]
       proc1=subprocess.Popen(cmd1,stdout=subprocess.PIPE)
       proc2=subprocess.Popen(cmd2,stdin=proc1.stdout,stdout=subprocess.PIPE)
