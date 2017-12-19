@@ -268,16 +268,18 @@ class Find_and_register_new_project_data:
       if not isinstance(data, pd.Series):
         raise ValueError('Expecting a pandas series and got {0}'.\
                          format(type(data)))
+      
+      if user_col not in data or data[user_col].isnull():
+        raise ValueError('Missing required username')
+      
+      if (hpc_user_col not in data or data[hpc_user_col].isnull()) and \
+         (password_col not in data or data[password_col].isnull()):
+        raise ValueError('Missing required field password for non-hpc user {0}'.\
+                         format(username))
+      
       username=data[user_col]
       hpc_username=data[hpc_user_col]
       password=data[password_col]
-      
-      if username is None:
-        raise ValueError('Missing required username')
-      
-      if hpc_username is None and password is None:
-        raise ValueError('Missing required field password for non-hpc user {0}'.\
-                         format(username))
       
       check_cmd1=['iadmin','lu']
       check_cmd2=['grep','-w',username]
