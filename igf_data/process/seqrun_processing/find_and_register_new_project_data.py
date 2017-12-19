@@ -9,6 +9,8 @@ from igf_data.igfdb.sampleadaptor import SampleAdaptor
 from igf_data.task_tracking.igf_slack import IGF_slack
 from igf_data.igfdb.igfTables import Project, User, Sample
 from igf_data.igfdb.useradaptor import UserAdaptor
+from igf_data.utils.fileutils import get_temp_dir, remove_dir
+from jinja2 import Template,Environment, FileSystemLoader,select_autoescape
 
 class Find_and_register_new_project_data:
   '''
@@ -173,12 +175,42 @@ class Find_and_register_new_project_data:
       raise
   
   
-  def _notify_about_new_user_account(self,data):
+  def _notify_about_new_user_account(self,data,user_col='username',\
+                           password_col='password',hpc_user_col='hpc_username',\
+                           name_col='name',email_id_col='email_id'):
     '''
     An internal method for sending mail to new user with their password
     '''
     try:
-      pass
+      if not isinstance(data, pd.Series):
+        raise ValueError('Expecting a pandas series and got {0}'.\
+                         format(type(data)))
+      username=data[user_col]
+      fullname=data[name_col]
+      password=data[password_col]
+      email_id=data[email_id_col]
+      
+      if hpc_user_col not in data or data[hpc_user_col].isnull():               # send email only to non-hpc users
+        template_dir=os.path.dirname(self.user_account_template)
+        template_env=Environment(loader=FileSystemLoader(searchpath=template_dir), \
+                                 autoescape=select_autoescape(['html','xml']))  # set template env
+        template_file=template_env.\
+                      get_template(os.path.basename(self.user_account_template))
+        temp_work_dir=get_temp_dir()                                            # get a temp dir
+        report_output_file=os.path.join(temp_work_dir,'email_template.txt')
+        template_file.\
+          stream(userEmail=email_id, \
+                 fullName=fullname,\
+                 userName=username,\
+                 userPass=password,\
+                ).\
+          dump(report_output_file)
+        read_cmd=['cat', report_output_file]
+        proc=subprocess.Popen(read_cmd, stdout=subprocess.PIPE)
+        sendmail_cmd=['sendmail', '-t']
+        subprocess.check_call(sendmail_cmd,stdin=proc.stdout)
+        proc.stdout.close()
+        remove_dir(temp_work_dir)
     except:
       raise
   
