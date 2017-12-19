@@ -394,7 +394,8 @@ class Find_and_register_new_project_data:
       if len(sample_data.index) > 0:                                            # store new samples
         pass
       
-      user_data.apply(lambda x: self._setup_irods_account(data))                # create irods account
+      if self.setup_irods:
+        user_data.apply(lambda x: self._setup_irods_account(data))              # create irods account
     except:
       if db_connected:
         base.rollback_session()
@@ -402,7 +403,7 @@ class Find_and_register_new_project_data:
     else:
       if db_connected:
         base.commit_session()
-        if len(user_data.index) > 0:
+        if len(user_data.index) > 0 and self.notify_user:
           user_data.apply(lambda x: self._notify_about_new_user_account(x),\
                           axis=1)                                               # send mail to new user with their password and forget it
     finally:
