@@ -225,8 +225,12 @@ class Find_and_register_new_project_data:
       c_proc1.stdout.close()
       result=c_proc2.communicate()[0]
       result=result.decode('UTF-8').split('\n')
-      if len(result) >0:
+      if len(result) == 1:
         raise ValueError('IRODS account exists for user {0}'.format(username))
+      
+      if len(result)>1:
+        raise ValueError('Failed to correctly identify existing irods user for {0}'.\
+                         format(username))
     except:
       raise
 
