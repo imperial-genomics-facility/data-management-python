@@ -38,6 +38,7 @@ class Project(Base):
 class User(Base):
   __tablename__ = 'user'
   __table_args__ = (
+    UniqueConstraint('name'),
     UniqueConstraint('username'),
     UniqueConstraint('email_id'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
