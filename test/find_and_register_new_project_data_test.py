@@ -60,15 +60,15 @@ class Find_and_register_project_data1(unittest.TestCase):
                        'email_id':'user2@ic.ac.uk',
                        'sample_igf_id':'IGF00007',
                       }]
-    pd.DataFrame(new_project_data).to_csv(self.new_project_data)
+    pd.DataFrame(new_project_data).to_csv(os.path.join('.',self.new_project_data))
   
   def tearDown(self):
     Base.metadata.drop_all(self.engine)
     os.remove(self.dbname)
-    os.remove(self.new_project_data)
+    os.remove(os.path.join('.',self.new_project_data))
     
   def test_find_new_projects_data(self):
-    fa=Find_and_register_new_project_data(projet_info_path='data/check_project_data',\
+    fa=Find_and_register_new_project_data(projet_info_path=os.path.join('.','data/check_project_data'),\
                                           dbconfig=self.dbconfig,\
                                           user_account_template='template/email_notification/send_new_account_info.txt',\
                                           log_slack=False,\
