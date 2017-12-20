@@ -1,5 +1,4 @@
 import pandas as pd
-from sqlalchemy.sql import column
 from shlex import quote
 import os,subprocess,fnmatch,warnings,string
 from igf_data.utils.dbutils import read_dbconf_json
@@ -11,7 +10,7 @@ from igf_data.task_tracking.igf_slack import IGF_slack
 from igf_data.igfdb.igfTables import Project, User, Sample
 from igf_data.igfdb.useradaptor import UserAdaptor
 from igf_data.utils.fileutils import get_temp_dir, remove_dir
-from jinja2 import Template,Environment, FileSystemLoader,select_autoescape
+from jinja2 import Environment, FileSystemLoader,select_autoescape
 
 class Find_and_register_new_project_data:
   '''
