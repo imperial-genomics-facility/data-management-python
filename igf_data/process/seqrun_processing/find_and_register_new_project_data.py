@@ -54,7 +54,7 @@ class Find_and_register_new_project_data:
       self.data_authority_column=data_authority_column
       self.log_slack=log_slack
       dbparams = read_dbconf_json(dbconfig)
-      base=BaseAdaptor(**dbparam)
+      base=BaseAdaptor(**dbparams)
       self.session_class = base.get_session_class()
       self.setup_irods=setup_irods
       self.notify_user=notify_user
@@ -84,7 +84,7 @@ class Find_and_register_new_project_data:
     try:
       new_project_info_list=self._find_new_project_info()
       if len(new_project_info_list) == 0:
-        if log_slack:
+        if self.log_slack:
           self.igf_slack.post_message_to_channel(message='No project info found',\
                                                  reaction='sleep')
           
@@ -96,10 +96,10 @@ class Find_and_register_new_project_data:
           message='skipped project info file {0}, got error {1}'.\
                   format(project_info_file,e)
           warnings.warn(message)
-          if log_slack:
+          if self.log_slack:
             self.igf_slack.post_message_to_channel(message,reaction='fail')     # send message to slack
     except Exception as e:
-      if log_slack:
+      if self.log_slack:
         message='Error in registering project info: {0}'.format(e)
         self.igf_slack.post_message_to_channel(message,reaction='fail')
       raise
@@ -136,7 +136,7 @@ class Find_and_register_new_project_data:
            data[self.user_lookup_column] == '':
           user_email=data[self.user_lookup_column]
           ua=UserAdaptor(**{'session':dbsession})                               # connect to user adaptor
-          user_exists=us.check_user_records_email_id(email_id=user_email)
+          user_exists=ua.check_user_records_email_id(email_id=user_email)
           if not user_exists:                                                   # store data only if user is not existing
             data[check_column]=True
           else:
@@ -283,7 +283,7 @@ class Find_and_register_new_project_data:
       if (hpc_user_col not in data or data[hpc_user_col].isnull()) and \
          (password_col not in data or data[password_col].isnull()):
         raise ValueError('Missing required field password for non-hpc user {0}'.\
-                         format(username))
+                         format(data[user_col]))
       
       username=data[user_col]
       hpc_username=data[hpc_user_col]
@@ -381,7 +381,7 @@ class Find_and_register_new_project_data:
                          format(data[user_col],data[hpc_user_col]))
         
       if (hpc_user_col not in data or data[hpc_user_col].isnull()) \
-         and check_hpc_user:                                                    # assign hpc username
+         and self.check_hpc_user:                                               # assign hpc username
         hpc_username=self._get_hpc_username(username=data[user_col])
         data[hpc_user_col]=hpc_username                                         # set hpc username
       
@@ -553,10 +553,10 @@ class Find_and_register_new_project_data:
       fa.start_session()                                                        # connect to db
       for root_path,dirs,files in os.walk(self.projet_info_path, topdown=True):
         for file_path in files:
-          if fnmatch.fnmatch(file_name, '*.csv'):                               # only consider csv files
+          if fnmatch.fnmatch(file_path, '*.csv'):                               # only consider csv files
             file_check=fa.check_file_records_file_path(file_path=file_path)     # check for file in db
             if not file_check:
-              new_project_info_list.append(os.path.join(root,file))             # collect new project info files
+              new_project_info_list.append(os.path.join(root_path,file_path))   # collect new project info files
       fa.close_session()                                                        # disconnect db
       return new_project_info_list
     except:
