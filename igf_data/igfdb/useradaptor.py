@@ -84,8 +84,8 @@ class UserAdaptor(BaseAdaptor):
                                                              axis=1) 
 
       # check for username, user with igf id should have the username
-      if new_data[new_data[user_igf_id_column].notnull() & new_data[username_column].isnull()][email_column].count() > 0 :
-        raise ValueError('Missing username for a registered user {0}'.format(new_data[user_igf_id_column].astype('str')))
+      #if new_data[new_data[user_igf_id_column].notnull() & new_data[username_column].isnull()][email_column].count() > 0 :
+      #  raise ValueError('Missing username for a registered user {0}'.format(new_data[user_igf_id_column].astype('str')))
 
       return new_data
     except:
