@@ -523,13 +523,13 @@ class Find_and_register_new_project_data:
       user_data=user_data.drop_duplicates()
       project_user_data=project_user_data.drop_duplicates()
       sample_data=sample_data.drop_duplicates()                                 # remove duplicate entries
-      if self.project_lookup_column not in project_data.column:
+      if self.project_lookup_column not in project_data.columns:
         raise ValueError('Missing required column: {0}'.\
                          format(self.project_lookup_column))
-      if self.user_lookup_column not in user_data.column:
+      if self.user_lookup_column not in user_data.columns:
         raise ValueError('Missing required column: {0}'.\
                          format(self.user_lookup_column))
-      if self.sample_lookup_column not in sample_data.column:
+      if self.sample_lookup_column not in sample_data.columns:
         raise ValueError('Missing required column: {0}'.\
                          format(self.sample_lookup_column))                     # check if required columns are present in the dataframe
         
