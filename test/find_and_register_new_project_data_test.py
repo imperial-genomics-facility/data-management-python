@@ -98,6 +98,19 @@ class Find_and_register_project_data1(unittest.TestCase):
     self.assertEqual(project_user_data[0]['project_igf_id'],\
                      'IGFP0002_test_23-5-2017_rna')
     
+  def test_assign_username_and_password(self):
+    fa=Find_and_register_new_project_data(projet_info_path=os.path.join('.','data/check_project_data'),\
+                                          dbconfig=self.dbconfig,\
+                                          user_account_template='template/email_notification/send_new_account_info.txt',\
+                                          log_slack=False,\
+                                          check_hpc_user=False,\
+                                          )
+    all_data=fa._read_project_info_and_get_new_entries(project_info_file=self.new_project_data)
+    user_data=all_data['user_data']
+    user_data=user_data.apply(lambda x: \
+                                self._assign_username_and_password(x), \
+                                axis=1)
+    
     
 if __name__=='__main__':
   unittest.main()
