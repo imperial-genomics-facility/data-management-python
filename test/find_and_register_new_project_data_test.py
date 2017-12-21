@@ -76,6 +76,29 @@ class Find_and_register_project_data1(unittest.TestCase):
     new_project_info_list=fa._find_new_project_info()
     self.assertEqual(len(new_project_info_list),1)
     
+  def test_read_project_info_and_get_new_entries(self):
+    fa=Find_and_register_new_project_data(projet_info_path=os.path.join('.','data/check_project_data'),\
+                                          dbconfig=self.dbconfig,\
+                                          user_account_template='template/email_notification/send_new_account_info.txt',\
+                                          log_slack=False,\
+                                          )
+    all_data=fa._read_project_info_and_get_new_entries(project_info_file=self.new_project_data)
+    project_data=all_data['project_data'].to_dict(orient='region')
+    self.assertEqual(project_data[0]['project_igf_id'],\
+                     'IGFP0002_test_23-5-2017_rna')
+    sample_data=all_data['sample_data'].to_dict(orient='region')
+    self.assertEqual(sample_data[0]['sample_igf_id'],\
+                     'IGF00006')
+    user_data=all_data['user_data'].to_dict(orient='region')
+    self.assertEqual(user_data[0]['email_id'],\
+                     'user2@ic.ac.uk')
+    project_user_data=all_data['project_user_data'].to_dict(orient='region')
+    self.assertEqual(project_user_data[0]['email_id'],\
+                     'user2@ic.ac.uk')
+    self.assertEqual(project_user_data[0]['project_igf_id'],\
+                     'IGFP0002_test_23-5-2017_rna')
+    
+    
 if __name__=='__main__':
   unittest.main()
   
