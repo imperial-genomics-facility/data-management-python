@@ -203,7 +203,7 @@ class ProjectAdaptor(BaseAdaptor):
     It returns True if the file is present in db or False if its not
     '''
     try:
-      project_user_check=True
+      project_user_check=False
       session=self.session
       query=session.\
             query(Project, User, ProjectUser.data_authority).\
