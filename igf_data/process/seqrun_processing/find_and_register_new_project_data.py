@@ -159,10 +159,10 @@ class Find_and_register_new_project_data:
           raise ValueError('Missing or empty required column {0}'.\
                            format(self.sample_lookup_column))
       elif table_name=='project_user':
-        if (self.user_lookup_column in data and \
-            not pd.isnull(data[self.user_lookup_column]) ) or \
-           (self.project_lookup_column in data and \
-            not pd.isnull(data[self.project_lookup_column]) ):
+        if self.user_lookup_column in data and \
+            not pd.isnull(data[self.user_lookup_column]) and \
+           self.project_lookup_column in data and \
+            not pd.isnull(data[self.project_lookup_column]):
           project_igf_id=data[self.project_lookup_column]
           user_email=data[self.user_lookup_column]
           pa=ProjectAdaptor(**{'session':dbsession})                            # connect to project adaptor
