@@ -112,6 +112,7 @@ class Find_and_register_project_data1(unittest.TestCase):
                                 axis=1)
     user_data=user_data.to_dict(orient='region')
     self.assertEqual(user_data[0]['username'],'user2')
+    self.assertTrue(user_data[0]['password'])
     
     
 if __name__=='__main__':
