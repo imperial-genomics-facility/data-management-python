@@ -134,9 +134,9 @@ class UserAdaptor(BaseAdaptor):
     try:
       user_check=False
       user_obj=self.fetch_records_by_column(table=User, \
-                                        column_name=User.user_igf_id, \
-                                        column_id=email_id, \
-                                        output_mode='one_or_none' )
+                                            column_name=User.email_id, \
+                                            column_id=email_id, \
+                                            output_mode='one_or_none' )
       if user_obj is not None:
         user_check=True
       return user_check
