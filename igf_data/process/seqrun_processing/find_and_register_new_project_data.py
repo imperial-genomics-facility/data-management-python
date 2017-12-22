@@ -169,7 +169,7 @@ class Find_and_register_new_project_data:
           project_user_exists=pa.check_existing_project_user(project_igf_id,\
                                                              email_id=user_email)
           if self.data_authority_column not in data or \
-             data[self.data_authority_column].isnull():
+             pd.isnull(data[self.data_authority_column]):
             data[self.data_authority_column]='T'                                # set user as data authority
             
           if not project_user_exists:                                           # store data only if sample is not existing
@@ -209,7 +209,7 @@ class Find_and_register_new_project_data:
       password=data[password_col]
       email_id=data[email_id_col]
       
-      if hpc_user_col not in data or data[hpc_user_col].isnull():               # send email only to non-hpc users
+      if hpc_user_col not in data or pd.isnull(data[hpc_user_col]):             # send email only to non-hpc users
         template_dir=os.path.dirname(self.user_account_template)
         template_env=Environment(loader=FileSystemLoader(searchpath=template_dir), \
                                  autoescape=select_autoescape(['html','xml']))  # set template env
@@ -276,11 +276,11 @@ class Find_and_register_new_project_data:
         raise ValueError('Expecting a pandas series and got {0}'.\
                          format(type(data)))
       
-      if user_col not in data or data[user_col].isnull():
+      if user_col not in data or pd.isnull(data[user_col]):
         raise ValueError('Missing required username')
       
-      if (hpc_user_col not in data or data[hpc_user_col].isnull()) and \
-         (password_col not in data or data[password_col].isnull()):
+      if (hpc_user_col not in data or pd.isnull(data[hpc_user_col])) and \
+         (password_col not in data or pd.isnull(data[password_col])):
         raise ValueError('Missing required field password for non-hpc user {0}'.\
                          format(data[user_col]))
       
@@ -367,25 +367,25 @@ class Find_and_register_new_project_data:
       if not isinstance(data, pd.Series):
         raise ValueError('Expecting a pandas series and got {0}'.\
                          format(type(data)))
-      
-      if user_col not in data or data[user_col].isnull():                       # assign username from email id
+        
+      if user_col not in data or pd.isnull(data[user_col]):                     # assign username from email id
         username,_=data[email_col].split('@',1)                                 # get username from email id
         data[user_col]=username[:10] if len(username)>10 \
                                      else username                              # allowing only first 10 chars of the email id
-       
-      if user_col in data and not data[user_col].isnull() and \
-         hpc_user_col in data and not data[hpc_user_col].isnull() and \
+                                     
+      if user_col in data and not pd.isnull(data[user_col]) and \
+         hpc_user_col in data and not pd.isnull(data[hpc_user_col]) and \
          data[user_col] != data[hpc_user_col]:                                  # if user name and hpc username both are present, they should be same
         raise ValueError('username {0} and hpc_username {1} should be same'.\
                          format(data[user_col],data[hpc_user_col]))
         
-      if (hpc_user_col not in data or data[hpc_user_col].isnull()) \
+      if (hpc_user_col not in data or pd.isnull(data[hpc_user_col])) \
          and self.check_hpc_user:                                               # assign hpc username
         hpc_username=self._get_hpc_username(username=data[user_col])
         data[hpc_user_col]=hpc_username                                         # set hpc username
       
-      if hpc_user_col not in data or data[hpc_user_col].isnull():
-        if password_col not in data or data[password_col].isnull():
+      if hpc_user_col not in data or pd.isnull(data[hpc_user_col]):
+        if password_col not in data or pd.isnull(data[password_col]):
           data[password_col]=self._get_user_password()                          # assign a random password if its not supplied
           
       return data
