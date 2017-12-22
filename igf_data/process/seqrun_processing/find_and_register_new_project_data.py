@@ -136,7 +136,7 @@ class Find_and_register_new_project_data:
           user_email=data[self.user_lookup_column]
           ua=UserAdaptor(**{'session':dbsession})                               # connect to user adaptor
           user_exists=ua.check_user_records_email_id(email_id=user_email)
-          if not user_exists:                                                   # store data only if user is not existing
+          if user_exists:                                                   # store data only if user is not existing
             data[check_column]=True
           else:
             data[check_column]=False
@@ -150,7 +150,7 @@ class Find_and_register_new_project_data:
           sample_igf_id=data[self.sample_lookup_column]
           sa=SampleAdaptor(**{'session':dbsession})                             # connect to sample adaptor
           sample_exists=sa.check_sample_records_igf_id(sample_igf_id)
-          if not sample_exists:                                                 # store data only if sample is not existing
+          if sample_exists:                                                 # store data only if sample is not existing
             data[check_column]=True
           else:
             data[check_column]=False
@@ -172,7 +172,7 @@ class Find_and_register_new_project_data:
              pd.isnull(data[self.data_authority_column]):
             data[self.data_authority_column]='T'                                # set user as data authority
             
-          if not project_user_exists:                                           # store data only if sample is not existing
+          if project_user_exists:                                           # store data only if sample is not existing
             data[check_column]=True
           else:
             data[check_column]=False

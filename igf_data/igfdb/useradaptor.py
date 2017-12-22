@@ -137,7 +137,7 @@ class UserAdaptor(BaseAdaptor):
                                         column_name=User.user_igf_id, \
                                         column_id=email_id, \
                                         output_mode='one_or_none' )
-      if user_obj:
+      if user_obj is not None:
         user_check=True
       return user_check
     except:

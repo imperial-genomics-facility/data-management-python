@@ -142,7 +142,7 @@ class SampleAdaptor(BaseAdaptor):
                                               column_name=column, \
                                               column_id=sample_igf_id, \
                                               output_mode='one_or_none')
-      if sample_obj:
+      if sample_obj is not None:
         sample_check=True
       return sample_check
     except:
