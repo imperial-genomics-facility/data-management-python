@@ -114,6 +114,27 @@ class Find_and_register_project_data1(unittest.TestCase):
     self.assertEqual(user_data[0]['username'],'user2')
     self.assertTrue(user_data[0]['password'])
     
+  def test_check_existing_data(self):
+    fa=Find_and_register_new_project_data(projet_info_path=os.path.join('.','data/check_project_data'),\
+                                          dbconfig=self.dbconfig,\
+                                          user_account_template='template/email_notification/send_new_account_info.txt',\
+                                          log_slack=False,\
+                                          check_hpc_user=False,\
+                                          )
+    project_data1=pd.DataFrame([{'project_igf_id':'IGFP0001_test_22-8-2017_rna',},
+                                {'project_igf_id':'IGFP0002_test_23-5-2017_rna',},
+                               ]
+                              )
+    base=BaseAdaptor(**{'session_class':self.session_class})
+    base.start_session()
+    project_data1=project_data1.apply(lambda x: fa._check_existing_data(data=x,\
+                                                                        dbsession=base.session,\
+                                                                        table_name='project'),\
+                                      axis=1)
+    base.close_session()
+    project_data1=project_data1[project_data1['EXISTS']==False].to_dict(orient='region')
+    self.assertEqual(project_data1[0]['project_igf_id'],'IGFP0002_test_23-5-2017_rna')
+    
     
 if __name__=='__main__':
   unittest.main()
