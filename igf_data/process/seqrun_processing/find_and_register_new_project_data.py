@@ -122,7 +122,7 @@ class Find_and_register_new_project_data:
           project_igf_id=data[self.project_lookup_column]
           pa=ProjectAdaptor(**{'session':dbsession})                            # connect to project adaptor
           project_exists=pa.check_project_records_igf_id(project_igf_id)
-          if not project_exists:                                                # store data only if project is not existing
+          if project_exists:                                                # store data only if project is not existing
             data[check_column]=True
           else:
             data[check_column]=False
