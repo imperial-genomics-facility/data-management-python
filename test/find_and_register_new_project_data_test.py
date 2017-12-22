@@ -108,8 +108,10 @@ class Find_and_register_project_data1(unittest.TestCase):
     all_data=fa._read_project_info_and_get_new_entries(project_info_file=self.new_project_data)
     user_data=all_data['user_data']
     user_data=user_data.apply(lambda x: \
-                                self._assign_username_and_password(x), \
+                                fa._assign_username_and_password(x), \
                                 axis=1)
+    user_data=user_data.to_dict(orient='region')
+    self.assertEqual(user_data[0]['username'],'user2')
     
     
 if __name__=='__main__':
