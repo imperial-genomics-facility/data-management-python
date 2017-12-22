@@ -213,7 +213,7 @@ class ProjectAdaptor(BaseAdaptor):
             filter(User.email_id==email_id)
       results=self.fetch_records(query=query, \
                                  output_mode='one_or_none')
-      if results:
+      if results is not None:
         project_user_check=True
       return project_user_check
     except:
