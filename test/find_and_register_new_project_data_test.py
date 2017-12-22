@@ -142,6 +142,15 @@ class Find_and_register_project_data1(unittest.TestCase):
                                 axis=1)
     user_data1=user_data1[user_data1['EXISTS']==False].to_dict(orient='region')
     self.assertEqual(user_data1[0]['email_id'],'user3@ic.ac.uk')
+    sample_data1=pd.DataFrame([{'sample_igf_id':'IGF00001','project_igf_id':'IGFP0001_test_22-8-2017_rna',},
+                               {'sample_igf_id':'IGF00007','project_igf_id':'IGFP0001_test_22-8-2017_rna',},])
+    
+    sample_data1=sample_data1.apply(lambda x: fa._check_existing_data(data=x,\
+                                                                      dbsession=base.session,\
+                                                                      table_name='sample'),\
+                                    axis=1)
+    sample_data1=sample_data1[sample_data1['EXISTS']==False].to_dict(orient='region')
+    self.assertEqual(sample_data1[0]['sample_igf_id'],'IGF00007')
     base.close_session()
     
 if __name__=='__main__':

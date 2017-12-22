@@ -145,6 +145,7 @@ class Find_and_register_new_project_data:
           raise ValueError('Missing or empty required column {0}'.\
                            format(self.user_lookup_column))
       elif table_name=='sample':
+        print(data)
         if self.sample_lookup_column in data and \
            pd.isnull(data[self.sample_lookup_column]):
           sample_igf_id=data[self.sample_lookup_column]
