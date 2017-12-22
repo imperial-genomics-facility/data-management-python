@@ -143,7 +143,7 @@ class ProjectAdaptor(BaseAdaptor):
                                             column_name=column, \
                                             column_id=project_igf_id, \
                                             output_mode='one_or_none')
-      if project_obj:
+      if project_obj is not None:
         project_check=True
       return project_check
     except:
