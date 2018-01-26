@@ -16,6 +16,7 @@ class SendEmailToUser(IGFBaseProcess):
         'remote_user':None,
         'remote_host':None,
         'user_info_file':None,
+        'user_passwd':'Your account password',
       })
     return params_dict
   
@@ -29,9 +30,10 @@ class SendEmailToUser(IGFBaseProcess):
       template_dir=self.param_required('template_dir')
       remote_user=self.param_required('remote_user')
       remote_host=self.param_required('remote_host')
-      user_info_file=self.param_required('user_info_file')
+      user_info_file=self.param('user_info_file')
       email_template_path=self.param('email_template_path')
       email_template=self.param('email_template')
+      user_passwd=self.param('user_passwd')
       
       pa=ProjectAdaptor(**{'session_class':igf_session_class})
       pa.start_session()
@@ -48,7 +50,7 @@ class SendEmailToUser(IGFBaseProcess):
       login_name=user_info['username']
       user_email=user_info['email_id']
       
-      user_passwd=self._get_user_passwd(user_email)                             # method for user passwd, replace it after moving to the unified user registration system
+      #user_passwd=self._get_user_passwd(user_email)                             # method for user passwd, replace it after moving to the unified user registration system
       email_template_path=os.path.join(template_dir, \
                                        email_template_path)
       template_env=Environment(loader=FileSystemLoader(searchpath=email_template_path), \
@@ -91,6 +93,7 @@ class SendEmailToUser(IGFBaseProcess):
   def _get_user_passwd(self,user_email):
     '''
     An internal method for fetching the user passwd
+    It should be redundant now as password will not be sent along with the data
     '''
     try:
       remote_user=self.param_required('remote_user')
