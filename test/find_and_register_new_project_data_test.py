@@ -166,6 +166,31 @@ class Find_and_register_project_data1(unittest.TestCase):
     self.assertEqual(project_user_data1[0]['project_igf_id'],'IGFP0002_test_23-5-2017_rna')
     base.close_session()
     
+    def test_process_project_data_and_account(self):
+      fa=Find_and_register_new_project_data(projet_info_path=os.path.join('.','data/check_project_data'),\
+                                          dbconfig=self.dbconfig,\
+                                          user_account_template='template/email_notification/send_new_account_info.txt',\
+                                          log_slack=False,\
+                                          setup_irods=False,\
+                                          notify_user=False,\
+                                          check_hpc_user=False,\
+                                          )
+      fa.process_project_data_and_account()
+      base=BaseAdaptor(**{'session_class':self.session_class})
+      base.start_session()
+      pa=ProjectAdaptor(**{'session':base.session})
+      project_exists=pa.check_project_records_igf_id(project_igf_id='IGFP0002_test_23-5-2017_rna')
+      self.assertTrue(project_exists)
+      ua=UserAdaptor(**{'session':dbsession})
+      user_exists=ua.check_user_records_email_id(email_id='user2@ic.ac.uk')
+      self.assertTrue(user_exists)
+      sa=SampleAdaptor(**{'session':dbsession})
+      sample_exists=sa.check_sample_records_igf_id(sample_igf_id='IGF00006')
+      self.assertTrue(sample_exists)
+      project_user_exists=pa.check_existing_project_user(project_igf_id='IGFP0002_test_23-5-2017_rna',\
+                                                         email_id='user2@ic.ac.uk')
+      self.assertTrue(project_user_exists)
+    
 if __name__=='__main__':
   unittest.main()
   
