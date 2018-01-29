@@ -219,7 +219,32 @@ class ProjectAdaptor(BaseAdaptor):
     except:
       raise
     
-
+    
+  def check_data_authority_for_project(self,project_igf_id):
+    '''
+    A method for checking user data authority for existing projects
+    
+    required params:
+    project_igf_id: An unique project igf id
+    '''
+    try:
+      project_user_check=False
+      session=self.session
+      query=session.\
+            query(Project).\
+            join(ProjectUser).\
+            join(User).\
+            filter(Project.project_igf_id==project_igf_id).\
+            filter(ProjectUser.data_authority=='T')
+      results=self.fetch_records(query=query, \
+                                 output_mode='one_or_none')
+      if results is not None:
+        project_user_check=True
+      return project_user_check
+    except:
+      raise
+  
+  
   def get_project_attributes(self, project_igf_id, attribute_name=''): 
     projects=self.get_project_info(format='object', project_igf_id=project_igf_id)
     project=projects[0]
