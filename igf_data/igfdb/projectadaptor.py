@@ -233,7 +233,6 @@ class ProjectAdaptor(BaseAdaptor):
       query=session.\
             query(Project).\
             join(ProjectUser).\
-            join(User).\
             filter(Project.project_igf_id==project_igf_id).\
             filter(ProjectUser.data_authority=='T')
       results=self.fetch_records(query=query, \

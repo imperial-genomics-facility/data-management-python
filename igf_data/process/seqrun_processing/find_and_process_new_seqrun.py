@@ -37,6 +37,7 @@ def check_for_registered_project_and_sample(seqrun_info,dbconfig,samplesheet_fil
   '''
   try:
     msg=''
+    new_seqrun_info=dict()
     dbparams=read_dbconf_json(dbconfig)
     base=BaseAdaptor(**dbparams)
     base.start_session()                                                          # connect to db
@@ -51,8 +52,6 @@ def check_for_registered_project_and_sample(seqrun_info,dbconfig,samplesheet_fil
         record_exists=sa.check_project_and_sample(project_igf_id=project_id,\
                                                   sample_igf_id=sample_id)      # check for record in db
         if not record_exists:
-          if seqrun_name in seqrun_info:
-            del seqrun_info[seqrun_name]                                        # remove seqrun if samples are not registered
           if msg =='':
             msg='missing sample {1} and project {2} for run {3}'.\
                 format(sample_id, project_id, seqrun_name)
@@ -62,16 +61,16 @@ def check_for_registered_project_and_sample(seqrun_info,dbconfig,samplesheet_fil
                 
         project_authority_exists=pa.check_data_authority_for_project(project_igf_id=project_id)
         if not project_authority_exists:
-          if seqrun_name in seqrun_info:
-            del seqrun_info[seqrun_name]                                        # remove seqrun if data authority is not set properly
           if msg =='':
             msg='missing user info for project {0} for run {1}'.\
                 format(project_id, seqrun_name)
           else:
             msg='{0} \n missing user info for project {1} for run {2}'.\
                 format(msg, project_id, seqrun_name)
+        if record_exists and project_authority_exists:
+          new_seqrun_info.update({seqrun_name : seqrun_path})
     base.close_session()
-    return seqrun_info, msg
+    return new_seqrun_info, msg
   except:
     raise
 

@@ -34,7 +34,7 @@ class Find_and_register_project_data1(unittest.TestCase):
     pa.store_project_and_attribute_data(data=project_data)
     project_user_data=[{'project_igf_id':'IGFP0001_test_22-8-2017_rna',
                         'email_id':'user1@ic.ac.uk',
-                        'data_authority':'T'}]
+                        'data_authority':True}]
     pa.assign_user_to_project(data=project_user_data)
     sample_data=[{'sample_igf_id':'IGF00001',
                   'project_igf_id':'IGFP0001_test_22-8-2017_rna',},

@@ -1,6 +1,6 @@
 import unittest, json, os, shutil
 from sqlalchemy import create_engine
-from igf_data.igfdb.igfTables import Base, Seqrun, Pipeline_seed, Pipeline
+from igf_data.igfdb.igfTables import Base, Seqrun, Pipeline_seed, Pipeline, ProjectUser
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.platformadaptor import PlatformAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
@@ -44,7 +44,7 @@ class Find_seqrun_test1(unittest.TestCase):
     pa.store_project_and_attribute_data(data=project_data)
     project_user_data=[{'project_igf_id':'project_1',
                         'email_id':'user1@ic.ac.uk',
-                        'data_authority':'T'}]
+                        'data_authority': True}]
     pa.assign_user_to_project(data=project_user_data)
     sample_data=[{'sample_igf_id':'IGF0001',
                   'project_igf_id':'project_1',},
@@ -55,7 +55,7 @@ class Find_seqrun_test1(unittest.TestCase):
                 ]
     sa=SampleAdaptor(**{'session':base.session})
     sa.store_sample_and_attribute_data(data=sample_data)
-    
+    base.commit_session()
     with open(pipeline_json, 'r') as json_data:            # store pipeline data to db
       pipeline_data=json.load(json_data)
       pa=PipelineAdaptor(**{'session':base.session})
@@ -127,7 +127,7 @@ class Find_seqrun_test1(unittest.TestCase):
   def test_check_for_registered_project_and_sample(self):
     valid_seqrun_dir=find_new_seqrun_dir(path=self.path,dbconfig=self.dbconfig)
     registered_seqruns,msg=check_for_registered_project_and_sample(seqrun_info=valid_seqrun_dir,\
-                                                               dbconfig=self.dbconfig)
+                                                                   dbconfig=self.dbconfig)
     self.assertEqual(msg,'')
     self.assertTrue('seqrun1' in registered_seqruns)
 if __name__=='__main__':
