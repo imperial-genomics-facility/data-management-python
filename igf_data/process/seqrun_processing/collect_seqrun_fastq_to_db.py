@@ -1,5 +1,6 @@
-import os, re, fnmatch
+import os, re, fnmatch, subprocess
 from collections import defaultdict
+from shlex import quote
 from igf_data.illumina.samplesheet import SampleSheet
 import pandas as pd
 from igf_data.igfdb.igfTables import Experiment, Run
@@ -145,7 +146,37 @@ class Collect_seqrun_fastq_to_db:
           fastq_files_list.append(fastq_info)                                   # adding entries per sample per lane
     return fastq_files_list
 
-
+  @staticmethod
+  def _count_fastq_reads(fastq_file):
+    '''
+    A static method for counting reads from the zipped and bzipped fastq files
+    required params:
+    fastq_file: A fastq file with absolute path
+    '''
+    try:
+      if not os.path.exists(fastq_file):
+        raise IOError('fastq file {0} is not found'.format(fastq_file))
+      if fnmatch.fnmatch(os.path.basename(fastq_file),'*.fastq.gz'):
+        read_cmd=['zcat',quote(fastq_file)]
+      elif fnmatch.fnmatch(os.path.basename(fastq_file),'*.fastq.bz'):
+        read_cmd=['bzcat',quote(fastq_file)]
+      elif fnmatch.fnmatch(os.path.basename(fastq_file),'*.fastq'):
+        read_cmd=['cat',quote(fastq_file)]
+      else:
+        raise ValueError('file {0} is not recognised'.format(fastq_file))
+      
+      proc=subprocess.Popen(read_cmd, stdout=subprocess.PIPE)
+      count_cmd=['wc','-l']
+      proc2=subprocess.Popen(count_cmd,stdin=proc.stdout,stdout=subprocess.PIPE)
+      proc.stdout.close()
+      result=proc2.communicate()[0]
+      result=result.decode('UTF-8').split('\n')
+      result=int(result)/4
+      return result
+    except:
+      raise
+    
+  
   def _calculate_experiment_run_and_file_info(self,data,restricted_list):
     if not isinstance(data, pd.Series):
       data=pd.Series(data)
@@ -175,10 +206,12 @@ class Collect_seqrun_fastq_to_db:
       data['R1_md5']=calculate_file_checksum(filepath=data.R1, \
                                              hasher='md5')
       data['R1_size']=os.path.getsize(data.R1)
+      data['R1_READ_COUNT']=self._count_fastq_reads(fastq_file=data.R1)
     if 'R2' in data:
       data['R2_md5']=calculate_file_checksum(filepath=data.R2, \
                                              hasher='md5')
       data['R2_size']=os.path.getsize(data.R2)
+      data['R2_READ_COUNT']=self._count_fastq_reads(fastq_file=data.R2)
     # set library strategy
     library_layout='SINGLE'
     if 'R1' in data and 'R2' in data and \
@@ -308,7 +341,7 @@ class Collect_seqrun_fastq_to_db:
                                                            'status'
                                                           ])
       run_columns.extend(['seqrun_igf_id',
-                          'experiment_igf_id'])
+                          'experiment_igf_id','R1_READ_COUNT','R2_READ_COUNT'])
       run_data=dataframe.loc[:,run_columns]
       run_data=run_data.drop_duplicates()
       # get collection data
