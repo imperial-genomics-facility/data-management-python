@@ -3,9 +3,12 @@ from sqlalchemy import create_engine
 from igf_data.igfdb.igfTables import Base, Seqrun, Pipeline_seed, Pipeline
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.platformadaptor import PlatformAdaptor
+from igf_data.igfdb.projectadaptor import ProjectAdaptor
+from igf_data.igfdb.useradaptor import UserAdaptor
+from igf_data.igfdb.sampleadaptor import SampleAdaptor
 from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
-from igf_data.process.seqrun_processing.find_and_process_new_seqrun import find_new_seqrun_dir,calculate_file_md5,load_seqrun_files_to_db, seed_pipeline_table_for_new_seqrun
+from igf_data.process.seqrun_processing.find_and_process_new_seqrun import find_new_seqrun_dir,calculate_file_md5,load_seqrun_files_to_db, seed_pipeline_table_for_new_seqrun, check_for_registered_project_and_sample
 
 class Find_seqrun_test1(unittest.TestCase):
   def setUp(self):
@@ -28,7 +31,31 @@ class Find_seqrun_test1(unittest.TestCase):
     self.pipeline_name=''
     Base.metadata.create_all(self.engine)
     base.start_session()
-
+    user_data=[{'name':'user1','email_id':'user1@ic.ac.uk','username':'user1'},]
+    ua=UserAdaptor(**{'session':base.session})
+    ua.store_user_data(data=user_data)
+    project_data=[{'project_igf_id':'project_1',
+                   'project_name':'test_22-8-2017_rna',
+                   'description':'Its project 1',
+                   'project_deadline':'Before August 2017',
+                   'comments':'Some samples are treated with drug X',
+                 }]
+    pa=ProjectAdaptor(**{'session':base.session})
+    pa.store_project_and_attribute_data(data=project_data)
+    project_user_data=[{'project_igf_id':'project_1',
+                        'email_id':'user1@ic.ac.uk',
+                        'data_authority':'T'}]
+    pa.assign_user_to_project(data=project_user_data)
+    sample_data=[{'sample_igf_id':'IGF0001',
+                  'project_igf_id':'project_1',},
+                 {'sample_igf_id':'IGF0002',
+                  'project_igf_id':'project_1',},
+                 {'sample_igf_id':'IGF0003',
+                  'project_igf_id':'project_1',},
+                ]
+    sa=SampleAdaptor(**{'session':base.session})
+    sa.store_sample_and_attribute_data(data=sample_data)
+    
     with open(pipeline_json, 'r') as json_data:            # store pipeline data to db
       pipeline_data=json.load(json_data)
       pa=PipelineAdaptor(**{'session':base.session})
@@ -97,6 +124,12 @@ class Find_seqrun_test1(unittest.TestCase):
     base.close_session()
     self.assertTrue('seqrun1' in [s.seqrun_igf_id for s in seeds])
  
+  def test_check_for_registered_project_and_sample(self):
+    valid_seqrun_dir=find_new_seqrun_dir(path=self.path,dbconfig=self.dbconfig)
+    registered_seqruns,msg=check_for_registered_project_and_sample(seqrun_info=valid_seqrun_dir,\
+                                                               dbconfig=self.dbconfig)
+    self.assertEqual(msg,'')
+    self.assertTrue('seqrun1' in registered_seqruns)
 if __name__=='__main__':
   unittest.main()
 
