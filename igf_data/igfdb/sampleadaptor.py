@@ -147,5 +147,28 @@ class SampleAdaptor(BaseAdaptor):
       return sample_check
     except:
       raise
-
+    
+    
+  def check_project_and_sample(self,project_igf_id,sample_igf_id):
+    '''
+    A method for checking existing project and sample igf id combination
+    in sample table
+    
+    required params:
+    project_igf_id
+    sample_igf_id
+    It returns True if target entry is present or return False
+    '''
+    try:
+      sample_check=False
+      sample_object=self.session.query(Sample).\
+                                 join(Project).\
+                                 filter(Sample.sample_igf_id==sample_igf_id).\
+                                 filter(Project.project_igf_id==project_igf_id).\
+                                 one_or_none()
+      if sample_object is not None:
+        sample_check=True
+      return sample_check
+    except:
+      raise
 
