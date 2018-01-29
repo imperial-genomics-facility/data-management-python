@@ -1,14 +1,17 @@
 import os, sys, hashlib, json, fnmatch
+from igf_data.illumina.samplesheet import SampleSheet
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.igfTables import Seqrun
 from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
+from igf_data.igfdb.sampleadaptor import SampleAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.igfdb.platformadaptor import PlatformAdaptor
 from igf_data.illumina.runinfo_xml import RunInfo_xml
 from igf_data.illumina.runparameters_xml import RunParameter_xml
 from igf_data.utils.fileutils import calculate_file_checksum
+from igf_data.utils.dbutils import read_dbconf_json
 
 
 def find_new_seqrun_dir(path, dbconfig):
@@ -19,6 +22,46 @@ def find_new_seqrun_dir(path, dbconfig):
   new_seqrun_dir=check_seqrun_dir_in_db(all_seqrun_dir,dbconfig)                          
   valid_seqrun_dir=check_finished_seqrun_dir(seqrun_dir=new_seqrun_dir, seqrun_path=path)
   return valid_seqrun_dir
+
+
+def check_for_registered_project_and_sample(seqrun_info,dbconfig,samplesheet_file='SampleSheet.csv'):
+  '''
+  A method for fetching project and sample records from samplesheet and checking for
+  registered samples in db
+  
+  required params:
+  seqrun_info: A dictionary containing seqrun name and path as key and values
+  dbconfig: A database configuration file
+  samplesheet_file: Name of samplesheet file, default is SampleSheet.csv
+  '''
+  try:
+    msg=''
+    dbparams=read_dbconf_json(dbconfig)
+    sa=SampleAdaptor(**dbparams)
+    sa.start_session()                                                          # connect to db
+    for seqrun_name, seqrun_path in seqrun_info.items():
+      samplesheet=os.path.join(seqrun_path,samplesheet_file)                    # get samplesheet file
+      samplesheet_data=SampleSheet(infile=samplesheet)                          # read samplesheet data
+      for row in samplesheet_data._data:
+        sample_id=row['Sample_ID']
+        project_id=row['Sample_Project']
+        record_exists=sa.check_project_and_sample(project_igf_id=project_id,\
+                                                  sample_igf_id=sample_id)      # check for record in db
+        if not record_exists:
+          if seqrun_name in seqrun_info:
+            del seqrun_info[seqrun_name]                                        # remove seqrun if samples are not registered
+          if msg =='':
+            msg='missing sample {1} and project {2} for run {3}'.\
+                format(sample_id, project_id, seqrun_name)
+          else:
+            msg='{0} \n missing sample {1} and project {2} for run {3}'.\
+                format(msg, sample_id, project_id, seqrun_name)
+    sa.close_session()
+    if msg=='':
+      msg='All samples and projects are registered'                             # default message
+    return seqrun_info, msg
+  except:
+    raise
 
 
 def check_finished_seqrun_dir(seqrun_dir, seqrun_path, required_files=['RTAComplete.txt','SampleSheet.csv','RunInfo.xml']):
