@@ -161,11 +161,12 @@ class SampleAdaptor(BaseAdaptor):
     '''
     try:
       sample_check=False
-      sample_object=self.session.query(Sample).\
-                                 join(Project).\
-                                 filter(Sample.sample_igf_id==sample_igf_id).\
-                                 filter(Project.project_igf_id==project_igf_id).\
-                                 one_or_none()
+      query=self.session.\
+                 query(Sample).\
+                 join(Project).\
+                 filter(Sample.sample_igf_id==sample_igf_id).\
+                 filter(Project.project_igf_id==project_igf_id)                 # construct join query
+      sample_object=self.fetch_records(query=query,output_mode='one_or_none')   # check for existing records
       if sample_object is not None:
         sample_check=True
       return sample_check
