@@ -57,8 +57,6 @@ def check_for_registered_project_and_sample(seqrun_info,dbconfig,samplesheet_fil
             msg='{0} \n missing sample {1} and project {2} for run {3}'.\
                 format(msg, sample_id, project_id, seqrun_name)
     sa.close_session()
-    if msg=='':
-      msg='All samples and projects are registered'                             # default message
     return seqrun_info, msg
   except:
     raise
