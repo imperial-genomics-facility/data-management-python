@@ -5,6 +5,7 @@ from igf_data.igfdb.igfTables import Seqrun
 from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.sampleadaptor import SampleAdaptor
+from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.igfdb.platformadaptor import PlatformAdaptor
@@ -37,8 +38,10 @@ def check_for_registered_project_and_sample(seqrun_info,dbconfig,samplesheet_fil
   try:
     msg=''
     dbparams=read_dbconf_json(dbconfig)
-    sa=SampleAdaptor(**dbparams)
-    sa.start_session()                                                          # connect to db
+    base=BaseAdaptor(**dbparams)
+    base.start_session()                                                          # connect to db
+    sa=SampleAdaptor(**{'session':base.session})
+    pa=ProjectAdaptor(**{'session':base.session})
     for seqrun_name, seqrun_path in seqrun_info.items():
       samplesheet=os.path.join(seqrun_path,samplesheet_file)                    # get samplesheet file
       samplesheet_data=SampleSheet(infile=samplesheet)                          # read samplesheet data
@@ -56,7 +59,18 @@ def check_for_registered_project_and_sample(seqrun_info,dbconfig,samplesheet_fil
           else:
             msg='{0} \n missing sample {1} and project {2} for run {3}'.\
                 format(msg, sample_id, project_id, seqrun_name)
-    sa.close_session()
+                
+        project_authority_exists=pa.check_data_authority_for_project(project_igf_id=project_id)
+        if not project_authority_exists:
+          if seqrun_name in seqrun_info:
+            del seqrun_info[seqrun_name]                                        # remove seqrun if data authority is not set properly
+          if msg =='':
+            msg='missing user info for project {0} for run {1}'.\
+                format(project_id, seqrun_name)
+          else:
+            msg='{0} \n missing user info for project {1} for run {2}'.\
+                format(msg, project_id, seqrun_name)
+    base.close_session()
     return seqrun_info, msg
   except:
     raise
