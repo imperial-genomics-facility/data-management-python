@@ -87,10 +87,7 @@ def check_seqrun_dir_in_db(all_seqrun_dir,dbconfig):
   all_seqrun_dir: list of seqrun dirs to check
   dbconfig: dbconfig
   '''
-  dbparam=None
-  with open(dbconfig, 'r') as json_data:
-    dbparam=json.load(json_data)
-  
+  dbparam=read_dbconf_json(dbconfig)
   sra=SeqrunAdaptor(**dbparam)
   sra.start_session()
   sra_data=sra.fetch_records(sra.session.query(Seqrun.seqrun_igf_id),output_mode='object')
