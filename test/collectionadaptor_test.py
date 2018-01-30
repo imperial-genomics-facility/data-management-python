@@ -37,7 +37,7 @@ class CollectionAdaptor_test1(unittest.TestCase):
     file_data=fa.fetch_file_records_file_path(file_path)
     fa.close_session()
     file_md5=file_data.md5
-    self.assertEqual(file_md5, 'a925b61b8b7622c94b8fddcaa1e6e5a6')
+    self.assertEqual(file_md5, 'd5798564a14a09b9e80640ac2f42f47e')
     
   def test_fetch_collection_name_and_table_from_file_path(self):
     file_path='data/collect_fastq_dir/1_16/IGFP0001_test_22-8-2017_rna/IGF00002/IGF00002-2_S1_L001_R1_001.fastq.gz'
