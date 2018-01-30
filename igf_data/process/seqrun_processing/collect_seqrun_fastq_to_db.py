@@ -169,10 +169,13 @@ class Collect_seqrun_fastq_to_db:
       count_cmd=['wc','-l']
       proc2=subprocess.Popen(count_cmd,stdin=proc.stdout,stdout=subprocess.PIPE)
       proc.stdout.close()
-      result=proc2.communicate()[0]
-      result=result.decode('UTF-8').split('\n')
-      result=int(result)/4
+      result=int(proc2.communicate()[0].decode('UTF-8'))
+      if result==0:
+        raise ValueError('Fastq file {0} has zero lines'.format(fastq_file))
+      
+      result=int(result/4)
       return result
+      
     except:
       raise
     
