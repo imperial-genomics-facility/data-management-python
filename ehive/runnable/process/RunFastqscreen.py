@@ -8,7 +8,7 @@ from igf_data.igfdb.runadaptor import RunAdaptor
 
 class RunFastqscreen(IGFBaseProcess):
   def param_defaults(self):
-    params_dict=super(IGFBaseProcess,self).param_defaults()
+    params_dict=super(RunFastqscreen,self).param_defaults()
     params_dict.update({
       'force_overwrite':True,
       'tag':None,

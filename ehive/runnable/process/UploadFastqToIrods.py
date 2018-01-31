@@ -7,7 +7,7 @@ from igf_data.igfdb.projectadaptor import ProjectAdaptor
 
 class UploadFastqToIrods(IGFBaseProcess):
   def param_defaults(self):
-    params_dict=super(IGFBaseProcess,self).param_defaults()
+    params_dict=super(UploadFastqToIrods,self).param_defaults()
     params_dict.update({
         'samplesheet_filename':'SampleSheet.csv',
         'report_html':'*all/all/all/laneBarcode.html',

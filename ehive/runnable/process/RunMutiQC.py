@@ -5,7 +5,7 @@ from igf_data.utils.fileutils import get_temp_dir,remove_dir
 
 class RunMutiQC(IGFBaseProcess):
   def param_defaults(self):
-    params_dict=super(IGFBaseProcess,self).param_defaults()
+    params_dict=super(RunMutiQC,self).param_defaults()
     params_dict.update({
       'force_overwrite':True,
       'multiqc_dir_label':'multiqc',

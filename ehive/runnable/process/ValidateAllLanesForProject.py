@@ -11,7 +11,7 @@ class ValidateAllLanesForProject(IGFBaseProcess):
   projects with failed qc stats and send messsage to slack channel
   '''
   def param_defaults(self):
-    params_dict=super(IGFBaseProcess,self).param_defaults()
+    params_dict=super(ValidateAllLanesForProject,self).param_defaults()
     params_dict.update({
         'strict_check':True,
       })

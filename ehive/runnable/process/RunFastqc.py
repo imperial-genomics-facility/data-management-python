@@ -9,7 +9,7 @@ from igf_data.igfdb.runadaptor import RunAdaptor
 
 class RunFastqc(IGFBaseProcess):
   def param_defaults(self):
-    params_dict=super(IGFBaseProcess,self).param_defaults()
+    params_dict=super(RunFastqc,self).param_defaults()
     params_dict.update({
       'required_collection_table':'run',
       'force_overwrite':True,
