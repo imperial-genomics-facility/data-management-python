@@ -9,7 +9,7 @@ class SendEmailToUser(IGFBaseProcess):
   A runnable module for sending email to the users about the data availability
   '''
   def param_defaults(self):
-    params_dict=super(IGFBaseProcess,self).param_defaults()
+    params_dict=super(SendEmailToUser,self).param_defaults()
     params_dict.update({
         'email_template_path':'email_notification',
         'email_template':'send_fastq_to_user.txt',
