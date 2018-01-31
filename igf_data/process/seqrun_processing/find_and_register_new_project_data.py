@@ -404,6 +404,7 @@ class Find_and_register_new_project_data:
           sample_data
     '''
     try:
+      db_connected=False
       project_data=data['project_data']
       user_data=data['user_data']
       project_user_data=data['project_user_data']
@@ -411,7 +412,6 @@ class Find_and_register_new_project_data:
       user_data=user_data.apply(lambda x: \
                                 self._assign_username_and_password(x), \
                                 axis=1)                                         # check for use account and password
-      db_connected=False
       base=BaseAdaptor(**{'session_class':self.session_class})
       base.start_session()                                                      # connect_to db
       db_connected=True
