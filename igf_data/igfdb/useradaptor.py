@@ -24,7 +24,7 @@ class UserAdaptor(BaseAdaptor):
     if not isinstance(series, pd.Series):
       series=pd.DataFrame(series)
 
-    if password_column in series.index and series[password_column]:             # password is optional
+    if password_column in series.index and not pd.isnull(series[password_column]): # password is optional
       salt=codecs.encode(os.urandom(32),"hex").decode("utf-8")                  # calculate salt value
       password=series[password_column]                                          # fetch password
       if not isinstance(password, str):

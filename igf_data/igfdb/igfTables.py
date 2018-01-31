@@ -46,7 +46,7 @@ class User(Base):
   user_id         = Column(INTEGER(unsigned=True), primary_key=True, nullable=False) 
   user_igf_id     = Column(String(10))
   name            = Column(String(30), nullable=False)
-  email_id        = Column(String(20), nullable=False)
+  email_id        = Column(String(40), nullable=False)
   username        = Column(String(20))
   hpc_username    = Column(String(20))
   twitter_user    = Column(String(20))
