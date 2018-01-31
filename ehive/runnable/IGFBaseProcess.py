@@ -7,7 +7,7 @@ class IGFBaseProcess(IGFBaseRunnable):
   def param_defaults(self):
     params_dict=super(IGFBaseProcess,self).param_defaults()
     return params_dict
-  
+
   def write_output(self):
     if self.param_is_defined('dataflow_params'):
       dataflow_params = self.param('dataflow_params')
