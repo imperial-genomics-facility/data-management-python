@@ -78,7 +78,7 @@ class SendEmailToUser(IGFBaseProcess):
       subprocess.check_call(sendmail_cmd,stdin=proc.stdout)
       proc.stdout.close()
       remove_dir(temp_work_dir)
-      message='finished data processing for seqrun: {0}, project: {0}, sent mail to igf'.\
+      message='finished data processing for seqrun: {0}, project: {1}, sent mail to igf'.\
               format(seqrun_igf_id, project_name)
       self.post_message_to_slack(message,reaction='pass')
     except Exception as e:
