@@ -408,10 +408,10 @@ class Find_and_register_new_project_data:
     '''
     try:
       db_connected=False
-      project_data=data['project_data']
-      user_data=data['user_data']
-      project_user_data=data['project_user_data']
-      sample_data=data['sample_data']
+      project_data=pd.DataFrame(data['project_data'])
+      user_data=pd.DataFrame(data['user_data'])
+      project_user_data=pd.DataFrame(data['project_user_data'])
+      sample_data=pd.DataFrame(data['sample_data'])
       user_data=user_data.apply(lambda x: \
                                 self._assign_username_and_password(x), \
                                 axis=1)                                         # check for use account and password
