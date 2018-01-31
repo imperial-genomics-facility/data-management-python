@@ -427,7 +427,7 @@ class Find_and_register_new_project_data:
                             check_column='EXISTS'),\
                          axis=1)                                                # get project map
       project_data=project_data[project_data['EXISTS']==False]                  # filter existing projects
-      del project_data['EXISTS']                                                # remove extra column
+      project_data.drop('EXISTS', axis=1, inplace=True)                         # remove extra column
       user_data=user_data.\
                 apply(lambda x: \
                       self._check_existing_data(\
@@ -437,7 +437,7 @@ class Find_and_register_new_project_data:
                             check_column='EXISTS'),\
                       axis=1)                                                   # get user map
       user_data=user_data[user_data['EXISTS']==False]                           # filter existing users
-      del user_data['EXISTS']                                                   # remove extra column
+      user_data.drop('EXISTS', axis=1, inplace=True)                            # remove extra column
       sample_data=sample_data.\
                    apply(lambda x: \
                          self._check_existing_data(\
@@ -447,7 +447,7 @@ class Find_and_register_new_project_data:
                             check_column='EXISTS'),\
                          axis=1)                                                # get sample map
       sample_data=sample_data[sample_data['EXISTS']==False]                     # filter existing samples
-      del sample_data['EXISTS']                                                 # remove extra column
+      sample_data.drop('EXISTS', axis=1, inplace=True)                          # remove extra column
       project_user_data=project_user_data.\
                         apply(lambda x: \
                          self._check_existing_data(\
@@ -457,7 +457,7 @@ class Find_and_register_new_project_data:
                             check_column='EXISTS'),\
                          axis=1)                                                # get project user map
       project_user_data=project_user_data[project_user_data['EXISTS']==False]   # filter existing project user
-      del project_user_data['EXISTS']                                           # remove extra column
+      project_user_data.drop('EXISTS', axis=1, inplace=True)                    # remove extra column
       
       if len(project_data.index) > 0:                                           # store new projects
         pa1=ProjectAdaptor(**{'session':base.session})                          # connect to project adaptor
