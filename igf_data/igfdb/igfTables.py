@@ -55,7 +55,7 @@ class User(Base):
   date_created    = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
   password        = Column(String(129))
   encryption_salt = Column(String(129))
-  ht_password     = Column(String(32))
+  ht_password     = Column(String(40))
   projectuser     = relationship('ProjectUser', backref="user")
   
   def __repr__(self):
