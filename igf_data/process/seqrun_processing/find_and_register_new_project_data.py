@@ -329,7 +329,7 @@ class Find_and_register_new_project_data:
     '''
     try:
       cmd1=['ssh', \
-           '{0}@{1}'.format(quote(self.hpc_username),quote(self.hpc_address)), \
+           '{0}@{1}'.format(quote(self.hpc_user),quote(self.hpc_address)), \
            '"ldapsearch -x -h {0}"'.format(quote(self.ldap_server)), \
           ]
       cmd2=['grep',\
