@@ -9,7 +9,7 @@ class SamplesheetFilterAndIndexFactory(IGFBaseJobFactory):
   It creates a job factory and pass on the output samplesheet names
   '''
   def param_defaults(self):
-    params_dict=super(IGFBaseJobFactory,self).param_defaults()
+    params_dict=super(SamplesheetFilterAndIndexFactory,self).param_defaults()
     params_dict.update({
         'samplesheet_filename':'SampleSheet.csv',
       })

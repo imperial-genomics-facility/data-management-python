@@ -12,7 +12,7 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
   file for user access
   '''
   def param_defaults(self):
-    params_dict=super(IGFBaseProcess,self).param_defaults()
+    params_dict=super(CreateRemoteAccessForProject,self).param_defaults()
     params_dict.update({
       'htaccess_template_path':'ht_access',
       'htaccess_template':'htaccess.jinja',

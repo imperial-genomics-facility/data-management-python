@@ -6,7 +6,7 @@ class ProjectFastqdirFactory(IGFBaseJobFactory):
   '''
   
   def param_defaults(self):
-    params_dict=super(IGFBaseJobFactory,self).param_defaults()
+    params_dict=super(ProjectFastqdirFactory,self).param_defaults()
     return params_dict
   
   def run(self):

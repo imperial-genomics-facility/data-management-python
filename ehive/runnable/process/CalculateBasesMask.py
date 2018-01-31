@@ -11,7 +11,7 @@ class CalculateBasesMask(IGFBaseProcess):
   Illumina samplesheet and RunInfor.xml file
   '''
   def param_defaults(self):
-    params_dict=super(IGFBaseProcess,self).param_defaults()
+    params_dict=super(CalculateBasesMask,self).param_defaults()
     params_dict.update({
         'runinfo_filename':'RunInfo.xml',
         'read_offset':1,

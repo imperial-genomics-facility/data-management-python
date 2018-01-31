@@ -6,7 +6,7 @@ class FastqFileFactory(IGFBaseJobFactory):
   A job factory class for creating fan jobs for demultilexed fastq files
   '''
   def param_defaults(self):
-    params_dict=super(IGFBaseJobFactory,self).param_defaults()
+    params_dict=super(FastqFileFactory,self).param_defaults()
     params_dict.update({
         'required_keyword':None,
         'filter_keyword':None,

@@ -3,7 +3,7 @@ from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 
 class ChangePipelineSeedStatus(IGFBaseProcess):
   def param_defaults(self):
-    params_dict=super(IGFBaseProcess,self).param_defaults()
+    params_dict=super(ChangePipelineSeedStatus,self).param_defaults()
     return params_dict
   
   def run(self):

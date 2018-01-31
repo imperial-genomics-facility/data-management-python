@@ -11,7 +11,7 @@ class RunBcl2Fastq(IGFBaseProcess):
   A process class for running tool bcl2fastq
   '''
   def param_defaults(self):
-    params_dict=super(IGFBaseProcess,self).param_defaults()
+    params_dict=super(RunBcl2Fastq,self).param_defaults()
     params_dict.update({
         'runinfo_filename':'RunInfo.xml',
         'samplesheet_filename':'SampleSheet.csv',

@@ -16,7 +16,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
   Also copy the static html page to remote server
   '''
   def param_defaults(self):
-    params_dict=super(IGFBaseProcess,self).param_defaults()
+    params_dict=super(PrepareQcPageForRemote,self).param_defaults()
     params_dict.update({
       'qc_template_path':'qc_report',
       'project_template':'index.html',

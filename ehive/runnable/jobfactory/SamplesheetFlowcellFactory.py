@@ -8,7 +8,7 @@ class SampleSheetFlowcellFactory(IGFBaseJobFactory):
   A class for finding all the projects mentioned in the SampleSheet
   '''
   def param_defaults(self):
-    params_dict=super(IGFBaseJobFactory,self).param_defaults()
+    params_dict=super(SampleSheetFlowcellFactory,self).param_defaults()
     return params_dict
   
   def run(self):

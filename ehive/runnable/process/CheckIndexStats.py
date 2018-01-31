@@ -9,7 +9,7 @@ class CheckIndexStats(IGFBaseProcess):
   A ehive process class for checking barcode stats and report to slack and asana
   '''
   def param_defaults(self):
-    params_dict=super(IGFBaseProcess,self).param_defaults()
+    params_dict=super(CheckIndexStats,self).param_defaults()
     params_dict.update({
       'stats_filename':'Stats/Stats.json',
       'strict_check':True,

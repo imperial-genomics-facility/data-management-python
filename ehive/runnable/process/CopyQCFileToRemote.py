@@ -6,7 +6,7 @@ from igf_data.utils.fileutils import copy_remote_file
 
 class CopyQCFileToRemote(IGFBaseProcess):
   def param_defaults(self):
-    params_dict=super(IGFBaseProcess,self).param_defaults()
+    params_dict=super(CopyQCFileToRemote,self).param_defaults()
     params_dict.update({
       'remote_host':None,
       'remote_project_path':None,

@@ -4,7 +4,7 @@ from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 
 class CleanupDirOrFile(IGFBaseProcess):
   def param_defaults(self):
-    params_dict=super(IGFBaseProcess,self).param_defaults()
+    params_dict=super(CleanupDirOrFile,self).param_defaults()
     params_dict.update({
       'cleanup_status':False,
       })

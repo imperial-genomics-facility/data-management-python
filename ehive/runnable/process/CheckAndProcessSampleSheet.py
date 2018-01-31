@@ -13,7 +13,7 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
   and converting index barcodes based on flowcell rules table
   '''
   def param_defaults(self):
-    params_dict=super(IGFBaseProcess,self).param_defaults()
+    params_dict=super(CheckAndProcessSampleSheet,self).param_defaults()
     params_dict.update({
         'samplesheet_filename':'SampleSheet.csv',
         'index2_label':'index_2',

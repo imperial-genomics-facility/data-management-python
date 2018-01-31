@@ -7,7 +7,7 @@ class CollectFastqToDbCollection(IGFBaseProcess):
   as the experiment and runs
   '''
   def param_defaults(self):
-    params_dict=super(IGFBaseProcess,self).param_defaults()
+    params_dict=super(CollectFastqToDbCollection,self).param_defaults()
     params_dict.update({'file_location':'HPC_PROJECT',
                         'samplesheet_filename':'SampleSheet.csv',
                         'manifest_name': 'file_manifest.csv',
