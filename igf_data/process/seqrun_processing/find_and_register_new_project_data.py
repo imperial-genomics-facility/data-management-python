@@ -330,22 +330,22 @@ class Find_and_register_new_project_data:
     try:
       cmd1=['ssh', \
            '{0}@{1}'.format(quote(self.hpc_user),quote(self.hpc_address)), \
-           '"ldapsearch -x -h {0}"'.format(quote(self.ldap_server)), \
+           'ldapsearch -x -h {0}'.format(quote(self.ldap_server)), \
           ]
       cmd2=['grep',\
             '-w',\
-            '"uid: {0}"'.format(quote(username)), \
+            'uid: {0}'.format(quote(username)), \
            ]
       proc1=subprocess.Popen(cmd1,stdout=subprocess.PIPE)
       proc2=subprocess.Popen(cmd2,stdin=proc1.stdout,stdout=subprocess.PIPE)
       proc1.stdout.close()
       result=proc2.communicate()[0]
-      result=result.decode('UTF-8').split('\n')
-      if len(result)>0:
-        hpc_user=username
+      result=result.decode('UTF-8')
+      if result=='':
+        hpc_username=None
       else:
-        hpc_user=None
-      return hpc_user
+        hpc_username=username
+      return hpc_username
     except:
       raise
     
