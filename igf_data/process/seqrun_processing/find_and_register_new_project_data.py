@@ -236,7 +236,7 @@ class Find_and_register_new_project_data:
         sendmail_cmd=['sendmail', '-t']
         subprocess.check_call(sendmail_cmd,stdin=proc.stdout)
         proc.stdout.close()
-        if proc.returncode !=0:
+        if proc.returncode !=None:
           raise ValueError('Failed running command {0}:{1}'.format(read_cmd,\
                                                                    proc.returncode))
         remove_dir(temp_work_dir)
@@ -303,7 +303,7 @@ class Find_and_register_new_project_data:
       c_proc1=subprocess.Popen(check_cmd1,stdout=subprocess.PIPE)
       c_proc2=subprocess.Popen(check_cmd2,stdin=c_proc1.stdout,stdout=subprocess.PIPE)
       c_proc1.stdout.close()
-      if c_proc1.returncode !=0:
+      if c_proc1.returncode !=None:
           raise ValueError('Failed running command {0}:{1}'.format(check_cmd1,\
                                                                    c_proc1.returncode))
       result=c_proc2.communicate()[0]
@@ -354,7 +354,7 @@ class Find_and_register_new_project_data:
       proc1=subprocess.Popen(cmd1,stdout=subprocess.PIPE)
       proc2=subprocess.Popen(cmd2,stdin=proc1.stdout,stdout=subprocess.PIPE)
       proc1.stdout.close()
-      if proc1.returncode !=0:
+      if proc1.returncode !=None:
           raise ValueError('Failed running command {0}:{1}'.format(cmd1,\
                                                                    proc1.returncode))
       result=proc2.communicate()[0]
