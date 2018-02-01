@@ -49,8 +49,11 @@ class UserAdaptor(BaseAdaptor):
     if not isinstance(data_series, pd.Series):
       data_series=pd.DataFrame(data_series)
 
-    if categoty_column not in data_series or pd.isnull(data_series[categoty_column]):
-      if hpc_user_column in data_series.index and not pd.isnull(data_series[hpc_user_column]):
+    if categoty_column not in data_series or \
+       pd.isnull(data_series[categoty_column]):
+      if hpc_user_column in data_series and \
+          not pd.isnull(data_series[hpc_user_column]) and \
+          data_series[hpc_user_column]!='':
         data_series[categoty_column]=hpc_user                                   # assign hpc user
       else:
         data_series[categoty_column]=non_hpc_user                               # non hpc user
