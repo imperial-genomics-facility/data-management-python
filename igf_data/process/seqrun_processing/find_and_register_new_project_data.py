@@ -93,6 +93,11 @@ class Find_and_register_new_project_data:
           new_data=self._read_project_info_and_get_new_entries(project_info_file) # get new project, user and samples information
           self._check_and_register_data(data=new_data,\
                                         project_info_file=project_info_file)    # register data
+          if self.log_slack:
+            message='loaded new metadata from file {0}'.\
+                  format(os.path.basename(project_info_file))
+            self.igf_slack.post_message_to_channel(message,reaction='pass')
+
         except Exception as e:                                                  # if error found in one file, skip the file
           message='skipped project info file {0}, got error {1}'.\
                   format(project_info_file,e)
