@@ -233,6 +233,9 @@ class Find_and_register_new_project_data:
           dump(report_output_file)
         read_cmd=['cat', quote(report_output_file)]
         proc=subprocess.Popen(read_cmd, stdout=subprocess.PIPE)
+        if proc.returncode !=0:
+          raise ValueError('Failed running command {0}'.format(read_cmd))
+        
         sendmail_cmd=['sendmail', '-t']
         subprocess.check_call(sendmail_cmd,stdin=proc.stdout)
         proc.stdout.close()
@@ -298,6 +301,9 @@ class Find_and_register_new_project_data:
       check_cmd1=['iadmin','lu']
       check_cmd2=['grep','-w',quote(username)]
       c_proc1=subprocess.Popen(check_cmd1,stdout=subprocess.PIPE)
+      if c_proc1.returncode !=0:
+          raise ValueError('Failed running command {0}'.format(check_cmd1))
+        
       c_proc2=subprocess.Popen(check_cmd2,stdin=c_proc1.stdout,stdout=subprocess.PIPE)
       c_proc1.stdout.close()
       result=c_proc2.communicate()[0]
@@ -342,6 +348,9 @@ class Find_and_register_new_project_data:
             'uid: {0}'.format(quote(username)), \
            ]
       proc1=subprocess.Popen(cmd1,stdout=subprocess.PIPE)
+      if proc1.returncode !=0:
+          raise ValueError('Failed running command {0}'.format(cmd1))
+        
       proc2=subprocess.Popen(cmd2,stdin=proc1.stdout,stdout=subprocess.PIPE)
       proc1.stdout.close()
       result=proc2.communicate()[0]
