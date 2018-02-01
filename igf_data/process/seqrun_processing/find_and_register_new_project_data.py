@@ -233,12 +233,12 @@ class Find_and_register_new_project_data:
           dump(report_output_file)
         read_cmd=['cat', quote(report_output_file)]
         proc=subprocess.Popen(read_cmd, stdout=subprocess.PIPE)
-        if proc.returncode !=0:
-          raise ValueError('Failed running command {0}'.format(read_cmd))
-        
         sendmail_cmd=['sendmail', '-t']
         subprocess.check_call(sendmail_cmd,stdin=proc.stdout)
         proc.stdout.close()
+        if proc.returncode !=0:
+          raise ValueError('Failed running command {0}:{1}'.format(read_cmd,\
+                                                                   proc.returncode))
         remove_dir(temp_work_dir)
     except:
       raise
@@ -301,15 +301,16 @@ class Find_and_register_new_project_data:
       check_cmd1=['iadmin','lu']
       check_cmd2=['grep','-w',quote(username)]
       c_proc1=subprocess.Popen(check_cmd1,stdout=subprocess.PIPE)
-      if c_proc1.returncode !=0:
-          raise ValueError('Failed running command {0}'.format(check_cmd1))
-
       c_proc2=subprocess.Popen(check_cmd2,stdin=c_proc1.stdout,stdout=subprocess.PIPE)
       c_proc1.stdout.close()
-      if c_proc2.returncode !=0:
-          raise ValueError('Failed running command {0}'.format(check_cmd2))
-
+      if c_proc1.returncode !=0:
+          raise ValueError('Failed running command {0}:{1}'.format(check_cmd1,\
+                                                                   c_proc1.returncode))
       result=c_proc2.communicate()[0]
+      if c_proc2.returncode !=0:
+          raise ValueError('Failed running command {0}:{1}'.format(check_cmd2,\
+                                                                   c_proc2.returncode))
+        
       result=result.decode('UTF-8')
       if result != '' and pd.isnull(data[hpc_user_col]):                        # fail for non hpc users
         raise ValueError('IRODS account exists for non hpc user {0}'.\
@@ -351,15 +352,16 @@ class Find_and_register_new_project_data:
             'uid: {0}'.format(quote(username)), \
            ]
       proc1=subprocess.Popen(cmd1,stdout=subprocess.PIPE)
-      if proc1.returncode !=0:
-          raise ValueError('Failed running command {0}'.format(cmd1))
-        
       proc2=subprocess.Popen(cmd2,stdin=proc1.stdout,stdout=subprocess.PIPE)
       proc1.stdout.close()
-      if proc2.returncode !=0:
-          raise ValueError('Failed running command {0}'.format(cmd2))
-        
+      if proc1.returncode !=0:
+          raise ValueError('Failed running command {0}:{1}'.format(cmd1,\
+                                                                   proc1.returncode))
       result=proc2.communicate()[0]
+      if proc2.returncode !=0:
+          raise ValueError('Failed running command {0}:{1}'.format(cmd2,\
+                                                                   proc2.returncode))
+
       result=result.decode('UTF-8')
       if result=='':
         hpc_username=None
