@@ -12,7 +12,7 @@ A new user account has been created for you at Imperial BRC Genomics Facility. P
 username: {{ userName }}
 password: {{ userPass }}
 
-You’ve received this email because you requested for a new sequencing project with this email address. If you didn’t intend to, please let us know as soon as possible.
+You have received this email because of your requested for a new sequencing project. If you didn’t intend to, please let us know as soon as possible.
 
 Kind regards
 
@@ -27,5 +27,4 @@ United Kingdom
 
 phone +44 (0)20 7594 9107
 Twitter https://twitter.com/ImperialGF
-
 www.imperial.ac.uk/genomicsfacility
