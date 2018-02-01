@@ -307,10 +307,6 @@ class Find_and_register_new_project_data:
           raise ValueError('Failed running command {0}:{1}'.format(check_cmd1,\
                                                                    c_proc1.returncode))
       result=c_proc2.communicate()[0]
-      if c_proc2.returncode !=0:
-          raise ValueError('Failed running command {0}:{1}'.format(check_cmd2,\
-                                                                   c_proc2.returncode))
-        
       result=result.decode('UTF-8')
       if result != '' and pd.isnull(data[hpc_user_col]):                        # fail for non hpc users
         raise ValueError('IRODS account exists for non hpc user {0}'.\
@@ -358,10 +354,6 @@ class Find_and_register_new_project_data:
           raise ValueError('Failed running command {0}:{1}'.format(cmd1,\
                                                                    proc1.returncode))
       result=proc2.communicate()[0]
-      if proc2.returncode !=0:
-          raise ValueError('Failed running command {0}:{1}'.format(cmd2,\
-                                                                   proc2.returncode))
-
       result=result.decode('UTF-8')
       if result=='':
         hpc_username=None
