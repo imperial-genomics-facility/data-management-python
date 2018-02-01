@@ -294,13 +294,11 @@ class Find_and_register_new_project_data:
       c_proc2=subprocess.Popen(check_cmd2,stdin=c_proc1.stdout,stdout=subprocess.PIPE)
       c_proc1.stdout.close()
       result=c_proc2.communicate()[0]
-      result=result.decode('UTF-8').split('\n')
-      if len(result) == 1:
-        raise ValueError('IRODS account exists for user {0}'.format(username))
-      
-      if len(result)>1:
-        raise ValueError('Failed to correctly identify existing irods user for {0}'.\
+      result=result.decode('UTF-8')
+      if result != '' and pd.isnull(data[hpc_user_col]):                        # fail for non hpc users
+        raise ValueError('IRODS account exists for non hpc user {0}'.\
                          format(username))
+      
       irods_mkuser_cmd=['iadmin', 'mkuser', \
                         '{0}#igfZone'.format(quote(username)), 'rodsuser']
       subprocess.check_call(irods_mkuser_cmd)                                   # create irods user
