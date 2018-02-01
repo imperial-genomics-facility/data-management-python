@@ -484,7 +484,7 @@ class Find_and_register_new_project_data:
         sa.store_sample_and_attribute_data(data=sample_data,autosave=False)     # load samples data
       
       if self.setup_irods:
-        user_data.apply(lambda x: self._setup_irods_account(data))              # create irods account
+        user_data.apply(lambda x: self._setup_irods_account(data=x),axis=1)     # create irods account
         
     except:
       if db_connected:
