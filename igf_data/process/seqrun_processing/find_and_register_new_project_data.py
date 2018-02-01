@@ -11,6 +11,7 @@ from igf_data.igfdb.igfTables import Project, User, Sample
 from igf_data.igfdb.useradaptor import UserAdaptor
 from igf_data.utils.fileutils import get_temp_dir, remove_dir
 from jinja2 import Environment, FileSystemLoader,select_autoescape
+from igf_data.utils.fileutils import calculate_file_checksum
 
 class Find_and_register_new_project_data:
   '''
@@ -90,7 +91,8 @@ class Find_and_register_new_project_data:
       for project_info_file in new_project_info_list:
         try:
           new_data=self._read_project_info_and_get_new_entries(project_info_file) # get new project, user and samples information
-          self._check_and_register_data(data=new_data)
+          self._check_and_register_data(data=new_data,\
+                                        project_info_file=project_info_file)    # register data
         except Exception as e:                                                  # if error found in one file, skip the file
           message='skipped project info file {0}, got error {1}'.\
                   format(project_info_file,e)
@@ -394,7 +396,7 @@ class Find_and_register_new_project_data:
       raise
   
   
-  def _check_and_register_data(self,data):
+  def _check_and_register_data(self,data,project_info_file):
     '''
     An internal method for checking and registering data
     required params:
@@ -403,6 +405,7 @@ class Find_and_register_new_project_data:
           user_data
           project_user_data
           sample_data
+    project_info_file: A filepath for project info
     '''
     try:
       db_connected=False
@@ -483,6 +486,16 @@ class Find_and_register_new_project_data:
       
       if self.setup_irods:
         user_data.apply(lambda x: self._setup_irods_account(data=x),axis=1)     # create irods account
+      
+      file_checksum=calculate_file_checksum(filepath=project_info_file)
+      file_size=os.path.getsize(project_info_file)
+      file_data=[{'file_path':project_info_file,\
+                  'location':'ORWELL',\
+                  'md5':file_checksum,\
+                  'size':file_size,\
+                }]
+      fa=FileAdaptor(**{'session':base.session})                                # connect to file adaptor
+      fa.store_file_data(data=file_data,autosave=False)
         
     except:
       if db_connected:
