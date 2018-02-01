@@ -409,9 +409,16 @@ class Find_and_register_new_project_data:
     try:
       db_connected=False
       project_data=pd.DataFrame(data['project_data'])
+      project_data=project_data[project_data[self.project_lookup_column].isnull()==False]
+      project_data=project_data.drop_duplicates()
       user_data=pd.DataFrame(data['user_data'])
+      user_data=user_data[user_data[self.user_lookup_column].isnull()==False]
+      user_data=user_data.drop_duplicates()
       project_user_data=pd.DataFrame(data['project_user_data'])
+      project_user_data=project_user_data.drop_duplicates()
       sample_data=pd.DataFrame(data['sample_data'])
+      sample_data=sample_data[sample_data[self.sample_lookup_column].isnull()==False]
+      sample_data=sample_data.drop_duplicates()
       user_data=user_data.apply(lambda x: \
                                 self._assign_username_and_password(x), \
                                 axis=1)                                         # check for use account and password
