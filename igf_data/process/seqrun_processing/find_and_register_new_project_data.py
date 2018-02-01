@@ -531,14 +531,15 @@ class Find_and_register_new_project_data:
                                              excluded_columns=['project_id'])   # get project columns
       required_user_columns=base.get_table_columns(table_name=User, \
                                              excluded_columns=['user_id'])      # get user columns
-      required_sample_columns=base.get_table_columns(table_name=Sample, \
-                                             excluded_columns=['sample_id',\
-                                                               'project_id'])   # get sample columns
       required_project_user_columns=['project_igf_id','email_id']               # get project user columns
-      required_sample_columns.append('project_igf_id')
-      project_data=project_info_data.loc[:,required_project_columns]            # get data from project table
-      user_data=project_info_data.loc[:,required_user_columns]                  # get data from user table
+      project_data=project_info_data.loc[:,required_project_columns]            # get data for project table
+      user_data=project_info_data.loc[:,required_user_columns]                  # get data for user table
       project_user_data=project_info_data.loc[:,required_project_user_columns]  # get data for project user table
+      required_sample_columns=list(set(project_info_data.columns).\
+                                   difference(set(list(project_data)+\
+                                                  list(user_data)+\
+                                                  list(project_user_data))))    # all remaining column goes to sample tables
+      required_sample_columns.append('project_igf_id')
       sample_data=project_info_data.loc[:,required_sample_columns]              # get data for sample table
       project_data=project_data.drop_duplicates()
       user_data=user_data.drop_duplicates()
