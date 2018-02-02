@@ -114,27 +114,26 @@ class Find_and_register_project_data1(unittest.TestCase):
     self.assertEqual(user_data[0]['username'],'user2')
     self.assertTrue(user_data[0]['password'])
 
-    def test_assign_username_and_password2(self):
-      fa=Find_and_register_new_project_data(projet_info_path=os.path.join('.','data/check_project_data'),\
+  def test_assign_username_and_password2(self):
+    fa=Find_and_register_new_project_data(projet_info_path=os.path.join('.','data/check_project_data'),\
                                           dbconfig=self.dbconfig,\
                                           user_account_template='template/email_notification/send_new_account_info.txt',\
                                           log_slack=False,\
                                           check_hpc_user=False,\
                                           )
-      user_data1=pd.Series({'name':'user1','email_id':'user1@ic.ac.uk','hpc_username':'user11'})
-      user_data1=fa._assign_username_and_password(data=user_data1)
-      self.assertEqual(user_data1['username'],'user11')
-      self.assertEqual(user_data1['category'],'HPC_USER')
-      user_data2=pd.Series({'name':'user1','email_id':'user1@ic.ac.uk',\
-                            'username':'user1',\
-                            'hpc_username':'user11'})
-      with self.assertRaises(ValueError):
-        user_data2=fa._assign_username_and_password(data=user_data2)
-
-      user_data3=pd.Series({'name':'user1','email_id':'user1@ic.ac.uk',})
-      user_data3=fa._assign_username_and_password(data=user_data3)
-      self.assertTrue('category' not in user_data3)
-      self.assertTrue('hpc_username' not in user_data3)
+    user_data1=pd.Series({'name':'user1','email_id':'user1@ic.ac.uk','hpc_username':'user11'})
+    user_data1=fa._assign_username_and_password(data=user_data1)
+    self.assertEqual(user_data1['username'],'user11')
+    self.assertEqual(user_data1['category'],'HPC_USER')
+    user_data2=pd.Series({'name':'user1','email_id':'user1@ic.ac.uk',\
+                          'username':'user1',\
+                          'hpc_username':'user11'})
+    with self.assertRaises(ValueError):
+      user_data2=fa._assign_username_and_password(data=user_data2)
+    user_data3=pd.Series({'name':'user1','email_id':'user1@ic.ac.uk',})
+    user_data3=fa._assign_username_and_password(data=user_data3)
+    self.assertFalse('category' in user_data3)
+    self.assertFalse('hpc_username' in user_data3)
 
   def test_check_existing_data(self):
     fa=Find_and_register_new_project_data(projet_info_path=os.path.join('.','data/check_project_data'),\

@@ -387,9 +387,8 @@ class Find_and_register_new_project_data:
         raise ValueError('Expecting a pandas series and got {0}'.\
                          format(type(data)))
 
-      if (user_col not in data or \
-          (user_col in data and pd.isnull(data[user_col]))) and \
-         hpc_user_col in data and not pd.isnull(data[hpc_user_col]):            # if hpc username found, make it username
+      if (user_col not in data or pd.isnull(data[user_col])) and \
+         (hpc_user_col in data and not pd.isnull(data[hpc_user_col])):          # if hpc username found, make it username
         data[user_col]=data[hpc_user_col]
 
       if (user_col not in data or (user_col in data and pd.isnull(data[user_col]))):  # assign username from email id
@@ -397,9 +396,8 @@ class Find_and_register_new_project_data:
         data[user_col]=username[:10] if len(username)>10 \
                                      else username                              # allowing only first 10 chars of the email id
 
-      if (hpc_user_col not in data or \
-          (hpc_user_col in data and pd.isnull(data[hpc_user_col]))) \
-         and self.check_hpc_user:                                               # assign hpc username
+      if (hpc_user_col not in data or pd.isnull(data[hpc_user_col])) and \
+         self.check_hpc_user:                                                   # assign hpc username
         hpc_username=self._get_hpc_username(username=data[user_col])
         data[hpc_user_col]=hpc_username                                         # set hpc username
 
@@ -409,14 +407,11 @@ class Find_and_register_new_project_data:
         raise ValueError('username {0} and hpc_username {1} should be same'.\
                          format(data[user_col],data[hpc_user_col]))
 
-      if hpc_user_col not in data or \
-         (hpc_user_col in data and not pd.isnull(data[hpc_user_col])):
-        if password_col not in data or \
-           (password_col in data and pd.isnull(data[password_col])):
+      if (hpc_user_col not in data or not pd.isnull(data[hpc_user_col])) and \
+         (password_col not in data or pd.isnull(data[password_col])):
           data[password_col]=self._get_user_password()                          # assign a random password if its not supplied
 
-      if category_col not in data or \
-         (category_col in data and pd.isnull(data[category_col])) and \
+      if (category_col not in data or pd.isnull(data[category_col])) and \
          (hpc_user_col in data and not pd.isnull(data[hpc_user_col])):          # set user category for hpc users
          data[category_col]=hpc_category
       return data
