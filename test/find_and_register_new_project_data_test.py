@@ -98,7 +98,7 @@ class Find_and_register_project_data1(unittest.TestCase):
     self.assertEqual(project_user_data[0]['project_igf_id'],\
                      'IGFP0002_test_23-5-2017_rna')
     
-  def test_assign_username_and_password(self):
+  def test_assign_username_and_password1(self):
     fa=Find_and_register_new_project_data(projet_info_path=os.path.join('.','data/check_project_data'),\
                                           dbconfig=self.dbconfig,\
                                           user_account_template='template/email_notification/send_new_account_info.txt',\
@@ -113,7 +113,29 @@ class Find_and_register_project_data1(unittest.TestCase):
     user_data=user_data.to_dict(orient='region')
     self.assertEqual(user_data[0]['username'],'user2')
     self.assertTrue(user_data[0]['password'])
-    
+
+    def test_assign_username_and_password2(self):
+      fa=Find_and_register_new_project_data(projet_info_path=os.path.join('.','data/check_project_data'),\
+                                          dbconfig=self.dbconfig,\
+                                          user_account_template='template/email_notification/send_new_account_info.txt',\
+                                          log_slack=False,\
+                                          check_hpc_user=False,\
+                                          )
+      user_data1=pd.Series({'name':'user1','email_id':'user1@ic.ac.uk','hpc_username':'user11'})
+      user_data1=fa._assign_username_and_password(data=user_data1)
+      self.assertEqual(user_data1['username'],'user11')
+      self.assertEqual(user_data1['category'],'HPC_USER')
+      user_data2=pd.Series({'name':'user1','email_id':'user1@ic.ac.uk',\
+                            'username':'user1',\
+                            'hpc_username':'user11'})
+      with self.assertRaises(ValueError):
+        user_data2=fa._assign_username_and_password(data=user_data2)
+
+      user_data3=pd.Series({'name':'user1','email_id':'user1@ic.ac.uk',})
+      user_data3=fa._assign_username_and_password(data=user_data3)
+      self.assertTrue('category' not in user_data3)
+      self.assertTrue('hpc_username' not in user_data3)
+
   def test_check_existing_data(self):
     fa=Find_and_register_new_project_data(projet_info_path=os.path.join('.','data/check_project_data'),\
                                           dbconfig=self.dbconfig,\
