@@ -381,24 +381,29 @@ class Find_and_register_new_project_data:
       if not isinstance(data, pd.Series):
         raise ValueError('Expecting a pandas series and got {0}'.\
                          format(type(data)))
-        
-      if user_col not in data or pd.isnull(data[user_col]):                     # assign username from email id
+
+      if (user_col not in data or \
+          (user_col in data and pd.isnull(data[user_col]))) and \
+         hpc_user_col in data and not pd.isnull(data[hpc_user_col]):            # if hpc username found, make it username
+        data[user_col]=data[hpc_user_col]
+
+      if (user_col not in data or (user_col in data and pd.isnull(data[user_col]))):  # assign username from email id
         username,_=data[email_col].split('@',1)                                 # get username from email id
         data[user_col]=username[:10] if len(username)>10 \
                                      else username                              # allowing only first 10 chars of the email id
-                                     
-      if user_col in data and not pd.isnull(data[user_col]) and \
-         hpc_user_col in data and not pd.isnull(data[hpc_user_col]) and \
-         data[user_col] != data[hpc_user_col]:                                  # if user name and hpc username both are present, they should be same
-        raise ValueError('username {0} and hpc_username {1} should be same'.\
-                         format(data[user_col],data[hpc_user_col]))
-        
+
       if (hpc_user_col not in data or \
           (hpc_user_col in data and pd.isnull(data[hpc_user_col]))) \
          and self.check_hpc_user:                                               # assign hpc username
         hpc_username=self._get_hpc_username(username=data[user_col])
         data[hpc_user_col]=hpc_username                                         # set hpc username
-      
+
+      if user_col in data and not pd.isnull(data[user_col]) and \
+         hpc_user_col in data and not pd.isnull(data[hpc_user_col]) and \
+         data[user_col] != data[hpc_user_col]:                                  # if user name and hpc username both are present, they should be same
+        raise ValueError('username {0} and hpc_username {1} should be same'.\
+                         format(data[user_col],data[hpc_user_col]))
+
       if hpc_user_col not in data or \
          (hpc_user_col in data and pd.isnull(data[hpc_user_col])):
         if password_col not in data or \
