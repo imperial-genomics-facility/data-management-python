@@ -125,6 +125,7 @@ class Find_and_register_project_data1(unittest.TestCase):
     user_data1=fa._assign_username_and_password(data=user_data1)
     self.assertEqual(user_data1['username'],'user11')
     self.assertEqual(user_data1['category'],'HPC_USER')
+    self.assertFalse('password' in user_data1)
     user_data2=pd.Series({'name':'user1','email_id':'user1@ic.ac.uk',\
                           'username':'user1',\
                           'hpc_username':'user11'})

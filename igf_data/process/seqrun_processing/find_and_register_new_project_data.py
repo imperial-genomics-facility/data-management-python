@@ -407,7 +407,7 @@ class Find_and_register_new_project_data:
         raise ValueError('username {0} and hpc_username {1} should be same'.\
                          format(data[user_col],data[hpc_user_col]))
 
-      if (hpc_user_col not in data or not pd.isnull(data[hpc_user_col])) and \
+      if (hpc_user_col not in data or pd.isnull(data[hpc_user_col])) and \
          (password_col not in data or pd.isnull(data[password_col])):
           data[password_col]=self._get_user_password()                          # assign a random password if its not supplied
 
