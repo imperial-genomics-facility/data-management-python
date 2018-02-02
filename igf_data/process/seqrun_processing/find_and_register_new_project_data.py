@@ -433,23 +433,15 @@ class Find_and_register_new_project_data:
     try:
       db_connected=False
       project_data=pd.DataFrame(data['project_data'])
-      project_data=project_data[project_data[self.project_lookup_column].isnull()==False]
-      project_data=project_data.drop_duplicates()
       user_data=pd.DataFrame(data['user_data'])
-      user_data=user_data[user_data[self.user_lookup_column].isnull()==False]
-      user_data=user_data.drop_duplicates()
       project_user_data=pd.DataFrame(data['project_user_data'])
-      project_user_data=project_user_data.drop_duplicates()
       sample_data=pd.DataFrame(data['sample_data'])
-      sample_data=sample_data[sample_data[self.sample_lookup_column].isnull()==False]
-      sample_data=sample_data.drop_duplicates()
-      user_data=user_data.apply(lambda x: \
-                                self._assign_username_and_password(x), \
-                                axis=1)                                         # check for use account and password
       base=BaseAdaptor(**{'session_class':self.session_class})
       base.start_session()                                                      # connect_to db
       db_connected=True
       if project_data.index.size > 0:
+        project_data=project_data[project_data[self.project_lookup_column].isnull()==False]
+        project_data=project_data.drop_duplicates()
         project_data=project_data.\
                      apply(lambda x: \
                            self._check_existing_data(\
@@ -460,7 +452,13 @@ class Find_and_register_new_project_data:
                            axis=1)                                              # get project map
         project_data=project_data[project_data['EXISTS']==False]                # filter existing projects
         project_data.drop('EXISTS', axis=1, inplace=True)                       # remove extra column
+
       if user_data.index.size > 0:
+        user_data=user_data[user_data[self.user_lookup_column].isnull()==False]
+        user_data=user_data.drop_duplicates()
+        user_data=user_data.apply(lambda x: \
+                                self._assign_username_and_password(x), \
+                                axis=1)                                         # check for use account and password
         user_data=user_data.\
                   apply(lambda x: \
                         self._check_existing_data(\
@@ -471,7 +469,10 @@ class Find_and_register_new_project_data:
                         axis=1)                                                 # get user map
         user_data=user_data[user_data['EXISTS']==False]                         # filter existing users
         user_data.drop('EXISTS', axis=1, inplace=True)                          # remove extra column
+
       if sample_data.index.size > 0:
+        sample_data=sample_data[sample_data[self.sample_lookup_column].isnull()==False]
+        sample_data=sample_data.drop_duplicates()
         sample_data=sample_data.\
                      apply(lambda x: \
                            self._check_existing_data(\
@@ -482,7 +483,9 @@ class Find_and_register_new_project_data:
                            axis=1)                                              # get sample map
         sample_data=sample_data[sample_data['EXISTS']==False]                   # filter existing samples
         sample_data.drop('EXISTS', axis=1, inplace=True)                        # remove extra column
+
       if project_user_data.index.size > 0:
+        project_user_data=project_user_data.drop_duplicates()
         project_user_data=project_user_data.\
                           apply(lambda x: \
                            self._check_existing_data(\
