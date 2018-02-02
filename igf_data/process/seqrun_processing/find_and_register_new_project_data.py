@@ -449,47 +449,51 @@ class Find_and_register_new_project_data:
       base=BaseAdaptor(**{'session_class':self.session_class})
       base.start_session()                                                      # connect_to db
       db_connected=True
-      project_data=project_data.\
-                   apply(lambda x: \
-                         self._check_existing_data(\
-                            data=x,\
-                            dbsession=base.session, \
-                            table_name='project',
-                            check_column='EXISTS'),\
-                         axis=1)                                                # get project map
-      project_data=project_data[project_data['EXISTS']==False]                  # filter existing projects
-      project_data.drop('EXISTS', axis=1, inplace=True)                         # remove extra column
-      user_data=user_data.\
-                apply(lambda x: \
-                      self._check_existing_data(\
-                            data=x,\
-                            dbsession=base.session, \
-                            table_name='user',
-                            check_column='EXISTS'),\
-                      axis=1)                                                   # get user map
-      user_data=user_data[user_data['EXISTS']==False]                           # filter existing users
-      user_data.drop('EXISTS', axis=1, inplace=True)                            # remove extra column
-      sample_data=sample_data.\
-                   apply(lambda x: \
-                         self._check_existing_data(\
-                            data=x,\
-                            dbsession=base.session, \
-                            table_name='sample',
-                            check_column='EXISTS'),\
-                         axis=1)                                                # get sample map
-      sample_data=sample_data[sample_data['EXISTS']==False]                     # filter existing samples
-      sample_data.drop('EXISTS', axis=1, inplace=True)                          # remove extra column
-      project_user_data=project_user_data.\
-                        apply(lambda x: \
-                         self._check_existing_data(\
-                            data=x,\
-                            dbsession=base.session, \
-                            table_name='project_user',
-                            check_column='EXISTS'),\
-                         axis=1)                                                # get project user map
-      project_user_data=project_user_data[project_user_data['EXISTS']==False]   # filter existing project user
-      project_user_data.drop('EXISTS', axis=1, inplace=True)                    # remove extra column
-      
+      if project_data.index.size > 0:
+        project_data=project_data.\
+                     apply(lambda x: \
+                           self._check_existing_data(\
+                              data=x,\
+                              dbsession=base.session, \
+                              table_name='project',
+                              check_column='EXISTS'),\
+                           axis=1)                                              # get project map
+        project_data=project_data[project_data['EXISTS']==False]                # filter existing projects
+        project_data.drop('EXISTS', axis=1, inplace=True)                       # remove extra column
+      if user_data.index.size > 0:
+        user_data=user_data.\
+                  apply(lambda x: \
+                        self._check_existing_data(\
+                              data=x,\
+                              dbsession=base.session, \
+                              table_name='user',
+                              check_column='EXISTS'),\
+                        axis=1)                                                 # get user map
+        user_data=user_data[user_data['EXISTS']==False]                         # filter existing users
+        user_data.drop('EXISTS', axis=1, inplace=True)                          # remove extra column
+      if sample_data.index.size > 0:
+        sample_data=sample_data.\
+                     apply(lambda x: \
+                           self._check_existing_data(\
+                              data=x,\
+                              dbsession=base.session, \
+                              table_name='sample',
+                              check_column='EXISTS'),\
+                           axis=1)                                              # get sample map
+        sample_data=sample_data[sample_data['EXISTS']==False]                   # filter existing samples
+        sample_data.drop('EXISTS', axis=1, inplace=True)                        # remove extra column
+      if project_user_data.index.size > 0:
+        project_user_data=project_user_data.\
+                          apply(lambda x: \
+                           self._check_existing_data(\
+                              data=x,\
+                              dbsession=base.session, \
+                              table_name='project_user',
+                              check_column='EXISTS'),\
+                           axis=1)                                              # get project user map
+        project_user_data=project_user_data[project_user_data['EXISTS']==False] # filter existing project user
+        project_user_data.drop('EXISTS', axis=1, inplace=True)                  # remove extra column
+
       if len(project_data.index) > 0:                                           # store new projects
         pa1=ProjectAdaptor(**{'session':base.session})                          # connect to project adaptor
         pa1.store_project_and_attribute_data(data=project_data,autosave=False)  # load project data
