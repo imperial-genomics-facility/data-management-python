@@ -368,7 +368,9 @@ class Find_and_register_new_project_data:
   def _assign_username_and_password(self,data,user_col='username',\
                                     hpc_user_col='hpc_username',\
                                     password_col='password',\
-                                    email_col='email_id'):
+                                    email_col='email_id',
+                                    hpc_category='HPC_USER',
+                                    category_col='category'):
     '''
     An internal method for assigning new user account and password
     required params:
@@ -377,6 +379,8 @@ class Find_and_register_new_project_data:
     password_col: Column name for password, default password
     hpc_user_col: Column name for hpc_username, default hpc_username
     email_id_col: Column name for email id, default email_id
+    category_col: Column name for user category, default category
+    hpc_category: Category tag for hpc user, default: HPC_USER
     '''
     try:
       if not isinstance(data, pd.Series):
@@ -406,11 +410,15 @@ class Find_and_register_new_project_data:
                          format(data[user_col],data[hpc_user_col]))
 
       if hpc_user_col not in data or \
-         (hpc_user_col in data and pd.isnull(data[hpc_user_col])):
+         (hpc_user_col in data and not pd.isnull(data[hpc_user_col])):
         if password_col not in data or \
            (password_col in data and pd.isnull(data[password_col])):
           data[password_col]=self._get_user_password()                          # assign a random password if its not supplied
-          
+
+      if category_col not in data or \
+         (category_col in data and pd.isnull(data[category_col])) and \
+         (hpc_user_col in data and not pd.isnull(data[hpc_user_col])):          # set user category for hpc users
+         data[category_col]=hpc_category
       return data
     except:
       raise
