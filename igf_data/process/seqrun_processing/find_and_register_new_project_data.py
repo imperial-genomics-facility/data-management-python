@@ -335,6 +335,7 @@ class Find_and_register_new_project_data:
   def _get_hpc_username(self,username):
     '''
     An internal method for checking hpc accounts for new users
+    This method is not reliable as the ldap server can be down from time to time
     required params:
     username: A username string
     '''
