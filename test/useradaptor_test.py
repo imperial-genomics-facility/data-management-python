@@ -1,5 +1,6 @@
 import os, unittest
 import pandas as pd
+import hashlib
 from sqlalchemy import create_engine
 from igf_data.igfdb.igfTables import Base
 from igf_data.igfdb.baseadaptor import BaseAdaptor
@@ -52,7 +53,14 @@ class Useradaptor_test1(unittest.TestCase):
                                           non_hpc_user='NON_HPC_USER')
     user_data2=user_data2.to_dict()
     self.assertEqual(user_data2['category'],'NON_HPC_USER')
-    
+
+  def test_encrypt_password(self):
+    ua=UserAdaptor(**{'session_class': self.session_class})
+    user_data=pd.Series({'name':'AAAA','password':'BBBBBBBBBBBBBBBBBBB'})
+    user_data=ua._encrypt_password(series=user_data)
+    passkey=user_data['encryption_salt']+'BBBBBBBBBBBBBBBBBBB'
+    self.assertEqual(user_data['password'], hashlib.sha512(str(passkey).encode('utf-8')).hexdigest())
+
 if __name__ == '__main__':
   unittest.main()
   
