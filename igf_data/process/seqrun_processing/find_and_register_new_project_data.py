@@ -177,9 +177,9 @@ class Find_and_register_new_project_data:
                                                              email_id=user_email)
           if self.data_authority_column not in data or \
              pd.isnull(data[self.data_authority_column]):
-            data[self.data_authority_column]='T'                                # set user as data authority
+            data[self.data_authority_column]=True                               # set user as data authority
             
-          if project_user_exists:                                           # store data only if sample is not existing
+          if project_user_exists:                                               # store data only if sample is not existing
             data[check_column]=True
           else:
             data[check_column]=False
@@ -485,7 +485,7 @@ class Find_and_register_new_project_data:
         sample_data.drop('EXISTS', axis=1, inplace=True)                        # remove extra column
 
       project_user_data=project_user_data.drop_duplicates()
-      project_user_data=project_user_data.dropna()                              # not allowing any empty values
+      #project_user_data=project_user_data.dropna()                              # not allowing any empty values
       if project_user_data.index.size > 0:
         project_user_data=project_user_data.\
                           apply(lambda x: \
