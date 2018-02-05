@@ -22,6 +22,7 @@ def full_suite():
   from .samplesheet_test import Hiseq4000SampleSheet
   from .find_and_register_new_project_data_test import Find_and_register_project_data1
   from .useradaptor_test import Useradaptor_test1
+  from .sampleadaptor_test import Sampleadaptor_test1
 
   return unittest.TestSuite([ \
       unittest.TestLoader().loadTestsFromTestCase(BasesMask_testA), 
@@ -46,4 +47,5 @@ def full_suite():
       unittest.TestLoader().loadTestsFromTestCase(Hiseq4000SampleSheet),
       unittest.TestLoader().loadTestsFromTestCase(Find_and_register_project_data1),
       unittest.TestLoader().loadTestsFromTestCase(Useradaptor_test1),
+      unittest.TestLoader().loadTestsFromTestCase(Sampleadaptor_test1),
     ])

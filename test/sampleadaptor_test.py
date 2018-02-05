@@ -7,7 +7,7 @@ from igf_data.utils.dbutils import read_json_data, read_dbconf_json
 from igf_data.igfdb.sampleadaptor import SampleAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
 
-class Useradaptor_test1(unittest.TestCase):
+class Sampleadaptor_test1(unittest.TestCase):
   def setUp(self):
     self.dbconfig='data/dbconfig.json'
     dbparam=read_dbconf_json(self.dbconfig)
