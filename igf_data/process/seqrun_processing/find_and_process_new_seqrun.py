@@ -53,7 +53,7 @@ def check_for_registered_project_and_sample(seqrun_info,dbconfig,samplesheet_fil
                                                   sample_igf_id=sample_id)      # check for record in db
         if not record_exists:
           if msg =='':
-            msg='missing sample {1} and project {2} for run {3}'.\
+            msg='missing sample {0} and project {1} for run {2}'.\
                 format(sample_id, project_id, seqrun_name)
           else:
             msg='{0} \n missing sample {1} and project {2} for run {3}'.\
