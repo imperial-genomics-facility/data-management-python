@@ -485,7 +485,9 @@ class Find_and_register_new_project_data:
         sample_data.drop('EXISTS', axis=1, inplace=True)                        # remove extra column
 
       project_user_data=project_user_data.drop_duplicates()
-      #project_user_data=project_user_data.dropna()                              # not allowing any empty values
+      project_user_data_mask=(project_user_data[self.project_lookup_column] != '') and \
+                             (project_user_data[self.user_lookup_column] != '')
+      project_user_data=project_user_data[project_user_data_mask]               # not allowing any empty values for project or user lookup
       if project_user_data.index.size > 0:
         project_user_data=project_user_data.\
                           apply(lambda x: \
