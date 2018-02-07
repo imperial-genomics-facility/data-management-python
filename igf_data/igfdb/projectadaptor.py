@@ -102,7 +102,7 @@ class ProjectAdaptor(BaseAdaptor):
       data=pd.DataFrame(data)
  
     if not set((required_project_column,required_user_column,data_authority_column)).issubset(set(tuple(data.columns))):          # check for required parameters
-      raise ValueError('Missing required value in input data {0}'.format(data_columns))
+      raise ValueError('Missing required value in input data {0}'.format(data.columns))
 
     try:
       project_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
