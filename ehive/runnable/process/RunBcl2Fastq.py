@@ -24,7 +24,7 @@ class RunBcl2Fastq(IGFBaseProcess):
                              '--create-fastq-for-index-reads':''},
       })
     return params_dict
-  
+
   def run(self):
     try:
       seqrun_igf_id=self.param_required('seqrun_igf_id')
@@ -45,26 +45,26 @@ class RunBcl2Fastq(IGFBaseProcess):
       fastq_dir_label=self.param('fastq_dir_label')
       samplesheet_filename=self.param('samplesheet_filename')
       model_name=self.param('model_name')
-      
+
       seqrun_dir=os.path.join(seqrun_local_dir,seqrun_igf_id)                   # local seqrun dir
       runinfo_file=os.path.join(seqrun_dir,runinfo_filename)                    # seqrun runinfo file
       if not os.path.exists(samplesheet_file):
         raise IOError('samplesheet file {0} not found'.format(samplesheet_file))
-      
+
       if not os.path.exists(runinfo_file):
         raise IOError('Runinfo file {0} not found'.format(runinfo_file))
-      
+
       lane_index='{0}_{1}'.format(flowcell_lane,index_length)                   # get label for lane and index length
       output_dir_label=os.path.join(project_name,\
                                     fastq_dir_label,\
                                     seqrun_date,\
                                     flowcell_id,\
                                     lane_index)                                 # output dir label
-      output_fastq_dir=os.path.join(base_fastq_dir,output_dir_label)             # output fastq dir
-      
+      output_fastq_dir=os.path.join(base_fastq_dir,output_dir_label)            # output fastq dir
+
       if os.path.exists(output_fastq_dir) and force_overwrite:
         remove_dir(output_fastq_dir)                                            # remove fastq directory if its already present
-      
+
       message='started fastq conversion for {0}, {1} : {2}_{3}'.\
               format(seqrun_igf_id,project_name,flowcell_lane,index_length)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
@@ -75,17 +75,23 @@ class RunBcl2Fastq(IGFBaseProcess):
                                               run_info_xml=runinfo_file,
                                               platform_model=model_name)        # get lists of files to move to TMPDIR
       move_file.copy_bcl_files()                                                # move files to TMPDIR
-      
-      output_temp_dir=get_temp_dir()                                            # create a new output directory in TMPDIR
+
+      work_dir=os.path.join(base_work_dir, \
+                            seqrun_igf_id, \
+                            job_name)
+      if not os.path.exists(work_dir):
+        os.makedirs(work_dir,mode=0o770)
+
+      output_temp_dir=get_temp_dir(work_dir=work_dir)                           # create directory in work_dir, writing in TMPDIR causing incomplete report
       bcl2fastq_cmd=[bcl2fastq_exe,
                      '--runfolder-dir',seqrun_temp_dir,
                      '--sample-sheet',samplesheet_file,
-                     '--output-dir',output_temp_dir,
-                     ]                                                          # bcl2fastq base parameters
+                     '--output-dir',output_temp_dir]                            # bcl2fastq base parameters
+
       bcl2fastq_param=self.format_tool_options(bcl2fastq_options)               # format bcl2fastq params
       bcl2fastq_cmd.extend(bcl2fastq_param)                                     # add additional parameters
       subprocess.check_call(bcl2fastq_cmd)                                      # run bcl2fastq
-      
+
       copytree(output_temp_dir,output_fastq_dir)                                # copy output from TMPDIR
       copy2(samplesheet_file,os.path.join(output_fastq_dir,\
                                           samplesheet_filename))                # add samplesheet to output dir
@@ -95,6 +101,8 @@ class RunBcl2Fastq(IGFBaseProcess):
                      index_length,output_fastq_dir)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
       self.comment_asana_task(task_name=seqrun_igf_id, comment=message)         # send log to asana
+      remove_dir(seqrun_temp_dir)
+      remove_dir(output_temp_dir)                                               # remove temp dirs
     except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
