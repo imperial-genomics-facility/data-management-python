@@ -78,12 +78,12 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
              htpasswd_filename=htpasswd_filename, \
              customerUsernameList=' '.join(user_list)).\
       dump(htaccess_output)                                                     # write new htacces file
-      os.chmod(htaccess_output, mode=0o770)
+      os.chmod(htaccess_output, mode=0o774)
                
       htpasswd.\
       stream(userDict=user_passwd_dict).\
       dump(htpasswd_output)                                                     # write new htpass file
-      os.chmod(htpasswd_output, mode=0o770)
+      os.chmod(htpasswd_output, mode=0o774)
       
       remote_project_dir=os.path.join(remote_project_path,\
                                       project_name
