@@ -382,6 +382,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
                                       rsuffix='_sa')                            # merge sample data with qc data
       required_headers=['Sample_ID',
                         'Sample_Name',
+                        'FastqFile',
                         'TotalReads',
                         'index']
       if 'index2' in list(sample_data.columns):
@@ -391,6 +392,8 @@ class PrepareQcPageForRemote(IGFBaseProcess):
                                'Fastqscreen'])                                  # create header order
       qc_merged_data=merged_data.loc[:,required_headers].\
                                  to_dict(orient='records')                      #  extract final data
+      qc_merged_data['FastqFile']=qc_merged_data['FastqFile'].\
+                                  map(lambda path: os.path.basename(path))      # keep only fastq filename
       return required_headers, qc_merged_data
     except:
       raise    
