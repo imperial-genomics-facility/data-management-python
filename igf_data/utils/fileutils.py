@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import os, subprocess, hashlib
-from tempfile import mkdtemp
+from tempfile import mkdtemp,gettempdir
 from shutil import rmtree, move, copy2
 
 def move_file(source_path,destinationa_path, force=False):
@@ -109,7 +109,10 @@ def get_temp_dir(work_dir=None, prefix='temp'):
     if work_dir is not None and not os.path.isdir(work_dir):                    # check if work directory is present
       raise IOError('work directory {0} is not present'.format(work_dir))
     
-    temp_dir=mkdtemp(prefix=prefix,dir=work_dir)  # create a temp dir
+    if work_dir is None:
+      work_dir=gettempdir()
+
+    temp_dir=mkdtemp(prefix=prefix,dir=work_dir)                                # create a temp dir
     return temp_dir
   except:
     raise
