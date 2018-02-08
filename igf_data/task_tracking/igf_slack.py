@@ -21,9 +21,9 @@ class IGF_slack:
     self.slack_bot_id=None
         
     self.slack_config=slack_config
-    self._read_and_set_slack_config()                  # read config file and set parameters
-    self.slackobject = SlackClient(self.slack_token)   # create slackclient instance
-    self.slack_token=None                              # reset slack token 
+    self._read_and_set_slack_config()                                           # read config file and set parameters
+    self.slackobject = SlackClient(self.slack_token)                            # create slackclient instance
+    self.slack_token=None                                                       # reset slack token 
       
 
   def post_message_to_channel(self, message, reaction=''):
@@ -35,11 +35,11 @@ class IGF_slack:
     reaction: pass / fail / sleep
     '''
     if reaction=='pass':
-      message='{0} {1}'.format(':white_check_mark:',message)
+      message='{0} {1}'.format(':heavy_check_mark:',message)
     elif reaction=='fail':
       message='{0} {1}'.format(':X:',message)
     elif reaction=='sleep':
-      message='{1} {0}'.format(':zzz:',message)    
+      message='{1} {0}'.format(':robot_face: :zzz:',message)
 
     try:        
       self.slackobject.api_call( "chat.postMessage", channel=self.slack_channel_id, text=message)
