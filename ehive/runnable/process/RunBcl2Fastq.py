@@ -75,7 +75,7 @@ class RunBcl2Fastq(IGFBaseProcess):
                                               run_info_xml=runinfo_file,
                                               platform_model=model_name)        # get lists of files to move to TMPDIR
       move_file.copy_bcl_files()                                                # move files to TMPDIR
-
+      job_name=self.job_name()
       work_dir=os.path.join(base_work_dir, \
                             seqrun_igf_id, \
                             job_name)
