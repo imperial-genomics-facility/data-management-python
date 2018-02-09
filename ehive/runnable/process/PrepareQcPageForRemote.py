@@ -390,10 +390,10 @@ class PrepareQcPageForRemote(IGFBaseProcess):
         
       required_headers.extend(['Fastqc',
                                'Fastqscreen'])                                  # create header order
+      merged_data['FastqFile']=merged_data['FastqFile'].\
+                               map(lambda path: os.path.basename(path))         # keep only fastq filename
       qc_merged_data=merged_data.loc[:,required_headers].\
                                  to_dict(orient='records')                      #  extract final data
-      qc_merged_data['FastqFile']=qc_merged_data['FastqFile'].\
-                                  map(lambda path: os.path.basename(path))      # keep only fastq filename
       return required_headers, qc_merged_data
     except:
       raise    
