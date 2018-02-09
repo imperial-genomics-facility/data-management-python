@@ -187,7 +187,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
         if len(reports)==0:
           raise ValueError('No demultiplexing report found for fastq dir {0}'.\
                            format(fastq_dir))
-        
+        os.chmod(reports[0], mode=0o774)                                        # added read permission for report html
         copy_remote_file(source_path=reports[0], \
                        destinationa_path=remote_file_path, \
                        destination_address='{0}@{1}'.format(remote_user,\
