@@ -41,7 +41,7 @@ def copy_local_file(source_path,destinationa_path, force=False):
         raise
 
 
-def copy_remote_file(source_path,destinationa_path, source_address=None, destination_address=None, copy_method='rsync'):
+def copy_remote_file(source_path,destinationa_path, source_address=None, destination_address=None, copy_method='rsync',check_file=True):
     '''
     A method for copy files from or to remote location
     required params:
@@ -50,6 +50,7 @@ def copy_remote_file(source_path,destinationa_path, source_address=None, destina
     source_address: Address of the source server
     destination_address: Address of the destination server
     copy_method: A nethod for copy files, default is 'rsync'
+    check_file: Check file after transfer using checksum, default True
     '''
     try:
         if source_address is None and destination_address is None:
@@ -67,7 +68,10 @@ def copy_remote_file(source_path,destinationa_path, source_address=None, destina
           subprocess.check_call(dir_cmd)
 
         if copy_method == 'rsync':
-            cmd=['rsync','-c', '-e','ssh',source_path,destinationa_path]
+          cmd=['rsync']
+          if check_file:
+            cmd.append('-c')                                                  # file check now optional
+          cmd.extend(['-e','ssh',source_path,destinationa_path])
         else:
             raise ValueError('copy method {0} is not supported'.format(copy_method))
 
