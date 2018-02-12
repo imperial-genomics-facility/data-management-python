@@ -322,12 +322,21 @@ class Find_and_register_new_project_data:
                            '/igfZone/home/{0}'.format(quote(username))]
         subprocess.check_call(irods_inherit_cmd)                                # inherit irods user
       
-        if (hpc_username is None or hpc_username == '' ) and password:
+        if (hpc_username is None or hpc_username == '' ) and \
+           (password is not None or password != ''):
+          if len(password)>20:
+            raise ValueError('check password for non hpc user {0}: {1}'.\
+                             format(username,password))                         # it could be the encrypted password
+
           irods_passwd_cmd=['iadmin', 'moduser', \
                             '{0}#igfZone'.format(quote(username)), \
                             'password', ''.format(quote(password))]
           subprocess.check_call(irods_passwd_cmd)                               # set password for non-hpc user
-        
+          if self.log_slack:
+            message='created irods account for non-hpc user: {0}, password length: {1}'.\
+                    format(username,len(password))
+            self.igf_slack.post_message_to_channel(message,reaction='pass')
+
     except:
       raise
 
