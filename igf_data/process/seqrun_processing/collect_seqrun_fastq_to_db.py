@@ -334,13 +334,31 @@ class Collect_seqrun_fastq_to_db:
           run_igf_id=data['run_igf_id']
           ra=RunAdaptor(**{'session':dbsession})
           run_exists=ra.check_run_records_igf_id(run_igf_id)
-          if run_exists:                                                # store data only if project is not existing
+          if run_exists:                                                        # store data only if run is not existing
             data[check_column]=True
           else:
             data[check_column]=False
           return data
         else:
           raise ValueError('Missing or empty required column run_igf_id')
+
+      elif table_name=='collection':
+        if 'name' in data and 'type' in data and \
+           not pd.isnull(data['name']) and pd.isnull(data['type']):
+          name=data['name']
+          name=data['type']
+          ca=CollectionAdaptor(**{'session':dbsession})
+          collection_exists=ca.check_collection_records_name_and_type(\
+                                 collection_name=name, \
+                                 collection_type=type)
+          if collection_exists:
+            data[check_column]=True
+          else:
+            data[check_column]=False
+          return data
+        else:
+          raise ValueError('Missing or empty required column name or type')
+
       else:
         raise ValueError('table {0} not supported yet'.format(table_name))
     except:
