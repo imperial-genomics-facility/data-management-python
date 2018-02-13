@@ -402,6 +402,16 @@ class Collect_seqrun_fastq_to_db:
                           'experiment_igf_id','R1_READ_COUNT','R2_READ_COUNT'])
       run_data=dataframe.loc[:,run_columns]
       run_data=run_data.drop_duplicates()
+      if run_data.index.size > 0:
+        run_data=run_data.apply(lambda x: \
+                                self._check_existing_data(\
+                                      data=x,\
+                                      dbsession=base.session,\
+                                      table_name='run',\
+                                      check_column='EXISTS'),\
+                                axis=1)
+        run_data=run_data[run_data['EXISTS']==False]                            # filter existing runs
+        run_data.drop('EXISTS', axis=1, inplace=True)                           # remove extra columns
       # get collection data
       collection_columns=['name','type','table']
       collection_data=dataframe.loc[:,collection_columns]
