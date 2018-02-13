@@ -62,32 +62,42 @@ class Collect_seqrun_fastq_to_db:
     samplesheet_list=list()
     r1_fastq_list=list()
     r2_fastq_list=list()
-    for root, dirs, files in os.walk(top=fastq_dir):
-      if samplesheet_filename in files:
-        samplesheet_list.append(os.path.join(root,samplesheet_filename))
+    if os.path.isdir(fastq_dir):
+      for root, dirs, files in os.walk(top=fastq_dir):
+        if samplesheet_filename in files:
+          samplesheet_list.append(os.path.join(root,samplesheet_filename))
         
-      for file in files:
-        if not fnmatch.fnmatch(file, 'Undetermined_'):
-          if r1_fastq_regex.match(file):
-            r1_fastq_list.append(os.path.join(root,file))
-          elif r2_fastq_regex.match(file):
-            r2_fastq_list.append(os.path.join(root,file))
+        for file in files:
+          if not fnmatch.fnmatch(file, 'Undetermined_'):
+            if r1_fastq_regex.match(file):
+              r1_fastq_list.append(os.path.join(root,file))
+            elif r2_fastq_regex.match(file):
+              r2_fastq_list.append(os.path.join(root,file))
         
-    if len(r2_fastq_list) > 0 and len(r1_fastq_list) != len(r2_fastq_list):
-      raise ValueError('R1 {0} and R2 {1}'.format(len(r1_fastq_list),\
-                                                  len(r2_fastq_list)))
+      if len(r2_fastq_list) > 0 and len(r1_fastq_list) != len(r2_fastq_list):
+        raise ValueError('R1 {0} and R2 {1}'.format(len(r1_fastq_list),\
+                                                    len(r2_fastq_list)))
   
-    if samplesheet_file is None and len(samplesheet_list)==1:
+      if samplesheet_file is None and len(samplesheet_list)==1:
         self.samplesheet_file=samplesheet_list[0]                               # set samplesheet file name
         
-    if len(samplesheet_list) > 1:
-      raise ValueError('Found more than one samplesheet file for fastq dir {0}'.\
-                       format(fastq_dir))
+      if len(samplesheet_list) > 1:
+        raise ValueError('Found more than one samplesheet file for fastq dir {0}'.\
+                         format(fastq_dir))
          
-    if samplesheet_file is None and len(samplesheet_list)==0:
-      raise ValueError('No samplesheet file for fastq dir {0}'.\
-                       format(fastq_dir))
-  
+      if samplesheet_file is None and len(samplesheet_list)==0:
+        raise ValueError('No samplesheet file for fastq dir {0}'.\
+                         format(fastq_dir))
+    elif os.path.isfile(fastq_dir):
+      if samplesheet_file is None:
+        raise ValueError('Missing samplesheet file for fastq file {0}'.\
+                         format(fastq_dir))
+      if not fnmatch.fnmatch(file, 'Undetermined_'):
+        if r1_fastq_regex.match(file):
+          r1_fastq_list.append(os.path.join(root,file))
+        elif r2_fastq_regex.match(file):
+          r2_fastq_list.append(os.path.join(root,file))
+
     return r1_fastq_list, r2_fastq_list
 
 
