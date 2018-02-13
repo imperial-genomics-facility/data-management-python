@@ -93,7 +93,29 @@ class CollectionAdaptor(BaseAdaptor):
       raise
 
 
-  
+  def check_collection_records_name_and_type(self, collection_name, collection_type, target_column_name=['name','type']):
+    '''
+    A method for checking existing data for Collection table
+    required params:
+    collection_name: a collection name value
+    collection_type: a collection type value
+    target_column_name: a list of columns, default is ['name','type']
+    It returns True if the file is present in db or False if its not
+    '''
+    try:
+      collection_check=False
+      column_list=[column for column in Collection.__table__.columns \
+                       if column.key in target_column_name]
+      column_data=dict(zip(column_list,[collection_name, collection_type]))
+      collection_obj=self.fetch_records_by_multiple_column(table=Collection, \
+                                                           column_data=column_data, \
+                                                           output_mode='one_or_none')
+      if collection_obj is not None:
+        collection_check=True
+      return collection_check
+    except:
+      raise
+
   def fetch_collection_records_name_and_type(self, collection_name, collection_type, target_column_name=['name','type']):
     '''
     A method for fetching data for Collection table
