@@ -310,7 +310,42 @@ class Collect_seqrun_fastq_to_db:
     except:
       raise
     
-    
+  def _check_existing_data(self,data,dbsession,table_name,check_column='EXISTS'):
+    try:
+      if not isinstance(data, pd.Series):
+        raise ValueError('Expecting a data series and got {0}'.format(type(data)))
+
+      if table_name=='experiment':
+        if 'experiment_igf_id' in data and \
+           not pd.isnull(data['experiment_igf_id']):
+          experiment_igf_id=data['experiment_igf_id']
+          ea=ExperimentAdaptor(**{'session':dbsession})
+          experiment_exists=ea.check_experiment_records_id(experiment_igf_id)
+          if experiment_exists:                                                # store data only if project is not existing
+            data[check_column]=True
+          else:
+            data[check_column]=False
+          return data
+        else:
+          raise ValueError('Missing or empty required column experiment_igf_id')
+      elif table_name=='run':
+        if 'run_igf_id' in data and \
+           not pd.isnull(data['run_igf_id']):
+          run_igf_id=data['run_igf_id']
+          ra=RunAdaptor(**{'session':dbsession})
+          run_exists=ra.check_run_records_igf_id(run_igf_id)
+          if run_exists:                                                # store data only if project is not existing
+            data[check_column]=True
+          else:
+            data[check_column]=False
+          return data
+        else:
+          raise ValueError('Missing or empty required column run_igf_id')
+      else:
+        raise ValueError('table {0} not supported yet'.format(table_name))
+    except:
+      raise
+
   def _build_and_store_exp_run_and_collection_in_db(self,fastq_files_list, \
                                                     restricted_list=['10X']):
     '''
@@ -345,6 +380,16 @@ class Collect_seqrun_fastq_to_db:
                                  'sample_igf_id'])
       exp_data=dataframe.loc[:,experiment_columns]
       exp_data=exp_data.drop_duplicates()
+      if exp_data.index.size > 0:
+        exp_data=exp_data.apply(lambda x: \
+                                self._check_existing_data(\
+                                      data=x,\
+                                      dbsession=base.session,\
+                                      table_name='experiment',\
+                                      check_column='EXISTS'),\
+                                axis=1)
+        exp_data=exp_data[exp_data['EXISTS']==False]                            # filter existing experiments
+        exp_data.drop('EXISTS', axis=1, inplace=True)                           # remove extra columns
       # get run data
       run_columns=base.get_table_columns(table_name=Run, \
                                          excluded_columns=['run_id',
