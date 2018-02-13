@@ -133,4 +133,24 @@ class ExperimentAdaptor(BaseAdaptor):
     except:
       raise
 
-
+  def check_experiment_records_id(self, experiment_igf_id, target_column_name='experiment_igf_id'):
+    '''
+    A method for checking existing data for Experiment table
+    required params:
+    experiment_igf_id: an igf id
+    target_column_name: a column name, default experiment_igf_id
+    It returns True if the file is present in db or False if its not
+    '''
+    try:
+      experiment_check=False
+      column=[column for column in Experiment.__table__.columns \
+                       if column.key == target_column_name][0]
+      experiment_obj=self.fetch_records_by_column(table=Experiment, \
+                                           column_name=column, \
+                                           column_id=experiment_igf_id, \
+                                           output_mode='one_or_none')
+      if experiment_obj is not None:
+        experiment_check=True
+      return experiment_check
+    except:
+      raise
