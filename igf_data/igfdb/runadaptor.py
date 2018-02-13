@@ -112,6 +112,27 @@ class RunAdaptor(BaseAdaptor):
         self.rollback_session()
       raise
 
+  def check_run_records_igf_id(self, run_igf_id, target_column_name='run_igf_id'):
+    '''
+    A method for existing data for Run table
+    required params:
+    run_igf_id: an igf id
+    target_column_name: a column name, default run_igf_id
+    It returns True if the file is present in db or False if its not
+    '''
+    try:
+      run_check=False
+      column=[column for column in Run.__table__.columns \
+                       if column.key == target_column_name][0]
+      run_obj=self.fetch_records_by_column(table=Run, \
+                                           column_name=column, \
+                                           column_id=run_igf_id, \
+                                           output_mode='one_or_none')
+      if run_obj is not None:
+        run_check=True
+      return run_check
+    except:
+      raise
 
   def fetch_run_records_igf_id(self, run_igf_id, target_column_name='run_igf_id'):
     '''
