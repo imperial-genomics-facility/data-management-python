@@ -321,7 +321,7 @@ class Collect_seqrun_fastq_to_db:
           experiment_igf_id=data['experiment_igf_id']
           ea=ExperimentAdaptor(**{'session':dbsession})
           experiment_exists=ea.check_experiment_records_id(experiment_igf_id)
-          if experiment_exists:                                                # store data only if project is not existing
+          if experiment_exists:                                                 # store data only if experiment is not existing
             data[check_column]=True
           else:
             data[check_column]=False
@@ -434,6 +434,16 @@ class Collect_seqrun_fastq_to_db:
       collection_columns=['name','type','table']
       collection_data=dataframe.loc[:,collection_columns]
       collection_data=collection_data.drop_duplicates()
+      if collection_data.index.size > 0:
+        collection_data=collection_data.apply(lambda x: \
+                                self._check_existing_data(\
+                                      data=x,\
+                                      dbsession=base.session,\
+                                      table_name='collection',\
+                                      check_column='EXISTS'),\
+                                axis=1)
+        collection_data=collection_data[collection_data['EXISTS']==False]       # filter existing collection
+        collection_data.drop('EXISTS', axis=1, inplace=True)                    # remove extra columns
       # store experiment to db
       ea=ExperimentAdaptor(**{'session':base.session})
       ea.store_project_and_attribute_data(data=exp_data,autosave=False)
