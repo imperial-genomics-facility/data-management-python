@@ -265,9 +265,13 @@ class PrepareQcPageForRemote(IGFBaseProcess):
                         'SampleQC':sample_data['sample_qc_page'],\
                         'Demultiplexing_Report':sample_data['demultiplexing_report'],\
                       })                                                        # adding data for qc page
+    if len(qc_data) > 0:
+      qc_data=pd.DataFrame(qc_data).\
+              sort_values(by='LaneID').\
+              to_dict(orient='records')                                         # sort qc data based on lane id
     return required_header, qc_data
-    
-    
+
+
   def _process_undetermined_data(self,remote_file_path):
     '''
     An internal method for processing undetermined data
