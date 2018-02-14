@@ -344,13 +344,12 @@ class Collect_seqrun_fastq_to_db:
 
       elif table_name=='collection':
         if 'name' in data and 'type' in data and \
-           not pd.isnull(data['name']) and pd.isnull(data['type']):
-          name=data['name']
-          name=data['type']
+           not pd.isnull(data['name']) and \
+           not pd.isnull(data['type']):
           ca=CollectionAdaptor(**{'session':dbsession})
           collection_exists=ca.check_collection_records_name_and_type(\
-                                 collection_name=name, \
-                                 collection_type=type)
+                                 collection_name=data['name'], \
+                                 collection_type=data['type'])
           if collection_exists:
             data[check_column]=True
           else:
@@ -436,11 +435,11 @@ class Collect_seqrun_fastq_to_db:
       collection_data=collection_data.drop_duplicates()
       if collection_data.index.size > 0:
         collection_data=collection_data.apply(lambda x: \
-                                self._check_existing_data(\
-                                      data=x,\
-                                      dbsession=base.session,\
-                                      table_name='collection',\
-                                      check_column='EXISTS'),\
+                                self._check_existing_data( \
+                                      data=x, \
+                                      dbsession=base.session, \
+                                      table_name='collection', \
+                                      check_column='EXISTS'), \
                                 axis=1)
         collection_data=collection_data[collection_data['EXISTS']==False]       # filter existing collection
         collection_data.drop('EXISTS', axis=1, inplace=True)                    # remove extra columns
