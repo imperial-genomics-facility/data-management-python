@@ -66,7 +66,7 @@ You can check the report of some quality control checks on raw sequence data com
 
 http://eliot.med.ic.ac.uk/report/project/{{ projectName }}/{{ projectRunDate }}/{{ flowcellId }}
 
-Please use your username and password to access these qc reports.
+Please use your username and password to access these qc reports. Try using your Imperial College's password if the IGF login password doesn't work for you.
 
 Kind regards
 
