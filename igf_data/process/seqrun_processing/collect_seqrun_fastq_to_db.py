@@ -407,6 +407,7 @@ class Collect_seqrun_fastq_to_db:
                                 axis=1)
         exp_data=exp_data[exp_data['EXISTS']==False]                            # filter existing experiments
         exp_data.drop('EXISTS', axis=1, inplace=True)                           # remove extra columns
+        exp_data=exp_data[pd.isnull(exp_data['experiment_igf_id'])==False]      # filter exp with null values
       # get run data
       run_columns=base.get_table_columns(table_name=Run, \
                                          excluded_columns=['run_id',
@@ -429,6 +430,7 @@ class Collect_seqrun_fastq_to_db:
                                 axis=1)
         run_data=run_data[run_data['EXISTS']==False]                            # filter existing runs
         run_data.drop('EXISTS', axis=1, inplace=True)                           # remove extra columns
+        run_data=run_data[pd.isnull(run_data['run_igf_id'])==False]             # filter run with null values
       # get collection data
       collection_columns=['name','type','table']
       collection_data=dataframe.loc[:,collection_columns]
@@ -443,14 +445,17 @@ class Collect_seqrun_fastq_to_db:
                                 axis=1)
         collection_data=collection_data[collection_data['EXISTS']==False]       # filter existing collection
         collection_data.drop('EXISTS', axis=1, inplace=True)                    # remove extra columns
+        collection_data=collection_data[pd.isnull(collection_data['name'])==False] # filter collection with null values
       # store experiment to db
-      ea=ExperimentAdaptor(**{'session':base.session})
-      ea.store_project_and_attribute_data(data=exp_data,autosave=False)
-      base.session.flush()
+      if exp_data.index.size > 0:
+        ea=ExperimentAdaptor(**{'session':base.session})
+        ea.store_project_and_attribute_data(data=exp_data,autosave=False)
+        base.session.flush()
       # store run to db
-      ra=RunAdaptor(**{'session':base.session})
-      ra.store_run_and_attribute_data(data=run_data,autosave=False)
-      base.session.flush()
+      if run_data.index.size > 0:
+        ra=RunAdaptor(**{'session':base.session})
+        ra.store_run_and_attribute_data(data=run_data,autosave=False)
+        base.session.flush()
       # store file to db
       
       fa=FileAdaptor(**{'session':base.session})
@@ -458,9 +463,10 @@ class Collect_seqrun_fastq_to_db:
       base.session.flush()
       # store collection to db
       ca=CollectionAdaptor(**{'session':base.session})
-      ca.store_collection_and_attribute_data(data=collection_data,\
-                                             autosave=False)
-      base.session.flush()
+      if collection_data.index.size > 0:
+        ca.store_collection_and_attribute_data(data=collection_data,\
+                                               autosave=False)
+        base.session.flush()
       ca.create_collection_group(data=file_group_data,autosave=False)
       base.commit_session()
       self._write_manifest_file(file_data)
