@@ -52,7 +52,7 @@ class SamplesheetFilterAndIndexFactory(IGFBaseJobFactory):
           data_group[lane_id]=samplesheet_project_data.\
                               group_data_by_index_length()                      # group data by lane
       else:
-        data_group[1]=samplesheet.group_data_by_index_length()                  # For MiSeq and NextSeq
+        data_group[lanes[0]]=samplesheet.group_data_by_index_length()           # For MiSeq and NextSeq or single lane hiseq projects
         
       sub_tasks=list()                                                          # create empty sub_tasks data structure
       for lane_id in data_group.keys():
