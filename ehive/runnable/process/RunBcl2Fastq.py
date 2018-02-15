@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import os, subprocess
-from shutil import copytree, copy2
+from shutil import copytree, copy2, move
 from igf_data.utils.fileutils import get_temp_dir,remove_dir
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.process.moveBclFilesForDemultiplexing import moveBclFilesForDemultiplexing
@@ -76,17 +76,27 @@ class RunBcl2Fastq(IGFBaseProcess):
                                               platform_model=model_name)        # get lists of files to move to TMPDIR
       move_file.copy_bcl_files()                                                # move files to TMPDIR
       job_name=self.job_name()
-      work_dir=os.path.join(base_work_dir, \
+      output_temp_dir=get_temp_dir(work_dir=os.environ['TMPDIR'])               # create tmp directory in TMPDIR for cluster
+      report_dir=os.path.join(base_work_dir, \
                             seqrun_igf_id, \
-                            job_name)
-      if not os.path.exists(work_dir):
-        os.makedirs(work_dir,mode=0o770)
+                            job_name, \
+                            'Report')                                           # creating report directory in main storage
+      if not os.path.exists(report_dir):
+        os.makedirs(report_dir,mode=0o770)
 
-      output_temp_dir=get_temp_dir(work_dir=work_dir)                           # create directory in work_dir, writing in TMPDIR causing incomplete report
+      stats_dir=os.path.join(base_work_dir, \
+                            seqrun_igf_id, \
+                            job_name, \
+                            'Stats')                                            # create stats directory in main storage
+      if not os.path.exists(stats_dir):
+        os.makedirs(stats_dir,mode=0o770)
+
       bcl2fastq_cmd=[bcl2fastq_exe,
                      '--runfolder-dir',seqrun_temp_dir,
                      '--sample-sheet',samplesheet_file,
-                     '--output-dir',output_temp_dir]                            # bcl2fastq base parameters
+                     '--output-dir',output_temp_dir,
+                     '--reports-dir',report_dir,
+                     '--stats-dir',stats_dir]                                   # bcl2fastq base parameters
 
       bcl2fastq_param=self.format_tool_options(bcl2fastq_options)               # format bcl2fastq params
       bcl2fastq_cmd.extend(bcl2fastq_param)                                     # add additional parameters
@@ -95,6 +105,8 @@ class RunBcl2Fastq(IGFBaseProcess):
       copytree(output_temp_dir,output_fastq_dir)                                # copy output from TMPDIR
       copy2(samplesheet_file,os.path.join(output_fastq_dir,\
                                           samplesheet_filename))                # add samplesheet to output dir
+      move(report_dir,output_fastq_dir)                                         # move report directory to project dir
+      move(stats_dir,output_fastq_dir)                                          # move stats directory to project dir
       self.param('dataflow_params',{'fastq_dir':output_fastq_dir})              # set dataflow params
       message='Fastq conversion done for {0},{1}:{2}_{3}, fastq: {4}'.\
               format(seqrun_igf_id,project_name,flowcell_lane,\
