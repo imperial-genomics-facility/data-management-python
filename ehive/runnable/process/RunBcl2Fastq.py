@@ -80,7 +80,7 @@ class RunBcl2Fastq(IGFBaseProcess):
       report_dir=os.path.join(base_work_dir, \
                             seqrun_igf_id, \
                             job_name, \
-                            'Report')                                           # creating report directory in main storage
+                            'Reports')                                           # creating report directory in main storage
       if not os.path.exists(report_dir):
         os.makedirs(report_dir,mode=0o770)
 
