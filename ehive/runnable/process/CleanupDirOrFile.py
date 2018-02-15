@@ -9,13 +9,13 @@ class CleanupDirOrFile(IGFBaseProcess):
       'cleanup_status':False,
       })
     return params_dict
-  
+
   def run(self):
     try:
       seqrun_igf_id=self.param_required('seqrun_igf_id')
       path=self.param_required('path')
       cleanup_status=self.param_required('cleanup_status')
-      
+
       message=None
       if cleanup_status:
         if not os.path.exists(path):
@@ -27,15 +27,15 @@ class CleanupDirOrFile(IGFBaseProcess):
         elif os.path.isfile(path):
           os.remove(path)
           message='removed file {0}'.format(path)
-          
+
         else:
           message='path {0} is not file or directory, skipped removing'.\
                   format(path)
-          
+
       else:
         message='Not removing path {0} as cleanup_status is not True'.\
                 format(path)
-                
+
       self.param('dataflow_params',{'path':path,'cleanup_status':cleanup_status})# set dataflow params
       if message:
         self.post_message_to_slack(message,reaction='pass')                     # send msg to slack
