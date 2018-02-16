@@ -64,8 +64,11 @@ class UploadFastqToIrods(IGFBaseProcess):
                                                      seqrun_date,
                                                      samplesheet_filename))
             copy2(samplesheet_file, tmp_samplesheet_file)                       # change samplesheet filename
+            self.post_message_to_slack(message=tmp_samplesheet_file,\
+                                       reaction='pass')
             tar.add(tmp_samplesheet_file,\
-                    arcname=os.path.basename(tmp_samplesheet_file))             # add samplesheet file to tar
+                    arcname=os.path.relpath(tmp_samplesheet_file,\
+                                            start=temp_work_dir))               # add samplesheet file to tar
 
           if report_htmlname in files:
             for file in files:
@@ -80,8 +83,11 @@ class UploadFastqToIrods(IGFBaseProcess):
                 copy2(os.path.join(os.path.abspath(root),\
                                    reports[0]),\
                       tmp_report_file)                                          # copy report file to temp
+                self.post_message_to_slack(message=tmp_report_file,\
+                                       reaction='pass')
                 tar.add(tmp_report_file,\
-                        arcname=os.path.basename(tmp_report_file))              # add demultiplexing report to tar
+                        arcname=os.path.relpath(tmp_report_file,\
+                                                start=temp_work_dir))           # add demultiplexing report to tar
 
           if manifest_name in files:
             manifest_file=os.path.join(os.path.abspath(root),\
@@ -93,8 +99,11 @@ class UploadFastqToIrods(IGFBaseProcess):
                                                   seqrun_date,\
                                                   manifest_name))               # change manifest name
             copy2(manifest_file,tmp_manifest_file)                              # copy manifest to temp
+            self.post_message_to_slack(message=tmp_manifest_file,\
+                                       reaction='pass')
             tar.add(tmp_manifest_file,\
-                    arcname=os.path.basename(tmp_manifest_file))                # add samplesheet file to tar
+                    arcname=os.path.relpath(tmp_manifest_file,\
+                                            start=temp_work_dir))               # add samplesheet file to tar
 
           for file in files:
             if fnmatch.fnmatch(file, '*.fastq.gz') and \
