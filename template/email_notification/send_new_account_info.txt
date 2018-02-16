@@ -1,6 +1,6 @@
 To: {{ userEmail }}
 Cc: igf@imperial.ac.uk
-Subject: New user account created for your sequencing data
+Subject: New user account created for your sequencing data, DO NOT DELETE this email
 From: igf@imperial.ac.uk
 MIME-Version: 1.0
 Content-Type: text/plain
