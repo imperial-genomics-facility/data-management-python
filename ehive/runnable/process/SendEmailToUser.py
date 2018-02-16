@@ -16,7 +16,6 @@ class SendEmailToUser(IGFBaseProcess):
         'remote_user':None,
         'remote_host':None,
         'user_info_file':None,
-        'user_passwd':'Your account password',
       })
     return params_dict
   
@@ -33,7 +32,7 @@ class SendEmailToUser(IGFBaseProcess):
       user_info_file=self.param('user_info_file')
       email_template_path=self.param('email_template_path')
       email_template=self.param('email_template')
-      user_passwd=self.param('user_passwd')
+      user_passwd=False                                                         # default value for user password
       
       pa=ProjectAdaptor(**{'session_class':igf_session_class})
       pa.start_session()
@@ -49,8 +48,10 @@ class SendEmailToUser(IGFBaseProcess):
       user_name=user_info['name']                                               # get username for irods
       login_name=user_info['username']
       user_email=user_info['email_id']
-      
-      #user_passwd=self._get_user_passwd(user_email)                             # method for user passwd, replace it after moving to the unified user registration system
+      user_category=user_info['category']
+      if user_category=='HPC_USER':
+        user_passwd=True                                                        # set user password as true for hpc users
+
       email_template_path=os.path.join(template_dir, \
                                        email_template_path)
       template_env=Environment(loader=FileSystemLoader(searchpath=email_template_path), \

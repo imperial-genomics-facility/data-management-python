@@ -19,7 +19,7 @@ Follow this path
 
   User Name: {{ customerUsername }}
 {% if customerPasswd%}
-  Password: {{ customerPasswd }}
+  Password: Your account password
   Authentication Type: Standard
 {% else %}
   Password: Your account password
