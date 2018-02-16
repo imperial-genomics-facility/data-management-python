@@ -18,7 +18,7 @@ Follow this path
 {{ projectName }}/fastq/{{ projectRunDate }}/{{ flowcellId }}
 
   User Name: {{ customerUsername }}
-{% if customerPasswd%}
+{% if customerPasswd==1 %}
   Password: Your account password
   Authentication Type: Standard
 {% else %}
@@ -40,7 +40,7 @@ You can download your data via a web browser or via the icommand client on cx1 c
                 "irods_default_resource": "woolfResc",
                 "irods_user_name": "{{ customerUsername }}",
                 "irods_zone_name": "igfZone",
-            {% if not customerPasswd %}
+            {% if not customerPasswd==1 %}
                 "irods_ssl_ca_certificate_file": "/apps/irods/certs/igf-chain.pem",
                 "irods_ssl_ca_certificate_path": "/apps/irods/certs",
                 "irods_ssl_verify_server": "cert",

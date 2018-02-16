@@ -32,7 +32,7 @@ class SendEmailToUser(IGFBaseProcess):
       user_info_file=self.param('user_info_file')
       email_template_path=self.param('email_template_path')
       email_template=self.param('email_template')
-      user_passwd=False                                                         # default value for user password
+      user_passwd=0                                                             # default value for user password
       
       pa=ProjectAdaptor(**{'session_class':igf_session_class})
       pa.start_session()
@@ -50,7 +50,7 @@ class SendEmailToUser(IGFBaseProcess):
       user_email=user_info['email_id']
       user_category=user_info['category']
       if user_category=='HPC_USER':
-        user_passwd=True                                                        # set user password as true for hpc users
+        user_passwd=1                                                           # set user password as true for hpc users
 
       email_template_path=os.path.join(template_dir, \
                                        email_template_path)
