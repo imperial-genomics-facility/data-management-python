@@ -157,13 +157,17 @@ def prepare_seqrun_for_db(seqrun_name, seqrun_path, session_class):
     seqrun_data['platform_igf_id']=platform_name
     seqrun_data['flowcell_id']=flowcell_id
 
-    for read_id in reads_stats.keys():
+    read_count=1
+    index_count=1
+    for read_id in sorted(reads_stats.keys()):
       if reads_stats[read_id]['isindexedread'] == 'Y':
         # its index
-        seqrun_data['index{0}'.format(read_id)]=reads_stats[read_id]['numcycles']
+        seqrun_data['index{0}'.format(index_count)]=reads_stats[read_id]['numcycles']
+        index_count+=1
       elif  reads_stats[read_id]['isindexedread'] == 'N':
         # its read
-        seqrun_data['read{0}'.format(read_id)]=reads_stats[read_id]['numcycles']
+        seqrun_data['read{0}'.format(read_count)]=reads_stats[read_id]['numcycles']
+        read_count+=1
       else:
         raise ValueError('unknown value for isindexedread: {0}'.format(reads_stats[read_id]['isindexedread']))
 
