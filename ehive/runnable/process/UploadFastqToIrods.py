@@ -30,13 +30,13 @@ class UploadFastqToIrods(IGFBaseProcess):
 
       pa=ProjectAdaptor(**{'session_class':igf_session_class})
       pa.start_session()
-      user_info=pa.get_project_user_info(project_igf_id=project_name)         # fetch user info from db
+      user_info=pa.get_project_user_info(project_igf_id=project_name)           # fetch user info from db
       pa.close_session()
 
       user_info=user_info[user_info['data_authority']=='T']                     # filter dataframe for data authority
       user_info=user_info.to_dict(orient='records')                             # convert dataframe to list of dictionaries
       if len(user_info) == 0:
-        raise ValueError('No user found for project {0}'.format(project_name)) 
+        raise ValueError('No user found for project {0}'.format(project_name))
 
       user_info=user_info[0]
       username=user_info['username']                                            # get username for irods
@@ -64,8 +64,6 @@ class UploadFastqToIrods(IGFBaseProcess):
                                                      seqrun_date,
                                                      samplesheet_filename))
             copy2(samplesheet_file, tmp_samplesheet_file)                       # change samplesheet filename
-            self.post_message_to_slack(message=tmp_samplesheet_file,\
-                                       reaction='pass')
             tar.add(tmp_samplesheet_file,\
                     arcname=os.path.relpath(tmp_samplesheet_file,\
                                             start=temp_work_dir))               # add samplesheet file to tar
@@ -81,8 +79,6 @@ class UploadFastqToIrods(IGFBaseProcess):
                                                     seqrun_date,\
                                                     os.path.basename(report_file)))  # change report name
                 copy2(report_file, tmp_report_file)                                  # copy report file to temp
-                self.post_message_to_slack(message=tmp_report_file,\
-                                       reaction='pass')
                 tar.add(tmp_report_file,\
                         arcname=os.path.relpath(tmp_report_file,\
                                                 start=temp_work_dir))           # add demultiplexing report to tar
@@ -97,8 +93,6 @@ class UploadFastqToIrods(IGFBaseProcess):
                                                   seqrun_date,\
                                                   manifest_name))               # change manifest name
             copy2(manifest_file,tmp_manifest_file)                              # copy manifest to temp
-            self.post_message_to_slack(message=tmp_manifest_file,\
-                                       reaction='pass')
             tar.add(tmp_manifest_file,\
                     arcname=os.path.relpath(tmp_manifest_file,\
                                             start=temp_work_dir))               # add samplesheet file to tar
