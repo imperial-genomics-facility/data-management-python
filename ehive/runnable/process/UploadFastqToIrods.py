@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os,tarfile,fnmatch,datetime
+from shutil import copy2
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.fileutils import get_temp_dir,remove_dir
 from igf_data.utils.igf_irods_client import IGF_irods_uploader
@@ -14,7 +15,7 @@ class UploadFastqToIrods(IGFBaseProcess):
         'irods_exe_dir':None,
       })
     return params_dict
-  
+
   def run(self):
     try:
       fastq_dir=self.param_required('fastq_dir')
@@ -26,20 +27,20 @@ class UploadFastqToIrods(IGFBaseProcess):
       samplesheet_filename=self.param('samplesheet_filename')
       manifest_name=self.param_required('manifest_name')
       report_html=self.param('report_html')
-      
+
       pa=ProjectAdaptor(**{'session_class':igf_session_class})
       pa.start_session()
       user_info=pa.get_project_user_info(project_igf_id=project_name)         # fetch user info from db
       pa.close_session()
-      
+
       user_info=user_info[user_info['data_authority']=='T']                     # filter dataframe for data authority
       user_info=user_info.to_dict(orient='records')                             # convert dataframe to list of dictionaries
       if len(user_info) == 0:
         raise ValueError('No user found for project {0}'.format(project_name)) 
-    
+
       user_info=user_info[0]
       username=user_info['username']                                            # get username for irods
-      
+
       report_htmlname=os.path.basename(report_html)
       seqrun_date=seqrun_igf_id.split('_')[0]                                   # collect seqrun date from igf id
       seqrun_date=datetime.datetime.strptime(seqrun_date,'%y%m%d').date()       # identify actual date
@@ -50,35 +51,58 @@ class UploadFastqToIrods(IGFBaseProcess):
                                             seqrun_date)                        # construct name of the tarfile
       temp_work_dir=get_temp_dir()                                              # get a temp dir
       tarfile_name=os.path.join(temp_work_dir,tarfile_name)                     # create tarfile in the temp dir
-      
+
       with tarfile.open(tarfile_name, "w") as tar:
         for root,dirs, files in os.walk(top=fastq_dir):
           if samplesheet_filename in files:
             samplesheet_file=os.path.join(os.path.abspath(root),\
                                           samplesheet_filename)                 # get samplesheet filepath
-            tar.add(samplesheet_file,arcname=os.path.relpath(samplesheet_file,\
-                                                             start=fastq_dir))  # add samplesheet file to tar
-        
+            tmp_samplesheet_file=os.path.join(temp_work_dir,\
+                                              '{0}_{1}_{2}_{3}'.\
+                                              format(project_name,\
+                                                     base_seq_dir,\
+                                                     seqrun_date,
+                                                     samplesheet_filename))
+            copy2(samplesheet_file, tmp_samplesheet_file)                       # change samplesheet filename
+            tar.add(tmp_samplesheet_file,\
+                    arcname=os.path.basename(tmp_samplesheet_file))             # add samplesheet file to tar
+
           if report_htmlname in files:
             for file in files:
               if fnmatch.fnmatch(os.path.join(root,file),report_html):
                 reports=os.path.join(os.path.abspath(root),file)                # get filepath for the report
-                tar.add(reports,arcname=os.path.relpath(reports[0],\
-                                                        start=fastq_dir))       # add demultiplexing report to tar
-                
+                tmp_report_file=os.path.join(temp_work_dir,\
+                                             '{0}_{1}_{2}_{3}'.\
+                                             format(project_name,\
+                                                    base_seq_dir,\
+                                                    seqrun_date,\
+                                                    os.path.basename(reports[0]))) # change report name
+                copy2(os.path.join(os.path.abspath(root),\
+                                   reports[0]),\
+                      tmp_report_file)                                          # copy report file to temp
+                tar.add(tmp_report_file,\
+                        arcname=os.path.basename(tmp_report_file))              # add demultiplexing report to tar
+
           if manifest_name in files:
             manifest_file=os.path.join(os.path.abspath(root),\
                                        manifest_name)                           # get samplesheet filepath
-            tar.add(manifest_file,arcname=os.path.relpath(manifest_file,\
-                                                             start=fastq_dir))  # add samplesheet file to tar
-        
+            tmp_manifest_file=os.path.join(temp_work_dir,\
+                                           '{0}_{1}_{2}_{3}'.\
+                                           format(project_name,\
+                                                  base_seq_dir,\
+                                                  seqrun_date,\
+                                                  manifest_name))               # change manifest name
+            copy2(manifest_file,tmp_manifest_file)                              # copy manifest to temp
+            tar.add(tmp_manifest_file,\
+                    arcname=os.path.basename(tmp_manifest_file))                # add samplesheet file to tar
+
           for file in files:
             if fnmatch.fnmatch(file, '*.fastq.gz') and \
               not fnmatch.fnmatch(file, 'Undetermined_*'):
               fastq_file_path=os.path.join(os.path.abspath(root),file)          # get filepath for the fastq files
               tar.add(fastq_file_path,arcname=os.path.relpath(fastq_file_path,\
                                                               start=fastq_dir)) # add fastq file to tar
-              
+
       irods_upload.\
       upload_fastqfile_and_create_collection(filepath=tarfile_name,\
                                              irods_user=username, \
