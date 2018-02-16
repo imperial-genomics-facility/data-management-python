@@ -73,16 +73,14 @@ class UploadFastqToIrods(IGFBaseProcess):
           if report_htmlname in files:
             for file in files:
               if fnmatch.fnmatch(os.path.join(root,file),report_html):
-                reports=os.path.join(os.path.abspath(root),file)                # get filepath for the report
+                report_file=os.path.join(os.path.abspath(root),file)            # get filepath for the report
                 tmp_report_file=os.path.join(temp_work_dir,\
                                              '{0}_{1}_{2}_{3}'.\
                                              format(project_name,\
                                                     base_seq_dir,\
                                                     seqrun_date,\
-                                                    os.path.basename(reports[0]))) # change report name
-                copy2(os.path.join(os.path.abspath(root),\
-                                   reports[0]),\
-                      tmp_report_file)                                          # copy report file to temp
+                                                    os.path.basename(report_file)))  # change report name
+                copy2(report_file, tmp_report_file)                                  # copy report file to temp
                 self.post_message_to_slack(message=tmp_report_file,\
                                        reaction='pass')
                 tar.add(tmp_report_file,\
