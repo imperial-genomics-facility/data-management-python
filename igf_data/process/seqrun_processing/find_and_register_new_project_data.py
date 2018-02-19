@@ -571,6 +571,7 @@ class Find_and_register_new_project_data:
       base=BaseAdaptor(**{'session_class':self.session_class})
       required_project_columns=base.get_table_columns(table_name=Project, \
                                              excluded_columns=['project_id'])   # get project columns
+      required_project_columns.append('barcode_check')                          # add barcode check param to project attribute table
       required_user_columns=base.get_table_columns(table_name=User, \
                                              excluded_columns=['user_id'])      # get user columns
       required_project_user_columns=['project_igf_id','email_id']               # get project user columns
