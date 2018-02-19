@@ -308,10 +308,24 @@ class Find_and_register_new_project_data:
                                                                    c_proc1.returncode))
       result=c_proc2.communicate()[0]
       result=result.decode('UTF-8')
-      if result != '' and pd.isnull(data[hpc_user_col]):                        # fail for non hpc users
-        raise ValueError('IRODS account exists for non hpc user {0}'.\
-                         format(username))
-      if result=='':
+      if result != '' and pd.isnull(data[hpc_user_col]):                        # for non hpc users
+        if self.check_hpc_user:
+          raise ValueError('Can not reset iRODS password for non hpc user {0} with check_hpc_user option'.\
+                           format(username))
+        else:
+          if password is not None or password != '':
+            irods_passwd_cmd=['iadmin', 'moduser', \
+                              '{0}#igfZone'.format(quote(username)), \
+                              'password', ''.format(quote(password))]
+            subprocess.check_call(irods_passwd_cmd)
+            if self.log_slack:
+              message='resetting irods account password for non-hpc user: {0}, password length: {1}'.\
+                    format(username,len(password))
+              self.igf_slack.post_message_to_channel(message,reaction='pass')
+          else:
+            raise ValueError('Missing password for non-hpc user {0}'.\
+                             format(quote(username)))
+      elif result=='':
         irods_mkuser_cmd=['iadmin', 'mkuser', \
                           '{0}#igfZone'.format(quote(username)), 'rodsuser']
         subprocess.check_call(irods_mkuser_cmd)                                 # create irods user
