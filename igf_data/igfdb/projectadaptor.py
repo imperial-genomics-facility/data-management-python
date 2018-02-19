@@ -13,13 +13,12 @@ class ProjectAdaptor(BaseAdaptor):
     A method for dividing and storing data to project and attribute_table
     '''
     (project_data, project_attr_data)=self.divide_data_to_table_and_attribute(data=data)
-    
     try:
-      self.store_project_data(data=project_data)                              # store project
-      if len(project_attr_data.columns) > 0:                                  # check if any attribute is present
-        self.store_project_attributes(data=project_attr_data)                 # store project attributes
+      self.store_project_data(data=project_data)                                # store project
+      if len(project_attr_data.index) > 0:                                      # check if any attribute is present
+        self.store_project_attributes(data=project_attr_data)                   # store project attributes
       if autosave:
-        self.commit_session()                                                 # save changes to database
+        self.commit_session()                                                   # save changes to database
     except:
       if autosave:
         self.rollback_session()
