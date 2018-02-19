@@ -18,7 +18,7 @@ class CollectionAdaptor(BaseAdaptor):
     (collection_data, collection_attr_data)=self.divide_data_to_table_and_attribute(data=data)
     try:
       self.store_collection_data(data=collection_data)                                                        # store collection data
-      if len(collection_attr_data.columns) > 0:
+      if len(collection_attr_data.index) > 0:
         self.store_collection_attributes(data=collection_attr_data)                                           # store project attributes 
 
       if autosave:

@@ -16,7 +16,7 @@ class RunAdaptor(BaseAdaptor):
 
     try:
       self.store_run_data(data=run_data)                                                   # store run
-      if len(run_attr_data.columns)>0:                                                     # check if any attribute exists
+      if len(run_attr_data.index)>0:                                                     # check if any attribute exists
         self.store_run_attributes(data=run_attr_data)                                      # store run attributes
       if autosave:
         self.commit_session()                                                              # save changes to database

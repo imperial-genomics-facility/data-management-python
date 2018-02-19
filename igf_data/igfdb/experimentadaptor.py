@@ -17,7 +17,7 @@ class ExperimentAdaptor(BaseAdaptor):
     try:
       self.store_experiment_data(data=experiment_data)                                          # store experiment data
 
-      if len(experiment_attr_data.columns) > 0:                                                 # check if any attribute is present of not
+      if len(experiment_attr_data.index) > 0:                                                 # check if any attribute is present of not
         self.store_experiment_attributes(data=experiment_attr_data)                             # store run attributes
 
       if autosave:

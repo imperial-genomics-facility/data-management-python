@@ -14,7 +14,7 @@ class FileAdaptor(BaseAdaptor):
     (file_data, file_attr_data)=self.divide_data_to_table_and_attribute(data=data)
     try:
       self.store_file_data(data=file_data) 
-      if len(file_attr_data.columns)>0:                             # check if any attribute exists
+      if len(file_attr_data.index)>0:                             # check if any attribute exists
         self.store_file_attributes(data=file_attr_data) 
 
       if autosave:

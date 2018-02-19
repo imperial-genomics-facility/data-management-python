@@ -18,7 +18,7 @@ class SampleAdaptor(BaseAdaptor):
 
     try:
       self.store_sample_data(data=sample_data)                                         # store sample records
-      if len(sample_attr_data.columns) > 0:                                            # check if any attribute is present
+      if len(sample_attr_data.index) > 0:                                            # check if any attribute is present
         self.store_sample_attributes(data=sample_attr_data)                            # store project attributes
       if autosave:
         self.commit_session()

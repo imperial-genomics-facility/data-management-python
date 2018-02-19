@@ -16,7 +16,7 @@ class SeqrunAdaptor(BaseAdaptor):
 
     try:                                                                                 
       self.store_seqrun_data(data=seqrun_data)                                                # store run
-      if len(seqrun_attr_data.columns)>0:                                                     # check if any attribute exists
+      if len(seqrun_attr_data.index)>0:                                                     # check if any attribute exists
         self.store_seqrun_attributes(data=seqrun_attr_data)                                   # store run attributes
      
       if autosave:
