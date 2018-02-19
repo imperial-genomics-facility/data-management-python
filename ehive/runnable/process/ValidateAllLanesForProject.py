@@ -29,19 +29,27 @@ class ValidateAllLanesForProject(IGFBaseProcess):
     project_status: Project status info, PASS or FAIL
     barcode_check_key: The attribute key name for barcode check, default barcode_check
     '''
-    if project_status=='FAIL':
-      base = BaseAdaptor(**{'session_class':igf_session_class})
-      base.start_session()
-      query=base.session.\
-            query(Project).\
-            join(Project_attribute).\
-            filter(Project.project_id==Project_attribute.project_id).\
-            filter(Project.project_name==project_name).\
-            filter(Project_attribute.attribute_name==barcode_check_key)
-      result=base.fetch_records(query, output_mode='one_or_none')
-      if result is not None and result.attribute_value=='OFF':                  # checking for barcode checking status
-        project_status=='PASS'                                                  # reset project status
-    return project_status
+    try:
+      db_connected=0
+      if project_status=='FAIL':
+        base = BaseAdaptor(**{'session_class':igf_session_class})
+        base.start_session()
+        db_connected=1
+        query=base.session.\
+              query(Project).\
+              join(Project_attribute).\
+              filter(Project.project_id==Project_attribute.project_id).\
+              filter(Project.project_name==project_name).\
+              filter(Project_attribute.attribute_name==barcode_check_key)       # seq query for db lookup
+        result=base.fetch_records(query, output_mode='one_or_none')             # fetch data from db
+        if result is not None and result.attribute_value=='OFF':                # checking for barcode checking status
+          project_status=='PASS'                                                # reset project status
+      return project_status
+    except:
+      raise
+    finally:
+      if db_connected==1:
+        base.close_session()
 
   def run(self):
     try:
