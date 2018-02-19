@@ -316,7 +316,7 @@ class Find_and_register_new_project_data:
           if password is not None or password != '':
             irods_passwd_cmd=['iadmin', 'moduser', \
                               '{0}#igfZone'.format(quote(username)), \
-                              'password', ''.format(quote(password))]
+                              'password', '{0}'.format(quote(password))]
             subprocess.check_call(irods_passwd_cmd)
             if self.log_slack:
               message='resetting irods account password for non-hpc user: {0}, password length: {1}'.\
@@ -344,7 +344,7 @@ class Find_and_register_new_project_data:
 
           irods_passwd_cmd=['iadmin', 'moduser', \
                             '{0}#igfZone'.format(quote(username)), \
-                            'password', ''.format(quote(password))]
+                            'password', '{0}'.format(quote(password))]
           subprocess.check_call(irods_passwd_cmd)                               # set password for non-hpc user
           if self.log_slack:
             message='created irods account for non-hpc user: {0}, password length: {1}'.\
