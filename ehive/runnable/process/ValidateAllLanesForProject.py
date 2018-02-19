@@ -2,6 +2,8 @@
 import os
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from shutil import rmtree
+from igf_data.igfdb.projectadaptor import BaseAdaptor
+from igf_data.igfdb.igfTables import Project, Project_attribute
 
 class ValidateAllLanesForProject(IGFBaseProcess):
   '''
@@ -16,25 +18,52 @@ class ValidateAllLanesForProject(IGFBaseProcess):
         'strict_check':True,
       })
     return params_dict
-  
+
+  @staticmethod
+  def _check_project_table(igf_session_class,project_name,project_status,barcode_check_key='barcode_check'):
+    '''
+    A static method for check project barcode check setting from database
+    required params:
+    igf_session_class: A database session class
+    project_name: Name of the project
+    project_status: Project status info, PASS or FAIL
+    barcode_check_key: The attribute key name for barcode check, default barcode_check
+    '''
+    if project_status=='FAIL':
+      base = BaseAdaptor(**{'session_class':igf_session_class})
+      base.start_session()
+      query=base.session.\
+            query(Project).\
+            join(Project_attribute).\
+            filter(Project.project_id==Project_attribute.project_id).\
+            filter(Project.project_name==project_name).\
+            filter(Project_attribute.attribute_name==barcode_check_key)
+      result=base.fetch_records(query, output_mode='one_or_none')
+      if result is not None and result.attribute_value=='OFF':                  # checking for barcode checking status
+        project_status=='PASS'                                                  # reset project status
+    return project_status
+
   def run(self):
     try:
       project_fastq=self.param_required('project_fastq')
       strict_check=self.param('strict_check')
       seqrun_igf_id=self.param_required('seqrun_igf_id')
       project_name=self.param_required('project_name')
-      
+      igf_session_class=self.param_required('igf_session_class')
+
       project_status='PASS'                                                     # default status is PASS
       for fastq_dir,qc_stats in project_fastq.items():
         if qc_stats=='FAIL':
           project_status='FAIL'                                                 # mark project status as failed if any lane is failed
-          
+
+      project_status=self._check_project_table(igf_session_class,\
+                                               project_name,\
+                                               project_status)                  # override project status check of dodgy projects 
       if project_status=='PASS':
         self.param('dataflow_params',{'project_fastq':project_fastq,
                                       'project_status':project_status})
       else:
         self.param('dataflow_params',{'project_status':project_status})
-        
         for fastq_dir in project_fastq.keys():
           report_dir=os.path.join(fastq_dir,'Reports','html')
           for flowcell in os.listdir(report_dir):
