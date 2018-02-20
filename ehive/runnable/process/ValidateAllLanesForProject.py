@@ -19,31 +19,38 @@ class ValidateAllLanesForProject(IGFBaseProcess):
       })
     return params_dict
 
-  @staticmethod
-  def _check_project_table(igf_session_class,project_name,project_status,barcode_check_key='barcode_check'):
+  def _check_project_table(self,project_status,barcode_check_key='barcode_check',\
+                           barcode_off_value='OFF'):
     '''
-    A static method for check project barcode check setting from database
+    An internal method for check project barcode check setting from database
     required params:
-    igf_session_class: A database session class
-    project_name: Name of the project
     project_status: Project status info, PASS or FAIL
     barcode_check_key: The attribute key name for barcode check, default barcode_check
+    barcode_off_value: A keyword for barcode check setting, default OFF
     '''
     try:
       db_connected=0
+      igf_session_class=self.param('igf_session_class')
+      project_name=self.param('project_name')
+      seqrun_igf_id=self.param('seqrun_igf_id')
+
       if project_status=='FAIL':
         base = BaseAdaptor(**{'session_class':igf_session_class})
         base.start_session()
         db_connected=1
         query=base.session.\
-              query(Project).\
-              join(Project_attribute).\
+              query(Project_attribute).\
+              join(Project).\
               filter(Project.project_id==Project_attribute.project_id).\
-              filter(Project.project_name==project_name).\
+              filter(Project.project_igf_id==project_name).\
               filter(Project_attribute.attribute_name==barcode_check_key)       # seq query for db lookup
         result=base.fetch_records(query, output_mode='one_or_none')             # fetch data from db
-        if result is not None and result.attribute_value=='OFF':                # checking for barcode checking status
-          project_status=='PASS'                                                # reset project status
+        if result is not None and result.attribute_value==barcode_off_value:    # checking for barcode checking status
+          project_status='PASS'                                                 # reset project status
+          message='Overriding failed project {0} to PASS'.\
+                  format(project_name)
+          self.post_message_to_slack(message,reaction='pass')                   # comment to slack
+          self.comment_asana_task(task_name=seqrun_igf_id, comment=message)     # send msg to asana
       return project_status
     except:
       raise
@@ -64,9 +71,7 @@ class ValidateAllLanesForProject(IGFBaseProcess):
         if qc_stats=='FAIL':
           project_status='FAIL'                                                 # mark project status as failed if any lane is failed
 
-      project_status=self._check_project_table(igf_session_class,\
-                                               project_name,\
-                                               project_status)                  # override project status check of dodgy projects 
+      project_status=self._check_project_table(project_status)                  # override project status check of dodgy projects 
       if project_status=='PASS':
         self.param('dataflow_params',{'project_fastq':project_fastq,
                                       'project_status':project_status})
