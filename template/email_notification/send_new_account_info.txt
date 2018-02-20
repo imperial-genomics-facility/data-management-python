@@ -7,10 +7,12 @@ Content-Type: text/plain
 
 Dear {{ fullName }},
 
-A new user account has been created for you at Imperial BRC Genomics Facility. Please DO NOT DELETE this login information as you will need them for accessing your sequencing data from facility server.
+We have created a new user account for you at Imperial BRC Genomics Facility for accessing your data. You have to provide the following login credentials while downloading the sequencing data and accessing the QC report pages from our server.
 
 username: {{ userName }}
 password: {{ userPass }}
+
+Please DO NOT DELETE this information as we will not include the account PASSWORD field to our data dissemination emails in future.
 
 You have received this email because of your requested for a new sequencing project. If you did not intend to, please let us know as soon as possible.
 
