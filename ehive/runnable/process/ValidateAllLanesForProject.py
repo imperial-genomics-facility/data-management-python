@@ -71,7 +71,7 @@ class ValidateAllLanesForProject(IGFBaseProcess):
         if qc_stats=='FAIL':
           project_status='FAIL'                                                 # mark project status as failed if any lane is failed
 
-      project_status=self._check_project_table(project_status)                  # override project status check of dodgy projects 
+      project_status=self._check_project_table(project_status)                  # override project status check of dodgy projects
       if project_status=='PASS':
         self.param('dataflow_params',{'project_fastq':project_fastq,
                                       'project_status':project_status})
