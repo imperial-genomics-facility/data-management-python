@@ -32,8 +32,8 @@ class SendEmailToUser(IGFBaseProcess):
       user_info_file=self.param('user_info_file')
       email_template_path=self.param('email_template_path')
       email_template=self.param('email_template')
-      user_passwd=0                                                             # default value for user password
-      
+      hpcUser=False                                                             # default value for hpc users
+
       pa=ProjectAdaptor(**{'session_class':igf_session_class})
       pa.start_session()
       user_info=pa.get_project_user_info(project_igf_id=project_name)           # fetch user info from db
@@ -50,7 +50,10 @@ class SendEmailToUser(IGFBaseProcess):
       user_email=user_info['email_id']
       user_category=user_info['category']
       if user_category=='HPC_USER':
-        user_passwd=1                                                           # set user password as true for hpc users
+        hpcUser=True                                                            # set value for hpc user
+        message='loading hpc user specific settings for {0}:{1}'.\
+                format(user_name,login_name)
+        self.post_message_to_slack(message,reaction='pass')                     # send message to slack
 
       email_template_path=os.path.join(template_dir, \
                                        email_template_path)
@@ -66,7 +69,7 @@ class SendEmailToUser(IGFBaseProcess):
                customerUsername=login_name,\
                projectRunDate=seqrun_date, \
                flowcellId=flowcell_id, \
-               customerPasswd=user_passwd,\
+               hpcUser=hpcUser,\
               ).\
         dump(report_output_file)
       proc=subprocess.Popen(['cat',\
