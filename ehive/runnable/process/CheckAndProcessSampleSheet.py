@@ -90,12 +90,18 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
         self.post_message_to_slack(message,reaction='pass')
         self.comment_asana_task(task_name=seqrun_igf_id, comment=message)
 
-      samplesheet.print_sampleSheet(outfile=output_file)
-      self.param('dataflow_params',{'samplesheet':output_file})
-      message='seqrun: {0}, reformatted samplesheet:{1}'.format(seqrun_igf_id,\
+      if len(samplesheet._data) > 0:                                            # fail safe for 10x only projects
+        samplesheet.print_sampleSheet(outfile=output_file)
+        self.param('dataflow_params',{'samplesheet':output_file})
+        message='seqrun: {0}, reformatted samplesheet:{1}'.format(seqrun_igf_id,\
                                                                output_file)
-      self.post_message_to_slack(message,reaction='pass')
-      self.comment_asana_task(task_name=seqrun_igf_id, comment=message)
+        self.post_message_to_slack(message,reaction='pass')
+        self.comment_asana_task(task_name=seqrun_igf_id, comment=message)
+      else:
+        message='seqrun: {0}, 10X only projects found, stopping data flow'.\
+                format(seqrun_igf_id)
+        self.post_message_to_slack(message,reaction='pass')
+        self.comment_asana_task(task_name=seqrun_igf_id, comment=message)
     except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
