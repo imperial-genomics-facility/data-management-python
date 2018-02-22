@@ -32,7 +32,11 @@ class Hiseq4000SampleSheet(unittest.TestCase):
     pattern=re.compile('hiseq', re.IGNORECASE)
     self.assertRegexpMatches(platform_name, pattern)
 
-        
+  def test_get_project_and_lane(self):
+    samplesheet_data=self.samplesheet_data
+    platform_list=samplesheet_data.get_project_and_lane()
+    self.assertTrue('project_3:8' in platform_list)
+
   def test_filter_sample_data(self):
     samplesheet_data=self.samplesheet_data
     samplesheet_data.filter_sample_data(condition_key='Lane', condition_value=3)
