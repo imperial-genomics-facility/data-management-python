@@ -123,7 +123,7 @@ class SampleSheet:
 
       project_list=list()
 
-      for project_lane, data_list in data_group:
+      for project_lane, _ in data_group:
         if isinstance(project_lane,tuple):
           project_lane=':'.join(project_lane)                                   # for hiseq samplesheet
         project_list.append(project_lane)
