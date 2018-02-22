@@ -32,8 +32,9 @@ class SampleSheetProjectFactory(IGFBaseJobFactory):
       sub_tasks=[{'project_name':project_name} \
                  for project_name in project_names]                             # create subtasks data structure
       self.param('sub_tasks',sub_tasks)                                         # seed dataflow
+      project_lane=samplesheet.get_project_and_lane()                           # get project name and lane info from samplesheet
       self.add_asana_notes(task_name=seqrun_igf_id,\
-                           notes='\n'.join(project_names))                      # add project names to asana notes
+                           notes='\n'.join(project_lane))                       # add project names to asana notes
     except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
