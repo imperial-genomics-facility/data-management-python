@@ -1,4 +1,5 @@
 import os, re, copy, sys
+import pandas as pd
 from collections import defaultdict, deque
 
 try:
@@ -102,6 +103,33 @@ class SampleSheet:
       raise ValueError('no project name found for samplesheet {0}, column {1}'.format(self.infile, project_header))
 
     return project_names
+
+
+  def get_project_and_lane(self, project_tag='Sample_Project',lane_tag='Lane'):
+    '''
+    A method for fetching project and lane information from samplesheet
+    required params:
+    project_tag: A string for project name column in the samplesheet, default Sample_Project
+    lane_tag: A string for Lane id column in the samplesheet, default Lane
+    
+    returns: A list of project name (for all) and lane information (only for hiseq)
+    '''
+    try:
+      samplesheet_data=pd.DataFrame(self._data)
+      if 'Lane' in samplesheet_data.columns:
+        data_group=samplesheet_data.groupby(['Sample_Project','Lane'])          # for hiseq
+      else:
+        data_group=samplesheet_data.groupby(['Sample_Project'])                 # for nextseq and miseq
+
+      project_list=list()
+
+      for project_lane, data_list in data_group:
+        if isinstance(project_lane,tuple):
+          project_lane=':'.join(project_lane)                                   # for hiseq samplesheet
+        project_list.append(project_lane)
+      return project_list
+    except:
+        raise
 
 
   def get_index_count(self):
