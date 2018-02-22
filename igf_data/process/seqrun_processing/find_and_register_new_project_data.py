@@ -266,15 +266,14 @@ class Find_and_register_new_project_data:
       return new_password
     except:
       raise
-    
-    
-  @staticmethod
-  def _setup_irods_account(data,user_col='username',\
+
+
+  def _setup_irods_account(self,data,user_col='username',\
                            password_col='password',\
                            hpc_user_col='hpc_username',\
                           ):
     '''
-    An internal staticmethod for creating new user account in irods
+    An internal method for creating new user account in irods
     required params:
     data: A pandas series containing user data
     user_col: Column name for username, deffault username
@@ -350,7 +349,6 @@ class Find_and_register_new_project_data:
             message='created irods account for non-hpc user: {0}, password length: {1}'.\
                     format(username,len(password))
             self.igf_slack.post_message_to_channel(message,reaction='pass')
-
     except:
       raise
 
