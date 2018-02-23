@@ -26,7 +26,7 @@ class IGF_slack:
     self.slack_token=None                                                       # reset slack token 
       
 
-  def post_message_to_channel(self, message, reaction=''):
+  def post_message_to_channel(self, message, reaction='',attachments=None, thread_ts=None):
     '''
     A method for posting message to the slack channel
     required params:
@@ -42,12 +42,16 @@ class IGF_slack:
       message='{1} {0}'.format(':robot_face: :zzz:',message)
 
     try:        
-      self.slackobject.api_call( "chat.postMessage", channel=self.slack_channel_id, text=message)
+      self.slackobject.api_call( "chat.postMessage", \
+                                 channel=self.slack_channel_id, \
+                                 text=message,\
+                                 attachments=attachments, \
+                                 thread_ts=thread_ts)
     except:
       raise
     
 
-  def post_file_to_channel(self,filepath,message=None):
+  def post_file_to_channel(self,filepath,message=None,attachments=None, thread_ts=None):
     '''
     A method for uploading a file to slack
     required params:
@@ -65,6 +69,7 @@ class IGF_slack:
         self.slackobject.api_call( "files.upload", \
                                    channels=self.slack_channel_id, \
                                    initial_comment=message, \
+                                   thread_ts=thread_ts, \
                                    file=open(os.path.join(filepath),'rb'),)     # share files in slack channel
     except:
       raise
