@@ -93,7 +93,7 @@ class ProcessSingleCellSamplesheet:
       raise
 
 
-  def replace_singlecell_barcodes(self,output_samplesheet):
+  def change_singlecell_barcodes(self,output_samplesheet):
     '''
     A method for replacing single cell index codes present in the samplesheet 
     with the four index sequences. This method will create 4 samplesheet entries
