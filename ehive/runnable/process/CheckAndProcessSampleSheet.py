@@ -23,6 +23,7 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
         'adapter_section':'Settings',
         'read1_adapter_label':'Adapter',
         'read2_adapter_label':'AdapterRead2',
+        'project_type':None,
       })
     return params_dict
   
@@ -41,6 +42,7 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
       adapter_section=self.param('adapter_section')
       read1_adapter_label=self.param('read1_adapter_label')
       read2_adapter_label=self.param('read2_adapter_label')
+      project_type=self.param('project_type')
       
       job_name=self.job_name()
       work_dir=os.path.join(base_work_dir,seqrun_igf_id,job_name)               # get work directory name
@@ -59,10 +61,18 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
         raise IOError('seqrun: {0}, samplesheet file {1} not found'.\
                       format(seqrun_igf_id,samplesheet_file))
     
+      samplesheet_sc=SampleSheet(infile=samplesheet_file)                       # read samplesheet for single cell check
+      samplesheet_sc.filter_sample_data(condition_key='Description', 
+                                        condition_value=tenX_label, 
+                                        method='include')                       # get 10X samplesheet
+      if len(samplesheet_sc._data) > 0:
+        project_type=tenX_label                                                 # check if 10x samples are present in samplesheet
+        
       samplesheet=SampleSheet(infile=samplesheet_file)                          # read samplesheet
       samplesheet.filter_sample_data(condition_key='Description', 
                                      condition_value=tenX_label, 
-                                     method='exclude')                          # separate 10X samplesheet
+                                     method='exclude')                          # filter 10X samplesheet
+
       if adapter_trim_check:
         read1_val=samplesheet.check_sample_header(section=adapter_section,\
                                                   condition_key=read1_adapter_label)
@@ -90,18 +100,20 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
         self.post_message_to_slack(message,reaction='pass')
         self.comment_asana_task(task_name=seqrun_igf_id, comment=message)
 
-      if len(samplesheet._data) > 0:                                            # fail safe for 10x only projects
-        samplesheet.print_sampleSheet(outfile=output_file)
-        self.param('dataflow_params',{'samplesheet':output_file})
-        message='seqrun: {0}, reformatted samplesheet:{1}'.format(seqrun_igf_id,\
-                                                               output_file)
-        self.post_message_to_slack(message,reaction='pass')
-        self.comment_asana_task(task_name=seqrun_igf_id, comment=message)
-      else:
-        message='seqrun: {0}, 10X only projects found, stopping data flow'.\
+      if len(samplesheet_sc._data) > 0:                                         # merge 10x samplesheet
+        samplesheet._data.append(samplesheet_sc._data)
+        message='seqrun: {0}, merging 10X samples with reformatted samplesheet'.\
                 format(seqrun_igf_id)
         self.post_message_to_slack(message,reaction='pass')
         self.comment_asana_task(task_name=seqrun_igf_id, comment=message)
+        
+      samplesheet.print_sampleSheet(outfile=output_file)
+      self.param('dataflow_params',{'samplesheet':output_file,
+                                    'project_type':project_type})
+      message='seqrun: {0}, reformatted samplesheet:{1}'.format(seqrun_igf_id,\
+                                                                output_file)
+      self.post_message_to_slack(message,reaction='pass')
+      self.comment_asana_task(task_name=seqrun_igf_id, comment=message)
     except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
