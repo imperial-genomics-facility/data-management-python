@@ -4,9 +4,9 @@ from igf_data.process.singlecell_seqrun.processsinglecellsamplesheet import Proc
 
 class ProcessSingleCellSamplesheet_testA(unittest.TestCase):
   def setUp(self):
-    self.samplesheet_file='data\singlecell_data\SampleSheet.csv'
-    self.singlecell_barcode_json='data\singlecell_data\chromium-shared-sample-indexes-plate_20180301.json'
-    self.output_file='data\singlecell_data\mod_SampleSheet.csv'
+    self.samplesheet_file='data/singlecell_data/SampleSheet.csv'
+    self.singlecell_barcode_json='data/singlecell_data/chromium-shared-sample-indexes-plate_20180301.json'
+    self.output_file='data/singlecell_data/mod_SampleSheet.csv'
     if os.path.exists(self.output_file):
       os.remove(self.output_file)
     
