@@ -53,7 +53,7 @@ class ProcessSingleCellSamplesheet:
     return index_data
 
 
-  def _process_samplesheet_lines(data):
+  def _process_samplesheet_lines(self,data):
     '''
     An internal method for processing single cell indexes. Four lines of sample
     information are added to the output for each of the single cell samples
@@ -68,6 +68,7 @@ class ProcessSingleCellSamplesheet:
         raise ValueError('expecting a dictionary and got {0}'.format(type(data)))
       if self.index_column in data:
         sc_index=data[self.index_column]
+        index_data=self.singlecell_barcodes
         if sc_index in index_data:
           final_data=list()
           suffix=0
@@ -76,10 +77,10 @@ class ProcessSingleCellSamplesheet:
             mod_data=dict(data)
             mod_data[self.index_column]=index_seq
             mod_data[self.sample_id_column]='{0}_{1}'.\
-                                             format(mod_data[sample_id_column],\
+                                             format(mod_data[self.sample_id_column],\
                                                     suffix)
             mod_data[self.sample_name_column]='{0}_{1}'.\
-                                              format(mod_data[sample_name_column],\
+                                              format(mod_data[self.sample_name_column],\
                                                      suffix)
             final_data.append(mod_data)
         else:
@@ -113,14 +114,16 @@ class ProcessSingleCellSamplesheet:
                                         condition_value=self.singlecell_lebel, 
                                         method='include')
       new_samplesheet_data=list()
+      new_samplesheet_data.extend(samplesheet._data)
       if len(samplesheet_sc._data) > 0:                                         # single cell samples are present
         for data in samplesheet_sc._data:
           processed_data=self._process_samplesheet_lines(data)
           if isinstance(processed_data,list):
-            new_single_cell_data.extend(processed_data)
+            new_samplesheet_data.extend(processed_data)
           else:
-            new_single_cell_data.append(processed_data)
-        samplesheet._data.append(new_single_cell_data)                          # add modified single cell records
+            new_samplesheet_data.append(processed_data)
+
+      samplesheet._data=new_samplesheet_data                                    # add modified single cell records
       samplesheet.print_sampleSheet(outfile=output_samplesheet)                 # write modified samplesheet
     except:
       raise
