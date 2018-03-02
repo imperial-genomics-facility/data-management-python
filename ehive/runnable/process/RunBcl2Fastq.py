@@ -3,6 +3,7 @@ import os, subprocess
 from shutil import copytree, copy2, move
 from igf_data.utils.fileutils import get_temp_dir,remove_dir
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
+from igf_data.illumina.samplesheet import SampleSheet
 from igf_data.process.moveBclFilesForDemultiplexing import moveBclFilesForDemultiplexing
 
 
@@ -22,6 +23,8 @@ class RunBcl2Fastq(IGFBaseProcess):
         'bcl2fastq_options':{'-r':'1','-w':'1','-p':'1','--barcode-mismatches':'1', \
                              '--auto-set-to-zero-barcode-mismatches':'',\
                              '--create-fastq-for-index-reads':''},
+        'singlecell_options':{'--minimum-trimmed-read-length=8','--mask-short-adapter-reads=8'},
+        'singlecell_tag':'10X',
       })
     return params_dict
 
@@ -41,6 +44,8 @@ class RunBcl2Fastq(IGFBaseProcess):
       bcl2fastq_exe=self.param_required('bcl2fastq_exe')
       runinfo_filename=self.param('runinfo_filename')
       bcl2fastq_options=self.param('bcl2fastq_options')
+      singlecell_options=self.param('singlecell_options')
+      singlecell_tag=self.param('singlecell_tag')
       force_overwrite=self.param('force_overwrite')
       fastq_dir_label=self.param('fastq_dir_label')
       samplesheet_filename=self.param('samplesheet_filename')
@@ -50,6 +55,14 @@ class RunBcl2Fastq(IGFBaseProcess):
       runinfo_file=os.path.join(seqrun_dir,runinfo_filename)                    # seqrun runinfo file
       if not os.path.exists(samplesheet_file):
         raise IOError('samplesheet file {0} not found'.format(samplesheet_file))
+
+      singlecell_status=False                                                   # single cell status is false by default
+      samplesheet_sc=SampleSheet(infile=samplesheet_file)                       # read samplesheet for single cell check
+      samplesheet_sc.filter_sample_data(condition_key='Description', 
+                                        condition_value=singlecell_tag, 
+                                        method='include')
+      if len(samplesheet_sc._data) > 0:
+        singlecell_status=True                                                  # set single cell status as true if its present in samplesheet
 
       if not os.path.exists(runinfo_file):
         raise IOError('Runinfo file {0} not found'.format(runinfo_file))
@@ -100,6 +113,10 @@ class RunBcl2Fastq(IGFBaseProcess):
 
       bcl2fastq_param=self.format_tool_options(bcl2fastq_options)               # format bcl2fastq params
       bcl2fastq_cmd.extend(bcl2fastq_param)                                     # add additional parameters
+      if singlecell_status:
+        sc_bcl2fastq_param=self.format_tool_options(singlecell_options)         # format singlecell bcl2fastq params
+        bcl2fastq_cmd.extend(sc_bcl2fastq_param)                                # add additional parameters
+
       subprocess.check_call(bcl2fastq_cmd)                                      # run bcl2fastq
 
       copytree(output_temp_dir,output_fastq_dir)                                # copy output from TMPDIR
