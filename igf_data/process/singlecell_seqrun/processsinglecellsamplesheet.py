@@ -12,14 +12,14 @@ class ProcessSingleCellSamplesheet:
   required params:
   samplesheet_file: A samplesheet containing single cell samples
   singlecell_barcode_json: A JSON file listing single cell indexes
-  singlecell_lebel: A text lebel for the single cell sample description
+  singlecell_tag: A text keyword for the single cell sample description
   index_column: Column name for index lookup
   sample_id_column: Column name for sample_id lookup
   sample_name_column: Column name for sample_name lookup
   '''
   
   def __init__(self,samplesheet_file,singlecell_barcode_json,\
-               singlecell_lebel='10X',index_column='index',\
+               singlecell_tag='10X',index_column='index',\
                sample_id_column='Sample_ID', sample_name_column='Sample_Name',
                sample_description_column='Description'):
     self.samplesheet_file=samplesheet_file
@@ -30,7 +30,7 @@ class ProcessSingleCellSamplesheet:
     self.sample_description_column=sample_description_column
     self.singlecell_barcodes=ProcessSingleCellSamplesheet.\
                              _get_index_data(singlecell_barcode_json)           # get single cell indexes
-    self.singlecell_lebel=singlecell_lebel
+    self.singlecell_tag=singlecell_tag
 
 
   @staticmethod
@@ -106,12 +106,12 @@ class ProcessSingleCellSamplesheet:
     try:
       samplesheet=SampleSheet(infile=self.samplesheet_file)
       samplesheet.filter_sample_data(condition_key=self.sample_description_column, 
-                                     condition_value=self.singlecell_lebel, 
+                                     condition_value=self.singlecell_tag, 
                                      method='exclude')                          # filter single cell samples
       
       samplesheet_sc=SampleSheet(infile=self.samplesheet_file)
       samplesheet_sc.filter_sample_data(condition_key=self.sample_description_column, 
-                                        condition_value=self.singlecell_lebel, 
+                                        condition_value=self.singlecell_tag, 
                                         method='include')
       new_samplesheet_data=list()
       new_samplesheet_data.extend(samplesheet._data)
