@@ -13,7 +13,9 @@ class ReplaceSingleCellBarcodes(IGFBaseProcess):
   '''
   def param_defaults(self):
     params_dict=super(CheckAndProcessSampleSheet,self).param_defaults()
-    params_dict.update({'output_samplesheet_name':'SampleSheet_SC.csv',
+    params_dict.update({
+                        'output_samplesheet_name':'SampleSheet_SC.csv',
+                        'singlecell_tag':'10X',
                       })
     return params_dict
 
@@ -25,10 +27,12 @@ class ReplaceSingleCellBarcodes(IGFBaseProcess):
       singlecell_barcode_json = self. param_required('singlecell_barcode_json')
       base_work_dir=self.param_required('base_work_dir')
       output_samplesheet_name=self.param('output_samplesheet_name')
+      singlecell_tag=self.param('singlecell_tag')
       job_name=self.job_name()
       work_dir=os.path.join(base_work_dir,seqrun_igf_id,job_name)               # get work directory name
       sc_data=ProcessSingleCellSamplesheet(samplesheet_file,\
-                                           singlecell_barcode_json)
+                                           singlecell_barcode_json,\
+                                           singlecell_tag)
       output_samplesheet=os.path.join(work_dir,output_samplesheet_name)         # set output file
       if os.path.exists(output_samplesheet):
         os.remove(output_samplesheet)                                           # remove existing file
