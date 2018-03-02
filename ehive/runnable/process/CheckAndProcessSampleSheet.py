@@ -18,7 +18,7 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
         'samplesheet_filename':'SampleSheet.csv',
         'index2_label':'index_2',
         'revcomp_label':'REVCOMP',
-        '10X_label':'10X',
+        'singlecell_tag':'10X',
         'adapter_trim_check':True,
         'adapter_section':'Settings',
         'read1_adapter_label':'Adapter',
@@ -37,7 +37,7 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
       samplesheet_filename=self.param('samplesheet_filename')
       index2_label=self.param('index2_label')
       revcomp_label=self.param('revcomp_label')
-      tenX_label=self.param('10X_label')
+      tenX_label=self.param('singlecell_tag')
       adapter_trim_check=self.param('adapter_trim_check')
       adapter_section=self.param('adapter_section')
       read1_adapter_label=self.param('read1_adapter_label')
