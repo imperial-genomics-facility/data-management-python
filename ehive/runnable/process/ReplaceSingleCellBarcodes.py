@@ -21,7 +21,7 @@ class ReplaceSingleCellBarcodes(IGFBaseProcess):
   def run(self):
     try:
       igf_session_class = self.param_required('igf_session_class')
-      samplesheet_file = self.param_required('samplesheet_file')
+      samplesheet_file = self.param_required('samplesheet')
       singlecell_barcode_json = self. param_required('singlecell_barcode_json')
       base_work_dir=self.param_required('base_work_dir')
       output_samplesheet_name=self.param('output_samplesheet_name')
