@@ -14,6 +14,7 @@ class MergeSingleCellFastq:
   orig_sampleid_col: A keyword for original sample id column, default 'Original_Sample_ID'
   orig_samplename_col: A keyword for original sample name column, default 'Original_Sample_Name'
   description_col: A keyword for description column, default 'Description'
+  project_col: A keyword for project column, default 'Sample_Project'
   
   SampleSheet file should contain following columns:
   Sample_ID: A single cell sample id in the following format, SampleId_{digit}
@@ -25,7 +26,7 @@ class MergeSingleCellFastq:
   def __init__(self, fastq_dir,samplesheet,platform_name,singlecell_tag='10X', 
                sampleid_col='Sample_ID', samplename_col='Sample_Name', 
                orig_sampleid_col='Original_Sample_ID', description_col='Description', 
-               orig_samplename_col='Original_Sample_Name'):
+               orig_samplename_col='Original_Sample_Name',project_col='Sample_Project'):
     self.fastq_dir=fastq_dir
     self.samplesheet=samplesheet
     self.platform_name=platform_name
@@ -35,6 +36,7 @@ class MergeSingleCellFastq:
     self.orig_sampleid_col=orig_sampleid_col
     self.description_col=description_col
     self.orig_samplename_col=orig_samplename_col
+    self.project_col=project_col
 
   def _fetch_lane_and_sample_info_from_samplesheet(self):
     '''
@@ -59,27 +61,33 @@ class MergeSingleCellFastq:
         for group_tag,_ in pd.DataFrame(samplesheet_data._data).\
                               groupby(['PseudoLane',
                                        self.orig_sampleid_col,
-                                       self.orig_samplename_col]):
+                                       self.orig_samplename_col,
+                                       self.project_col]):
           sample_data.append({'lane_id':group_tag[0],
                               'sample_id':group_tag[1],
-                              'sample_name':group_tag[2]})
+                              'sample_name':group_tag[2],
+                              'project_igf_id':group_tag[3]})
       elif platform_name=='MISEQ':                                              # hack for miseq
         samplesheet_data.add_pseudo_lane_for_miseq()
         for group_tag,_ in pd.DataFrame(samplesheet_data._data).\
                               groupby(['PseudoLane',
                                        self.orig_sampleid_col,
-                                       self.orig_samplename_col]):
+                                       self.orig_samplename_col,
+                                       self.project_col]):
           sample_data.append({'lane_id':group_tag[0],
                               'sample_id':group_tag[1],
-                              'sample_name':group_tag[2]})
+                              'sample_name':group_tag[2],
+                              'project_igf_id':group_tag[3]})
       elif platform_name=='HISEQ4000':                                          # check for hiseq4k
         for group_tag,_ in pd.DataFrame(samplesheet_data._data).\
                               groupby(['Lane',
                                        self.orig_sampleid_col,
-                                       self.orig_samplename_col]):
+                                       self.orig_samplename_col,
+                                       self.project_col]):
           sample_data.append({'lane_id':group_tag[0],
                               'sample_id':group_tag[1],
-                              'sample_name':group_tag[2]})
+                              'sample_name':group_tag[2],
+                              'project_igf_id':group_tag[3]})
       else:
         raise ValueError('platform {0} not supported'.format(platform_name))
       return sample_data
