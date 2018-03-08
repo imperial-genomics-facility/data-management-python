@@ -160,7 +160,7 @@ class MergeSingleCellFastq:
               append(os.path.join(root,file))
       return sample_files_list, undetermined_reads
     except:
-      pass
+      raise
 
 
   def merge_fastq_per_lane_per_sample(self,output_dir):
