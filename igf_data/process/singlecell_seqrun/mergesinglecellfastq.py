@@ -165,5 +165,7 @@ class MergeSingleCellFastq:
     '''
     try:
       sample_data=self._fetch_lane_and_sample_info_from_samplesheet()           # get sample and lane information from samplesheet
+      sample_files, undetermined_files=self._group_singlecell_fastq(sample_data,\
+                                                                    fastq_dir)  # get file groups
     except:
       raise
