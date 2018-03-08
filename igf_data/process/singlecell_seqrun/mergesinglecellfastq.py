@@ -118,8 +118,7 @@ class MergeSingleCellFastq:
       sample_files_list=defaultdict(lambda: \
                                     defaultdict(lambda: \
                                                 defaultdict(lambda: \
-                                                            defaultdict(lambda: \
-                                                                        defaultdict(list))))) # output data structure
+                                                            defaultdict(list)))) # output data structure
       for sample_record in sample_data:
         sample_lane=sample_record['lane_id']
         sample_id=sample_record['sample_id']
