@@ -126,7 +126,7 @@ class MergeSingleCellFastq:
         sample_name=sample_record['sample_name']
         project_id=sample_record['project_id']
         sample_id_regex=re.compile('^{0}_\d$'.format(sample_id))                # regexp for sample id match
-        file_name_regex=re.compile('^{0}_(\d)_S\d+_L00{1}_([R,I][1,2])_(\d+)\.fastq(\.gz)?$'.\
+        file_name_regex=re.compile('^{0}_(\d)_S\d+_L00{1}_([R,I][1,2])_\d+\.fastq(\.gz)?$'.\
                                   format(sample_name,sample_lane))              # regexp for fastq file match
         for root,dir_name,files in os.walk(fastq_dir):
           for file in files:
@@ -135,17 +135,16 @@ class MergeSingleCellFastq:
               if re.search(sample_id_regex,os.path.basename(root)) and \
                  re.search(file_name_regex,file): 
                 sm=re.match(file_name_regex,file)
-                if len(sm.groups())>=3:
+                if len(sm.groups())>=2:
                   fragment_id=sm.group(1)
                   read_type=sm.group(2)
-                  fastq_frag=sm.group(3)
-                  sample_files_list[sample_lane][sample_id][read_type][fragment_id][fastq_frag].\
+                  sample_files_list[sample_lane][sample_id][read_type][fragment_id].\
                   append(os.path.join(root,file))                               # add fastqs to samples list
                 else:
                   raise ValueError('Failed to determined sample info:{0}, {1}'.\
                                    format(sample_id,file))
 
-      undetermined_regex=re.compile('^Undetermined_S\d+_L00(\d)_([R,I][1,2])_(\d+)\.fastq(\.gz)?$')
+      undetermined_regex=re.compile('^Undetermined_S\d+_L00(\d)_([R,I][1,2])_\d+\.fastq(\.gz)?$')
       undetermined_reads=defaultdict(lambda: defaultdict(list))
       for root,dir_name,files in os.walk(fastq_dir):
         for file in files:
@@ -155,8 +154,7 @@ class MergeSingleCellFastq:
             if len(um.groups())>=3:
               umlane_id=um.group(1)
               umread_type=um.group(2)
-              umfastq_frag=um.group(3)
-              undetermined_reads[umlane_id][umread_type][umfastq_frag].\
+              undetermined_reads[umlane_id][umread_type].\
               append(os.path.join(root,file))
       return sample_files_list, undetermined_reads
     except:
