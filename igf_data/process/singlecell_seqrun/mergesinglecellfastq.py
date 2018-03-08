@@ -4,7 +4,7 @@ from igf_data.illumina.samplesheet import SampleSheet
 class MergeSingleCellFastq:
   '''
   A class for merging single cell fastq files per lane per sample
-  
+
   required params:
   fastq_dir: A directory path containing fastq files
   samplesheet: A samplesheet file used demultiplexing of bcl files
@@ -16,7 +16,9 @@ class MergeSingleCellFastq:
   orig_samplename_col: A keyword for original sample name column, default 'Original_Sample_Name'
   description_col: A keyword for description column, default 'Description'
   project_col: A keyword for project column, default 'Sample_Project'
-  
+  pseudo_lane_col: A keyword for pseudo lane column, default 'PseudoLane'
+  lane_col: A keyword for lane column, default 'Lane'
+
   SampleSheet file should contain following columns:
   Sample_ID: A single cell sample id in the following format, SampleId_{digit}
   Sample_Name: A single cell sample name in the following format, SampleName_{digit}
@@ -27,7 +29,8 @@ class MergeSingleCellFastq:
   def __init__(self, fastq_dir,samplesheet,platform_name,singlecell_tag='10X', 
                sampleid_col='Sample_ID', samplename_col='Sample_Name', 
                orig_sampleid_col='Original_Sample_ID', description_col='Description', 
-               orig_samplename_col='Original_Sample_Name',project_col='Sample_Project'):
+               orig_samplename_col='Original_Sample_Name',project_col='Sample_Project',
+               lane_col='Lane', pseudo_lane_col='PseudoLane'):
     self.fastq_dir=fastq_dir
     self.samplesheet=samplesheet
     self.platform_name=platform_name
@@ -38,6 +41,8 @@ class MergeSingleCellFastq:
     self.description_col=description_col
     self.orig_samplename_col=orig_samplename_col
     self.project_col=project_col
+    self.lane_col=lane_col
+    self.pseudo_lane_col=pseudo_lane_col
 
   def _fetch_lane_and_sample_info_from_samplesheet(self):
     '''
@@ -60,7 +65,7 @@ class MergeSingleCellFastq:
       if platform_name=='NEXTSEQ':                                              # hack for nextseq
         samplesheet_data.add_pseudo_lane_for_nextseq()
         for group_tag,_ in pd.DataFrame(samplesheet_data._data).\
-                              groupby(['PseudoLane',
+                              groupby([self.pseudo_lane_col,
                                        self.orig_sampleid_col,
                                        self.orig_samplename_col,
                                        self.project_col]):
@@ -71,7 +76,7 @@ class MergeSingleCellFastq:
       elif platform_name=='MISEQ':                                              # hack for miseq
         samplesheet_data.add_pseudo_lane_for_miseq()
         for group_tag,_ in pd.DataFrame(samplesheet_data._data).\
-                              groupby(['PseudoLane',
+                              groupby([self.pseudo_lane_col,
                                        self.orig_sampleid_col,
                                        self.orig_samplename_col,
                                        self.project_col]):
@@ -81,7 +86,7 @@ class MergeSingleCellFastq:
                               'project_igf_id':group_tag[3]})
       elif platform_name=='HISEQ4000':                                          # check for hiseq4k
         for group_tag,_ in pd.DataFrame(samplesheet_data._data).\
-                              groupby(['Lane',
+                              groupby([self.lane_col,
                                        self.orig_sampleid_col,
                                        self.orig_samplename_col,
                                        self.project_col]):
