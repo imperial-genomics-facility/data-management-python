@@ -118,14 +118,15 @@ class MergeSingleCellFastq:
       sample_files_list=defaultdict(lambda: \
                                     defaultdict(lambda: \
                                                 defaultdict(lambda: \
-                                                            defaultdict(list)))) # output data structure
+                                                            defaultdict(lambda: \
+                                                                        defaultdict(list))))) # output data structure
       for sample_record in sample_data:
         sample_lane=sample_record['lane_id']
         sample_id=sample_record['sample_id']
         sample_name=sample_record['sample_name']
         project_id=sample_record['project_id']
         sample_id_regex=re.compile('^{0}_\d$'.format(sample_id))                # regexp for sample id match
-        file_name_regex=re.compile('^{0}_(\d)_S\d+_L00{1}_([R,I][1,2])_\d+\.fastq(\.gz)?$'.\
+        file_name_regex=re.compile('^{0}_(\d)_S\d+_L00{1}_([R,I][1,2])_(\d+)\.fastq(\.gz)?$'.\
                                   format(sample_name,sample_lane))              # regexp for fastq file match
         for root,dir_name,files in os.walk(fastq_dir):
           for file in files:
@@ -134,26 +135,28 @@ class MergeSingleCellFastq:
               if re.search(sample_id_regex,os.path.basename(root)) and \
                  re.search(file_name_regex,file): 
                 sm=re.match(file_name_regex,file)
-                if len(sm.groups())>2:
+                if len(sm.groups())>=3:
                   fragment_id=sm.group(1)
                   read_type=sm.group(2)
-                  sample_files_list[sample_lane][sample_id][read_type][fragment_id].\
+                  fastq_frag=sm.group(3)
+                  sample_files_list[sample_lane][sample_id][read_type][fragment_id][fastq_frag].\
                   append(os.path.join(root,file))                               # add fastqs to samples list
                 else:
                   raise ValueError('Failed to determined sample info:{0}, {1}'.\
                                    format(sample_id,file))
 
-      undetermined_regex=re.compile('^Undetermined_S\d+_L00(\d)_([R,I][1,2])_\d+.fastq(\.gz)?$')
+      undetermined_regex=re.compile('^Undetermined_S\d+_L00(\d)_([R,I][1,2])_(\d+)\.fastq(\.gz)?$')
       undetermined_reads=defaultdict(lambda: defaultdict(list))
       for root,dir_name,files in os.walk(fastq_dir):
         for file in files:
           if fnmatch.fnmatch(file, "*.fastq.gz") and \
              fnmatch.fnmatch(file, "Undetermined_*"):
             um=re.match(undetermined_regex,file)
-            if len(um.groups())>2:
+            if len(um.groups())>=3:
               umlane_id=um.group(1)
               umread_type=um.group(2)
-              undetermined_reads[umlane_id][umread_type].\
+              umfastq_frag=um.group(3)
+              undetermined_reads[umlane_id][umread_type][umfastq_frag].\
               append(os.path.join(root,file))
       return sample_files_list, undetermined_reads
     except:
