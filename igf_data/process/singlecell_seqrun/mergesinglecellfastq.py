@@ -1,6 +1,8 @@
-import os,re, fnmatch
+import os,fnmatch,re,subprocess,shutil
 from collections import defaultdict
 from igf_data.illumina.samplesheet import SampleSheet
+from igf_data.utils.fileutils import get_temp_dir,remove_dir
+
 class MergeSingleCellFastq:
   '''
   A class for merging single cell fastq files per lane per sample
@@ -112,9 +114,10 @@ class MergeSingleCellFastq:
     fastq_dir: A directory path containing fastq files
     
     returns two dictionary of fastq group, one for single cell samples and 
-    another for undetermined reads
+    another for sample information
     '''
     try:
+      samples_info=defaultdict(dict)
       sample_files_list=defaultdict(lambda: \
                                     defaultdict(lambda: \
                                                 defaultdict(lambda: \
@@ -124,6 +127,8 @@ class MergeSingleCellFastq:
         sample_id=sample_record['sample_id']
         sample_name=sample_record['sample_name']
         project_id=sample_record['project_id']
+        samples_info[sample_id]['sample_name']=sample_name
+        samples_info[sample_id]['project_id']=project_id
         sample_id_regex=re.compile('^{0}_\d$'.format(sample_id))                # regexp for sample id match
         file_name_regex=re.compile('^{0}_(\d)_S\d+_L00{1}_([R,I][1,2])_\d+\.fastq(\.gz)?$'.\
                                   format(sample_name,sample_lane))              # regexp for fastq file match
@@ -142,20 +147,7 @@ class MergeSingleCellFastq:
                 else:
                   raise ValueError('Failed to determined sample info:{0}, {1}'.\
                                    format(sample_id,file))
-
-      undetermined_regex=re.compile('^Undetermined_S\d+_L00(\d)_([R,I][1,2])_\d+\.fastq(\.gz)?$')
-      undetermined_reads=defaultdict(lambda: defaultdict(list))
-      for root,dir_name,files in os.walk(fastq_dir):
-        for file in files:
-          if fnmatch.fnmatch(file, "*.fastq.gz") and \
-             fnmatch.fnmatch(file, "Undetermined_*"):
-            um=re.match(undetermined_regex,file)
-            if len(um.groups())>=3:
-              umlane_id=um.group(1)
-              umread_type=um.group(2)
-              undetermined_reads[umlane_id][umread_type].\
-              append(os.path.join(root,file))
-      return sample_files_list, undetermined_reads
+      return sample_files_list, samples_info
     except:
       raise
 
@@ -170,7 +162,36 @@ class MergeSingleCellFastq:
     '''
     try:
       sample_data=self._fetch_lane_and_sample_info_from_samplesheet()           # get sample and lane information from samplesheet
-      sample_files, undetermined_files=self._group_singlecell_fastq(sample_data,\
+      sample_files, samples_info=self._group_singlecell_fastq(sample_data,\
                                                                     fastq_dir)  # get file groups
+      s_count=0                                                                 # initial count for fastq S value
+      for lane_id in sorted(sample_files.keys()):
+        if self.platform_type=='NEXTSEQ':
+            s_count=0                                                           # nextseq is weird, reset counter for each lane
+        for sample_id in sorted(sample_files[lane_id].keys()):
+          s_count+=1                                                            # assign new S value for fastq files
+          sample_name=sample_info.get(sample_id)['sample_name']
+          project_id=sample_info.get(sample_id)['project_id']                   # get sample and project info
+          output_path=os.path.join(self.fastq_dir,
+                                   project_id,
+                                   sample_id)                                   # output location is under input fastq_dir
+          if not os.path.exists(output_path):
+            os.makedirs(output_path,mode=0o770)                                 # create outout directory
+
+          for read_type in sample_files[lane_id][sample_id].keys():             # merge per read type
+            output_filename='{0}_S{1}_L00{2}_{3}_001.fastq.gz'.\
+                            format(sample_name,s_count,lane_id, read_type)      # assign new output filename
+            final_path=os.path.join(output_path,output_filename)                # assign final output path
+            input_list=list()
+            for sc_fragment, file_path in sorted(sample_files[lane_id][sample_id][read_type].items()):
+              input_list.extend(file_path)                                      # create list of input fastqs for merge
+            temp_dir=get_temp_dir()                                             # get a temp dir
+            temp_file=os.path.join(temp_dir,output_filename)                    # assign temp filename
+            cmd=["cat"]+input_list+[">",temp_file]                              # shell command for merging fastq.gz files
+            subprocess.check_call(" ".join(cmd),shell=True)                     # exact same command for fastq merge as 10x pipeline
+            shutil.copy(temp_file,final_path)                                   # copy file to final location
+            remove_dir(temp_dir)                                                # remove temp dir
+            for file_path in input_list:
+              os.remove(file_path)                                              # remove fastq chunks
     except:
       raise
