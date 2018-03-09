@@ -166,6 +166,7 @@ class MergeSingleCellFastq:
       sample_data=self._fetch_lane_and_sample_info_from_samplesheet()           # get sample and lane information from samplesheet
       sample_files, samples_info=self._group_singlecell_fastq(sample_data,\
                                                                     fastq_dir)  # get file groups
+      all_intermediate_files=list()                                             # empty list for intermediate files
       s_count=0                                                                 # initial count for fastq S value
       for lane_id in sorted(sample_files.keys()):
         if self.platform_type=='NEXTSEQ':
@@ -191,6 +192,12 @@ class MergeSingleCellFastq:
             input_list=list()
             for sc_fragment, file_path in sorted(sample_files[lane_id][sample_id][read_type].items()):
               input_list.extend(file_path)                                      # create list of input fastqs for merge
+            if len(input_list) != 4:
+              raise ValueError('expecting 4 files, got {0} for sample {1}, lane {2}, read type {3}'.\
+                               format(len(input_list),\
+                                      sample_id,
+                                      lane_id,
+                                      read_type))                               # checking input files list
             temp_dir=get_temp_dir()                                             # get a temp dir
             temp_file=os.path.join(temp_dir,output_filename)                    # assign temp filename
             cmd=["cat"]+input_list+[">",temp_file]                              # shell command for merging fastq.gz files
@@ -198,6 +205,8 @@ class MergeSingleCellFastq:
             shutil.copy(temp_file,final_path)                                   # copy file to final location
             remove_dir(temp_dir)                                                # remove temp dir
             for file_path in input_list:
-              os.remove(file_path)                                              # remove fastq chunks
+              all_intermediate_files.append(file_path)                          # add fastq to intermediate list
+      for file_path in all_intermediate_files:
+        os.remove(file_path)                                                    # remove intermediate files once merging is complete
     except:
       raise
