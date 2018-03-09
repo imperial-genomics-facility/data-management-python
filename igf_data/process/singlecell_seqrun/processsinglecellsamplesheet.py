@@ -20,7 +20,7 @@ class ProcessSingleCellSamplesheet:
   orig_sample_name: Column name for keeping original sample_names, default: 'Original_Sample_Name'
   orig_index: Column name for keeping original index, default 'Original_index'
   '''
-  
+
   def __init__(self,samplesheet_file,singlecell_barcode_json,\
                singlecell_tag='10X',index_column='index',\
                sample_id_column='Sample_ID', sample_name_column='Sample_Name',
@@ -50,14 +50,17 @@ class ProcessSingleCellSamplesheet:
     
     returns: A dictionary
     '''
-    with open(singlecell_barcode_json) as json_data:
-      index_json=json.load(json_data)
+    try:
+      with open(singlecell_barcode_json) as json_data:
+        index_json=json.load(json_data)
 
-    index_data=dict()
-    for index_line in index_json:
-      index_name,index_list=index_line
-      index_data[index_name]=index_list
-    return index_data
+      index_data=dict()
+      for index_line in index_json:
+        index_name,index_list=index_line
+        index_data[index_name]=index_list
+      return index_data
+    except:
+      raise
 
 
   def _process_samplesheet_lines(self,data):
@@ -85,15 +88,14 @@ class ProcessSingleCellSamplesheet:
               mod_data=dict(data)
               mod_data[self.orig_index]=mod_data[self.index_column]
               mod_data[self.orig_sample_id]=mod_data[self.sample_id_column]
-              mod_data[self.orig_sample_name]=mod_data[self.sample_name_column]   # keep original sample infos
-              mod_data[self.index_column]=index_seq                               # add sc index
+              mod_data[self.orig_sample_name]=mod_data[self.sample_name_column] # keep original sample infos
+              mod_data[self.index_column]=index_seq                             # add sc index
               mod_data[self.sample_id_column]='{0}_{1}'.\
                                               format(mod_data[self.sample_id_column],\
-                                                     suffix)                     # add sc sample id
+                                                     suffix)                    # add sc sample id
               mod_data[self.sample_name_column]='{0}_{1}'.\
                                                 format(mod_data[self.sample_name_column],\
-                                                       suffix)                    # add sc sample name
-
+                                                       suffix)                  # add sc sample name
               final_data.append(mod_data)
           else:
             raise ValueError('index {0} not found in file {1}'.\
@@ -121,17 +123,8 @@ class ProcessSingleCellSamplesheet:
     output_samplesheet: A file name of the output samplesheet
     '''
     try:
-      #samplesheet=SampleSheet(infile=self.samplesheet_file)
-      #samplesheet.filter_sample_data(condition_key=self.sample_description_column, 
-      #                               condition_value=self.singlecell_tag, 
-      #                               method='exclude')                          # filter single cell samples
-      
       samplesheet_sc=SampleSheet(infile=self.samplesheet_file)
-      #samplesheet_sc.filter_sample_data(condition_key=self.sample_description_column, 
-      #                                  condition_value=self.singlecell_tag, 
-      #                                  method='include')
       new_samplesheet_data=list()
-      #new_samplesheet_data.extend(samplesheet._data)
       if len(samplesheet_sc._data) > 0:                                         # single cell samples are present
         for data in samplesheet_sc._data:
           processed_data=self._process_samplesheet_lines(data)
@@ -140,20 +133,11 @@ class ProcessSingleCellSamplesheet:
           else:
             new_samplesheet_data.append(processed_data)
 
-      #data_header=samplesheet._data_header
       data_header=samplesheet_sc._data_header
-      #print(samplesheet_sc._data_header)
-      #samplesheet._data_header=data_header.extend([self.orig_index,
-      #                                             self.orig_sample_id,
-      #                                             self.orig_sample_name])      # added new column names
       samplesheet_sc._data_header.extend([self.orig_index,
                           self.orig_sample_id,
-                          self.orig_sample_name])   # added new column names
-      #print(data_header)
-      #samplesheet_sc._data_header=data_header
-      #samplesheet._data=new_samplesheet_data                                    # add modified single cell records
-      #samplesheet.print_sampleSheet(outfile=output_samplesheet)                 # write modified samplesheet
-      samplesheet_sc._data=new_samplesheet_data                                    # add modified single cell records
-      samplesheet_sc.print_sampleSheet(outfile=output_samplesheet)                 # write modified samplesheet
+                          self.orig_sample_name])                               # added new column names
+      samplesheet_sc._data=new_samplesheet_data                                 # add modified single cell records
+      samplesheet_sc.print_sampleSheet(outfile=output_samplesheet)              # write modified samplesheet
     except:
       raise
