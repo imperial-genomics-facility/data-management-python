@@ -1,3 +1,4 @@
+import pandas as pd
 import os,fnmatch,re,subprocess,shutil
 from collections import defaultdict
 from igf_data.illumina.samplesheet import SampleSheet
@@ -66,41 +67,41 @@ class MergeSingleCellFastq:
                          condition_value=self.singlecell_tag,
                          method='include')                                      # filter samplesheet for single cell data
       sample_lane_data=list()
-      if platform_name=='NEXTSEQ':                                              # hack for nextseq
+      if self.platform_name=='NEXTSEQ':                                         # hack for nextseq
         samplesheet_data.add_pseudo_lane_for_nextseq()
         for group_tag,_ in pd.DataFrame(samplesheet_data._data).\
                               groupby([self.pseudo_lane_col,
                                        self.orig_sampleid_col,
                                        self.orig_samplename_col,
                                        self.project_col]):
-          sample_data.append({'lane_id':group_tag[0],
+          sample_lane_data.append({'lane_id':group_tag[0],
                               'sample_id':group_tag[1],
                               'sample_name':group_tag[2],
-                              'project_igf_id':group_tag[3]})
-      elif platform_name=='MISEQ':                                              # hack for miseq
+                              'project_id':group_tag[3]})
+      elif self.platform_name=='MISEQ':                                         # hack for miseq
         samplesheet_data.add_pseudo_lane_for_miseq()
         for group_tag,_ in pd.DataFrame(samplesheet_data._data).\
                               groupby([self.pseudo_lane_col,
                                        self.orig_sampleid_col,
                                        self.orig_samplename_col,
                                        self.project_col]):
-          sample_data.append({'lane_id':group_tag[0],
+          sample_lane_data.append({'lane_id':group_tag[0],
                               'sample_id':group_tag[1],
                               'sample_name':group_tag[2],
-                              'project_igf_id':group_tag[3]})
-      elif platform_name=='HISEQ4000':                                          # check for hiseq4k
+                              'project_id':group_tag[3]})
+      elif self.platform_name=='HISEQ4000':                                     # check for hiseq4k
         for group_tag,_ in pd.DataFrame(samplesheet_data._data).\
                               groupby([self.lane_col,
                                        self.orig_sampleid_col,
                                        self.orig_samplename_col,
                                        self.project_col]):
-          sample_data.append({'lane_id':group_tag[0],
+          sample_lane_data.append({'lane_id':group_tag[0],
                               'sample_id':group_tag[1],
                               'sample_name':group_tag[2],
-                              'project_igf_id':group_tag[3]})
+                              'project_id':group_tag[3]})
       else:
         raise ValueError('platform {0} not supported'.format(platform_name))
-      return sample_data
+      return sample_lane_data
     except:
       raise
 
@@ -162,16 +163,16 @@ class MergeSingleCellFastq:
     try:
       sample_data=self._fetch_lane_and_sample_info_from_samplesheet()           # get sample and lane information from samplesheet
       sample_files, samples_info=self._group_singlecell_fastq(sample_data,\
-                                                                    fastq_dir)  # get file groups
+                                                              self.fastq_dir)   # get file groups
       all_intermediate_files=list()                                             # empty list for intermediate files
       s_count=0                                                                 # initial count for fastq S value
       for lane_id in sorted(sample_files.keys()):
-        if self.platform_type=='NEXTSEQ':
+        if self.platform_name=='NEXTSEQ':
             s_count=0                                                           # nextseq is weird, reset counter for each lane
         for sample_id in sorted(sample_files[lane_id].keys()):
           s_count+=1                                                            # assign new S value for fastq files
-          sample_name=sample_info.get(sample_id)['sample_name']
-          project_id=sample_info.get(sample_id)['project_id']                   # get sample and project info
+          sample_name=samples_info.get(sample_id)['sample_name']
+          project_id=samples_info.get(sample_id)['project_id']                   # get sample and project info
           output_path=os.path.join(self.fastq_dir,
                                    project_id,
                                    sample_id)                                   # output location is under input fastq_dir
