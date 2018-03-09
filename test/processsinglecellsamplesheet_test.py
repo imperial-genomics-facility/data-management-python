@@ -9,11 +9,11 @@ class ProcessSingleCellSamplesheet_testA(unittest.TestCase):
     self.output_file='data/singlecell_data/mod_SampleSheet.csv'
     if os.path.exists(self.output_file):
       os.remove(self.output_file)
-    
+
   def tearDown(self):
     if os.path.exists(self.output_file):
       os.remove(self.output_file)
-    
+
   def test_change_singlecell_barcodes1(self):
     sc_data=ProcessSingleCellSamplesheet(samplesheet_file=self.samplesheet_file,\
                                          singlecell_barcode_json=self.singlecell_barcode_json)
