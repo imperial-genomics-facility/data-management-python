@@ -154,13 +154,10 @@ class MergeSingleCellFastq:
       raise
 
 
-  def merge_fastq_per_lane_per_sample(self,output_dir):
+  def merge_fastq_per_lane_per_sample(self):
     '''
     A method for merging single cell fastq files present in input fastq_dir
     per lane per sample basis
-    
-    required params:
-    output_dir: A directory path for writing output fastq files
     '''
     try:
       sample_data=self._fetch_lane_and_sample_info_from_samplesheet()           # get sample and lane information from samplesheet
