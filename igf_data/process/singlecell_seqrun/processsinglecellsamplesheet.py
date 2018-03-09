@@ -13,15 +13,19 @@ class ProcessSingleCellSamplesheet:
   samplesheet_file: A samplesheet containing single cell samples
   singlecell_barcode_json: A JSON file listing single cell indexes
   singlecell_tag: A text keyword for the single cell sample description
-  index_column: Column name for index lookup
-  sample_id_column: Column name for sample_id lookup
-  sample_name_column: Column name for sample_name lookup
+  index_column: Column name for index lookup, default 'index'
+  sample_id_column: Column name for sample_id lookup, default 'Sample_ID'
+  sample_name_column: Column name for sample_name lookup, default 'Sample_NAme'
+  orig_sample_id: Column name for keeping original sample ids, default 'Original_Sample_ID'
+  orig_sample_name: Column name for keeping original sample_names, default: 'Original_Sample_Name'
+  orig_index: Column name for keeping original index, default 'Original_index'
   '''
   
   def __init__(self,samplesheet_file,singlecell_barcode_json,\
                singlecell_tag='10X',index_column='index',\
                sample_id_column='Sample_ID', sample_name_column='Sample_Name',
-               sample_description_column='Description'):
+               orig_sample_id='Original_Sample_ID', orig_sample_name='Original_Sample_Name',
+               sample_description_column='Description',orig_index='Original_index'):
     self.samplesheet_file=samplesheet_file
     self.singlecell_barcode_json=singlecell_barcode_json
     self.index_column=index_column
@@ -31,6 +35,9 @@ class ProcessSingleCellSamplesheet:
     self.singlecell_barcodes=ProcessSingleCellSamplesheet.\
                              _get_index_data(singlecell_barcode_json)           # get single cell indexes
     self.singlecell_tag=singlecell_tag
+    self.orig_sample_id=orig_sample_id
+    self.orig_sample_name=orig_sample_name
+    self.orig_index=orig_index
 
 
   @staticmethod
