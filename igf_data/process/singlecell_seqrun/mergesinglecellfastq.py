@@ -20,6 +20,7 @@ class MergeSingleCellFastq:
   project_col: A keyword for project column, default 'Sample_Project'
   pseudo_lane_col: A keyword for pseudo lane column, default 'PseudoLane'
   lane_col: A keyword for lane column, default 'Lane'
+  force_overwrite: A toggle for overwriting output fastqs, default True
 
   SampleSheet file should contain following columns:
   Sample_ID: A single cell sample id in the following format, SampleId_{digit}
@@ -29,10 +30,10 @@ class MergeSingleCellFastq:
   Description: A single cell label, default 10X
   '''
   def __init__(self, fastq_dir,samplesheet,platform_name,singlecell_tag='10X', 
-               sampleid_col='Sample_ID', samplename_col='Sample_Name', 
+               sampleid_col='Sample_ID', samplename_col='Sample_Name',
                orig_sampleid_col='Original_Sample_ID', description_col='Description', 
                orig_samplename_col='Original_Sample_Name',project_col='Sample_Project',
-               lane_col='Lane', pseudo_lane_col='PseudoLane'):
+               lane_col='Lane', pseudo_lane_col='PseudoLane',force_overwrite=True):
     self.fastq_dir=fastq_dir
     self.samplesheet=samplesheet
     self.platform_name=platform_name
@@ -45,6 +46,7 @@ class MergeSingleCellFastq:
     self.project_col=project_col
     self.lane_col=lane_col
     self.pseudo_lane_col=pseudo_lane_col
+    self.force_overwrite=force_overwrite
 
   def _fetch_lane_and_sample_info_from_samplesheet(self):
     '''
@@ -182,6 +184,10 @@ class MergeSingleCellFastq:
             output_filename='{0}_S{1}_L00{2}_{3}_001.fastq.gz'.\
                             format(sample_name,s_count,lane_id, read_type)      # assign new output filename
             final_path=os.path.join(output_path,output_filename)                # assign final output path
+            if not self.force_overwrite and os.path.exists(final_path):
+              raise ValueError('Failed to overwrite existing file {0}'.\
+                               format(final_path))
+
             input_list=list()
             for sc_fragment, file_path in sorted(sample_files[lane_id][sample_id][read_type].items()):
               input_list.extend(file_path)                                      # create list of input fastqs for merge
