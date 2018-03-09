@@ -82,13 +82,17 @@ class ProcessSingleCellSamplesheet:
           for index_seq in index_data[sc_index]:
             suffix +=1
             mod_data=dict(data)
-            mod_data[self.index_column]=index_seq
+            mod_data[self.orig_index]=mod_data[self.index_column]
+            mod_data[self.orig_sample_id]=mod_data[self.sample_id_column]
+            mod_data[self.orig_sample_name]=mod_data[self.sample_name_column]   # keep original sample infos
+            mod_data[self.index_column]=index_seq                               # add sc index
             mod_data[self.sample_id_column]='{0}_{1}'.\
                                              format(mod_data[self.sample_id_column],\
-                                                    suffix)
+                                                    suffix)                     # add sc sample id
             mod_data[self.sample_name_column]='{0}_{1}'.\
                                               format(mod_data[self.sample_name_column],\
-                                                     suffix)
+                                                     suffix)                    # add sc sample name
+            
             final_data.append(mod_data)
         else:
           raise ValueError('index {0} not found in file {1}'.\
