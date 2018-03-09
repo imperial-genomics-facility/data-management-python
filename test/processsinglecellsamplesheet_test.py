@@ -14,7 +14,7 @@ class ProcessSingleCellSamplesheet_testA(unittest.TestCase):
     if os.path.exists(self.output_file):
       os.remove(self.output_file)
     
-  def test_change_singlecell_barcodes(self):
+  def test_change_singlecell_barcodes1(self):
     sc_data=ProcessSingleCellSamplesheet(samplesheet_file=self.samplesheet_file,\
                                          singlecell_barcode_json=self.singlecell_barcode_json)
     sc_data.change_singlecell_barcodes(output_samplesheet=self.output_file)
@@ -29,5 +29,18 @@ class ProcessSingleCellSamplesheet_testA(unittest.TestCase):
     self.assertEqual(len(sc_samplesheet._data),1)
     sc_index=sc_samplesheet._data[0]['index']
     self.assertTrue(sc_index , ["GTGTATTA", "TGTGCGGG", "ACCATAAC", "CAACGCCT"])
+    self.assertEqual(sc_samplesheet._data[0]['Original_index'],'SI-GA-B3')
+    self.assertEqual(sc_samplesheet._data[0]['Original_Sample_ID'],'IGF0008')
+
+  def test_change_singlecell_barcodes2(self):
+    sc_data=ProcessSingleCellSamplesheet(samplesheet_file=self.samplesheet_file,\
+                                         singlecell_barcode_json=self.singlecell_barcode_json)
+    sc_data.change_singlecell_barcodes(output_samplesheet=self.output_file)
+    samplesheet=SampleSheet(infile=self.output_file)
+    samplesheet.filter_sample_data(condition_key='Sample_Project',\
+                                   condition_value='project_2', \
+                                   method='exclude')
+    self.assertEqual(len(samplesheet._data),5)
+    self.assertTrue('Original_Sample_ID' in samplesheet._data_header)
 if __name__=='__main__':
   unittest.main()
