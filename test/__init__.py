@@ -24,6 +24,7 @@ def full_suite():
   from .useradaptor_test import Useradaptor_test1
   from .sampleadaptor_test import Sampleadaptor_test1
   from .processsinglecellsamplesheet_test import ProcessSingleCellSamplesheet_testA
+  from .mergesinglecellfastq_test import MergeSingleCellFastq_testA
 
   return unittest.TestSuite([ \
       unittest.TestLoader().loadTestsFromTestCase(BasesMask_testA), 
@@ -50,4 +51,5 @@ def full_suite():
       unittest.TestLoader().loadTestsFromTestCase(Useradaptor_test1),
       unittest.TestLoader().loadTestsFromTestCase(Sampleadaptor_test1),
       unittest.TestLoader().loadTestsFromTestCase(ProcessSingleCellSamplesheet_testA),
+      unittest.TestLoader().loadTestsFromTestCase(MergeSingleCellFastq_testA),
     ])
