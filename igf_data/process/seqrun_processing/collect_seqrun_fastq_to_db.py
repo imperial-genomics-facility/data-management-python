@@ -1,3 +1,4 @@
+import pandas as pd
 import os, re, fnmatch, subprocess
 from collections import defaultdict
 from shlex import quote
@@ -135,9 +136,27 @@ class Collect_seqrun_fastq_to_db:
       (r1_fastq_list, r2_fastq_list)=\
           self._get_fastq_and_samplesheet()
       samplesheet_file=self.samplesheet_file
+      singlecell_status=False
+      final_data=list()
+      samplesheet_sc=SampleSheet(infile=samplesheet_file)                       # read samplesheet for single cell check
+      samplesheet_sc.filter_sample_data(condition_key='Description', 
+                                        condition_value=self.singlecell_tag, 
+                                        method='include')                       # keep only single cell samples
+      if len(samplesheet_sc._data) >0:
+        sc_new_data=pd.DataFrame(samplesheet_sc._data).\
+                       drop(['Sample_ID','Sample_Name','index'],axis=1).\
+                       drop_duplicates().\
+                       to_dict(orient='region')                                 # remove duplicate entries from single cell samplesheet
+        final_data.extend(sc_new_data)                                          # add single cell entries to the final dataset
+
       samplesheet_data=SampleSheet(infile=samplesheet_file)
+      samplesheet_data.filter_sample_data(condition_key='Description', 
+                                        condition_value=self.singlecell_tag, 
+                                        method='exclude')                       # keep non single cell samples
+      if len(samplesheet_data._data) > 0:
+        final_data.extend(samplesheet_data._data)                               # add normal samples to final data
       fastq_files_list=list()
-      for row in samplesheet_data._data:
+      for row in final_data:
         description=row['Description']
         if description==self.singlecell_tag:                                    # collect required values for single cell projects
           sample_name=row['Original_Sample_Name']
