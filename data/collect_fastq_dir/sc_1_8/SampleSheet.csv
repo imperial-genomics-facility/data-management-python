@@ -1,0 +1,29 @@
+[Settings]
+ReverseComplement,0,,,,,,,,
+Adapter,AGATCGGAAGAGCACACGTCTGAACTCCAGTCA,,,,,,,,
+AdapterRead2,AGATCGGAAGAGCGTCGTGTAGGGAAAGAGTGT,,,,,,,,
+,,,,,,,,,
+[Header]
+IEMFileVersion,4,,,,,,,,
+Investigator Name,L4_B4,,,,,,,,
+Experiment Name,IGFP0001_test_22-8-2017_rna_1X50,,,,,,,,
+Date,03/10/2017,,,,,,,,
+Workflow,GenerateFASTQ,,,,,,,,
+Application,NextSeq_FASTQ Only,,,,,,,,
+Assay,TruSeq HT,,,,,,,,
+Description,,,,,,,,,
+Chemistry,Amplicon,,,,,,,,
+,,,,,,,,,
+[Reads]
+51,,,,,,,,,
+,,,,,,,,,
+[Data]
+Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description,Original_Sample_ID,Original_Sample_Name
+IGF00001_1,IGF00001-1_1,,,SI-GA-C3,TCAGCCGT,,,IGFP0001_test_22-8-2017_rna_sc,10X,IGF00001,IGF00001-1
+IGF00001_2,IGF00001-1_2,,,SI-GA-C3,CAGAGGCC,,,IGFP0001_test_22-8-2017_rna_sc,10X,IGF00001,IGF00001-1
+IGF00001_3,IGF00001-1_3,,,SI-GA-C3,GGTCAATA,,,IGFP0001_test_22-8-2017_rna_sc,10X,IGF00001,IGF00001-1
+IGF00001_4,IGF00001-1_4,,,SI-GA-C3,ATCTTTAG,,,IGFP0001_test_22-8-2017_rna_sc,10X,IGF00001,IGF00001-1
+IGF00002_1,IGF00002-2_1,,,SI-GA-B3,GTGTATTA,,,IGFP0001_test_22-8-2017_rna_sc,10X,IGF00002,IGF00002-2
+IGF00002_2,IGF00002-2_2,,,SI-GA-B3,TGTGCGGG,,,IGFP0001_test_22-8-2017_rna_sc,10X,IGF00002,IGF00002-2
+IGF00002_3,IGF00002-2_3,,,SI-GA-B3,ACCATAAC,,,IGFP0001_test_22-8-2017_rna_sc,10X,IGF00002,IGF00002-2
+IGF00002_4,IGF00002-2_4,,,SI-GA-B3,CAACGCCT,,,IGFP0001_test_22-8-2017_rna_sc,10X,IGF00002,IGF00002-2
