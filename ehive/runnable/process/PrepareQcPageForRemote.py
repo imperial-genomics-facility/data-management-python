@@ -379,9 +379,30 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       samplesheet_file=os.path.join(fastq_dir,samplesheet_filename)
       if not os.path.exists(samplesheet_file):
           raise IOError('samplesheet file {0} not found'.format(samplesheet_file))
-        
+
+      final_samplesheet_data=list()
+      samplesheet_sc=SampleSheet(infile=samplesheet_file)                       # read samplesheet for single cell check
+      samplesheet_sc.filter_sample_data(condition_key='Description', 
+                                        condition_value=self.singlecell_tag, 
+                                        method='include')                       # keep only single cell samples
+      if len(samplesheet_sc._data) >0:
+        sc_data=pd.DataFrame(sc_samplesheet._data).\
+                   drop(['Sample_ID','Sample_Name','index'],axis=1).\
+                   drop_duplicates().\
+                   rename(columns={'Original_Sample_ID':'Sample_ID',
+                                   'Original_Sample_Name':'Sample_Name',
+                                   'Original_index':'index'}).\
+                   to_dict(orient='region')                                     # restructure single cell data. sc data doesn't have index2
+        final_samplesheet_data.extend(sc_data)                                  # add single cell samples to final data
+
       sa=SampleSheet(infile=samplesheet_file)
-      sample_data=pd.DataFrame(sa._data).set_index('Sample_ID')                 # get sample infor from Samplesheet
+      sa.filter_sample_data(condition_key='Description', 
+                                        condition_value=self.singlecell_tag, 
+                                        method='exclude')                       # remove only single cell samples
+      if len(sa._data)>0:
+        final_samplesheet_data.extend(sa._data)                                 # add non single cell samples info to final data
+
+      sample_data=pd.DataFrame(final_samplesheet_data).set_index('Sample_ID')   # get sample info from final data
       merged_data=merged_qc_info.join(sample_data, \
                                       how='inner', \
                                       on='Sample_ID', \
