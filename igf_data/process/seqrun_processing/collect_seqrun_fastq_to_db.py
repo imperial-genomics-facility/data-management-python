@@ -155,6 +155,7 @@ class Collect_seqrun_fastq_to_db:
                                         method='exclude')                       # keep non single cell samples
       if len(samplesheet_data._data) > 0:
         final_data.extend(samplesheet_data._data)                               # add normal samples to final data
+
       fastq_files_list=list()
       for row in final_data:
         description=row['Description']
