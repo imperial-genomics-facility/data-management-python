@@ -16,7 +16,8 @@ class Collect_seqrun_fastq_to_db:
   def __init__(self,fastq_dir,model_name,seqrun_igf_id,session_class,flowcell_id,\
                samplesheet_file=None,samplesheet_filename='SampleSheet.csv',\
                collection_type='demultiplexed_fastq',file_location='HPC_PROJECT',\
-               collection_table='run', manifest_name='file_manifest.csv'):
+               collection_table='run', manifest_name='file_manifest.csv',
+               singlecell_tag='10X'):
     self.fastq_dir=fastq_dir
     self.samplesheet_file=samplesheet_file
     self.samplesheet_filename=samplesheet_filename
@@ -28,6 +29,7 @@ class Collect_seqrun_fastq_to_db:
     self.flowcell_id=flowcell_id
     self.collection_table=collection_table
     self.manifest_name=manifest_name
+    self.singlecell_tag=singlecell_tag
 
 
   def find_fastq_and_build_db_collection(self):
