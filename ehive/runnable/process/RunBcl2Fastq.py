@@ -25,6 +25,7 @@ class RunBcl2Fastq(IGFBaseProcess):
                              '--create-fastq-for-index-reads':''},
         'singlecell_options':{'--minimum-trimmed-read-length=8','--mask-short-adapter-reads=8'},
         'singlecell_tag':'10X',
+        'project_type':None,
       })
     return params_dict
 
@@ -50,19 +51,20 @@ class RunBcl2Fastq(IGFBaseProcess):
       fastq_dir_label=self.param('fastq_dir_label')
       samplesheet_filename=self.param('samplesheet_filename')
       model_name=self.param('model_name')
+      project_type=self.param('project_type')                                   # single cell status is false by default
 
       seqrun_dir=os.path.join(seqrun_local_dir,seqrun_igf_id)                   # local seqrun dir
       runinfo_file=os.path.join(seqrun_dir,runinfo_filename)                    # seqrun runinfo file
       if not os.path.exists(samplesheet_file):
         raise IOError('samplesheet file {0} not found'.format(samplesheet_file))
 
-      singlecell_status=False                                                   # single cell status is false by default
+
       samplesheet_sc=SampleSheet(infile=samplesheet_file)                       # read samplesheet for single cell check
       samplesheet_sc.filter_sample_data(condition_key='Description', 
                                         condition_value=singlecell_tag, 
                                         method='include')
       if len(samplesheet_sc._data) > 0:
-        singlecell_status=True                                                  # set single cell status as true if its present in samplesheet
+        project_type=singlecell_tag                                             # set single cell status as true if its present in samplesheet
 
       if not os.path.exists(runinfo_file):
         raise IOError('Runinfo file {0} not found'.format(runinfo_file))
@@ -124,7 +126,8 @@ class RunBcl2Fastq(IGFBaseProcess):
                                           samplesheet_filename))                # add samplesheet to output dir
       move(report_dir,output_fastq_dir)                                         # move report directory to project dir
       move(stats_dir,output_fastq_dir)                                          # move stats directory to project dir
-      self.param('dataflow_params',{'fastq_dir':output_fastq_dir})              # set dataflow params
+      self.param('dataflow_params',{'fastq_dir':output_fastq_dir,
+                                    'project_type':project_type})               # set dataflow params
       message='Fastq conversion done for {0},{1}:{2}_{3}, fastq: {4}'.\
               format(seqrun_igf_id,project_name,flowcell_lane,\
                      index_length,output_fastq_dir)
