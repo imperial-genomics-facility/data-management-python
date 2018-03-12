@@ -1,4 +1,5 @@
 import unittest, json, os
+from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.igfdb.igfTables import Base
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
@@ -105,7 +106,7 @@ class Collect_fastq_test1(unittest.TestCase):
       os.remove(manifest_path)
 
 
-  def test__get_fastq_and_samplesheet(self):
+  def test_get_fastq_and_samplesheet(self):
     ci=Collect_seqrun_fastq_to_db(fastq_dir=self.fastq_dir,
                                   session_class=self.session_class,
                                   seqrun_igf_id=self.seqrun_igf_id,
@@ -148,8 +149,9 @@ class Collect_fastq_test1(unittest.TestCase):
                                   manifest_name=self.manifest_name,
                                  )
     ci.find_fastq_and_build_db_collection()
-    #ca=CollectionAdaptor(**{'session_class':self.session_class})               # fix me , check collection table
-
+    ca=CollectionAdaptor(**{'session_class':self.session_class})
+    ca.start_session()
+    ca.close_session()
 
   def test_calculate_experiment_run_and_file_info(self):
     data={'lane_number': '1', 
@@ -215,6 +217,114 @@ class Collect_fastq_test1(unittest.TestCase):
     file_group_data=file_group_data[0]
     self.assertEqual(file_group_data['file_path'],'data/collect_fastq_dir/1_16/IGFP0001_test_22-8-2017_rna/IGF00001/IGF00001-1_S1_L001_R1_001.fastq.gz')
     self.assertEqual(file_group_data['name'],'IGF00001_MISEQ_000000000-D0YLK_1')
+
+
+
+class Collect_fastq_test_sc1(unittest.TestCase):
+  '''
+  Unit test for single cell fastq data loading
+  '''
+  def setUp(self):
+    self.dbconfig='data/dbconfig.json'
+    self.fastq_dir='data/collect_fastq_dir/sc_1_8'
+    self.model_name='NEXTSEQ'
+    self.flowcell_id='TESTABC'
+    self.seqrun_igf_id='171003_NB500000_0089_TESTABC'
+    self.file_location='HPC_PROJECT'
+    self.samplesheet_file='data/collect_fastq_dir/sc_1_8/SampleSheet.csv'
+    self.samplesheet_filename='SampleSheet.csv'
+    self.manifest_name='file_manifest.csv'
+    dbparam = read_dbconf_json(self.dbconfig)
+    base = BaseAdaptor(**dbparam)
+    self.engine = base.engine
+    self.dbname=dbparam['dbname']
+    Base.metadata.create_all(self.engine)
+    self.session_class=base.session_class
+    base.start_session()
+    platform_data=[{ "platform_igf_id" : "M00001" ,
+                     "model_name" : "MISEQ" ,
+                     "vendor_name" : "ILLUMINA" ,
+                     "software_name" : "RTA" ,
+                     "software_version" : "RTA1.18.54"
+                   },
+                   { "platform_igf_id" : "NB500000",
+                     "model_name" : "NEXTSEQ",
+                     "vendor_name" : "ILLUMINA",
+                     "software_name" : "RTA",
+                     "software_version" : "RTA2"
+                   },
+                   { "platform_igf_id" : "K00000",
+                     "model_name" : "HISEQ4000",
+                     "vendor_name" : "ILLUMINA",
+                     "software_name" : "RTA",
+                     "software_version" : "RTA2"
+                   }]
+    flowcell_rule_data=[{"platform_igf_id":"K00000",
+                         "flowcell_type":"HiSeq 3000/4000 SR",
+                         "index_1":"NO_CHANGE",
+                         "index_2":"NO_CHANGE"},
+                        {"platform_igf_id":"K00000",
+                         "flowcell_type":"HiSeq 3000/4000 PE",
+                         "index_1":"NO_CHANGE",
+                         "index_2":"REVCOMP"},
+                        {"platform_igf_id":"NB500000",
+                         "flowcell_type":"NEXTSEQ",
+                         "index_1":"NO_CHANGE",
+                         "index_2":"REVCOMP"},
+                        {"platform_igf_id":"M00001",
+                         "flowcell_type":"MISEQ",
+                         "index_1":"NO_CHANGE",
+                         "index_2":"NO_CHANGE"}
+                        ]
+    pl=PlatformAdaptor(**{'session':base.session})
+    pl.store_platform_data(data=platform_data)
+    pl.store_flowcell_barcode_rule(data=flowcell_rule_data)
+    project_data=[{'project_igf_id':'IGFP0001_test_22-8-2017_rna_sc',
+                   'project_name':'test_22-8-2017_rna',
+                   'description':'Its project 1',
+                   'project_deadline':'Before August 2017',
+                   'comments':'Some samples are treated with drug X',
+                 }]
+    pa=ProjectAdaptor(**{'session':base.session})
+    pa.store_project_and_attribute_data(data=project_data)
+    sample_data=[{'sample_igf_id':'IGF00001',
+                  'project_igf_id':'IGFP0001_test_22-8-2017_rna_sc',},
+                 {'sample_igf_id':'IGF00002',
+                  'project_igf_id':'IGFP0001_test_22-8-2017_rna_sc',},
+                ]
+    sa=SampleAdaptor(**{'session':base.session})
+    sa.store_sample_and_attribute_data(data=sample_data)
+    
+    seqrun_data=[{'seqrun_igf_id':'171003_NB500000_0089_TESTABC',
+                  'flowcell_id':'TESTABC',
+                  'platform_igf_id':'NB500000',
+                  'flowcell':'NEXTSEQ',
+                }]
+    sra=SeqrunAdaptor(**{'session':base.session})
+    sra.store_seqrun_and_attribute_data(data=seqrun_data)
+    base.close_session()
+
+  def tearDown(self):
+    Base.metadata.drop_all(self.engine)
+    os.remove(self.dbname)
+    manifest_path=os.path.join(self.fastq_dir,self.manifest_name)
+    if os.path.exists(manifest_path):
+      os.remove(manifest_path)
+
+  def test_find_fastq_and_build_db_collection(self):
+    ci=Collect_seqrun_fastq_to_db(fastq_dir=self.fastq_dir,
+                                  session_class=self.session_class,
+                                  seqrun_igf_id=self.seqrun_igf_id,
+                                  flowcell_id=self.flowcell_id,
+                                  model_name=self.model_name,
+                                  file_location=self.file_location,
+                                  samplesheet_file=self.samplesheet_file,
+                                  manifest_name=self.manifest_name,
+                                 )
+    ci.find_fastq_and_build_db_collection()
+    ca=CollectionAdaptor(**{'session_class':self.session_class})
+    ca.start_session()
+    ca.close_session()
 
 if __name__=='__main__':
   unittest.main()
