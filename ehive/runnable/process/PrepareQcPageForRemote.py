@@ -35,6 +35,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       'samplesheet_filename':'SampleSheet.csv',
       'report_html':'*all/all/all/laneBarcode.html',
       'remote_ftp_base':'/www/html',
+      'singlecell_tag':'10X',
     })
     return params_dict
   
@@ -64,6 +65,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       undetermined_filename=self.param('undetermined_filename')
       report_html=self.param('report_html')
       remote_ftp_base=self.param('remote_ftp_base')
+      singlecell_tag=self.param('singlecell_tag')
      
       if page_type not in ['project','sample','undetermined']:
         raise ValueError('Project type {0} is not defined yet'.format(page_type))
@@ -311,6 +313,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       seqrun_date=self.param_required('seqrun_date')
       flowcell_id=self.param_required('flowcell_id')
       lane_index_info=self.param_required('lane_index_info')
+      singlecell_tag=self.param('singlecell_tag')
       
       remote_path=os.path.join(remote_project_path, \
                                project_name, \
