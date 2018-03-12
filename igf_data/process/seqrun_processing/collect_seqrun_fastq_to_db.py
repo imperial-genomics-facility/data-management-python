@@ -128,40 +128,43 @@ class Collect_seqrun_fastq_to_db:
     '''
     An internal method for collecting fastq and sample info
     '''
-    seqrun_igf_id=self.seqrun_igf_id
-    model_name=self.model_name
-    flowcell_id=self.flowcell_id
-    (r1_fastq_list, r2_fastq_list)=\
-        self._get_fastq_and_samplesheet()
-    samplesheet_file=self.samplesheet_file
-    samplesheet_data=SampleSheet(infile=samplesheet_file)
-    fastq_files_list=list()
-    for row in samplesheet_data._data:
-      description=row['Description']
-      if description==self.singlecell_tag:                                      # collect required values for single cell projects
-        sample_name=row['Original_Sample_Name']
-        sample_id=row['Original_Sample_ID']
-      else:
-        sample_name=row['Sample_Name']                                          # collect default values for normal projects
-        sample_id=row['Sample_ID']
-      project_name=row['Sample_Project']
+    try:
+      seqrun_igf_id=self.seqrun_igf_id
+      model_name=self.model_name
+      flowcell_id=self.flowcell_id
+      (r1_fastq_list, r2_fastq_list)=\
+          self._get_fastq_and_samplesheet()
+      samplesheet_file=self.samplesheet_file
+      samplesheet_data=SampleSheet(infile=samplesheet_file)
+      fastq_files_list=list()
+      for row in samplesheet_data._data:
+        description=row['Description']
+        if description==self.singlecell_tag:                                    # collect required values for single cell projects
+          sample_name=row['Original_Sample_Name']
+          sample_id=row['Original_Sample_ID']
+        else:
+          sample_name=row['Sample_Name']                                        # collect default values for normal projects
+          sample_id=row['Sample_ID']
+        project_name=row['Sample_Project']
 
-      sample_files=self._link_fastq_file_to_sample(sample_name,r1_fastq_list, \
-                                                   r2_fastq_list)
-      for lane, lane_files in sample_files.items():
-        fastq_info={'sample_igf_id':sample_id,
-                    'sample_name':sample_name,
-                    'project_igf_id':project_name,
-                    'lane_number':lane,
-                    'seqrun_igf_id':seqrun_igf_id,
-                    'platform_name':model_name,
-                    'flowcell_id':flowcell_id,
-                    'description':description
-                   }
-        for read_type, filepath in lane_files.items():
-          fastq_info.update({read_type:filepath})                               # allowing only one file per lane per read type
-          fastq_files_list.append(fastq_info)                                   # adding entries per sample per lane
-    return fastq_files_list
+        sample_files=self._link_fastq_file_to_sample(sample_name,r1_fastq_list, \
+                                                     r2_fastq_list)
+        for lane, lane_files in sample_files.items():
+          fastq_info={'sample_igf_id':sample_id,
+                      'sample_name':sample_name,
+                      'project_igf_id':project_name,
+                      'lane_number':lane,
+                      'seqrun_igf_id':seqrun_igf_id,
+                      'platform_name':model_name,
+                      'flowcell_id':flowcell_id,
+                      'description':description
+                     }
+          for read_type, filepath in lane_files.items():
+            fastq_info.update({read_type:filepath})                             # allowing only one file per lane per read type
+            fastq_files_list.append(fastq_info)                                 # adding entries per sample per lane
+      return fastq_files_list
+    except:
+      raise
 
   @staticmethod
   def _count_fastq_reads(fastq_file):
