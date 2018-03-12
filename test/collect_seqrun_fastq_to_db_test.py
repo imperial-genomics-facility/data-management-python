@@ -1,6 +1,6 @@
 import unittest, json, os
 from igf_data.utils.dbutils import read_dbconf_json
-from igf_data.igfdb.igfTables import Base
+from igf_data.igfdb.igfTables import Base, Collection
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.igfdb.sampleadaptor import SampleAdaptor
@@ -151,7 +151,11 @@ class Collect_fastq_test1(unittest.TestCase):
     ci.find_fastq_and_build_db_collection()
     ca=CollectionAdaptor(**{'session_class':self.session_class})
     ca.start_session()
+    query=ca.session.query(Collection).filter(Collection.name=='IGF00001_MISEQ_000000000-D0YLK_1')
+    file_path='data/collect_fastq_dir/1_16/IGFP0001_test_22-8-2017_rna/IGF00002/IGF00002-2_S1_L001_R1_001.fastq.gz'
+    (name,type)=ca.fetch_collection_name_and_table_from_file_path(file_path)
     ca.close_session()
+    self.assertEqual(name,'IGF00002_MISEQ_000000000-D0YLK_1')
 
   def test_calculate_experiment_run_and_file_info(self):
     data={'lane_number': '1', 
@@ -324,7 +328,10 @@ class Collect_fastq_test_sc1(unittest.TestCase):
     ci.find_fastq_and_build_db_collection()
     ca=CollectionAdaptor(**{'session_class':self.session_class})
     ca.start_session()
+    file_path='data/collect_fastq_dir/sc_1_8/IGFP0001_test_22-8-2017_rna_sc/IGF00001/IGF00001-1_S1_L003_R1_001.fastq.gz'
+    (name,type)=ca.fetch_collection_name_and_table_from_file_path(file_path)
     ca.close_session()
+    self.assertEqual(name,'IGF00001_NEXTSEQ_TESTABC_3')
 
 if __name__=='__main__':
   unittest.main()

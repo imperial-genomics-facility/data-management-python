@@ -6,7 +6,7 @@ def get_tests():
 def full_suite():
   from .basesmask_test import BasesMask_testA,BasesMask_testB,BasesMask_testC,BasesMask_testD
   from .checksequenceIndexbarcodes_test import CheckSequenceIndexBarcodes_test1
-  from .collect_seqrun_fastq_to_db_test import Collect_fastq_test1
+  from .collect_seqrun_fastq_to_db_test import Collect_fastq_test1,Collect_fastq_test_sc1
   from .collectionadaptor_test import CollectionAdaptor_test1
   from .dbutils_test import Dbutils_test1
   from .find_and_process_new_seqrun_test import Find_seqrun_test1
@@ -33,6 +33,7 @@ def full_suite():
       unittest.TestLoader().loadTestsFromTestCase(BasesMask_testD),
       unittest.TestLoader().loadTestsFromTestCase(CheckSequenceIndexBarcodes_test1),
       unittest.TestLoader().loadTestsFromTestCase(Collect_fastq_test1),
+      unittest.TestLoader().loadTestsFromTestCase(Collect_fastq_test_sc1),
       unittest.TestLoader().loadTestsFromTestCase(CollectionAdaptor_test1),
       unittest.TestLoader().loadTestsFromTestCase(Dbutils_test1),
       unittest.TestLoader().loadTestsFromTestCase(Find_seqrun_test1),
