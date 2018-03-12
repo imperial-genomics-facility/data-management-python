@@ -68,25 +68,25 @@ class Collect_seqrun_fastq_to_db:
       for root, dirs, files in os.walk(top=fastq_dir):
         if samplesheet_filename in files:
           samplesheet_list.append(os.path.join(root,samplesheet_filename))
-        
+
         for file in files:
           if not fnmatch.fnmatch(file, 'Undetermined_'):
             if r1_fastq_regex.match(file):
               r1_fastq_list.append(os.path.join(root,file))
             elif r2_fastq_regex.match(file):
               r2_fastq_list.append(os.path.join(root,file))
-        
+
       if len(r2_fastq_list) > 0 and len(r1_fastq_list) != len(r2_fastq_list):
         raise ValueError('R1 {0} and R2 {1}'.format(len(r1_fastq_list),\
                                                     len(r2_fastq_list)))
-  
+
       if samplesheet_file is None and len(samplesheet_list)==1:
         self.samplesheet_file=samplesheet_list[0]                               # set samplesheet file name
         
       if len(samplesheet_list) > 1:
         raise ValueError('Found more than one samplesheet file for fastq dir {0}'.\
                          format(fastq_dir))
-         
+
       if samplesheet_file is None and len(samplesheet_list)==0:
         raise ValueError('No samplesheet file for fastq dir {0}'.\
                          format(fastq_dir))
@@ -112,7 +112,7 @@ class Collect_seqrun_fastq_to_db:
         m=r1_regex.match(os.path.basename(file1))
         lane_id=m.group(1).strip('0')
         sample_files[lane_id]['R1']=file1
-            
+
     if len(r2_fastq_list) > 0:
       r2_regex=re.compile(sample_name+'_S\d+_L(\d+)_R2_\d+\.fastq(\.gz)?',\
                           re.IGNORECASE)
@@ -184,7 +184,7 @@ class Collect_seqrun_fastq_to_db:
         read_cmd=['cat',quote(fastq_file)]
       else:
         raise ValueError('file {0} is not recognised'.format(fastq_file))
-      
+
       proc=subprocess.Popen(read_cmd, stdout=subprocess.PIPE)
       count_cmd=['wc','-l']
       proc2=subprocess.Popen(count_cmd,stdin=proc.stdout,stdout=subprocess.PIPE)
@@ -192,14 +192,13 @@ class Collect_seqrun_fastq_to_db:
       result=int(proc2.communicate()[0].decode('UTF-8'))
       if result==0:
         raise ValueError('Fastq file {0} has zero lines'.format(fastq_file))
-      
+
       result=int(result/4)
       return result
-      
     except:
       raise
-    
-  
+
+
   def _calculate_experiment_run_and_file_info(self,data,restricted_list):
     if not isinstance(data, pd.Series):
       data=pd.Series(data)
@@ -209,7 +208,7 @@ class Collect_seqrun_fastq_to_db:
       library_id=data.description
     else:
       library_id=data.sample_igf_id
-  
+
     # calcaulate experiment id
     experiment_id='{0}_{1}'.format(library_id,data.platform_name)
     data['library_name']=library_id
@@ -240,7 +239,7 @@ class Collect_seqrun_fastq_to_db:
     if 'R1' in data and 'R2' in data and \
       data.R1 is not None and data.R2 is not None:
       library_layout='PAIRED'
-    
+
     data['library_layout']=library_layout
     return data
 
@@ -248,10 +247,10 @@ class Collect_seqrun_fastq_to_db:
   def _reformat_file_group_data(self,data):
     if isinstance(data, pd.DataFrame):
       data=data.to_dict(orient='records')
-        
+
     if not isinstance(data,list):
       raise ValueError('Expecting list got {0}'.format(type(data)))
-        
+
     reformatted_file_group_data=list()
     reformatted_file_data=list()
 
@@ -302,14 +301,14 @@ class Collect_seqrun_fastq_to_db:
       manifest_name=self.manifest_name
       fastq_dir=self.fastq_dir
       manifest_path=os.path.join(fastq_dir,manifest_name)
-    
+
       if os.path.exists(manifest_path):
         raise ValueError('manifest file {0} already present'.\
                          format(manifest_path))
-    
+
       if isinstance(file_data, list):
         file_data=pd.DataFrame(file_data)                                       # convert file data to dataframe
-      
+
       file_data['file_path']=file_data['file_path'].\
                              map(lambda x: os.path.relpath(x, start=fastq_dir)) # replace filepath with relative path
       file_data=file_data.drop(['location'],axis=1)                             # remove file location info
@@ -319,7 +318,7 @@ class Collect_seqrun_fastq_to_db:
                        index=False)                                             # write data to manifest file
     except:
       raise
-    
+
   def _check_existing_data(self,data,dbsession,table_name,check_column='EXISTS'):
     try:
       if not isinstance(data, pd.Series):
@@ -467,7 +466,7 @@ class Collect_seqrun_fastq_to_db:
         ra.store_run_and_attribute_data(data=run_data,autosave=False)
         base.session.flush()
       # store file to db
-      
+
       fa=FileAdaptor(**{'session':base.session})
       fa.store_file_and_attribute_data(data=file_data,autosave=False)
       base.session.flush()
@@ -487,4 +486,3 @@ class Collect_seqrun_fastq_to_db:
     finally:
       if db_connected:
         base.close_session()
-      
