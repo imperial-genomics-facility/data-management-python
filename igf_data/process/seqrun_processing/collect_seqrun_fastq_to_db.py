@@ -223,11 +223,7 @@ class Collect_seqrun_fastq_to_db:
     if not isinstance(data, pd.Series):
       data=pd.Series(data)
     # set library id
-    library_id=None
-    if data.description and data.description not in restricted_list:
-      library_id=data.description
-    else:
-      library_id=data.sample_igf_id
+    library_id=data.sample_igf_id
 
     # calcaulate experiment id
     experiment_id='{0}_{1}'.format(library_id,data.platform_name)
