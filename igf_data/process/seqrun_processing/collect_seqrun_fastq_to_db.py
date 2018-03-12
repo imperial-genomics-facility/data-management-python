@@ -137,10 +137,15 @@ class Collect_seqrun_fastq_to_db:
     samplesheet_data=SampleSheet(infile=samplesheet_file)
     fastq_files_list=list()
     for row in samplesheet_data._data:
-      sample_name=row['Sample_Name']
-      sample_id=row['Sample_ID']
-      project_name=row['Sample_Project']
       description=row['Description']
+      if description==self.singlecell_tag:                                      # collect required values for single cell projects
+        sample_name=row['Original_Sample_Name']
+        sample_id=row['Original_Sample_ID']
+      else:
+        sample_name=row['Sample_Name']                                          # collect default values for normal projects
+        sample_id=row['Sample_ID']
+      project_name=row['Sample_Project']
+
       sample_files=self._link_fastq_file_to_sample(sample_name,r1_fastq_list, \
                                                    r2_fastq_list)
       for lane, lane_files in sample_files.items():
