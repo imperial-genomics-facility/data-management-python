@@ -131,6 +131,8 @@ def add_seqrun_path_info(input_data,output_file):
                apply(lambda line: \
                      _modify_seqrun_data(data_series=line),
                      axis=1)                                                    # add remote seqrun path
-    input_data.to_json(output_file)                                             # write output json
+    input_data=input_data.to_json(orient='records')                             # encode output json
+    with open(output_file,'w') as j_data:
+      j_data.write(input_data)                                                  # write output json file
   except:
     raise
