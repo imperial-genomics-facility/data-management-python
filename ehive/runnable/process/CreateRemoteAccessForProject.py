@@ -1,7 +1,7 @@
 import os, subprocess
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
-from igf_data.utils.fileutils import get_temp_dir
+from igf_data.utils.fileutils import get_temp_dir, remove_dir
 from igf_data.utils.fileutils import copy_remote_file
 from jinja2 import Template,Environment, FileSystemLoader, select_autoescape
 
@@ -182,6 +182,7 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
                        destination_address='{0}@{1}'.format(remote_user,\
                                                             remote_host))       # copy file to remote
       self.param('dataflow_params',{'remote_dir_status':'done'})
+      remove_dir(temp_work_dir)
     except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
