@@ -1,4 +1,4 @@
-
+import os,subprocess
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.fileutils import get_temp_dir, remove_dir
 from igf_data.utils.projectutils import get_project_read_count,get_seqrun_info_for_project
@@ -43,6 +43,50 @@ class UpdateProjectInfo(IGFBaseProcess):
                                             project_igf_id=project_name)        # fetch seqrun info for each projects
       add_seqrun_path_info(input_data=seqrun_data,
                            output_file=temp_seqrun_info)                        # write seqrun info json
+      remote_project_dir=os.path.join(remote_project_path,\
+                                      project_name)                             # get remote project directory path
+      check_seqrun_cmd=['ssh',\
+                        '{0}@{1}'.\
+                        format(remote_user,\
+                               remote_host),\
+                        'ls',\
+                        os.path.join(remote_project_dir,seqruninfofile)]
+      response=subprocess.call(check_seqrun_cmd)                                # check for existing seqruninfofile
+      if response !=0:
+        rm_seqrun_cmd=['ssh',\
+                       '{0}@{1}'.\
+                       format(remote_user,\
+                              remote_host),\
+                       'rm',\
+                       '-f',\
+                       os.path.join(remote_project_dir,
+                                    seqruninfofile)]
+        subprocess.check_call(rm_seqrun_cmd)                                    # remove existing seqruninfofile
+      copy_remote_file(source_path=temp_seqrun_info, \
+                       destinationa_path=remote_project_dir, \
+                       destination_address=remote_host)                         # copy file to remote
+      check_readcount_cmd=['ssh',\
+                           '{0}@{1}'.\
+                           format(remote_user,\
+                                  remote_host),\
+                           'ls',\
+                           os.path.join(remote_project_dir,
+                                        samplereadcountfile)]                   # check for existing samplereadcountfile
+      response=subprocess.call(check_readcount_cmd)
+      if response !=0:
+        rm_readcount_cmd=['ssh',\
+                          '{0}@{1}'.\
+                          format(remote_user,\
+                                 remote_host),\
+                          'rm',\
+                          '-f',\
+                          os.path.join(remote_project_dir,
+                                       samplereadcountfile)]
+        subprocess.check_call(rm_readcount_cmd)                                 # remove existing samplereadcountfile
+      copy_remote_file(source_path=temp_read_count_output, \
+                       destinationa_path=remote_project_dir, \
+                       destination_address=remote_host)                         # copy file to remote
+
       self.param('dataflow_params',{'remote_project_info':'done'})
       remove_dir(temp_work_dir)                                                 # remove temp dir
     except Exception as e:
