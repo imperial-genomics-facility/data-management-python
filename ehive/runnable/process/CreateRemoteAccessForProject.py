@@ -32,7 +32,6 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
     try:
       seqrun_igf_id=self.param_required('seqrun_igf_id')
       project_name=self.param_required('project_name')
-      seqrun_date=self.param_required('seqrun_date')
       flowcell_id=self.param_required('flowcell_id')
       remote_project_path=self.param_required('remote_project_path')
       remote_user=self.param_required('remote_user')
