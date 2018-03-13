@@ -1,8 +1,8 @@
 
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
-from igf_data.utils.projectutils import get_project_read_count
 from igf_data.utils.fileutils import get_temp_dir, remove_dir
-from igf_data.utils.project_data_display_utils import convert_project_data_gviz_data
+from igf_data.utils.projectutils import get_project_read_count,get_seqrun_info_for_project
+from igf_data.utils.project_data_display_utils import convert_project_data_gviz_data,add_seqrun_path_info
 
 class UpdateProjectInfo(IGFBaseProcess):
   '''
@@ -32,11 +32,17 @@ class UpdateProjectInfo(IGFBaseProcess):
 
       temp_work_dir=get_temp_dir()                                              # get a temp dir
       temp_read_count_output=os.path.join(temp_work_dir,
-                                          samplereadcountfile)
+                                          samplereadcountfile)                  # get path for temp read count file
+      temp_seqrun_info=os.path.join(temp_work_dir,
+                                    seqruninfofile)                             # get path for temp seqrun info file
       raw_read_count=get_project_read_count(session_class=igf_session_class,
                                             project_igf_id=project_name)        # get raw read count for project
       convert_project_data_gviz_data(input_data=raw_read_count,
                                      output_file=temp_read_count_output)        # convert read count to gviz json
+      seqrun_data=get_seqrun_info_for_project(session_class=igf_session_class,
+                                            project_igf_id=project_name)        # fetch seqrun info for each projects
+      add_seqrun_path_info(input_data=seqrun_data,
+                           output_file=temp_seqrun_info)                        # write seqrun info json
       self.param('dataflow_params',{'remote_project_info':'done'})
       remove_dir(temp_work_dir)                                                 # remove temp dir
     except Exception as e:
