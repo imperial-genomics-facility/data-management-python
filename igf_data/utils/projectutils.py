@@ -1,14 +1,12 @@
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
-from igf_data.utils.dbutils import read_dbconf_json,read_json_data
 from igf_data.igfdb.igfTables import Project,Sample,Seqrun,Experiment,Run,Run_attribute
 
-def get_project_read_count(project_igf_id,dbconfig,run_attribute_name='R1_READ_COUNT'):
+def get_project_read_count(project_igf_id,session_class,run_attribute_name='R1_READ_COUNT'):
   '''
   '''
   try:
     read_count=list()
-    dbparam=read_dbconf_json(dbconfig)
-    pr=ProjectAdaptor(**dbparam)
+    pr=ProjectAdaptor(**{'session_class':session_class})
     pr.start_session()
     query=pr.session.query(Project.project_igf_id,
                            Sample.sample_igf_id,
