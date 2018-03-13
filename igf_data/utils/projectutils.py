@@ -10,7 +10,10 @@ def get_project_read_count(project_igf_id,dbconfig,run_attribute_name='R1_READ_C
     dbparam=read_dbconf_json(dbconfig)
     pr=ProjectAdaptor(**dbparam)
     pr.start_session()
-    query=pr.session.query(Project).\
+    query=pr.session.query(Project.project_igf_id,
+                           Sample.sample_igf_id,
+                           Seqrun.seqrun_igf_id,
+                           Run_attribute.attribute_value).\
                      join(Sample).\
                      join(Experiment).\
                      join(Run).\
