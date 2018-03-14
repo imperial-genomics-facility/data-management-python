@@ -37,13 +37,13 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
       samplesheet_filename=self.param('samplesheet_filename')
       index2_label=self.param('index2_label')
       revcomp_label=self.param('revcomp_label')
-      tenX_label=self.param('singlecell_tag')
+      singlecell_tag=self.param('singlecell_tag')
       adapter_trim_check=self.param('adapter_trim_check')
       adapter_section=self.param('adapter_section')
       read1_adapter_label=self.param('read1_adapter_label')
       read2_adapter_label=self.param('read2_adapter_label')
       project_type=self.param('project_type')
-      
+
       job_name=self.job_name()
       work_dir=os.path.join(base_work_dir,seqrun_igf_id,job_name)               # get work directory name
       if not os.path.exists(work_dir):
@@ -60,17 +60,17 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
       if not os.path.exists(samplesheet_file):
         raise IOError('seqrun: {0}, samplesheet file {1} not found'.\
                       format(seqrun_igf_id,samplesheet_file))
-    
+
       samplesheet_sc=SampleSheet(infile=samplesheet_file)                       # read samplesheet for single cell check
       samplesheet_sc.filter_sample_data(condition_key='Description', 
-                                        condition_value=tenX_label, 
+                                        condition_value=singlecell_tag, 
                                         method='include')                       # get 10X samplesheet
       if len(samplesheet_sc._data) > 0:
-        project_type=tenX_label                                                 # check if 10x samples are present in samplesheet
-        
+        project_type=singlecell_tag                                             # check if 10x samples are present in samplesheet
+
       samplesheet=SampleSheet(infile=samplesheet_file)                          # read samplesheet
       samplesheet.filter_sample_data(condition_key='Description', 
-                                     condition_value=tenX_label, 
+                                     condition_value=singlecell_tag, 
                                      method='exclude')                          # filter 10X samplesheet
 
       if adapter_trim_check:
@@ -83,12 +83,12 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
                   format(seqrun_igf_id,read1_val,read2_val)
           self.post_message_to_slack(message,reaction='pass')
           self.comment_asana_task(task_name=seqrun_igf_id, comment=message)     # send info about adapter trip to slack and asana
-        
+
       sa=SeqrunAdaptor(**{'session_class':igf_session_class})
       sa.start_session()
       rules_data=sa.fetch_flowcell_barcode_rules_for_seqrun(seqrun_igf_id)      # convert index based on barcode rules
       sa.close_session()
-      
+
       rules_data_set=rules_data.to_dict(orient='records')                       # convert dataframe to dictionary
       if len(rules_data_set) > 0:
         rules_data=rules_data_set[0]                                            # consider only the first rule
@@ -106,7 +106,7 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
                 format(seqrun_igf_id)
         self.post_message_to_slack(message,reaction='pass')
         self.comment_asana_task(task_name=seqrun_igf_id, comment=message)
-        
+
       samplesheet.print_sampleSheet(outfile=output_file)
       self.param('dataflow_params',{'samplesheet':output_file,
                                     'project_type':project_type})
