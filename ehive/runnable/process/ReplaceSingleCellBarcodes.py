@@ -12,7 +12,7 @@ class ReplaceSingleCellBarcodes(IGFBaseProcess):
   specifications-sample-index-sets-for-single-cell-3
   '''
   def param_defaults(self):
-    params_dict=super(CheckAndProcessSampleSheet,self).param_defaults()
+    params_dict=super(ReplaceSingleCellBarcodes,self).param_defaults()
     params_dict.update({
                         'output_samplesheet_name':'SampleSheet_SC.csv',
                         'singlecell_tag':'10X',
