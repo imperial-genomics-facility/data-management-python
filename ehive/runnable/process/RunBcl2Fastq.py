@@ -115,7 +115,7 @@ class RunBcl2Fastq(IGFBaseProcess):
 
       bcl2fastq_param=self.format_tool_options(bcl2fastq_options)               # format bcl2fastq params
       bcl2fastq_cmd.extend(bcl2fastq_param)                                     # add additional parameters
-      if singlecell_status:
+      if project_type==singlecell_tag:
         sc_bcl2fastq_param=self.format_tool_options(singlecell_options)         # format singlecell bcl2fastq params
         bcl2fastq_cmd.extend(sc_bcl2fastq_param)                                # add additional parameters
 
