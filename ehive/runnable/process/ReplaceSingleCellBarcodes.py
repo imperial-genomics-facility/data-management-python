@@ -25,7 +25,7 @@ class ReplaceSingleCellBarcodes(IGFBaseProcess):
       igf_session_class = self.param_required('igf_session_class')
       seqrun_igf_id=self.param_required('seqrun_igf_id')
       samplesheet_file = self.param_required('samplesheet')
-      singlecell_barcode_json = self. param_required('singlecell_barcode_json')
+      singlecell_barcode_json = self. param_required('single_cell_barcode_file')
       base_work_dir=self.param_required('base_work_dir')
       output_samplesheet_name=self.param('output_samplesheet_name')
       singlecell_tag=self.param('singlecell_tag')
