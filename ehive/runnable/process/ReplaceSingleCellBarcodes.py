@@ -23,6 +23,7 @@ class ReplaceSingleCellBarcodes(IGFBaseProcess):
   def run(self):
     try:
       igf_session_class = self.param_required('igf_session_class')
+      seqrun_igf_id=self.param_required('seqrun_igf_id')
       samplesheet_file = self.param_required('samplesheet')
       singlecell_barcode_json = self. param_required('singlecell_barcode_json')
       base_work_dir=self.param_required('base_work_dir')
@@ -39,7 +40,7 @@ class ReplaceSingleCellBarcodes(IGFBaseProcess):
 
       sc_data.change_singlecell_barcodes(output_samplesheet)                    # print new samplesheet with sc indexes
       self.param('dataflow_params',{'samplesheet':output_samplesheet})          # set data flow
-    except:
+    except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
                                                       seqrun_igf_id)
