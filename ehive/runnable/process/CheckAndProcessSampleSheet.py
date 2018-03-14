@@ -101,7 +101,7 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
         self.comment_asana_task(task_name=seqrun_igf_id, comment=message)
 
       if len(samplesheet_sc._data) > 0:                                         # merge 10x samplesheet
-        samplesheet._data.append(samplesheet_sc._data)
+        samplesheet._data.extend(samplesheet_sc._data)
         message='seqrun: {0}, merging 10X samples with reformatted samplesheet'.\
                 format(seqrun_igf_id)
         self.post_message_to_slack(message,reaction='pass')
