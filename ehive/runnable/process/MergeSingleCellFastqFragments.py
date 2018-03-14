@@ -6,7 +6,7 @@ class MergeSingleCellFastqFragments(IGFBaseProcess):
   BCL2FASTQ runs
   '''
   def param_defaults(self):
-    params_dict=super(CheckAndProcessSampleSheet,self).param_defaults()
+    params_dict=super(MergeSingleCellFastqFragments,self).param_defaults()
     params_dict.update({
                         'singlecell_tag':'10X'
                       })
