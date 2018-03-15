@@ -69,14 +69,20 @@ def convert_project_data_gviz_data(input_data,output_file):
                                                seqrun_list=list(seqrun_set)),
                             axis=1)                                             # count total reads for multiple seq runs
     intermediate_data.fillna(0,inplace=True)                                    # fail safe for missing samples
-    intermediate_data=intermediate_data.to_dict(orient='region')                # convert data frame to json
+    
+    
     description = {"sample_igf_id": ("string", "Sample ID")}                    # define description
     if len(list(seqrun_set)) >1:
         description.update({"total_read":("number", "Total Reads")})            # add total read column for samples with multiple runs
+        intermediate_data['total_read']=intermediate_data['total_read'].\
+                                        astype(int)                             # convert column to number
 
     for run in list(seqrun_set):
         description.update({run:("number",run)})                                # add seqrun columns
+        intermediate_data[run]=intermediate_data[run].\
+                               astype(int)                                      # convert column to number
 
+    intermediate_data=intermediate_data.to_dict(orient='region')                # convert data frame to json
     data_table = gviz_api.DataTable(description)                                # load description to gviz api
     data_table.LoadData(intermediate_data)                                      # load data to gviz_api
     column_list=['sample_igf_id']                                               # define column order
