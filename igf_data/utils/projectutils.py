@@ -62,7 +62,8 @@ def get_seqrun_info_for_project(project_igf_id,session_class):
     seqrun_info=pd.DataFrame()
     pr=ProjectAdaptor(**{'session_class':session_class})
     pr.start_session()
-    query=pr.session.query(distinct(Seqrun.seqrun_igf_id),
+    query=pr.session.query(distinct(Seqrun.seqrun_igf_id).\
+                           label('seqrun_igf_id'),
                            Seqrun.flowcell_id).\
                      join(Run).\
                      join(Experiment).\
