@@ -9,7 +9,7 @@ class UpdateProjectInfo(IGFBaseProcess):
   An ehive runnable class for updating data for project info page
   '''
   def param_defaults(self):
-    params_dict=super(CreateRemoteAccessForProject,self).param_defaults()
+    params_dict=super(UpdateProjectInfo,self).param_defaults()
     params_dict.update({
       'remote_project_path':None,
       'remote_user':None,
