@@ -14,7 +14,7 @@ def get_project_read_count(project_igf_id,session_class,run_attribute_name='R1_R
   returns a pandas dataframe containing following columns
     project_igf_id
     sample_igf_id
-    seqrun-igf_id
+    flowcell_id
     attribute_value
   '''
   try:
@@ -23,7 +23,7 @@ def get_project_read_count(project_igf_id,session_class,run_attribute_name='R1_R
     pr.start_session()
     query=pr.session.query(Project.project_igf_id,
                            Sample.sample_igf_id,
-                           Seqrun.seqrun_igf_id,
+                           Seqrun.flowcell_id,
                            Run_attribute.attribute_value).\
                      join(Sample).\
                      join(Experiment).\

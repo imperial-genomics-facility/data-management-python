@@ -31,7 +31,7 @@ def convert_project_data_gviz_data(input_data,output_file):
   required params:
   input_data: A pandas data frame, it should contain following columns
               sample_igf_id, 
-              seqrun_igf_id, 
+              flowcell_id, 
               attribute_value (R1_READ_COUNT)
   output_file: A filepath for writing gviz json data
   '''
@@ -43,19 +43,19 @@ def convert_project_data_gviz_data(input_data,output_file):
     processed_data=input_data.\
                    pivot_table(values='attribute_value',
                                index=['sample_igf_id',
-                                      'seqrun_igf_id'],
+                                      'flowcell_id'],
                                aggfunc='sum')                                   # group data by sample id and seq runs
     processed_data.\
     reset_index(['sample_igf_id',
-                 'seqrun_igf_id' ],
+                 'flowcell_id' ],
                 inplace=True)                                                   # reset index for processed data
     intermediate_data=list()                                                    # define empty intermediate data structure
     seqrun_set=set()                                                            # define empty seqrun set
     for line in processed_data.to_dict(orient='region'):                        # reformat processed data to required structure
       tmp_data=dict()
       tmp_data.update({'sample_igf_id':line['sample_igf_id'],
-                        line['seqrun_igf_id']:line['attribute_value']})
-      seqrun_set.add(line['seqrun_igf_id'])
+                        line['flowcell_id']:line['attribute_value']})
+      seqrun_set.add(line['flowcell_id'])
       intermediate_data.append(tmp_data)
 
     intermediate_data=pd.DataFrame(intermediate_data)                           # convert intermediate data to dataframe
