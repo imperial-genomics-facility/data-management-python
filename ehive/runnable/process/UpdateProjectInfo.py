@@ -63,6 +63,7 @@ class UpdateProjectInfo(IGFBaseProcess):
                        os.path.join(remote_project_dir,
                                     seqruninfofile)]
         subprocess.check_call(rm_seqrun_cmd)                                    # remove existing seqruninfofile
+      os.chmod(temp_seqrun_info, mode=0o754)                                    # changed file permission before copy
       copy_remote_file(source_path=temp_seqrun_info, \
                        destinationa_path=remote_project_dir, \
                        destination_address=remote_host)                         # copy file to remote
@@ -84,6 +85,7 @@ class UpdateProjectInfo(IGFBaseProcess):
                           os.path.join(remote_project_dir,
                                        samplereadcountfile)]
         subprocess.check_call(rm_readcount_cmd)                                 # remove existing samplereadcountfile
+      os.chmod(temp_read_count_output, mode=0o754)                              # changed file permission before copy
       copy_remote_file(source_path=temp_read_count_output, \
                        destinationa_path=remote_project_dir, \
                        destination_address=remote_host)                         # copy file to remote
