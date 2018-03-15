@@ -1,6 +1,7 @@
 import os,subprocess
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.fileutils import get_temp_dir, remove_dir
+from igf_data.utils.fileutils import copy_remote_file
 from igf_data.utils.projectutils import get_project_read_count,get_seqrun_info_for_project
 from igf_data.utils.project_data_display_utils import convert_project_data_gviz_data,add_seqrun_path_info
 
