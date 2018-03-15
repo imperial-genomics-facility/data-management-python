@@ -31,6 +31,9 @@ class ReplaceSingleCellBarcodes(IGFBaseProcess):
       singlecell_tag=self.param('singlecell_tag')
       job_name=self.job_name()
       work_dir=os.path.join(base_work_dir,seqrun_igf_id,job_name)               # get work directory name
+      if not os.path.exists(work_dir):
+        os.makedirs(work_dir, 0o770)                                            # create work dir if its not present
+
       sc_data=ProcessSingleCellSamplesheet(samplesheet_file,\
                                            singlecell_barcode_json,\
                                            singlecell_tag)
