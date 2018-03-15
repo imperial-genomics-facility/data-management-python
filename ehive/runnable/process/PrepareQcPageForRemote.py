@@ -383,7 +383,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       final_samplesheet_data=list()
       samplesheet_sc=SampleSheet(infile=samplesheet_file)                       # read samplesheet for single cell check
       samplesheet_sc.filter_sample_data(condition_key='Description', 
-                                        condition_value=self.singlecell_tag, 
+                                        condition_value=singlecell_tag, 
                                         method='include')                       # keep only single cell samples
       if len(samplesheet_sc._data) >0:
         sc_data=pd.DataFrame(sc_samplesheet._data).\
@@ -397,7 +397,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
 
       sa=SampleSheet(infile=samplesheet_file)
       sa.filter_sample_data(condition_key='Description', 
-                                        condition_value=self.singlecell_tag, 
+                                        condition_value=singlecell_tag, 
                                         method='exclude')                       # remove only single cell samples
       if len(sa._data)>0:
         final_samplesheet_data.extend(sa._data)                                 # add non single cell samples info to final data
