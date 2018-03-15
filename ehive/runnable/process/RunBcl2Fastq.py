@@ -23,7 +23,8 @@ class RunBcl2Fastq(IGFBaseProcess):
         'bcl2fastq_options':{'-r':'1','-w':'1','-p':'1','--barcode-mismatches':'1', \
                              '--auto-set-to-zero-barcode-mismatches':'',\
                              '--create-fastq-for-index-reads':''},
-        'singlecell_options':{'--minimum-trimmed-read-length=8','--mask-short-adapter-reads=8'},
+        'singlecell_options':{'--minimum-trimmed-read-length=8':'', \
+                              '--mask-short-adapter-reads=8':''},
         'singlecell_tag':'10X',
         'project_type':None,
       })
