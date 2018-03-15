@@ -10,24 +10,20 @@ class SampleSheetProjectFactory(IGFBaseJobFactory):
   def param_defaults(self):
     params_dict=super(SampleSheetProjectFactory,self).param_defaults()
     params_dict.update({
-        '10X_label':'10X'
+        'singlecell_tag':'10X'
       })
     return params_dict
-  
-  
+
+
   def run(self):
     try:
       samplesheet_file=self.param_required('samplesheet')
       seqrun_igf_id=self.param_required('seqrun_igf_id')
-      tenX_label=self.param('10X_label')
-      
+
       if not os.path.exists(samplesheet_file):
         raise IOError('Samplesheet file {0} not found'.format(samplesheet_file))
-      
+
       samplesheet=SampleSheet(infile=samplesheet_file)                          # read samplesheet
-      samplesheet.filter_sample_data(condition_key='Description', 
-                                     condition_value=tenX_label, 
-                                     method='exclude')                          # separate 10X samplesheet
       project_names=samplesheet.get_project_names()                             # get project names from samplesheet
       sub_tasks=[{'project_name':project_name} \
                  for project_name in project_names]                             # create subtasks data structure
