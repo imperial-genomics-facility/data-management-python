@@ -23,8 +23,7 @@ class RunBcl2Fastq(IGFBaseProcess):
         'bcl2fastq_options':{'-r':'1','-w':'1','-p':'1','--barcode-mismatches':'1', \
                              '--auto-set-to-zero-barcode-mismatches':'',\
                              '--create-fastq-for-index-reads':''},
-        'singlecell_options':{'--minimum-trimmed-read-length=8':'', \
-                              '--mask-short-adapter-reads=8':''},
+        'singlecell_options':'{"--minimum-trimmed-read-length=8":"","--mask-short-adapter-reads=8":""}',
         'singlecell_tag':'10X',
         'project_type':None,
       })
@@ -46,7 +45,7 @@ class RunBcl2Fastq(IGFBaseProcess):
       bcl2fastq_exe=self.param_required('bcl2fastq_exe')
       runinfo_filename=self.param('runinfo_filename')
       bcl2fastq_options=self.param('bcl2fastq_options')
-      singlecell_options=self.param('singlecell_options')
+      singlecell_options=self.param_required('singlecell_options')
       singlecell_tag=self.param('singlecell_tag')
       force_overwrite=self.param('force_overwrite')
       fastq_dir_label=self.param('fastq_dir_label')
