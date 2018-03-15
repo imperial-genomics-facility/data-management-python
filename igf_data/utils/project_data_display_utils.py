@@ -1,3 +1,4 @@
+import os
 import gviz_api
 import pandas as pd
 from igf_data.utils.seqrunutils import get_seqrun_date_from_igf_id
