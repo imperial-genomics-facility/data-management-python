@@ -386,7 +386,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
                                         condition_value=singlecell_tag, 
                                         method='include')                       # keep only single cell samples
       if len(samplesheet_sc._data) >0:
-        sc_data=pd.DataFrame(sc_samplesheet._data).\
+        sc_data=pd.DataFrame(samplesheet_sc._data).\
                    drop(['Sample_ID','Sample_Name','index'],axis=1).\
                    drop_duplicates().\
                    rename(columns={'Original_Sample_ID':'Sample_ID',
