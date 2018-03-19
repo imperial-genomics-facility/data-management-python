@@ -21,21 +21,22 @@
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
     <script type="text/javascript" ">
     plot_data = function(json_file){
-      google.charts.load('current', {'packages':['bar']});
+      google.charts.load("current", {packages: ["corechart"]});
       google.charts.setOnLoadCallback(drawChart);
 
       function drawChart() {
        $.getJSON(json_file, function(jsonData) {
           var data = new google.visualization.DataTable(jsonData);
           var options = {
-            chart: {
-              title: 'Sample read count',
-            },
+            animation: {startup: true,
+                        duration: 800,
+                        easing: 'in'},
+            bar: { groupWidth: "60%" },
             hAxis: {slantedText : true, slantedTextAngle : 45},
-            bars: 'horizontal' // Required for Material Bar Charts.
+            orientation: 'vertical'
           }
-          var chart = new google.charts.Bar(document.getElementById('barchart_material'));
-          chart.draw(data, google.charts.Bar.convertOptions(options));
+          var chart = new google.visualization.ColumnChart(document.getElementById('barchart_material'));
+          chart.draw(data, options);
        });
       }
      };
@@ -100,7 +101,7 @@
           </div>
           </ul>
           <h2>Sample stats</h2>
-           <div id="barchart_material" style="width: 800px; height: 600px;"></div>
+           <div id="barchart_material" style="width: 700px; height: 800px;"></div>
            <script>
              plot_data(json_file="{{ sampleReadCountFile }}");
            </script>
