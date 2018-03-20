@@ -32,8 +32,21 @@
                         duration: 800,
                         easing: 'in'},
             bar: { groupWidth: "60%" },
-            hAxis: {slantedText : true, slantedTextAngle : 45},
-            orientation: 'vertical'
+            vAxis: {title: 'Sample ID'},
+            hAxis: {title: 'Number of Reads',
+                    slantedText : true,
+                    slantedTextAngle : 45},
+            orientation: 'vertical',
+            legend: {position: 'right',
+                     textStyle: {color: '#708090',
+                                 fontSize: 10}
+                    },
+            colors:['#4682B4',
+                    '#A233A2',
+                    '#FF7F50',
+                    '#6787E7',
+                    '#B75555',
+                    '#2E8B57',],
           }
           var chart = new google.visualization.ColumnChart(document.getElementById('barchart_material'));
           chart.draw(data, options);
