@@ -81,7 +81,7 @@ def copy_remote_file(source_path,destinationa_path, source_address=None, destina
         if proc.returncode !=0:                                                 # fetching error message for non zero exits
           outs,errs=proc.communicate()
           raise ValueError('Error while copying file to remote server {0}'.\
-                           format(errs))
+                           format(errs.decode('utf8')))
 
     except:
         raise
