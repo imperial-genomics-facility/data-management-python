@@ -22,7 +22,10 @@ def _count_total_reads(data,seqrun_list):
     raise
 
 
-def convert_project_data_gviz_data(input_data,output_file):
+def convert_project_data_gviz_data(input_data,output_file,
+                                   sample_col='sample_igf_id',
+                                   read_count_col='attribute_value',
+                                   seqrun_col='flowcell_id'):
   '''
   A utility method for converting project's data availability information to
   gviz data table format
@@ -33,37 +36,42 @@ def convert_project_data_gviz_data(input_data,output_file):
               sample_igf_id, 
               flowcell_id, 
               attribute_value (R1_READ_COUNT)
+  sample_col: Column name for sample id, default sample_igf_id
+  seqrun_col: Column name for sequencing run identifier, default flowcell_id
+  read_count_col: Column name for sample read counts, default attribute_value
   output_file: A filepath for writing gviz json data
   '''
   try:
     if not isinstance(input_data, pd.DataFrame):
       raise AttributeError('Expecting a pandas dataframe and got {0}'.\
                            format(type(input_data)))
-
+    input_data[read_count_col]=input_data[read_count_col].astype(int)           # convert reac counts to int
     processed_data=input_data.\
-                   pivot_table(values='attribute_value',
-                               index=['sample_igf_id',
-                                      'flowcell_id'],
+                   pivot_table(values=read_count_col,
+                               index=[sample_col,
+                                      seqrun_col],
                                aggfunc='sum')                                   # group data by sample id and seq runs
+    print(processed_data.to_dict(orient='region'))
     processed_data.\
-    reset_index(['sample_igf_id',
-                 'flowcell_id' ],
+    reset_index([sample_col,
+                 seqrun_col],
                 inplace=True)                                                   # reset index for processed data
     intermediate_data=list()                                                    # define empty intermediate data structure
     seqrun_set=set()                                                            # define empty seqrun set
-    for line in processed_data.to_dict(orient='region'):                        # reformat processed data to required structure
+    print(processed_data.to_dict(orient='records'))
+    for line in processed_data.to_dict(orient='records'):                       # reformat processed data to required structure
       tmp_data=dict()
-      tmp_data.update({'sample_igf_id':line['sample_igf_id'],
-                        line['flowcell_id']:line['attribute_value']})
-      seqrun_set.add(line['flowcell_id'])
+      tmp_data.update({sample_col:line[sample_col],
+                        line[seqrun_col]:line[read_count_col]})
+      seqrun_set.add(line[seqrun_col])
       intermediate_data.append(tmp_data)
 
     intermediate_data=pd.DataFrame(intermediate_data)                           # convert intermediate data to dataframe
     intermediate_data.fillna(0,inplace=True)                                    # replace NAN values with zero
     intermediate_data=intermediate_data.\
-                      pivot_table(index='sample_igf_id',
+                      pivot_table(index=sample_col,
                                   aggfunc='sum').\
-                      reset_index('sample_igf_id')                              # group data by samples id
+                      reset_index(sample_col)                                   # group data by samples id
     intermediate_data=intermediate_data.\
                       apply(lambda line: \
                             _count_total_reads(data=line,
@@ -71,8 +79,8 @@ def convert_project_data_gviz_data(input_data,output_file):
                             axis=1)                                             # count total reads for multiple seq runs
     intermediate_data.fillna(0,inplace=True)                                    # fail safe for missing samples
     
-    
-    description = {"sample_igf_id": ("string", "Sample ID")}                    # define description
+    print(intermediate_data)
+    description = {sample_col: ("string", "Sample ID")}                         # define description
     if len(list(seqrun_set)) >1:
         description.update({"total_read":("number", "Total Reads")})            # add total read column for samples with multiple runs
         intermediate_data['total_read']=intermediate_data['total_read'].\
@@ -83,10 +91,11 @@ def convert_project_data_gviz_data(input_data,output_file):
         intermediate_data[run]=intermediate_data[run].\
                                astype(float)                                    # convert column to number
 
-    intermediate_data=intermediate_data.to_dict(orient='region')                # convert data frame to json
+    intermediate_data=intermediate_data.to_dict(orient='records')                # convert data frame to json
+    print(intermediate_data)
     data_table = gviz_api.DataTable(description)                                # load description to gviz api
     data_table.LoadData(intermediate_data)                                      # load data to gviz_api
-    column_list=['sample_igf_id']                                               # define column order
+    column_list=[sample_col]                                                    # define column order
     column_list.extend(list(seqrun_set))
     if len(list(seqrun_set)) >1:
         column_list.append('total_read')                                        # total read is present only for multiple runs
@@ -97,10 +106,13 @@ def convert_project_data_gviz_data(input_data,output_file):
   except:
     raise
 
-def _modify_seqrun_data(data_series):
+def _modify_seqrun_data(data_series,seqrun_col,flowcell_col,path_col):
   '''
   An internal method for parsing seqrun dataframe and adding remote dir path
   required columns: seqrun_igf_id, flowcell_id
+  seqrun_col: Column name for sequencing run id, default seqrun_igf_id
+  flowcell_col: Column namae for flowcell id, default flowcell_id
+  path_col: Column name for path, default path
   output column: flowcell_id, path
   '''
   try:
@@ -108,16 +120,17 @@ def _modify_seqrun_data(data_series):
       raise AttributeError('Expecting a pandas data series and got {0}'.\
                            format(type(data_series)))
 
-    seqrun_igf_id=data_series['seqrun_igf_id']
-    flowcell_id=data_series['flowcell_id']
+    seqrun_igf_id=data_series[seqrun_col]
+    flowcell_id=data_series[flowcell_col]
     seqrun_date=get_seqrun_date_from_igf_id(seqrun_igf_id)
-    data_series['path']=os.path.join(seqrun_date,flowcell_id)
-    del data_series['seqrun_igf_id']
+    data_series[path_col]=os.path.join(seqrun_date,flowcell_id)                 # adding path to data series
+    del data_series[seqrun_col]
     return data_series
   except:
     raise
 
-def add_seqrun_path_info(input_data,output_file):
+def add_seqrun_path_info(input_data,output_file,seqrun_col='seqrun_igf_id',
+                         flowcell_col='flowcell_id',path_col='path'):
   '''
   A utility method for adding remote path to a dataframe for each sequencing runs
   of a project
@@ -126,6 +139,9 @@ def add_seqrun_path_info(input_data,output_file):
   input_data: A input dataframe containing the following columns
               seqrun_igf_id
               flowcell_id
+  seqrun_col: Column name for sequencing run id, default seqrun_igf_id
+  flowcell_col: Column namae for flowcell id, default flowcell_id
+  path_col: Column name for path, default path
   output_file: An output filepath for the json data
   '''
   try:
@@ -136,7 +152,10 @@ def add_seqrun_path_info(input_data,output_file):
     input_data.drop_duplicates(inplace=True)                                    # remove duplicate entries
     input_data=input_data.\
                apply(lambda line: \
-                     _modify_seqrun_data(data_series=line),
+                     _modify_seqrun_data(data_series=line,
+                                         seqrun_col=seqrun_col,
+                                         flowcell_col=flowcell_col,
+                                         path_col=path_col),
                      axis=1)                                                    # add remote seqrun path
     input_data=input_data.to_json(orient='records')                             # encode output json
     with open(output_file,'w') as j_data:
