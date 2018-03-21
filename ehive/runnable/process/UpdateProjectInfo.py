@@ -3,6 +3,7 @@ from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.fileutils import get_temp_dir, remove_dir
 from igf_data.utils.fileutils import copy_remote_file
 from igf_data.utils.projectutils import get_project_read_count,get_seqrun_info_for_project
+from igf_data.utils.gviz_utils import convert_to_gviz_json_for_display
 from igf_data.utils.project_data_display_utils import convert_project_data_gviz_data,add_seqrun_path_info
 
 class UpdateProjectInfo(IGFBaseProcess):
@@ -38,8 +39,12 @@ class UpdateProjectInfo(IGFBaseProcess):
                                     seqruninfofile)                             # get path for temp seqrun info file
       raw_read_count=get_project_read_count(session_class=igf_session_class,
                                             project_igf_id=project_name)        # get raw read count for project
-      convert_project_data_gviz_data(input_data=raw_read_count,
-                                     output_file=temp_read_count_output)        # convert read count to gviz json
+      (description,read_count_data,column_order)=\
+              convert_project_data_gviz_data(input_data=raw_read_count)         # convert read count to gviz requirements
+      convert_to_gviz_json_for_display(description=description,
+                                       data=read_count_data,
+                                       columns_order=column_order,
+                                       output_file=temp_read_count_output)      # write data to output json file
       seqrun_data=get_seqrun_info_for_project(session_class=igf_session_class,
                                             project_igf_id=project_name)        # fetch seqrun info for each projects
       add_seqrun_path_info(input_data=seqrun_data,

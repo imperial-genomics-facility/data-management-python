@@ -1,15 +1,15 @@
 import os
-import gviz_api
 import pandas as pd
 from igf_data.utils.seqrunutils import get_seqrun_date_from_igf_id
+
 
 def _count_total_reads(data,seqrun_list):
   '''
   An internal function for counting total reads
   
   required params:
-  data: A dictionary containing seqrun ids a key an read counts as values
-  seqrun_list: A list of sequencing runs
+  :param data, A dictionary containing seqrun ids a key an read counts as values
+  :param seqrun_list, A list of sequencing runs
   '''
   try:
     if len(seqrun_list) >1:
@@ -22,7 +22,7 @@ def _count_total_reads(data,seqrun_list):
     raise
 
 
-def convert_project_data_gviz_data(input_data,output_file,
+def convert_project_data_gviz_data(input_data,
                                    sample_col='sample_igf_id',
                                    read_count_col='attribute_value',
                                    seqrun_col='flowcell_id'):
@@ -32,14 +32,19 @@ def convert_project_data_gviz_data(input_data,output_file,
   https://developers.google.com/chart/interactive/docs/reference#DataTable
   
   required params:
-  input_data: A pandas data frame, it should contain following columns
+  :param input_data: A pandas data frame, it should contain following columns
               sample_igf_id, 
               flowcell_id, 
               attribute_value (R1_READ_COUNT)
-  sample_col: Column name for sample id, default sample_igf_id
-  seqrun_col: Column name for sequencing run identifier, default flowcell_id
-  read_count_col: Column name for sample read counts, default attribute_value
-  output_file: A filepath for writing gviz json data
+  :param sample_col, Column name for sample id, default sample_igf_id
+  :param seqrun_col, Column name for sequencing run identifier, default flowcell_id
+  :param read_count_col, Column name for sample read counts, default attribute_value
+
+  return 
+    a dictionary of description
+    a list of data dictionary
+    a tuple of column_order
+  
   '''
   try:
     if not isinstance(input_data, pd.DataFrame):
@@ -88,17 +93,14 @@ def convert_project_data_gviz_data(input_data,output_file,
         intermediate_data[run]=intermediate_data[run].\
                                astype(float)                                    # convert column to number
 
-    intermediate_data=intermediate_data.to_dict(orient='records')                # convert data frame to json
-    data_table = gviz_api.DataTable(description)                                # load description to gviz api
-    data_table.LoadData(intermediate_data)                                      # load data to gviz_api
+    intermediate_data=intermediate_data.to_dict(orient='records')               # convert data frame to json
     column_list=[sample_col]                                                    # define column order
     column_list.extend(list(seqrun_set))
     if len(list(seqrun_set)) >1:
         column_list.append('total_read')                                        # total read is present only for multiple runs
 
-    final_data=data_table.ToJSon(columns_order=tuple(column_list))              # create final data structure
-    with open(output_file,'w') as jf:
-        jf.write(final_data)                                                    # write final data to output file
+    column_order=tuple(column_list)
+    return description,intermediate_data,column_order
   except:
     raise
 
@@ -106,10 +108,10 @@ def _modify_seqrun_data(data_series,seqrun_col,flowcell_col,path_col):
   '''
   An internal method for parsing seqrun dataframe and adding remote dir path
   required columns: seqrun_igf_id, flowcell_id
-  seqrun_col: Column name for sequencing run id, default seqrun_igf_id
-  flowcell_col: Column namae for flowcell id, default flowcell_id
-  path_col: Column name for path, default path
-  output column: flowcell_id, path
+  :param seqrun_col, Column name for sequencing run id, default seqrun_igf_id
+  :param flowcell_col, Column namae for flowcell id, default flowcell_id
+  :param path_col, Column name for path, default path
+  returns a data series with following columns: flowcell_id, path
   '''
   try:
     if not isinstance(data_series,pd.Series):
@@ -132,12 +134,12 @@ def add_seqrun_path_info(input_data,output_file,seqrun_col='seqrun_igf_id',
   of a project
   
   required params:
-  input_data: A input dataframe containing the following columns
-              seqrun_igf_id
-              flowcell_id
-  seqrun_col: Column name for sequencing run id, default seqrun_igf_id
-  flowcell_col: Column namae for flowcell id, default flowcell_id
-  path_col: Column name for path, default path
+  :param input_data, A input dataframe containing the following columns
+          seqrun_igf_id
+          flowcell_id
+  :param seqrun_col, Column name for sequencing run id, default seqrun_igf_id
+  :param flowcell_col, Column namae for flowcell id, default flowcell_id
+  :param path_col, Column name for path, default path
   output_file: An output filepath for the json data
   '''
   try:
