@@ -51,14 +51,12 @@ def convert_project_data_gviz_data(input_data,output_file,
                                index=[sample_col,
                                       seqrun_col],
                                aggfunc='sum')                                   # group data by sample id and seq runs
-    print(processed_data.to_dict(orient='region'))
     processed_data.\
     reset_index([sample_col,
                  seqrun_col],
                 inplace=True)                                                   # reset index for processed data
     intermediate_data=list()                                                    # define empty intermediate data structure
     seqrun_set=set()                                                            # define empty seqrun set
-    print(processed_data.to_dict(orient='records'))
     for line in processed_data.to_dict(orient='records'):                       # reformat processed data to required structure
       tmp_data=dict()
       tmp_data.update({sample_col:line[sample_col],
@@ -78,8 +76,7 @@ def convert_project_data_gviz_data(input_data,output_file,
                                                seqrun_list=list(seqrun_set)),
                             axis=1)                                             # count total reads for multiple seq runs
     intermediate_data.fillna(0,inplace=True)                                    # fail safe for missing samples
-    
-    print(intermediate_data)
+
     description = {sample_col: ("string", "Sample ID")}                         # define description
     if len(list(seqrun_set)) >1:
         description.update({"total_read":("number", "Total Reads")})            # add total read column for samples with multiple runs
@@ -92,7 +89,6 @@ def convert_project_data_gviz_data(input_data,output_file,
                                astype(float)                                    # convert column to number
 
     intermediate_data=intermediate_data.to_dict(orient='records')                # convert data frame to json
-    print(intermediate_data)
     data_table = gviz_api.DataTable(description)                                # load description to gviz api
     data_table.LoadData(intermediate_data)                                      # load data to gviz_api
     column_list=[sample_col]                                                    # define column order
