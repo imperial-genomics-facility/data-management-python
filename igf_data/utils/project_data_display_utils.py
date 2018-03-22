@@ -50,7 +50,7 @@ def convert_project_data_gviz_data(input_data,
     if not isinstance(input_data, pd.DataFrame):
       raise AttributeError('Expecting a pandas dataframe and got {0}'.\
                            format(type(input_data)))
-    input_data[read_count_col]=input_data[read_count_col].astype(int)           # convert reac counts to int
+    input_data[read_count_col]=input_data[read_count_col].astype(float)         # convert reac counts to int
     processed_data=input_data.\
                    pivot_table(values=read_count_col,
                                index=[sample_col,
