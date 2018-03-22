@@ -359,9 +359,9 @@ class SampleSheet:
           raise ValueError('key {}, value {} not found for {}'.format(condition_key,condition_value,row))
       else:
         if method=='include':
-          if row[condition_key] == condition_value: filtered_data.append(row)
+          if row[condition_key].upper() == condition_value.upper(): filtered_data.append(row)
         elif method=='exclude':
-          if row[condition_key] != condition_value: filtered_data.append(row)
+          if row[condition_key].upper() != condition_value.upper(): filtered_data.append(row)
         else:
           raise ValueError('method {0} not supported'.format(method))
     # resetting data information
