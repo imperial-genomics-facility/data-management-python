@@ -1,4 +1,5 @@
 import shutil,os, subprocess
+from shlex import quote
 
 def get_storage_stats_in_gb(storage_list):
   '''
@@ -40,7 +41,7 @@ def get_sub_directory_size_in_gb(input_path):
   try:
     storage_stats=list()
     for dir_name in os.listdir(input_path):
-      cmd=['du','-s',os.path.join(input_path,dir_name)]
+      cmd=['du','-s',quote(os.path.join(input_path,dir_name))]
       proc=subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
       proc.wait()
       outs,errs=proc.communicate()
