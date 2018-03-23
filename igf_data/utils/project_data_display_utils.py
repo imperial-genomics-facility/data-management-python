@@ -21,6 +21,8 @@ def _count_total_reads(data,seqrun_list):
         if data[run] > 0:
           data['run_count'] += 1
           data['total_read'] += data[run]
+    if data['run_count'] == 1:
+      data['total_read'] = 0
     return data
   except:
     raise
