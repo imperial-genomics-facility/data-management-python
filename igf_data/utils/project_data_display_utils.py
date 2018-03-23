@@ -12,10 +12,14 @@ def _count_total_reads(data,seqrun_list):
   :param seqrun_list, A list of sequencing runs
   '''
   try:
+    data['run_count'] = 0
+    if 'total_read' not in data:
+      data['total_read']=0
+
     if len(seqrun_list) >1:
-      if 'total_read' not in data:
-        data['total_read']=0
-        for run in seqrun_list:
+      for run in seqrun_list:
+        if data[run] > 0:
+          data['run_count'] += 1
           data['total_read'] += data[run]
     return data
   except:
@@ -80,25 +84,36 @@ def convert_project_data_gviz_data(input_data,
                             _count_total_reads(data=line,
                                                seqrun_list=list(seqrun_set)),
                             axis=1)                                             # count total reads for multiple seq runs
-    intermediate_data.fillna(0,inplace=True)                                    # fail safe for missing samples
+    
+    multiple_run_data=intermediate_data[intermediate_data['run_count'] > 1]     # check for multi run projects
+    if len(multiple_run_data.index)==0 and \
+       'total_read' in multiple_run_data.columns:
+      intermediate_data.drop('total_read',axis=1,inplace=True)                  # drop the total read column if all samples are single run
 
+    if 'run_count'  in intermediate_data.columns:
+      intermediate_data.drop('run_count',axis=1,inplace=True)                   # removing run_count column
+
+    intermediate_data.fillna(0,inplace=True)                                    # fail safe for missing samples
     description = {sample_col: ("string", "Sample ID")}                         # define description
-    if len(list(seqrun_set)) >1:
-        description.update({"total_read":("number", "Total Reads")})            # add total read column for samples with multiple runs
-        intermediate_data['total_read']=intermediate_data['total_read'].\
-                                        astype(float)                           # convert column to number
+    if len(list(seqrun_set)) >1 and \
+       'total_read' in intermediate_data.columns:
+      description.update({"total_read":("number", "Total Reads")})              # add total read column for samples with multiple runs
+      intermediate_data['total_read']=intermediate_data['total_read'].\
+                                      astype(float)                             # convert column to number
 
     for run in list(seqrun_set):
-        description.update({run:("number",run)})                                # add seqrun columns
-        intermediate_data[run]=intermediate_data[run].\
-                               astype(float)                                    # convert column to number
+      description.update({run:("number",run)})                                  # add seqrun columns
+      intermediate_data[run]=intermediate_data[run].\
+                             astype(float)                                      # convert column to number
 
-    intermediate_data=intermediate_data.to_dict(orient='records')               # convert data frame to json
+
     column_list=[sample_col]                                                    # define column order
     column_list.extend(list(seqrun_set))
-    if len(list(seqrun_set)) >1:
-        column_list.append('total_read')                                        # total read is present only for multiple runs
+    if len(list(seqrun_set)) > 1 and \
+       'total_read' in intermediate_data.columns:
+      column_list.append('total_read')                                          # total read is present only for multiple runs
 
+    intermediate_data=intermediate_data.to_dict(orient='records')               # convert data frame to json
     column_order=tuple(column_list)
     return description,intermediate_data,column_order
   except:
