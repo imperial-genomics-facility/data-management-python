@@ -4,11 +4,11 @@ from shlex import quote
 
 def get_storage_stats_in_gb(storage_list):
   '''
-  A utility function for fetching disk usage stats (df -h) and return disk 
+  A utility function for fetching disk usage stats (df -h) and return disk
   usge in Gb
-  
+
   :param storage_list, a input list of storage path
-  
+
   returns a list of dictionary containing following keys
      storage
      used
@@ -97,16 +97,21 @@ def merge_storage_stats_json(config_file,label_file=None,
   except:
     raise
 
-def get_sub_directory_size_in_gb(input_path):
+def get_sub_directory_size_in_gb(input_path,dir_name_col='directory_name',
+                                 dir_size_col='directory_size'):
   '''
   A utility function for listing disk size of all sub-directories for a given path
   (similar to linux command du -sh /path/* )
-  
+
   :param input_path, a input file path
-  
-  returns a list of dictionaries containing following keys
-    directory_name
-    directory_size
+  :param dir_name_col, column name for directory name, default directory_name
+  :param dir_size_col, column name for directory size, default directory size
+  returns the following
+    * a list of dictionaries containing following keys
+        directory_name
+        directory_size
+    * a description dictionary for gviz_api
+    * a column order list for gviz _api
   '''
   try:
     storage_stats=list()
@@ -114,13 +119,17 @@ def get_sub_directory_size_in_gb(input_path):
       cmd=['du','-s',quote(os.path.join(input_path,dir_name))]
       proc=subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
       proc.wait()
-      outs,errs=proc.communicate()
+      outs,_=proc.communicate()
       if proc.returncode == 0:
         dir_size,dir_name=outs.decode('utf-8').split()
-        storage_stats.append({'directory_name':os.path.basename(dir_name),
-                              'directory_size':int(dir_size)/1024/1024/1024})
+        storage_stats.append({dir_name_col:os.path.basename(dir_name),
+                              dir_size_col:int(dir_size)/1024/1024/1024})
       else:
         raise ValueError('Failed directory size check: {0}'.format(err))
-    return storage_stats
+    description={dir_name_col: ("string", "Project Name"),
+                 dir_size_col: ("number","Size (in GB)"),
+                }                                                               # a description for gviz_api
+    column_order=[dir_name_col,dir_size_col]                                    # a column order for gviz_api
+    return storage_stats, description, column_order
   except:
     raise
