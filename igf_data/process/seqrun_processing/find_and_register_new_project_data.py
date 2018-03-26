@@ -643,7 +643,7 @@ class Find_and_register_new_project_data:
       for root_path,dirs,files in os.walk(self.projet_info_path, topdown=True):
         for file_path in files:
           if fnmatch.fnmatch(file_path, '*.csv') or \
-             fnmatch.fnmatch(file_path, '*xls'):                                # only consider csv files
+             fnmatch.fnmatch(file_path, '*xls'):                                # only consider csv or xls files
             file_check=fa.check_file_records_file_path(file_path=os.path.join(root_path,
                                                                               file_path)) # check for filepath in db
             if not file_check:
