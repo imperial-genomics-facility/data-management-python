@@ -35,16 +35,17 @@ class Find_and_register_new_project_data:
   setup_irods: Setup irods account for user, default is True
   notify_user: Send email notification to user, default is True
   '''
-  def __init__(self,projet_info_path,dbconfig,user_account_template, \
-               log_slack=True, slack_config=None,\
-               check_hpc_user=False, hpc_user=None,hpc_address=None,\
-               ldap_server=None,\
-               setup_irods=True,\
-               notify_user=True,\
-               project_lookup_column='project_igf_id',\
-               user_lookup_column='email_id',\
-               data_authority_column='data_authority',\
-               sample_lookup_column='sample_igf_id'):
+  def __init__(self,projet_info_path,dbconfig,user_account_template,
+               log_slack=True, slack_config=None,
+               check_hpc_user=False, hpc_user=None,hpc_address=None,
+               ldap_server=None,
+               setup_irods=True,
+               notify_user=True,
+               project_lookup_column='project_igf_id',
+               user_lookup_column='email_id',
+               data_authority_column='data_authority',
+               sample_lookup_column='sample_igf_id',
+               metadata_sheet_name='Project metadata'):
     try:
       self.projet_info_path=projet_info_path
       self.user_account_template=user_account_template
@@ -62,11 +63,12 @@ class Find_and_register_new_project_data:
       self.hpc_user=hpc_user
       self.hpc_address=hpc_address
       self.ldap_server=ldap_server
+      self.metadata_sheet_name=metadata_sheet_name
       if log_slack and slack_config is None:
         raise ValueError('Missing slack config file')
       elif log_slack and slack_config:
         self.igf_slack = IGF_slack(slack_config=slack_config)
-      
+
       if check_hpc_user and (hpc_user is None or \
                              hpc_address is None or \
                              ldap_server is None):
@@ -74,8 +76,8 @@ class Find_and_register_new_project_data:
                          format(hpc_user,hpc_address,ldap_server))
     except:
       raise
-  
-  
+
+
   def process_project_data_and_account(self):
     '''
     A method for finding new project info and registering them to database
@@ -579,7 +581,18 @@ class Find_and_register_new_project_data:
           sample_data
     '''
     try:
-      project_info_data=pd.read_csv(project_info_file)                          # read project info data
+      if fnmatch.fnmatch(project_info_file, '*.csv'):
+        project_info_data=pd.read_csv(project_info_file)                        # read project info data from csv file
+      elif fnmatch.fnmatch(project_info_file, '*xls'):
+        xl=pd.ExcelFile(project_info_file)
+        if self.metadata_sheet_name not in xl.sheet_names:                      # check for required metadata sheet name
+          raise ValueError('Excel file does not have the sheet {0}'.\
+                           format(self.metadata_sheet_name))
+        project_info_data=xl.parse(self.metadata_sheet_name)                    # read xls file from the metadata sheet
+      else:
+        raise ValueError('No parser defined for file {0}'.\
+                         format(project_info_file))
+
       base=BaseAdaptor(**{'session_class':self.session_class})
       required_project_columns=base.get_table_columns(table_name=Project, \
                                              excluded_columns=['project_id'])   # get project columns
@@ -629,7 +642,8 @@ class Find_and_register_new_project_data:
       fa.start_session()                                                        # connect to db
       for root_path,dirs,files in os.walk(self.projet_info_path, topdown=True):
         for file_path in files:
-          if fnmatch.fnmatch(file_path, '*.csv'):                               # only consider csv files
+          if fnmatch.fnmatch(file_path, '*.csv') or \
+             fnmatch.fnmatch(file_path, '*xls'):                                # only consider csv files
             file_check=fa.check_file_records_file_path(file_path=os.path.join(root_path,
                                                                               file_path)) # check for filepath in db
             if not file_check:
