@@ -253,7 +253,7 @@ class Find_and_register_new_project_data:
     '''
     try:
       new_password=None                                                         # default value of the new password is None
-      symbols='^&%$@#!'                                                         # allowed symbols in password
+      symbols='^&%@!'                                                           # allowed symbols in password
       chars=string.ascii_lowercase+\
             string.ascii_uppercase+\
             string.digits+\
