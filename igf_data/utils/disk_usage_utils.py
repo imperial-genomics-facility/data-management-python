@@ -119,7 +119,7 @@ def get_sub_directory_size_in_gb(input_path,dir_name_col='directory_name',
       cmd=['du','-s',quote(os.path.join(input_path,dir_name))]
       proc=subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
       proc.wait()
-      outs,_=proc.communicate()
+      outs,err=proc.communicate()
       if proc.returncode == 0:
         dir_size,dir_name=outs.decode('utf-8').split()
         storage_stats.append({dir_name_col:os.path.basename(dir_name),
@@ -129,7 +129,7 @@ def get_sub_directory_size_in_gb(input_path,dir_name_col='directory_name',
 
     storage_stats=pd.DataFrame(storage_stats)                                   # convert to dataframe
     storage_stats[dir_size_col]=storage_stats[dir_size_col].astype(float)       # change column type to float
-    storage_stats.sort_value(by=[dir_size_col],ascending=False,inplace=True)    # sort dataframe by dir size
+    storage_stats.sort_values(by=[dir_size_col],ascending=False,inplace=True)   # sort dataframe by dir size
     storage_stats=storage_stats.to_dict(orient='record')                        # convert to list of dictionary
     description={dir_name_col: ("string", "Project Name"),
                  dir_size_col: ("number","Size (in GB)"),
