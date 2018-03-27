@@ -82,6 +82,7 @@ def merge_storage_stats_json(config_file,label_file=None,
                                astype(float)                                    # convert used column to float
     all_storage_info[available_col]=all_storage_info[available_col].\
                                     astype(float)                               # convert available column to float
+    all_storage_info.dropna(inplace=True)
     if label_file:
       with open(label_file,'r') as j_data:
         storage_label=json.load(j_data)                                         # load data for storage name label
