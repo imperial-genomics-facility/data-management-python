@@ -126,6 +126,11 @@ def get_sub_directory_size_in_gb(input_path,dir_name_col='directory_name',
                               dir_size_col:int(dir_size)/1024/1024/1024})
       else:
         raise ValueError('Failed directory size check: {0}'.format(err))
+
+    storage_stats=pd.DataFrame(storage_stats)                                   # convert to dataframe
+    storage_stats[dir_size_col]=storage_stats[dir_size_col].astype(float)       # change column type to float
+    storage_stats.sort_value(by=[dir_size_col],ascending=False,inplace=True)    # sort dataframe by dir size
+    storage_stats=storage_stats.to_dict(orient='record')                        # convert to list of dictionary
     description={dir_name_col: ("string", "Project Name"),
                  dir_size_col: ("number","Size (in GB)"),
                 }                                                               # a description for gviz_api
