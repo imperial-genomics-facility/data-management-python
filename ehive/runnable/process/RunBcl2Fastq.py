@@ -23,7 +23,6 @@ class RunBcl2Fastq(IGFBaseProcess):
         'bcl2fastq_options':'{"-r" : "1","-w" : "1","-p" : "2","--barcode-mismatches" : "1","--auto-set-to-zero-barcode-mismatches":"","--create-fastq-for-index-reads":""}',
         'singlecell_options':'{"--minimum-trimmed-read-length=8":"","--mask-short-adapter-reads=8":""}',
         'singlecell_tag':'10X',
-        'project_type':None,
       })
     return params_dict
 
@@ -49,8 +48,8 @@ class RunBcl2Fastq(IGFBaseProcess):
       fastq_dir_label=self.param('fastq_dir_label')
       samplesheet_filename=self.param('samplesheet_filename')
       model_name=self.param('model_name')
-      project_type=self.param('project_type')                                   # single cell status is false by default
 
+      project_type=''                                                           # default single cell status is empty
       seqrun_dir=os.path.join(seqrun_local_dir,seqrun_igf_id)                   # local seqrun dir
       runinfo_file=os.path.join(seqrun_dir,runinfo_filename)                    # seqrun runinfo file
       if not os.path.exists(samplesheet_file):
@@ -125,7 +124,7 @@ class RunBcl2Fastq(IGFBaseProcess):
       move(report_dir,output_fastq_dir)                                         # move report directory to project dir
       move(stats_dir,output_fastq_dir)                                          # move stats directory to project dir
       self.param('dataflow_params',{'fastq_dir':output_fastq_dir,
-                                    'project_type':project_type})               # set dataflow params
+                                    'project_type':singlecell_tag})             # set dataflow params
       message='Fastq conversion done for {0},{1}:{2}_{3}, fastq: {4}'.\
               format(seqrun_igf_id,project_name,flowcell_lane,\
                      index_length,output_fastq_dir)
