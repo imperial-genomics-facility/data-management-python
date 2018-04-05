@@ -124,7 +124,7 @@ class RunBcl2Fastq(IGFBaseProcess):
       move(report_dir,output_fastq_dir)                                         # move report directory to project dir
       move(stats_dir,output_fastq_dir)                                          # move stats directory to project dir
       self.param('dataflow_params',{'fastq_dir':output_fastq_dir,
-                                    'bcl2fq_project_type':singlecell_tag})      # set dataflow params
+                                    'bcl2fq_project_type':project_type})        # set dataflow params
       message='Fastq conversion done for {0},{1}:{2}_{3}, fastq: {4}'.\
               format(seqrun_igf_id,project_name,flowcell_lane,\
                      index_length,output_fastq_dir)
