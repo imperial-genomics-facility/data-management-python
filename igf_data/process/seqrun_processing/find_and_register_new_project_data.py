@@ -315,10 +315,13 @@ class Find_and_register_new_project_data:
                            format(username))
         else:
           if password is not None or password != '':
-            irods_passwd_cmd=['iadmin', 'moduser', \
-                              '{0}#igfZone'.format(quote(username)), \
-                              'password', quote(password)]
-            irods_passwd_cmd=' '.join(irods_passwd_cmd)
+            irods_passwd_cmd='{0} {1} {2}#{3} {4} {5}'.\
+                             format('iadmin',
+                                    'moduser',
+                                    quote(username),
+                                    'password'
+                                    'igfZone',
+                                    quote(password))                            # format irods command for shell
             subprocess.check_call(irods_passwd_cmd,shell=True)
             if self.log_slack:
               message='resetting irods account password for non-hpc user: {0}, password length: {1}'.\
@@ -344,10 +347,13 @@ class Find_and_register_new_project_data:
             raise ValueError('check password for non hpc user {0}: {1}'.\
                              format(username,password))                         # it could be the encrypted password
 
-          irods_passwd_cmd=['iadmin', 'moduser', \
-                            '{0}#igfZone'.format(quote(username)), \
-                            'password', quote(password)]
-          irods_passwd_cmd=' '.join(irods_passwd_cmd)
+          irods_passwd_cmd='{0} {1} {2}#{3} {4} {5}'.\
+                             format('iadmin',
+                                    'moduser',
+                                    quote(username),
+                                    'password'
+                                    'igfZone',
+                                    quote(password))                            # format irods command for shell
           subprocess.check_call(irods_passwd_cmd,shell=True)                    # set password for non-hpc user
           if self.log_slack:
             message='created irods account for non-hpc user: {0}, password length: {1}'.\
