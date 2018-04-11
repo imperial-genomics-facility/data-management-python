@@ -108,6 +108,7 @@ class RunBcl2Fastq(IGFBaseProcess):
                      '--sample-sheet',samplesheet_file,
                      '--output-dir',output_temp_dir,
                      '--reports-dir',report_dir,
+                     '--use-bases-mask',bases_mask,
                      '--stats-dir',stats_dir]                                   # bcl2fastq base parameters
 
       bcl2fastq_param=self.format_tool_options(bcl2fastq_options)               # format bcl2fastq params
