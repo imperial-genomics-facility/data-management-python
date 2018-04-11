@@ -41,8 +41,8 @@ You can download your data via a web browser or via the icommand client on cx1 c
                  "irods_port":1247,
                  "irods_default_resource": "woolfResc",
                  "irods_user_name": "{{ customerUsername }}",
-                 "irods_zone_name": "igfZone",
-{% if hpcUser %} "irods_ssl_ca_certificate_file": "/apps/irods/certs/igf-chain.pem",
+                 "irods_zone_name": "igfZone", {% if hpcUser %}
+                 "irods_ssl_ca_certificate_file": "/apps/irods/certs/igf-chain.pem",
                  "irods_ssl_ca_certificate_path": "/apps/irods/certs",
                  "irods_ssl_verify_server": "cert",
                  "irods_authentication_scheme": "PAM" {% endif %}
