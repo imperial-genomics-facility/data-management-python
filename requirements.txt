@@ -1,8 +1,10 @@
+numpy==1.13.3
+multiqc==1.2
 coveralls
 html5lib
 lxml
 bs4
-pandas
+pandas==0.20.3
 sqlalchemy
 pymysql
 slackclient
@@ -11,3 +13,4 @@ matplotlib
 unittest2
 jinja2
 gviz_api
+xlrd
