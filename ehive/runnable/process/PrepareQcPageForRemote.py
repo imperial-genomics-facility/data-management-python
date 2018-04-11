@@ -294,6 +294,12 @@ class PrepareQcPageForRemote(IGFBaseProcess):
                         'Index_Length':index_length,\
                         'Undetermined_MultiQC':remote_multiqc_path,\
                        })
+
+      if len(qc_data) > 0:
+        qc_data=pd.DataFrame(qc_data).\
+              sort_values(by='LaneID').\
+              to_dict(orient='records')                                         # sort qc data based on lane id
+
       return required_header, qc_data
     except:
       raise
