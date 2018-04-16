@@ -319,8 +319,8 @@ class Find_and_register_new_project_data:
                              format('iadmin',
                                     'moduser',
                                     quote(username),
-                                    'password'
                                     'igfZone',
+                                    'password',
                                     quote(password))                            # format irods command for shell
             subprocess.check_call(irods_passwd_cmd,shell=True)
             if self.log_slack:
@@ -351,8 +351,8 @@ class Find_and_register_new_project_data:
                              format('iadmin',
                                     'moduser',
                                     quote(username),
-                                    'password'
                                     'igfZone',
+                                    'password',
                                     quote(password))                            # format irods command for shell
           subprocess.check_call(irods_passwd_cmd,shell=True)                    # set password for non-hpc user
           if self.log_slack:
