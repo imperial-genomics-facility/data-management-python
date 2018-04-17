@@ -102,7 +102,8 @@ class SampleSheet:
       other_errors=data.apply(lambda x: self._check_samplesheet_data_row(data_series=x),
                               axis=1)                                           # check for additional errors
       other_errors.dropna(inplace=True)
-      error_list.extend([value for value in other_errors.to_dict().values()])   # add other errors to the list
+      if len(other_errors)>0:
+        error_list.extend([value for value in other_errors.to_dict().values()]) # add other errors to the list
       return error_list
     except:
       raise
