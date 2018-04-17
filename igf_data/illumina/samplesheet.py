@@ -91,6 +91,10 @@ class SampleSheet:
       data=data.fillna("").applymap(lambda x: str(x))                           # replace nan with empty strings and convert all entries to string
       json_data=data.to_dict(orient='records')                                  # convert dataframe to list of dictionaries
       error_list=list()                                                         # define empty error list
+
+      if not os.path.exists(schema_json):
+        raise IOError('json schema file {0} not found'.format(schema_json))
+
       with open(schema_json,'r') as jf:
         schema=json.load(jf)                                                    # read schema from the json file
 
