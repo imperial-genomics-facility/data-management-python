@@ -79,5 +79,27 @@ class Hiseq4000SampleSheet(unittest.TestCase):
     existsD=samplesheet_data.check_sample_header(section='Settings', condition_key='Adapter')
     self.assertFalse(existsD)
 
+class TestValidateSampleSheet(unittest.TestCase):
+  def setUp(self):
+    file='doc/data/SampleSheet/HiSeq4000/SampleSheet.csv'
+    self.file=file
+    self.samplesheet_data=SampleSheet(infile=self.file)
+  
+  def test_validate_sample_id(self):
+    data=[{"Description": "",
+       "Sample_ID":"IGF1033 44",
+       "I5_Index_ID": "I5A1",
+       "I7_Index_ID": "I7A1",
+       "Sample_Name": "Sample-1000A",
+       "Sample_Plate": "",
+       "Sample_Project": "IGFQ0001_projectABC",
+       "Sample_Well": "",
+       "index": "CAATCAAG",
+       "index2": "TGTTAACT"}]
+    samplesheet=self.samplesheet_data
+    samplesheet._data=data
+    errors=samplesheet.validate_samplesheet_data(schema_json='data/validation_schema/samplesheet_validation.json')
+    self.assertEqual(len(errors),1)
+                                                 
 if __name__ == '__main__':
   unittest.main()
