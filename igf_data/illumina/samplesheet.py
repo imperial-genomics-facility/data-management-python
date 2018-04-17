@@ -77,7 +77,7 @@ class SampleSheet:
     except:
       raise
 
-  def validate_samplesheet_data(self,schema):
+  def validate_samplesheet_data(self,schema_json):
     '''
     A method for validation of samplesheet data
     
@@ -91,6 +91,9 @@ class SampleSheet:
       data=data.fillna("").applymap(lambda x: str(x))                           # replace nan with empty strings and convert all entries to string
       json_data=data.to_dict(orient='records')                                  # convert dataframe to list of dictionaries
       error_list=list()                                                         # define empty error list
+      with open(schema_json,'r') as jf:
+        schema=json.load(jf)                                                    # read schema from the json file
+
       # syntactic validation
       v_s = Draft4Validator(schema)                                             # initiate validator using schema
       error_list = sorted(v_s.iter_errors(json_data), key=lambda e: e.path)     # overwrite error_list with validation error
