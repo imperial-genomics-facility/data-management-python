@@ -1,5 +1,7 @@
-import os, re, copy, sys
+import os, re, copy, sys,json
 import pandas as pd
+import numpy as np
+from jsonschema import validate, Draft4Validator
 from collections import defaultdict, deque
 
 try:
@@ -32,6 +34,76 @@ class SampleSheet:
 
     # set index column values
     self.index_columns=self._get_index_columns()
+
+  @staticmethod
+  def _check_samplesheet_data_row(data_series,single_cell_flag='10X'):
+    '''
+    '''
+    try:
+      if not isinstance(data_series,pd.Series):
+        raise AttributeError(type(data_series))
+
+      err=list()
+      if data_series['Sample_ID']==data_series['Sample_Name']:
+        err.append("Same sample id and sample names are not allowed, {0}".\
+                   format(data_series['Sample_ID']))
+
+      if data_series['I7_Index_ID'] !='' and \
+         ('index' not in data_series or data_series['index']==''):
+        err.append("Missing I_7 index sequences for {0}".\
+                   format(data_series['Sample_ID']))
+
+      if data_series['I5_Index_ID'] !='' and \
+         ('index2' not in data_series or data_series['index2'] ==''):
+        err.append("Missing I_5 index sequences for {0}".\
+                   format(data_series['Sample_ID']))
+
+      if data_series['Description']==single_cell_flag and \
+          ('I7_Index_ID' not in data_series or data_series['I7_Index_ID']==''):
+            err.append("Required I_7 indexes for 10X samples for {0}".\
+                       format(data_series['Sample_ID']))
+
+      single_cell_index_pattern=re.compile(r'^SI-GA-[A-Z][0-9]+')
+      if data_series['Description']==single_cell_flag and \
+         not re.search(single_cell_index_pattern,data_series['I7_Index_ID']):
+        err.append("Required I_7 single cell indexes for 10X sample {0}".\
+                   format(data_series['Sample_ID']))
+
+      if len(err)==0:
+        err_str=np.nan
+      else:
+        err_str='\n'.join(err)
+      return err_str
+    except:
+      raise
+
+  def validate_samplesheet_data(self,schema):
+    '''
+    A method for validation of samplesheet data
+    
+    :param schema, A JSON schema for validation of the samplesheet data
+    
+    :return a list of error messages or an empty list if no error found
+    '''
+    try:
+      data=self._data
+      data=pd.DataFrame(data)                                                   # read data as pandas dataframe
+      data=data.fillna("").applymap(lambda x: str(x))                           # replace nan with empty strings and convert all entries to string
+      json_data=data.to_dict(orient='records')                                  # convert dataframe to list of dictionaries
+      error_list=list()                                                         # define empty error list
+      # syntactic validation
+      v_s = Draft4Validator(schema)                                             # initiate validator using schema
+      error_list = sorted(v_s.iter_errors(json_data), key=lambda e: e.path)     # overwrite error_list with validation error
+
+      # semantic validation
+      other_errors=data.apply(lambda x: self._check_samplesheet_data_row(data_series=x),
+                              axis=1)                                           # check for additional errors
+      other_errors.dropna(inplace=True)
+      error_list.extend([value for value in other_errors.to_dict().values()])   # add other errors to the list
+      return error_list
+    except:
+      raise
+
 
   def group_data_by_index_length(self):
     '''

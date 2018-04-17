@@ -14,3 +14,4 @@ unittest2
 jinja2
 gviz_api
 xlrd
+jsonschema
