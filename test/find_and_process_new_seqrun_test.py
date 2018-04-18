@@ -8,7 +8,7 @@ from igf_data.igfdb.useradaptor import UserAdaptor
 from igf_data.igfdb.sampleadaptor import SampleAdaptor
 from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
-from igf_data.process.seqrun_processing.find_and_process_new_seqrun import find_new_seqrun_dir,calculate_file_md5,load_seqrun_files_to_db, seed_pipeline_table_for_new_seqrun, check_for_registered_project_and_sample
+from igf_data.process.seqrun_processing.find_and_process_new_seqrun import find_new_seqrun_dir,calculate_file_md5,load_seqrun_files_to_db, seed_pipeline_table_for_new_seqrun, check_for_registered_project_and_sample,validate_samplesheet_for_seqrun
 
 class Find_seqrun_test1(unittest.TestCase):
   def setUp(self):
