@@ -51,6 +51,8 @@ def validate_samplesheet_for_seqrun(seqrun_info,schema_json,output_dir,sampleshe
         error_file=os.path.join(output_dir,
                                 '{0}_{1}'.format(seqrun_name,
                                                  error_file_suffix))            # get error file path
+        errors=[e if isinstance(e,str) else '{0} :{1}'.format(e.message,e.path) \
+                  for e in errors]
         errors_str='\n'.join(errors)
         with open(error_file,'w') as fh:
           fh.write(errors_str)                                                  # write error file
