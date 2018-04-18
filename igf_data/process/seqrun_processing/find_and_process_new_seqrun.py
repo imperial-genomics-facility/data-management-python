@@ -24,6 +24,42 @@ def find_new_seqrun_dir(path, dbconfig):
   valid_seqrun_dir=check_finished_seqrun_dir(seqrun_dir=new_seqrun_dir, seqrun_path=path)
   return valid_seqrun_dir
 
+def validate_samplesheet_for_seqrun(seqrun_info,schema_json,output_dir,samplesheet_file='SampleSheet.csv'):
+  '''
+  A method for validating samplesheet and writing errors to a report file
+  
+  :param seqrun_info : A dictionary containing seqrun name and path as key and values
+  :param schema_json : A json schema for samplesheet validation
+  :param output_dir : A directory path for writing output report files
+  :param samplesheet_file : Samplesheet filename, default 'SampleSheet.csv'
+  
+  :return new_seqrun_info : A new dictionary containing seqrun name and path as key and values
+  :return error_file_list : A dictionary containing seqrun name and error file paths as key and values
+  '''
+  new_seqrun_info=dict()
+  error_file_list=dict()
+  error_file_suffix='samplesheet_validation_failed.txt'
+  if not os.path.exists(output_dir):
+    raise IOError('Report output directory {0} not found'.format(output_dir))   # check for existing dir path
+
+  try:
+    for seqrun_name, seqrun_path in seqrun_info.items():
+      samplesheet=os.path.join(seqrun_path,samplesheet_file)                    # get samplesheet file
+      samplesheet_data=SampleSheet(infile=samplesheet)                          # read samplesheet data
+      errors=samplesheet_data.validate_samplesheet_data(schema_json)            # validate samplesheet data
+      if len(errors)>0:
+        error_file=os.path.join(output_dir,
+                                '{0}_{1}'.format(seqrun_name,
+                                                 error_file_suffix))            # get error file path
+        errors_str='\n'.join(errors)
+        with open(error_file,'w') as fh:
+          fh.write(errors_str)                                                  # write error file
+        error_file_list.update({seqrun_name :error_file})
+      else:
+        new_seqrun_info.update({seqrun_name : seqrun_path})
+      return new_seqrun_info, error_file_list
+  except:
+    raise
 
 def check_for_registered_project_and_sample(seqrun_info,dbconfig,samplesheet_file='SampleSheet.csv'):
   '''
