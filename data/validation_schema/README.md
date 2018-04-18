@@ -2,7 +2,7 @@
 
 ## Samplesheet validation
 
-Samplesheet validation json schema [file](samplesheet_validation.json) is for checking samplesheet metadata consistency for demultiplexing of the Illumina sequencing runs.
+Samplesheet validation json schema file [samplesheet_validation.json](samplesheet_validation.json) is for checking samplesheet metadata consistency for demultiplexing of the Illumina sequencing runs.
 
 ### Validation checklist (v1.0)
 
