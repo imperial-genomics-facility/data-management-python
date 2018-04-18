@@ -232,7 +232,6 @@ class TestValidateSampleSheet(unittest.TestCase):
     samplesheet=self.samplesheet_data
     samplesheet._data=data
     errors=samplesheet.validate_samplesheet_data(schema_json='data/validation_schema/samplesheet_validation.json')
-    print(errors)
     self.assertEqual(len(errors),1)
 
 if __name__ == '__main__':

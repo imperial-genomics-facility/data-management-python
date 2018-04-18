@@ -38,6 +38,12 @@ class SampleSheet:
   @staticmethod
   def _check_samplesheet_data_row(data_series,single_cell_flag='10X'):
     '''
+    An internal static method for additional validation of samplesheet data
+    
+    :param data_series, A pandas data series, containing a samplesheet data row
+    :param single_cell_flag, A keyword for single cell sample description, default 10X
+    
+    :return A string of error messages, or NAN value
     '''
     try:
       if not isinstance(data_series,pd.Series):
@@ -48,25 +54,26 @@ class SampleSheet:
         err.append("Same sample id and sample names are not allowed, {0}".\
                    format(data_series['Sample_ID']))
 
-      if data_series['I7_Index_ID'] !='' and \
-         ('index' not in data_series or data_series['index']==''):
-        err.append("Missing I_7 index sequences for {0}".\
-                   format(data_series['Sample_ID']))
-
       if data_series['I5_Index_ID'] !='' and \
          ('index2' not in data_series or data_series['index2'] ==''):
         err.append("Missing I_5 index sequences for {0}".\
                    format(data_series['Sample_ID']))
 
-      if data_series['Description']==single_cell_flag and \
-          ('I7_Index_ID' not in data_series or data_series['I7_Index_ID']==''):
-            err.append("Required I_7 indexes for 10X samples for {0}".\
-                       format(data_series['Sample_ID']))
-
       single_cell_index_pattern=re.compile(r'^SI-GA-[A-Z][0-9]+')
       if data_series['Description']==single_cell_flag and \
-         not re.search(single_cell_index_pattern,data_series['I7_Index_ID']):
+         not re.search(single_cell_index_pattern,data_series['index']):
         err.append("Required I_7 single cell indexes for 10X sample {0}".\
+                   format(data_series['Sample_ID']))
+
+      if data_series['Description']!=single_cell_flag and \
+         re.search(single_cell_index_pattern,data_series['index']):
+        err.append("Found I_7 single cell indexes, missing 10X description sample {0}".\
+                   format(data_series['Sample_ID']))
+
+      if data_series['Description']==single_cell_flag and \
+         re.search(single_cell_index_pattern,data_series['index']) and \
+         'index2' in data_series and data_series['index2'] !='':
+        err.append("Found I_5 index(2) for single cell sample {0}".\
                    format(data_series['Sample_ID']))
 
       if len(err)==0:
