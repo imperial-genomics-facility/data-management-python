@@ -54,7 +54,7 @@ class SampleSheet:
         err.append("Same sample id and sample names are not allowed, {0}".\
                    format(data_series['Sample_ID']))
 
-      if data_series['I5_Index_ID'] !='' and \
+      if ('I5_Index_ID' in data_series and data_series['I5_Index_ID'] !='') and \
          ('index2' not in data_series or data_series['index2'] ==''):
         err.append("Missing I_5 index sequences for {0}".\
                    format(data_series['Sample_ID']))
