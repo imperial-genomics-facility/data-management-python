@@ -19,7 +19,7 @@ def full_suite():
   from .runadaptor_test import RunAdaptor_test1
   from .runinfo_xml_test import Hiseq4000RunInfo as Hiseq4000RunInfo_runinfo_xml
   from .runparameters_xml_test import Hiseq4000RunParam
-  from .samplesheet_test import Hiseq4000SampleSheet
+  from .samplesheet_test import Hiseq4000SampleSheet,TestValidateSampleSheet
   from .find_and_register_new_project_data_test import Find_and_register_project_data1
   from .useradaptor_test import Useradaptor_test1
   from .sampleadaptor_test import Sampleadaptor_test1
@@ -49,6 +49,7 @@ def full_suite():
       unittest.TestLoader().loadTestsFromTestCase(Hiseq4000RunInfo_runinfo_xml),
       unittest.TestLoader().loadTestsFromTestCase(Hiseq4000RunParam),
       unittest.TestLoader().loadTestsFromTestCase(Hiseq4000SampleSheet),
+      unittest.TestLoader().loadTestsFromTestCase(TestValidateSampleSheet),
       unittest.TestLoader().loadTestsFromTestCase(Find_and_register_project_data1),
       unittest.TestLoader().loadTestsFromTestCase(Useradaptor_test1),
       unittest.TestLoader().loadTestsFromTestCase(Sampleadaptor_test1),
