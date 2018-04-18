@@ -66,9 +66,10 @@ You will find following information under the lane level tar files:
   - Manifest file containing the md5 checksum of the fastq files
   - Samplesheet file for the flowcell lane
 
-Please refer to the sample sheet extracts in the sample folders for facility sample ID to user sample name mappings.
+Please refer to the samplesheet in the tarfile for mapping facility sample ids to the original sample names.
 
 We have updated our QC report page for the fastq files and included following
+  - A project summary view showing read counts for each samples for each runs (click on the 'Project Home')
   - Sample QC results from FastQC and Fastqscreen
   - MultiQC report for both known and undetermined indexes barcodes per flowcell lane
   - Improved html report for sequencing run level and lane level overview
