@@ -100,6 +100,140 @@ class TestValidateSampleSheet(unittest.TestCase):
     samplesheet._data=data
     errors=samplesheet.validate_samplesheet_data(schema_json='data/validation_schema/samplesheet_validation.json')
     self.assertEqual(len(errors),1)
-                                                 
+    self.assertEqual(errors[0].path[1], 'Sample_ID')
+
+  def test_validate_sample_name(self):
+    data=[{"Description": "",
+       "Sample_ID":"IGF1033_44",
+       "I5_Index_ID": "I5A1",
+       "I7_Index_ID": "I7A1",
+       "Sample_Name": "Sample_{1000A",
+       "Sample_Plate": "",
+       "Sample_Project": "IGFQ0001_projectABC",
+       "Sample_Well": "",
+       "index": "CAATCAAG",
+       "index2": "TGTTAACT"}]
+    samplesheet=self.samplesheet_data
+    samplesheet._data=data
+    errors=samplesheet.validate_samplesheet_data(schema_json='data/validation_schema/samplesheet_validation.json')
+    self.assertEqual(len(errors),1)
+    self.assertEqual(errors[0].path[1], 'Sample_Name')
+
+  def test_validate_sample_project(self):
+    data=[{"Description": "",
+       "Sample_ID":"IGF1033_44",
+       "I5_Index_ID": "I5A1",
+       "I7_Index_ID": "I7A1",
+       "Sample_Name": "Sample-1000A",
+       "Sample_Plate": "",
+       "Sample_Project": "IGFQ0001 : projectABC",
+       "Sample_Well": "",
+       "index": "CAATCAAG",
+       "index2": "TGTTAACT"}]
+    samplesheet=self.samplesheet_data
+    samplesheet._data=data
+    errors=samplesheet.validate_samplesheet_data(schema_json='data/validation_schema/samplesheet_validation.json')
+    self.assertEqual(len(errors),1)
+    self.assertEqual(errors[0].path[1], 'Sample_Project')
+
+  def test_validate_index1(self):
+    data=[{"Description": "",
+       "Sample_ID":"IGF1033_44",
+       "I5_Index_ID": "I5A1",
+       "I7_Index_ID": "I7A1",
+       "Sample_Name": "Sample-1000A",
+       "Sample_Plate": "",
+       "Sample_Project": "IGFQ0001_projectABC",
+       "Sample_Well": "",
+       "index": "CAATCAAGNNN",
+       "index2": "TGTTAACT"}]
+    samplesheet=self.samplesheet_data
+    samplesheet._data=data
+    errors=samplesheet.validate_samplesheet_data(schema_json='data/validation_schema/samplesheet_validation.json')
+    self.assertEqual(len(errors),1)
+    self.assertEqual(errors[0].path[1], 'index')
+
+  def test_validate_index1_2(self):
+    data=[{"Description": "",
+       "Sample_ID":"IGF1033_44",
+       "I5_Index_ID": "I5A1",
+       "I7_Index_ID": "I7A1",
+       "Sample_Name": "Sample-1000A",
+       "Sample_Plate": "",
+       "Sample_Project": "IGFQ0001_projectABC",
+       "Sample_Well": "",
+       "index": "",
+       "index2": "TGTTAACT"}]
+    samplesheet=self.samplesheet_data
+    samplesheet._data=data
+    errors=samplesheet.validate_samplesheet_data(schema_json='data/validation_schema/samplesheet_validation.json')
+    self.assertEqual(len(errors),1)
+    self.assertEqual(errors[0].path[1], 'index')
+
+  def test_validate_index2(self):
+    data=[{"Description": "",
+       "Sample_ID":"IGF1033_44",
+       "I5_Index_ID": "I5A1",
+       "I7_Index_ID": "I7A1",
+       "Sample_Name": "Sample-1000A",
+       "Sample_Plate": "",
+       "Sample_Project": "IGFQ0001_projectABC",
+       "Sample_Well": "",
+       "index": "AAAAAAAA",
+       "index2": ""}]
+    samplesheet=self.samplesheet_data
+    samplesheet._data=data
+    errors=samplesheet.validate_samplesheet_data(schema_json='data/validation_schema/samplesheet_validation.json')
+    self.assertEqual(len(errors),1)
+
+  def test_validate_singlecell_index1(self):
+    data=[{"Description": "10X",
+       "Sample_ID":"IGF1033_44",
+       "I5_Index_ID": "I5A1",
+       "I7_Index_ID": "I7A1",
+       "Sample_Name": "Sample-1000A",
+       "Sample_Plate": "",
+       "Sample_Project": "IGFQ0001_projectABC",
+       "Sample_Well": "",
+       "index": "ATAAA",
+       "index2": "TGTTAACT"}]
+    samplesheet=self.samplesheet_data
+    samplesheet._data=data
+    errors=samplesheet.validate_samplesheet_data(schema_json='data/validation_schema/samplesheet_validation.json')
+    self.assertEqual(len(errors),1)
+
+  def test_validate_singlecell_index2(self):
+    data=[{"Description": "",
+       "Sample_ID":"IGF1033_44",
+       "I5_Index_ID": "",
+       "I7_Index_ID": "SI-GA-A1",
+       "Sample_Name": "Sample-1000A",
+       "Sample_Plate": "",
+       "Sample_Project": "IGFQ0001_projectABC",
+       "Sample_Well": "",
+       "index": "SI-GA-A1",
+       "index2": ""}]
+    samplesheet=self.samplesheet_data
+    samplesheet._data=data
+    errors=samplesheet.validate_samplesheet_data(schema_json='data/validation_schema/samplesheet_validation.json')
+    self.assertEqual(len(errors),1)
+
+  def test_validate_singlecell_index3(self):
+    data=[{"Description": "10X",
+       "Sample_ID":"IGF1033_44",
+       "I5_Index_ID": "S111",
+       "I7_Index_ID": "SI-GA-A1",
+       "Sample_Name": "Sample-1000A",
+       "Sample_Plate": "",
+       "Sample_Project": "IGFQ0001_projectABC",
+       "Sample_Well": "",
+       "index": "SI-GA-A1",
+       "index2": "TGTTAACT"}]
+    samplesheet=self.samplesheet_data
+    samplesheet._data=data
+    errors=samplesheet.validate_samplesheet_data(schema_json='data/validation_schema/samplesheet_validation.json')
+    print(errors)
+    self.assertEqual(len(errors),1)
+
 if __name__ == '__main__':
   unittest.main()
