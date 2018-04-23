@@ -78,18 +78,20 @@ def check_for_registered_project_and_sample(seqrun_info,dbconfig,samplesheet_fil
     new_seqrun_info=dict()
     dbparams=read_dbconf_json(dbconfig)
     base=BaseAdaptor(**dbparams)
-    base.start_session()                                                          # connect to db
+    base.start_session()                                                        # connect to db
     sa=SampleAdaptor(**{'session':base.session})
     pa=ProjectAdaptor(**{'session':base.session})
     for seqrun_name, seqrun_path in seqrun_info.items():
       samplesheet=os.path.join(seqrun_path,samplesheet_file)                    # get samplesheet file
       samplesheet_data=SampleSheet(infile=samplesheet)                          # read samplesheet data
+      reject_seqrun=False                                                       # do not reject any seqrun by default
       for row in samplesheet_data._data:
         sample_id=row['Sample_ID']
         project_id=row['Sample_Project']
         record_exists=sa.check_project_and_sample(project_igf_id=project_id,\
                                                   sample_igf_id=sample_id)      # check for record in db
         if not record_exists:
+          reject_seqrun=True                                                    # reject seqrun if samplesheet fails project id + sample id check
           if msg =='':
             msg='missing sample {0} and project {1} for run {2}'.\
                 format(sample_id, project_id, seqrun_name)
@@ -99,14 +101,15 @@ def check_for_registered_project_and_sample(seqrun_info,dbconfig,samplesheet_fil
                 
         project_authority_exists=pa.check_data_authority_for_project(project_igf_id=project_id)
         if not project_authority_exists:
+          reject_seqrun=True                                                    # reject seqrun if no data authority found for project
           if msg =='':
             msg='missing user info for project {0} for run {1}'.\
                 format(project_id, seqrun_name)
           else:
             msg='{0} \n missing user info for project {1} for run {2}'.\
                 format(msg, project_id, seqrun_name)
-        if record_exists and project_authority_exists:
-          new_seqrun_info.update({seqrun_name : seqrun_path})
+      if not reject_seqrun:
+        new_seqrun_info.update({seqrun_name : seqrun_path})                     # filter db checking failed runs
     base.close_session()
     return new_seqrun_info, msg
   except:
