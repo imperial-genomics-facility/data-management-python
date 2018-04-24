@@ -271,7 +271,7 @@ class Run(Base):
   __tablename__ = 'run'
   __table_args__ = (
     UniqueConstraint('run_igf_id'),
-    UniqueConstraint('experiment_id','lane_number'),
+    UniqueConstraint('experiment_id','seqrun_id','lane_number'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
   run_id        = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
