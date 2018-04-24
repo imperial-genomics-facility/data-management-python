@@ -156,12 +156,18 @@ class Find_and_register_new_project_data:
       elif table_name=='sample':
         if self.sample_lookup_column in data and \
            not pd.isnull(data[self.sample_lookup_column]):
+          project_igf_id=data[self.project_lookup_column]
           sample_igf_id=data[self.sample_lookup_column]
           sa=SampleAdaptor(**{'session':dbsession})                             # connect to sample adaptor
-          sample_exists=sa.check_sample_records_igf_id(sample_igf_id)
-          if sample_exists:                                                 # store data only if sample is not existing
+          sample_project_exists=sa.check_project_and_sample(project_igf_id=project_igf_id,\
+                                                            sample_igf_id=sample_igf_id) # check for existing sample_id and project-id combination
+          if sample_project_exists:                                             # store data only if sample is not existing
             data[check_column]=True
           else:
+            sample_exists=sa.check_sample_records_igf_id(sample_igf_id)         # check for existing sample
+            if sample_exists:
+              raise ValueError('Sample {0} exists in database but not associated with project {1}'.\
+                               format(sample_igf_id,project_igf_id))            # inconsistency in sample project combination
             data[check_column]=False
           return data
         else:
