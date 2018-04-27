@@ -62,7 +62,7 @@ try:
       for seqrun_name, error_file_path in error_files.items():
         message='Samplesheet validation failed for run {0}'.format(seqrun_name)
         slack_obj.post_file_to_channel(filepath=error_file_path,\
-                                     message=message)                           # post validation results to slack
+                                       message=message)                         # post validation results to slack
 
     remove_dir(temp_dir)                                                        # remove temp dir
 
