@@ -1,4 +1,5 @@
-import argparse
+import argparse, os
+from datetime import datetime
 from igf_data.task_tracking.igf_slack import IGF_slack
 from igf_data.task_tracking.igf_asana import IGF_asana
 from igf_data.utils.fileutils import get_temp_dir,remove_dir
@@ -34,7 +35,23 @@ try:
   new_seqruns,message=check_for_registered_project_and_sample(seqrun_info=new_seqruns,\
                                                               dbconfig=dbconfig_path)
   if message !='':
-    slack_obj.post_message_to_channel(message,reaction='pass')
+    msg_tmp_dir=get_temp_dir()                                                  # create temp dir
+    time_tuple=datetime.now().timetuple()                                       # get timetuple for NOW
+    time_stamp='{0}_{1}_{2}-{3}_{4}_{5}'.\
+               format(time_tuple.tm_year,
+                      time_tuple.tm_mon,
+                      time_tuple.tm_mday,
+                      time_tuple.tm_hour,
+                      time_tuple.tm_min,
+                      time_tuple.tm_sec)
+    file_name='samplesheet_metadata_check_failed_{0}.txt'.format(time_stamp)
+    file_name=os.path.join(msg_tmp_dir,file_name)
+    with open(file_name,'w') as fp:
+      fp.write(message)                                                         # write message file for slack
+    message='samplesheet metadata check message : {0}'.format(time_stamp)
+    slack_obj.post_file_to_channel(filepath=file_name,\
+                                   message=message)                             # post samplesheet metadata check results to slack
+    remove_dir(msg_tmp_dir)                                                     # remove temp dir
 
   if len(new_seqruns.keys()) > 0:
     temp_dir=get_temp_dir()                                                     # create temp dir
