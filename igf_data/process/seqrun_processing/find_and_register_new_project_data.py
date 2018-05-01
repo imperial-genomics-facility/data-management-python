@@ -1,5 +1,6 @@
 import pandas as pd
 from shlex import quote
+from copy import deepcopy
 import os,subprocess,fnmatch,warnings,string
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.igfdb.baseadaptor import BaseAdaptor
@@ -34,6 +35,7 @@ class Find_and_register_new_project_data:
   data_authority_column: data authority column name, default data_authority
   setup_irods: Setup irods account for user, default is True
   notify_user: Send email notification to user, default is True
+  default_user_email: Add another user as the default collaborator for all new projects, default igf@imperial.ac.uk
   '''
   def __init__(self,projet_info_path,dbconfig,user_account_template,
                log_slack=True, slack_config=None,
@@ -41,6 +43,7 @@ class Find_and_register_new_project_data:
                ldap_server=None,
                setup_irods=True,
                notify_user=True,
+               default_user_email='igf@imperial.ac.uk',
                project_lookup_column='project_igf_id',
                user_lookup_column='email_id',
                data_authority_column='data_authority',
@@ -59,6 +62,7 @@ class Find_and_register_new_project_data:
       self.session_class = base.get_session_class()
       self.setup_irods=setup_irods
       self.notify_user=notify_user
+      self.default_user_email=default_user_email
       self.check_hpc_user=check_hpc_user
       self.hpc_user=hpc_user
       self.hpc_address=hpc_address
@@ -111,8 +115,8 @@ class Find_and_register_new_project_data:
         message='Error in registering project info: {0}'.format(e)
         self.igf_slack.post_message_to_channel(message,reaction='fail')
       raise
-    
-    
+
+
   def _check_existing_data(self,data,dbsession,table_name,check_column='EXISTS'):
     '''
     An internal function for checking and registering project info
@@ -131,7 +135,7 @@ class Find_and_register_new_project_data:
           project_igf_id=data[self.project_lookup_column]
           pa=ProjectAdaptor(**{'session':dbsession})                            # connect to project adaptor
           project_exists=pa.check_project_records_igf_id(project_igf_id)
-          if project_exists:                                                # store data only if project is not existing
+          if project_exists:                                                    # store data only if project is not existing
             data[check_column]=True
           else:
             data[check_column]=False
@@ -145,7 +149,7 @@ class Find_and_register_new_project_data:
           user_email=data[self.user_lookup_column]
           ua=UserAdaptor(**{'session':dbsession})                               # connect to user adaptor
           user_exists=ua.check_user_records_email_id(email_id=user_email)
-          if user_exists:                                                   # store data only if user is not existing
+          if user_exists:                                                       # store data only if user is not existing
             data[check_column]=True
           else:
             data[check_column]=False
@@ -183,9 +187,10 @@ class Find_and_register_new_project_data:
           pa=ProjectAdaptor(**{'session':dbsession})                            # connect to project adaptor
           project_user_exists=pa.check_existing_project_user(project_igf_id,\
                                                              email_id=user_email)
-          if self.data_authority_column not in data or \
-             pd.isnull(data[self.data_authority_column]):
-            data[self.data_authority_column]=True                               # set user as data authority
+          if user_email != self.default_user_email and \
+             (self.data_authority_column not in data or \
+             pd.isnull(data[self.data_authority_column])):
+            data[self.data_authority_column]=True                               # set user as data authority, filter default user
             
           if project_user_exists:                                               # store data only if sample is not existing
             data[check_column]=True
@@ -454,8 +459,27 @@ class Find_and_register_new_project_data:
       return data
     except:
       raise
-  
-  
+
+
+  def _add_default_user_to_project(self,project_user_data):
+    '''
+    An internal method for adding default user to the project_user_data dataframe
+    :param project_user_data : A dataframe containing project_igf_id and email_id column
+    :returns a pandas dataframe with new row for the project_igf_id and default_user_email
+    '''
+    try:
+      new_project_user_data=list()
+      for row in project_user_data.to_dict(orient='records'):
+        new_project_user_data.append(row)
+        row2=deepcopy(row)
+        row2[self.user_lookup_column]=self.default_user_email
+        new_project_user_data.append(row2)
+      new_project_user_data=pd.DataFrame(new_project_user_data)
+      return new_project_user_data
+    except:
+      raise
+
+
   def _check_and_register_data(self,data,project_info_file):
     '''
     An internal method for checking and registering data
@@ -526,6 +550,7 @@ class Find_and_register_new_project_data:
                              (project_user_data[self.user_lookup_column].isnull()==False)
       project_user_data=project_user_data[project_user_data_mask]               # not allowing any empty values for project or user lookup
       if project_user_data.index.size > 0:
+        project_user_data=self._add_default_user_to_project(project_user_data)  # update project_user_data with default users
         project_user_data=project_user_data.\
                           apply(lambda x: \
                            self._check_existing_data(\

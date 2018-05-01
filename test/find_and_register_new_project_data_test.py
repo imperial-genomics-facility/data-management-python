@@ -22,7 +22,8 @@ class Find_and_register_project_data1(unittest.TestCase):
     self.session_class=base.session_class
     base.start_session()
     ua=UserAdaptor(**{'session':base.session})
-    user_data=[{'name':'user1','email_id':'user1@ic.ac.uk','username':'user1'},]
+    user_data=[{'name':'user1','email_id':'user1@ic.ac.uk','username':'user1'},
+               {'name':'igf','email_id':'igf@imperial.ac.uk','username':'igf'}]
     ua.store_user_data(data=user_data)
     project_data=[{'project_igf_id':'IGFP0001_test_22-8-2017_rna',
                    'project_name':'test_22-8-2017_rna',
