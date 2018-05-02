@@ -60,12 +60,19 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
 
       user_list=list()
       user_passwd_dict=dict()
+      hpc_user=True                                                             # by default, load hpc user settings
       for user in user_info:
         username=user['username']                                               # get username for irods
         user_list.append(username)
         if 'ht_password' in user.keys():
           ht_passwd=user['ht_password']                                         # get htaccess passwd
           user_passwd_dict.update({username:ht_passwd})
+
+        if 'category' in user.keys() and \
+           'data_authority' in user.keys() and \
+           user['category'] == 'NON_HPC_USER' and \
+           user['data_authority']=='T':
+          hpc_user=False                                                        # switch to non-hpc settings if primary user is non-hpc
 
       temp_work_dir=get_temp_dir()                                              # get a temp dir
       template_env=Environment(loader=FileSystemLoader(searchpath=htaccess_template_path), \
@@ -80,6 +87,7 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       htaccess.\
       stream(remote_project_dir=remote_project_path,\
              project_tag=project_name,\
+             hpcUser=hpc_user,\
              htpasswd_filename=htpasswd_filename, \
              customerUsernameList=' '.join(user_list)).\
       dump(htaccess_output)                                                     # write new htacces file
