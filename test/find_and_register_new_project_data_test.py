@@ -216,6 +216,9 @@ class Find_and_register_project_data1(unittest.TestCase):
       project_user_exists=pa.check_existing_project_user(project_igf_id='IGFP0002_test_23-5-2017_rna',\
                                                          email_id='user2@ic.ac.uk')
       self.assertTrue(project_user_exists)
+      project_user_exists=pa.check_existing_project_user(project_igf_id='IGFP0002_test_23-5-2017_rna',\
+                                                         email_id='igf@imperial.ac.uk')
+      self.assertTrue(project_user_exists)
       base.close_session()
     
 if __name__=='__main__':
