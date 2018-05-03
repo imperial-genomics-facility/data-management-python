@@ -241,14 +241,37 @@ class ProjectAdaptor(BaseAdaptor):
       return project_user_check
     except:
       raise
-  
-  
+
+
+  def check_project_attributes(self, project_igf_id, attribute_name): 
+    '''
+    A method for checking existing project attribute in database
+    :param project_igf_id: An unique project igf id
+    :param attribute_name: An attribute name
+    :return A boolean value
+    '''
+    try:
+      project_attribute_check=False
+      session=self.session
+      query=session.\
+            query(Project).\
+            join(Project_attribute).\
+            filter(Project.project_igf_id==project_igf_id).\
+            filter(Project_attribute.attribute_name==attribute_name)
+      results=self.fetch_records(query=query, \
+                                 output_mode='one_or_none')
+      if results is not None:
+        project_attribute_check=True
+      return project_attribute_check
+    except:
+      raise
+
   def get_project_attributes(self, project_igf_id, attribute_name=''): 
     projects=self.get_project_info(format='object', project_igf_id=project_igf_id)
     project=projects[0]
 
     project_attributes=BaseAdaptor.\
-                       get_attributes(self, \
+                       get_attributes_by_dbid(self, \
                                       attribute_table='Project_attribute', \
                                       db_id=project.project_id )
     return project_attributes
