@@ -81,3 +81,20 @@ def get_seqrun_info_for_project(project_igf_id,session_class):
     return seqrun_info
   except:
     raise
+
+def mark_project_barcode_check_off(project_igf_id,session_class,
+                                   barcode_check_attribute='barcode_check'):
+  '''
+  A utility method for marking project barcode check as off using the project_igf_id
+  
+  :param project_igf_id: A project_igf_id string
+  :param session_class: A db session class object
+  :param barcode_check_attribute: A text keyword for barcode check attribute, default barcode_check
+  '''
+  try:
+    pr=ProjectAdaptor(**{'session_class':session_class})
+    pr.start_session()
+    pr_attributes=pr.check_project_attributes(project_igf_id=project_igf_id,
+                                              attribute_name=barcode_check_attribute)
+  except:
+    raise
