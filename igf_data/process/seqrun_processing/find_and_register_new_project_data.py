@@ -608,13 +608,31 @@ class Find_and_register_new_project_data:
     finally:
       if db_connected:
         base.close_session()                                                    # close db connection
-  
+
+  def _check_and_add_project_attributes(self,data_series):
+    '''
+    An internal method for checking project data and adding required attributes
+    :param data_series: A Pandas Series containing project data
+    :returns A Pandas series with project attribute information
+    '''
+    try:
+      if not isinstance(data_series, pd.Series):
+        raise AttributeError('Expecting a Pandas Series and got {0}'.\
+                             format(type(data_series)))
+
+      if self.barcode_check_keyword not in data_series or  \
+         pd.isnull(data_series[self.barcode_check_keyword]):
+        data_series[self.barcode_check_keyword]='ON'                            # by default barcode checking is always ON
+      return data_series
+    except:
+      raise
+
 
   def _read_project_info_and_get_new_entries(self,project_info_file):
     '''
     An internal method for processing project info data
     required params:
-    project_info_file: A filepath for project_info csv files
+    :param project_info_file: A filepath for project_info csv files
     
     It returns a dictionary with following keys
           project_data
@@ -652,6 +670,9 @@ class Find_and_register_new_project_data:
       required_sample_columns.append('project_igf_id')
       sample_data=project_info_data.loc[:,required_sample_columns]              # get data for sample table
       project_data=project_data.drop_duplicates()
+      project_data=project_data.apply(lambda x: \
+                                      self._check_and_add_project_attributes(x),
+                                      axis=1)                                   # add missing project attribute to the dataframe
       user_data=user_data.drop_duplicates()
       project_user_data=project_user_data.drop_duplicates()
       sample_data=sample_data.drop_duplicates()                                 # remove duplicate entries

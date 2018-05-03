@@ -60,6 +60,7 @@ class Find_and_register_project_data1(unittest.TestCase):
                        'name':'user2',
                        'email_id':'user2@ic.ac.uk',
                        'sample_igf_id':'IGF00007',
+                       'barcode_check':'OFF'
                       }]
     pd.DataFrame(new_project_data).to_csv(os.path.join('.',self.new_project_data))
   
@@ -87,6 +88,12 @@ class Find_and_register_project_data1(unittest.TestCase):
     project_data=all_data['project_data'].to_dict(orient='region')
     self.assertEqual(project_data[0]['project_igf_id'],\
                      'IGFP0002_test_23-5-2017_rna')
+    self.assertEqual(project_data[0]['barcode_check'],\
+                     'ON')
+    self.assertEqual(project_data[1]['project_igf_id'],\
+                     'IGFP0003_test_24-8-2017_rna')
+    self.assertEqual(project_data[1]['barcode_check'],\
+                     'OFF')
     sample_data=all_data['sample_data'].to_dict(orient='region')
     self.assertEqual(sample_data[0]['sample_igf_id'],\
                      'IGF00006')
