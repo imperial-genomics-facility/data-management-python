@@ -351,7 +351,7 @@ class BaseAdaptor(DBConnect):
     '''
     A method for fetching records using a query
     optional parameters:
-    output_mode: dataframe / object / one
+    output_mode: dataframe / object / one / one_or_none
     
     returns a pandas dataframe for dataframe mode and a generator object for object mode
     ''' 
