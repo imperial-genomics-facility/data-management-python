@@ -32,10 +32,14 @@
                         duration: 800,
                         easing: 'in'},
             bar: { groupWidth: "60%" },
-            vAxis: {title: 'Sample ID'},
+            vAxis: {title: 'Sample ID',
+                    textStyle:{fontSize: 10}
+                   },
             hAxis: {title: 'Number of Reads',
                     slantedText : true,
-                    slantedTextAngle : 45},
+                    slantedTextAngle : 45,
+                    textStyle:{fontSize: 10}
+                    },
             orientation: 'vertical',
             legend: {position: 'right',
                      textStyle: {color: '#708090',
@@ -121,7 +125,7 @@
           </div>
           </ul>
           <h2>Sample stats</h2>
-           <div id="barchart_material" style="width: 700px; height: 800px;"></div>
+           <div id="barchart_material" style="width: 700px; height: 1500px;"></div>
            <script>
              plot_data(json_file="{{ sampleReadCountFile }}");
            </script>
