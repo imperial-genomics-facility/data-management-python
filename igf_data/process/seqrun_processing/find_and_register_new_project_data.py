@@ -20,22 +20,23 @@ class Find_and_register_new_project_data:
   Account for new users will be created in irods server and password will be 
   mailed to them.
   required params:
-  projet_info_path: A directory path for project info files
-  dbconfig: A json dbconfig file
-  check_hpc_user: Guess the hpc user name, True or False, default: False
-  hpc_user: A hpc user name, default is None
-  hpc_address: A hpc host address, default is None
-  ldap_server: A ldap server address for search, default is None
-  user_account_template: A template file for user account activation email
-  log_slack: Enable or disable sending message to slack, default: True
-  slack_config: A slack config json file, required if log_slack is True
-  project_lookup_column: project data lookup column, default project_igf_id
-  user_lookup_column: user data lookup column, default email_id
-  sample_lookup_column: sample data lookup column, default sample_igf_id
-  data_authority_column: data authority column name, default data_authority
-  setup_irods: Setup irods account for user, default is True
-  notify_user: Send email notification to user, default is True
-  default_user_email: Add another user as the default collaborator for all new projects, default igf@imperial.ac.uk
+  :param projet_info_path: A directory path for project info files
+  :param dbconfig: A json dbconfig file
+  :param check_hpc_user: Guess the hpc user name, True or False, default: False
+  :param hpc_user: A hpc user name, default is None
+  :param hpc_address: A hpc host address, default is None
+  :param ldap_server: A ldap server address for search, default is None
+  :param user_account_template: A template file for user account activation email
+  :param log_slack: Enable or disable sending message to slack, default: True
+  :param slack_config: A slack config json file, required if log_slack is True
+  :param project_lookup_column: project data lookup column, default project_igf_id
+  :param user_lookup_column: user data lookup column, default email_id
+  :param sample_lookup_column: sample data lookup column, default sample_igf_id
+  :param data_authority_column: data authority column name, default data_authority
+  :param setup_irods: Setup irods account for user, default is True
+  :param notify_user: Send email notification to user, default is True
+  :param default_user_email: Add another user as the default collaborator for all new projects, default igf@imperial.ac.uk
+  :param barcode_check_keyword: Project attribute name for barcode check settings, default barcode_check
   '''
   def __init__(self,projet_info_path,dbconfig,user_account_template,
                log_slack=True, slack_config=None,
@@ -48,6 +49,7 @@ class Find_and_register_new_project_data:
                user_lookup_column='email_id',
                data_authority_column='data_authority',
                sample_lookup_column='sample_igf_id',
+               barcode_check_keyword='barcode_check',
                metadata_sheet_name='Project metadata'):
     try:
       self.projet_info_path=projet_info_path
@@ -63,6 +65,7 @@ class Find_and_register_new_project_data:
       self.setup_irods=setup_irods
       self.notify_user=notify_user
       self.default_user_email=default_user_email
+      self.barcode_check_keyword=barcode_check_keyword
       self.check_hpc_user=check_hpc_user
       self.hpc_user=hpc_user
       self.hpc_address=hpc_address
@@ -635,7 +638,7 @@ class Find_and_register_new_project_data:
       base=BaseAdaptor(**{'session_class':self.session_class})
       required_project_columns=base.get_table_columns(table_name=Project, \
                                              excluded_columns=['project_id'])   # get project columns
-      required_project_columns.append('barcode_check')                          # add barcode check param to project attribute table
+      required_project_columns.append(self.barcode_check_keyword)               # add barcode check param to project attribute table
       required_user_columns=base.get_table_columns(table_name=User, \
                                              excluded_columns=['user_id'])      # get user columns
       required_project_user_columns=['project_igf_id','email_id']               # get project user columns
