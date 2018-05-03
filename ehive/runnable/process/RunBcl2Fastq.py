@@ -117,6 +117,10 @@ class RunBcl2Fastq(IGFBaseProcess):
         sc_bcl2fastq_param=self.format_tool_options(singlecell_options)         # format singlecell bcl2fastq params
         bcl2fastq_cmd.extend(sc_bcl2fastq_param)                                # add additional parameters
 
+      message=' '.join(bcl2fastq_cmd)
+      self.post_message_to_slack(message,reaction='pass')                       # send bcl2fastq command to Slack
+      self.comment_asana_task(task_name=seqrun_igf_id, comment=message)         # send bcl2fastq command to Asana
+
       subprocess.check_call(bcl2fastq_cmd)                                      # run bcl2fastq
 
       copytree(output_temp_dir,output_fastq_dir)                                # copy output from TMPDIR
