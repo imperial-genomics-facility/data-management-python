@@ -124,10 +124,10 @@ class Find_and_register_new_project_data:
     '''
     An internal function for checking and registering project info
     required params:
-    data: A pandas data series
-    dbsession: A sqlalchemy database session object
-    table_name: A database table name
-    check_column: Column name for existing data
+    :param data: A pandas data series
+    :param dbsession: A sqlalchemy database session object
+    :param table_name: A database table name
+    :param check_column: Column name for existing data
     '''
     try:
       if not isinstance(data, pd.Series):
@@ -216,12 +216,12 @@ class Find_and_register_new_project_data:
     '''
     An internal method for sending mail to new user with their password
     required params:
-    data: A pandas series containing user data
-    user_col: Column name for username, default username
-    password_col: Column name for password, default password
-    hpc_user_col: Column name for hpc_username, default hpc_username
-    name_col: Column name for name, default name
-    email_id_col: Column name for email id, default email_id
+    :param data: A pandas series containing user data
+    :param user_col: Column name for username, default username
+    :param password_col: Column name for password, default password
+    :param hpc_user_col: Column name for hpc_username, default hpc_username
+    :param name_col: Column name for name, default name
+    :param email_id_col: Column name for email id, default email_id
     '''
     try:
       if not isinstance(data, pd.Series):
@@ -265,7 +265,7 @@ class Find_and_register_new_project_data:
     '''
     An internal staticmethod for generating random password
     required params:
-    password_length: Required length of password, default 12
+    :param password_length: Required length of password, default 12
     '''
     try:
       new_password=None                                                         # default value of the new password is None
@@ -291,10 +291,10 @@ class Find_and_register_new_project_data:
     '''
     An internal method for creating new user account in irods
     required params:
-    data: A pandas series containing user data
-    user_col: Column name for username, deffault username
-    password_col: Column name for password, default password
-    hpc_user_col: Column name for hpc_username, default hpc_username
+    :param data: A pandas series containing user data
+    :param user_col: Column name for username, deffault username
+    :param password_col: Column name for password, default password
+    :param hpc_user_col: Column name for hpc_username, default hpc_username
     '''
     try:
       if not isinstance(data, pd.Series):
@@ -382,7 +382,7 @@ class Find_and_register_new_project_data:
     An internal method for checking hpc accounts for new users
     This method is not reliable as the ldap server can be down from time to time
     required params:
-    username: A username string
+    :param username: A username string
     '''
     try:
       cmd1=['ssh', \
@@ -419,13 +419,13 @@ class Find_and_register_new_project_data:
     '''
     An internal method for assigning new user account and password
     required params:
-    data: A pandas series containing user data
-    user_col: Column name for username, deffault username
-    password_col: Column name for password, default password
-    hpc_user_col: Column name for hpc_username, default hpc_username
-    email_id_col: Column name for email id, default email_id
-    category_col: Column name for user category, default category
-    hpc_category: Category tag for hpc user, default: HPC_USER
+    :param data: A pandas series containing user data
+    :param user_col: Column name for username, deffault username
+    :param password_col: Column name for password, default password
+    :param hpc_user_col: Column name for hpc_username, default hpc_username
+    :param email_id_col: Column name for email id, default email_id
+    :param category_col: Column name for user category, default category
+    :param hpc_category: Category tag for hpc user, default: HPC_USER
     '''
     try:
       if not isinstance(data, pd.Series):
@@ -487,12 +487,12 @@ class Find_and_register_new_project_data:
     '''
     An internal method for checking and registering data
     required params:
-    data: A dictionary containing following keys
+    :param data: A dictionary containing following keys
           project_data
           user_data
           project_user_data
           sample_data
-    project_info_file: A filepath for project info
+    :param project_info_file: A filepath for project info
     '''
     try:
       db_connected=False
@@ -634,7 +634,7 @@ class Find_and_register_new_project_data:
     required params:
     :param project_info_file: A filepath for project_info csv files
     
-    It returns a dictionary with following keys
+    :returns a dictionary with following keys
           project_data
           user_data
           project_user_data
