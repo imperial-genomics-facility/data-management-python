@@ -1,7 +1,7 @@
 import pandas as pd
 from sqlalchemy import distinct
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
-from igf_data.igfdb.igfTables import Project,Sample,Seqrun,Experiment,Run,Run_attribute
+from igf_data.igfdb.igfTables import Project,Sample,Seqrun,Experiment,Run,Run_attribute, Project_attribute
 
 def get_project_read_count(project_igf_id,session_class,run_attribute_name='R1_READ_COUNT'):
   '''
