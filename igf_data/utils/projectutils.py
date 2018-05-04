@@ -104,6 +104,7 @@ def mark_project_barcode_check_off(project_igf_id,session_class,
       query=pr.session.\
             query(Project_attribute).\
             join(Project).\
+            filter(Project.project_id==Project_attribute.project_id).\
             filter(Project.project_igf_id==project_igf_id).\
             filter(Project_attribute.attribute_name==barcode_check_attribute)   # create query for fetching attribute records
       pr.modify_records(query,{barcode_check_attribute:barcode_check_val})      # modify attribute records
