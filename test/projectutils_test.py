@@ -33,8 +33,9 @@ class Projectutils_test1(unittest.TestCase):
     pr.start_session()
     pr.store_project_and_attribute_data(self.data)
     pr.close_session()
+
     mark_project_barcode_check_off(project_igf_id='IGFP001_test1_24-1-18',
-                                   session_class=self.session_class)
+                                   session_class=self.session_class)            # no attribute record
     pr.start_session()
     attribute_check=pr.check_project_attributes(project_igf_id='IGFP001_test1_24-1-18',
                                                 attribute_name='barcode_check')
@@ -49,11 +50,26 @@ class Projectutils_test1(unittest.TestCase):
     for pr_attribute in pr_attributes.to_dict(orient='records'):
       self.assertEqual(pr_attribute['attribute_value'],'ON')
     pr.close_session()
+
     mark_project_barcode_check_off(project_igf_id='IGFP002_test1_24-1-18',
-                                   session_class=self.session_class)
+                                   session_class=self.session_class)            # barcode check ON
     pr.start_session()
     pr_attributes=pr.get_project_attributes(project_igf_id='IGFP002_test1_24-1-18',
                                                   attribute_name='barcode_check')
     for pr_attribute in pr_attributes.to_dict(orient='records'):
-      self.assertEqual(pr_attribute['attribute_value'],'ON')
+      self.assertEqual(pr_attribute['attribute_value'],'OFF')
+
+    pr_attributes=pr.get_project_attributes(project_igf_id='IGFP003_test1_24-1-18',
+                                                  attribute_name='barcode_check')
+    for pr_attribute in pr_attributes.to_dict(orient='records'):
+      self.assertEqual(pr_attribute['attribute_value'],'OFF')
+    pr.close_session()
+
+    mark_project_barcode_check_off(project_igf_id='IGFP003_test1_24-1-18',
+                                   session_class=self.session_class)            # barcode check OFF
+    pr.start_session()
+    pr_attributes=pr.get_project_attributes(project_igf_id='IGFP003_test1_24-1-18',
+                                                  attribute_name='barcode_check')
+    for pr_attribute in pr_attributes.to_dict(orient='records'):
+      self.assertEqual(pr_attribute['attribute_value'],'OFF')
     pr.close_session()
