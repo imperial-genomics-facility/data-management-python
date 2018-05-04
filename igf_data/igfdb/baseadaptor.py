@@ -253,29 +253,6 @@ class BaseAdaptor(DBConnect):
     except:
       raise
 
-
-  def modify_records(self, query, update_values):
-    '''
-    A method for updating table records
-    required params:
-    query: a session.query object with filter criteria
-    update_values: a dictionaries, with key as the column 
-                   name and value as the new updated value
-    '''
-    if not hasattr(self, 'session'):
-      raise AttributeError('Attribute session not found')
-
-    session=self.session 
-    for row in query:
-      try:
-        for column_name, new_value in update_values.items():
-          row.column_name=new_value
-        session.flush()
-      except:
-        session.rollback()
-        raise
-
-
   def _fetch_records_as_dataframe(self, query):
     '''
     An internal method for fetching database records as dataframe
