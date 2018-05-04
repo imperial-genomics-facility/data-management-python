@@ -83,13 +83,15 @@ def get_seqrun_info_for_project(project_igf_id,session_class):
     raise
 
 def mark_project_barcode_check_off(project_igf_id,session_class,
-                                   barcode_check_attribute='barcode_check'):
+                                   barcode_check_attribute='barcode_check',
+                                   barcode_check_val='OFF'):
   '''
   A utility method for marking project barcode check as off using the project_igf_id
   
   :param project_igf_id: A project_igf_id string
   :param session_class: A db session class object
   :param barcode_check_attribute: A text keyword for barcode check attribute, default barcode_check
+  :param barcode_check_val: A text for barcode check attribute value, default is 'OFF'
   '''
   try:
     db_connected=False
@@ -104,10 +106,10 @@ def mark_project_barcode_check_off(project_igf_id,session_class,
             join(Project).\
             filter(Project.project_igf_id==project_igf_id).\
             filter(Project_attribute.attribute_name==barcode_check_attribute)   # create query for fetching attribute records
-      pr.modify_records(query,{barcode_check_attribute:'OFF'})                  # modify attribute records
+      pr.modify_records(query,{barcode_check_attribute:barcode_check_val})      # modify attribute records
     else:                                                                       # if project attribute is not present, store it
       data=[{'project_igf_id':project_igf_id,
-             barcode_check_attribute:'OFF'}]                                    # create data structure for the attribute table
+             barcode_check_attribute:barcode_check_val}]                        # create data structure for the attribute table
       pr.store_project_attributes(data,autosave=False)                          # store data to attribute table without auto commit
 
     pr.commit_session()
