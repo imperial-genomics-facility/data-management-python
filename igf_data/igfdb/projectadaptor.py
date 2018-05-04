@@ -153,8 +153,8 @@ class ProjectAdaptor(BaseAdaptor):
     '''
     A method for fetching data for Project table
     required params:
-    project_igf_id: an igf id
-    output_mode  : dataframe / object
+    :param project_igf_id: an igf id
+    :param output_mode: dataframe / object / one
     '''
     try:
       column=[column for column in Project.__table__.columns \
@@ -266,15 +266,24 @@ class ProjectAdaptor(BaseAdaptor):
     except:
       raise
 
-  def get_project_attributes(self, project_igf_id, attribute_name=''): 
-    projects=self.get_project_info(format='object', project_igf_id=project_igf_id)
-    project=projects[0]
+  def get_project_attributes(self, project_igf_id, attribute_name=''):
+    '''
+    A method for fetching entries from project attribute table
+    
+    :param project_igf_id: A project_igf_id string
+    :param attribute_name: An attribute name, default in None
+    :returns dataframe of records
+    '''
+    try:
+      project=self.fetch_project_records_igf_id(project_igf_id=project_igf_id)
 
-    project_attributes=BaseAdaptor.\
-                       get_attributes_by_dbid(self, \
-                                      attribute_table='Project_attribute', \
-                                      db_id=project.project_id )
-    return project_attributes
+      project_attributes=BaseAdaptor.\
+                         get_attributes_by_dbid(self, \
+                                        attribute_table='Project_attribute', \
+                                        db_id=project.project_id )
+      return project_attributes
+    except:
+      raise
 
 
   def project_samples(self, format='dataframe', project_igf_id=''):
