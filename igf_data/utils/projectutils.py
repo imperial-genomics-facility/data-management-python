@@ -101,13 +101,13 @@ def mark_project_barcode_check_off(project_igf_id,session_class,
     pr_attributes=pr.check_project_attributes(project_igf_id=project_igf_id,
                                               attribute_name=barcode_check_attribute) # check for the existing project attribute
     if pr_attributes:                                                           # if attribute present, then modify it
+      project=pr.fetch_project_records_igf_id(project_igf_id=project_igf_id)    # fetch project info
       query=pr.session.\
             query(Project_attribute).\
-            join(Project).\
-            filter(Project.project_id==Project_attribute.project_id).\
-            filter(Project.project_igf_id==project_igf_id).\
-            filter(Project_attribute.attribute_name==barcode_check_attribute)   # create query for fetching attribute records
-      pr.modify_records(query,{barcode_check_attribute:barcode_check_val})      # modify attribute records
+            filter(Project_attribute.attribute_name==barcode_check_attribute).\
+            filter(Project_attribute.project_id==project.project_id).\
+            update({Project_attribute.attribute_value:barcode_check_val,},
+                   synchronize_session=False)                                   # create query for fetching attribute records and modify attribute records
     else:                                                                       # if project attribute is not present, store it
       data=[{'project_igf_id':project_igf_id,
              'attribute_name':barcode_check_attribute,
