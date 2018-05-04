@@ -109,7 +109,8 @@ def mark_project_barcode_check_off(project_igf_id,session_class,
       pr.modify_records(query,{barcode_check_attribute:barcode_check_val})      # modify attribute records
     else:                                                                       # if project attribute is not present, store it
       data=[{'project_igf_id':project_igf_id,
-             barcode_check_attribute:barcode_check_val}]                        # create data structure for the attribute table
+             'attribute_name':barcode_check_attribute,
+             'attribute_value':barcode_check_val}]                              # create data structure for the attribute table
       pr.store_project_attributes(data,autosave=False)                          # store data to attribute table without auto commit
 
     pr.commit_session()
