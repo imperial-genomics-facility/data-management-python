@@ -270,7 +270,7 @@ class BaseAdaptor(DBConnect):
       try:
         for column_name, new_value in update_values.items():
           row.column_name=new_value
-        session.commit()
+        session.flush()
       except:
         session.rollback()
         raise
