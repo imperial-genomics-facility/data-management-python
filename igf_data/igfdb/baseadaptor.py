@@ -428,8 +428,14 @@ class BaseAdaptor(DBConnect):
     session=self.session
     linked_column=[column for column in linked_table.__table__.columns \
                        if column.key == linked_column_name][0]
-    query=session.query(attribute_table).join(linked_table)
-    query.filter(linked_column==db_id)
+                       
+    attribute_linked_column=[column for column in attribute_table.__table__.columns \
+                       if column.key == linked_column_name][0]
+                       
+    query=session.query(attribute_table).\
+                  join(linked_table).\
+                  filter(linked_column==attribute_linked_column).\
+                  filter(linked_column==db_id)
     try:
       result=self.fetch_records(query=query)
       return result
