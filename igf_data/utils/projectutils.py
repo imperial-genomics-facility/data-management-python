@@ -98,13 +98,23 @@ def mark_project_barcode_check_off(project_igf_id,session_class,
     db_connected=True
     pr_attributes=pr.check_project_attributes(project_igf_id=project_igf_id,
                                               attribute_name=barcode_check_attribute) # check for the existing project attribute
-    if not pr_attributes:                                                       # if project attribute is not present, store it
+    if pr_attributes:                                                           # if attribute present, then modify it
+      query=pr.session.\
+            query(Project_attribute).\
+            join(Project).\
+            filter(Project.project_igf_id==project_igf_id).\
+            filter(Project_attribute.attribute_name==barcode_check_attribute)   # create query for fetching attribute records
+      pr.modify_records(query,{barcode_check_attribute:'OFF'})                  # modify attribute records
+    else:                                                                       # if project attribute is not present, store it
       data=[{'project_igf_id':project_igf_id,
              barcode_check_attribute:'OFF'}]                                    # create data structure for the attribute table
       pr.store_project_attributes(data,autosave=False)                          # store data to attribute table without auto commit
-    
+
     pr.commit_session()
   except:
     if db_connected:
       pr.rollback_session()
     raise
+  finally:
+    if db_connected:
+      pr.close_session()
