@@ -266,12 +266,14 @@ class ProjectAdaptor(BaseAdaptor):
     except:
       raise
 
-  def get_project_attributes(self, project_igf_id, attribute_name=''):
+  def get_project_attributes(self, project_igf_id,linked_column_name='project_id',
+                             attribute_name=''):
     '''
     A method for fetching entries from project attribute table
     
     :param project_igf_id: A project_igf_id string
     :param attribute_name: An attribute name, default in None
+    :param linked_column_name: A column name for linking attribute table
     :returns dataframe of records
     '''
     try:
@@ -279,7 +281,9 @@ class ProjectAdaptor(BaseAdaptor):
 
       project_attributes=BaseAdaptor.\
                          get_attributes_by_dbid(self, \
-                                        attribute_table='Project_attribute', \
+                                        attribute_table=Project_attribute, \
+                                        linked_table=Project,\
+                                        linked_column_name=linked_column_name,\
                                         db_id=project.project_id )
       return project_attributes
     except:
