@@ -416,14 +416,20 @@ class BaseAdaptor(DBConnect):
       raise
 
 
-  def get_attributes_by_dbid(self, attribute_table, linked_table, linked_column, db_id):
+  def get_attributes_by_dbid(self, attribute_table, linked_table, linked_column_name, db_id):
     '''
     A method for fetching attribute records for a specific attribute table with a db_id linked as foreign key
+    :param attribute_table: A attribute table object
+    :param linked_table: A main table object
+    :param linked_column_name: A table name to link main table
+    :param db_id: A unique id to link main  table
+    :returns a dataframe of records
     '''
     session=self.session
-    query=session.query(linked_table).join(linked_table)
-    filter_criteria=[linked_table.linked_column==db_id]
-    query.filter(filter_criteria)
+    linked_column=[column for column in linked_table.__table__.columns \
+                       if column.key == linked_column_name][0]
+    query=session.query(attribute_table).join(linked_table)
+    query.filter(linked_column==db_id)
     try:
       result=self.fetch_records(query=query)
       return result
