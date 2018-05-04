@@ -92,9 +92,19 @@ def mark_project_barcode_check_off(project_igf_id,session_class,
   :param barcode_check_attribute: A text keyword for barcode check attribute, default barcode_check
   '''
   try:
+    db_connected=False
     pr=ProjectAdaptor(**{'session_class':session_class})
     pr.start_session()
+    db_connected=True
     pr_attributes=pr.check_project_attributes(project_igf_id=project_igf_id,
-                                              attribute_name=barcode_check_attribute)
+                                              attribute_name=barcode_check_attribute) # check for the existing project attribute
+    if not pr_attributes:                                                       # if project attribute is not present, store it
+      data=[{'project_igf_id':project_igf_id,
+             barcode_check_attribute:'OFF'}]                                    # create data structure for the attribute table
+      pr.store_project_attributes(data,autosave=False)                          # store data to attribute table without auto commit
+    
+    pr.commit_session()
   except:
+    if db_connected:
+      pr.rollback_session()
     raise
