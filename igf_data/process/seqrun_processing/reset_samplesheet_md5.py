@@ -2,7 +2,8 @@ import os
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.task_tracking.igf_slack import IGF_slack
 from igf_data.task_tracking.igf_asana import IGF_asana
-
+from igf_data.igfdb.baseadaptor import BaseAdaptor
+from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 
 class Reset_samplesheet_md5:
   '''
@@ -25,7 +26,7 @@ class Reset_samplesheet_md5:
     '''
     try:
       self.seqrun_path=seqrun_path
-      self.seqrun_igf_list=self._read_seqrun_list(seqrun_igf_list)
+      self.seqrun_igf_list=seqrun_igf_list
       self.json_collection_type=json_collection_type
       self.log_slack=log_slack
       self.log_asana=log_asana
@@ -43,6 +44,32 @@ class Reset_samplesheet_md5:
         raise ValueError('Missing asana config file or asana project id')
       elif log_asana and asana_config and asana_project_id:
         self.igf_asana=IGF_asana(asana_config,asana_project_id)                 # add asana object
+    except:
+      raise
+
+  def run(self):
+    '''
+    A method for resetting md5 values in the samplesheet json files for all seqrun ids
+    '''
+    try:
+      seqrun_list=self._read_seqrun_list(self.seqrun_igf_list)                  # fetch list of seqrun ids from input file
+      if len(seqrun_list)>0:
+        ca=CollectionAdaptor(**{'session_class':self.session_class})
+        ca.start_session()                                                      # connect to collection adapter
+        for seqrun_id in seqrun_list:
+          files_data=ca.get_collection_files(collection_name=seqrun_id,
+                                             collection_type=self.json_collection_type,
+                                             output_mode='one_or_none')         # check for existing md5 json file in db
+          if files_data:
+            json_file_path=files_data.file_path                                 # get md5 json file path
+          else:
+            raise ValueError('No md5 json file found for seqrun_igf_id: {0}'.\
+                             format(seqrun_id))
+        ca.close_session()                                                      # close db connection
+      else:
+        if self.log_slack:
+          message='No new seqrun id found for changing samplesheet md5'
+          self.igf_slack.post_message_to_channel(message, reaction='sleep')
     except:
       raise
 
