@@ -1,3 +1,4 @@
+import os
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.task_tracking.igf_slack import IGF_slack
 from igf_data.task_tracking.igf_asana import IGF_asana
@@ -24,7 +25,7 @@ class Reset_samplesheet_md5:
     '''
     try:
       self.seqrun_path=seqrun_path
-      self.seqrun_igf_list=seqrun_igf_list
+      self.seqrun_igf_list=self._read_seqrun_list(seqrun_igf_list)
       self.json_collection_type=json_collection_type
       self.log_slack=log_slack
       self.log_asana=log_asana
@@ -42,5 +43,24 @@ class Reset_samplesheet_md5:
         raise ValueError('Missing asana config file or asana project id')
       elif log_asana and asana_config and asana_project_id:
         self.igf_asana=IGF_asana(asana_config,asana_project_id)                 # add asana object
+    except:
+      raise
+
+  @staticmethod
+  def _read_seqrun_list(seqrun_igf_list):
+    '''
+    A static method for reading list of sequencing run ids from a n input file 
+    to a list
+    :param seqrun_igf_list: A file containing the sequencing run ids
+    :return list: A list of seqrun ids from the input file
+    '''
+    try:
+      if not os.path.exists(seqrun_igf_list):
+        raise IOError('File {0} not found'.format(seqrun_igf_list))
+
+      seqrun_ids=list()                                                         # define an empty list of seqrun ids
+      with open(seqrun_igf_list,'r') as fp:
+        seqrun_ids=[i.strip() for i in fp]                                      # add seqrun ids to the list
+      return seqrun_ids
     except:
       raise
