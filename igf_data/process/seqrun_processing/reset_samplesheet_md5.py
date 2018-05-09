@@ -1,5 +1,6 @@
 import os, warnings
 from igf_data.utils.dbutils import read_dbconf_json
+from igf_data.utils.fileutils import get_temp_dir
 from igf_data.task_tracking.igf_slack import IGF_slack
 from igf_data.task_tracking.igf_asana import IGF_asana
 from igf_data.igfdb.baseadaptor import BaseAdaptor
@@ -68,6 +69,48 @@ class Reset_samplesheet_md5:
     except:
       raise
 
+  @staticmethod
+  def _get_updated_json_file(json_file_path,samplesheet_md5,samplesheet_name,
+                             file_field='seqrun_file_name',md5_field='file_md5'):
+    '''
+    A static method for checking samplesheet md5 value in json file and create
+    a new copy of json file with updated md5, if samplesheet has changed
+    :param json_file_path: A file path for seqrun md5 json file
+    :param samplesheet_md5: A md5 value for samplesheet file
+    :param samplesheet_name: Name of the samplesheet file
+    :param file_field: A keyword for filename loop up in json file, default seqrun_file_name
+    :param md5_field: A keyword for md5 value look up in json file, default file_md5
+    :returns A string filepath if samplesheet has been updated or None
+    '''
+    try:
+      if not os.path.exists(json_file_path):
+        raise IOError('Json md5 file {0} not found'.format(json_file_path))
+
+      create_new_file=False                                                     # don't create new json by default
+      json_data=list()
+      with open(json_file_path,'r') as jp:
+        json_data=json.load(jp)                                                 # load data from json file
+
+      for json_row in json_data:
+        if json_row[file_field]==samplesheet_name and \
+           json_row[md5_field]!=samplesheet_md5:
+          json_row[md5_field]=samplesheet_md5                                   # update json data with new md5
+          create_new_file=True                                                  # create new json if md5 values are not matching
+          break;                                                                # stop file look up
+
+      if create_new_file:
+        temp_dir=get_temp_dir()
+        json_file_name=os.path.basename(json_file_path)                         # get original json filename
+        temp_json_file=os.path.join(temp_dir,
+                                    json_file_name)                             # get temp file path
+        with open(temp_json_file,'w') as jwp:
+          json.dump(json_data,jwp,indent=4)                                     # write data to temp file
+        return temp_json_file                                                   # return file path
+      else:
+        return None                                                             # return none
+    except:
+      raise
+
   def run(self):
     '''
     A method for resetting md5 values in the samplesheet json files for all seqrun ids
@@ -83,7 +126,10 @@ class Reset_samplesheet_md5:
                                              output_mode='one_or_none')         # check for existing md5 json file in db
           if files_data:
             json_file_path=files_data.file_path                                 # get md5 json file path
-            
+            samplesheet_md5=self._get_samplesheet_md5(seqrun_id)                # get md5 value for new samplesheet file
+            new_json_path=self._get_updated_json_file(json_file_path,
+                                                      samplesheet_md5,
+                                                      self.samplesheet_name)    # get updated md5 json file if samplesheet has been changed
           else:
             message='No md5 json file found for seqrun_igf_id: {0}'.\
                     format(seqrun_id)
