@@ -26,7 +26,8 @@ def full_suite():
   from .processsinglecellsamplesheet_test import ProcessSingleCellSamplesheet_testA
   from .mergesinglecellfastq_test import MergeSingleCellFastq_testA
   from .project_data_display_utils_test import Convert_project_data_gviz_data1,Add_seqrun_path_info1
-  from test.projectutils_test import Projectutils_test1
+  from .projectutils_test import Projectutils_test1
+  from .fileadaptor_test import Fileadaptor_test1
 
   return unittest.TestSuite([ \
       unittest.TestLoader().loadTestsFromTestCase(BasesMask_testA), 
@@ -59,4 +60,5 @@ def full_suite():
       unittest.TestLoader().loadTestsFromTestCase(Convert_project_data_gviz_data1),
       unittest.TestLoader().loadTestsFromTestCase(Add_seqrun_path_info1),
       unittest.TestLoader().loadTestsFromTestCase(Projectutils_test1),
+      unittest.TestLoader().loadTestsFromTestCase(Fileadaptor_test1),
     ])
