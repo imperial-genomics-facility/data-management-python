@@ -4,6 +4,7 @@ from igf_data.task_tracking.igf_slack import IGF_slack
 from igf_data.task_tracking.igf_asana import IGF_asana
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
+from igf_data.utils.fileutils import calculate_file_checksum
 
 class Reset_samplesheet_md5:
   '''
@@ -12,7 +13,7 @@ class Reset_samplesheet_md5:
   def __init__(self,seqrun_path,seqrun_igf_list,dbconfig_file,
                json_collection_type='ILLUMINA_BCL_MD5',log_slack=True,
                log_asana=True,slack_config=None,asana_project_id=None,
-               asana_config=None):
+               asana_config=None,samplesheet_name='SampleSheet.csv'):
     '''
     :param seqrun_path: A directory path for sequencing run home
     :param seqrun_igf_list: A file path listing sequencing runs to reset
@@ -23,6 +24,7 @@ class Reset_samplesheet_md5:
     :param slack_config: A file containing Slack tokens, default None
     :param asana_config: A file containing Asana tokens, default None
     :param asana_project_id: A numeric Asana project id, default is None
+    :param samplesheet_name: Name of the samplesheet file, default SampleSheet.csv
     '''
     try:
       self.seqrun_path=seqrun_path
@@ -30,6 +32,7 @@ class Reset_samplesheet_md5:
       self.json_collection_type=json_collection_type
       self.log_slack=log_slack
       self.log_asana=log_asana
+      self.samplesheet_name=samplesheet_name
       dbparams = read_dbconf_json(dbconfig_file)
       base=BaseAdaptor(**dbparams)
       self.session_class = base.get_session_class()                             # add session class to instance
@@ -44,6 +47,24 @@ class Reset_samplesheet_md5:
         raise ValueError('Missing asana config file or asana project id')
       elif log_asana and asana_config and asana_project_id:
         self.igf_asana=IGF_asana(asana_config,asana_project_id)                 # add asana object
+    except:
+      raise
+
+  def _get_samplesheet_md5(self,seqrun_igf_id):
+    '''
+    An internal method for calculating md5 value for updated samplesheet file
+    :param seqrun_igf_id: A string of seqrun_igf_id
+    :return string: MD5 value of the samplesheet.csv file
+    '''
+    try:
+      samplesheet_path=os.path.join(self.seqrun_path,
+                                    seqrun_igf_id,
+                                    self.samplesheet_name)
+      if not os.path.exists(samplesheet_path):
+        raise IOError('Samplesheet not found for seqrun {0}'.\
+                      format(seqrun_igf_id))
+      return calculate_file_checksum(filepath=samplesheet_path,
+                                     hasher='md5')
     except:
       raise
 
@@ -62,6 +83,7 @@ class Reset_samplesheet_md5:
                                              output_mode='one_or_none')         # check for existing md5 json file in db
           if files_data:
             json_file_path=files_data.file_path                                 # get md5 json file path
+            
           else:
             message='No md5 json file found for seqrun_igf_id: {0}'.\
                     format(seqrun_id)
