@@ -1,4 +1,4 @@
-import os
+import os, warnings
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.task_tracking.igf_slack import IGF_slack
 from igf_data.task_tracking.igf_asana import IGF_asana
@@ -63,8 +63,10 @@ class Reset_samplesheet_md5:
           if files_data:
             json_file_path=files_data.file_path                                 # get md5 json file path
           else:
-            raise ValueError('No md5 json file found for seqrun_igf_id: {0}'.\
-                             format(seqrun_id))
+            message='No md5 json file found for seqrun_igf_id: {0}'.\
+                    format(seqrun_id)
+            warnings.warn(message)                                              # not raising any exception if seqrun id is not found
+            self.igf_slack.post_message_to_channel(message, reaction='fail')
         ca.close_session()                                                      # close db connection
       else:
         if self.log_slack:
