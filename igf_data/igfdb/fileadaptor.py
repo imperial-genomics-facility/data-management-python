@@ -119,4 +119,26 @@ class FileAdaptor(BaseAdaptor):
     except:
       raise
 
+  def update_file_table_for_file_path(self,file_path,tag,value,autosave=False):
+    '''
+    A method for updating file table
+    :param file_path: A file_path for database look up
+    :param tag: A keyword for file column name
+    :param value: A new value for the file column
+    :param autosave: Toggle autosave, default off
+    '''
+    try:
+      file_columns=self.get_table_columns(table_name=File, excluded_columns=['file_id'])
+      if tag not in file_columns:
+        raise ValueError('column name {0} not allowed for table File'.\
+                         format(tag))
+      query=self.session.\
+            query(File).\
+            filter(File.file_path==file_path).\
+            update({tag:value},synchronize_session=False)
+      if autosave:
+        self.commit_session()
+    except:
+      raise
+
 
