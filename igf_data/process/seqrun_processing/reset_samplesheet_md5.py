@@ -35,8 +35,8 @@ class Reset_samplesheet_md5:
       self.log_asana=log_asana
       self.samplesheet_name=samplesheet_name
       dbparams = read_dbconf_json(dbconfig_file)
-      base=BaseAdaptor(**dbparams)
-      self.session_class = base.get_session_class()                             # add session class to instance
+      self.base_adaptor=BaseAdaptor(**dbparams)
+      #self.session_class = base.get_session_class()                             # add session class to instance
       if log_slack and slack_config is None:
         raise ValueError('Missing slack config file')
       elif log_slack and slack_config:
@@ -116,31 +116,44 @@ class Reset_samplesheet_md5:
     A method for resetting md5 values in the samplesheet json files for all seqrun ids
     '''
     try:
+      db_connected=False
       seqrun_list=self._read_seqrun_list(self.seqrun_igf_list)                  # fetch list of seqrun ids from input file
       if len(seqrun_list)>0:
-        ca=CollectionAdaptor(**{'session_class':self.session_class})
+        base_adapter=self.base_adaptor
+        base.start_session()
+        db_connected=True
+        ca=CollectionAdaptor(**{'session':base.session})
         ca.start_session()                                                      # connect to collection adapter
         for seqrun_id in seqrun_list:
           files_data=ca.get_collection_files(collection_name=seqrun_id,
                                              collection_type=self.json_collection_type,
                                              output_mode='one_or_none')         # check for existing md5 json file in db
-          if files_data:
+          if files_data is not None:
             json_file_path=files_data.file_path                                 # get md5 json file path
             samplesheet_md5=self._get_samplesheet_md5(seqrun_id)                # get md5 value for new samplesheet file
             new_json_path=self._get_updated_json_file(json_file_path,
                                                       samplesheet_md5,
                                                       self.samplesheet_name)    # get updated md5 json file if samplesheet has been changed
+            if new_json_path is not None:
+              new_json_file_md5=calculate_file_checksum(filepath=new_json_path,
+                                                        hasher='md5')
+            else:
+              message='no change in samplesheet for seqrun {0}'.format(seqrun_id)
+              self.igf_slack.post_message_to_channel(message, reaction='pass')
           else:
             message='No md5 json file found for seqrun_igf_id: {0}'.\
                     format(seqrun_id)
             warnings.warn(message)                                              # not raising any exception if seqrun id is not found
             self.igf_slack.post_message_to_channel(message, reaction='fail')
-        ca.close_session()                                                      # close db connection
+        base.close_session()                                                      # close db connection
       else:
         if self.log_slack:
           message='No new seqrun id found for changing samplesheet md5'
           self.igf_slack.post_message_to_channel(message, reaction='sleep')
     except:
+      if db_connected:
+        base.rollback()
+        base.close_session()
       raise
 
   @staticmethod
