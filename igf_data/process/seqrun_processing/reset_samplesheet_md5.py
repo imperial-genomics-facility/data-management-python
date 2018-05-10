@@ -1,5 +1,4 @@
 import os, warnings
-from shutil import move
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.utils.fileutils import get_temp_dir
 from igf_data.task_tracking.igf_slack import IGF_slack
@@ -7,7 +6,7 @@ from igf_data.task_tracking.igf_asana import IGF_asana
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
-from igf_data.utils.fileutils import calculate_file_checksum
+from igf_data.utils.fileutils import calculate_file_checksum,move_file
 
 class Reset_samplesheet_md5:
   '''
@@ -144,7 +143,9 @@ class Reset_samplesheet_md5:
                                                    tag='md5',
                                                    value=new_json_file_md5,
                                                    autosave=False)              # update json file md5 in db, don't commit yet
-                move(new_json_path,json_file_path)                              # modify json file
+                move_file(source_path=new_json_path,
+                          destinationa_path=json_file_path,
+                          force=True)                                           # overwrite json file
                 base.commit_session()                                           # save changes in db
               else:
                 message='no change in samplesheet for seqrun {0}'.format(seqrun_id)
