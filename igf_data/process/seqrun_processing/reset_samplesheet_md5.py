@@ -12,7 +12,7 @@ class Reset_samplesheet_md5:
   '''
   A class for modifying samplesheet md5 for seqrun data processing
   '''
-  def __init__(self,seqrun_path,seqrun_igf_list,dbconfig_file,
+  def __init__(self,seqrun_path,seqrun_igf_list,dbconfig_file,clean_up=True,
                json_collection_type='ILLUMINA_BCL_MD5',log_slack=True,
                log_asana=True,slack_config=None,asana_project_id=None,
                asana_config=None,samplesheet_name='SampleSheet.csv'):
@@ -20,6 +20,7 @@ class Reset_samplesheet_md5:
     :param seqrun_path: A directory path for sequencing run home
     :param seqrun_igf_list: A file path listing sequencing runs to reset
     :param dbconfig_file: A file containing the database configuration
+    :param clean_up: Clean up input file once its processed, default True
     :param json_collection_type: A collection type for md5 json file lookup, default ILLUMINA_BCL_MD5
     :param log_slack: A boolean flag for toggling Slack messages, default True
     :param log_asana: Aboolean flag for toggling Asana message, default True
@@ -34,6 +35,7 @@ class Reset_samplesheet_md5:
       self.json_collection_type=json_collection_type
       self.log_slack=log_slack
       self.log_asana=log_asana
+      self.clean_up=clean_up
       self.samplesheet_name=samplesheet_name
       dbparams = read_dbconf_json(dbconfig_file)
       self.base_adaptor=BaseAdaptor(**dbparams)
@@ -129,6 +131,7 @@ class Reset_samplesheet_md5:
             files_data=ca.get_collection_files(collection_name=seqrun_id,
                                                collection_type=self.json_collection_type,
                                                output_mode='one_or_none')       # check for existing md5 json file in db
+            # TO DO: skip seqrun_id if pipeline is still running
             if files_data is not None:
               json_file_path=files_data.file_path                               # get md5 json file path
               samplesheet_md5=self._get_samplesheet_md5(seqrun_id)              # get md5 value for new samplesheet file
@@ -160,7 +163,8 @@ class Reset_samplesheet_md5:
             warnings.warn(message)
             self.igf_slack.post_message_to_channel(message, reaction='fail')
         base.close_session()                                                    # close db connection
-        self._clear_seqrun_list(self.seqrun_igf_list)                           # clear input file
+        if self.clean_up:
+          self._clear_seqrun_list(self.seqrun_igf_list)                         # clear input file
       else:
         if self.log_slack:
           message='No new seqrun id found for changing samplesheet md5'
