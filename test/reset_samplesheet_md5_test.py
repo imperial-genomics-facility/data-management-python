@@ -6,6 +6,7 @@ from igf_data.igfdb.igfTables import Base
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
+from igf_data.utils.fileutils import calculate_file_checksum
 from igf_data.process.seqrun_processing.reset_samplesheet_md5 import Reset_samplesheet_md5
 
 class Reset_samplesheet_md5_test1(unittest.TestCase):
@@ -25,6 +26,7 @@ class Reset_samplesheet_md5_test1(unittest.TestCase):
                            ])
     with open(self.json_file_path,'w') as jp:
       json.dump(json_data.to_dict(orient='record'),jp,indent=4)
+    self.initial_json_md5=calculate_file_checksum(filepath=self.json_file_path)
     self.correct_samplesheet_md5='259ed03f2e8c45980de121f7c3a70565'
     self.json_collection_name='seqrun1'
     self.json_collection_type='ILLUMINA_BCL_MD5'
@@ -64,7 +66,12 @@ class Reset_samplesheet_md5_test1(unittest.TestCase):
     for json_row in json_data:
       if json_row['seqrun_file_name']=='SampleSheet.csv':
         new_md5_value=json_row['file_md5']
-    self.assertEqual(self.correct_samplesheet_md5,new_md5_value)
+    self.assertEqual(self.correct_samplesheet_md5,new_md5_value)                # check json file for updated samplesheet md5
+    fa=FileAdaptor(**{'session_class': self.session_class})
+    fa.start_session()
+    file=fa.fetch_file_records_file_path(file_path=self.json_file_path)
+    self.assertNotEqual(file.md5, self.initial_json_md5)                        # check db for updated json file md5 value
+    fa.close_session()
 
 if __name__ == '__main__':
   unittest.main()
