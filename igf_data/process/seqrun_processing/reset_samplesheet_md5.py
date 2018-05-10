@@ -160,6 +160,7 @@ class Reset_samplesheet_md5:
             warnings.warn(message)
             self.igf_slack.post_message_to_channel(message, reaction='fail')
         base.close_session()                                                    # close db connection
+        self._clear_seqrun_list(self.seqrun_igf_list)                           # clear input file
       else:
         if self.log_slack:
           message='No new seqrun id found for changing samplesheet md5'
