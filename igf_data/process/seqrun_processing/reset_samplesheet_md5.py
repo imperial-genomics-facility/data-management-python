@@ -37,7 +37,6 @@ class Reset_samplesheet_md5:
       self.samplesheet_name=samplesheet_name
       dbparams = read_dbconf_json(dbconfig_file)
       self.base_adaptor=BaseAdaptor(**dbparams)
-      #self.session_class = base.get_session_class()                             # add session class to instance
       if log_slack and slack_config is None:
         raise ValueError('Missing slack config file')
       elif log_slack and slack_config:
