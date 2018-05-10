@@ -1,4 +1,4 @@
-import os, warnings
+import os, warnings, json
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.utils.fileutils import get_temp_dir
 from igf_data.task_tracking.igf_slack import IGF_slack
@@ -7,6 +7,7 @@ from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_data.utils.fileutils import calculate_file_checksum,move_file
+from igf_data.igfdb.igfTables import File
 
 class Reset_samplesheet_md5:
   '''
@@ -133,7 +134,9 @@ class Reset_samplesheet_md5:
                                                output_mode='one_or_none')       # check for existing md5 json file in db
             # TO DO: skip seqrun_id if pipeline is still running
             if files_data is not None:
-              json_file_path=files_data.file_path                               # get md5 json file path
+              json_file_path=[element.file_path 
+                                for element in files_data 
+                                  if isinstance(element, File)][0]              # get md5 json file path from sqlalchemy collection results
               samplesheet_md5=self._get_samplesheet_md5(seqrun_id)              # get md5 value for new samplesheet file
               new_json_path=self._get_updated_json_file(json_file_path,
                                                         samplesheet_md5,
