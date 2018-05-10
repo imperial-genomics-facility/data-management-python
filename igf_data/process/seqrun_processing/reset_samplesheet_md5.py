@@ -1,10 +1,12 @@
 import os, warnings
+from shutil import move
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.utils.fileutils import get_temp_dir
 from igf_data.task_tracking.igf_slack import IGF_slack
 from igf_data.task_tracking.igf_asana import IGF_asana
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
+from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_data.utils.fileutils import calculate_file_checksum
 
 class Reset_samplesheet_md5:
@@ -119,42 +121,71 @@ class Reset_samplesheet_md5:
       db_connected=False
       seqrun_list=self._read_seqrun_list(self.seqrun_igf_list)                  # fetch list of seqrun ids from input file
       if len(seqrun_list)>0:
-        base_adapter=self.base_adaptor
-        base.start_session()
+        base=self.base_adaptor
+        base.start_session()                                                    # connect to database
         db_connected=True
-        ca=CollectionAdaptor(**{'session':base.session})
-        ca.start_session()                                                      # connect to collection adapter
+        ca=CollectionAdaptor(**{'session':base.session})                        # connect to collection table
+        fa=FileAdaptor(**{'session':base.session})                              # connect to file table
         for seqrun_id in seqrun_list:
-          files_data=ca.get_collection_files(collection_name=seqrun_id,
-                                             collection_type=self.json_collection_type,
-                                             output_mode='one_or_none')         # check for existing md5 json file in db
-          if files_data is not None:
-            json_file_path=files_data.file_path                                 # get md5 json file path
-            samplesheet_md5=self._get_samplesheet_md5(seqrun_id)                # get md5 value for new samplesheet file
-            new_json_path=self._get_updated_json_file(json_file_path,
-                                                      samplesheet_md5,
-                                                      self.samplesheet_name)    # get updated md5 json file if samplesheet has been changed
-            if new_json_path is not None:
-              new_json_file_md5=calculate_file_checksum(filepath=new_json_path,
-                                                        hasher='md5')
+          try:
+            files_data=ca.get_collection_files(collection_name=seqrun_id,
+                                               collection_type=self.json_collection_type,
+                                               output_mode='one_or_none')       # check for existing md5 json file in db
+            if files_data is not None:
+              json_file_path=files_data.file_path                               # get md5 json file path
+              samplesheet_md5=self._get_samplesheet_md5(seqrun_id)              # get md5 value for new samplesheet file
+              new_json_path=self._get_updated_json_file(json_file_path,
+                                                        samplesheet_md5,
+                                                        self.samplesheet_name)  # get updated md5 json file if samplesheet has been changed
+              if new_json_path is not None:
+                new_json_file_md5=calculate_file_checksum(filepath=new_json_path,
+                                                          hasher='md5')
+                fa.update_file_table_for_file_path(file_path=json_file_path,
+                                                   tag='md5',
+                                                   value=new_json_file_md5,
+                                                   autosave=False)              # update json file md5 in db, don't commit yet
+                move(new_json_path,json_file_path)                              # modify json file
+                base.commit_session()                                           # save changes in db
+              else:
+                message='no change in samplesheet for seqrun {0}'.format(seqrun_id)
+                self.igf_slack.post_message_to_channel(message, reaction='pass')
             else:
-              message='no change in samplesheet for seqrun {0}'.format(seqrun_id)
-              self.igf_slack.post_message_to_channel(message, reaction='pass')
-          else:
-            message='No md5 json file found for seqrun_igf_id: {0}'.\
-                    format(seqrun_id)
-            warnings.warn(message)                                              # not raising any exception if seqrun id is not found
+              message='No md5 json file found for seqrun_igf_id: {0}'.\
+                      format(seqrun_id)
+              warnings.warn(message)                                            # not raising any exception if seqrun id is not found
+              self.igf_slack.post_message_to_channel(message, reaction='fail')
+          except Exception as e:
+            base.rollback_session()
+            message='Failed to update d5 json file for seqrun id {0}, error : {1}'
+            warnings.warn(message)
             self.igf_slack.post_message_to_channel(message, reaction='fail')
-        base.close_session()                                                      # close db connection
+        base.close_session()                                                    # close db connection
       else:
         if self.log_slack:
           message='No new seqrun id found for changing samplesheet md5'
           self.igf_slack.post_message_to_channel(message, reaction='sleep')
     except:
       if db_connected:
-        base.rollback()
+        base.rollback_session()
         base.close_session()
       raise
+
+
+  @staticmethod
+  def _clear_seqrun_list(seqrun_igf_list):
+    '''
+    A static method for clearing the seqrun list file
+    :param seqrun_igf_list: A file containing the sequencing run ids
+    '''
+    try:
+      if not os.path.exists(seqrun_igf_list):
+        raise IOError('File {0} not found'.format(seqrun_igf_list))
+
+      with open(seqrun_igf_list,'w') as fwp:
+        fwp.write('')                                                           # over write seqrun list file
+    except:
+      raise
+
 
   @staticmethod
   def _read_seqrun_list(seqrun_igf_list):
