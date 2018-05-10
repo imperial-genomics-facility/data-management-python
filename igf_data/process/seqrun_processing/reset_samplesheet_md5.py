@@ -154,24 +154,30 @@ class Reset_samplesheet_md5:
                 base.commit_session()                                           # save changes in db
               else:
                 message='no change in samplesheet for seqrun {0}'.format(seqrun_id)
-                self.igf_slack.post_message_to_channel(message, reaction='pass')
+                warnings.warn(message)
+                if self.log_slack:
+                  self.igf_slack.post_message_to_channel(message, reaction='pass')
             else:
               message='No md5 json file found for seqrun_igf_id: {0}'.\
                       format(seqrun_id)
               warnings.warn(message)                                            # not raising any exception if seqrun id is not found
-              self.igf_slack.post_message_to_channel(message, reaction='fail')
+              if self.log_slack:
+                self.igf_slack.post_message_to_channel(message, reaction='fail')
           except Exception as e:
             base.rollback_session()
             message='Failed to update d5 json file for seqrun id {0}, error : {1}'
             warnings.warn(message)
-            self.igf_slack.post_message_to_channel(message, reaction='fail')
+            if self.log_slack:
+              self.igf_slack.post_message_to_channel(message, reaction='fail')
         base.close_session()                                                    # close db connection
         if self.clean_up:
           self._clear_seqrun_list(self.seqrun_igf_list)                         # clear input file
       else:
         if self.log_slack:
           message='No new seqrun id found for changing samplesheet md5'
-          self.igf_slack.post_message_to_channel(message, reaction='sleep')
+          warnings.warn(message)
+          if self.log_slack:
+            self.igf_slack.post_message_to_channel(message, reaction='sleep')
     except:
       if db_connected:
         base.rollback_session()
