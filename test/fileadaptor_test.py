@@ -4,7 +4,7 @@ from sqlalchemy import create_engine
 from igf_data.igfdb.igfTables import Base
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
-from igf_data.utils.dbutils import read_json_data, read_dbconf_json
+from igf_data.utils.dbutils import read_dbconf_json
 
 class Fileadaptor_test1(unittest.TestCase):
   def setUp(self):
