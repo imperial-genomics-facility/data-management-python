@@ -1,0 +1,26 @@
+[
+    {
+        "file_md5": "1e7531158974b5a5b7cbb7dde09ac779",
+        "seqrun_file_name": "SampleSheet.csv"
+    },
+    {
+        "file_md5": "2b22f945bc9e7e390af5432425783a03",
+        "seqrun_file_name": "RTAConfiguration.xml"
+    },
+    {
+        "file_md5": "d9791ebbbbfc66cf2ffb3038425c3feb",
+        "seqrun_file_name": "RunInfo.xml"
+    },
+    {
+        "file_md5": "a3cfee87eb00fa60b6df95ed8a142d36",
+        "seqrun_file_name": "RunParameters.xml"
+    },
+    {
+        "file_md5": "a4969d6f2a24da20e415c60924c8ef42",
+        "seqrun_file_name": "RTARead1Complete.txt"
+    },
+    {
+        "file_md5": "35187a0de7c35bc1bd753fba56492395",
+        "seqrun_file_name": "RTARead2Complete.txt"
+    }
+]
