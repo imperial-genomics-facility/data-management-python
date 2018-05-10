@@ -36,6 +36,16 @@ class Fileadaptor_test1(unittest.TestCase):
     file_obj=fa.fetch_file_records_file_path(file_path='AAAA')
     self.assertEqual(file_obj.md5,'BBBBBBBBBBBBBB')
     fa.close_session()
+    fa.start_session()
+    fa.update_file_table_for_file_path(file_path='AAAA', 
+                                       tag='md5',
+                                       value='CCCCCCCCCCCCCCC', 
+                                       autosave=False)
+    fa.close_session()
+    fa.start_session()
+    file_obj=fa.fetch_file_records_file_path(file_path='AAAA')
+    self.assertEqual(file_obj.md5,'BBBBBBBBBBBBBB')
+    fa.close_session()
 
 if __name__ == '__main__':
   unittest.main()
