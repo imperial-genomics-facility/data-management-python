@@ -92,11 +92,36 @@ class Modify_pipeline_seed:
                                    default ['SEEDED','RUNNING']
     '''
     try:
-      results=self._fetch_pipeline_seed_entry(restrict_seed_status=restricted_status_list) # get results for pipeline_seed table
-      if results is not None:
-        ddd
-      else:
-        raise ValueError('No entry found for seqrun {0}, pipeline {0}'.\
-                         format(self.igf_id,self.pipeline_name))
+      db_connected=False
+      input_id_list=self._read_input_list(igf_id_list=self.igf_id_list)         # get input ids from file
+      failed_ids=list()                                                         # define empty list of failed ids
+      base=self.base_adaptor
+      base.start_session()                                                      # connect to database
+      db_connected=True
+      
+      base.commit_session()                                                     # save data to database
+      base.close_session()                                                      # close database connection
+    except:
+      if db_connected:
+        base.rollback_session()
+        base.close_session()
+      raise
+
+  @staticmethod
+  def _read_input_list(igf_id_list):
+    '''
+    A static method for reading list of ids from an input file
+    to a list
+    :param igf_id_list: A file containing the input igf ids
+    :return list: A list of ids from the input file
+    '''
+    try:
+      if not os.path.exists(igf_id_list):
+        raise IOError('File {0} not found'.format(seqrun_igf_list))
+
+      id_list=list()                                                            # define an empty list of seqrun ids
+      with open(seqrun_igf_list,'r') as fp:
+        id_list=[i.strip() for i in fp]                                         # add seqrun ids to the list
+      return id_list
     except:
       raise
