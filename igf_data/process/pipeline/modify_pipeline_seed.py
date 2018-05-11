@@ -1,21 +1,52 @@
 from sqlalchemy.sql import not_
+from igf_data.utils.dbutils import read_dbconf_json
+from igf_data.task_tracking.igf_slack import IGF_slack
+from igf_data.task_tracking.igf_asana import IGF_asana
 from igf_data.igfdb.igfTables import Project,Sample,Seqrun,Experiment,Run,Collection,File,Pipeline,Pipeline_seed
+
+
 class Modify_pipeline_seed:
   '''
   A class for changing pipeline run status in the pipeline_seed table
   '''
-  def __init__(self,igf_id,table_name,pipeline_name,dbconfig_file):
+  def __init__(self,igf_id_list,table_name,pipeline_name,dbconfig_file,
+               log_slack=True,log_asana=True,slack_config=None,
+               asana_project_id=None,asana_config=None):
     '''
-    :param igf_id: A igf id to uniquely identify the entity
+    :param igf_id_list: A list of igf ids to uniquely identify the entity
     :param table_name: A database table name to look for the igf id
+                       available options are 'project','sample','experiment','run',
+                                             'file','seqrun','collection'
     :param pipeline_name: A pipeline name to change the status of the seed
-    :param session: A database session
+    :param dbconfig_file: A file containing the database configuration
+    :param log_slack: A boolean flag for toggling Slack messages, default True
+    :param log_asana: Aboolean flag for toggling Asana message, default True
+    :param slack_config: A file containing Slack tokens, default None
+    :param asana_config: A file containing Asana tokens, default None
+    :param asana_project_id: A numeric Asana project id, default is None
     '''
-    self.igf_id=igf_id
-    self.table_name=table_name
-    self.pipeline_name=pipeline_name
-    self.session=session
+    try:
+      self.igf_id_list=igf_id_list
+      if table_name not in ('project','sample','experiment','run','file','seqrun','collection'):
+        raise ValueError('Table {0} not supported for pipeline seed'.\
+                         format(table_name))
+      self.table_name=table_name
+      self.pipeline_name=pipeline_name
+      dbparams = read_dbconf_json(dbconfig_file)
+      self.base_adaptor=BaseAdaptor(**dbparams)
+      if log_slack and slack_config is None:
+        raise ValueError('Missing slack config file')
+      elif log_slack and slack_config:
+        self.igf_slack = IGF_slack(slack_config)                                # add slack object
 
+      if log_asana and \
+         (asana_config is None or \
+          asana_project_id is None):
+        raise ValueError('Missing asana config file or asana project id')
+      elif log_asana and asana_config and asana_project_id:
+        self.igf_asana=IGF_asana(asana_config,asana_project_id)                 # add asana object
+    except:
+      raise
 
   def _fetch_pipeline_seed_entry(self,select_seed_status=None,restrict_seed_status=None):
     '''
