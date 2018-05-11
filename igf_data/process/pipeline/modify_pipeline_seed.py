@@ -11,7 +11,7 @@ class Modify_pipeline_seed:
   '''
   def __init__(self,igf_id_list,table_name,pipeline_name,dbconfig_file,
                log_slack=True,log_asana=True,slack_config=None,
-               asana_project_id=None,asana_config=None):
+               asana_project_id=None,asana_config=None,clean_up=True,):
     '''
     :param igf_id_list: A list of igf ids to uniquely identify the entity
     :param table_name: A database table name to look for the igf id
@@ -24,6 +24,7 @@ class Modify_pipeline_seed:
     :param slack_config: A file containing Slack tokens, default None
     :param asana_config: A file containing Asana tokens, default None
     :param asana_project_id: A numeric Asana project id, default is None
+    :param clean_up: Clean up input file once its processed, default True
     '''
     try:
       self.igf_id_list=igf_id_list
@@ -32,6 +33,7 @@ class Modify_pipeline_seed:
                          format(table_name))
       self.table_name=table_name
       self.pipeline_name=pipeline_name
+      self.clean_up=clean_up
       dbparams = read_dbconf_json(dbconfig_file)
       self.base_adaptor=BaseAdaptor(**dbparams)
       if log_slack and slack_config is None:
@@ -48,20 +50,22 @@ class Modify_pipeline_seed:
     except:
       raise
 
-  def _fetch_pipeline_seed_entry(self,select_seed_status=None,restrict_seed_status=None):
+  def _fetch_pipeline_seed_entry(self,igf_id,select_seed_status=None,restrict_seed_status=None):
     '''
     An internal method for fetching unique pipeline seed entry from database
+    :param igf_id: A igf id to uniquely select pipe seed data
     :param select_seed_status: A list of seed status to include from the query, default None
     :param restrict_seed_status: A list of seed status to exclude from the query, default None
     '''
     try:
       query=None
       if self.table_name =='seqrun':
-        query=self.session.\
+        query=self.base_adaptor.session.\
                    query(Pipeline_seed).\
                    join(Seqrun).\
                    join(Pipeline).\
                    filter(Pipeline_seed.seed_id==Seqrun.seqrun_id).\
+                   filter(Seqrun.seqrun_igf_id==igf_id).\
                    filter(Pipeline_seed.seed_table==self.table_name).\
                    filter(Pipeline.pipeline_id==Pipeline_seed.pipeline_id).\
                    filter(Pipeline.pipeline_name==self.pipeline_name)           # get base query for seqrun table
@@ -78,8 +82,9 @@ class Modify_pipeline_seed:
            isinstance(restrict_seed_status,list) and \
            len(restrict_seed_status)>0:
           query.filter(not_(Pipeline_seed.status.in_(restrict_seed_status)))    # add generic restrict filter
-
-      return query.one_or_none()                                                # fetch unique value for pipeline seed
+      pipeseed_data=self.base_adaptor.fetch_records(query,\
+                                                    output_mode='one_or_none')  # fetch unique value for pipeline seed
+      return pipeseed_data
     except:
       raise
 
@@ -98,13 +103,36 @@ class Modify_pipeline_seed:
       base=self.base_adaptor
       base.start_session()                                                      # connect to database
       db_connected=True
-      
+      for igf_id in input_id_list:
+        pipe_seed_data=self._fetch_pipeline_seed_entry(igf_id=igf_id,
+                                                       restrict_seed_status=restricted_status_list) # get pipe seed data for igf id
+        if pipe_seed_data is None:
+          failed_ids.append(igf_id)                                             # add igf id to failed list
+          
       base.commit_session()                                                     # save data to database
       base.close_session()                                                      # close database connection
+      if self.clean_up:
+        self._clear_input_list(file_path=self.igf_id_list,
+                               igf_list=failed_ids)                             # over write input list and add failed ids for next try
     except:
       if db_connected:
         base.rollback_session()
         base.close_session()
+      raise
+
+  @staticmethod
+  def _clear_input_list(file_path,igf_list):
+    '''
+    A static method for clearing the seqrun list file
+    :param seqrun_igf_list: A file containing the sequencing run ids
+    '''
+    try:
+      if not os.path.exists(file_path):
+        raise IOError('File {0} not found'.format(file_path))
+
+      with open(file_path,'w') as fwp:
+        fwp.write('\n'.join(igf_list))                                          # over write input list file
+    except:
       raise
 
   @staticmethod
@@ -119,9 +147,9 @@ class Modify_pipeline_seed:
       if not os.path.exists(igf_id_list):
         raise IOError('File {0} not found'.format(seqrun_igf_list))
 
-      id_list=list()                                                            # define an empty list of seqrun ids
+      id_list=list()                                                            # define an empty list of igf ids
       with open(seqrun_igf_list,'r') as fp:
-        id_list=[i.strip() for i in fp]                                         # add seqrun ids to the list
+        id_list=[i.strip() for i in fp]                                         # add ids to the list
       return id_list
     except:
       raise
