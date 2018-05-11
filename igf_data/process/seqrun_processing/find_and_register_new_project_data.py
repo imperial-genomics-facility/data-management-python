@@ -673,9 +673,25 @@ class Find_and_register_new_project_data:
       project_data=project_data.apply(lambda x: \
                                       self._check_and_add_project_attributes(x),
                                       axis=1)                                   # add missing project attribute to the dataframe
+      project_data['project_igf_id']=project_data['project_igf_id'].\
+                                     map(lambda x: x.replace(' ',''))           # replace any white space from project igf id
+
       user_data=user_data.drop_duplicates()
+      user_data['email_id']=user_data['email_id'].\
+                            map(lambda x: x.replace(' ',''))                    # replace any white space from email id
+
       project_user_data=project_user_data.drop_duplicates()
+      project_user_data['project_igf_id']=project_user_data['project_igf_id'].\
+                                          map(lambda x: x.replace(' ',''))      # replace any white space from project igf id
+      project_user_data['email_id']=project_user_data['email_id'].\
+                                    map(lambda x: x.replace(' ',''))            # replace any white space from email id
+
       sample_data=sample_data.drop_duplicates()                                 # remove duplicate entries
+      sample_data['project_igf_id']=sample_data['project_igf_id'].\
+                                    map(lambda x: x.replace(' ',''))            # replace any white space from project igf id
+      sample_data['sample_igf_id']=sample_data['sample_igf_id'].\
+                                    map(lambda x: x.replace(' ',''))            # replace any white space from sample igf id
+
       if self.project_lookup_column not in project_data.columns:
         raise ValueError('Missing required column: {0}'.\
                          format(self.project_lookup_column))
