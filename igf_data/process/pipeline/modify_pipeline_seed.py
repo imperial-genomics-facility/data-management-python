@@ -1,4 +1,4 @@
-import os
+import os,warnings
 import pandas as pd
 from sqlalchemy.sql import not_
 from igf_data.utils.dbutils import read_dbconf_json
@@ -39,6 +39,8 @@ class Modify_pipeline_seed:
       self.clean_up=clean_up
       dbparams = read_dbconf_json(dbconfig_file)
       self.base_adaptor=BaseAdaptor(**dbparams)
+      self.log_slack=log_slack
+      self.log_asana=log_asana
       if log_slack and slack_config is None:
         raise ValueError('Missing slack config file')
       elif log_slack and slack_config:
@@ -105,6 +107,7 @@ class Modify_pipeline_seed:
       db_connected=False
       input_id_list=self._read_input_list(igf_id_list=self.igf_id_list)         # get input ids from file
       failed_ids=list()                                                         # define empty list of failed ids
+      pass_list=list()                                                          # required for logging in asana
       base=self.base_adaptor
       base.start_session()                                                      # connect to database
       db_connected=True
@@ -120,15 +123,32 @@ class Modify_pipeline_seed:
                              'seed_table':pipe_seed_data.seed_table,
                              'status':seeded_label}                             # set data for seed update
           pl.update_pipeline_seed(data=data, autosave=False)                    # update data to pipeline seed table
+          pass_list.append(igf_id)
       base.commit_session()                                                     # save data to database after all changes
       base.close_session()                                                      # close database connection
       if self.clean_up:
         self._clear_input_list(file_path=self.igf_id_list,
                                igf_list=failed_ids)                             # over write input list and add failed ids for next try
-    except:
+        message='Overwriting pipeseed input list {0}'.format(self.igf_id_list)
+        if self.log_slack:
+          self.igf_slack.post_message_to_channel(message, reaction='pass')      # comment to slack for file over writing
+      if len(pass_list)>0:
+        for id_line in pass_list:
+          message='Changed pipeline seed for id {0}, pipeline {1}, to {3}'.\
+                  format(id_line,self.pipeline_name,seeded_label)
+          if self.log_slack:
+            self.igf_slack.post_message_to_channel(message, reaction='pass')    # comment to slack channel
+          if self.log_asana:
+            self.igf_asana.comment_asana_task(task_name=id_line,
+                                              comment=message)                  # comment on asana task
+    except Exception as e:
       if db_connected:
         base.rollback_session()
         base.close_session()
+        message='Failed to update pipeline seed, Error: {0}'.format(e)
+        warnings.warn(message)
+      if self.log_slack:
+        self.igf_slack.post_message_to_channel(message, reaction='fail')
       raise
 
   @staticmethod
