@@ -91,11 +91,13 @@ class Modify_pipeline_seed:
     except:
       raise
 
-  def reset_pipeline_seed_for_rerun(self,restricted_status_list=['SEEDED','RUNNING']):
+  def reset_pipeline_seed_for_rerun(self,seeded_label='SEEDED',
+                                    restricted_status_list=['SEEDED','RUNNING']):
     '''
     A method for setting the pipeline for re-run if the first run has failed or aborted
     This method will set the pipeline_seed.status as 'SEEDED' only if its not already
     'SEEDED' or 'RUNNING'
+    :param seeded_label: A text label for seeded status, default SEEDED
     :param restricted_status_list: A list of pipeline status to exclude from the search,
                                    default ['SEEDED','RUNNING']
     '''
@@ -116,7 +118,7 @@ class Modify_pipeline_seed:
           updated_seed_data={'pipeline_id':pipe_seed_data.pipeline_id,
                              'seed_id':pipe_seed_data.seed_id,
                              'seed_table':pipe_seed_data.seed_table,
-                             'status':'SEEDED'}                                 # set data for seed update
+                             'status':seeded_label}                             # set data for seed update
           pl.update_pipeline_seed(data=data, autosave=False)                    # update data to pipeline seed table
       base.commit_session()                                                     # save data to database after all changes
       base.close_session()                                                      # close database connection
