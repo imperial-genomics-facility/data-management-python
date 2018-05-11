@@ -1,7 +1,10 @@
+import os
+import pandas as pd
 from sqlalchemy.sql import not_
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.task_tracking.igf_slack import IGF_slack
 from igf_data.task_tracking.igf_asana import IGF_asana
+from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.igfdb.igfTables import Project,Sample,Seqrun,Experiment,Run,Collection,File,Pipeline,Pipeline_seed
 
 
@@ -108,8 +111,14 @@ class Modify_pipeline_seed:
                                                        restrict_seed_status=restricted_status_list) # get pipe seed data for igf id
         if pipe_seed_data is None:
           failed_ids.append(igf_id)                                             # add igf id to failed list
-          
-      base.commit_session()                                                     # save data to database
+        else:
+          pl=PipelineAdaptor(**{'session':base.session})                        # connect to pipeline adaptor
+          updated_seed_data={'pipeline_id':pipe_seed_data.pipeline_id,
+                             'seed_id':pipe_seed_data.seed_id,
+                             'seed_table':pipe_seed_data.seed_table,
+                             'status':'SEEDED'}                                 # set data for seed update
+          pl.update_pipeline_seed(data=data, autosave=False)                    # update data to pipeline seed table
+      base.commit_session()                                                     # save data to database after all changes
       base.close_session()                                                      # close database connection
       if self.clean_up:
         self._clear_input_list(file_path=self.igf_id_list,
