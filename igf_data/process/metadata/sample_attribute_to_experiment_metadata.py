@@ -1,0 +1,107 @@
+import os,warnings
+from igf_data.utils.dbutils import read_dbconf_json
+from igf_data.igfdb.baseadaptor import BaseAdaptor
+from igf_data.igfdb.igfTables import Base,Experiment,Project,Sample,Sample_attribute
+from igf_data.igfdb.projectadaptor import ProjectAdaptor
+from igf_data.igfdb.sampleadaptor import SampleAdaptor
+from igf_data.igfdb.experimentadaptor import ExperimentAdaptor
+from igf_data.task_tracking.igf_slack import IGF_slack
+
+class Experiment_metadata_updator:
+  '''
+  A class for updating metadata for experiment table in database
+  '''
+  def __init__(self,dbconfig_file,log_slack=True,slack_config=None):
+    '''
+    :param dbconfig_file: A database configuration file path
+    :param log_slack: A boolean flag for toggling Slack messages, default True
+    :param slack_config: A file containing Slack tokens, default None
+    '''
+    try:
+      dbparams = read_dbconf_json(dbconfig_file)
+      self.base_adaptor=BaseAdaptor(**dbparams)
+      self.log_slack=log_slack
+      if log_slack and slack_config is None:
+        raise ValueError('Missing slack config file')
+      elif log_slack and slack_config:
+        self.igf_slack = IGF_slack(slack_config)                                # add slack object
+    except:
+      raise
+
+  def update_metadta_from_sample_attribute(self,experiment_igf_id=None,
+                                           sample_attribute_names=['library_source',
+                                                                   'library_strategy',
+                                                                   'experiment_type']):
+    '''
+    A method for fetching experiment metadata from sample_attribute tables
+    :param experiment_igf_id: An experiment igf id for updating only a selected experiment, default None for all experiments
+    :param sample_attribute_names: A list of sample attribute names to look for experiment metadata,
+                                   default: library_source, library_strategy, experiment_type
+    '''
+    try:
+      base=self.base_adaptor
+      base.start_session()
+      query=base.session.\
+            query(Experiment).\
+            distinct(Experiment.experiment_id).\
+            join(Sample).\
+            join(Sample_attribute).\
+            filter(Sample.sample_id==Experiment.sample_id).\
+            filter(Sample.sample_id==Sample_attribute.sample_id).\
+            filter(Experiment.library_source=='UNKNOWN').\
+            filter(Experiment.library_strategy=='UNKNOWN').\
+            filter(Experiment.experiment_type=='UNKNOWN').\
+            filter(Sample_attribute.attribute_name.in_(sample_attribute_names))
+      exps=base.fetch_records(query, output_mode='dataframe')
+      print(exps.to_dict(orient='records'))
+      base.close_session()
+    except:
+      raise
+
+if __name__ == '__main__':
+  from sqlalchemy import create_engine
+
+  dbparams = read_dbconf_json('data/dbconfig.json')
+  dbname=dbparams['dbname']
+  if os.path.exists(dbname):
+    os.remove(dbname)
+
+  base=BaseAdaptor(**dbparams)
+  Base.metadata.create_all(base.engine)
+  base.start_session()
+  project_data=[{'project_igf_id':'IGFP0001_test_22-8-2017_rna_sc',
+                 'project_name':'test_22-8-2017_rna',
+                 'description':'Its project 1',
+                 'project_deadline':'Before August 2017',
+                 'comments':'Some samples are treated with drug X',
+                }]
+  pa=ProjectAdaptor(**{'session':base.session})
+  pa.store_project_and_attribute_data(data=project_data)
+  sample_data=[{'sample_igf_id':'IGF00001',
+                'project_igf_id':'IGFP0001_test_22-8-2017_rna_sc',
+                'library_source':'TRANSCRIPTOMIC_SINGLE_CELL',
+                'library_strategy':'RNA-SEQ',
+                'experiment_type':'POLYA-RNA'},
+               {'sample_igf_id':'IGF00002',
+                'project_igf_id':'IGFP0001_test_22-8-2017_rna_sc',},
+              ]
+  sa=SampleAdaptor(**{'session':base.session})
+  sa.store_sample_and_attribute_data(data=sample_data)
+  experiment_data=[{'project_igf_id':'IGFP0001_test_22-8-2017_rna_sc',
+                    'sample_igf_id':'IGF00001',
+                    'experiment_igf_id':'IGF00001_HISEQ4000',
+                    'library_name':'IGF00001'},
+                   {'project_igf_id':'IGFP0001_test_22-8-2017_rna_sc',
+                    'sample_igf_id':'IGF00002',
+                    'experiment_igf_id':'IGF00002_HISEQ4000',
+                    'library_name':'IGF00002'},
+                  ]
+  ea=ExperimentAdaptor(**{'session':base.session})
+  ea.store_project_and_attribute_data(data=experiment_data)
+  base.close_session()
+
+  emu=Experiment_metadata_updator(dbconfig_file='data/dbconfig.json',
+                                  log_slack=False)
+  emu.update_metadta_from_sample_attribute()
+  if os.path.exists(dbname):
+    os.remove(dbname)
