@@ -118,11 +118,11 @@ class Modify_pipeline_seed:
           failed_ids.append(igf_id)                                             # add igf id to failed list
         else:
           pl=PipelineAdaptor(**{'session':base.session})                        # connect to pipeline adaptor
-          updated_seed_data={'pipeline_id':pipe_seed_data.pipeline_id,
+          updated_seed_data=[{'pipeline_id':pipe_seed_data.pipeline_id,
                              'seed_id':pipe_seed_data.seed_id,
                              'seed_table':pipe_seed_data.seed_table,
-                             'status':seeded_label}                             # set data for seed update
-          pl.update_pipeline_seed(data=data, autosave=False)                    # update data to pipeline seed table
+                             'status':seeded_label}]                            # set data for seed update
+          pl.update_pipeline_seed(data=updated_seed_data, autosave=False)                    # update data to pipeline seed table
           pass_list.append(igf_id)
       base.commit_session()                                                     # save data to database after all changes
       base.close_session()                                                      # close database connection
