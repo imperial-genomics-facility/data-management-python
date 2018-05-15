@@ -10,7 +10,7 @@ from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
 from igf_data.process.pipeline.modify_pipeline_seed import Modify_pipeline_seed
 
 
-class Reset_samplesheet_md5_test1(unittest.TestCase):
+class Modify_pipeline_seed_test1(unittest.TestCase):
   def setUp(self):
     self.dbconfig='data/dbconfig.json'
     dbparam=read_dbconf_json(self.dbconfig)
