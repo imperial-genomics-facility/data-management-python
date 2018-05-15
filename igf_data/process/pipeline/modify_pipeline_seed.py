@@ -4,6 +4,7 @@ from sqlalchemy.sql import not_
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.task_tracking.igf_slack import IGF_slack
 from igf_data.task_tracking.igf_asana import IGF_asana
+from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.igfdb.igfTables import Project,Sample,Seqrun,Experiment,Run,Collection,File,Pipeline,Pipeline_seed
 
