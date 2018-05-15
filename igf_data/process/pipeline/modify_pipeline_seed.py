@@ -68,9 +68,8 @@ class Modify_pipeline_seed:
       if self.table_name =='seqrun':
         query=self.base_adaptor.session.\
                    query(Pipeline_seed).\
-                   join(Seqrun).\
+                   join(Seqrun,Pipeline_seed.seed_id==Seqrun.seqrun_id).\
                    join(Pipeline).\
-                   filter(Pipeline_seed.seed_id==Seqrun.seqrun_id).\
                    filter(Seqrun.seqrun_igf_id==igf_id).\
                    filter(Pipeline_seed.seed_table==self.table_name).\
                    filter(Pipeline.pipeline_id==Pipeline_seed.pipeline_id).\
@@ -180,7 +179,7 @@ class Modify_pipeline_seed:
         raise IOError('File {0} not found'.format(seqrun_igf_list))
 
       id_list=list()                                                            # define an empty list of igf ids
-      with open(seqrun_igf_list,'r') as fp:
+      with open(igf_id_list,'r') as fp:
         id_list=[i.strip() for i in fp]                                         # add ids to the list
       return id_list
     except:
