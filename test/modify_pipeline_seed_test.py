@@ -77,7 +77,7 @@ class Reset_samplesheet_md5_test1(unittest.TestCase):
                     "seed_id":seqrun.seqrun_id}]
     pp=PipelineAdaptor(**{'session': base.session})
     pp.store_pipeline_data(data=pipeline_data)
-    pp.create_pipeline_seed(data=pipeseed_data,required_columns=['pipeline_name', 'seed_id', 'seed_table'])
+    pp.create_pipeline_seed(data=pipeseed_data,required_columns=['pipeline_id', 'seed_id', 'seed_table'])
     base.close_session()
     self.seqrun_input_list='data/reset_samplesheet_md5/seqrun_pipeline_reset_list.txt'
     with open(self.seqrun_input_list,'w') as fp:
@@ -87,6 +87,52 @@ class Reset_samplesheet_md5_test1(unittest.TestCase):
     Base.metadata.drop_all(self.engine)
     os.remove(self.dbname)
     os.remove(self.seqrun_input_list)
+
+  def test_reset_pipeline_seed_for_rerun(self):
+    base=BaseAdaptor(**{'session_class':self.session_class})
+    base.start_session()
+    sra=SeqrunAdaptor(**{'session':base.session})
+    seqrun=sra.fetch_seqrun_records_igf_id(seqrun_igf_id='171003_M00001_0089_000000000-TEST')
+    pp=PipelineAdaptor(**{'session': base.session})
+    pipeline=pp.fetch_pipeline_records_pipeline_name('demultiplexing_fastq')
+    pipe_seed=pp.fetch_pipeline_seed(pipeline_id=pipeline.pipeline_id,
+                                     seed_id=seqrun.seqrun_id,
+                                     seed_table='seqrun')
+    self.assertEqual(pipe_seed.status, 'SEEDED')
+    pp.update_pipeline_seed(data=[{'pipeline_id':pipeline.pipeline_id,
+                                   'seed_id':seqrun.seqrun_id,
+                                   'seed_table':'seqrun',
+                                   'status':'RUNNING',
+                                   }])
+    pipe_seed2=pp.fetch_pipeline_seed(pipeline_id=pipeline.pipeline_id,
+                                     seed_id=seqrun.seqrun_id,
+                                     seed_table='seqrun')
+    self.assertEqual(pipe_seed2.status, 'RUNNING')
+    base.close_session()
+
+    with open(self.seqrun_input_list,'w') as fp:
+      fp.write('171003_M00001_0089_000000000-TEST')
+
+    mps=Modify_pipeline_seed(igf_id_list=self.seqrun_input_list,
+                             table_name='seqrun',
+                             pipeline_name='demultiplexing_fastq',
+                             dbconfig_file=self.dbconfig,
+                             log_slack=False,
+                             log_asana=False,
+                             clean_up=True
+                             )
+    mps.reset_pipeline_seed_for_rerun(seeded_label='SEEDED')
+
+    base.start_session()
+    sra=SeqrunAdaptor(**{'session':base.session})
+    seqrun=sra.fetch_seqrun_records_igf_id(seqrun_igf_id='171003_M00001_0089_000000000-TEST')
+    pp=PipelineAdaptor(**{'session': base.session})
+    pipeline=pp.fetch_pipeline_records_pipeline_name('demultiplexing_fastq')
+    pipe_seed=pp.fetch_pipeline_seed(pipeline_id=pipeline.pipeline_id,
+                                     seed_id=seqrun.seqrun_id,
+                                     seed_table='seqrun')
+    self.assertEqual(pipe_seed.status, 'SEEDED')
+    base.close_session()
 
 if __name__ == '__main__':
   unittest.main()
