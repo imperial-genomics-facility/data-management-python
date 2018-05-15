@@ -126,6 +126,7 @@ class Modify_pipeline_seed:
           pass_list.append(igf_id)
       base.commit_session()                                                     # save data to database after all changes
       base.close_session()                                                      # close database connection
+      db_connected=False
       if self.clean_up:
         self._clear_input_list(file_path=self.igf_id_list,
                                igf_list=failed_ids)                             # over write input list and add failed ids for next try
@@ -134,7 +135,7 @@ class Modify_pipeline_seed:
           self.igf_slack.post_message_to_channel(message, reaction='pass')      # comment to slack for file over writing
       if len(pass_list)>0:
         for id_line in pass_list:
-          message='Changed pipeline seed for id {0}, pipeline {1}, to {3}'.\
+          message='Changed pipeline seed for id {0}, pipeline {1}, to {2}'.\
                   format(id_line,self.pipeline_name,seeded_label)
           if self.log_slack:
             self.igf_slack.post_message_to_channel(message, reaction='pass')    # comment to slack channel
