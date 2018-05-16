@@ -1,4 +1,5 @@
 import os,warnings
+import string
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.igfTables import Base,Experiment,Project,Sample,Sample_attribute
@@ -28,6 +29,14 @@ class Experiment_metadata_updator:
     except:
       raise
 
+  @staticmethod
+  def _text_sum(a=None):
+    if isinstance(a,list):
+      return ';'.join(a)
+    else:
+      return a
+
+
   def update_metadta_from_sample_attribute(self,experiment_igf_id=None,
                                            sample_attribute_names=['library_source',
                                                                    'library_strategy',
@@ -42,7 +51,7 @@ class Experiment_metadata_updator:
       base=self.base_adaptor
       base.start_session()
       query=base.session.\
-            query(Experiment).\
+            query(Experiment.experiment_igf_id).\
             distinct(Experiment.experiment_id).\
             join(Sample).\
             join(Sample_attribute).\
@@ -51,9 +60,23 @@ class Experiment_metadata_updator:
             filter(Experiment.library_source=='UNKNOWN').\
             filter(Experiment.library_strategy=='UNKNOWN').\
             filter(Experiment.experiment_type=='UNKNOWN').\
-            filter(Sample_attribute.attribute_name.in_(sample_attribute_names))
-      exps=base.fetch_records(query, output_mode='dataframe')
-      print(exps.to_dict(orient='records'))
+            filter(Sample_attribute.attribute_name.in_(sample_attribute_names)) # base query for db lookup
+      if experiment_igf_id is not None:
+        query=query.filter(Experiment.experiment_igf_id==experiment_igf_id)     # look for specific experiment_igf_id
+
+      exps=base.fetch_records(query, output_mode='object')                      # fetch exp records as generator expression
+      for row in exps:
+        experiment_id=row[0]
+        ea=ExperimentAdaptor(**{'session':base.session})
+        attributes=ea.fetch_sample_attribute_records_for_experiment_igf_id(experiment_igf_id=experiment_id, 
+                                                                output_mode='dataframe',
+                                                                attribute_list=sample_attribute_names)
+        exp_update_data=dict()
+        for attribute_row in attributes.to_dict(orient='records'):
+          exp_update_data.update({attribute_row['attribute_name']:attribute_row['attribute_value']})
+
+        print(exp_update_data)
+
       base.close_session()
     except:
       raise
@@ -82,6 +105,10 @@ if __name__ == '__main__':
                 'library_source':'TRANSCRIPTOMIC_SINGLE_CELL',
                 'library_strategy':'RNA-SEQ',
                 'experiment_type':'POLYA-RNA'},
+               {'sample_igf_id':'IGF00003',
+                'project_igf_id':'IGFP0001_test_22-8-2017_rna_sc',
+                'library_source':'TRANSCRIPTOMIC_SINGLE_CELL',
+                'experiment_type':'POLYA-RNA'},
                {'sample_igf_id':'IGF00002',
                 'project_igf_id':'IGFP0001_test_22-8-2017_rna_sc',},
               ]
@@ -90,6 +117,10 @@ if __name__ == '__main__':
   experiment_data=[{'project_igf_id':'IGFP0001_test_22-8-2017_rna_sc',
                     'sample_igf_id':'IGF00001',
                     'experiment_igf_id':'IGF00001_HISEQ4000',
+                    'library_name':'IGF00001'},
+                   {'project_igf_id':'IGFP0001_test_22-8-2017_rna_sc',
+                    'sample_igf_id':'IGF00003',
+                    'experiment_igf_id':'IGF00003_HISEQ4000',
                     'library_name':'IGF00001'},
                    {'project_igf_id':'IGFP0001_test_22-8-2017_rna_sc',
                     'sample_igf_id':'IGF00002',
