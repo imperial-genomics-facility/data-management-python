@@ -167,9 +167,8 @@ class ExperimentAdaptor(BaseAdaptor):
     '''
     try:
       query=self.session.\
-            query(Sample_attribute,
-                  Sample.sample_igf_id,
-                  Experiment.experiment_igf_id).\
+            query(Sample_attribute.attribute_name,
+                  Sample_attribute.attribute_value).\
             join(Sample).\
             join(Experiment).\
             filter(Sample.sample_id==Sample_attribute.sample_id).\
@@ -179,8 +178,8 @@ class ExperimentAdaptor(BaseAdaptor):
       if attribute_list is not None and \
          isinstance(attribute_list,list) and \
          len(attribute_list)>0:
-        query.filter(Sample_attribute.attribute_name.in_(attribute_list))       # look for only specific attributes, if list provided
-      result=self.fetch_records(query=query, output_mode=output_mode)           # fetch results
+        query=query.filter(Sample_attribute.attribute_name.in_(attribute_list))       # look for only specific attributes, if list provided
+      results=self.fetch_records(query=query, output_mode=output_mode)           # fetch results
       return results
     except:
       raise
