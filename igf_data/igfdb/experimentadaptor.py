@@ -1,7 +1,7 @@
 import pandas as pd
 from sqlalchemy.sql import column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
-from igf_data.igfdb.igfTables import Project, Sample, Experiment, Experiment_attribute
+from igf_data.igfdb.igfTables import Project, Sample, Experiment, Experiment_attribute, Sample,Sample_attribute
 
 class ExperimentAdaptor(BaseAdaptor):
   '''
@@ -152,5 +152,35 @@ class ExperimentAdaptor(BaseAdaptor):
       if experiment_obj is not None:
         experiment_check=True
       return experiment_check
+    except:
+      raise
+
+  def fetch_sample_attribute_records_for_experiment_igf_id(self,experiment_igf_id,
+                                                           output_mode='dataframe',
+                                                           attribute_list=None):
+    '''
+    A method for fetching sample_attribute_records for a given experiment_igf_id
+    :param experiment_igf_id: An experiment_igf_id
+    :param output_mode: Result output mode, default dataframe
+    :param attribute_list: A list of attributes for database lookup, default None
+    :returns an object or dataframe based on the output_mode
+    '''
+    try:
+      query=self.session.\
+            query(Sample_attribute,
+                  Sample.sample_igf_id,
+                  Experiment.experiment_igf_id).\
+            join(Sample).\
+            join(Experiment).\
+            filter(Sample.sample_id==Sample_attribute.sample_id).\
+            filter(Sample.sample_id==Experiment.sample_id).\
+            filter(Experiment.experiment_igf_id==experiment_igf_id)             # get basic query
+
+      if attribute_list is not None and \
+         isinstance(attribute_list,list) and \
+         len(attribute_list)>0:
+        query.filter(Sample_attribute.attribute_name.in_(attribute_list))       # look for only specific attributes, if list provided
+      result=self.fetch_records(query=query, output_mode=output_mode)           # fetch results
+      return results
     except:
       raise
