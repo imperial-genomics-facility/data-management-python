@@ -3,6 +3,7 @@ from igf_data.utils.dbutils import read_dbconf_json
 from sqlalchemy import create_engine
 from igf_data.igfdb.igfTables import Base
 from igf_data.igfdb.baseadaptor import BaseAdaptor
+from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.igfdb.sampleadaptor import SampleAdaptor
 from igf_data.igfdb.experimentadaptor import ExperimentAdaptor
 from igf_data.process.metadata.experiment_metadata_updator import Experiment_metadata_updator
@@ -59,3 +60,23 @@ class Experiment_metadata_updator_test(unittest.TestCase):
   def tearDown(self):
     Base.metadata.drop_all(self.engine)
     os.remove(self.dbname)
+
+  def test_update_metadta_from_sample_attribute1(self):
+    ea=ExperimentAdaptor(**{'session_class':self.session_class})
+    ea.start_session()
+    exp1=ea.fetch_experiment_records_id(experiment_igf_id='IGF00001_HISEQ4000')
+    self.assertEqual(exp1.library_strategy,'UNKNOWN')
+    exp2=ea.fetch_experiment_records_id(experiment_igf_id='IGF00002_HISEQ4000')
+    self.assertEqual(exp2.library_strategy,'UNKNOWN')
+    ea.close_session()
+    emu=Experiment_metadata_updator(dbconfig_file=self.dbconfig,
+                                    log_slack=False)
+    emu.update_metadta_from_sample_attribute()
+    ea=ExperimentAdaptor(**{'session_class':self.session_class})
+    ea.start_session()
+    exp1=ea.fetch_experiment_records_id(experiment_igf_id='IGF00001_HISEQ4000')
+    self.assertEqual(exp1.library_strategy,'RNA-SEQ')
+    exp2=ea.fetch_experiment_records_id(experiment_igf_id='IGF00002_HISEQ4000')
+    self.assertEqual(exp2.library_strategy,'UNKNOWN')
+    ea.close_session()
+
