@@ -75,11 +75,9 @@ class Experiment_metadata_updator:
                                                                 attribute_list=sample_attribute_names)
         exp_update_data=dict()
         for attribute_row in attributes:
-          print(attribute_row)
           exp_update_data.update({attribute_row.attribute_name:attribute_row.attribute_value})
 
         if len(exp_update_data.keys())>0:
-          print(exp_update_data)
           ea.update_experiment_records_by_igf_id(experiment_igf_id=experiment_id,
                                                  update_data=exp_update_data,
                                                  autosave=False)                # update experiment entry if attribute records are found
