@@ -90,11 +90,17 @@ class Experiment_metadata_updator:
       if self.log_slack:
         message='Update {0} experiments from sample attribute records'.\
                 format(exp_update_count)
-        self.igf_slack.post_message_to_channel(message=message, reaction='pass')
-    except:
+        self.igf_slack.post_message_to_channel(message=message,
+                                               reaction='pass')
+    except Exception as e:
       if db_connected:
         base.rollback_session()
         base.close_session()
+        message='Error while updating experiment records: {0}'.format(e)
+        warnings.warn(message)
+        if self.log_slack:
+          self.igf_slack.post_message_to_channel(message=message,
+                                                 reaction='fail')
       raise
 
 if __name__ == '__main__':
