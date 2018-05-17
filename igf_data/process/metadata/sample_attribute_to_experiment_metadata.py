@@ -66,6 +66,7 @@ class Experiment_metadata_updator:
       if experiment_igf_id is not None:
         query=query.filter(Experiment.experiment_igf_id==experiment_igf_id)     # look for specific experiment_igf_id
 
+      exp_update_count=0
       exps=base.fetch_records(query, output_mode='object')                      # fetch exp records as generator expression
       for row in exps:
         experiment_id=row[0]
@@ -78,6 +79,7 @@ class Experiment_metadata_updator:
           exp_update_data.update({attribute_row.attribute_name:attribute_row.attribute_value})
 
         if len(exp_update_data.keys())>0:
+          exp_update_count+=1
           ea.update_experiment_records_by_igf_id(experiment_igf_id=experiment_id,
                                                  update_data=exp_update_data,
                                                  autosave=False)                # update experiment entry if attribute records are found
@@ -85,6 +87,10 @@ class Experiment_metadata_updator:
       base.commit_session()
       base.close_session()
       db_connected=False
+      if self.log_slack:
+        message='Update {0} experiments from sample attribute records'.\
+                format(exp_update_count)
+        self.igf_slack.post_message_to_channel(message=message, reaction='pass')
     except:
       if db_connected:
         base.rollback_session()
