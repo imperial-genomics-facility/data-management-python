@@ -183,3 +183,31 @@ class ExperimentAdaptor(BaseAdaptor):
       return results
     except:
       raise
+
+  def update_experiment_records_by_igf_id(self,experiment_igf_id,update_data,autosave=True):
+    '''
+    A method for updating experiment records in database
+    :param experiment_igf_id: An igf ids for the experiment data lookup
+    :param update_data: A dictionary containing the updated entries
+    :param autosave: Toggle auto commit after database update, default True
+    '''
+    try:
+      if not isinstance(update_data,dict):
+        raise AttributeError('Expecting a dictionary with new data for experiment record update and got {0}'.\
+                             format(type(update_data)))                         # check update data type before db update
+      allowed_experiment_columns=self.get_table_columns(table_name=Experiment,
+                                                        excluded_columns='experiment_id') # get list of allowed experiment columns
+      for update_key in update_data.keys():
+        if update_key not in allowed_experiment_columns:
+          raise ValueError('Check your data, column {0} is not part of Experiment table'.\
+                           format(update_key))                                  # check each key of the update_data dictionary
+      query=self.session.\
+            query(Experiment).\
+            filter(Experiment.experiment_igf_id==experiment_igf_id)             # define base query
+      query.update(update_data)                                                 # update data in db
+      if autosave:
+        self.commit_session()                                                   # save data if auto commit is on
+    except:
+      self.rollback_session()                                                   # rollback session if db update has failed
+      raise
+
