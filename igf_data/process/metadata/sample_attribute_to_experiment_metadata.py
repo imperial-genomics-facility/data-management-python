@@ -48,8 +48,10 @@ class Experiment_metadata_updator:
                                    default: library_source, library_strategy, experiment_type
     '''
     try:
+      db_connected=False
       base=self.base_adaptor
       base.start_session()
+      db_connected=True
       query=base.session.\
             query(Experiment.experiment_igf_id).\
             distinct(Experiment.experiment_id).\
@@ -69,16 +71,26 @@ class Experiment_metadata_updator:
         experiment_id=row[0]
         ea=ExperimentAdaptor(**{'session':base.session})
         attributes=ea.fetch_sample_attribute_records_for_experiment_igf_id(experiment_igf_id=experiment_id, 
-                                                                output_mode='dataframe',
+                                                                output_mode='object',
                                                                 attribute_list=sample_attribute_names)
         exp_update_data=dict()
-        for attribute_row in attributes.to_dict(orient='records'):
-          exp_update_data.update({attribute_row['attribute_name']:attribute_row['attribute_value']})
+        for attribute_row in attributes:
+          print(attribute_row)
+          exp_update_data.update({attribute_row.attribute_name:attribute_row.attribute_value})
 
-        print(exp_update_data)
+        if len(exp_update_data.keys())>0:
+          print(exp_update_data)
+          ea.update_experiment_records_by_igf_id(experiment_igf_id=experiment_id,
+                                                 update_data=exp_update_data,
+                                                 autosave=False)                # update experiment entry if attribute records are found
 
+      base.commit_session()
       base.close_session()
+      db_connected=False
     except:
+      if db_connected:
+        base.rollback_session()
+        base.close_session()
       raise
 
 if __name__ == '__main__':
