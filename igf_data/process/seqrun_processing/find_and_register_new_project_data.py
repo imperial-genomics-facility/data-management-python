@@ -37,6 +37,7 @@ class Find_and_register_new_project_data:
   :param notify_user: Send email notification to user, default is True
   :param default_user_email: Add another user as the default collaborator for all new projects, default igf@imperial.ac.uk
   :param barcode_check_keyword: Project attribute name for barcode check settings, default barcode_check
+  :param sendmail_exe: Sendmail executable path, default /usr/sbin/sendmail
   '''
   def __init__(self,projet_info_path,dbconfig,user_account_template,
                log_slack=True, slack_config=None,
@@ -50,7 +51,8 @@ class Find_and_register_new_project_data:
                data_authority_column='data_authority',
                sample_lookup_column='sample_igf_id',
                barcode_check_keyword='barcode_check',
-               metadata_sheet_name='Project metadata'):
+               metadata_sheet_name='Project metadata',
+               sendmail_exe='/usr/sbin/sendmail'):
     try:
       self.projet_info_path=projet_info_path
       self.user_account_template=user_account_template
@@ -71,6 +73,7 @@ class Find_and_register_new_project_data:
       self.hpc_address=hpc_address
       self.ldap_server=ldap_server
       self.metadata_sheet_name=metadata_sheet_name
+      self.sendmail_exe=sendmail_exe
       if log_slack and slack_config is None:
         raise ValueError('Missing slack config file')
       elif log_slack and slack_config:
@@ -249,7 +252,7 @@ class Find_and_register_new_project_data:
           dump(report_output_file)
         read_cmd=['cat', quote(report_output_file)]
         proc=subprocess.Popen(read_cmd, stdout=subprocess.PIPE)
-        sendmail_cmd=['sendmail', '-t']
+        sendmail_cmd=[self.sendmail_exe, '-t']
         subprocess.check_call(sendmail_cmd,stdin=proc.stdout)
         proc.stdout.close()
         if proc.returncode !=None:
