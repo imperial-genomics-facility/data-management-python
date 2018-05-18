@@ -682,6 +682,10 @@ class Find_and_register_new_project_data:
       user_data=user_data.drop_duplicates()
       user_data['email_id']=user_data['email_id'].\
                             map(lambda x: x.replace(' ',''))                    # replace any white space from email id
+      if 'name' in user_data.columns:
+        user_data['name'].fillna('',inplace=True)
+        user_data['name']=user_data['name'].\
+                          map(lambda x: x.title())                              # reformat name, if its present
 
       project_user_data=project_user_data.drop_duplicates()
       project_user_data['project_igf_id']=project_user_data['project_igf_id'].\
