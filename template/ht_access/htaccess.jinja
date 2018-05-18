@@ -3,6 +3,6 @@ AuthType Basic
 {% if hpcUser %}
 AuthBasicProvider ldap file
 AuthzLDAPAuthoritative on
-AuthLDAPUrl ldap://unixldap.cc.ic.ac.uk/ou=everyone,dc=ic,dc=ac,dc=uk?uid { % endif %}
+AuthLDAPUrl ldap://unixldap.cc.ic.ac.uk/ou=everyone,dc=ic,dc=ac,dc=uk?uid {% endif %}
 AuthUserFile {{ remote_project_dir }}/{{ project_tag }}/{{ htpasswd_filename }}
 Require user {{ customerUsernameList }}
