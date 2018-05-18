@@ -117,16 +117,30 @@ class UserAdaptor(BaseAdaptor):
     '''
     A method for fetching data for User table
     required params:
-    user_igf_id: an igf id
-     output_mode  : dataframe / object
+    :param user_igf_id: an igf id
+    :return user object
     '''
     try:
       user=self.fetch_records_by_column(table=User, column_name=User.user_igf_id, column_id=user_igf_id, output_mode='one' )
-      return user 
+      return user
     except:
       raise
-  
-  
+
+
+  def fetch_user_records_email_id(self, user_email_id):
+    '''
+    A method for fetching data for User table
+    required params:
+    :param user_email_id: an email id
+    :return user object
+    '''
+    try:
+      user=self.fetch_records_by_column(table=User, column_name=User.email_id, column_id=user_email_id, output_mode='one' )
+      return user
+    except:
+      raise
+
+
   def check_user_records_email_id(self,email_id):
     '''
     A method for checking existing user data in db
