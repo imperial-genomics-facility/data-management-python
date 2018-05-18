@@ -217,6 +217,8 @@ class Find_and_register_project_data1(unittest.TestCase):
       ua=UserAdaptor(**{'session':base.session})
       user_exists=ua.check_user_records_email_id(email_id='user2@ic.ac.uk')
       self.assertTrue(user_exists)
+      user1=ua.fetch_user_records_email_id(user_email_id='user2@ic.ac.uk')
+      self.assertEqual(user1.name,'User2')
       sa=SampleAdaptor(**{'session':base.session})
       sample_exists=sa.check_sample_records_igf_id(sample_igf_id='IGF00006')
       self.assertTrue(sample_exists)
