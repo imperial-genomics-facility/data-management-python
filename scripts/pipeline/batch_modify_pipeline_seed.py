@@ -23,11 +23,14 @@ seed_status=args.seed_status
 
 try:
   mps=Modify_pipeline_seed(igf_id_list=input_list,
-                             table_name='seqrun',
-                             pipeline_name='demultiplexing_fastq',
+                             table_name=table_name,
+                             pipeline_name=pipeline_name,
                              dbconfig_file=dbconfig,
-                             log_slack=False,
-                             log_asana=False,
+                             log_slack=True,
+                             log_asana=True,
+                             slack_config=slack_config,
+                             asana_config=asana_config,
+                             asana_project_id=asana_project_id,
                              clean_up=True
                              )
   mps.reset_pipeline_seed_for_rerun(seeded_label=seed_status)
