@@ -86,7 +86,8 @@ class Modify_pipeline_seed:
       if restrict_seed_status is not None and \
            isinstance(restrict_seed_status,list) and \
            len(restrict_seed_status)>0:
-          query.filter(not_(Pipeline_seed.status.in_(restrict_seed_status)))    # add generic restrict filter
+          query=query.filter(not_(Pipeline_seed.status.in_(restrict_seed_status))) # add generic restrict filter
+
       pipeseed_data=self.base_adaptor.fetch_records(query,\
                                                     output_mode='one_or_none')  # fetch unique value for pipeline seed
       return pipeseed_data
