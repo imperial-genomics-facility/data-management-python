@@ -152,7 +152,7 @@ class Reset_samplesheet_md5:
                           destinationa_path=json_file_path,
                           force=True)                                           # overwrite json file
                 base.commit_session()                                           # save changes in db
-                message='Setting new Samplesheet infor for run {0}'.\
+                message='Setting new Samplesheet info for run {0}'.\
                         format(seqrun_id)
                 if self.log_slack:
                   self.igf_slack.post_message_to_channel(message, 
