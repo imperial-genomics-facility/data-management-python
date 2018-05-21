@@ -22,7 +22,7 @@ input_list=args.input_list
 seed_status=args.seed_status
 
 try:
-  mps=Modify_pipeline_seed(igf_id_list=self.seqrun_input_list,
+  mps=Modify_pipeline_seed(igf_id_list=input_list,
                              table_name='seqrun',
                              pipeline_name='demultiplexing_fastq',
                              dbconfig_file=dbconfig,
