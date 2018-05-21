@@ -31,6 +31,7 @@ def full_suite():
   from .reset_samplesheet_md5_test import Reset_samplesheet_md5_test1
   from .modify_pipeline_seed_test import Modify_pipeline_seed_test1
   from .experiment_metadata_updator_test import Experiment_metadata_updator_test
+  from .projectadaptor_test import Projectadaptor_test1
 
   return unittest.TestSuite([ \
       unittest.TestLoader().loadTestsFromTestCase(BasesMask_testA), 
@@ -67,4 +68,5 @@ def full_suite():
       unittest.TestLoader().loadTestsFromTestCase(Reset_samplesheet_md5_test1),
       unittest.TestLoader().loadTestsFromTestCase(Modify_pipeline_seed_test1),
       unittest.TestLoader().loadTestsFromTestCase(Experiment_metadata_updator_test),
+      unittest.TestLoader().loadTestsFromTestCase(Projectadaptor_test1),
     ])
