@@ -158,7 +158,7 @@ class Reset_samplesheet_md5:
                   self.igf_slack.post_message_to_channel(message, 
                                                          reaction='pass')       # send log to slack
                 if self.log_asana:
-                  self.igf_asana.add_notes_for_task(task_name=seqrun_id,
+                  self.igf_asana.comment_asana_task(task_name=seqrun_id,
                                                     notes=message)              # send log to asana
               else:
                 message='no change in samplesheet for seqrun {0}'.format(seqrun_id)
