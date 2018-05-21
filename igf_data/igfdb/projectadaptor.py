@@ -305,7 +305,7 @@ class ProjectAdaptor(BaseAdaptor):
             filter(Project.project_id==Sample.project_id).\
             filter(Project.project_igf_id==project_igf_id)
       if only_active:
-        query.filter(Sample.status=='ACTIVE')                                   # checking only active projects
+        query=query.filter(Sample.status=='ACTIVE')                                   # checking only active projects
 
       results=self.fetch_records(query=query, output_mode=output_mode)
       return results
