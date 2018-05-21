@@ -1,7 +1,7 @@
 import pandas as pd
 from sqlalchemy.sql import column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
-from igf_data.igfdb.igfTables import Project, ProjectUser, Project_attribute, User
+from igf_data.igfdb.igfTables import Project, ProjectUser, Project_attribute, User, Sample
 
 class ProjectAdaptor(BaseAdaptor):
   '''
@@ -290,8 +290,44 @@ class ProjectAdaptor(BaseAdaptor):
       raise
 
 
-  def project_samples(self, format='dataframe', project_igf_id=''):
-    pass
+  def fetch_project_samples(self, project_igf_id,only_active=True,output_mode='object'):
+    '''
+    A method for fetching all the samples for a specific project
+    :param project_igf_id: A project id
+    :param only_active: Toggle for including only active projects, default is True
+    :param output_mode: Output mode, default object
+    :returns: Depends on the output_mode, a generator expression, dataframe or an object
+    '''
+    try:
+      query=self.session.\
+            query(Sample).\
+            join(Project).\
+            filter(Project.project_id==Sample.project_id).\
+            filter(Project.project_igf_id==project_igf_id)
+      if only_active:
+        query.filter(Sample.status=='ACTIVE')                                   # checking only active projects
+
+      results=self.fetch_records(query=query, output_mode=output_mode)
+      return results
+    except:
+      raise
+
+
+  def count_project_samples(self,project_igf_id, only_active=True):
+    '''
+    A method for counting total number of samples for a project
+    :param project_igf_id: A project id
+    :param only_active: Toggle for including only active projects, default is True
+    :returns: A int sample count
+    '''
+    try:
+      results_data=self.fetch_project_samples(project_igf_id=project_igf_id,
+                                              only_active=only_active,
+                                              output_mode='dataframe')          # fetch samples as dataframe
+      count=len(results_data.index)                                             # count dataframe row
+      return count
+    except:
+      raise
 
 
   def project_experiments(self, format='dataframe', project_igf_id=''):
