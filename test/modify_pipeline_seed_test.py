@@ -102,12 +102,12 @@ class Modify_pipeline_seed_test1(unittest.TestCase):
     pp.update_pipeline_seed(data=[{'pipeline_id':pipeline.pipeline_id,
                                    'seed_id':seqrun.seqrun_id,
                                    'seed_table':'seqrun',
-                                   'status':'RUNNING',
+                                   'status':'FINISHED',
                                    }])
     pipe_seed2=pp.fetch_pipeline_seed(pipeline_id=pipeline.pipeline_id,
                                      seed_id=seqrun.seqrun_id,
                                      seed_table='seqrun')
-    self.assertEqual(pipe_seed2.status, 'RUNNING')
+    self.assertEqual(pipe_seed2.status, 'FINISHED')
     base.close_session()
 
     with open(self.seqrun_input_list,'w') as fp:
