@@ -25,6 +25,8 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       'remote_host':None,
       'seqruninfofile':'seqruninfofile.json',
       'samplereadcountfile':'samplereadcountfile.json',
+      'image_height':700,
+      'sample_count_threshold':50,
     })
     return params_dict
 
@@ -46,13 +48,20 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       project_template=self.param('project_template')
       seqruninfofile=self.param('seqruninfofile')
       samplereadcountfile=self.param('samplereadcountfile')
+      image_height=self.param('image_height')
+      sample_count_threshold=self.param('sample_count_threshold')
 
       htaccess_template_path=os.path.join(template_dir,htaccess_template_path)  # set path for template dir
       project_template_path=os.path.join(template_dir,project_template)         # set path for project template
       pa=ProjectAdaptor(**{'session_class':igf_session_class})
       pa.start_session()
       user_info=pa.get_project_user_info(project_igf_id=project_name)           # fetch user info from db
+      sample_counts=pa.count_project_samples(project_igf_id=project_name,
+                                             only_active=True)                  # get sample counts for the project
       pa.close_session()
+
+      if sample_counts > sample_count_threshold:
+        image_height=image_height*2                                             # change image height for more samples
 
       user_info=user_info.to_dict(orient='records')                             # convert dataframe to list of dictionaries
       if len(user_info) == 0:
@@ -106,7 +115,8 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       project_index.\
       stream(ProjectName=project_name,\
              seqrunInfoFile=seqruninfofile, \
-             sampleReadCountFile=samplereadcountfile).\
+             sampleReadCountFile=samplereadcountfile,
+             ImageHeight=image_height,).\
       dump(project_output)                                                      # write new project file
       os.chmod(project_output, mode=0o774)
 
