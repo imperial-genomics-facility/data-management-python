@@ -25,7 +25,7 @@ try:
   mps=Modify_pipeline_seed(igf_id_list=self.seqrun_input_list,
                              table_name='seqrun',
                              pipeline_name='demultiplexing_fastq',
-                             dbconfig_file=self.dbconfig,
+                             dbconfig_file=dbconfig,
                              log_slack=False,
                              log_asana=False,
                              clean_up=True
