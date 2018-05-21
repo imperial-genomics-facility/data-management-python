@@ -173,7 +173,8 @@ class Reset_samplesheet_md5:
                 self.igf_slack.post_message_to_channel(message, reaction='fail')
           except Exception as e:
             base.rollback_session()
-            message='Failed to update d5 json file for seqrun id {0}, error : {1}'
+            message='Failed to update  json file for seqrun id {0}, error : {1}'.\
+                    format(seqrun_id,e)
             warnings.warn(message)
             if self.log_slack:
               self.igf_slack.post_message_to_channel(message, reaction='fail')
