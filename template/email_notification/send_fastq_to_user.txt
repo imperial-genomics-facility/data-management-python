@@ -26,7 +26,8 @@ Follow this path
 QC Report page:
 http://eliot.med.ic.ac.uk/report/project/{{ projectName }}/{{ projectRunDate }}/{{ flowcellId }}
 
-Please use your username and password to access these qc reports. {% if not hpcUser %} Try using your Imperial College's password if the facility login password doesn't work for you. {% endif %}
+Please use your username and password to access these qc reports. {% if not hpcUser %} We fixed the bug related to the report page access. Now you should be able to login to these pages with facility password. {% endif %} 
+
 
 You can download your data via a web browser or via the icommand client on cx1 configured appropriately
 
