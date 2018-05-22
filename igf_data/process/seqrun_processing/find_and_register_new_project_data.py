@@ -19,7 +19,7 @@ class Find_and_register_new_project_data:
   A class for finding new data for project and registering them to the db. 
   Account for new users will be created in irods server and password will be 
   mailed to them.
-  required params:
+  
   :param projet_info_path: A directory path for project info files
   :param dbconfig: A json dbconfig file
   :param check_hpc_user: Guess the hpc user name, True or False, default: False
@@ -126,7 +126,7 @@ class Find_and_register_new_project_data:
   def _check_existing_data(self,data,dbsession,table_name,check_column='EXISTS'):
     '''
     An internal function for checking and registering project info
-    required params:
+    
     :param data: A pandas data series
     :param dbsession: A sqlalchemy database session object
     :param table_name: A database table name
@@ -218,7 +218,7 @@ class Find_and_register_new_project_data:
                            name_col='name',email_id_col='email_id'):
     '''
     An internal method for sending mail to new user with their password
-    required params:
+    
     :param data: A pandas series containing user data
     :param user_col: Column name for username, default username
     :param password_col: Column name for password, default password
@@ -267,7 +267,7 @@ class Find_and_register_new_project_data:
   def _get_user_password(password_length=12):
     '''
     An internal staticmethod for generating random password
-    required params:
+    
     :param password_length: Required length of password, default 12
     '''
     try:
@@ -293,7 +293,7 @@ class Find_and_register_new_project_data:
                           ):
     '''
     An internal method for creating new user account in irods
-    required params:
+
     :param data: A pandas series containing user data
     :param user_col: Column name for username, deffault username
     :param password_col: Column name for password, default password
@@ -384,7 +384,7 @@ class Find_and_register_new_project_data:
     '''
     An internal method for checking hpc accounts for new users
     This method is not reliable as the ldap server can be down from time to time
-    required params:
+
     :param username: A username string
     '''
     try:
@@ -421,7 +421,7 @@ class Find_and_register_new_project_data:
                                     category_col='category'):
     '''
     An internal method for assigning new user account and password
-    required params:
+
     :param data: A pandas series containing user data
     :param user_col: Column name for username, deffault username
     :param password_col: Column name for password, default password
@@ -470,8 +470,9 @@ class Find_and_register_new_project_data:
   def _add_default_user_to_project(self,project_user_data):
     '''
     An internal method for adding default user to the project_user_data dataframe
-    :param project_user_data : A dataframe containing project_igf_id and email_id column
-    :returns a pandas dataframe with new row for the project_igf_id and default_user_email
+
+    :param project_user_data: A dataframe containing project_igf_id and email_id column
+    :returns: a pandas dataframe with new row for the project_igf_id and default_user_email
     '''
     try:
       new_project_user_data=list()
@@ -489,8 +490,9 @@ class Find_and_register_new_project_data:
   def _check_and_register_data(self,data,project_info_file):
     '''
     An internal method for checking and registering data
-    required params:
+
     :param data: A dictionary containing following keys
+    
           project_data
           user_data
           project_user_data
@@ -615,8 +617,9 @@ class Find_and_register_new_project_data:
   def _check_and_add_project_attributes(self,data_series):
     '''
     An internal method for checking project data and adding required attributes
+    
     :param data_series: A Pandas Series containing project data
-    :returns A Pandas series with project attribute information
+    :returns: A Pandas series with project attribute information
     '''
     try:
       if not isinstance(data_series, pd.Series):
@@ -634,10 +637,11 @@ class Find_and_register_new_project_data:
   def _read_project_info_and_get_new_entries(self,project_info_file):
     '''
     An internal method for processing project info data
-    required params:
+    
     :param project_info_file: A filepath for project_info csv files
     
-    :returns a dictionary with following keys
+    :returns: A dictionary with following keys
+    
           project_data
           user_data
           project_user_data
