@@ -14,11 +14,31 @@ from igf_data.utils.fileutils import calculate_file_checksum
 
 
 class Collect_seqrun_fastq_to_db:
+  '''
+  A class for collecting raw fastq files after demultiplexing and storing them in database.
+  Additionally this will also create relevant entries for the experiment and run tables in database
+  '''
   def __init__(self,fastq_dir,model_name,seqrun_igf_id,session_class,flowcell_id,\
                samplesheet_file=None,samplesheet_filename='SampleSheet.csv',\
                collection_type='demultiplexed_fastq',file_location='HPC_PROJECT',\
                collection_table='run', manifest_name='file_manifest.csv',
                singlecell_tag='10X'):
+    '''
+    List of parameters
+    
+    :param fastq_dir: A directory path for file look up
+    :param model_name: Sequencing platform information
+    :param seqrun_igf_id: Sequencing run name
+    :param session_class: A database session class
+    :param flowcell_id: Flowcell information for the run
+    :param samplesheet_file: Samplesheet filepath
+    :param samplesheet_filename: Name of the samplesheet file, default SampleSheet.csv
+    :param collection_type: Collection type information for new fastq files, default demultiplexed_fastq
+    :param file_location: Fastq file location information, default HPC_PROJECT
+    :param collection_table: Collection table information for fastq files, default run
+    :param manifest_name: Name of the file manifest file, default file_manifest.csv
+    :param singlecell_tag: Samplesheet description for singlecell samples, default 10X
+    '''
     self.fastq_dir=fastq_dir
     self.samplesheet_file=samplesheet_file
     self.samplesheet_filename=samplesheet_filename
@@ -37,17 +57,22 @@ class Collect_seqrun_fastq_to_db:
     '''
     A method for finding fastq files and samplesheet under a run directory
     and loading the new files to db with their experiment and run information
-    It calculates following entries:
-    library_name: Same as sample_id unless mentioned in 'Description' field of
-                  samplesheet
-    experiment_igf_id: library_name combined with the platform name
-                       same library sequenced in different platform will be added
-                       as separate experiemnt
-    run_igf_id: experiment_igf_id combined with sequencing flowcell_id and lane_id
-    collection name: Same as run_igf_id, fastq files will be added to db collection
-                     using this id
-    collection type: Default type for fastq file collections are 'demultiplexed_fastq'
-    file_location: default value is 'HPC_PROJECT'  
+    
+    It calculates following entries
+    
+    * library_name
+        Same as sample_id unless mentioned in 'Description' field of samplesheet
+    * experiment_igf_id
+        library_name combined with the platform name
+        same library sequenced in different platform will be added as separate experiemnt
+    * run_igf_id
+        experiment_igf_id combined with sequencing flowcell_id and lane_id
+        collection name: Same as run_igf_id, fastq files will be added to db collection
+        using this id
+    * collection type
+        Default type for fastq file collections are 'demultiplexed_fastq'
+    * file_location
+        Default value is 'HPC_PROJECT'  
     '''
     try:
       fastq_files_list=self._collect_fastq_and_sample_info()
