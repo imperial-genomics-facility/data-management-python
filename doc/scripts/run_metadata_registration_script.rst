@@ -1,0 +1,2 @@
+Run metadata registration script
+================================

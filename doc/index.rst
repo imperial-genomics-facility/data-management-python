@@ -3,14 +3,28 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Python library for running IGF pipelines's documentation!
-====================================================================
+Python library for running IGF pipelines
+=========================================
 
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 4
+   :caption: Table of Contents
 
 
+List of python scripts
+**********************
+.. toctree::
+   :glob:
+
+   scripts/*
+
+
+List of python classes and functions
+************************************
+.. toctree::
+   :glob:
+   
+   modules/*
 
 Indices and tables
 ==================
