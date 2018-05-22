@@ -18,6 +18,10 @@ from igf_data.utils.dbutils import read_dbconf_json
 def find_new_seqrun_dir(path, dbconfig):
   '''
   A method for check and finding new sequencing run directory
+
+  :param path: A directory path for new sequencing run lookup
+  :param dbconfig: A database configuration file
+  :returns: A list of new sequencing run names for processing
   '''
   all_seqrun_dir=[f for f in os.listdir(path) if os.path.isdir(os.path.join(path,f))]    # list of all directories present under path
   new_seqrun_dir=check_seqrun_dir_in_db(all_seqrun_dir,dbconfig)                          
@@ -28,13 +32,13 @@ def validate_samplesheet_for_seqrun(seqrun_info,schema_json,output_dir,sampleshe
   '''
   A method for validating samplesheet and writing errors to a report file
   
-  :param seqrun_info : A dictionary containing seqrun name and path as key and values
-  :param schema_json : A json schema for samplesheet validation
-  :param output_dir : A directory path for writing output report files
-  :param samplesheet_file : Samplesheet filename, default 'SampleSheet.csv'
+  :param seqrun_info: A dictionary containing seqrun name and path as key and values
+  :param schema_json: A json schema for samplesheet validation
+  :param output_dir: A directory path for writing output report files
+  :param samplesheet_file: Samplesheet filename, default 'SampleSheet.csv'
   
-  :return new_seqrun_info : A new dictionary containing seqrun name and path as key and values
-  :return error_file_list : A dictionary containing seqrun name and error file paths as key and values
+  :returns: new_seqrun_info, A new dictionary containing seqrun name and path as key and values
+  :returns: error_file_list, A dictionary containing seqrun name and error file paths as key and values
   '''
   new_seqrun_info=dict()
   error_file_list=dict()
@@ -68,10 +72,11 @@ def check_for_registered_project_and_sample(seqrun_info,dbconfig,samplesheet_fil
   A method for fetching project and sample records from samplesheet and checking for
   registered samples in db
   
-  required params:
-  seqrun_info: A dictionary containing seqrun name and path as key and values
-  dbconfig: A database configuration file
-  samplesheet_file: Name of samplesheet file, default is SampleSheet.csv
+  :param seqrun_info: A dictionary containing seqrun name and path as key and values
+  :param dbconfig: A database configuration file
+  :param samplesheet_file: Name of samplesheet file, default is SampleSheet.csv
+  :returns: A dictionary containing the new run information
+            A string message  containing database checking information
   '''
   try:
     msg=''
@@ -119,6 +124,12 @@ def check_for_registered_project_and_sample(seqrun_info,dbconfig,samplesheet_fil
 def check_finished_seqrun_dir(seqrun_dir, seqrun_path, required_files=['RTAComplete.txt','SampleSheet.csv','RunInfo.xml']):
   '''
   A method for checking complete sequencing run directory
+  
+  :param seqrun_dir: A list of sequencing run names
+  :param seqrun_path: A directory path for new sequencing run look up
+  :param required_files: A list of files to check before marking sequencing run as complete,
+                         default: 'RTAComplete.txt','SampleSheet.csv','RunInfo.xml'
+  :returns: A dictionary containing valid sequencing run information
   '''
   valid_seqruns=dict()
   for seqrun in seqrun_dir:
@@ -137,9 +148,10 @@ def check_finished_seqrun_dir(seqrun_dir, seqrun_path, required_files=['RTACompl
 def check_seqrun_dir_in_db(all_seqrun_dir,dbconfig):
   '''
   A method for checking existing seqrun dirs in database
-  required params:
-  all_seqrun_dir: list of seqrun dirs to check
-  dbconfig: dbconfig
+  
+  :param all_seqrun_dir: list of seqrun dirs to check
+  :param dbconfig: dbconfig
+  :returns: A list containing new sequencing run information
   '''
   dbparam=read_dbconf_json(dbconfig)
   sra=SeqrunAdaptor(**dbparam)
@@ -155,10 +167,16 @@ def check_seqrun_dir_in_db(all_seqrun_dir,dbconfig):
 def calculate_file_md5(seqrun_info, md5_out, seqrun_path, file_suffix='md5.json', exclude_dir=[]):
   '''
   A method for file md5 calculation for all the sequencing run files
-  Output is a dictionary of json files
-  {seqrun_name: seqrun_md5_list_path}
-  Format of the json file
-  [{"seqrun_file_name":"file_path","file_md5":"md5_value"}]
+  
+  :param seqrun_info: A dictionary containing sequencing run information
+  :param md5_out: JSON md5 file output directory
+  :param file_suffix: Suffix information for new JSON md5 files, default: md5.json
+  :param exclude_dir: A list of directories to exclude from the file look up
+  :returns:  Output is a dictionary of json files
+  
+      {seqrun_name: seqrun_md5_list_path}
+      Format of the json file
+      [{"seqrun_file_name":"file_path","file_md5":"md5_value"}]
   '''
   seqrun_and_md5=dict()
   for seqrun_name, seqrun_path in seqrun_info.items():
@@ -185,6 +203,11 @@ def calculate_file_md5(seqrun_info, md5_out, seqrun_path, file_suffix='md5.json'
 def prepare_seqrun_for_db(seqrun_name, seqrun_path, session_class):
   '''
   A method for preparing seqrun data for database
+  
+  :param seqrun_name: A sequencing run name
+  :param seqrun_path: A directory path for sequencing run look up
+  :param session_class: A database session class
+  :returns: A dictionary containing information to populate the seqrun table in database
   '''
   try:
     runinfo_file=os.path.join(seqrun_path,'RunInfo.xml')
@@ -236,9 +259,10 @@ def prepare_seqrun_for_db(seqrun_name, seqrun_path, session_class):
 def seed_pipeline_table_for_new_seqrun(pipeline_name, dbconfig):
   '''
   A method for seeding pipelines for the new seqruns
-  required params:
-  pipeline_name: A pipeline name
-  dbconfig: A dbconfig file
+  
+  :param pipeline_name: A pipeline name
+  :param dbconfig: A dbconfig file
+  :returns: Nill
   '''
   dbparam=None
   with open(dbconfig, 'r') as json_data:
@@ -256,6 +280,12 @@ def seed_pipeline_table_for_new_seqrun(pipeline_name, dbconfig):
 def load_seqrun_files_to_db(seqrun_info, seqrun_md5_info, dbconfig, file_type='ILLUMINA_BCL_MD5'):
   '''
   A method for loading md5 lists to collection and files table
+  
+  :param seqrun_info: A dictionary containing the sequencing run information
+  :param seqrun_md5_info: A dictionary containing the sequencing run JSON md5 file info
+  :param dbconfig: A database configuration file
+  :param file_type: A collection type information for loading the JSON files to database
+  :returns: Nill
   '''
   dbparam=None
   with open(dbconfig, 'r') as json_data:
