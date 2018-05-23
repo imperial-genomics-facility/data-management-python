@@ -40,7 +40,8 @@ class AlignmentSeedFactory(IGFBaseJobFactory):
       pa = PipelineAdaptor(**{'session_class':igf_session_class})               # get db adaptor
       pa.start_session()                                                        # connect to db
       (pipeseeds_data,table_data) = \
-                         pa.fetch_alignment_seed_with_table_data(pipeline_name) # fetch requires entries as list of dictionaries from table for the seeded entries
+          pa.fetch_pipeline_seed_with_table_data(pipeline_name=pipeline_name,
+                                                 table_name='experiment')       # fetch requires entries as list of dictionaries from table for the seeded entries
       if not isinstance(pipeseeds_data,pd.DataFrame) or \
          not isinstance(table_data,pd.DataFrame):
         raise AttributeError('Expecting a pandas dataframe of pipeseed data and received {0}, {1}').\
