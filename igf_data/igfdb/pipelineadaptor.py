@@ -78,25 +78,27 @@ class PipelineAdaptor(BaseAdaptor):
 
   def fetch_pipeline_seed_with_table_data(self, pipeline_name, status='SEEDED'):
     '''
-    A method for fetching linked table records for the seeded entires in pipeseed table
-    required params:
-    pipeline_name: a pipeline name
-    optional params:
-    status: default is SEEDED
+    A method for fetching linked table records for the seeded entries in pipeseed table
+    
+    :param pipeline_name: A pipeline name
+    :param status: A text label for seeded status, default is SEEDED
+    :returns: Two pandas dataframe for pipeline_seed entries and data from other tables
     '''
     try:
-      pipeseed_query=self.session.query(Pipeline_seed). \
-                                  join(Pipeline). \
-                                  filter(Pipeline_seed.status==status). \
+      pipeseed_data=pd.DataFrame()
+      table_data=pd.DataFrame()                                                 # return empty dataframes if no data found
+
+      pipeseed_query=self.session.query(Pipeline_seed).\
+                                  join(Pipeline).\
+                                  filter(Pipeline_seed.status==status).\
                                   filter(Pipeline.pipeline_name==pipeline_name)
       pipeseed_data=self.fetch_records(query=pipeseed_query)
-     
-      if (len(pipeseed_data.to_dict(orient='records'))>0): 
+
+      if (len(pipeseed_data.to_dict(orient='records'))>0):
         table_data=pd.concat([self.__map_seed_data_to_foreign_table(data=record) \
-                             for record in pipeseed_data.to_dict(orient='records')], axis=0)  # transform dataframe to dictionary and map records
-      else:
-        pipeseed_data=pd.DataFrame()
-        table_data=pd.DataFrame()      # create empty dataframes if no dat found
+                             for record in pipeseed_data.to_dict(orient='records')], 
+                                                                 axis=0)        # transform dataframe to dictionary and map records
+
       return (pipeseed_data, table_data)
     except:
       raise
