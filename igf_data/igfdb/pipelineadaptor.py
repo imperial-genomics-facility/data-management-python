@@ -65,8 +65,7 @@ class PipelineAdaptor(BaseAdaptor):
     '''
     try:
       if not isinstance(data, pd.Series):
-        raise AttributeError('Expecting a pandas series and got {0}').\
-                             format(type(data))
+        data=pd.Series(data)
 
       if 'seed_table' not in data or \
          data.seed_table not in ('seqrun','experiment'):
@@ -102,7 +101,7 @@ class PipelineAdaptor(BaseAdaptor):
                           filter(Sample.status=='ACTIVE').\
                           filter(Experiment.status=='ACTIVE').\
                           filter(Experiment.experiment_id==data.seed_id)
-        new_data=self.fetch_records(query)
+      new_data=self.fetch_records(query)
       return new_data
     except:
       raise
@@ -135,7 +134,7 @@ class PipelineAdaptor(BaseAdaptor):
                                   filter(Pipeline_seed.seed_table==table_name)
       pipeseed_data=self.fetch_records(query=pipeseed_query)
 
-      if (len(pipeseed_data.to_dict(orient='records'))>0):
+      if len(pipeseed_data.index)>0:
         table_data=pd.concat([self.__map_seed_data_to_foreign_table(data=record) \
                              for record in pipeseed_data.to_dict(orient='records')], 
                                                                  axis=0)        # transform dataframe to dictionary and map records
