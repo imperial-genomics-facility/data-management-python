@@ -57,23 +57,56 @@ class PipelineAdaptor(BaseAdaptor):
   def __map_seed_data_to_foreign_table(self, data):
     '''
     An internal method for mapping seed records to foreign tables
-    required param:
-    data: a dictionary of a pandas series
-    '''
-    if not isinstance(data, pd.Series):
-      data = pd.Series(data)
 
-    query = None
-    if data.seed_table=='seqrun':  
-      query = self.session.query(Seqrun,Platform.platform_igf_id,Platform.model_name,Platform.vendor_name,
-                                 Platform.software_name,Platform.software_version). \
-                           join(Platform).\
-                           filter(Seqrun.reject_run=='N').\
-                           filter(Seqrun.seqrun_id==data.seed_id)
-      data=self.fetch_records(query)
-      return data
-    else:
-       raise ValueError('seed_table {0} not supported'.format(data.seed_table))
+    :param data: A pandas series containing pipeline_seed table entries
+    :returns: A pandas series containing following entries
+                seqrun - Entries from seqrun and platform tables
+                experiment - Entries from Project, Sample and Experiment tables
+    '''
+    try:
+      if not isinstance(data, pd.Series):
+        raise AttributeError('Expecting a pandas series and got {0}').\
+                             format(type(data))
+
+      if 'seed_table' not in data or \
+         data.seed_table not in ('seqrun','experiment'):
+        raise ValueError('seed_table {0} not supported'.format(data.seed_table))
+
+      new_data=pd.Series()
+      query = None
+      if data.seed_table=='seqrun':
+        query = self.session.query(Seqrun,
+                                   Platform.platform_igf_id,
+                                   Platform.model_name,
+                                   Platform.vendor_name,
+                                   Platform.software_name,
+                                   Platform.software_version). \
+                             join(Platform).\
+                             filter(Seqrun.platform_id==Platform.platform_id).\
+                             filter(Seqrun.reject_run=='N').\
+                             filter(Seqrun.seqrun_id==data.seed_id)
+      elif data.seed_table=='experiment':
+        query=self.session.query(Experiment,
+                                 Project.project_igf_id,
+                                 Sample.sample_igf_id,
+                                 Sample.species_name,
+                                 Sample.phenotype,
+                                 Sample.sex,
+                                 Sample.cell_line,
+                                 Sample.donor_anonymized_id,
+                                 Sample.sample_submitter_id).\
+                          join(Sample).\
+                          join(Project).\
+                          filter(Project.project_id==Sample.project_id).\
+                          filter(Project.project_id==Experiment.project_id).\
+                          filter(Sample.status=='ACTIVE').\
+                          filter(Experiment.status=='ACTIVE').\
+                          filter(Experiment.experiment_id==data.seed_id)
+        new_data=self.fetch_records(query)
+      return new_data
+    except:
+      raise
+
 
 
   def fetch_pipeline_seed_with_table_data(self, pipeline_name, status='SEEDED'):
