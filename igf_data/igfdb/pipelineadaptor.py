@@ -109,22 +109,30 @@ class PipelineAdaptor(BaseAdaptor):
 
 
 
-  def fetch_pipeline_seed_with_table_data(self, pipeline_name, status='SEEDED'):
+  def fetch_pipeline_seed_with_table_data(self, pipeline_name, table_name='seqrun',
+                                          status='SEEDED'):
     '''
     A method for fetching linked table records for the seeded entries in pipeseed table
     
     :param pipeline_name: A pipeline name
+    :param table_name: A table name for pipeline_seed lookup, default seqrun
     :param status: A text label for seeded status, default is SEEDED
     :returns: Two pandas dataframe for pipeline_seed entries and data from other tables
     '''
     try:
+      if table_name not in ('seqrun','experiment'):
+        raise ValueError('Not support for fetching pipeseed data for table {0}'.\
+                         format(table_name))
+
       pipeseed_data=pd.DataFrame()
       table_data=pd.DataFrame()                                                 # return empty dataframes if no data found
 
       pipeseed_query=self.session.query(Pipeline_seed).\
                                   join(Pipeline).\
+                                  filter(Pipeline.pipeline_id==Pipeline_seed.pipeline_id).\
                                   filter(Pipeline_seed.status==status).\
-                                  filter(Pipeline.pipeline_name==pipeline_name)
+                                  filter(Pipeline.pipeline_name==pipeline_name).\
+                                  filter(Pipeline_seed.seed_table==table_name)
       pipeseed_data=self.fetch_records(query=pipeseed_query)
 
       if (len(pipeseed_data.to_dict(orient='records'))>0):
