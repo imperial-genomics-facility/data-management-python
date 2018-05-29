@@ -14,6 +14,7 @@ def get_cellranger_count_input_list(db_session_class,experiment_igf_id,
   :param experiment_igf_id: An experiment igf id
   :param fastq_collection_type: Fastq collection type name, default demultiplexed_fastq
   :returns: A list of fastq dir path for the cellranger count run
+  :raises ValueError: It raises ValueError if no fastq directory found
   '''
   try:
     fastq_dir_list=[]                                                           # default list of fastq dirs
@@ -40,6 +41,10 @@ def get_cellranger_count_input_list(db_session_class,experiment_igf_id,
       fastq_dir_list.append(os.path.dirname(row.file_path))                     # add fastq directory path to the putput list
     if len(fastq_dir_list) > 0:
       fastq_dir_list=list(set(fastq_dir_list))                                  # remove redundant values
+    else:
+      raise ValueError('No fastq directory found for experiment {0}'.\
+                       format(experiment_igf_id))
+
     base.close_session()
     return fastq_dir_list                                                       # return list of fastq dirs
   except:
