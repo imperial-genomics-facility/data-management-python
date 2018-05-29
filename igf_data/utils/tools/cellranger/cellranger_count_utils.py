@@ -96,3 +96,30 @@ def check_cellranger_count_outrput(output_path,
 
   except:
     raise
+
+def get_cellranger_reference_genome(session_class,collection_name,
+                                    collection_type='cellranger_reference'):
+  '''
+  A function for fetching reference genome information for cellranger count
+  
+  :param session_class: A database session class
+  :param collection_name: A string as the reference genome collection name
+  :param collection_type: A string as the reference genome collection type,
+                          default cellranger_reference
+  :returns: A file table object
+  :raises ValueError: It raises error if no reference genome found for the collection_name
+  '''
+  try:
+    ca=CollectionAdaptor(**{'session_class':igf_session_class})
+    ca.start_session()
+    reference_genome=ca.get_collection_files(collection_name=collection_name,
+                                             collection_type=collection_type,
+                                             output_mode='one_or_none')         # get reference genome info from database
+    ca.close_session()
+    if reference_genome is None:
+      raise ValueError('No unique reference genome found for name {0}'.\
+                       format(collection_name))
+
+    return reference_genome
+  except:
+    raise
