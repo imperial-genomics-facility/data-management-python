@@ -110,7 +110,7 @@ def get_cellranger_reference_genome(session_class,collection_name,
   :raises ValueError: It raises error if no reference genome found for the collection_name
   '''
   try:
-    ca=CollectionAdaptor(**{'session_class':igf_session_class})
+    ca=CollectionAdaptor(**{'session_class':session_class})
     ca.start_session()
     reference_genome=ca.get_collection_files(collection_name=collection_name,
                                              collection_type=collection_type,
