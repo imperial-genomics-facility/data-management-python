@@ -47,7 +47,7 @@ try:
         slack_obj.post_message_to_channel(message, reaction='pass')
 
     except Exception as e:
-      failed_id_list.apend(project_id)                                          # add project id to the failed list
+      failed_id_list.append(project_id)                                          # add project id to the failed list
       message='Failed to reset barcode checking as OFF for project {0}'.\
               format(project_id)
       if log_slack:
