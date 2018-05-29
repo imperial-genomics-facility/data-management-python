@@ -137,19 +137,19 @@ class IGFBaseRunnable(eHive.BaseRunnable):
     return job_name
 
 
-  def format_tool_options(self,option):
+  def format_tool_options(self,option,separator=None):
     '''
-    A method for formatting tool options
-    before running commands tools via 
+    A method for formatting tool options before running commands tools via 
     subprocess module
-    required params:
-    option: A dictionary or json text as string
-    returns a formatted list
+    
+    :param option: A dictionary or json text as string
+    :param separator: A character to use as separator, default is None
+    :returns: a formatted list
     '''
     try:
       option_list=list()
       if isinstance(option, str):
-        option=json.loads(option.replace('\'','"'))                             # replace ' with " and convert ot json dict
+        option=json.loads(option.replace('\'','"'))                             # replace ' with " and convert to json dict
         
       if not isinstance(option, dict):
         raise ValueError('expecting param options as dictionary, got {0}'.\
@@ -157,7 +157,15 @@ class IGFBaseRunnable(eHive.BaseRunnable):
         
       option_list=[[param,value] if value else [param]
                        for param, value in option.items()]                      # remove empty values
-      option_list=[col for row in option_list for col in row]                   # flatten sub lists
+      if separator in None:
+        option_list=[col for row in option_list for col in row]                 # flatten sub lists
+      else:
+        if not isinstance(separator, str):
+          raise AttributeError('Expectian a string for param separator, got: {0}'.\
+                               format(type(separator)))
+
+        option_list=[separator.join(row) for row in option_list]                # use separator string to combine params
+
       option_list=list(map(lambda x: str(x),option_list))                       # convert lists values to string
       return option_list
     except:
