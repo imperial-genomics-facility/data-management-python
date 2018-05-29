@@ -111,7 +111,7 @@ def get_cellranger_reference_genome(session_class,collection_name,
   :param collection_name: A string as the reference genome collection name
   :param collection_type: A string as the reference genome collection type,
                           default cellranger_reference
-  :returns: A file table object
+  :returns: A file path
   :raises ValueError: It raises error if no reference genome found for the collection_name
   '''
   try:
@@ -125,6 +125,6 @@ def get_cellranger_reference_genome(session_class,collection_name,
       raise ValueError('No unique reference genome found for name {0}'.\
                        format(collection_name))
 
-    return reference_genome
+    return reference_genome.file_path
   except:
     raise
