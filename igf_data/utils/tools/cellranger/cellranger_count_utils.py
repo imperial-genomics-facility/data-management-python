@@ -52,20 +52,20 @@ def get_cellranger_count_input_list(db_session_class,experiment_igf_id,
       base.close_session()
     raise
 
-def check_cellranger_count_outrput(output_path,
-                                   file_list=['web_summary.html',
-                                              'metrics_summary.csv',
-                                              'possorted_genome_bam.bam',
-                                              'possorted_genome_bam.bam.bai',
-                                              'filtered_gene_bc_matrices_h5.h5',
-                                              'raw_gene_bc_matrices_h5.h5',
-                                              'molecule_info.h5',
-                                              'cloupe.cloupe',
-                                              'analysis/tsne/2_components/projection.csv',
-                                              'analysis/clustering/graphclust/clusters.csv',
-                                              'analysis/diffexp/kmeans_3_clusters/differential_expression.csv',
-                                              'analysis/pca/10_components/variance.csv'
-                                             ]):
+def check_cellranger_count_output(output_path,
+                                  file_list=['web_summary.html',
+                                             'metrics_summary.csv',
+                                             'possorted_genome_bam.bam',
+                                             'possorted_genome_bam.bam.bai',
+                                             'filtered_gene_bc_matrices_h5.h5',
+                                             'raw_gene_bc_matrices_h5.h5',
+                                             'molecule_info.h5',
+                                             'cloupe.cloupe',
+                                             'analysis/tsne/2_components/projection.csv',
+                                             'analysis/clustering/graphclust/clusters.csv',
+                                             'analysis/diffexp/kmeans_3_clusters/differential_expression.csv',
+                                             'analysis/pca/10_components/variance.csv'
+                                            ]):
   '''
   A function for checking cellranger count output
   
