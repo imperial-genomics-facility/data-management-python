@@ -2,6 +2,7 @@
 import os, subprocess
 from shlex import quote
 from shutil import copytree
+from fnmatch import fnmatch
 from igf_data.utils.fileutils import get_temp_dir,remove_dir
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.tools.cellranger.cellranger_count_utils import get_cellranger_count_input_list
@@ -18,7 +19,7 @@ class RunCellrangerCount(IGFBaseProcess):
         'force_overwrite':True,
         'cellranger_exe':None,
         'fastq_collection_type':'demultiplexed_fastq',
-        'reference_type':'cellranger_reference',
+        'reference_type':'cellranger_reference_transcriptome',
         'cellranger_options':'{ "--jobmode":"pbspro","--localcores":"1","--localmem":"4","--mempercore":"4","--maxjobs":"20"}',
         'job_timeout':172800,
       })
@@ -45,7 +46,7 @@ class RunCellrangerCount(IGFBaseProcess):
     :param base_work_dir: Base work directory path
     :param fastq_collection_type: Collection type name for input fastq files, default demultiplexed_fastq
     :param species_name: Reference genome collection name
-    :param reference_type: Reference genome collection type, default cellranger_reference
+    :param reference_type: Reference genome collection type, default cellranger_reference_transcriptome
     :param job_timeout: Timeout for cellranger job, default 48hrs
     :returns: Adding cellranger_output to the dataflow_params
     '''
@@ -112,7 +113,19 @@ class RunCellrangerCount(IGFBaseProcess):
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
       self.comment_asana_task(task_name=seqrun_igf_id, comment=message)         # send comment to Asana
       check_cellranger_count_output(output_path=cellranger_output)              # check output file
-      self.param('dataflow_params',{'cellranger_output':cellranger_output})     # pass on cellranger output path
+      bam_list=list()                                                           # define empty bamfile list
+      for file in os.listdir(check_cellranger_count_output):
+        if fnmatch(file, '*.bam'):
+          bam_list.append(file)                                                 # add all bams to bam_list
+
+      if len(bam_list)>1:
+        raise ValueError('More than one bam found for cellranger count run:{0}'.\
+                         format(check_cellranger_count_output))                 # check number of bams, presence of one bam is already validated by check method
+
+      reference_type=reference_type.replace('transcriptome','fasta')            # changing reference type for cram conversion
+      self.param('dataflow_params',{'cellranger_output':cellranger_output,
+                                    'bam_file':bam_list[0],
+                                    'reference_type':reference_type})           # pass on cellranger output path
     except:
       message='project: {2}, sample:{3}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
