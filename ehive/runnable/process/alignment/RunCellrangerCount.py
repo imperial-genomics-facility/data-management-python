@@ -69,6 +69,8 @@ class RunellrangerCount(IGFBaseProcess):
         os.makedirs(work_dir,mode=0o770)                                        # create work directory
 
       os.chdir(work_dir)                                                        # move to work dir
+      os.environ['PATH'] += '{0}{1}'.format(os.pathsep,
+                                            os.path.basename(cellranger_exe))   # add cellranger path to env
       reference_genome=get_cellranger_reference_genome(\
                          collection_name=species_name,
                          collection_type=reference_type,
