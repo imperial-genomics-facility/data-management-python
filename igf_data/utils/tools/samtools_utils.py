@@ -48,7 +48,7 @@ def convert_bam_to_cram(bam_file,reference_file,cram_path,force=False):
                         '-T{0}'.format(quote(reference_file)),
                         '-o{0}'.format(quote(temp_file)),
                         catch_stdout=False
-                        )                                                       # conver bam to cram using pysam view
+                        )                                                       # convert bam to cram using pysam view
     move_file(source_path=temp_file,
               destinationa_path=cram_path,
               force=force)                                                      # move cram file to original path
