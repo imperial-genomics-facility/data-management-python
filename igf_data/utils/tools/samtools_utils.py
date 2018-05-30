@@ -1,6 +1,8 @@
 import os
 import pysam
 import fnmatch
+from shlex import quote
+from igf_data.utils.fileutils import get_temp_dir,remove_dir,move_file
 
 def convert_bam_to_cram(bam_file,reference_file,cram_path,force=False):
   '''
@@ -38,16 +40,18 @@ def convert_bam_to_cram(bam_file,reference_file,cram_path,force=False):
     if not os.path.exists(os.path.join(bam_file,'.bai')):
       pysam.samtools.index(bam_file)                                            # generate bam index if its not present
 
-    bam_data=pysam.AlignmentFile(bam_file,
-                                 mode='rb',
-                                 check_sq=True,
-                                 require_index=True)                            # read bam file
-    bam_header=bam_data.header.as_dict()                                        # get bam header info
-    with pysam.AlignmentFile(cram_path,
-                             mode='wb',
-                             reference_filename=reference_file,
-                             header=bam_header) as outf:
-      for read in bam_data.fetch():
-        outf.write(read)                                                        # write entries to cram format
+    temp_file=os.path.join(get_temp_dir(),
+                           os.path.basename(cram_path))                         # get temp cram file path
+    pysam.samtools.view(bam_file,
+                        '-C',
+                        '-OCRAM',
+                        '-T{0}'.format(quote(reference_file)),
+                        '-o{0}'.format(quote(temp_file)),
+                        catch_stdout=False
+                        )                                                       # conver bam to cram using pysam view
+    move_file(source_path=temp_file,
+              destinationa_path=cram_path,
+              force=force)                                                      # move cram file to original path
+    remove_dir(dir_path=os.path.dirname(temp_file))                             # remove temp directory
   except:
     raise
