@@ -103,7 +103,7 @@ def check_cellranger_count_output(output_path,
     raise
 
 def get_cellranger_reference_genome(session_class,collection_name,
-                                    collection_type='cellranger_reference'):
+                                    collection_type='cellranger_reference_transcriptome'):
   '''
   A function for fetching reference genome information for cellranger count
   
