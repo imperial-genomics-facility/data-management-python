@@ -1,4 +1,5 @@
 import os, eHive, json
+from datetime import datetime
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.task_tracking.igf_slack import IGF_slack
 from igf_data.task_tracking.igf_asana import IGF_asana
@@ -136,6 +137,20 @@ class IGFBaseRunnable(eHive.BaseRunnable):
     job_name='{0}_{1}'.format(class_name,job_id)
     return job_name
 
+  def get_datestamp(self):
+    '''
+    A method for fetching datestamp
+    :returns: A padded string of format YYYYMMDD
+    '''
+    try:
+      time_tuple=datetime.now().timetuple()
+      datestamp='{0}{1:02d}{2:02d}'.format(time_tuple.tm_year,
+                                           time_tuple.tm_mon,
+                                           time_tuple.tm_mday)
+      return datestamp
+    except:
+      raise
+
   def get_job_work_dir(self,work_dir):
     '''
     A method for getting a job specific work directory
@@ -145,7 +160,8 @@ class IGFBaseRunnable(eHive.BaseRunnable):
     '''
     try:
       job_name=self.job_name()
-      work_dir=os.path.join(work_dir,job_name)                                  # get work directory name
+      datestamp=self.get_datestamp()
+      work_dir=os.path.join(work_dir,job_name,datestamp)                        # get work directory name
       if not os.path.exists(work_dir):
         os.makedirs(work_dir,mode=0o770)                                        # create work directory
 
