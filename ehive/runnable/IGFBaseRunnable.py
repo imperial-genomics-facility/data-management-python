@@ -136,6 +136,22 @@ class IGFBaseRunnable(eHive.BaseRunnable):
     job_name='{0}_{1}'.format(class_name,job_id)
     return job_name
 
+  def get_job_work_dir(self,work_dir):
+    '''
+    A method for getting a job specific work directory
+    
+    :param work_dir: A work directory path
+    :returns: A new job specific directory under the work dir
+    '''
+    try:
+      job_name=self.job_name()
+      work_dir=os.path.join(work_dir,job_name)                                  # get work directory name
+      if not os.path.exists(work_dir):
+        os.makedirs(work_dir,mode=0o770)                                        # create work directory
+
+      return work_dir
+    except:
+      raise
 
   def format_tool_options(self,option,separator=None):
     '''
