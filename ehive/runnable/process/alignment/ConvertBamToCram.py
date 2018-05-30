@@ -2,6 +2,7 @@
 import os
 from igf_data.utils.tools.samtools_utils import convert_bam_to_cram
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
+from igf_data.utils.tools.cellranger.cellranger_count_utils import get_cellranger_reference_genome
 
 class ConvertBamToCram(IGFBaseProcess):
   '''
@@ -38,7 +39,20 @@ class ConvertBamToCram(IGFBaseProcess):
       bam_file=self.param_required('bam_file')
       base_work_dir=self.param_required('base_work_dir')
 
-      work_dir=os.path.join(base_work_dir,project_igf_id,sample_igf_id,experiment_igf_id)
-      work_dir=self.get_job_work_dir(work_dir,work_dir)
+      reference_genome=get_cellranger_reference_genome(\
+                         collection_name=species_name,
+                         collection_type=reference_type,
+                         session_class=igf_session_class)                       # fetch reference genome for cellranger run
+      work_dir=os.path.join(base_work_dir,
+                            project_igf_id,
+                            sample_igf_id,
+                            experiment_igf_id)
+      work_dir=self.get_job_work_dir(work_dir,work_dir)                         # get workdir
+      cram_file=os.path.basename(bam_file).replace('.bam','.cram')              # get base cram file name
+      cram_file=os.path.join(work_dir,cram_file)                                # get cram file path in work dir
+      convert_bam_to_cram(bam_file=bam_file,
+                          reference_file=reference_genome,
+                          cram_path=cram_file)                                  # create new cramfile
+      self.param('dataflow_params',{'cram_file':cram_file})                     # pass on cram output path
     except:
       raise
