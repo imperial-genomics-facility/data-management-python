@@ -8,7 +8,7 @@ from igf_data.utils.tools.cellranger.cellranger_count_utils import get_cellrange
 from igf_data.utils.tools.cellranger.cellranger_count_utils import check_cellranger_count_output
 from igf_data.utils.tools.cellranger.cellranger_count_utils import get_cellranger_reference_genome
 
-class RunellrangerCount(IGFBaseProcess):
+class RunCellrangerCount(IGFBaseProcess):
   '''
   A ehive process class for running cellranger count pipeline
   '''
