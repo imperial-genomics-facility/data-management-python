@@ -20,6 +20,7 @@ class RunellrangerCount(IGFBaseProcess):
         'fastq_collection_type':'demultiplexed_fastq',
         'reference_type':'cellranger_reference',
         'cellranger_options':'{ "--jobmode":"pbspro","--localcores":"1","--localmem":"4","--mempercore":"4","--maxjobs":"20"}',
+        'job_timeout':172800,
       })
     return params_dict
 
@@ -45,6 +46,7 @@ class RunellrangerCount(IGFBaseProcess):
     :param fastq_collection_type: Collection type name for input fastq files, default demultiplexed_fastq
     :param species_name: Reference genome collection name
     :param reference_type: Reference genome collection type, default cellranger_reference
+    :param job_timeout: Timeout for cellranger job, default 48hrs
     :returns: Adding cellranger_output to the dataflow_params
     '''
     try:
@@ -57,6 +59,7 @@ class RunellrangerCount(IGFBaseProcess):
       cellranger_options=self.param_required('cellranger_options')
       base_work_dir=self.param_required('base_work_dir')
       fastq_collection_type=self.param_required('fastq_collection_type')
+      job_timeout=self.param_required('job_timeout')
       species_name=self.param('species_name')
       reference_type=self.param('reference_type')
 
@@ -85,10 +88,27 @@ class RunellrangerCount(IGFBaseProcess):
                       '{0}={1}'.format('--transcriptome',quote(reference_genome)),
                      ]                                                          # set initial parameters
       cellranger_cmd.extend(cellranger_options)                                 # add optional parameters
-      subprocess.check_call(cellranger_cmd)                                     # run cellranger count
+      message='started cellranger count for {0}, {1} {2}'.\
+              format(project_igf_id,
+                     sample_igf_id,
+                     experiment_igf_id)
+      self.post_message_to_slack(message,reaction='pass')                       # send log to slack
+      self.comment_asana_task(task_name=seqrun_igf_id, comment=message)         # send comment to Asana
+      message=' '.join(cellranger_cmd)
+      self.comment_asana_task(task_name=seqrun_igf_id, comment=message)         # send cellranger command to Asana
+
+      subprocess.check_call(cellranger_cmd,
+                            timeout=job_timeout)                                # run cellranger count
       cellranger_output=os.path.join(work_dir,
                                      experiment_igf_id,
                                      'outs')                                    # get cellranger output path
+      message='finished cellranger count for {0}, {1} {2} : {3}'.\
+              format(project_igf_id,
+                     sample_igf_id,
+                     experiment_igf_id,
+                     cellranger_output)
+      self.post_message_to_slack(message,reaction='pass')                       # send log to slack
+      self.comment_asana_task(task_name=seqrun_igf_id, comment=message)         # send comment to Asana
       check_cellranger_count_output(output_path=cellranger_output)              # check output file
       self.param('dataflow_params',{'cellranger_output':cellranger_output})     # pass on cellranger output path
     except:
