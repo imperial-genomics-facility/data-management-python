@@ -189,3 +189,17 @@ def preprocess_path_name(input_path):
     return output_path
   except:
     raise
+
+def get_file_extension(input_file):
+  '''
+  A method for extracting file suffix information
+  
+  :param input_file: A filepath for getting suffix
+  :returns: A suffix string or an empty string if no suffix found
+  '''
+  try:
+    output_suffix='.'.join(os.path.basename(input_file).\
+                           split('.')[1:])                                      # get complete suffix for input file path
+    return output_suffix
+  except:
+    raise
