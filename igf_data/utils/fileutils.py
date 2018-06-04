@@ -148,7 +148,7 @@ def remove_dir(dir_path):
   except:
     raise
 
-def get_datestamp():
+def get_datestamp_label():
   '''
   A method for fetching datestamp
   :returns: A padded string of format YYYYMMDD
