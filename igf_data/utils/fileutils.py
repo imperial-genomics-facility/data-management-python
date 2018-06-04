@@ -5,22 +5,28 @@ from tempfile import mkdtemp,gettempdir
 from shutil import rmtree, move, copy2
 
 def move_file(source_path,destinationa_path, force=False):
-    '''
-    A method for moving files to local disk
-    required params:
-    source_path: A source file path
-    destination_path: A destination file path
-    force: Optional, set True to overwrite existing
-           destination file, default is False
-    '''
-    try:
-        if not os.path.exists(source_path):
-            raise IOError('source file {0} not found'.format(source_path))
-        if os.path.exists(destinationa_path) and not force:
-            raise IOError('destination file {0} already present. set option "force" as True to overwrite it'.format(destinationa_path))
-        move(source_path, destinationa_path, copy_function=copy2)
-    except:
-        raise
+  '''
+  A method for moving files to local disk
+  
+  :param source_path: A source file path
+  :param destination_path: A destination file path, including the file name
+  :param force: Optional, set True to overwrite existing
+                destination file, default is False
+  '''
+  try:
+    if not os.path.exists(source_path):
+      raise IOError('source file {0} not found'.format(source_path))
+
+    if os.path.exists(destinationa_path) and not force:
+      raise IOError('destination file {0} already present. set option "force" as True to overwrite it'.format(destinationa_path))
+
+    dir_path=os.path.dirname(destinationa_path)
+    if not os.path.exists(dir_path):
+      os.makedirs(dir_path, mode=0o770)
+
+    move(source_path, destinationa_path, copy_function=copy2)
+  except:
+    raise
 
 
 def copy_local_file(source_path,destinationa_path, force=False):
