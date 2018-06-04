@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os, subprocess, hashlib
+from datetime import datetime
 from tempfile import mkdtemp,gettempdir
 from shutil import rmtree, move, copy2
 
@@ -144,5 +145,19 @@ def remove_dir(dir_path):
     if not os.path.isdir(dir_path):
       raise IOError('directory path {0} is not present'.format(dir_path))
     rmtree(dir_path)
+  except:
+    raise
+
+def get_datestamp():
+  '''
+  A method for fetching datestamp
+  :returns: A padded string of format YYYYMMDD
+  '''
+  try:
+    time_tuple=datetime.now().timetuple()
+    datestamp='{0}{1:02d}{2:02d}'.format(time_tuple.tm_year,
+                                         time_tuple.tm_mon,
+                                         time_tuple.tm_mday)
+    return datestamp
   except:
     raise
