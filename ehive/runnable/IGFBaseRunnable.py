@@ -4,6 +4,7 @@ from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.task_tracking.igf_slack import IGF_slack
 from igf_data.task_tracking.igf_asana import IGF_asana
 from igf_data.igfdb.baseadaptor import BaseAdaptor
+from igf_data.utils.fileutils import get_datestamp_label
 from numpy import isin
 
 
@@ -143,10 +144,7 @@ class IGFBaseRunnable(eHive.BaseRunnable):
     :returns: A padded string of format YYYYMMDD
     '''
     try:
-      time_tuple=datetime.now().timetuple()
-      datestamp='{0}{1:02d}{2:02d}'.format(time_tuple.tm_year,
-                                           time_tuple.tm_mon,
-                                           time_tuple.tm_mday)
+      datestamp=get_datestamp_label()
       return datestamp
     except:
       raise
