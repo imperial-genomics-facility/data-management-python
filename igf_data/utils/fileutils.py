@@ -37,6 +37,13 @@ def copy_local_file(source_path,destinationa_path, force=False):
             raise IOError('source file {0} not found'.format(source_path))
         if os.path.exists(destinationa_path) and not force:
             raise IOError('destination file {0} already present. set option "force" as True to overwrite it'.format(destinationa_path))
+        if os.path.isdir(destinationa_path):
+          dir_cmd=['mkdir','-p',destinationa_path]
+          subprocess.check_call(dir_cmd)
+        elif os.path.isfile(destinationa_path):
+          dir_cmd=['mkdir','-p',os.path.dirname(destinationa_path)]
+          subprocess.check_call(dir_cmd)
+
         copy2(source_path, destinationa_path, follow_symlinks=True)
     except:
         raise
