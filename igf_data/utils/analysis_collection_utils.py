@@ -1,5 +1,7 @@
 import os
 from igf_data.utils.fileutils import get_datestamp_label
+from igf_data.utils.fileutils import preprocess_path_name
+from igf_data.utils.fileutils import get_file_extension
 
 class Analysis_collection_utils:
   def __init__(self,project_igf_id,dbsession,base_path=None,sample_igf_id=None,experiment_igf_id=None,
@@ -30,23 +32,23 @@ class Analysis_collection_utils:
                                  'project'
     '''
     try:
-      project_igf_id=self.project_igf_id
-      sample_igf_id=self.sample_igf_id
-      experiment_igf_id=self.experiment_igf_id
-      run_igf_id=self.run_igf_id
-      collection_name=self.collection_name
-      collection_type=self.collection_type
-      collection_table=self.collection_table
-      base_path=self.base_path
-      rename_file=self.rename_file
-      add_datestamp=self.add_datestamp
-      analysis_name=self.analysis_name
-      tag_name=self.tag_name
+      self.project_igf_id=project_igf_id
+      self.sample_igf_id=sample_igf_id
+      self.experiment_igf_id=experiment_igf_id
+      self.run_igf_id=run_igf_id
+      self.collection_name=collection_name
+      self.collection_type=collection_type
+      self.collection_table=collection_table
+      self.base_path=base_path
+      self.rename_file=rename_file
+      self.add_datestamp=add_datestamp
+      self.analysis_name=analysis_name
+      self.tag_name=tag_name
     except:
       raise
 
-  def load_file_to_disk_and_db(self,withdraw_exisitng_collection=True,
-                               autosave_db=True):
+  def load_file_to_disk_and_db(self,input_file,withdraw_exisitng_collection=True,
+                               autosave_db=True,file_suffix=None):
     '''
     A method for loading analysis results to disk and database. File will be moved to a new path if base_path is present.
     Directory structure of the final path is based on the collection_table information.
@@ -56,8 +58,11 @@ class Analysis_collection_utils:
     experiment - base_path/project_igf_id/sample_igf_id/experiment_igf_id/analysis_name
     run - base_path/project_igf_id/sample_igf_id/experiment_igf_id/run_igf_id/analysis_name
     
+    :param input_file: Input file to load
     :param withdraw_exisitng_collection: Remove existing collection group
     :param autosave_db: Save changes to database, default True
+    :param file_suffix: Use a specific file suffix, use None if it should be same as original file
+                        e.g. input.vcf.gz to  output.vcf.gz
     '''
     try:
       if self.collection_name is None or \
@@ -87,7 +92,31 @@ class Analysis_collection_utils:
       if self.rename_file and self.analysis_name is None:
         raise ValueError('Analysis name is required for renaming file')         # check analysis name
 
-      if self.base_path is not None:                                            # move file if base_path is present
-        
+      final_path=''
+      if self.base_path is None:                                                # do not move file if base_path is absent
+        final_path=os.path.dirname(input_file)
+      else:                                                                     # move file path
+        if self.collection_type == 'project':
+          final_path=os.path.join(base_path,
+                                  self.project_igf_id,
+                                  self.analysis_name)                           # final path for project
+        elif self.collection_type == 'sample':
+          final_path=os.path.join(base_path,
+                                  self.project_igf_id,
+                                  self.sample_igf_id,
+                                  self.analysis_name)                           # final path for sample
+        elif self.collection_type == 'experiment':
+          final_path=os.path.join(base_path,
+                                  self.project_igf_id,
+                                  self.sample_igf_id,
+                                  self.experiment_igf_id,
+                                  self.analysis_name)                           # final path for experiment
+        elif self.collection_type == 'run':
+          final_path=os.path.join(base_path,
+                                  self.project_igf_id,
+                                  self.sample_igf_id,
+                                  self.experiment_igf_id,
+                                  self.run_igf_id,
+                                  self.analysis_name)                           # final path for run
     except:
       raise
