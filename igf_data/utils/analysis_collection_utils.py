@@ -2,6 +2,7 @@ import os
 from igf_data.utils.fileutils import get_datestamp_label
 from igf_data.utils.fileutils import preprocess_path_name
 from igf_data.utils.fileutils import get_file_extension
+from igf_data.utils.fileutils import move_file
 
 class Analysis_collection_utils:
   def __init__(self,project_igf_id,dbsession,base_path=None,sample_igf_id=None,experiment_igf_id=None,
@@ -48,7 +49,7 @@ class Analysis_collection_utils:
       raise
 
   def load_file_to_disk_and_db(self,input_file,withdraw_exisitng_collection=True,
-                               autosave_db=True,file_suffix=None):
+                               autosave_db=True,file_suffix=None,force=True):
     '''
     A method for loading analysis results to disk and database. File will be moved to a new path if base_path is present.
     Directory structure of the final path is based on the collection_table information.
@@ -63,6 +64,7 @@ class Analysis_collection_utils:
     :param autosave_db: Save changes to database, default True
     :param file_suffix: Use a specific file suffix, use None if it should be same as original file
                         e.g. input.vcf.gz to  output.vcf.gz
+    :param force: Toggle for removing existing file, default True
     '''
     try:
       if self.collection_name is None or \
@@ -118,5 +120,39 @@ class Analysis_collection_utils:
                                   self.experiment_igf_id,
                                   self.run_igf_id,
                                   self.analysis_name)                           # final path for run
+
+      if self.rename_file:
+        new_filename=''
+        if self.collection_type == 'project':
+          new_filename=self.project_igf_id
+        elif self.collection_type == 'sample':
+          new_filename=self.sample_igf_id
+        elif self.collection_type == 'experiment':
+          new_filename=self.experiment_igf_id
+        elif self.collection_type == 'run':
+          new_filename=self.run_igf_id
+
+        if new_filename =='':
+          raise ValueError('New filename not found for input file {0}'.\
+                           format(input_file))
+
+        new_filename='{0}_{1}'.format(new_filename,
+                                      self.analysis_name)
+        if self.add_datestamp:
+          datestamp=get_datestamp_label()                                       # collect datestamp
+          new_filename='{0}_[1}'.format(new_filename,
+                                        datestamp)                              # add datestamp to filepath
+
+        file_suffix=get_file_extension(input_file=input_file)                   # collect file suffix
+        if file_suffix =='':
+          raise ValueError('Missing file extension for new file name of {0}'.\
+                           format(input_file))                                  # raise error if not file suffix found
+
+        new_filename='{0}.{1}'.format(new_filename,file_suffix)                 # add file suffix to the new name
+        final_path=os.path.join(final_path,
+                                new_filename)                                   # get new filepath
+        move_file(source_path=input_file,
+                  destinationa_path=final_path,
+                  force=force)                                                  # move file to destination dir
     except:
       raise
