@@ -3,8 +3,8 @@ from igf_data.utils.fileutils import get_datestamp_label
 
 class Analysis_collection_utils:
   def __init__(self,project_igf_id,dbsession,sample_igf_id=None,experiment_igf_id=None,
-               run_igf_id=None,collection_name=None,collection_type=None,
-               collection_table=None,rename_file=True,add_datestamp=True,
+               run_igf_id=None,collection_name=None,collection_type=None,collection_table=None,
+               rename_file=True,add_datestamp=True,tag_name=None,
                analysis_name=None, allowed_collection=('sample','experiment','run','project')):
     '''
     A class for dealing with analysis file collection
@@ -20,6 +20,7 @@ class Analysis_collection_utils:
     :param rename_file: Rename file based on collection_table type while loading, default True
     :param add_datestamp: Add datestamp while loading the file
     :param analysis_name: Analysis name for the file, required for renaming while loading, default None
+    :param tag_name: Additional tag for filename,default None
     :param allowed_collection: List of allowed collection tables,
      
                                  'sample'
@@ -38,6 +39,7 @@ class Analysis_collection_utils:
       rename_file=self.rename_file
       add_datestamp=self.add_datestamp
       analysis_name=self.analysis_name
+      tag_name=self.tag_name
     except:
       raise
 
