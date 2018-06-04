@@ -13,6 +13,11 @@ class ConvertBamToCram(IGFBaseProcess):
     params_dict.update({
         'force_overwrite':True,
         'reference_type':None,
+        'load_file':True,
+        'path_map':None,
+        'collection_name':None,
+        'collection_type':'ANALYSIS_CRAM',
+        'collection_table':'experiment',
       })
     return params_dict
 
@@ -27,6 +32,12 @@ class ConvertBamToCram(IGFBaseProcess):
     :param reference_type:  Reference genome collection type, should have suffix '_fasta'
     :param species_name: Reference genome collection name
     :param base_work_dir: Base work directory path
+    :param load_file: A toggle for loading file to disk and database collection, default True
+    :param base_result_dir: Base work directory path
+    :param path_map: A path for loading output file in the base_result_dir, default None
+    :param collection_name: A database collection name for output file, default None
+    :param collection_type: A database collection type for output file, default ANALYSIS_CRAM
+    :param collection_table: A database collection table for output file, default experiment
     '''
     try:
       project_igf_id=self.param_required('project_igf_id')
@@ -38,6 +49,12 @@ class ConvertBamToCram(IGFBaseProcess):
       species_name=self.param_required('species_name')
       bam_file=self.param_required('bam_file')
       base_work_dir=self.param_required('base_work_dir')
+      base_result_dir=self.param_required('base_result_dir')
+      load_file=self.param_required('load_file')
+      path_map=self.param_required('path_map')
+      collection_name=self.param_required('collection_name')
+      collection_type=self.param_required('collection_type')
+      collection_table=self.param_required('collection_table')
 
       reference_genome=get_cellranger_reference_genome(\
                          collection_name=species_name,
