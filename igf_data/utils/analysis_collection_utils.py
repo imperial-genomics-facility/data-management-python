@@ -2,12 +2,12 @@ import os
 from igf_data.utils.fileutils import get_datestamp_label
 
 class Analysis_collection_utils:
-  def __init__(self,project_igf_id,dbsession,sample_igf_id=None,experiment_igf_id=None,
+  def __init__(self,project_igf_id,dbsession,base_path=None,sample_igf_id=None,experiment_igf_id=None,
                run_igf_id=None,collection_name=None,collection_type=None,collection_table=None,
                rename_file=True,add_datestamp=True,tag_name=None,
                analysis_name=None, allowed_collection=('sample','experiment','run','project')):
     '''
-    A class for dealing with analysis file collection
+    A class for dealing with analysis file collection.
     
     :param project_igf_id: A project name string
     :param dbsession: An active database session
@@ -17,6 +17,7 @@ class Analysis_collection_utils:
     :param collection_name: Collection name information for file, default None
     :param collection_type: Collection type information for file, default None
     :param collection_table: Collection table information for file, default None
+    :param base_path: A base filepath to move file while loading, default None
     :param rename_file: Rename file based on collection_table type while loading, default True
     :param add_datestamp: Add datestamp while loading the file
     :param analysis_name: Analysis name for the file, required for renaming while loading, default None
@@ -36,6 +37,7 @@ class Analysis_collection_utils:
       collection_name=self.collection_name
       collection_type=self.collection_type
       collection_table=self.collection_table
+      base_path=self.base_path
       rename_file=self.rename_file
       add_datestamp=self.add_datestamp
       analysis_name=self.analysis_name
@@ -46,7 +48,13 @@ class Analysis_collection_utils:
   def load_file_to_disk_and_db(self,withdraw_exisitng_collection=True,
                                autosave_db=True):
     '''
-    A method for loading analysis results to disk and database
+    A method for loading analysis results to disk and database. File will be moved to a new path if base_path is present.
+    Directory structure of the final path is based on the collection_table information.
+    
+    project - base_path/project_igf_id/analysis_name
+    sample - base_path/project_igf_id/sample_igf_id/analysis_name
+    experiment - base_path/project_igf_id/sample_igf_id/experiment_igf_id/analysis_name
+    run - base_path/project_igf_id/sample_igf_id/experiment_igf_id/run_igf_id/analysis_name
     
     :param withdraw_exisitng_collection: Remove existing collection group
     :param autosave_db: Save changes to database, default True
@@ -79,6 +87,7 @@ class Analysis_collection_utils:
       if self.rename_file and self.analysis_name is None:
         raise ValueError('Analysis name is required for renaming file')         # check analysis name
 
-
+      if self.base_path is not None:                                            # move file if base_path is present
+        
     except:
       raise
