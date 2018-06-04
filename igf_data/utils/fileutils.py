@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import os, subprocess, hashlib
+import os,subprocess,hashlib,string,re
 from datetime import datetime
 from tempfile import mkdtemp,gettempdir
 from shutil import rmtree, move, copy2
@@ -159,5 +159,33 @@ def get_datestamp_label():
                                          time_tuple.tm_mon,
                                          time_tuple.tm_mday)
     return datestamp
+  except:
+    raise
+
+def preprocess_path_name(input_path):
+  '''
+  A method for processing a filepath. It takes a file path or dirpath and
+  returns the same path after removing any whitespace or ascii symbols from the input.
+  
+  :param path: An input file path or directory path
+  :returns: A reformatted filepath or dirpath
+  '''
+  try:
+    symbols=string.punctuation                                                  # get all punctuation chars
+    symbols=symbols.replace('_','').\
+                    replace('-','',).\
+                    replace('.','')                                             # remove allowed characters
+    sub_patterns=[(r'[{0}]'.format(symbols),'_'),
+                  (r'\s+','_'),
+                  (r'_+','_'),
+                  (r'^_',''),
+                  (r'_$','')]                                                   # compile list of patterns
+    output=list()
+    for path in input.split('/'):
+      for old,new in sub_patterns:
+        path=re.sub(old,new,path)
+      output.append(path)                                                       # substitute from list of patterns
+    output_path='/'.join(output)                                                # create output path
+    return output_path
   except:
     raise
