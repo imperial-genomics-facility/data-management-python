@@ -18,6 +18,7 @@ class ConvertBamToCram(IGFBaseProcess):
         'collection_name':None,
         'collection_type':'ANALYSIS_CRAM',
         'collection_table':'experiment',
+        'withdraw_old_collection_group':True,
       })
     return params_dict
 
@@ -38,6 +39,7 @@ class ConvertBamToCram(IGFBaseProcess):
     :param collection_name: A database collection name for output file, default None
     :param collection_type: A database collection type for output file, default ANALYSIS_CRAM
     :param collection_table: A database collection table for output file, default experiment
+    :param withdraw_old_collection_group: A toggle for retiring old collection group, default True
     '''
     try:
       project_igf_id=self.param_required('project_igf_id')
@@ -55,6 +57,7 @@ class ConvertBamToCram(IGFBaseProcess):
       collection_name=self.param_required('collection_name')
       collection_type=self.param_required('collection_type')
       collection_table=self.param_required('collection_table')
+      withdraw_old_collection_group=self.param_required('withdraw_old_collection_group')
 
       reference_genome=get_cellranger_reference_genome(\
                          collection_name=species_name,
@@ -70,6 +73,14 @@ class ConvertBamToCram(IGFBaseProcess):
       convert_bam_to_cram(bam_file=bam_file,
                           reference_file=reference_genome,
                           cram_path=cram_file)                                  # create new cramfile
+      if load_file:
+        if path_map is None or collection_name is None:
+          raise ValueError('path_name and collection_name are required for loading cram file')
+
+        new_cram_file=os.path.join(base_result_dir,path_map,
+                                   os.path.basename(cram_file))                 # get new cram file path
+        
+      
       self.param('dataflow_params',{'cram_file':cram_file})                     # pass on cram output path
     except:
       raise
