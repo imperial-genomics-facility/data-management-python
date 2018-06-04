@@ -24,29 +24,27 @@ def move_file(source_path,destinationa_path, force=False):
 
 
 def copy_local_file(source_path,destinationa_path, force=False):
-    '''
-    A method for copy files to local disk
-    required params:
-    source_path: A source file path
-    destination_path: A destination file path
-    force: Optional, set True to overwrite existing
-           destination file, default is False
-    '''
-    try:
-        if not os.path.exists(source_path):
-            raise IOError('source file {0} not found'.format(source_path))
-        if os.path.exists(destinationa_path) and not force:
-            raise IOError('destination file {0} already present. set option "force" as True to overwrite it'.format(destinationa_path))
-        if os.path.isdir(destinationa_path):
-          dir_cmd=['mkdir','-p',destinationa_path]
-          subprocess.check_call(dir_cmd)
-        elif os.path.isfile(destinationa_path):
-          dir_cmd=['mkdir','-p',os.path.dirname(destinationa_path)]
-          subprocess.check_call(dir_cmd)
+  '''
+  A method for copy files to local disk
 
-        copy2(source_path, destinationa_path, follow_symlinks=True)
-    except:
-        raise
+  :param source_path: A source file path
+  :param destination_path: A destination file path, including the file name
+  :param force: Optional, set True to overwrite existing
+                destination file, default is False
+  '''
+  try:
+    if not os.path.exists(source_path):
+      raise IOError('source file {0} not found'.format(source_path))
+
+    if os.path.exists(destinationa_path) and not force:
+      raise IOError('destination file {0} already present. set option "force" as True to overwrite it'.format(destinationa_path))
+
+    dir_cmd=['mkdir','-p',os.path.dirname(destinationa_path)]
+    subprocess.check_call(dir_cmd)
+
+    copy2(source_path, destinationa_path, follow_symlinks=True)
+  except:
+    raise
 
 
 def copy_remote_file(source_path,destinationa_path, source_address=None, destination_address=None, copy_method='rsync',check_file=True):
