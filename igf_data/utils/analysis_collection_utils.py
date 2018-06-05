@@ -3,6 +3,7 @@ from igf_data.utils.fileutils import get_datestamp_label
 from igf_data.utils.fileutils import preprocess_path_name
 from igf_data.utils.fileutils import get_file_extension
 from igf_data.utils.fileutils import move_file
+from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 
 class Analysis_collection_utils:
   def __init__(self,project_igf_id,dbsession,base_path=None,sample_igf_id=None,experiment_igf_id=None,
@@ -34,6 +35,7 @@ class Analysis_collection_utils:
     '''
     try:
       self.project_igf_id=project_igf_id
+      self.dbsession=dbsession
       self.sample_igf_id=sample_igf_id
       self.experiment_igf_id=experiment_igf_id
       self.run_igf_id=run_igf_id
@@ -45,6 +47,34 @@ class Analysis_collection_utils:
       self.add_datestamp=add_datestamp
       self.analysis_name=analysis_name
       self.tag_name=tag_name
+    except:
+      raise
+
+  def create_or_update_file_collection(self,file_path,withdraw_exisitng_collection=True,
+                               autosave_db=True,force=True):
+    '''
+    A method for create or update file collection in db
+    
+    :param file_path: file path to load as db collection
+    :param withdraw_exisitng_collection: Remove existing collection group
+    :param autosave_db: Save changes to database, default True
+    :param force: Toggle for removing existing file collection, default True
+    '''
+    try:
+      ca=CollectionAdaptor(**{'session':self.dbsession})
+      collection_exists=ca.get_collection_files(collection_name=self.collection_name,
+                                                collection_type=self.collection_type)
+      if len(collection_exists.index) >0:
+         if withdraw_exisitng_collection:
+           pass
+         else:
+           data=[{'name':self.collection_name,
+                  'type':self.collection_type,
+                  'table':self.collection_table,
+                  'file_path':file_path}]
+           ca.load_file_and_create_collection(data=data,
+                                              autosave=autosave_db)
+        
     except:
       raise
 
@@ -151,6 +181,7 @@ class Analysis_collection_utils:
         new_filename='{0}.{1}'.format(new_filename,file_suffix)                 # add file suffix to the new name
         final_path=os.path.join(final_path,
                                 new_filename)                                   # get new filepath
+        
         move_file(source_path=input_file,
                   destinationa_path=final_path,
                   force=force)                                                  # move file to destination dir
