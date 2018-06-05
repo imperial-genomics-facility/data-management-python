@@ -189,6 +189,7 @@ class CollectionAdaptor(BaseAdaptor):
     except:
       raise
 
+
   def _tag_existing_collection_data(self,data,tag='EXISTS',tag_column='data_exists'):
     '''
     An internal method for checking a dataframe for existing collection record
@@ -213,6 +214,7 @@ class CollectionAdaptor(BaseAdaptor):
       return data
     except:
       raise
+
 
   def fetch_collection_name_and_table_from_file_path(self,file_path):
     '''
@@ -241,8 +243,8 @@ class CollectionAdaptor(BaseAdaptor):
                           format(len(results)))
     except:      
       raise   
-      
-      
+
+
   def create_collection_group(self, data, autosave=True, required_collection_column=['name','type'],required_file_column='file_path'):
     '''
     A function for creating collection group, a link between a file and a collection
