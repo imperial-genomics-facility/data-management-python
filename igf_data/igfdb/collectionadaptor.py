@@ -132,8 +132,9 @@ class CollectionAdaptor(BaseAdaptor):
       raise
 
 
-  def load_file_and_create_collection(self,data,autosave=True, hasher='md5', \
-                                      required_coumns=['name','type','table',\
+  def load_file_and_create_collection(self,data,autosave=True, hasher='md5',
+                                      calculate_file_size_and_md5=True,
+                                      required_coumns=['name','type','table',
                                                        'file_path','location']):
     '''
     A function for loading files to db and creating collections
@@ -151,10 +152,13 @@ class CollectionAdaptor(BaseAdaptor):
         raise ValueError('missing required columns: {0}'.\
                          format(data.columns))
 
-      data['md5']=data['file_path'].map(lambda x: \
-                                        calculate_file_checksum(filepath=x, \
-                                                              hasher=hasher))   # calculate file checksum
-      data['size']=data['file_path'].map(lambda x: os.path.getsize(x))          # calculate file size 
+      if calculate_file_size_and_md5:
+        data['md5']=data['file_path'].\
+                    map(lambda x: \
+                    calculate_file_checksum(filepath=x,
+                                            hasher=hasher))                     # calculate file checksum
+        data['size']=data['file_path'].\
+                     map(lambda x: os.path.getsize(x))                          # calculate file size
 
       file_columns=['file_path','md5','size','location']
       file_data=data.loc[:,file_columns]
@@ -310,12 +314,15 @@ if __name__=='__main__':
   from sqlalchemy import create_engine
   from igf_data.igfdb.igfTables import Base
   from igf_data.utils.dbutils import read_dbconf_json
+  from igf_data.utils.fileutils import get_temp_dir
+  from igf_data.utils.fileutils import remove_dir
 
   dbparams = read_dbconf_json('data/dbconfig.json')
   dbname=dbparams['dbname']
   if os.path.exists(dbname):
     os.remove(dbname)
 
+  temp_dir=get_temp_dir()
   base=BaseAdaptor(**dbparams)
   Base.metadata.create_all(base.engine)
   base.start_session()
@@ -339,17 +346,22 @@ if __name__=='__main__':
   print(collection_exists)
   collection_data=[{ 'name':'IGF001_MISEQ',
                      'type':'ALIGNMENT_CRAM',
-                     'table':'experiment'
+                     'table':'experiment',
+                     'file_path':'a.cram'
                    },
                    { 'name':'IGF003_MISEQ',
                      'type':'ALIGNMENT_CRAM',
-                     'table':'experiment'
+                     'table':'experiment',
+                     'file_path':'b.cram'
                    }]
   collection_data=pd.DataFrame(collection_data)
-  collection_data=collection_data.apply(lambda x: \
-                                        ca._tag_existing_collection_data(x),
-                                        axis=1)
-  print(collection_data.to_dict(orient='records'))
+  ca.load_file_and_create_collection(data=collection_data,
+                                     calculate_file_size_and_md5=False)
+  cg_data=ca.get_collection_files(collection_name='IGF001_MISEQ',
+                                  collection_type='ALIGNMENT_CRAM',
+                                  output_mode='dataframe')
+  print(cg_data.to_dict(orient='records'))
   base.close_session()
+  remove_dir(temp_dir)
   if os.path.exists(dbname):
     os.remove(dbname)
