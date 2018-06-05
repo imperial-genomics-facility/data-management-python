@@ -180,7 +180,7 @@ class CollectionAdaptor(BaseAdaptor):
     except:
       raise
 
-  def _tag_existing_collection_data(self,data,tag='EXISTS'):
+  def _tag_existing_collection_data(self,data,tag='EXISTS',tag_column='data_exists'):
     '''
     An internal method for checking a dataframe for existing collection record
     
@@ -188,9 +188,19 @@ class CollectionAdaptor(BaseAdaptor):
                         name
                         type
     :param tag: A text tag for marking existing collections, default EXISTS
+    :param tag_column: A column name for adding the tag, default data_exists
     :returns: A pandas series
     '''
     try:
+      if not isinstance(data, pd.Series):
+        data=pd.Series(data)
+
+      data[tag_column]=''
+      collection_exists=self.check_collection_records_name_and_type(collection_name=data['name'],
+                                                                    collection_type=data['table'])
+      if collection_exists:
+        data[tag_column]=tag
+
       return data
     except:
       raise
