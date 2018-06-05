@@ -180,15 +180,14 @@ class CollectionAdaptor(BaseAdaptor):
     except:
       raise
 
-  def _filter_existing_collection_from_table_data(self,data,collection_name,collection_type):
+  def _tag_existing_collection_data(self,data,tag='EXISTS'):
     '''
     An internal method for checking a dataframe for existing collection record
     
     :param data: A Pandas data series or a dictionary with following keys
                         name
                         type
-    :param collection_name: a collection name value
-    :param collection_type: a collection type value
+    :param tag: A text tag for marking existing collections, default EXISTS
     :returns: A pandas series
     '''
     try:
@@ -314,7 +313,7 @@ if __name__=='__main__':
   base.close_session()
   base.start_session()
   ca=CollectionAdaptor(**{'session':base.session})
-  collection_exists=ca.check_collection_records_name_and_type(collection_name='IGF001_MISEQ',
+  collection_exists=ca.fetch_collection_records_name_and_type(collection_name='IGF001_MISEQ',
                                                               collection_type='ALIGNMENT_CRAM')
   print(collection_exists)
   base.close_session()
