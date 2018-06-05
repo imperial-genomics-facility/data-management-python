@@ -137,44 +137,53 @@ class CollectionAdaptor(BaseAdaptor):
                                                        'file_path','location']):
     '''
     A function for loading files to db and creating collections
-    required params:
-    data: A list of dictionary or a Pandas dataframe
-    autosave: Save data to db, default: True
-    required_coumns: List of required columns
-    hasher: Method for file checksum, default: md5
+    
+    :param data: A list of dictionary or a Pandas dataframe
+    :param autosave: Save data to db, default True
+    :param required_coumns: List of required columns
+    :param hasher: Method for file checksum, default md5
     '''
     try:
       if not isinstance(data, pd.DataFrame):
         data=pd.DataFrame(data)
-      
+
       if not set(data.columns).issubset(set(required_coumns)):
         raise ValueError('missing required columns: {0}'.\
                          format(data.columns))
-      
+
       data['md5']=data['file_path'].map(lambda x: \
                                         calculate_file_checksum(filepath=x, \
                                                               hasher=hasher))   # calculate file checksum
       data['size']=data['file_path'].map(lambda x: os.path.getsize(x))          # calculate file size 
-    
+
       file_columns=['file_path','md5','size','location']
       file_data=data.loc[:,file_columns]
       file_data=file_data.drop_duplicates()
-    
+
       collection_columns=['name','type','table']
       collection_data=data.loc[:,collection_columns]
       collection_data=collection_data.drop_duplicates()
-    
+
       file_group_column=['name','type','file_path']
       file_group_data=data.loc[:,file_group_column]
       file_group_data=file_group_data.drop_duplicates()
-    
+
       fa=FileAdaptor(**{'session':self.session})
-      fa.store_file_and_attribute_data(data=file_data,autosave=False)
+      fa.store_file_and_attribute_data(data=file_data,autosave=False)           # store file data
       self.session.flush()
-      self.store_collection_and_attribute_data(data=collection_data,\
-                                               autosave=False)
-      self.session.flush()
-      self.create_collection_group(data=file_group_data,autosave=False)
+      collection_data=collection_data.apply(lambda x: \
+                                            self._tag_existing_collection_data(\
+                                              data=x,\
+                                              tag='EXISTS',\
+                                              tag_column='data_exists'),
+                                            axis=1)                             # tag existing collections
+      collection_data=collection_data[collection_data['data_exists']!='EXISTS'] # filter existing collections
+      if len(collection_data.index) > 0:
+        self.store_collection_and_attribute_data(data=collection_data,\
+                                                 autosave=False)                # store new collection if any entry present
+        self.session.flush()
+
+      self.create_collection_group(data=file_group_data,autosave=False)         # store collection group info
       if autosave:
         self.commit_session()
     except:
@@ -326,6 +335,19 @@ if __name__=='__main__':
   collection_exists=ca.fetch_collection_records_name_and_type(collection_name='IGF001_MISEQ',
                                                               collection_type='ALIGNMENT_CRAM')
   print(collection_exists)
+  collection_data=[{ 'name':'IGF001_MISEQ',
+                     'type':'ALIGNMENT_CRAM',
+                     'table':'experiment'
+                   },
+                   { 'name':'IGF003_MISEQ',
+                     'type':'ALIGNMENT_CRAM',
+                     'table':'experiment'
+                   }]
+  collection_data=pd.DataFrame(collection_data)
+  collection_data=collection_data.apply(lambda x: \
+                                        ca._tag_existing_collection_data(x),
+                                        axis=1)
+  print(collection_data.to_dict(orient='records'))
   base.close_session()
   if os.path.exists(dbname):
     os.remove(dbname)
