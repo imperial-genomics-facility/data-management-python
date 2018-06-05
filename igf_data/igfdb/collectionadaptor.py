@@ -179,7 +179,22 @@ class CollectionAdaptor(BaseAdaptor):
         self.commit_session()
     except:
       raise
-  
+
+  def _filter_existing_collection_from_table_data(self,data,collection_name,collection_type):
+    '''
+    An internal method for checking a dataframe for existing collection record
+    
+    :param data: A Pandas data series or a dictionary with following keys
+                        name
+                        type
+    :param collection_name: a collection name value
+    :param collection_type: a collection type value
+    :returns: A pandas series
+    '''
+    try:
+      return data
+    except:
+      raise
 
   def fetch_collection_name_and_table_from_file_path(self,file_path):
     '''
@@ -271,3 +286,37 @@ class CollectionAdaptor(BaseAdaptor):
        raise
 
 
+if __name__=='__main__':
+  from sqlalchemy import create_engine
+  from igf_data.igfdb.igfTables import Base
+  from igf_data.utils.dbutils import read_dbconf_json
+
+  dbparams = read_dbconf_json('data/dbconfig.json')
+  dbname=dbparams['dbname']
+  if os.path.exists(dbname):
+    os.remove(dbname)
+
+  base=BaseAdaptor(**dbparams)
+  Base.metadata.create_all(base.engine)
+  base.start_session()
+  collection_data=[{ 'name':'IGF001_MISEQ',
+                     'type':'ALIGNMENT_CRAM',
+                     'table':'experiment'
+                   },
+                   { 'name':'IGF002_MISEQ',
+                     'type':'ALIGNMENT_CRAM',
+                     'table':'experiment'
+                   }]
+
+  ca=CollectionAdaptor(**{'session':base.session})
+  ca.store_collection_and_attribute_data(data=collection_data,
+                                         autosave=True)
+  base.close_session()
+  base.start_session()
+  ca=CollectionAdaptor(**{'session':base.session})
+  collection_exists=ca.check_collection_records_name_and_type(collection_name='IGF001_MISEQ',
+                                                              collection_type='ALIGNMENT_CRAM')
+  print(collection_exists)
+  base.close_session()
+  if os.path.exists(dbname):
+    os.remove(dbname)
