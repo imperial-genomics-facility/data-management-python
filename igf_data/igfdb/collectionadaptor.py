@@ -212,7 +212,7 @@ class CollectionAdaptor(BaseAdaptor):
       data[tag_column]=''
       collection_exists=self.check_collection_records_name_and_type(collection_name=data['name'],
                                                                     collection_type=data['table'])
-      if collection_exists:
+      if collection_exists is not None:
         data[tag_column]=tag
 
       return data
@@ -347,20 +347,25 @@ if __name__=='__main__':
   collection_data=[{ 'name':'IGF001_MISEQ',
                      'type':'ALIGNMENT_CRAM',
                      'table':'experiment',
-                     'file_path':'a.cram'
                    },
                    { 'name':'IGF003_MISEQ',
                      'type':'ALIGNMENT_CRAM',
                      'table':'experiment',
-                     'file_path':'b.cram'
                    }]
   collection_data=pd.DataFrame(collection_data)
-  ca.load_file_and_create_collection(data=collection_data,
-                                     calculate_file_size_and_md5=False)
-  cg_data=ca.get_collection_files(collection_name='IGF001_MISEQ',
-                                  collection_type='ALIGNMENT_CRAM',
-                                  output_mode='dataframe')
-  print(cg_data.to_dict(orient='records'))
+  collection_data=collection_data.apply(lambda x: \
+                                            ca._tag_existing_collection_data(\
+                                              data=x,\
+                                              tag='EXISTS',\
+                                              tag_column='data_exists'),
+                                            axis=1)                             # tag existing collections
+  collection_data=collection_data[collection_data['data_exists']!='EXISTS']
+  #ca.load_file_and_create_collection(data=collection_data,
+  #                                   calculate_file_size_and_md5=False)
+  #cg_data=ca.get_collection_files(collection_name='IGF001_MISEQ',
+  #                                collection_type='ALIGNMENT_CRAM',
+  #                                output_mode='dataframe')
+  print(collection_data.to_dict(orient='records'))
   base.close_session()
   remove_dir(temp_dir)
   if os.path.exists(dbname):
