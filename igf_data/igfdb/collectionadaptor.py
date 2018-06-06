@@ -14,6 +14,9 @@ class CollectionAdaptor(BaseAdaptor):
   def store_collection_and_attribute_data(self, data, autosave=True):
     '''
     A method for dividing and storing data to collection and attribute table
+    
+    :param data: A list of dictionary or a Pandas DataFrame
+    :param autosave: A toggle for saving changes to database, default True
     '''
     (collection_data, collection_attr_data)=self.divide_data_to_table_and_attribute(data=data)
     try:
@@ -32,13 +35,11 @@ class CollectionAdaptor(BaseAdaptor):
   def divide_data_to_table_and_attribute(self, data, required_column=['name', 'type'], attribute_name_column='attribute_name', attribute_value_column='attribute_value'):
     '''
     A method for separating data for Collection and Collection_attribute tables
-    required params:
-    required_column: column name to add to the attribute data
-    attribute_name_column: label for attribute name column
-    attribute_value_column: label for attribute value column
-
-    It returns two pandas dataframes, one for Collection and another for Collection_attribute table
-
+    
+    :param required_column: column name to add to the attribute data, default 'name', 'type'
+    :param attribute_name_column: label for attribute name column, default attribute_name
+    :param attribute_value_column: label for attribute value column, default attribute_value
+    :returns: Two pandas dataframes, one for Collection and another for Collection_attribute table
     '''
     if not isinstance(data, pd.DataFrame):
       data=pd.DataFrame(data)
@@ -53,10 +54,13 @@ class CollectionAdaptor(BaseAdaptor):
                                                               )
     return (collection_df, collection_attr_df)
 
- 
+
   def store_collection_data(self, data, autosave=False):
     '''
-    Load data to Collection table
+    A method for loading data to Collection table
+    
+    :param data: A list of dictionary or a Pandas DataFrame
+    :param autosave: A toggle for saving changes to database, default True
     '''
     try:
       self.store_records(table=Collection, data=data)
@@ -71,6 +75,10 @@ class CollectionAdaptor(BaseAdaptor):
   def store_collection_attributes(self, data, collection_id='', autosave=False):
     '''
     A method for storing data to Collectionm_attribute table
+    
+    :param data: A list of dictionary or a Pandas DataFrame
+    :param collection_id: A collection id, optional
+    :param autosave: A toggle for saving changes to database, default True
     '''
     try:
       if not isinstance(data, pd.DataFrame):
@@ -114,13 +122,14 @@ class CollectionAdaptor(BaseAdaptor):
     except:
       raise
 
+
   def fetch_collection_records_name_and_type(self, collection_name, collection_type, target_column_name=['name','type']):
     '''
     A method for fetching data for Collection table
-    required params:
-    collection_name: a collection name value
-    collection_type: a collection type value
-    target_column_name: a list of columns, default is ['name','type']
+    
+    :param collection_name: a collection name value
+    :param collection_type: a collection type value
+    :param target_column_name: a list of columns, default is ['name','type']
     '''
     try:
       column_list=[column for column in Collection.__table__.columns \
@@ -231,8 +240,9 @@ class CollectionAdaptor(BaseAdaptor):
     A method for fetching collection name and collection_table info using the
     file_path information. It will return None if the file doesn't have any 
     collection present in the database
-    required params:
-    file_path: A filepath info
+    
+    :param file_path: A filepath info
+    :returns: Collection name and collection table for first collection group
     '''
     try:
       collection_name=None
@@ -258,7 +268,17 @@ class CollectionAdaptor(BaseAdaptor):
   def create_collection_group(self, data, autosave=True, required_collection_column=['name','type'],required_file_column='file_path'):
     '''
     A function for creating collection group, a link between a file and a collection
-    [{'name':'a collection name', 'type':'a collection type', 'file_path': 'path'},]
+    
+    :param data: A list dictionary or a Pandas DataFrame with following columns
+                           name
+                           type
+                           file_path
+                 E.g. [{'name':'a collection name', 'type':'a collection type', 'file_path': 'path'},]
+    :param required_collection_column: List of required column for fetching collection,
+                                       default 'name','type'
+    :param required_file_column: Required column for fetching file information,
+                                 default file_path
+    :param autosave: A toggle for saving changes to database, default True
     '''
 
     if not isinstance(data, pd.DataFrame):
@@ -294,11 +314,10 @@ class CollectionAdaptor(BaseAdaptor):
   def get_collection_files(self, collection_name, collection_type='', output_mode='dataframe'):
     '''
     A method for fetching information from Collection, File, Collection_group tables
-    required params:
-    collection_name: a collection name to fetch the linked files
-    optional params:
-    collection_type: a collection type 
-    output_mode: dataframe / object
+    
+    :param collection_name: a collection name to fetch the linked files
+    :param collection_type: a collection type 
+    :param output_mode: dataframe / object
     '''
     if not hasattr(self, 'session'):
       raise AttributeError('Attribute session not found')
@@ -460,10 +479,15 @@ if __name__=='__main__':
   #collection_data=collection_data[collection_data['data_exists']!='EXISTS']
   ca.load_file_and_create_collection(data=collection_data,
                                      calculate_file_size_and_md5=False)
+  remove_data_list=[{'name':'IGF001_MISEQ',
+                     'type':'ALIGNMENT_CRAM',
+                     'table':'experiment',
+                     }]
+  ca.remove_collection_group_info(data=remove_data_list)
   cg_data=ca.get_collection_files(collection_name='IGF001_MISEQ',
                                   collection_type='ALIGNMENT_CRAM',
                                   output_mode='dataframe')
-  print(cg_data[['collection_id','file_id']].to_dict(orient='records'))
+  print(cg_data.to_dict(orient='records'))
   #print([element.file_path
   #         for row in cg_data
   #          for element in row
