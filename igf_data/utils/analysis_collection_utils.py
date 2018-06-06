@@ -50,10 +50,11 @@ class Analysis_collection_utils:
     except:
       raise
 
-  def create_or_update_file_collection(self,file_path,withdraw_exisitng_collection=True,
-                               autosave_db=True,force=True):
+  def create_or_update_analysis_collection(self,file_path,
+                                           withdraw_exisitng_collection=True,
+                                           autosave_db=True,force=True):
     '''
-    A method for create or update file collection in db
+    A method for create or update analysis file collection in db
     
     :param file_path: file path to load as db collection
     :param withdraw_exisitng_collection: Remove existing collection group
@@ -66,15 +67,18 @@ class Analysis_collection_utils:
                                                 collection_type=self.collection_type)
       if len(collection_exists.index) >0:
          if withdraw_exisitng_collection:
-           pass
+           remove_data=[{'name':self.collection_name,
+                         'type':self.collection_type,
+                       }]
+           ca.remove_collection_group_info(data=remove_data,
+                                           autosave=autosave_db)                # removing all existing collection groups for the collection name and type
          else:
-           data=[{'name':self.collection_name,
-                  'type':self.collection_type,
-                  'table':self.collection_table,
-                  'file_path':file_path}]
-           ca.load_file_and_create_collection(data=data,
-                                              autosave=autosave_db)
-        
+           collection_data=[{'name':self.collection_name,
+                             'type':self.collection_type,
+                             'table':self.collection_table,
+                             'file_path':file_path}]
+           ca.load_file_and_create_collection(data=collection_data,
+                                              autosave=autosave_db)             # load file, collection and create collection group
     except:
       raise
 
