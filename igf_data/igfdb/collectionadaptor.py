@@ -96,10 +96,10 @@ class CollectionAdaptor(BaseAdaptor):
   def check_collection_records_name_and_type(self, collection_name, collection_type):
     '''
     A method for checking existing data for Collection table
-    required params:
-    collection_name: a collection name value
-    collection_type: a collection type value
-    It returns True if the file is present in db or False if its not
+    
+    :param collection_name: a collection name value
+    :param collection_type: a collection type value
+    :returns: True if the file is present in db or False if its not
     '''
     try:
       collection_check=False
@@ -209,10 +209,16 @@ class CollectionAdaptor(BaseAdaptor):
       if not isinstance(data, pd.Series):
         data=pd.Series(data)
 
+      if 'name' not in data or \
+         'type' not in data:
+        raise ValueError('Required collection column name or type not found in data: {0}'.\
+                         format(data.to_dict()))
+
       data[tag_column]=''
-      collection_exists=self.check_collection_records_name_and_type(collection_name=data['name'],
-                                                                    collection_type=data['table'])
-      if collection_exists is not None:
+      collection_exists=self.check_collection_records_name_and_type(\
+                               collection_name=data['name'],
+                               collection_type=data['type'])
+      if collection_exists:
         data[tag_column]=tag
 
       return data
