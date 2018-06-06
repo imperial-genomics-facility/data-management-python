@@ -26,12 +26,11 @@ class Analysis_collection_utils:
     :param add_datestamp: Add datestamp while loading the file
     :param analysis_name: Analysis name for the file, required for renaming while loading, default None
     :param tag_name: Additional tag for filename,default None
-    :param allowed_collection: List of allowed collection tables,
-     
-                                 'sample'
-                                 'experiment'
-                                 'run'
-                                 'project'
+    :param allowed_collection: List of allowed collection tables
+                                 sample
+                                 experiment
+                                 run
+                                 project
     '''
     try:
       self.project_igf_id=project_igf_id
@@ -82,7 +81,8 @@ class Analysis_collection_utils:
     except:
       raise
 
-  def load_file_to_disk_and_db(self,input_file,withdraw_exisitng_collection=True,
+
+  def load_file_to_disk_and_db(self,input_file_list,withdraw_exisitng_collection=True,
                                autosave_db=True,file_suffix=None,force=True):
     '''
     A method for loading analysis results to disk and database. File will be moved to a new path if base_path is present.
@@ -93,7 +93,7 @@ class Analysis_collection_utils:
     experiment - base_path/project_igf_id/sample_igf_id/experiment_igf_id/analysis_name
     run - base_path/project_igf_id/sample_igf_id/experiment_igf_id/run_igf_id/analysis_name
     
-    :param input_file: Input file to load
+    :param input_file_list: A list of input file to load, all using the same collection info
     :param withdraw_exisitng_collection: Remove existing collection group
     :param autosave_db: Save changes to database, default True
     :param file_suffix: Use a specific file suffix, use None if it should be same as original file
@@ -128,66 +128,70 @@ class Analysis_collection_utils:
       if self.rename_file and self.analysis_name is None:
         raise ValueError('Analysis name is required for renaming file')         # check analysis name
 
-      final_path=''
-      if self.base_path is None:                                                # do not move file if base_path is absent
-        final_path=os.path.dirname(input_file)
-      else:                                                                     # move file path
-        if self.collection_type == 'project':
-          final_path=os.path.join(base_path,
-                                  self.project_igf_id,
-                                  self.analysis_name)                           # final path for project
-        elif self.collection_type == 'sample':
-          final_path=os.path.join(base_path,
-                                  self.project_igf_id,
-                                  self.sample_igf_id,
-                                  self.analysis_name)                           # final path for sample
-        elif self.collection_type == 'experiment':
-          final_path=os.path.join(base_path,
-                                  self.project_igf_id,
-                                  self.sample_igf_id,
-                                  self.experiment_igf_id,
-                                  self.analysis_name)                           # final path for experiment
-        elif self.collection_type == 'run':
-          final_path=os.path.join(base_path,
-                                  self.project_igf_id,
-                                  self.sample_igf_id,
-                                  self.experiment_igf_id,
-                                  self.run_igf_id,
-                                  self.analysis_name)                           # final path for run
+      for input_file in input_file_list:
+        final_path=''
+        if self.base_path is None:                                              # do not move file if base_path is absent
+          final_path=os.path.dirname(input_file)
+        else:                                                                   # move file path
+          if self.collection_type == 'project':
+            final_path=os.path.join(base_path,
+                                    self.project_igf_id,
+                                    self.analysis_name)                         # final path for project
+          elif self.collection_type == 'sample':
+            final_path=os.path.join(base_path,
+                                    self.project_igf_id,
+                                    self.sample_igf_id,
+                                    self.analysis_name)                         # final path for sample
+          elif self.collection_type == 'experiment':
+            final_path=os.path.join(base_path,
+                                    self.project_igf_id,
+                                    self.sample_igf_id,
+                                    self.experiment_igf_id,
+                                    self.analysis_name)                         # final path for experiment
+          elif self.collection_type == 'run':
+            final_path=os.path.join(base_path,
+                                    self.project_igf_id,
+                                    self.sample_igf_id,
+                                    self.experiment_igf_id,
+                                    self.run_igf_id,
+                                    self.analysis_name)                         # final path for run
 
-      if self.rename_file:
-        new_filename=''
-        if self.collection_type == 'project':
-          new_filename=self.project_igf_id
-        elif self.collection_type == 'sample':
-          new_filename=self.sample_igf_id
-        elif self.collection_type == 'experiment':
-          new_filename=self.experiment_igf_id
-        elif self.collection_type == 'run':
-          new_filename=self.run_igf_id
+        if self.rename_file:
+          new_filename=''
+          if self.collection_type == 'project':
+            new_filename=self.project_igf_id
+          elif self.collection_type == 'sample':
+            new_filename=self.sample_igf_id
+          elif self.collection_type == 'experiment':
+            new_filename=self.experiment_igf_id
+          elif self.collection_type == 'run':
+            new_filename=self.run_igf_id
 
-        if new_filename =='':
-          raise ValueError('New filename not found for input file {0}'.\
-                           format(input_file))
+          if new_filename =='':
+            raise ValueError('New filename not found for input file {0}'.\
+                             format(input_file))
 
-        new_filename='{0}_{1}'.format(new_filename,
-                                      self.analysis_name)
-        if self.add_datestamp:
-          datestamp=get_datestamp_label()                                       # collect datestamp
-          new_filename='{0}_[1}'.format(new_filename,
-                                        datestamp)                              # add datestamp to filepath
+          new_filename='{0}_{1}'.format(new_filename,
+                                        self.analysis_name)
+          if self.add_datestamp:
+            datestamp=get_datestamp_label()                                     # collect datestamp
+            new_filename='{0}_[1}'.format(new_filename,
+                                          datestamp)                            # add datestamp to filepath
 
-        file_suffix=get_file_extension(input_file=input_file)                   # collect file suffix
-        if file_suffix =='':
-          raise ValueError('Missing file extension for new file name of {0}'.\
-                           format(input_file))                                  # raise error if not file suffix found
+          file_suffix=get_file_extension(input_file=input_file)                 # collect file suffix
+          if file_suffix =='':
+            raise ValueError('Missing file extension for new file name of {0}'.\
+                             format(input_file))                                # raise error if not file suffix found
 
-        new_filename='{0}.{1}'.format(new_filename,file_suffix)                 # add file suffix to the new name
-        final_path=os.path.join(final_path,
-                                new_filename)                                   # get new filepath
-        
-        move_file(source_path=input_file,
-                  destinationa_path=final_path,
-                  force=force)                                                  # move file to destination dir
+          new_filename='{0}.{1}'.format(new_filename,file_suffix)               # add file suffix to the new name
+          final_path=os.path.join(final_path,
+                                  new_filename)                                 # get new filepath
+          self.create_or_update_analysis_collection(file_path=final_path,
+                                                    autosave_db=autosave_db)    # load new file collection in db
+          move_file(source_path=input_file,
+                    destinationa_path=final_path,
+                    force=force)                                                # move file to destination dir
+          if autosave_db:
+            self.dbsession.commit_session()                                     # save changes to db
     except:
       raise
