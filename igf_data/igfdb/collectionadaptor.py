@@ -18,21 +18,24 @@ class CollectionAdaptor(BaseAdaptor):
     :param data: A list of dictionary or a Pandas DataFrame
     :param autosave: A toggle for saving changes to database, default True
     '''
-    (collection_data, collection_attr_data)=self.divide_data_to_table_and_attribute(data=data)
     try:
-      self.store_collection_data(data=collection_data)                                                        # store collection data
+      (collection_data,
+       collection_attr_data)=self.divide_data_to_table_and_attribute(data=data)
+      self.store_collection_data(data=collection_data)                          # store collection data
       if len(collection_attr_data.index) > 0:
-        self.store_collection_attributes(data=collection_attr_data)                                           # store project attributes 
+        self.store_collection_attributes(data=collection_attr_data)             # store project attributes
 
       if autosave:
-        self.commit_session()                                                                                 # save changes to database
+        self.commit_session()                                                   # save changes to database
     except:
       if autosave:
         self.rollback_session()
       raise
 
 
-  def divide_data_to_table_and_attribute(self, data, required_column=['name', 'type'], attribute_name_column='attribute_name', attribute_value_column='attribute_value'):
+  def divide_data_to_table_and_attribute(self, data, required_column=['name', 'type'],
+                                         attribute_name_column='attribute_name',
+                                         attribute_value_column='attribute_value'):
     '''
     A method for separating data for Collection and Collection_attribute tables
     
@@ -41,18 +44,24 @@ class CollectionAdaptor(BaseAdaptor):
     :param attribute_value_column: label for attribute value column, default attribute_value
     :returns: Two pandas dataframes, one for Collection and another for Collection_attribute table
     '''
-    if not isinstance(data, pd.DataFrame):
-      data=pd.DataFrame(data)
+    try:
+      if not isinstance(data, pd.DataFrame):
+        data=pd.DataFrame(data)
 
-    collection_columns=self.get_table_columns(table_name=Collection, excluded_columns=['collection_id'])           # get required columns for collection table    
-    (collection_df, collection_attr_df)=BaseAdaptor.divide_data_to_table_and_attribute(self, \
-                                                                     data=data, \
-                                                                   required_column=required_column, \
-                                                                   table_columns=collection_columns,  \
-                                                                     attribute_name_column=attribute_name_column, \
-                                                                     attribute_value_column=attribute_value_column
-                                                              )
-    return (collection_df, collection_attr_df)
+      collection_columns=self.get_table_columns(table_name=Collection,
+                                                excluded_columns=['collection_id']) # get required columns for collection table    
+      (collection_df, collection_attr_df)=BaseAdaptor.\
+                                          divide_data_to_table_and_attribute(\
+                                            self,
+                                            data=data, \
+                                            required_column=required_column, \
+                                            table_columns=collection_columns,  \
+                                            attribute_name_column=attribute_name_column, \
+                                            attribute_value_column=attribute_value_column
+                                          )
+      return (collection_df, collection_attr_df)
+    except:
+      raise
 
 
   def store_collection_data(self, data, autosave=False):
@@ -82,17 +91,20 @@ class CollectionAdaptor(BaseAdaptor):
     '''
     try:
       if not isinstance(data, pd.DataFrame):
-        data=pd.DataFrame(data)                                                                                  # convert data to dataframe
+        data=pd.DataFrame(data)                                                 # convert data to dataframe
 
       if 'name' in data.columns and 'type' in data.columns:
-        map_function=lambda x: self.map_foreign_table_and_store_attribute(data=x, \
-                                                                          lookup_table=Collection, \
-                                                                          lookup_column_name=['name', 'type'], \
-                                                                          target_column_name='collection_id')     # prepare the function
-        new_data=data.apply(map_function, axis=1)                                                                 # map foreign key ids
-        data=new_data                                                                                             # overwrite data                 
+        map_function=lambda x: self.map_foreign_table_and_store_attribute(\
+                                      data=x,
+                                      lookup_table=Collection,
+                                      lookup_column_name=['name', 'type'],
+                                      target_column_name='collection_id')       # prepare the function
+        new_data=data.apply(map_function, axis=1)                               # map foreign key ids
+        data=new_data                                                           # overwrite data
 
-      self.store_attributes(attribute_table=Collection_attribute, linked_column='collection_id', db_id=collection_id, data=data) # store without autocommit
+      self.store_attributes(attribute_table=Collection_attribute,
+                            linked_column='collection_id',
+                            db_id=collection_id, data=data)                     # store without autocommit
       if autosave:
         self.commit_session()
     except:
