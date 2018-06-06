@@ -1,3 +1,4 @@
+import pandas as pd
 import unittest, json, os, shutil
 from sqlalchemy import create_engine
 from igf_data.igfdb.igfTables import Base
@@ -99,6 +100,41 @@ class CollectionAdaptor_test1(unittest.TestCase):
                                      output_mode='dataframe')
     self.assertEqual(len(cg_data2.index), 0)
     ca.close_session()
+
+  def test_tag_existing_collection_data(self):
+    collection_data=[{'name':'IGF001_MISEQ',
+                      'type':'ALIGNMENT_CRAM',
+                      'table':'experiment'
+                     },
+                     {'name':'IGF002_MISEQ',
+                      'type':'ALIGNMENT_CRAM',
+                      'table':'experiment'
+                     }]
+    ca=CollectionAdaptor(**{'session_class':self.session_class})
+    ca.start_session()
+    ca.store_collection_and_attribute_data(data=collection_data,
+                                          autosave=True)
+    collection_data2=[{'name':'IGF001_MISEQ',
+                       'type':'ALIGNMENT_CRAM',
+                       'table':'experiment',
+                      },
+                      {'name':'IGF003_MISEQ',
+                       'type':'ALIGNMENT_CRAM',
+                       'table':'experiment',
+                      }]
+    collection_data2=pd.DataFrame(collection_data2)
+    collection_data2=collection_data2.apply(lambda x: \
+                                            ca._tag_existing_collection_data(\
+                                            data=x,\
+                                            tag='EXISTS',\
+                                            tag_column='data_exists'),
+                                           axis=1)                              # tag existing collections
+    ca_exists=collection_data2[collection_data2['data_exists']=='EXISTS']
+    ca_not_exists=collection_data2[collection_data2['data_exists']!='EXISTS']
+    self.assertEqual(ca_exists['name'].values[0],'IGF001_MISEQ')
+    self.assertEqual(ca_not_exists['name'].values[0],'IGF003_MISEQ')
+    ca.close_session()
+
 
 
 if __name__=='__main__':
