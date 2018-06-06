@@ -280,29 +280,34 @@ class CollectionAdaptor(BaseAdaptor):
                                  default file_path
     :param autosave: A toggle for saving changes to database, default True
     '''
-
-    if not isinstance(data, pd.DataFrame):
-      data=pd.DataFrame(data)
-
-    required_columns=required_collection_column
-    required_columns.append(required_file_column)
-
-    if not set((required_columns)).issubset(set(tuple(data.columns))):                                            # check for required parameters
-      raise ValueError('Missing required value in input data {0}, required {1}'.format(tuple(data.columns), required_columns))    
-
     try:
-      collection_map_function=lambda x: self.map_foreign_table_and_store_attribute(data=x, \
-                                                                          lookup_table=Collection, \
-                                                                          lookup_column_name=['name', 'type'], \
-                                                                          target_column_name='collection_id')     # prepare the function
-      new_data=data.apply(collection_map_function, axis=1)                                                        # map collection id
+      if not isinstance(data, pd.DataFrame):
+        data=pd.DataFrame(data)
+
+      required_columns=required_collection_column
+      required_columns.append(required_file_column)
+
+      if not set((required_columns)).issubset(set(tuple(data.columns))):        # check for required parameters
+        raise ValueError('Missing required value in input data {0}, required {1}'.\
+                         format(tuple(data.columns), required_columns))    
+
+      collection_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
+                                               data=x,
+                                               lookup_table=Collection,
+                                               lookup_column_name=['name', 'type'],
+                                               target_column_name='collection_id') # prepare the function
+      new_data=data.apply(collection_map_function,
+                          axis=1)                                               # map collection id
       file_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
-                                                 data=x, \
-                                                 lookup_table=File, \
-                                                 lookup_column_name=required_file_column, \
-                                                 target_column_name='file_id')                   # prepare the function for file id
-      new_data=new_data.apply(file_map_function, axis=1)                                         # map collection id
-      self.store_records(table=Collection_group, data=new_data.astype(str), mode='serial')       # storing data after converting it to string
+                                         data=x,
+                                         lookup_table=File,
+                                         lookup_column_name=required_file_column,
+                                         target_column_name='file_id')          # prepare the function for file id
+      new_data=new_data.apply(file_map_function,
+                              axis=1)                                           # map collection id
+      self.store_records(table=Collection_group,
+                         data=new_data.astype(str),
+                         mode='serial')                                         # storing data after converting it to string
       if autosave:
         self.commit_session()
     except:
@@ -319,18 +324,23 @@ class CollectionAdaptor(BaseAdaptor):
     :param collection_type: a collection type 
     :param output_mode: dataframe / object
     '''
-    if not hasattr(self, 'session'):
-      raise AttributeError('Attribute session not found')
+    try:
+      if not hasattr(self, 'session'):
+        raise AttributeError('Attribute session not found')
 
-    session=self.session
-    query=session.query(Collection, File).join(Collection_group).join(File)  # sql join Collection, Collection_group and File tables
-    query=query.filter(Collection.name.in_([collection_name]))               # filter query based on collection_name
-    if collection_type: 
-      query=query.filter(Collection.type.in_([collection_type]))             # filter query on collection_type, if its present
-   
-    try:    
-       results=self.fetch_records(query=query, output_mode=output_mode)      # get results
-       return results
+      query=self.session.\
+            query(Collection, File).\
+            join(Collection_group).\
+            join(File)                                                          # sql join Collection, Collection_group and File tables
+      query=query.\
+            filter(Collection.name.in_([collection_name]))                      # filter query based on collection_name
+      if collection_type: 
+        query=query.\
+              filter(Collection.type.in_([collection_type]))                    # filter query on collection_type, if its present
+
+      results=self.fetch_records(query=query,
+                                 output_mode=output_mode)                       # get results
+      return results
     except:
        raise
 
