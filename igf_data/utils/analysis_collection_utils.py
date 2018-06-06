@@ -3,10 +3,11 @@ from igf_data.utils.fileutils import get_datestamp_label
 from igf_data.utils.fileutils import preprocess_path_name
 from igf_data.utils.fileutils import get_file_extension
 from igf_data.utils.fileutils import move_file
+from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 
 class Analysis_collection_utils:
-  def __init__(self,project_igf_id,dbsession,base_path=None,sample_igf_id=None,experiment_igf_id=None,
+  def __init__(self,project_igf_id,dbsession_class,base_path=None,sample_igf_id=None,experiment_igf_id=None,
                run_igf_id=None,collection_name=None,collection_type=None,collection_table=None,
                rename_file=True,add_datestamp=True,tag_name=None,
                analysis_name=None, allowed_collection=('sample','experiment','run','project')):
@@ -14,7 +15,7 @@ class Analysis_collection_utils:
     A class for dealing with analysis file collection.
     
     :param project_igf_id: A project name string
-    :param dbsession: An active database session
+    :param dbsession_class: A database session class
     :param sample_igf_id: A sample name string, default None
     :param experiment_igf_id: An experiment name string, default None
     :param run_igf_id: A run name string, default None 
@@ -49,19 +50,20 @@ class Analysis_collection_utils:
     except:
       raise
 
-  def create_or_update_analysis_collection(self,file_path,
+  def create_or_update_analysis_collection(self,file_path,dbsession,
                                            withdraw_exisitng_collection=True,
                                            autosave_db=True,force=True):
     '''
     A method for create or update analysis file collection in db
     
     :param file_path: file path to load as db collection
+    :param dbsession: An active database session
     :param withdraw_exisitng_collection: Remove existing collection group
     :param autosave_db: Save changes to database, default True
     :param force: Toggle for removing existing file collection, default True
     '''
     try:
-      ca=CollectionAdaptor(**{'session':self.dbsession})
+      ca=CollectionAdaptor(**{'session':dbsession})
       collection_exists=ca.get_collection_files(collection_name=self.collection_name,
                                                 collection_type=self.collection_type)
       if len(collection_exists.index) >0:
@@ -101,6 +103,7 @@ class Analysis_collection_utils:
     :param force: Toggle for removing existing file, default True
     '''
     try:
+      dbconnected=False
       if self.collection_name is None or \
          self.collection_type is None or \
          self.collection_table is None:
@@ -128,6 +131,9 @@ class Analysis_collection_utils:
       if self.rename_file and self.analysis_name is None:
         raise ValueError('Analysis name is required for renaming file')         # check analysis name
 
+      base=BaseAdaptor(**{'session_class':self.dbsession})
+      base.start_session()
+      dbconnected=True
       for input_file in input_file_list:
         final_path=''
         if self.base_path is None:                                              # do not move file if base_path is absent
@@ -187,11 +193,18 @@ class Analysis_collection_utils:
           final_path=os.path.join(final_path,
                                   new_filename)                                 # get new filepath
           self.create_or_update_analysis_collection(file_path=final_path,
+                                                    dbsession=base.session,
                                                     autosave_db=autosave_db)    # load new file collection in db
           move_file(source_path=input_file,
                     destinationa_path=final_path,
                     force=force)                                                # move file to destination dir
           if autosave_db:
-            self.dbsession.commit_session()                                     # save changes to db
+            base.commit_session()                                               # save changes to db for each file
+
+      base.commit_session()
+      base.close_session()
     except:
+      if dbconnected:
+        base.rollback_session()
+        base.close_session()
       raise
