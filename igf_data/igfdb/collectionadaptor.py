@@ -164,6 +164,7 @@ class CollectionAdaptor(BaseAdaptor):
     :param autosave: Save data to db, default True
     :param required_coumns: List of required columns
     :param hasher: Method for file checksum, default md5
+    :param calculate_file_size_and_md5: Enable file size and md5 check, default True
     '''
     try:
       if not isinstance(data, pd.DataFrame):
