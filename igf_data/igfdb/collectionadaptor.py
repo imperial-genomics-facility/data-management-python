@@ -315,6 +315,91 @@ class CollectionAdaptor(BaseAdaptor):
     except:
        raise
 
+  def _check_and_remove_collection_group(self,data,autosave=True,collection_name_col='name',
+                                         collection_type_col='type',file_path_col='file_path',
+                                         collection_id_col='collection_id',file_id_col='file_id'):
+    '''
+    An internal method for checking and removing collection group data
+    
+    :param data: A dictionary or a Pandas Series
+    :param autosave: A toggle for saving changes to database, default True
+    :param collection_name_col: Name of the collection name column, default name
+    :param collection_type_col: Name of the collection_type column, default type
+    :param file_path_col: Name of the file_path column, default file_path
+    :param collection_id_col: Name of the collection_id column, default collection_id
+    :param file_id_col: Name of the file_id column, default file_id
+    '''
+    try:
+      if not isinstance(data, pd.Series):
+        data=pd.Series(data)
+
+      if collection_name_col not in data or \
+         collection_type_col not in data or \
+         file_path_col not in data:
+        raise ValueError('Missing required fields for checking existing collection group'.\
+                         format(data.to-dict()))
+
+      collection_files=self.get_collection_files(collection_name=data[collection_name_col],
+                                                 collection_type=data[collection_type_col],
+                                                 output_mode='dataframe')       # fetch collection files info from db
+
+      if data.file_path != '':
+        collection_files=collection_files[collection_files[file_path_col]==data[file_path_col]] # filter collection group files
+
+      if len(collection_files.index)>0:
+        for row in collection_files.to_dict(orient='records'):
+          collection_id=row[collection_id_col]
+          file_id=row[file_id_col]
+
+          self.session.\
+          query(Collection_group).\
+          filter(Collection_group.collection_id==collection_id).\
+          filter(Collection_group.file_id==file_id).\
+           delete(synchronize_session=False)                                    # remove records from db
+
+      if autosave:
+        self.commit_session()                                                   # save changes to db
+    except:
+      raise
+
+
+  def remove_collection_group_info(self,data,autosave=True,
+                                   required_collection_column=['name','type'],
+                                   required_file_column='file_path'):
+    '''
+    A method for removing collection group information from database
+    
+    :param data: A list dictionary or a Pandas DataFrame with following columns
+                           name
+                           type
+                           file_path
+                 File_path information is not mandatory
+    :param required_collection_column: List of required column for fetching collection,
+                                       default 'name','type'
+    :param required_file_column: Required column for fetching file information,
+                                 default file_path
+    :param autosave: A toggle for saving changes to database, default True
+    '''
+    try:
+      if not isinstance(data,pd.DataFrame):
+        data=pd.DataFrame(data)
+
+      required_columns=required_collection_column
+      required_columns.append(required_file_column)
+
+      if required_file_column not in data.columns:
+        data[required_file_column]=''                                           # add an empty file_path column if its not present
+
+      if not set((required_columns)).issubset(set(tuple(data.columns))):        # check for required parameters
+        raise ValueError('Missing required value in input data {0}, required {1}'.\
+                         format(tuple(data.columns), required_columns))    
+
+      data.apply(lambda x: \
+                 self._check_and_remove_collection_group(data=x,
+                                                         autosave=autosave),
+                 axis=1)                                                        # check and remove collection group data
+    except:
+      raise
 
 if __name__=='__main__':
   from sqlalchemy import create_engine
@@ -349,11 +434,16 @@ if __name__=='__main__':
   ca=CollectionAdaptor(**{'session':base.session})
   collection_exists=ca.fetch_collection_records_name_and_type(collection_name='IGF001_MISEQ',
                                                               collection_type='ALIGNMENT_CRAM')
-  print(collection_exists)
+  #print(collection_exists)
   collection_data=[{ 'name':'IGF001_MISEQ',
                      'type':'ALIGNMENT_CRAM',
                      'table':'experiment',
                      'file_path':'a.cram',
+                   },
+                   { 'name':'IGF001_MISEQ',
+                     'type':'ALIGNMENT_CRAM',
+                     'table':'experiment',
+                     'file_path':'a1.cram',
                    },
                    { 'name':'IGF003_MISEQ',
                      'type':'ALIGNMENT_CRAM',
@@ -373,7 +463,11 @@ if __name__=='__main__':
   cg_data=ca.get_collection_files(collection_name='IGF001_MISEQ',
                                   collection_type='ALIGNMENT_CRAM',
                                   output_mode='dataframe')
-  print(cg_data.to_dict(orient='records'))
+  print(cg_data[['collection_id','file_id']].to_dict(orient='records'))
+  #print([element.file_path
+  #         for row in cg_data
+  #          for element in row
+  #            if isinstance(element, File)])
   base.close_session()
   remove_dir(temp_dir)
   if os.path.exists(dbname):
