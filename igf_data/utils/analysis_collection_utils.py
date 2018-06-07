@@ -15,7 +15,7 @@ class Analysis_collection_utils:
     '''
     A class for dealing with analysis file collection. It has specific method for moving analysis files
     to a specific directory structure and rename the file using a uniform rule, if required.
-    E.g. "<collection_name>_<analysis_name>_<tag><datestamp>.<original_suffix>"
+    E.g. "<collection_name>_<analysis_name>_<tag>_<datestamp>.<original_suffix>"
     
     :param project_igf_id: A project name string
     :param dbsession_class: A database session class
