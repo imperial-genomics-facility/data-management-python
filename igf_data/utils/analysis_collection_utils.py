@@ -174,13 +174,13 @@ class Analysis_collection_utils:
 
         if self.rename_file:
           new_filename=''
-          if self.collection_type == 'project':
+          if self.collection_table == 'project':
             new_filename=self.project_igf_id
-          elif self.collection_type == 'sample':
+          elif self.collection_table == 'sample':
             new_filename=self.sample_igf_id
-          elif self.collection_type == 'experiment':
+          elif self.collection_table == 'experiment':
             new_filename=self.experiment_igf_id
-          elif self.collection_type == 'run':
+          elif self.collection_table == 'run':
             new_filename=self.run_igf_id
 
           if new_filename =='':
@@ -191,7 +191,7 @@ class Analysis_collection_utils:
                                         self.analysis_name)
           if self.add_datestamp:
             datestamp=get_datestamp_label()                                     # collect datestamp
-            new_filename='{0}_[1}'.format(new_filename,
+            new_filename='{0}_{1}'.format(new_filename,
                                           datestamp)                            # add datestamp to filepath
 
           file_suffix=get_file_extension(input_file=input_file)                 # collect file suffix
@@ -203,12 +203,14 @@ class Analysis_collection_utils:
           final_path=os.path.join(final_path,
                                   new_filename)                                 # get new filepath
           final_path=preprocess_path_name(input_path=final_path)                # remove unexpected characters from file path
-          self.create_or_update_analysis_collection(file_path=final_path,
-                                                    dbsession=base.session,
-                                                    autosave_db=autosave_db)    # load new file collection in db
           move_file(source_path=input_file,
                     destinationa_path=final_path,
                     force=force)                                                # move or overwrite file to destination dir
+          self.create_or_update_analysis_collection(\
+                 file_path=final_path,
+                 dbsession=base.session,
+                 withdraw_exisitng_collection=withdraw_exisitng_collection,
+                 autosave_db=autosave_db)                                       # load new file collection in db
           if autosave_db:
             base.commit_session()                                               # save changes to db for each file
 
