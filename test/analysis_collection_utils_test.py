@@ -1,4 +1,4 @@
-import os, unittest
+import os, unittest, sqlalchemy
 from sqlalchemy import create_engine
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.utils.fileutils import get_temp_dir,remove_dir
@@ -57,6 +57,29 @@ class Analysis_collection_utils_test1(unittest.TestCase):
                                      collection_type='AnalysisA_Files',
                                      output_mode='dataframe')
     self.assertEqual(len(ca_files.index),1)
+    au.create_or_update_analysis_collection(file_path=os.path.join(self.temp_work_dir,
+                                                                   'a.cram'),
+                                            dbsession=base.session,
+                                            autosave_db=True,
+                                            force=True
+                                           )                                    # overwriting file collection
     base.close_session()
+    base.start_session()
+    ca=CollectionAdaptor(**{'session':base.session})
+    ca_files=ca.get_collection_files(collection_name='ProjectA',
+                                     collection_type='AnalysisA_Files',
+                                     output_mode='dataframe')
+    self.assertEqual(len(ca_files.index),1)
+
+    with self.assertRaises(sqlalchemy.exc.IntegrityError):                      # file collection without force
+      au.create_or_update_analysis_collection(\
+        file_path=os.path.join(self.temp_work_dir,
+                               'a.cram'),
+        dbsession=base.session,
+        autosave_db=True,
+        force=False
+      )
+    base.close_session()
+
 if __name__=='__main__':
   unittest.main()
