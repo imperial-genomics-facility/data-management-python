@@ -123,10 +123,6 @@ class Analysis_collection_utils:
          self.collection_table is None:
         raise ValueError('File collection information is incomplete')           # check for collection information
 
-      if self.collection_type not in allowed_collection:
-        raise ValueError('collection type {0} not allowed'.\
-                         format(self.collection_type))                          # check for collection table information
-
       if self.collection_type is 'sample' and \
          self.sample_igf_id is None:
         raise ValueError('Missing sample name for building sample collection')  # check for sample info
