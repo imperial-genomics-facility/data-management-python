@@ -167,7 +167,7 @@ class FileAdaptor(BaseAdaptor):
       delete(synchronize_session=False)                                         # remove record from db
 
       if autosave:
-        self.session.commit_session()                                           # save changes to database
+        self.commit_session()                                                   # save changes to database
 
     except:
       raise
