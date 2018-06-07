@@ -38,7 +38,7 @@ class Analysis_collection_utils:
     '''
     try:
       self.project_igf_id=project_igf_id
-      self.dbsession=dbsession
+      self.dbsession_class=dbsession_class
       self.sample_igf_id=sample_igf_id
       self.experiment_igf_id=experiment_igf_id
       self.run_igf_id=run_igf_id
@@ -86,12 +86,13 @@ class Analysis_collection_utils:
                        }]
            ca.remove_collection_group_info(data=remove_data,
                                            autosave=autosave_db)                # removing all existing collection groups for the collection name and type
-         else:
-           collection_data=[{'name':self.collection_name,
-                             'type':self.collection_type,
-                             'table':self.collection_table,
-                             'file_path':file_path}]
-           ca.load_file_and_create_collection(data=collection_data,
+
+      else:
+        collection_data=[{'name':self.collection_name,
+                          'type':self.collection_type,
+                          'table':self.collection_table,
+                          'file_path':file_path}]
+        ca.load_file_and_create_collection(data=collection_data,
                                               autosave=autosave_db)             # load file, collection and create collection group
     except:
       raise
@@ -144,7 +145,7 @@ class Analysis_collection_utils:
       if self.rename_file and self.analysis_name is None:
         raise ValueError('Analysis name is required for renaming file')         # check analysis name
 
-      base=BaseAdaptor(**{'session_class':self.dbsession})
+      base=BaseAdaptor(**{'session_class':self.dbsession_class})
       base.start_session()                                                      # connect to db
       dbconnected=True
       for input_file in input_file_list:
