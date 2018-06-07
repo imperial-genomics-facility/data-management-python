@@ -210,7 +210,7 @@ class Analysis_collection_utils:
                                                     autosave_db=autosave_db)    # load new file collection in db
           move_file(source_path=input_file,
                     destinationa_path=final_path,
-                    force=force)                                                # move file to destination dir
+                    force=force)                                                # move or overwrite file to destination dir
           if autosave_db:
             base.commit_session()                                               # save changes to db for each file
 
