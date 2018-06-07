@@ -71,29 +71,29 @@ class Analysis_collection_utils:
     '''
     try:
       ca=CollectionAdaptor(**{'session':dbsession})
+      
+      collection_exists=ca.get_collection_files(collection_name=self.collection_name,
+                                                collection_type=self.collection_type)
+      if len(collection_exists.index) >0 and \
+          withdraw_exisitng_collection:
+        remove_data=[{'name':self.collection_name,
+                      'type':self.collection_type,
+                    }]
+        ca.remove_collection_group_info(data=remove_data,
+                                        autosave=autosave_db)                   # removing all existing collection groups for the collection name and type
+
       fa=FileAdaptor(**{'session':dbsession})
       file_exists=fa.check_file_records_file_path(file_path=file_path)          # check if file already present in db
       if file_exists and force:
         fa.remove_file_data_for_file_path(file_path=file_path,
                                           autosave=autosave_db)                 # remove entry from file table
 
-      collection_exists=ca.get_collection_files(collection_name=self.collection_name,
-                                                collection_type=self.collection_type)
-      if len(collection_exists.index) >0:
-         if withdraw_exisitng_collection:
-           remove_data=[{'name':self.collection_name,
-                         'type':self.collection_type,
-                       }]
-           ca.remove_collection_group_info(data=remove_data,
-                                           autosave=autosave_db)                # removing all existing collection groups for the collection name and type
-
-      else:
-        collection_data=[{'name':self.collection_name,
-                          'type':self.collection_type,
-                          'table':self.collection_table,
-                          'file_path':file_path}]
-        ca.load_file_and_create_collection(data=collection_data,
-                                              autosave=autosave_db)             # load file, collection and create collection group
+      collection_data=[{'name':self.collection_name,
+                        'type':self.collection_type,
+                        'table':self.collection_table,
+                        'file_path':file_path}]
+      ca.load_file_and_create_collection(data=collection_data,
+                                         autosave=autosave_db)                  # load file, collection and create collection group
     except:
       raise
 
