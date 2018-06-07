@@ -2,6 +2,7 @@ import os, unittest, sqlalchemy
 from sqlalchemy import create_engine
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.utils.fileutils import get_temp_dir,remove_dir
+from igf_data.utils.fileutils import get_datestamp_label
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
@@ -79,6 +80,58 @@ class Analysis_collection_utils_test1(unittest.TestCase):
         autosave_db=True,
         force=False
       )
+    base.close_session()
+
+  def test_load_file_to_disk_and_db1(self):
+    au=Analysis_collection_utils(project_igf_id='ProjectA',
+                                 dbsession_class=self.session_class,
+                                 analysis_name='AnalysisA',
+                                 tag_name='TagA',
+                                 collection_name='ProjectA',
+                                 collection_type='AnalysisA_Files',
+                                 collection_table='project'
+                                )
+    input_file_list=[os.path.join(self.temp_work_dir,
+                                  file_name)
+                      for file_name in self.input_list]
+    au.load_file_to_disk_and_db(input_file_list=input_file_list,
+                                withdraw_exisitng_collection=False)             # loading all files to same collection
+    base = BaseAdaptor(**{'session_class':self.session_class})
+    base.start_session()
+    ca=CollectionAdaptor(**{'session':base.session})
+    ca_files=ca.get_collection_files(collection_name='ProjectA',
+                                     collection_type='AnalysisA_Files',
+                                     output_mode='dataframe')
+    self.assertEqual(len(ca_files.index),
+                     len(self.input_list))                                      # compare with input list
+    base.close_session()
+
+
+  def test_load_file_to_disk_and_db2(self):
+    au=Analysis_collection_utils(project_igf_id='ProjectA',
+                                 dbsession_class=self.session_class,
+                                 analysis_name='AnalysisA',
+                                 tag_name='TagA',
+                                 collection_name='ProjectA',
+                                 collection_type='AnalysisA_Files',
+                                 collection_table='project'
+                                )
+    input_file_list=[os.path.join(self.temp_work_dir,
+                                  file_name)
+                      for file_name in self.input_list]
+    au.load_file_to_disk_and_db(input_file_list=input_file_list,
+                                withdraw_exisitng_collection=True)              # withdrawing existing collection group before loading new
+    base = BaseAdaptor(**{'session_class':self.session_class})
+    base.start_session()
+    ca=CollectionAdaptor(**{'session':base.session})
+    ca_files=ca.get_collection_files(collection_name='ProjectA',
+                                     collection_type='AnalysisA_Files',
+                                     output_mode='dataframe')
+    self.assertEqual(len(ca_files.index),1)                                     # check for unique collection group
+    fa=FileAdaptor(**{'session':base.session})
+    query=fa.session.query(File)
+    fa_records=fa.fetch_records(query=query, output_mode='dataframe')
+    print(fa_records.to_dict(orient='records'))
     base.close_session()
 
 if __name__=='__main__':
