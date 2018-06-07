@@ -189,6 +189,10 @@ class Analysis_collection_utils:
 
           new_filename='{0}_{1}'.format(new_filename,
                                         self.analysis_name)
+          if self.tag_name is not None:
+            new_filename='{0}_{1}'.format(new_filename,
+                                          self.tag_name)                        # add tagname to filepath
+
           if self.add_datestamp:
             datestamp=get_datestamp_label()                                     # collect datestamp
             new_filename='{0}_{1}'.format(new_filename,
