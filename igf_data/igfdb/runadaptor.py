@@ -11,50 +11,65 @@ class RunAdaptor(BaseAdaptor):
   def store_run_and_attribute_data(self, data, autosave=True):
     '''
     A method for dividing and storing data to run and attribute table
+    
+    :param data: A list of dictionaries or a Pandas DataFrame containing the run data
+    :param autosave: A toggle for saving data automatically to db, default True
     '''
     (run_data, run_attr_data)=self.divide_data_to_table_and_attribute(data=data)
 
     try:
-      self.store_run_data(data=run_data)                                                   # store run
-      if len(run_attr_data.index)>0:                                                     # check if any attribute exists
-        self.store_run_attributes(data=run_attr_data)                                      # store run attributes
+      self.store_run_data(data=run_data)                                        # store run
+      if len(run_attr_data.index)>0:                                            # check if any attribute exists
+        self.store_run_attributes(data=run_attr_data)                           # store run attributes
       if autosave:
-        self.commit_session()                                                              # save changes to database
+        self.commit_session()                                                   # save changes to database
     except:
       if autosave:
         self.rollback_session()
       raise
 
 
-  def divide_data_to_table_and_attribute(self, data, required_column='run_igf_id', attribute_name_column='attribute_name', attribute_value_column='attribute_value'):
+  def divide_data_to_table_and_attribute(self, data, required_column='run_igf_id',
+                                         attribute_name_column='attribute_name',
+                                         attribute_value_column='attribute_value'):
     '''
     A method for separating data for Run and Run_attribute tables
-    required params:
-    required_column: column name to add to the attribute data
-    attribute_name_column: label for attribute name column
-    attribute_value_column: label for attribute value column
-
-    It returns two pandas dataframes, one for Run and another for Run_attribute table
-
+    
+    :param data: A list of dictionaries or a Pandas DataFrame
+    :param required_column: column name to add to the attribute data
+    :param attribute_name_column: label for attribute name column
+    :param attribute_value_column: label for attribute value column
+    :returns: Two pandas dataframes, one for Run and another for Run_attribute table
     '''
-    if not isinstance(data, pd.DataFrame):
-      data=pd.DataFrame(data)
+    try:
+      if not isinstance(data, pd.DataFrame):
+        data=pd.DataFrame(data)
 
-    run_columns=self.get_table_columns(table_name=Run, excluded_columns=['run_id', 'seqrun_id', 'experiment_id'])     # get required columns for run table
-    run_columns.extend(['seqrun_igf_id', 'experiment_igf_id'])
-    (run_df, run_attr_df)=BaseAdaptor.divide_data_to_table_and_attribute(self, \
-                                                      data=data, \
-                                                    required_column=required_column, \
-                                                    table_columns=run_columns,  \
-                                                      attribute_name_column=attribute_name_column, \
-                                                      attribute_value_column=attribute_value_column \
-                                                    )                                                                 # divide data to run and attribute table
-    return (run_df, run_attr_df)
-   
+      run_columns=self.get_table_columns(table_name=Run,
+                                         excluded_columns=['run_id',
+                                                           'seqrun_id',
+                                                           'experiment_id'])    # get required columns for run table
+      run_columns.extend(['seqrun_igf_id', 'experiment_igf_id'])
+      (run_df, run_attr_df)=BaseAdaptor.\
+                            divide_data_to_table_and_attribute(\
+                              self,
+                              data=data,
+                              required_column=required_column,
+                              table_columns=run_columns,
+                              attribute_name_column=attribute_name_column,
+                              attribute_value_column=attribute_value_column
+                            )                                                   # divide data to run and attribute table
+      return (run_df, run_attr_df)
+    except:
+      raise
+
 
   def store_run_data(self, data, autosave=False):
     '''
-    Load data to Run table
+    A method for loading data to Run table
+    
+    :param data: A list of dictionaries or a Pandas DataFrame containing the attribute data
+    :param autosave: A toggle for saving data automatically to db, default True
     '''
     try:
       if not isinstance(data, pd.DataFrame):
@@ -62,23 +77,23 @@ class RunAdaptor(BaseAdaptor):
 
       if 'seqrun_igf_id' in data.columns:
         seqrun_map_function=lambda x: self.map_foreign_table_and_store_attribute( \
-                                               data=x, \
-                                               lookup_table=Seqrun, \
-                                               lookup_column_name='seqrun_igf_id', \
-                                               target_column_name='seqrun_id')             # prepare seqrun mapping function
-        new_data=data.apply(seqrun_map_function, axis=1)                                   # map seqrun id
-        data=new_data                                                                      # overwrite data
+                                             data=x,
+                                             lookup_table=Seqrun,
+                                             lookup_column_name='seqrun_igf_id',
+                                             target_column_name='seqrun_id')    # prepare seqrun mapping function
+        new_data=data.apply(seqrun_map_function, axis=1)                        # map seqrun id
+        data=new_data                                                           # overwrite data
 
       if 'experiment_igf_id' in data.columns:
         exp_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
-                                               data=x, \
-                                               lookup_table=Experiment, \
-                                               lookup_column_name='experiment_igf_id', \
-                                               target_column_name='experiment_id')          # prepare experiment mapping function
-        new_data=data.apply(exp_map_function, axis=1)                                       # map experiment id
-        data=new_data                                                                       # overwrite data
+                                          data=x,
+                                          lookup_table=Experiment,
+                                          lookup_column_name='experiment_igf_id',
+                                          target_column_name='experiment_id')   # prepare experiment mapping function
+        new_data=data.apply(exp_map_function, axis=1)                           # map experiment id
+        data=new_data                                                           # overwrite data
 
-      self.store_records(table=Run, data=data)                                              # store without autocommit
+      self.store_records(table=Run, data=data)                                  # store without autocommit
       if autosave:
         self.commit_session()
     except:
@@ -90,21 +105,27 @@ class RunAdaptor(BaseAdaptor):
   def store_run_attributes(self, data, run_id='', autosave=False):
     '''
     A method for storing data to Run_attribute table
+    
+    :param data: A list of dictionaries or a Pandas DataFrame containing the attribute data
+    :param autosave: A toggle for saving data automatically to db, default True
     '''
     try:
       if not isinstance(data, pd.DataFrame):
-        data=pd.DataFrame(data)                                                             # convert data to dataframe
+        data=pd.DataFrame(data)                                                 # convert data to dataframe
 
       if 'run_igf_id' in data.columns:
         run_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
-                                               data=x, \
-                                               lookup_table=Run, \
-                                               lookup_column_name='run_igf_id', \
-                                               target_column_name='run_id')                 # prepare run mapping function
+                                               data=x,
+                                               lookup_table=Run,
+                                               lookup_column_name='run_igf_id',
+                                               target_column_name='run_id')     # prepare run mapping function
         new_data=data.apply(run_map_function, axis=1)
-        data=new_data                                                                       # overwrite data    
+        data=new_data                                                           # overwrite data
 
-      self.store_attributes(attribute_table=Run_attribute, linked_column='run_id', db_id=run_id, data=data) # store without autocommit
+      self.store_attributes(attribute_table=Run_attribute,
+                            linked_column='run_id',
+                            db_id=run_id,
+                            data=data)                                          # store without autocommit
       if autosave:
         self.commit_session()
     except:
@@ -112,13 +133,14 @@ class RunAdaptor(BaseAdaptor):
         self.rollback_session()
       raise
 
+
   def check_run_records_igf_id(self, run_igf_id, target_column_name='run_igf_id'):
     '''
     A method for existing data for Run table
-    required params:
-    run_igf_id: an igf id
-    target_column_name: a column name, default run_igf_id
-    It returns True if the file is present in db or False if its not
+    
+    :param run_igf_id: an igf id
+    :param target_column_name: a column name, default run_igf_id
+    :returns: True if the file is present in db or False if its not
     '''
     try:
       run_check=False
@@ -134,12 +156,13 @@ class RunAdaptor(BaseAdaptor):
     except:
       raise
 
+
   def fetch_run_records_igf_id(self, run_igf_id, target_column_name='run_igf_id'):
     '''
     A method for fetching data for Run table
-    required params:
-    run_igf_id: an igf id
-    target_column_name: a column name, default run_igf_id
+    
+    :param run_igf_id: an igf id
+    :param target_column_name: a column name, default run_igf_id
     '''
     try:
       column=[column for column in Run.__table__.columns \
@@ -151,13 +174,13 @@ class RunAdaptor(BaseAdaptor):
       return run  
     except:
       raise
-  
-  
+
+
   def fetch_sample_info_for_run(self,run_igf_id):
     '''
     A method for fetching sample information linked to a run_igf_id
-    required params:
-    run_igf_id: A run_igf_id to search database
+    
+    :param run_igf_id: A run_igf_id to search database
     '''
     try:
       session=self.session
@@ -165,7 +188,7 @@ class RunAdaptor(BaseAdaptor):
                     join(Experiment).\
                     join(Run).\
                     filter(Run.run_igf_id==run_igf_id)
-      samples=self.fetch_records(query=query, output_mode='dataframe')          # get results     
+      samples=self.fetch_records(query=query, output_mode='dataframe')          # get results
       samples=samples.to_dict(orient='records')
       return samples[0]
     except:
