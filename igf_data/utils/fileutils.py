@@ -193,7 +193,7 @@ def preprocess_path_name(input_path):
                   (r'^_',''),
                   (r'_$','')]                                                   # compile list of patterns
     output=list()
-    for path in input.split('/'):
+    for path in input_path.split('/'):
       for old,new in sub_patterns:
         path=re.sub(old,new,path)
       output.append(path)                                                       # substitute from list of patterns
