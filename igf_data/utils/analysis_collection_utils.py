@@ -12,7 +12,9 @@ class Analysis_collection_utils:
                rename_file=True,add_datestamp=True,tag_name=None,
                analysis_name=None, allowed_collection=('sample','experiment','run','project')):
     '''
-    A class for dealing with analysis file collection.
+    A class for dealing with analysis file collection. It has specific method for moving analysis files
+    to a specific directory structure and rename the file using a uniform rule, if required.
+    E.g. "<collection_name>_<analysis_name>_<tag><datestamp>.<original_suffix>"
     
     :param project_igf_id: A project name string
     :param dbsession_class: A database session class
@@ -41,6 +43,10 @@ class Analysis_collection_utils:
       self.run_igf_id=run_igf_id
       self.collection_name=collection_name
       self.collection_type=collection_type
+      if collection_table not in allowed_collection:
+        raise ValueError('Collection table {0} not supported').\
+                         format(collection_table)                               # check collection table information
+
       self.collection_table=collection_table
       self.base_path=base_path
       self.rename_file=rename_file
