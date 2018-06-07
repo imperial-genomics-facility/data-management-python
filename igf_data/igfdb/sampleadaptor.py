@@ -173,3 +173,24 @@ class SampleAdaptor(BaseAdaptor):
     except:
       raise
 
+  def fetch_sample_project(self, sample_igf_id):
+    '''
+    A method for fetching project information for the sample
+    
+    :param sample_igf_id: A sample_igf_id for database lookup
+    :returns: A project_igf_id or None, if not found
+    '''
+    try:
+      query=self.session.\
+            query(Project.project_igf_id).\
+            join(Sample).\
+            filter(Project.project_id==Sample.project_id).\
+            filter(Sample.sample_igf_id==sample_igf_id)                         # set query
+      project=self.fetch_records(query=query,
+                                output_mode='one_or_none')                      # fetch project record
+      if project is not None:
+        project=project.project_igf_id
+
+      return project
+    except:
+      raise
