@@ -119,6 +119,29 @@ class FileAdaptor(BaseAdaptor):
     except:
       raise
 
+  def remove_file_data_for_file_path(self,file_path,autosave=True):
+    '''
+    A method for removing entry for a specific file.
+    
+    :param file_path: A complete file_path for checking database
+    :param autosave: A toggle for automatically saving changes to database, default True
+    '''
+    try:
+      file_exists=self.check_file_records_file_path(file_path=file_path)
+      if not file_exists:
+        raise ValueError('File {0} not found in database'.format(file_path))
+
+      self.session.\
+      query(File).\
+      filter(File.file_path==file_path).\
+      delete(synchronize_session=False)                                         # remove record from db
+
+      if autosave:
+        self.session.commit_session()                                           # save changes to database
+
+    except:
+      raise
+
   def update_file_table_for_file_path(self,file_path,tag,value,autosave=False):
     '''
     A method for updating file table
