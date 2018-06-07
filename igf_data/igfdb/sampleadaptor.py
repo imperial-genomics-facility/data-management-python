@@ -28,16 +28,16 @@ class SampleAdaptor(BaseAdaptor):
       raise
 
 
-  def divide_data_to_table_and_attribute(self, data, required_column='sample_igf_id', \
-                                         attribute_name_column='attribute_name', attribute_value_column='attribute_value'):
+  def divide_data_to_table_and_attribute(self, data, required_column='sample_igf_id',
+                                         attribute_name_column='attribute_name',
+                                         attribute_value_column='attribute_value'):
     '''
     A method for separating data for Sample and Sample_attribute tables
-    required params:
-    required_column: column name to add to the attribute data
-    attribute_name_column: label for attribute name column
-    attribute_value_column: label for attribute value column
-
-    It returns two pandas dataframes, one for Sample and another for Sample_attribute table
+    
+    :param required_column: column name to add to the attribute data
+    :param attribute_name_column: label for attribute name column
+    :param attribute_value_column: label for attribute value column
+    :returns: Two pandas dataframes, one for Sample and another for Sample_attribute table
     '''
     if not isinstance(data, pd.DataFrame):
       data=pd.DataFrame(data)
@@ -57,6 +57,8 @@ class SampleAdaptor(BaseAdaptor):
   def store_sample_data(self, data, autosave=False):
     '''
     Load data to Sample table
+    
+    :param data: A dataframe or list of dictionary containing the data
     '''
     try:
       if not isinstance(data, pd.DataFrame):
@@ -83,9 +85,9 @@ class SampleAdaptor(BaseAdaptor):
   def store_sample_attributes(self, data, sample_id='', autosave=False):
     '''
     A method for storing data to Sample_attribute table
-    required columns:
-    data: a dataframe or dictionary containing the Sample_attribute data
-    sample_id: an optional parameter to link the sample attributes to a specific sample
+    
+    :param data: A dataframe or list of dictionary containing the Sample_attribute data
+    :param sample_id: An optional parameter to link the sample attributes to a specific sample
     '''
     try:
       if not isinstance(data, pd.DataFrame):
@@ -112,9 +114,10 @@ class SampleAdaptor(BaseAdaptor):
   def fetch_sample_records_igf_id(self, sample_igf_id, target_column_name='sample_igf_id'):
     '''
     A method for fetching data for Sample table
-    required params:
-    sample_igf_id: an igf id
-    output_mode  : dataframe / object
+    
+    :param sample_igf_id: A sample igf id
+    :param output_mode: dataframe, object, one or on_on_none
+    :returns: An object or dataframe, based on the output_mode
     '''
     try:
       column=[column for column in Sample.__table__.columns \
@@ -127,12 +130,14 @@ class SampleAdaptor(BaseAdaptor):
     except:
       raise
     
-  def check_sample_records_igf_id(self, sample_igf_id, target_column_name='sample_igf_id'):
+  def check_sample_records_igf_id(self, sample_igf_id,
+                                  target_column_name='sample_igf_id'):
     '''
     A method for checking existing data for sample table
-    required params:
-    sample_igf_id: an igf id
-    It returns True if the file is present in db or False if its not
+    
+    :param sample_igf_id: an igf id
+    :param target_column_name: name of the target lookup column, default sample_igf_id
+    :returns: True if the file is present in db or False if its not
     '''
     try:
       sample_check=False
@@ -147,17 +152,17 @@ class SampleAdaptor(BaseAdaptor):
       return sample_check
     except:
       raise
-    
-    
+
+
   def check_project_and_sample(self,project_igf_id,sample_igf_id):
     '''
     A method for checking existing project and sample igf id combination
     in sample table
     
-    required params:
-    project_igf_id
-    sample_igf_id
-    It returns True if target entry is present or return False
+    
+    :param project_igf_id: A project igf id string
+    :param sample_igf_id: A sample igf id string
+    :returns: True if target entry is present or return False
     '''
     try:
       sample_check=False
@@ -172,6 +177,7 @@ class SampleAdaptor(BaseAdaptor):
       return sample_check
     except:
       raise
+
 
   def fetch_sample_project(self, sample_igf_id):
     '''
