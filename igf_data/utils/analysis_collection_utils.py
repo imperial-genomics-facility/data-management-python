@@ -5,6 +5,7 @@ from igf_data.utils.fileutils import get_file_extension
 from igf_data.utils.fileutils import move_file
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
+from igf_data.igfdb.fileadaptor import FileAdaptor
 
 class Analysis_collection_utils:
   def __init__(self,project_igf_id,dbsession_class,base_path=None,sample_igf_id=None,experiment_igf_id=None,
@@ -70,6 +71,12 @@ class Analysis_collection_utils:
     '''
     try:
       ca=CollectionAdaptor(**{'session':dbsession})
+      fa=FileAdaptor(**{'session':dbsession})
+      file_exists=fa.check_file_records_file_path(file_path=file_path)          # check if file already present in db
+      if file_exists and force:
+        fa.remove_file_data_for_file_path(file_path=file_path,
+                                          autosave=autosave_db)                 # remove entry from file table
+
       collection_exists=ca.get_collection_files(collection_name=self.collection_name,
                                                 collection_type=self.collection_type)
       if len(collection_exists.index) >0:
