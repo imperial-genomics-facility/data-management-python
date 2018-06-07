@@ -170,3 +170,40 @@ class RunAdaptor(BaseAdaptor):
       return samples[0]
     except:
       raise
+
+
+  def fetch_project_sample_and_experiment_for_run(self,run_igf_id):
+    '''
+    A method for fetching project, sample and experiment information for a run
+    
+    :param run_igf_id: A run igf id string
+    :returns: A list of three strings, or None if not found
+               project_igf_id
+               sample_igf_id
+               experiment_igf_id
+    '''
+    try:
+      project_igf_id=None
+      sample_igf_id=None
+      experiment_igf_id=None
+      query=self.session.\
+            query(Project.project_igf_id,
+                  Sample.sample_igf_id,
+                  Experiment.experiment_igf_id).\
+            join(Sample).\
+            join(Experiment).\
+            join(Run).\
+            filter(Project.project_id==Sample.project_id).\
+            filter(Sample.sample_id==Experiment.sample_id).\
+            filter(Experiment.experiment_id==Run.experiment_id).\
+            filter(Run.run_igf_id==run_igf_id)                                  # get query
+      data=self.fetch_records(query=query,
+                              output_mode='one_or_none')
+      if data is not None:
+        project_igf_id=data.project_igf_id
+        sample_igf_id=data.sample_igf_id
+        experiment_igf_id=data=experiment_igf_id
+
+      return project_igf_id,sample_igf_id,experiment_igf_id
+    except:
+      raise
