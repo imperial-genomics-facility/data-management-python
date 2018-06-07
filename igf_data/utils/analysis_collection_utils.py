@@ -206,6 +206,7 @@ class Analysis_collection_utils:
           new_filename='{0}.{1}'.format(new_filename,file_suffix)               # add file suffix to the new name
           final_path=os.path.join(final_path,
                                   new_filename)                                 # get new filepath
+          final_path=preprocess_path_name(input_path=final_path)                # remove unexpected characters from file path
           self.create_or_update_analysis_collection(file_path=final_path,
                                                     dbsession=base.session,
                                                     autosave_db=autosave_db)    # load new file collection in db
