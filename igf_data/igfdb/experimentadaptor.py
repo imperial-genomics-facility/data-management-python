@@ -187,6 +187,7 @@ class ExperimentAdaptor(BaseAdaptor):
   def update_experiment_records_by_igf_id(self,experiment_igf_id,update_data,autosave=True):
     '''
     A method for updating experiment records in database
+    
     :param experiment_igf_id: An igf ids for the experiment data lookup
     :param update_data: A dictionary containing the updated entries
     :param autosave: Toggle auto commit after database update, default True
@@ -209,5 +210,33 @@ class ExperimentAdaptor(BaseAdaptor):
         self.commit_session()                                                   # save data if auto commit is on
     except:
       self.rollback_session()                                                   # rollback session if db update has failed
+      raise
+
+
+  def fetch_project_and_sample_for_experiment(self,experiment_igf_id):
+    '''
+    A method for fetching project and sample igf id information for an experiment
+    
+    :param experiment_igf_id: An experiment igf id string
+    :returns: Two strings, project igf id and sample igd id, or None if not found
+    '''
+    try:
+      project_igf_id=None
+      sample_igf_id=None
+      query=self.session.\
+            query(Project.project_igf_id,Sample.sample_igf_id).\
+            join(Sample).\
+            join(Experiment).\
+            filter(Project.project_id==Sample.project_id).\
+            filter(Sample.sample_id==Experiment.sample_id).\
+            filter(Experiment.experiment_igf_id==experiment_igf_id)
+      data=self.fetch_records(query=query,
+                              output_mode='one_or_none')
+      if data is not None:
+        project_igf_id=data.project_igf_id
+        sample_igf_id=data.sample_igf_id
+
+      return project_igf_id,sample_igf_id
+    except:
       raise
 
