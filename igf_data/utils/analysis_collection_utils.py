@@ -149,23 +149,23 @@ class Analysis_collection_utils:
         if self.base_path is None:                                              # do not move file if base_path is absent
           final_path=os.path.dirname(input_file)
         else:                                                                   # move file path
-          if self.collection_type == 'project':
-            final_path=os.path.join(base_path,
+          if self.collection_table == 'project':
+            final_path=os.path.join(self.base_path,
                                     self.project_igf_id,
                                     self.analysis_name)                         # final path for project
-          elif self.collection_type == 'sample':
-            final_path=os.path.join(base_path,
+          elif self.collection_table == 'sample':
+            final_path=os.path.join(self.base_path,
                                     self.project_igf_id,
                                     self.sample_igf_id,
                                     self.analysis_name)                         # final path for sample
-          elif self.collection_type == 'experiment':
-            final_path=os.path.join(base_path,
+          elif self.collection_table == 'experiment':
+            final_path=os.path.join(self.base_path,
                                     self.project_igf_id,
                                     self.sample_igf_id,
                                     self.experiment_igf_id,
                                     self.analysis_name)                         # final path for experiment
-          elif self.collection_type == 'run':
-            final_path=os.path.join(base_path,
+          elif self.collection_table == 'run':
+            final_path=os.path.join(self.base_path,
                                     self.project_igf_id,
                                     self.sample_igf_id,
                                     self.experiment_igf_id,
@@ -202,17 +202,23 @@ class Analysis_collection_utils:
           new_filename='{0}.{1}'.format(new_filename,file_suffix)               # add file suffix to the new name
           final_path=os.path.join(final_path,
                                   new_filename)                                 # get new filepath
+        else:
+          final_path=os.path.join(final_path,
+                                  os.path.basename(input_file))
+
+        if final_path !=input_file:                                             # move file if its required
           final_path=preprocess_path_name(input_path=final_path)                # remove unexpected characters from file path
           move_file(source_path=input_file,
                     destinationa_path=final_path,
                     force=force)                                                # move or overwrite file to destination dir
-          self.create_or_update_analysis_collection(\
+
+        self.create_or_update_analysis_collection(\
                  file_path=final_path,
                  dbsession=base.session,
                  withdraw_exisitng_collection=withdraw_exisitng_collection,
                  autosave_db=autosave_db)                                       # load new file collection in db
-          if autosave_db:
-            base.commit_session()                                               # save changes to db for each file
+        if autosave_db:
+          base.commit_session()                                                 # save changes to db for each file
 
       base.commit_session()                                                     # save changes to db
       base.close_session()                                                      # close db connection
