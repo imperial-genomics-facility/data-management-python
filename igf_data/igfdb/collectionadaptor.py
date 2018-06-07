@@ -397,7 +397,7 @@ class CollectionAdaptor(BaseAdaptor):
           query(Collection_group).\
           filter(Collection_group.collection_id==collection_id).\
           filter(Collection_group.file_id==file_id).\
-           delete(synchronize_session=False)                                    # remove records from db
+          delete(synchronize_session=False)                                     # remove records from db
 
       if autosave:
         self.commit_session()                                                   # save changes to db
