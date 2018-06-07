@@ -169,5 +169,29 @@ class Analysis_collection_utils_test1(unittest.TestCase):
     base.close_session()
 
 
+  def test_load_file_to_disk_and_db4(self):
+    au=Analysis_collection_utils(project_igf_id='ProjectA',
+                                 dbsession_class=self.session_class,
+                                 analysis_name='AnalysisA',
+                                 tag_name='TagA',
+                                 collection_name='ProjectA',
+                                 collection_type='AnalysisA_Files',
+                                 collection_table='project',
+                                 rename_file=False
+                                )
+    input_file_list=[os.path.join(self.temp_work_dir,
+                                  file_name)
+                      for file_name in self.input_list]
+    au.load_file_to_disk_and_db(input_file_list=input_file_list,
+                                withdraw_exisitng_collection=False)             # loading all files to same collection, without rename
+    base = BaseAdaptor(**{'session_class':self.session_class})
+    base.start_session()
+    ca=CollectionAdaptor(**{'session':base.session})
+    ca_files=ca.get_collection_files(collection_name='ProjectA',
+                                     collection_type='AnalysisA_Files',
+                                     output_mode='dataframe')
+    file_list=list(ca_files['file_path'].to_dict().values())
+    self.assertTrue(input_file_list[0] in file_list)
+
 if __name__=='__main__':
   unittest.main()
