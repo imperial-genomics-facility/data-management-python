@@ -131,7 +131,7 @@ class Analysis_collection_utils_test1(unittest.TestCase):
     fa=FileAdaptor(**{'session':base.session})
     query=fa.session.query(File)
     fa_records=fa.fetch_records(query=query, output_mode='dataframe')
-    print(fa_records.to_dict(orient='records'))
+    self.assertEqual(len(fa_records['file_path'].to_dict()),3)                  # check if all files are present although only one collection group exists
     base.close_session()
 
 if __name__=='__main__':
