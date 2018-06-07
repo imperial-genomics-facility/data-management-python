@@ -145,7 +145,7 @@ class Analysis_collection_utils:
         raise ValueError('Analysis name is required for renaming file')         # check analysis name
 
       base=BaseAdaptor(**{'session_class':self.dbsession})
-      base.start_session()
+      base.start_session()                                                      # connect to db
       dbconnected=True
       for input_file in input_file_list:
         final_path=''
@@ -214,8 +214,8 @@ class Analysis_collection_utils:
           if autosave_db:
             base.commit_session()                                               # save changes to db for each file
 
-      base.commit_session()
-      base.close_session()
+      base.commit_session()                                                     # save changes to db
+      base.close_session()                                                      # close db connection
     except:
       if dbconnected:
         base.rollback_session()
