@@ -1,7 +1,7 @@
 import pandas as pd
 from sqlalchemy.sql import column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
-from igf_data.igfdb.igfTables import Experiment, Run, Run_attribute, Seqrun, Sample
+from igf_data.igfdb.igfTables import Experiment, Run, Run_attribute, Seqrun, Sample,Project
 
 class RunAdaptor(BaseAdaptor):
   '''
@@ -225,7 +225,7 @@ class RunAdaptor(BaseAdaptor):
       if data is not None:
         project_igf_id=data.project_igf_id
         sample_igf_id=data.sample_igf_id
-        experiment_igf_id=data=experiment_igf_id
+        experiment_igf_id=data.experiment_igf_id
 
       return project_igf_id,sample_igf_id,experiment_igf_id
     except:
