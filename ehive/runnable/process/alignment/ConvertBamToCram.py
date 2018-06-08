@@ -19,6 +19,7 @@ class ConvertBamToCram(IGFBaseProcess):
         'analysis_name':None,
         'tag_name':None,
         'collection_type':'ANALYSIS_CRAM',
+        'reference_type':'GENOME_FASTA',
         'collection_table':'experiment',
       })
     return params_dict
@@ -38,6 +39,7 @@ class ConvertBamToCram(IGFBaseProcess):
     :param collection_type: A database collection type for output file, default ANALYSIS_CRAM
     :param collection_table: A database collection table for output file, default experiment
     :param force_overwrite: A toggle for retiring old collection group, default True
+    :param reference_type: Reference genome collection type, default GENOME_FASTA
     '''
     try:
       project_igf_id=self.param_required('project_igf_id')
@@ -52,6 +54,7 @@ class ConvertBamToCram(IGFBaseProcess):
       analysis_name=self.param_required('analysis_name')
       tag_name=self.param_required('tag_name')
       force_overwrite=self.param_required('force_overwrite')
+      reference_type=self.param('reference_type')
 
       if collection_type is None or \
          collection_name is None or \
@@ -59,7 +62,8 @@ class ConvertBamToCram(IGFBaseProcess):
         raise ValueError('Missing collection information for loading cram file')
 
       ref_genome=Reference_genome_utils(genome_tag=species_name,
-                                        dbsession_class=igf_session_class)
+                                        dbsession_class=igf_session_class,
+                                        genome_fasta_type=reference_type)
       genome_fasta=ref_genome.get_genome_fasta()                                # get genome fasta 
       temp_work_dir=get_temp_dir()                                              # get temp dir
       cram_file=os.path.basename(bam_file).replace('.bam','.cram')              # get base cram file name
