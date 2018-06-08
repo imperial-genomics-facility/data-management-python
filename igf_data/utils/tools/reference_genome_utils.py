@@ -1,6 +1,6 @@
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 
-class reference_genome_utils:
+class Reference_genome_utils:
   '''
   A class for accessing different components of the reference genome for a specific build
   '''
