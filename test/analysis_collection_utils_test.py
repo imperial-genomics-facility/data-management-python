@@ -242,5 +242,112 @@ class Analysis_collection_utils_test1(unittest.TestCase):
     file_list=list(ca_files['file_path'].to_dict().values())
     self.assertTrue(input_file_list[0] in file_list)
 
+
+  def test_load_file_to_disk_and_db5(self):
+    au=Analysis_collection_utils(dbsession_class=self.session_class,
+                                 analysis_name='AnalysisA',
+                                 tag_name='TagA',
+                                 collection_name='SampleA',
+                                 collection_type='AnalysisA_Files',
+                                 collection_table='sample',
+                                 base_path=self.temp_base_dir
+                                )
+    input_file_list=[os.path.join(self.temp_work_dir,
+                                  file_name)
+                      for file_name in self.input_list]
+    au.load_file_to_disk_and_db(input_file_list=input_file_list,
+                                withdraw_exisitng_collection=False)             # loading all files to same collection
+    base = BaseAdaptor(**{'session_class':self.session_class})
+    base.start_session()
+    ca=CollectionAdaptor(**{'session':base.session})
+    ca_files=ca.get_collection_files(collection_name='SampleA',
+                                     collection_type='AnalysisA_Files',
+                                     output_mode='dataframe')
+    file_list=list(ca_files['file_path'].to_dict().values())
+    datestamp=get_datestamp_label()
+    test_file=os.path.join(self.temp_base_dir,
+                          'ProjectA',
+                          'SampleA',
+                          'AnalysisA',
+                          '{0}_{1}_{2}_{3}.{4}'.format('SampleA',
+                                                        'AnalysisA',
+                                                        'TagA',
+                                                        datestamp,
+                                                        'cram'))
+    self.assertTrue(test_file in file_list)
+    base.close_session()
+
+  def test_load_file_to_disk_and_db6(self):
+    au=Analysis_collection_utils(dbsession_class=self.session_class,
+                                 analysis_name='AnalysisA',
+                                 tag_name='TagA',
+                                 collection_name='ExperimentA',
+                                 collection_type='AnalysisA_Files',
+                                 collection_table='experiment',
+                                 base_path=self.temp_base_dir
+                                )
+    input_file_list=[os.path.join(self.temp_work_dir,
+                                  file_name)
+                      for file_name in self.input_list]
+    au.load_file_to_disk_and_db(input_file_list=input_file_list,
+                                withdraw_exisitng_collection=False)             # loading all files to same collection
+    base = BaseAdaptor(**{'session_class':self.session_class})
+    base.start_session()
+    ca=CollectionAdaptor(**{'session':base.session})
+    ca_files=ca.get_collection_files(collection_name='ExperimentA',
+                                     collection_type='AnalysisA_Files',
+                                     output_mode='dataframe')
+    file_list=list(ca_files['file_path'].to_dict().values())
+    datestamp=get_datestamp_label()
+    test_file=os.path.join(self.temp_base_dir,
+                          'ProjectA',
+                          'SampleA',
+                          'ExperimentA',
+                          'AnalysisA',
+                          '{0}_{1}_{2}_{3}.{4}'.format('ExperimentA',
+                                                        'AnalysisA',
+                                                        'TagA',
+                                                        datestamp,
+                                                        'cram'))
+    self.assertTrue(test_file in file_list)
+    base.close_session()
+
+
+  def test_load_file_to_disk_and_db7(self):
+    au=Analysis_collection_utils(dbsession_class=self.session_class,
+                                 analysis_name='AnalysisA',
+                                 tag_name='TagA',
+                                 collection_name='RunA',
+                                 collection_type='AnalysisA_Files',
+                                 collection_table='run',
+                                 base_path=self.temp_base_dir
+                                )
+    input_file_list=[os.path.join(self.temp_work_dir,
+                                  file_name)
+                      for file_name in self.input_list]
+    au.load_file_to_disk_and_db(input_file_list=input_file_list,
+                                withdraw_exisitng_collection=False)             # loading all files to same collection
+    base = BaseAdaptor(**{'session_class':self.session_class})
+    base.start_session()
+    ca=CollectionAdaptor(**{'session':base.session})
+    ca_files=ca.get_collection_files(collection_name='RunA',
+                                     collection_type='AnalysisA_Files',
+                                     output_mode='dataframe')
+    file_list=list(ca_files['file_path'].to_dict().values())
+    datestamp=get_datestamp_label()
+    test_file=os.path.join(self.temp_base_dir,
+                          'ProjectA',
+                          'SampleA',
+                          'ExperimentA',
+                          'RunA',
+                          'AnalysisA',
+                          '{0}_{1}_{2}_{3}.{4}'.format('RunA',
+                                                        'AnalysisA',
+                                                        'TagA',
+                                                        datestamp,
+                                                        'cram'))
+    self.assertTrue(test_file in file_list)
+    base.close_session()
+
 if __name__=='__main__':
   unittest.main()
