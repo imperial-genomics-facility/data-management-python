@@ -174,21 +174,6 @@ class Analysis_collection_utils:
           raise ValueError('Project {0} not found in database'.\
                            format(project_igf_id))
 
-      #if self.collection_type is 'sample' and \
-      #   self.sample_igf_id is None:
-      #  raise ValueError('Missing sample name for building sample collection')  # check for sample info
-
-      #if self.collection_type is 'experiment' and \
-      #   ( self.sample_igf_id is None or \
-      #     self.experiment_igf_id is None):
-      #  raise ValueError('Missing sample or experiment name for building experiment collection') # check for experiment info
-
-      #if self.collection_type is 'run' and \
-      #  ( self.sample_igf_id is None or \
-      #    self.experiment_igf_id is None or \
-      #    self.run_igf_id is None):
-      #  raise ValueError('Missing sample, experiment or run name for building run collection') # check for run info
-
       if self.rename_file and self.analysis_name is None:
         raise ValueError('Analysis name is required for renaming file')         # check analysis name
 
@@ -199,26 +184,48 @@ class Analysis_collection_utils:
           final_path=os.path.dirname(input_file)
         else:                                                                   # move file path
           if self.collection_table == 'project':
+            if project_igf_id is None:
+              raise ValueError('Missing project id for collection {0}'.\
+                               format(self.collection_name))
+
             final_path=os.path.join(self.base_path,
-                                    self.project_igf_id,
+                                    project_igf_id,
                                     self.analysis_name)                         # final path for project
           elif self.collection_table == 'sample':
+            if project_igf_id is None or \
+               sample_igf_id is None:
+              raise ValueError('Missing project and sample id for collection {0}'.\
+                               format(self.collection_name))
+
             final_path=os.path.join(self.base_path,
-                                    self.project_igf_id,
-                                    self.sample_igf_id,
+                                    project_igf_id,
+                                    sample_igf_id,
                                     self.analysis_name)                         # final path for sample
           elif self.collection_table == 'experiment':
+            if project_igf_id is None or \
+               sample_igf_id is None or \
+               experiment_igf_id is None:
+              raise ValueError('Missing project,sample and experiment id for collection {0}'.\
+                               format(self.collection_name))
+
             final_path=os.path.join(self.base_path,
-                                    self.project_igf_id,
-                                    self.sample_igf_id,
-                                    self.experiment_igf_id,
+                                    project_igf_id,
+                                    sample_igf_id,
+                                    experiment_igf_id,
                                     self.analysis_name)                         # final path for experiment
           elif self.collection_table == 'run':
+            if project_igf_id is None or \
+               sample_igf_id is None or \
+               experiment_igf_id is None or \
+               run_igf_id is None:
+              raise ValueError('Missing project,sample,experiment and run id for collection {0}'.\
+                               format(self.collection_name))
+
             final_path=os.path.join(self.base_path,
-                                    self.project_igf_id,
-                                    self.sample_igf_id,
-                                    self.experiment_igf_id,
-                                    self.run_igf_id,
+                                    project_igf_id,
+                                    sample_igf_id,
+                                    experiment_igf_id,
+                                    run_igf_id,
                                     self.analysis_name)                         # final path for run
 
         if self.rename_file:
