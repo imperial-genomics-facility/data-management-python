@@ -7,7 +7,7 @@ from igf_data.utils.fileutils import get_temp_dir,remove_dir
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.tools.cellranger.cellranger_count_utils import get_cellranger_count_input_list
 from igf_data.utils.tools.cellranger.cellranger_count_utils import check_cellranger_count_output
-from igf_data.utils.tools.cellranger.cellranger_count_utils import get_cellranger_reference_genome
+from igf_data.utils.tools.reference_genome_utils import Reference_genome_utils
 
 class RunCellrangerCount(IGFBaseProcess):
   '''
@@ -19,9 +19,9 @@ class RunCellrangerCount(IGFBaseProcess):
         'force_overwrite':True,
         'cellranger_exe':None,
         'fastq_collection_type':'demultiplexed_fastq',
-        'reference_type':'cellranger_reference_transcriptome',
+        'reference_type':'TRANSCRIPTOME_TENX',
         'cellranger_options':'{ "--jobmode":"pbspro","--localcores":"1","--localmem":"4","--mempercore":"4","--maxjobs":"20"}',
-        'job_timeout':172800,
+        'job_timeout':86400,
       })
     return params_dict
 
@@ -46,8 +46,8 @@ class RunCellrangerCount(IGFBaseProcess):
     :param base_work_dir: Base work directory path
     :param fastq_collection_type: Collection type name for input fastq files, default demultiplexed_fastq
     :param species_name: Reference genome collection name
-    :param reference_type: Reference genome collection type, default cellranger_reference_transcriptome
-    :param job_timeout: Timeout for cellranger job, default 48hrs
+    :param reference_type: Reference genome collection type, default TRANSCRIPTOME_TENX
+    :param job_timeout: Timeout for cellranger job, default 24hrs
     :returns: Adding cellranger_output to the dataflow_params
     '''
     try:
@@ -70,10 +70,10 @@ class RunCellrangerCount(IGFBaseProcess):
       os.chdir(work_dir)                                                        # move to work dir
       os.environ['PATH'] += '{0}{1}'.format(os.pathsep,
                                             os.path.basename(cellranger_exe))   # add cellranger path to env
-      reference_genome=get_cellranger_reference_genome(\
-                         collection_name=species_name,
-                         collection_type=reference_type,
-                         session_class=igf_session_class)                       # fetch reference genome for cellranger run
+      ref_genome=Reference_genome_utils(genome_tag=species_name,
+                                        dbsession_class=igf_session_class,
+                                        tenx_ref_type=reference_type)
+      cellranger_ref_transcriptome=ref_genome.get_transcriptome_tenx()          # fetch tenx ref transcriptome from db
       input_fastq_dirs=get_cellranger_count_input_list(\
                          db_session_class=igf_session_class,
                          experiment_igf_id=experiment_igf_id,
@@ -86,7 +86,7 @@ class RunCellrangerCount(IGFBaseProcess):
                                        quote(','.join(input_fastq_dirs))),
                       '{0}={1}'.format('--id=',quote(experiment_igf_id)),
                       '{0}={1}'.format('--sample=',quote(sample_submitter_id)),
-                      '{0}={1}'.format('--transcriptome',quote(reference_genome)),
+                      '{0}={1}'.format('--transcriptome',quote(cellranger_ref_transcriptome)),
                      ]                                                          # set initial parameters
       cellranger_cmd.extend(cellranger_options)                                 # add optional parameters
       message='started cellranger count for {0}, {1} {2}'.\
@@ -124,7 +124,7 @@ class RunCellrangerCount(IGFBaseProcess):
       self.param('dataflow_params',{'cellranger_output':cellranger_output,
                                     'bam_file':bam_list[0],
                                     'reference_type':reference_type})           # pass on cellranger output path
-    except:
+    except Exception as e:
       message='project: {2}, sample:{3}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
                                                       project_igf_id,
