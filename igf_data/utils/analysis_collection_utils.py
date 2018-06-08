@@ -12,24 +12,20 @@ from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
 
 class Analysis_collection_utils:
-  def __init__(self,project_igf_id,dbsession_class,base_path=None,sample_igf_id=None,experiment_igf_id=None,
-               run_igf_id=None,collection_name=None,collection_type=None,collection_table=None,
-               rename_file=True,add_datestamp=True,tag_name=None,
-               analysis_name=None, allowed_collection=('sample','experiment','run','project')):
+  def __init__(self,dbsession_class,base_path=None,collection_name=None,
+               collection_type=None,collection_table=None,rename_file=True,
+               add_datestamp=True,tag_name=None,analysis_name=None,
+               allowed_collection=('sample','experiment','run','project')):
     '''
     A class for dealing with analysis file collection. It has specific method for moving analysis files
     to a specific directory structure and rename the file using a uniform rule, if required.
     E.g. "<collection_name>_<analysis_name>_<tag>_<datestamp>.<original_suffix>"
     
-    :param project_igf_id: A project name string
     :param dbsession_class: A database session class
-    :param sample_igf_id: A sample name string, default None
-    :param experiment_igf_id: An experiment name string, default None
-    :param run_igf_id: A run name string, default None 
     :param collection_name: Collection name information for file, default None
     :param collection_type: Collection type information for file, default None
     :param collection_table: Collection table information for file, default None
-    :param base_path: A base filepath to move file while loading, default None
+    :param base_path: A base filepath to move file while loading, default 'None' for no file move
     :param rename_file: Rename file based on collection_table type while loading, default True
     :param add_datestamp: Add datestamp while loading the file
     :param analysis_name: Analysis name for the file, required for renaming while loading, default None
@@ -41,11 +37,7 @@ class Analysis_collection_utils:
                                  project
     '''
     try:
-      self.project_igf_id=project_igf_id
       self.dbsession_class=dbsession_class
-      self.sample_igf_id=sample_igf_id
-      self.experiment_igf_id=experiment_igf_id
-      self.run_igf_id=run_igf_id
       self.collection_name=collection_name
       self.collection_type=collection_type
       if collection_table not in allowed_collection:
@@ -61,11 +53,13 @@ class Analysis_collection_utils:
     except:
       raise
 
+
   def create_or_update_analysis_collection(self,file_path,dbsession,
                                            withdraw_exisitng_collection=True,
                                            autosave_db=True,force=True):
     '''
-    A method for create or update analysis file collection in db
+    A method for create or update analysis file collection in db. Required elements will be
+    collected from database if base_path element is given.
     
     :param file_path: file path to load as db collection
     :param dbsession: An active database session
@@ -108,6 +102,8 @@ class Analysis_collection_utils:
     A method for loading analysis results to disk and database. File will be moved to a new path if base_path is present.
     Directory structure of the final path is based on the collection_table information.
     
+    Following will be the final directory structure if base_path is present
+    
     project - base_path/project_igf_id/analysis_name
     sample - base_path/project_igf_id/sample_igf_id/analysis_name
     experiment - base_path/project_igf_id/sample_igf_id/experiment_igf_id/analysis_name
@@ -119,6 +115,7 @@ class Analysis_collection_utils:
     :param file_suffix: Use a specific file suffix, use None if it should be same as original file
                         e.g. input.vcf.gz to  output.vcf.gz
     :param force: Toggle for removing existing file, default True
+    :returns: Nill
     '''
     try:
       project_igf_id=None
