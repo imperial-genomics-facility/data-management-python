@@ -135,49 +135,49 @@ class Analysis_collection_utils:
       base=BaseAdaptor(**{'session_class':self.dbsession_class})
       base.start_session()                                                      # connect to db
       dbconnected=True
-      if self.collection_type is 'sample':
-        sa=SampleAdaptor(**{'session':base.session})
-        sample_igf_id=self.collection_name
-        sample_exists=sa.check_sample_records_igf_id(sample_igf_id=sample_igf_id)
-        if not sample_exists:
-          raise ValueError('Sample {0} not found in db'.\
-                           format(sample_igf_id))
+      if self.base_path is not None:                                            
+        if self.collection_type is 'sample':
+          sa=SampleAdaptor(**{'session':base.session})
+          sample_igf_id=self.collection_name
+          sample_exists=sa.check_sample_records_igf_id(sample_igf_id=sample_igf_id)
+          if not sample_exists:
+            raise ValueError('Sample {0} not found in db'.\
+                             format(sample_igf_id))
 
-        project_igf_id=sa.fetch_sample_project(sample_igf_id=sample_igf_id)     # fetch project id for sample
-      elif self.collection_type is 'experiment':
-        ea=ExperimentAdaptor(**{'session':base.session})
-        experiment_igf_id=self.collection_name
-        experiment_exists=\
-          ea.check_experiment_records_id(experiment_igf_id=experiment_igf_id)
-        if not experiment_exists:
-          raise ValueError('Experiment {0} not present in database'.\
-                           format(experiment_igf_id))
+          project_igf_id=sa.fetch_sample_project(sample_igf_id=sample_igf_id)     # fetch project id for sample
+        elif self.collection_type is 'experiment':
+          ea=ExperimentAdaptor(**{'session':base.session})
+          experiment_igf_id=self.collection_name
+          experiment_exists=\
+            ea.check_experiment_records_id(experiment_igf_id=experiment_igf_id)
+          if not experiment_exists:
+            raise ValueError('Experiment {0} not present in database'.\
+                             format(experiment_igf_id))
 
-          (project_igf_id,sample_igf_id)=\
-            ea.fetch_project_and_sample_for_experiment(experiment_igf_id=experiment_igf_id) # fetch project and sample id for experiment
-      elif self.collection_type is 'run':
-        ra=RunAdaptor(**{'session':base.session})
-        run_igf_id=self.collection_name
-        run_exists=ra.check_run_records_igf_id(run_igf_id=run_igf_id)
-        if not run_exists:
-          raise ValueError('Run {0} not found in database'.\
-                           format(run_igf_id))
+            (project_igf_id,sample_igf_id)=\
+              ea.fetch_project_and_sample_for_experiment(experiment_igf_id=experiment_igf_id) # fetch project and sample id for experiment
+        elif self.collection_type is 'run':
+          ra=RunAdaptor(**{'session':base.session})
+          run_igf_id=self.collection_name
+          run_exists=ra.check_run_records_igf_id(run_igf_id=run_igf_id)
+          if not run_exists:
+            raise ValueError('Run {0} not found in database'.\
+                             format(run_igf_id))
 
-        (project_igf_id,sample_igf_id,experiment_igf_id)=\
-          ra.fetch_project_sample_and_experiment_for_run(run_igf_id=run_igf_id) # fetch project, sample and experiment id for run
-      elif self.collection_type is 'project':
-        pa=ProjectAdaptor(**{'session':base.session})
-        project_igf_id=self.collection_name
-        project_exists=\
-          pa.check_project_records_igf_id(project_igf_id=project_igf_id)
-        if not project_exists:
-          raise ValueError('Project {0} not found in database'.\
-                           format(project_igf_id))
+          (project_igf_id,sample_igf_id,experiment_igf_id)=\
+            ra.fetch_project_sample_and_experiment_for_run(run_igf_id=run_igf_id) # fetch project, sample and experiment id for run
+        elif self.collection_type is 'project':
+          pa=ProjectAdaptor(**{'session':base.session})
+          project_igf_id=self.collection_name
+          project_exists=\
+            pa.check_project_records_igf_id(project_igf_id=project_igf_id)
+          if not project_exists:
+            raise ValueError('Project {0} not found in database'.\
+                             format(project_igf_id))
 
       if self.rename_file and self.analysis_name is None:
         raise ValueError('Analysis name is required for renaming file')         # check analysis name
 
-      
       for input_file in input_file_list:
         final_path=''
         if self.base_path is None:                                              # do not move file if base_path is absent
@@ -229,15 +229,7 @@ class Analysis_collection_utils:
                                     self.analysis_name)                         # final path for run
 
         if self.rename_file:
-          new_filename=''
-          if self.collection_table == 'project':
-            new_filename=self.project_igf_id
-          elif self.collection_table == 'sample':
-            new_filename=self.sample_igf_id
-          elif self.collection_table == 'experiment':
-            new_filename=self.experiment_igf_id
-          elif self.collection_table == 'run':
-            new_filename=self.run_igf_id
+          new_filename=self.collection_name                                     # use collection name to rename file
 
           if new_filename =='':
             raise ValueError('New filename not found for input file {0}'.\
