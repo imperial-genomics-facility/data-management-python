@@ -133,7 +133,7 @@ class Analysis_collection_utils:
       base.start_session()                                                      # connect to db
       dbconnected=True
       if self.base_path is not None:                                            
-        if self.collection_type is 'sample':
+        if self.collection_table is 'sample':
           sa=SampleAdaptor(**{'session':base.session})
           sample_igf_id=self.collection_name
           sample_exists=sa.check_sample_records_igf_id(sample_igf_id=sample_igf_id)
@@ -142,7 +142,7 @@ class Analysis_collection_utils:
                              format(sample_igf_id))
 
           project_igf_id=sa.fetch_sample_project(sample_igf_id=sample_igf_id)     # fetch project id for sample
-        elif self.collection_type is 'experiment':
+        elif self.collection_table is 'experiment':
           ea=ExperimentAdaptor(**{'session':base.session})
           experiment_igf_id=self.collection_name
           experiment_exists=\
@@ -153,7 +153,7 @@ class Analysis_collection_utils:
 
             (project_igf_id,sample_igf_id)=\
               ea.fetch_project_and_sample_for_experiment(experiment_igf_id=experiment_igf_id) # fetch project and sample id for experiment
-        elif self.collection_type is 'run':
+        elif self.collection_table is 'run':
           ra=RunAdaptor(**{'session':base.session})
           run_igf_id=self.collection_name
           run_exists=ra.check_run_records_igf_id(run_igf_id=run_igf_id)
@@ -163,7 +163,7 @@ class Analysis_collection_utils:
 
           (project_igf_id,sample_igf_id,experiment_igf_id)=\
             ra.fetch_project_sample_and_experiment_for_run(run_igf_id=run_igf_id) # fetch project, sample and experiment id for run
-        elif self.collection_type is 'project':
+        elif self.collection_table is 'project':
           pa=ProjectAdaptor(**{'session':base.session})
           project_igf_id=self.collection_name
           project_exists=\
