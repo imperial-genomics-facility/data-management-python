@@ -4,6 +4,10 @@ from igf_data.utils.fileutils import preprocess_path_name
 from igf_data.utils.fileutils import get_file_extension
 from igf_data.utils.fileutils import move_file
 from igf_data.igfdb.baseadaptor import BaseAdaptor
+from igf_data.igfdb.projectadaptor import ProjectAdaptor
+from igf_data.igfdb.sampleadaptor import SampleAdaptor
+from igf_data.igfdb.experimentadaptor import ExperimentAdaptor
+from igf_data.igfdb.runadaptor import RunAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
 
@@ -117,33 +121,78 @@ class Analysis_collection_utils:
     :param force: Toggle for removing existing file, default True
     '''
     try:
+      project_igf_id=None
+      sample_igf_id=None
+      experiment_igf_id=None
+      experiment_igf_id=None
+      run_igf_id=None
       dbconnected=False
       if self.collection_name is None or \
          self.collection_type is None or \
          self.collection_table is None:
         raise ValueError('File collection information is incomplete')           # check for collection information
 
-      if self.collection_type is 'sample' and \
-         self.sample_igf_id is None:
-        raise ValueError('Missing sample name for building sample collection')  # check for sample info
+      base=BaseAdaptor(**{'session_class':self.dbsession_class})
+      base.start_session()                                                      # connect to db
+      dbconnected=True
+      if self.collection_type is 'sample':
+        sa=SampleAdaptor(**{'session':base.session})
+        sample_igf_id=self.collection_name
+        sample_exists=sa.check_sample_records_igf_id(sample_igf_id=sample_igf_id)
+        if not sample_exists:
+          raise ValueError('Sample {0} not found in db'.\
+                           format(sample_igf_id))
 
-      if self.collection_type is 'experiment' and \
-         ( self.sample_igf_id is None or \
-           self.experiment_igf_id is None):
-        raise ValueError('Missing sample or experiment name for building experiment collection') # check for experiment info
+        project_igf_id=sa.fetch_sample_project(sample_igf_id=sample_igf_id)     # fetch project id for sample
+      elif self.collection_type is 'experiment':
+        ea=ExperimentAdaptor(**{'session':base.session})
+        experiment_igf_id=self.collection_name
+        experiment_exists=\
+          ea.check_experiment_records_id(experiment_igf_id=experiment_igf_id)
+        if not experiment_exists:
+          raise ValueError('Experiment {0} not present in database'.\
+                           format(experiment_igf_id))
 
-      if self.collection_type is 'run' and \
-        ( self.sample_igf_id is None or \
-          self.experiment_igf_id is None or \
-          self.run_igf_id is None):
-        raise ValueError('Missing sample, experiment or run name for building run collection') # check for run info
+          (project_igf_id,sample_igf_id)=\
+            ea.fetch_project_and_sample_for_experiment(experiment_igf_id=experiment_igf_id) # fetch project and sample id for experiment
+      elif self.collection_type is 'run':
+        ra=RunAdaptor(**{'session':base.session})
+        run_igf_id=self.collection_name
+        run_exists=ra.check_run_records_igf_id(run_igf_id=run_igf_id)
+        if not run_exists:
+          raise ValueError('Run {0} not found in database'.\
+                           format(run_igf_id))
+
+        (project_igf_id,sample_igf_id,experiment_igf_id)=\
+          ra.fetch_project_sample_and_experiment_for_run(run_igf_id=run_igf_id) # fetch project, sample and experiment id for run
+      elif self.collection_type is 'project':
+        pa=ProjectAdaptor(**{'session':base.session})
+        project_igf_id=self.collection_name
+        project_exists=\
+          pa.check_project_records_igf_id(project_igf_id=project_igf_id)
+        if not project_exists:
+          raise ValueError('Project {0} not found in database'.\
+                           format(project_igf_id))
+
+      #if self.collection_type is 'sample' and \
+      #   self.sample_igf_id is None:
+      #  raise ValueError('Missing sample name for building sample collection')  # check for sample info
+
+      #if self.collection_type is 'experiment' and \
+      #   ( self.sample_igf_id is None or \
+      #     self.experiment_igf_id is None):
+      #  raise ValueError('Missing sample or experiment name for building experiment collection') # check for experiment info
+
+      #if self.collection_type is 'run' and \
+      #  ( self.sample_igf_id is None or \
+      #    self.experiment_igf_id is None or \
+      #    self.run_igf_id is None):
+      #  raise ValueError('Missing sample, experiment or run name for building run collection') # check for run info
 
       if self.rename_file and self.analysis_name is None:
         raise ValueError('Analysis name is required for renaming file')         # check analysis name
 
-      base=BaseAdaptor(**{'session_class':self.dbsession_class})
-      base.start_session()                                                      # connect to db
-      dbconnected=True
+      
       for input_file in input_file_list:
         final_path=''
         if self.base_path is None:                                              # do not move file if base_path is absent
