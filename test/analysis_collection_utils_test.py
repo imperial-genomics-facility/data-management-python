@@ -5,6 +5,13 @@ from igf_data.utils.fileutils import get_temp_dir,remove_dir
 from igf_data.utils.fileutils import get_datestamp_label
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
+from igf_data.igfdb.projectadaptor import ProjectAdaptor
+from igf_data.igfdb.useradaptor import UserAdaptor
+from igf_data.igfdb.sampleadaptor import SampleAdaptor
+from igf_data.igfdb.platformadaptor import PlatformAdaptor
+from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
+from igf_data.igfdb.experimentadaptor import ExperimentAdaptor
+from igf_data.igfdb.runadaptor import RunAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.igfTables import Base,File,Collection,Collection_group
 from igf_data.utils.analysis_collection_utils import Analysis_collection_utils
@@ -28,6 +35,49 @@ class Analysis_collection_utils_test1(unittest.TestCase):
                              file_name)
       with open(file_path,'w') as fq:
         fq.write('AAAA')                                                        # create input files
+
+    base = BaseAdaptor(**{'session_class':self.session_class})
+    base.start_session()
+    platform_data=[{ "platform_igf_id" : "M001",
+                     "model_name" : "MISEQ" ,
+                     "vendor_name" : "ILLUMINA" ,
+                     "software_name" : "RTA" ,
+                    "software_version" : "RTA1.18.54"}]                         # platform data
+    flowcell_rule_data=[{"platform_igf_id":"M001",
+                         "flowcell_type":"MISEQ",
+                         "index_1":"NO_CHANGE",
+                         "index_2":"NO_CHANGE"}]                                # flowcell rule data
+    pl=PlatformAdaptor(**{'session':base.session})
+    pl.store_platform_data(data=platform_data)                                  # loading platform data
+    pl.store_flowcell_barcode_rule(data=flowcell_rule_data)                     # loading flowcell rules data
+    project_data=[{'project_igf_id':'ProjectA'}]                                # project data
+    pa=ProjectAdaptor(**{'session':base.session})                               # load project data
+    sample_data=[{'sample_igf_id':'SampleA',
+                  'project_igf_id':'ProjectA'}]                                 # sample data
+    sa=SampleAdaptor(**{'session':base.session})
+    sa.store_sample_and_attribute_data(data=sample_data)                        # store sample data
+    seqrun_data=[{'seqrun_igf_id':'SeqrunA', 
+                  'flowcell_id':'000000000-D0YLK', 
+                  'platform_igf_id':'M001',
+                  'flowcell':'MISEQ'}]                                          # seqrun data
+    sra=SeqrunAdaptor(**{'session':base.session})
+    sra.store_seqrun_and_attribute_data(data=seqrun_data)                       # load seqrun data
+    experiment_data=[{'experiment_igf_id':'ExperimentA',
+                      'sample_igf_id':'SampleA',
+                      'library_name':'SampleA',
+                      'platform_name':'MISEQ',
+                      'project_igf_id':'ProjectA'}]                             # experiment data
+    ea=ExperimentAdaptor(**{'session':base.session})
+    ea.store_project_and_attribute_data(data=experiment_data)                   # load experiment data
+    run_data=[{'run_igf_id':'RunA',
+               'experiment_igf_id':'ExperimentA',
+               'seqrun_igf_id':'SeqrunA',
+               'lane_number':'1'}]                                              # run data
+    ra=RunAdaptor(**{'session':base.session})
+    ra.store_run_and_attribute_data(data=run_data)                              # load run data
+    base.commit_session()
+    base.close_session()
+
 
   def tearDown(self):
     Base.metadata.drop_all(self.engine)
