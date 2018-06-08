@@ -1,4 +1,4 @@
-Utility classes
+Analysis utility
 ================
 
 
