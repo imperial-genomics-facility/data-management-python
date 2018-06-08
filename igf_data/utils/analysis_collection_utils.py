@@ -151,7 +151,7 @@ class Analysis_collection_utils:
             raise ValueError('Experiment {0} not present in database'.\
                              format(experiment_igf_id))
 
-            (project_igf_id,sample_igf_id)=\
+          (project_igf_id,sample_igf_id)=\
               ea.fetch_project_and_sample_for_experiment(experiment_igf_id=experiment_igf_id) # fetch project and sample id for experiment
         elif self.collection_table is 'run':
           ra=RunAdaptor(**{'session':base.session})
