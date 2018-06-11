@@ -246,7 +246,7 @@ def prepare_file_archive(results_dirpath,output_file,gzip_output=True,
       raise IOError('failed to write output file {0}, path not found'.\
                     format(output_file))                                        # check for existing output directory
 
-    if exclude_list is not None and not isinstance(exclude_list):
+    if exclude_list is not None and not isinstance(exclude_list,list):
       raise ValueError('Expecting a list for excluding file to archive, got {0}'.\
                        format(type(exclude_list)))                              # check exclude list type if its not None
 
