@@ -231,9 +231,16 @@ def prepare_file_archive(results_dirpath,output_file,gzip_output=True,
   :returns: Nill
   '''
   try:
-    if os.path.exists(output_file) and not force:
-      raise ValueError('Output archive already present: {0},set force as True to overwrite'.\
-                       format(output_file))                                     # check for existing output file
+    output_mode='w'                                                             # write mode for non compressed output
+    if gzip_output:
+      output_mode='w:gz'                                                        # set write mode for gzip output
+
+    if os.path.exists(output_file):
+      if not force:
+        raise ValueError('Output archive already present: {0},set force as True to overwrite'.\
+                         format(output_file))                                   # check for existing output file
+      else:
+        os.remove(output_file)                                                  # removing existing file
 
     if not os.path.exists(os.path.dirname(output_file)):
       raise IOError('failed to write output file {0}, path not found'.\
@@ -243,12 +250,7 @@ def prepare_file_archive(results_dirpath,output_file,gzip_output=True,
       raise ValueError('Expecting a list for excluding file to archive, got {0}'.\
                        format(type(exclude_list)))                              # check exclude list type if its not None
 
-    if gzip_output:
-      write_mode='w:gz'                                                         # set write mode for gzip output
-    else:
-      write_mode='w'                                                            # write mode for non compressed output
-
-    with open(output_file,write_mode) as tar:                                   # overwrite output file
+    with tarfile.open(output_file, "{0}".format(output_mode)) as tar:           # overwrite output file
       for root,dir,files in os.walk(results_dirpath):                           # check for files under results_dirpath
         for file in files:
           file_path=os.path.join(root,
