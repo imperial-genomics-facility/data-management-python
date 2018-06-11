@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os,subprocess,hashlib,string,re
+import tarfile,fnmatch
 from datetime import datetime
 from tempfile import mkdtemp,gettempdir
 from shutil import rmtree, move, copy2
@@ -213,5 +214,56 @@ def get_file_extension(input_file):
     output_suffix='.'.join(os.path.basename(input_file).\
                            split('.')[1:])                                      # get complete suffix for input file path
     return output_suffix
+  except:
+    raise
+
+
+def prepare_file_archive(results_dirpath,output_file,gzip_output=True,
+                         exclude_list=None,force=True):
+  '''
+  A method for creating tar.gz archive with the files present in filepath
+  
+  :param results_dirpath: A file path for input file directory
+  :param output_file: Name of the output archive filepath
+  :param gzip_output: A toggle for creating gzip output tarfile, default True
+  :param exclude_list: A list of file pattern to exclude from the archive, default None
+  :param force: A toggle for replacing output file, if its already present, default True
+  :returns: Nill
+  '''
+  try:
+    if os.path.exists(output_file) and not force:
+      raise ValueError('Output archive already present: {0},set force as True to overwrite'.\
+                       format(output_file))                                     # check for existing output file
+
+    if not os.path.exists(os.path.dirname(output_file)):
+      raise IOError('failed to write output file {0}, path not found'.\
+                    format(output_file))                                        # check for existing output directory
+
+    if exclude_list is not None and not isinstance(exclude_list):
+      raise ValueError('Expecting a list for excluding file to archive, got {0}'.\
+                       format(type(exclude_list)))                              # check exclude list type if its not None
+
+    if gzip_output:
+      write_mode='w:gz'                                                         # set write mode for gzip output
+    else:
+      write_mode='w'                                                            # write mode for non compressed output
+
+    with open(output_file,write_mode) as tar:                                   # overwrite output file
+      for root,dir,files in os.walk(results_dirpath):                           # check for files under results_dirpath
+        for file in files:
+          file_path=os.path.join(root,
+                                   file)
+          if exclude_list is None:
+            tar.add(file_path,
+                    arcname=os.path.relpath(file_path,
+                                            start=results_dirpath))             # add all files to archive
+          else:
+            exclude_flag=[exclude_pattern 
+                            for exclude_pattern in exclude_list 
+                              if fnmatch.fnmatch(file,exclude_pattern)]         # check for match with exclude pattern list
+            if len(exclude_flag)==0:
+              tar.add(file_path,
+                      arcname=os.path.relpath(file_path,
+                                              start=results_dirpath))           # add files to archive if its not in the list
   except:
     raise
