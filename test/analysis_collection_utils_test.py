@@ -309,7 +309,6 @@ class Analysis_collection_utils_test1(unittest.TestCase):
                                                         'TagA',
                                                         datestamp,
                                                         'cram'))
-    print(file_list)
     self.assertTrue(test_file in file_list)
     base.close_session()
 
