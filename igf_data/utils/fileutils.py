@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import pandas as pd
 import os,subprocess,hashlib,string,re
 import tarfile,fnmatch
 from datetime import datetime
@@ -235,6 +236,10 @@ def prepare_file_archive(results_dirpath,output_file,gzip_output=True,
     if gzip_output:
       output_mode='w:gz'                                                        # set write mode for gzip output
 
+    if not os.path.exists(results_dirpath):
+      raise IOError('Input directory path {0} not found'.\
+                    format(results_dirpath))                                    # check input directory path
+
     if os.path.exists(output_file):
       if not force:
         raise ValueError('Output archive already present: {0},set force as True to overwrite'.\
@@ -254,7 +259,7 @@ def prepare_file_archive(results_dirpath,output_file,gzip_output=True,
       for root,dir,files in os.walk(results_dirpath):                           # check for files under results_dirpath
         for file in files:
           file_path=os.path.join(root,
-                                   file)
+                                 file)
           if exclude_list is None:
             tar.add(file_path,
                     arcname=os.path.relpath(file_path,
@@ -267,5 +272,107 @@ def prepare_file_archive(results_dirpath,output_file,gzip_output=True,
               tar.add(file_path,
                       arcname=os.path.relpath(file_path,
                                               start=results_dirpath))           # add files to archive if its not in the list
+  except:
+    raise
+
+def _get_file_manifest_info(file_path,start_dir=None,md5_label='md5',
+                            size_lavel='size',path_label='file_path'):
+  '''
+  An internal method for calculating file manifest information for an input file
+  
+  :param file_path: A file path for manifest information generation
+  :param start_dir: A directory path for generating relative filepath info, default None
+  :param md5_label: A string for checksum column, default md5
+  :param size_lavel: A string for file size column, default size
+  :param path_label: A string for file path column, default file_path
+  :returns: A dictionary with the path_label,md5_label and size_lavel as the key
+  '''
+  try:
+    if not os.path.exists(file_path):
+      raise IOError('manifest generation has failed for file {0}'.\
+                    format(file_path))
+
+    file_data=dict()
+    file_relpath=os.path.relpath(file_path,
+                                 start=start_dir)                               # get relative filepath
+    file_md5=calculate_file_checksum(filepath=file_path,
+                                    hasher='md5')                               # get file md5
+    file_size=os.path.getsize(file_path)                                        # get file size
+    file_data.update({path_label:file_relpath,
+                      md5_label:file_md5,
+                      size_lavel:file_size
+                     })                                                         # update file data
+    return file_data
+  except:
+    raise
+
+
+def create_file_manifest_for_dir(results_dirpath,output_file,md5_label='md5',
+                                 size_lavel='size',path_label='file_path',
+                                 exclude_list=None,force=True):
+  '''
+  A method for creating md5 and size list for all the files in a directory path
+  
+  :param results_dirpath: A file path for input file directory
+  :param output_file: Name of the output archive filepath
+  :param exclude_list: A list of file pattern to exclude from the archive, default None
+  :param force: A toggle for replacing output file, if its already present, default True
+  :param md5_label: A string for checksum column, default md5
+  :param size_lavel: A string for file size column, default size
+  :param path_label: A string for file path column, default file_path
+  :returns: Nill
+  '''
+  try:
+    if not os.path.exists(results_dirpath):
+      raise IOError('Input directory path {0} not found'.\
+                    format(results_dirpath))                                    # check input directory path
+
+    if os.path.exists(output_file):
+      if not force:
+        raise ValueError('Output archive already present: {0},set force as True to overwrite'.\
+                         format(output_file))                                   # check for existing output file
+      else:
+        os.remove(output_file)                                                  # removing existing file
+
+    if not os.path.exists(os.path.dirname(output_file)):
+      raise IOError('failed to write output file {0}, path not found'.\
+                    format(output_file))                                        # check for existing output directory
+
+    if exclude_list is not None and not isinstance(exclude_list,list):
+      raise ValueError('Expecting a list for excluding file to archive, got {0}'.\
+                       format(type(exclude_list)))                              # check exclude list type if its not None
+
+    file_manifest_list=list()                                                   # empty list for file manifest
+
+    for root,dir,files in os.walk(results_dirpath):                             # check for files under results_dirpath
+      for file in files:
+        file_path=os.path.join(root,
+                               file)
+        if exclude_list is None:
+          file_data=file_data=_get_file_manifest_info(\
+                                file_path=file_path,
+                                start_dir=results_dirpath,
+                                md5_label=md5_label,
+                                size_lavel=size_lavel,
+                                path_label=path_label)
+          file_manifest_list.append(file_data)                                  # add file info for all files
+        else:
+          exclude_flag=[exclude_pattern 
+                          for exclude_pattern in exclude_list 
+                            if fnmatch.fnmatch(file,exclude_pattern)]           # check for match with exclude pattern list
+          if len(exclude_flag)==0:
+            file_data=file_data=_get_file_manifest_info(\
+                                  file_path=file_path,
+                                  start_dir=results_dirpath,
+                                  md5_label=md5_label,
+                                  size_lavel=size_lavel,
+                                  path_label=path_label)
+            file_manifest_list.append(file_data)                                # add file info for filtered files
+
+    file_manifest_list=pd.DataFrame(file_manifest_list)                         # convert manifest data to dataframe
+    file_manifest_list.to_csv(output_file,
+                              sep='\t',
+                              encoding='utf-8',
+                              index=False)                                      # write manifest csv file
   except:
     raise
