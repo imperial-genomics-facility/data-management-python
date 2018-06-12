@@ -314,7 +314,7 @@ def create_file_manifest_for_dir(results_dirpath,output_file,md5_label='md5',
   A method for creating md5 and size list for all the files in a directory path
   
   :param results_dirpath: A file path for input file directory
-  :param output_file: Name of the output archive filepath
+  :param output_file: Name of the output csv filepath
   :param exclude_list: A list of file pattern to exclude from the archive, default None
   :param force: A toggle for replacing output file, if its already present, default True
   :param md5_label: A string for checksum column, default md5
