@@ -371,7 +371,7 @@ def create_file_manifest_for_dir(results_dirpath,output_file,md5_label='md5',
 
     file_manifest_list=pd.DataFrame(file_manifest_list)                         # convert manifest data to dataframe
     file_manifest_list.to_csv(output_file,
-                              sep='\t',
+                              sep=',',
                               encoding='utf-8',
                               index=False)                                      # write manifest csv file
   except:

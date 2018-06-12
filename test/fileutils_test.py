@@ -1,5 +1,7 @@
+import pandas as pd
 import os,tarfile,unittest
 from igf_data.utils.fileutils import prepare_file_archive,get_temp_dir,remove_dir
+from igf_data.utils.fileutils import create_file_manifest_for_dir
 
 class Fileutils_test1(unittest.TestCase):
   def setUp(self):
@@ -29,6 +31,8 @@ class Fileutils_test1(unittest.TestCase):
                                       'test.tar')
     self.output_targz_file=os.path.join(get_temp_dir(),
                                         'test.tar.gz')
+    self.manifest_file=os.path.join(get_temp_dir(),
+                                    'file_manifest.csv')
     for file in file_list:
       file=os.path.join(self.results_dir,file)
       file_dir=os.path.dirname(file)
@@ -69,6 +73,15 @@ class Fileutils_test1(unittest.TestCase):
       tar_file_list=tar.getnames()
     self.assertTrue('web_summary.html' in tar_file_list)
     self.assertTrue('possorted_genome_bam.bam.html' not in tar_file_list)
+
+  def test_create_file_manifest_for_dir(self):
+    create_file_manifest_for_dir(results_dirpath=self.results_dir,
+                                 output_file=self.manifest_file)
+    manifest_data=pd.read_csv(self.manifest_file)
+    html_data=manifest_data[manifest_data['file_path']=='web_summary.html']
+    html_size=html_data['size'].values[0]
+    self.assertEqual(len(html_data.index),1)
+    self.assertEqual(html_size,1)
 
 
 if __name__ == '__main__':
