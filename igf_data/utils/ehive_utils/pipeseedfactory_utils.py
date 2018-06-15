@@ -1,7 +1,11 @@
 import datetime
+import pandas as pd
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 
-def get_pipeline_seeds(pipeseed_mode,pipeline_name,igf_session_class):
+def get_pipeline_seeds(pipeseed_mode,pipeline_name,igf_session_class,
+                       seed_id_label='seed_id',seqrun_date_label='seqrun_date',
+                       seqrun_id_label='seqrun_id',experiment_id_label='experiment_id',
+                       seqrun_igf_id_label='seqrun_igf_id'):
   '''
   A utils function for fetching pipeline seed information
   
@@ -22,14 +26,14 @@ def get_pipeline_seeds(pipeseed_mode,pipeline_name,igf_session_class):
     dbconnected=True
     pipeseeds_data, table_data = \
             pa.fetch_pipeline_seed_with_table_data(pipeline_name)               # fetch requires entries as list of dictionaries from table for the seeded entries
-      
+    seed_data=pd.DataFrame()
     if not isinstance(pipeseeds_data,pd.DataFrame) or \
        not isinstance(table_data,pd.DataFrame):
       raise AttributeError('Expecting a pandas dataframe of pipeseed data and received {0}, {1}').\
                            format(type(pipeseeds_data),type(table_data))
 
-    if len(pipeseeds_data.index) == 0 and \
-       len(table_data.index) == 0:
+    if len(pipeseeds_data.index) > 0 and \
+       len(table_data.index) > 0:
       pipeseeds_data[seed_id_label]=pipeseeds_data[seed_id_label].\
                                     map(lambda x: int(x))                       # convert pipeseed column type
       if pipeseed_mode=='demultiplexing':
