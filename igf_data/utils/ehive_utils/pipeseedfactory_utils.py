@@ -21,11 +21,18 @@ def get_pipeline_seeds(pipeseed_mode,pipeline_name,igf_session_class,
     if pipeseed_mode not in ('demultiplexing','alignment'):
       raise ValueError('Pipeseed_mode {0} not supported'.format(pipeseed_mode))
 
+    table_name=None
+    if pipeseed_mode=='demultiplexing':
+      table_name='seqrun'
+    elif pipeseed_mode=='alignment':
+      table_name='experiment'
+
     pa = PipelineAdaptor(**{'session_class':igf_session_class})                 # get db adaptor
     pa.start_session()                                                          # connect to db
     dbconnected=True
     pipeseeds_data, table_data = \
-            pa.fetch_pipeline_seed_with_table_data(pipeline_name)               # fetch requires entries as list of dictionaries from table for the seeded entries
+            pa.fetch_pipeline_seed_with_table_data(pipeline_name,
+                                                   table_name=table_name)       # fetch requires entries as list of dictionaries from table for the seeded entries
     seed_data=pd.DataFrame()
     if not isinstance(pipeseeds_data,pd.DataFrame) or \
        not isinstance(table_data,pd.DataFrame):

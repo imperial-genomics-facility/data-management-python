@@ -133,7 +133,6 @@ class PipelineAdaptor(BaseAdaptor):
                                   filter(Pipeline.pipeline_name==pipeline_name).\
                                   filter(Pipeline_seed.seed_table==table_name)
       pipeseed_data=self.fetch_records(query=pipeseed_query)
-
       if len(pipeseed_data.index)>0:
         table_data=pd.concat([self.__map_seed_data_to_foreign_table(data=record) \
                              for record in pipeseed_data.to_dict(orient='records')], 
