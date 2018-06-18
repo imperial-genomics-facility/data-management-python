@@ -36,7 +36,7 @@ def full_suite():
   from .analysis_collection_utils_test import Analysis_collection_utils_test1
   from .fileutils_test import Fileutils_test1
   from .pipeseedfactory_utils_test import Pipeseedfactory_utils_test1
-  from .reference_genome_utils_test1 import Reference_genome_utils_test1
+  from .reference_genome_utils_test import Reference_genome_utils_test1
 
   return unittest.TestSuite([ \
       unittest.TestLoader().loadTestsFromTestCase(BasesMask_testA), 
