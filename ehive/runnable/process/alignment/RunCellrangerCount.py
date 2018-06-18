@@ -65,7 +65,7 @@ class RunCellrangerCount(IGFBaseProcess):
       reference_type=self.param('reference_type')
 
       work_dir=os.path.join(base_work_dir,project_igf_id,sample_igf_id,experiment_igf_id)
-      work_dir=self.get_job_work_dir(work_dir,work_dir)
+      work_dir=self.get_job_work_dir(work_dir=work_dir)
 
       os.chdir(work_dir)                                                        # move to work dir
       os.environ['PATH'] += '{0}{1}'.format(os.pathsep,
