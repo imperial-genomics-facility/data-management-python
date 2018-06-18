@@ -72,7 +72,11 @@ class RunCellrangerCount(IGFBaseProcess):
 
       os.chdir(work_dir)                                                        # move to work dir
       os.environ['PATH'] += '{0}{1}'.format(os.pathsep,
-                                            os.path.basename(cellranger_exe))   # add cellranger path to env
+                                            os.path.dirname(cellranger_exe))    # add cellranger location to env PATH
+      if not os.path.is_executable(cellranger_exe):
+        raise ValueError('Cellranger file {0} is not executable'.\
+                         format(cellranger_exe))                                # check cellranger exe
+
       ref_genome=Reference_genome_utils(genome_tag=species_name,
                                         dbsession_class=igf_session_class,
                                         tenx_ref_type=reference_type)
@@ -92,9 +96,9 @@ class RunCellrangerCount(IGFBaseProcess):
                       '{0}={1}'.format('--transcriptome',
                                        quote(cellranger_ref_transcriptome)),
                      ]                                                          # set initial parameters
-      if sample_submitter_id is not None:
-        cellranger_cmd.append('{0}={1}'.format('--sample',
-                                               quote(sample_submitter_id)))     # add sample lookup info
+      #if sample_submitter_id is not None:
+      #  cellranger_cmd.append('{0}={1}'.format('--sample',
+      #                                         quote(sample_submitter_id)))     # add sample lookup info
 
       cellranger_cmd.extend(cellranger_options)                                 # add optional parameters
       message='started cellranger count for {0}, {1} {2}'.\
