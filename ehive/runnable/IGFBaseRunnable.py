@@ -187,7 +187,7 @@ class IGFBaseRunnable(eHive.BaseRunnable):
         
       option_list=[[param,value] if value else [param]
                        for param, value in option.items()]                      # remove empty values
-      if separator in None:
+      if separator is None:
         option_list=[col for row in option_list for col in row]                 # flatten sub lists
       else:
         if not isinstance(separator, str):
