@@ -66,7 +66,7 @@ class Reference_genome_utils:
                                                output_mode='dataframe')         # fetch collection files from db
       ca.close_session()
       if len(collection_files.index) >0:
-        files=list(collection_files[file_path_label].values())
+        files=list(collection_files[file_path_label].values)
         if unique_file:
           ref_file=files[0]                                                     # select the first file from db results
         else:
