@@ -15,7 +15,7 @@ def get_pipeline_seeds(pipeseed_mode,pipeline_name,igf_session_class,
   
   :param pipeline_name: A string infor about pipeline name
   :param igf_session_class: A database session class for pipeline seed lookup
-  :returns: Two Pandas dataframe, first with pipeseed entries and second with seed info
+  :returns: Two Pandas dataframes, first with pipeseed entries and second with seed info
   '''
   try:
     if pipeseed_mode not in ('demultiplexing','alignment'):
@@ -70,8 +70,7 @@ def get_pipeline_seeds(pipeseed_mode,pipeline_name,igf_session_class,
                              right_index=False)                                 # join dataframes
 
       seed_data=merged_data.\
-                applymap(lambda x: str(x)).\
-                to_dict(orient='records')                                       # convert dataframe to string and add as list of dictionaries
+                applymap(lambda x: str(x))                                      # convert dataframe to string and add as list of dictionaries
     return pipeseeds_data, seed_data
   except:
     raise

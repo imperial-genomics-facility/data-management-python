@@ -140,8 +140,7 @@ class Pipeseedfactory_utils_test1(unittest.TestCase):
     pipeseed,seed_list=get_pipeline_seeds(pipeseed_mode='demultiplexing',
                                           pipeline_name='DemultiplexingFastq',
                                           igf_session_class=self.session_class)
-    self.assertEqual(len(seed_list),1)
-    seed_list=pd.DataFrame(seed_list)
+    self.assertEqual(len(seed_list.index),1)
     seqrun_igf_id=seed_list['seqrun_igf_id'].values[0]
     self.assertEqual(seqrun_igf_id,'180416_M03291_0139_000000000-TEST')
 
@@ -149,8 +148,7 @@ class Pipeseedfactory_utils_test1(unittest.TestCase):
     pipeseed,seed_list=get_pipeline_seeds(pipeseed_mode='alignment',
                                           pipeline_name='PrimaryAnalysis',
                                           igf_session_class=self.session_class)
-    self.assertEqual(len(seed_list),1)
-    seed_list=pd.DataFrame(seed_list)
+    self.assertEqual(len(seed_list.index),1)
     experiment_igf_id=seed_list['experiment_igf_id'].values[0]
     self.assertEqual(experiment_igf_id,'IGF00123_MISEQ')
 
