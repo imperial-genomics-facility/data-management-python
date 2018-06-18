@@ -63,9 +63,12 @@ class RunCellrangerCount(IGFBaseProcess):
       job_timeout=self.param_required('job_timeout')
       species_name=self.param('species_name')
       reference_type=self.param('reference_type')
-
-      work_dir=os.path.join(base_work_dir,project_igf_id,sample_igf_id,experiment_igf_id)
-      work_dir=self.get_job_work_dir(work_dir=work_dir)
+      work_dir=False
+      work_dir_prefix=os.path.join(base_work_dir,
+                                   project_igf_id,
+                                   sample_igf_id,
+                                   experiment_igf_id)
+      work_dir=self.get_job_work_dir(work_dir=work_dir_prefix)                  # replace this with temp dir while running in queue
 
       os.chdir(work_dir)                                                        # move to work dir
       os.environ['PATH'] += '{0}{1}'.format(os.pathsep,
@@ -81,13 +84,18 @@ class RunCellrangerCount(IGFBaseProcess):
       cellranger_options=self.format_tool_options(cellranger_options,
                                                   separator='=')
       cellranger_cmd=[cellranger_exe,
-                      'count'
-                      '{0}={1}'.format('--fastqs=',
+                      'count',
+                      '{0}={1}'.format('--fastqs',
                                        quote(','.join(input_fastq_dirs))),
-                      '{0}={1}'.format('--id=',quote(experiment_igf_id)),
-                      '{0}={1}'.format('--sample=',quote(sample_submitter_id)),
-                      '{0}={1}'.format('--transcriptome',quote(cellranger_ref_transcriptome)),
+                      '{0}={1}'.format('--id',
+                                       quote(experiment_igf_id)),
+                      '{0}={1}'.format('--transcriptome',
+                                       quote(cellranger_ref_transcriptome)),
                      ]                                                          # set initial parameters
+      if sample_submitter_id is not None:
+        cellranger_cmd.append('{0}={1}'.format('--sample',
+                                               quote(sample_submitter_id)))     # add sample lookup info
+
       cellranger_cmd.extend(cellranger_options)                                 # add optional parameters
       message='started cellranger count for {0}, {1} {2}'.\
               format(project_igf_id,
@@ -131,4 +139,6 @@ class RunCellrangerCount(IGFBaseProcess):
                                                       sample_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
+      if work_dir:
+        remove_dir(work_dir)
       raise
