@@ -46,6 +46,11 @@ class Pipeseedfactory_utils_test1(unittest.TestCase):
                   'flowcell_id':'000000000-TEST',
                   'platform_igf_id':'M03291',
                   'flowcell':'MISEQ',
+                },
+                {'seqrun_igf_id':'180416_M03291_0140_000000000-TEST',
+                  'flowcell_id':'000000000-TEST',
+                  'platform_igf_id':'M03291',
+                  'flowcell':'MISEQ',
                 }]
     sra=SeqrunAdaptor(**{'session':base.session})
     sra.store_seqrun_and_attribute_data(data=seqrun_data)
@@ -55,6 +60,8 @@ class Pipeseedfactory_utils_test1(unittest.TestCase):
     pa.store_project_and_attribute_data(data=project_data)
     # SAMPLE
     sample_data=[{'sample_igf_id':'IGF00123',
+                  'project_igf_id':'IGFQ000123_test_10-4-2018_Miseq'},
+                 {'sample_igf_id':'IGF00124',
                   'project_igf_id':'IGFQ000123_test_10-4-2018_Miseq'}]
     sa=SampleAdaptor(**{'session':base.session})
     sa.store_sample_and_attribute_data(data=sample_data)
@@ -63,6 +70,17 @@ class Pipeseedfactory_utils_test1(unittest.TestCase):
                       'sample_igf_id':'IGF00123',
                       'experiment_igf_id':'IGF00123_MISEQ',
                       'library_name':'IGF00123',
+                      'library_source':'TRANSCRIPTOMIC_SINGLE_CELL',
+                      'library_strategy':'RNA-SEQ',
+                      'experiment_type':'POLYA-RNA',
+                      'library_layout':'PAIRED',
+                      'platform_name':'MISEQ',
+                      'singlecell_chemistry':'TENX'
+                    },
+                    {'project_igf_id':'IGFQ000123_test_10-4-2018_Miseq',
+                      'sample_igf_id':'IGF00124',
+                      'experiment_igf_id':'IGF00124_MISEQ',
+                      'library_name':'IGF00124',
                       'library_source':'TRANSCRIPTOMIC_SINGLE_CELL',
                       'library_strategy':'RNA-SEQ',
                       'experiment_type':'POLYA-RNA',
@@ -90,13 +108,28 @@ class Pipeseedfactory_utils_test1(unittest.TestCase):
     pipeline_seed_data=[{'pipeline_name':'PrimaryAnalysis',
                          'seed_id':1,
                          'seed_table':'experiment'},
+                        {'pipeline_name':'PrimaryAnalysis',
+                         'seed_id':2,
+                         'seed_table':'experiment'},
                         {'pipeline_name':'DemultiplexingFastq',
                          'seed_id':1,
                          'seed_table':'seqrun'},
+                        {'pipeline_name':'DemultiplexingFastq',
+                         'seed_id':2,
+                         'seed_table':'seqrun'},
                        ]
+    update_data=[{'pipeline_name':'PrimaryAnalysis',
+                  'seed_id':2,
+                  'seed_table':'experiment',
+                  'status':'FINISHED'},
+                 {'pipeline_name':'DemultiplexingFastq',
+                  'seed_id':2,
+                  'seed_table':'seqrun',
+                  'status':'FINISHED'}]
     pla=PipelineAdaptor(**{'session':base.session})
     pla.store_pipeline_data(data=pipeline_data)
     pla.create_pipeline_seed(data=pipeline_seed_data)
+    pla.update_pipeline_seed(update_data)
     base.close_session()
 
   def tearDown(self):
