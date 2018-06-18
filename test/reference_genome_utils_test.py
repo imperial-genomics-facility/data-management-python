@@ -68,12 +68,26 @@ class Reference_genome_utils_test1(unittest.TestCase):
     self.assertTrue('/path/HG38/gatk_snp_1' in files)
     self.assertTrue('/path/HG38/gatk_snp_2' in files)
 
-  def test_fef_fasta(self):
+  def test_fef_fasta1(self):
     rf=Reference_genome_utils(\
         genome_tag=self.species_name,
         dbsession_class=self.session_class)
     file=rf.get_genome_fasta()
     self.assertEqual(file,'/path/HG38/fasta')
+
+  def test_fef_fasta2(self):
+    rf=Reference_genome_utils(\
+        genome_tag=self.species_name,
+        dbsession_class=self.session_class,
+        genome_fasta_type='GENOME_FASTA1'
+        )
+    
+    with self.assertRaises(ValueError):
+      file=rf.get_genome_fasta()
+
+    file=rf.get_genome_fasta(check_missing=False)
+    self.assertEqual(file,None)
+
 
 if __name__=='__main__':
   unittest.main()
