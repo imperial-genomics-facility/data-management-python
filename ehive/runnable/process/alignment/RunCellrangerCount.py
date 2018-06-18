@@ -94,9 +94,9 @@ class RunCellrangerCount(IGFBaseProcess):
                      sample_igf_id,
                      experiment_igf_id)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
-      self.comment_asana_task(task_name=seqrun_igf_id, comment=message)         # send comment to Asana
+      self.comment_asana_task(task_name=project_igf_id, comment=message)        # send comment to Asana
       message=' '.join(cellranger_cmd)
-      self.comment_asana_task(task_name=seqrun_igf_id, comment=message)         # send cellranger command to Asana
+      self.comment_asana_task(task_name=project_igf_id, comment=message)        # send cellranger command to Asana
 
       subprocess.check_call(cellranger_cmd,
                             timeout=job_timeout)                                # run cellranger count
@@ -109,7 +109,7 @@ class RunCellrangerCount(IGFBaseProcess):
                      experiment_igf_id,
                      cellranger_output)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
-      self.comment_asana_task(task_name=seqrun_igf_id, comment=message)         # send comment to Asana
+      self.comment_asana_task(task_name=project_igf_id, comment=message)        # send comment to Asana
       check_cellranger_count_output(output_path=cellranger_output)              # check output file
       bam_list=list()                                                           # define empty bamfile list
       for file in os.listdir(check_cellranger_count_output):
