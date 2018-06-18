@@ -14,7 +14,7 @@ class RunCellrangerCount(IGFBaseProcess):
   A ehive process class for running cellranger count pipeline
   '''
   def param_defaults(self):
-    params_dict=super(RunBcl2Fastq,self).param_defaults()
+    params_dict=super(RunCellrangerCount,self).param_defaults()
     params_dict.update({
         'force_overwrite':True,
         'cellranger_exe':None,
