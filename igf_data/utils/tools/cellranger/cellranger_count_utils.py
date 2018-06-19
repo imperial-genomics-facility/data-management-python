@@ -86,18 +86,21 @@ def check_cellranger_count_output(output_path,
                         analysis/diffexp/kmeans_3_clusters/differential_expression.csv
                         analysis/pca/10_components/variance.csv
   :returns: Nill
-  :raises LookupError: when any file is missing from the output path
+  :raises IOError: when any file is missing from the output path
   '''
   try:
     file_dict_value=[i for i in range(len(file_list))]                          # get file index values
     file_dict=dict(zip(file_list,file_dict_value))                              # convert file list to a dictionary
-    for root,dir,files in os.walk(output_path):
-      for file in files:
-        if file in file_dict:
-          del file_dict[file]                                                   # remove file from dictionary if its present
+    for file_name in file_list:
+      file_path=os.path.join(output_path,
+                             file_name)
+      if os.path.exists(file_path) and \
+         os.path.getsize(file_path) > 0:
+        del file_dict[file_name]                                                # remove file from dictionary if its present
+
     if len(list(file_dict.keys())) > 0:
-      raise LookupError('Partial Cellranger count output found, missing following files: {0}'.\
-                    format(',',join(list(file_dict.keys()))))
+      raise IOError('Partial Cellranger count output found, missing following files: {0}'.\
+                    format(list(file_dict.keys())))
 
   except:
     raise
