@@ -73,9 +73,6 @@ class RunCellrangerCount(IGFBaseProcess):
       os.chdir(work_dir)                                                        # move to work dir
       os.environ['PATH'] += '{0}{1}'.format(os.pathsep,
                                             os.path.dirname(cellranger_exe))    # add cellranger location to env PATH
-      if not os.path.is_executable(cellranger_exe):
-        raise ValueError('Cellranger file {0} is not executable'.\
-                         format(cellranger_exe))                                # check cellranger exe
 
       ref_genome=Reference_genome_utils(genome_tag=species_name,
                                         dbsession_class=igf_session_class,
