@@ -124,18 +124,17 @@ class RunCellrangerCount(IGFBaseProcess):
       self.comment_asana_task(task_name=project_igf_id, comment=message)        # send comment to Asana
       check_cellranger_count_output(output_path=cellranger_output)              # check output file
       bam_list=list()                                                           # define empty bamfile list
-      for file in os.listdir(check_cellranger_count_output):
+      for file in os.listdir(cellranger_output):
         if fnmatch(file, '*.bam'):
           bam_list.append(file)                                                 # add all bams to bam_list
 
       if len(bam_list)>1:
         raise ValueError('More than one bam found for cellranger count run:{0}'.\
-                         format(check_cellranger_count_output))                 # check number of bams, presence of one bam is already validated by check method
+                         format(cellranger_output))                             # check number of bams, presence of one bam is already validated by check method
 
-      reference_type=reference_type.replace('transcriptome','fasta')            # changing reference type for cram conversion
       self.param('dataflow_params',{'cellranger_output':cellranger_output,
                                     'bam_file':bam_list[0],
-                                    'reference_type':reference_type})           # pass on cellranger output path
+                                   })                                           # pass on cellranger output path
     except Exception as e:
       message='project: {2}, sample:{3}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
