@@ -3,6 +3,7 @@ from sqlalchemy import create_engine
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.utils.fileutils import get_temp_dir,remove_dir
 from igf_data.utils.fileutils import get_datestamp_label
+from igf_data.utils.fileutils import preprocess_path_name
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
@@ -215,6 +216,7 @@ class Analysis_collection_utils_test1(unittest.TestCase):
                                                         'TagA',
                                                         datestamp,
                                                         'cram'))
+    test_file=preprocess_path_name(input_path=test_file)
     self.assertTrue(test_file in file_list)
     base.close_session()
 
@@ -274,6 +276,7 @@ class Analysis_collection_utils_test1(unittest.TestCase):
                                                         'TagA',
                                                         datestamp,
                                                         'cram'))
+    test_file=preprocess_path_name(input_path=test_file)
     self.assertTrue(test_file in file_list)
     base.close_session()
 
@@ -309,6 +312,7 @@ class Analysis_collection_utils_test1(unittest.TestCase):
                                                         'TagA',
                                                         datestamp,
                                                         'cram'))
+    test_file=preprocess_path_name(input_path=test_file)
     self.assertTrue(test_file in file_list)
     base.close_session()
 
@@ -346,6 +350,7 @@ class Analysis_collection_utils_test1(unittest.TestCase):
                                                         'TagA',
                                                         datestamp,
                                                         'cram'))
+    test_file=preprocess_path_name(input_path=test_file)
     self.assertTrue(test_file in file_list)
     base.close_session()
 
