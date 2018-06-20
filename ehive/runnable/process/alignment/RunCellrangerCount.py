@@ -161,7 +161,8 @@ class RunCellrangerCount(IGFBaseProcess):
       bam_list=list()                                                           # define empty bamfile list
       for file in os.listdir(cellranger_output):
         if fnmatch(file, '*.bam'):
-          bam_list.append(file)                                                 # add all bams to bam_list
+          bam_list.append(os.path.join(cellranger_output,
+                                       file))                                   # add all bams to bam_list
 
       if len(bam_list)>1:
         raise ValueError('More than one bam found for cellranger count run:{0}'.\
