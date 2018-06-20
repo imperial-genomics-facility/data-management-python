@@ -10,7 +10,7 @@ class ChangePipelineSeedStatus(IGFBaseProcess):
     try:
       igf_session_class = self.param_required('igf_session_class')              # set by base class
       pipeline_name = self.param_required('pipeline_name')
-      seqrun_igf_id=self.param_required('seqrun_igf_id')
+      igf_id=self.param_required('igf_id')
       seed_id=self.param_required('seed_id')
       seed_table=self.param_required('seed_table')
       new_status=self.param_required('new_status')
@@ -31,7 +31,7 @@ class ChangePipelineSeedStatus(IGFBaseProcess):
     except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
-                                                      seqrun_igf_id)
+                                                      igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise
