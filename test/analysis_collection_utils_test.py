@@ -147,8 +147,8 @@ class Analysis_collection_utils_test1(unittest.TestCase):
     input_file_list=[os.path.join(self.temp_work_dir,
                                   file_name)
                       for file_name in self.input_list]
-    au.load_file_to_disk_and_db(input_file_list=input_file_list,
-                                withdraw_exisitng_collection=False)             # loading all files to same collection
+    output_list=au.load_file_to_disk_and_db(input_file_list=input_file_list,
+                                            withdraw_exisitng_collection=False) # loading all files to same collection
     base = BaseAdaptor(**{'session_class':self.session_class})
     base.start_session()
     ca=CollectionAdaptor(**{'session':base.session})
@@ -157,6 +157,8 @@ class Analysis_collection_utils_test1(unittest.TestCase):
                                      output_mode='dataframe')
     self.assertEqual(len(ca_files.index),
                      len(self.input_list))                                      # compare with input list
+    self.assertEqual(len(output_list),
+                     len(self.input_list))                                      # compare with output list
     base.close_session()
 
 
@@ -171,8 +173,8 @@ class Analysis_collection_utils_test1(unittest.TestCase):
     input_file_list=[os.path.join(self.temp_work_dir,
                                   file_name)
                       for file_name in self.input_list]
-    au.load_file_to_disk_and_db(input_file_list=input_file_list,
-                                withdraw_exisitng_collection=True)              # withdrawing existing collection group before loading new
+    output_list=au.load_file_to_disk_and_db(input_file_list=input_file_list,
+                                            withdraw_exisitng_collection=True)  # withdrawing existing collection group before loading new
     base = BaseAdaptor(**{'session_class':self.session_class})
     base.start_session()
     ca=CollectionAdaptor(**{'session':base.session})
@@ -184,6 +186,7 @@ class Analysis_collection_utils_test1(unittest.TestCase):
     query=fa.session.query(File)
     fa_records=fa.fetch_records(query=query, output_mode='dataframe')
     self.assertEqual(len(fa_records['file_path'].to_dict()),3)                  # check if all files are present although only one collection group exists
+    self.assertEqual(len(output_list),3)
     base.close_session()
 
   def test_load_file_to_disk_and_db3(self):
@@ -198,8 +201,8 @@ class Analysis_collection_utils_test1(unittest.TestCase):
     input_file_list=[os.path.join(self.temp_work_dir,
                                   file_name)
                       for file_name in self.input_list]
-    au.load_file_to_disk_and_db(input_file_list=input_file_list,
-                                withdraw_exisitng_collection=False)             # loading all files to same collection
+    output_list=au.load_file_to_disk_and_db(input_file_list=input_file_list,
+                                            withdraw_exisitng_collection=False) # loading all files to same collection
     base = BaseAdaptor(**{'session_class':self.session_class})
     base.start_session()
     ca=CollectionAdaptor(**{'session':base.session})
@@ -218,6 +221,7 @@ class Analysis_collection_utils_test1(unittest.TestCase):
                                                         'cram'))
     test_file=preprocess_path_name(input_path=test_file)
     self.assertTrue(test_file in file_list)
+    self.assertTrue(test_file in output_list)
     base.close_session()
 
 
@@ -233,8 +237,8 @@ class Analysis_collection_utils_test1(unittest.TestCase):
     input_file_list=[os.path.join(self.temp_work_dir,
                                   file_name)
                       for file_name in self.input_list]
-    au.load_file_to_disk_and_db(input_file_list=input_file_list,
-                                withdraw_exisitng_collection=False)             # loading all files to same collection, without rename
+    output_list=au.load_file_to_disk_and_db(input_file_list=input_file_list,
+                                            withdraw_exisitng_collection=False) # loading all files to same collection, without rename
     base = BaseAdaptor(**{'session_class':self.session_class})
     base.start_session()
     ca=CollectionAdaptor(**{'session':base.session})
@@ -243,7 +247,8 @@ class Analysis_collection_utils_test1(unittest.TestCase):
                                      output_mode='dataframe')
     file_list=list(ca_files['file_path'].to_dict().values())
     self.assertTrue(input_file_list[0] in file_list)
-
+    self.assertTrue(input_file_list[0] in output_list)
+    base.close_session()
 
   def test_load_file_to_disk_and_db5(self):
     au=Analysis_collection_utils(dbsession_class=self.session_class,
@@ -257,8 +262,8 @@ class Analysis_collection_utils_test1(unittest.TestCase):
     input_file_list=[os.path.join(self.temp_work_dir,
                                   file_name)
                       for file_name in self.input_list]
-    au.load_file_to_disk_and_db(input_file_list=input_file_list,
-                                withdraw_exisitng_collection=False)             # loading all files to same collection
+    output_list=au.load_file_to_disk_and_db(input_file_list=input_file_list,
+                                            withdraw_exisitng_collection=False) # loading all files to same collection
     base = BaseAdaptor(**{'session_class':self.session_class})
     base.start_session()
     ca=CollectionAdaptor(**{'session':base.session})
@@ -278,6 +283,7 @@ class Analysis_collection_utils_test1(unittest.TestCase):
                                                         'cram'))
     test_file=preprocess_path_name(input_path=test_file)
     self.assertTrue(test_file in file_list)
+    self.assertTrue(test_file in output_list)
     base.close_session()
 
   def test_load_file_to_disk_and_db6(self):
@@ -292,8 +298,8 @@ class Analysis_collection_utils_test1(unittest.TestCase):
     input_file_list=[os.path.join(self.temp_work_dir,
                                   file_name)
                       for file_name in self.input_list]
-    au.load_file_to_disk_and_db(input_file_list=input_file_list,
-                                withdraw_exisitng_collection=False)             # loading all files to same collection
+    output_list=au.load_file_to_disk_and_db(input_file_list=input_file_list,
+                                            withdraw_exisitng_collection=False) # loading all files to same collection
     base = BaseAdaptor(**{'session_class':self.session_class})
     base.start_session()
     ca=CollectionAdaptor(**{'session':base.session})
@@ -314,6 +320,7 @@ class Analysis_collection_utils_test1(unittest.TestCase):
                                                         'cram'))
     test_file=preprocess_path_name(input_path=test_file)
     self.assertTrue(test_file in file_list)
+    self.assertTrue(test_file in output_list)
     base.close_session()
 
 
@@ -329,8 +336,8 @@ class Analysis_collection_utils_test1(unittest.TestCase):
     input_file_list=[os.path.join(self.temp_work_dir,
                                   file_name)
                       for file_name in self.input_list]
-    au.load_file_to_disk_and_db(input_file_list=input_file_list,
-                                withdraw_exisitng_collection=False)             # loading all files to same collection
+    output_list=au.load_file_to_disk_and_db(input_file_list=input_file_list,
+                                            withdraw_exisitng_collection=False) # loading all files to same collection
     base = BaseAdaptor(**{'session_class':self.session_class})
     base.start_session()
     ca=CollectionAdaptor(**{'session':base.session})
@@ -352,6 +359,7 @@ class Analysis_collection_utils_test1(unittest.TestCase):
                                                         'cram'))
     test_file=preprocess_path_name(input_path=test_file)
     self.assertTrue(test_file in file_list)
+    self.assertTrue(test_file in output_list)
     base.close_session()
 
 if __name__=='__main__':

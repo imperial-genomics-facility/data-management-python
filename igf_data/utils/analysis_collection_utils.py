@@ -115,7 +115,7 @@ class Analysis_collection_utils:
     :param file_suffix: Use a specific file suffix, use None if it should be same as original file
                         e.g. input.vcf.gz to  output.vcf.gz
     :param force: Toggle for removing existing file, default True
-    :returns: Nill
+    :returns: A list of final filepath
     '''
     try:
       project_igf_id=None
@@ -123,6 +123,7 @@ class Analysis_collection_utils:
       experiment_igf_id=None
       experiment_igf_id=None
       run_igf_id=None
+      output_path_list=list()                                                   # define empty output list
       dbconnected=False
       if self.collection_name is None or \
          self.collection_type is None or \
@@ -261,6 +262,7 @@ class Analysis_collection_utils:
                     destinationa_path=final_path,
                     force=force)                                                # move or overwrite file to destination dir
 
+        output_path_list.append(final_path)                                     # add final path to the output list
         self.create_or_update_analysis_collection(\
                  file_path=final_path,
                  dbsession=base.session,
@@ -271,6 +273,7 @@ class Analysis_collection_utils:
 
       base.commit_session()                                                     # save changes to db
       base.close_session()                                                      # close db connection
+      return output_path_list
     except:
       if dbconnected:
         base.rollback_session()
