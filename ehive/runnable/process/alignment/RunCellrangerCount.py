@@ -23,8 +23,8 @@ class RunCellrangerCount(IGFBaseProcess):
         'cellranger_exe':None,
         'fastq_collection_type':'demultiplexed_fastq',
         'reference_type':'TRANSCRIPTOME_TENX',
-        'cellranger_options':'{ "--jobmode":"pbspro","--localcores":"1","--localmem":"4","--mempercore":"4","--maxjobs":"20"}',
-        'job_timeout':86400,
+        'cellranger_options':'{"--nopreflight":"",--disable-ui":"", "--jobmode":"pbspro","--localcores":"1","--localmem":"4","--mempercore":"4","--maxjobs":"20"}',
+        'job_timeout':43200,
         'manifest_filename':'file_manifest.csv',
         'analysis_name':'cellranger_count',
         'collection_type':'CELLRANGER_RESULTS',
@@ -144,7 +144,7 @@ class RunCellrangerCount(IGFBaseProcess):
       # create archive for the results dir
       temp_archive_name=os.path.join(get_temp_dir(),
                                      '{0}.tar.gz'.format(experiment_igf_id))    # get the name of temp archive file
-      prepare_file_archive(results_dirpath==cellranger_output,
+      prepare_file_archive(results_dirpath=cellranger_output,
                            output_file=temp_archive_name,
                            exclude_list=['*.bam','*.bai','*.cram'])             # archive cellranget output
       # load archive file to db collection and results dir
