@@ -12,30 +12,31 @@ from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
 
 class Analysis_collection_utils:
+  '''
+  A class for dealing with analysis file collection. It has specific method for moving analysis files
+  to a specific directory structure and rename the file using a uniform rule, if required.
+  Example '<collection_name>_<analysis_name>_<tag>_<datestamp>.<original_suffix>'
+    
+  :param dbsession_class: A database session class
+  :param collection_name: Collection name information for file, default None
+  :param collection_type: Collection type information for file, default None
+  :param collection_table: Collection table information for file, default None
+  :param base_path: A base filepath to move file while loading, default 'None' for no file move
+  :param rename_file: Rename file based on collection_table type while loading, default True
+  :param add_datestamp: Add datestamp while loading the file
+  :param analysis_name: Analysis name for the file, required for renaming while loading, default None
+  :param tag_name: Additional tag for filename,default None
+  :param allowed_collection: List of allowed collection tables
+                                    
+                                    sample,
+                                    experiment,
+                                    run,
+                                    project
+  '''
   def __init__(self,dbsession_class,base_path=None,collection_name=None,
                collection_type=None,collection_table=None,rename_file=True,
                add_datestamp=True,tag_name=None,analysis_name=None,
                allowed_collection=('sample','experiment','run','project')):
-    '''
-    A class for dealing with analysis file collection. It has specific method for moving analysis files
-    to a specific directory structure and rename the file using a uniform rule, if required.
-    E.g. "<collection_name>_<analysis_name>_<tag>_<datestamp>.<original_suffix>"
-    
-    :param dbsession_class: A database session class
-    :param collection_name: Collection name information for file, default None
-    :param collection_type: Collection type information for file, default None
-    :param collection_table: Collection table information for file, default None
-    :param base_path: A base filepath to move file while loading, default 'None' for no file move
-    :param rename_file: Rename file based on collection_table type while loading, default True
-    :param add_datestamp: Add datestamp while loading the file
-    :param analysis_name: Analysis name for the file, required for renaming while loading, default None
-    :param tag_name: Additional tag for filename,default None
-    :param allowed_collection: List of allowed collection tables
-                                 sample
-                                 experiment
-                                 run
-                                 project
-    '''
     try:
       self.dbsession_class=dbsession_class
       self.collection_name=collection_name
