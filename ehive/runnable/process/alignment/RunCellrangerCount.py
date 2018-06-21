@@ -157,7 +157,7 @@ class RunCellrangerCount(IGFBaseProcess):
                                    base_path=base_result_dir)                   # initiate loading of archive file
       output_file_list=au.load_file_to_disk_and_db(\
                             input_file_list=[temp_archive_name],
-                            withdraw_exisitng_collection=force_overwrite)       # load file to db and disk
+                            withdraw_exisitng_collection=True)                  # load file to db and disk
       # find bam path for the data flow
       bam_list=list()                                                           # define empty bamfile list
       for file in os.listdir(cellranger_output):
