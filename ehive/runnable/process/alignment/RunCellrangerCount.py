@@ -23,7 +23,7 @@ class RunCellrangerCount(IGFBaseProcess):
         'cellranger_exe':None,
         'fastq_collection_type':'demultiplexed_fastq',
         'reference_type':'TRANSCRIPTOME_TENX',
-        'cellranger_options':'{"--nopreflight":"",--disable-ui":"", "--jobmode":"pbspro","--localcores":"1","--localmem":"4","--mempercore":"4","--maxjobs":"20"}',
+        'cellranger_options':'{"--nopreflight":"","--disable-ui":"", "--jobmode":"pbspro","--localcores":"1","--localmem":"4","--mempercore":"4","--maxjobs":"20"}',
         'job_timeout':43200,
         'manifest_filename':'file_manifest.csv',
         'analysis_name':'cellranger_count',
