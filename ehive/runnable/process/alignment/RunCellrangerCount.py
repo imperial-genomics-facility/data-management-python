@@ -119,8 +119,10 @@ class RunCellrangerCount(IGFBaseProcess):
       message=' '.join(cellranger_cmd)
       self.comment_asana_task(task_name=project_igf_id, comment=message)        # send cellranger command to Asana
       # start job execution
+      cellranger_cmd=' '.join(cellranger_cmd)                                   # create shell command string
       subprocess.check_call(cellranger_cmd,
-                            timeout=job_timeout)                                # run cellranger count
+                            shell=True,
+                            timeout=job_timeout)                                # run cellranger count using shell
       # prepare output after cellranger run
       cellranger_output=os.path.join(work_dir,
                                      experiment_igf_id,
