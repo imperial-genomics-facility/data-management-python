@@ -11,7 +11,7 @@ class ConvertBamToCram(IGFBaseProcess):
   A ehive process class for converting bam files to cram files
   '''
   def param_defaults(self):
-    params_dict=super(RunBcl2Fastq,self).param_defaults()
+    params_dict=super(ConvertBamToCram,self).param_defaults()
     params_dict.update({
         'force_overwrite':True,
         'reference_type':None,
