@@ -21,7 +21,7 @@
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
     <script type="text/javascript" ">
       google.charts.load("current", {packages: ["corechart"]});
-      google.charts.setOnLoadCallback(drawChart);
+      google.charts.setOnLoadCallback(drawHist);
 
       function drawChart() {
        $.getJSON("{{ seqrunInfoFile }}", function(jsonData) {
@@ -29,6 +29,7 @@
           var options = {
             width: 700,
             height: {{ ImageHeight }},
+            title: 'Column plot for sample read count',
             animation: {startup: true,
                         duration: 800,
                         easing: 'in'},
@@ -70,6 +71,7 @@
           var options = {
             width: 700,
             height: {{ ImageHeight }},
+            title: 'Column plot for sample read count (log scale)',
             animation: {startup: true,
                         duration: 800,
                         easing: 'in'},
@@ -111,7 +113,7 @@
             var options = {
               width: 900,
               height: 400,
-              title: 'Lengths of dinosaurs, in meters',
+              title: 'Histogram plot for sample read count',
               legend: { position: 'right',
                         textStyle: {color: '#708090',
                                     fontSize: 10}},
