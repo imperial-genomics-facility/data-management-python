@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111031356-1"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'UA-111031356-1');
+  </script>
+
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+    <link href="http://eliot.med.ic.ac.uk/report/static_pages/dashboard.css" rel="stylesheet">
+    <link href="http://eliot.med.ic.ac.uk/report/static_pages/sticky-footer.css" rel="stylesheet">
+   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script type="text/javascript" ">
+      google.charts.load('current', {'packages':['gantt']});
+      google.charts.setOnLoadCallback(drawChart);
+      function drawChart() {
+      $.getJSON("{{ status_data_json }}", function(jsonData) {
+        var data = new google.visualization.DataTable(jsonData);
+        var options = {
+          height: 450,
+          timeline: {
+            groupByRowLabel: true
+          }
+        };
+        var chart = new google.visualization.Gantt(document.getElementById('chart_div'));
+        chart.draw(data, options);
+      });
+    }
+    <title>IGF Status Report</title>
+</head>
+<body>
+  <header>
+      <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+        <a class="navbar-brand" href="#"><img style='height:30px' src='http://eliot.med.ic.ac.uk/report/static_pages/igf.png' /> IGF QC Report</a>
+        <button class="navbar-toggler d-lg-none" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item active">
+              <a class="nav-link" href="index.html">Project Home<span class="sr-only">(current)</span></a>
+           </li>
+           <li class="nav-item">
+              <a class="nav-link" href="#">Help</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="http://www.imperial.ac.uk/medicine/research-and-impact/facilities/genomics-facility/about/">About</a>
+            </li>
+          </ul>
+        </div>
+     </nav>
+    </header>
+    
+    <div class="container-fluid">
+      <div class="row">
+        <nav class="col-sm-3 col-md-2 d-none d-sm-block bg-light sidebar">
+          <ul class="nav nav-pills flex-column">
+            <li class="nav-item">
+              <a class="nav-link" href="index.html">Raw data<span class="sr-only"></span></a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link active" href="status.html">Status<span class="sr-only">(current)</span></a>
+            </li>
+          </ul>
+        </nav>
+
+        <main role="main" class="col-sm-9 ml-sm-auto col-md-10 pt-3">
+          <h1>Project Information</h1>
+          <dl class="row">
+           <dt class="col-sm-3">Project Name</dt>
+           <dd class="col-sm-9">{{ ProjectName }}</dd>
+          </dl>
+          <h2>Project status</h2>
+           <div id="chart_div" ></div>
+        </main>
+      </div>
+    </div>
+    <footer class="footer">
+      <div class="container">
+        <span class="text-muted">
+          <p>
+            <a>Copyright IGF team,</a>
+            <a>Email us </a><a href="mailto:igf@imperial.ac.uk">igf@imperial.ac.uk,</a>
+            <a href="https://twitter.com/ImperialGF?ref_src=twsrc%5Etfw" class="twitter-follow-button" data-show-count="false">Follow @ImperialGF</a>
+            <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+            <!--
+            <a href="https://twitter.com/messages/compose?recipient_id=2967805493&ref_src=twsrc%5Etfw&text=Hi%20IGF%20Team%2C%20I%20have%20a%20question%20related%20to%20project%20{{ ProjectName }}%2C%20date%20{{ SeqrunDate }}" class="twitter-dm-button" data-screen-name="@ImperialGF" data-show-count="false">Message</a>
+            <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+            -->
+          </p>
+        </span>
+      </div>
+    </footer>
+  </body>
+</html>
