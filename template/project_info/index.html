@@ -20,14 +20,15 @@
    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
     <script type="text/javascript" ">
-    plot_data = function(json_file){
       google.charts.load("current", {packages: ["corechart"]});
       google.charts.setOnLoadCallback(drawChart);
 
       function drawChart() {
-       $.getJSON(json_file, function(jsonData) {
+       $.getJSON("{{ seqrunInfoFile }}", function(jsonData) {
           var data = new google.visualization.DataTable(jsonData);
           var options = {
+            width: 700,
+            height: {{ ImageHeight }},
             animation: {startup: true,
                         duration: 800,
                         easing: 'in'},
@@ -63,17 +64,90 @@
           chart.draw(data, options);
        });
       }
-     };
+      function drawLogChart() {
+       $.getJSON("{{ seqrunInfoFile }}", function(jsonData) {
+          var data = new google.visualization.DataTable(jsonData);
+          var options = {
+            width: 700,
+            height: {{ ImageHeight }},
+            animation: {startup: true,
+                        duration: 800,
+                        easing: 'in'},
+            bar: { groupWidth: "60%" },
+            vAxis: {title: 'Sample ID',
+                    textStyle:{fontSize: 10}
+                   },
+            hAxis: {title: 'Number of Reads',
+                    slantedText : true,
+                    slantedTextAngle : 45,
+                    textStyle:{fontSize: 10},
+                    scaleType: 'log'},
+            orientation: 'vertical',
+            legend: {position: 'right',
+                     textStyle: {color: '#708090',
+                                 fontSize: 10}
+                    },
+            colors:['#4682B4',  // Steel Blue
+                    '#A233A2',  // Vivid Violet
+                    '#FF7F50',  // Coral - orange
+                    '#6787E7',  // Cornflower Blue
+                    '#B75555',  // Fuzzy Wuzzy Brown
+                    '#2E8B57',  // Sea Green
+                    '#191970',  // Midnight Blue
+                    '#DB7093',  // Pale Violet Red
+                    '#90EE90',  // Light Green
+                    '#00FFFF',  // Aqua
+                    '#FFD700',  // Gold
+                    '#DC143C',  // Crimson
+                   ],
+          }
+          var chart = new google.visualization.ColumnChart(document.getElementById('barchart_material'));
+          chart.draw(data, options);
+       });
+      } 
+      function drawHist() {
+          $.getJSON("{{ seqrunInfoFile }}", function(jsonData) {
+            var data = new google.visualization.DataTable(jsonData);
+            var options = {
+              width: 900,
+              height: 400,
+              title: 'Lengths of dinosaurs, in meters',
+              legend: { position: 'right',
+                        textStyle: {color: '#708090',
+                                    fontSize: 10}},
+              hAxis: { textStyle:{fontSize: 10,
+                                  color: '#708090'},
+                       slantedText : true,
+                       slantedTextAngle : 45,},
+              histogram: { maxNumBuckets: 20, },
+              colors:['#4682B4',  // Steel Blue
+                      '#A233A2',  // Vivid Violet
+                      '#FF7F50',  // Coral - orange
+                      '#6787E7',  // Cornflower Blue
+                      '#B75555',  // Fuzzy Wuzzy Brown
+                      '#2E8B57',  // Sea Green
+                      '#191970',  // Midnight Blue
+                      '#DB7093',  // Pale Violet Red
+                      '#90EE90',  // Light Green
+                      '#00FFFF',  // Aqua
+                      '#FFD700',  // Gold
+                      '#DC143C',  // Crimson
+                     ],
+            };
+            var chart = new google.visualization.Histogram(document.getElementById('barchart_material'));
+            chart.draw(data, options);
+          });
+        }
     </script>
     <script type="text/javascript">
     seqrunInfo = function(json_file) {
       $.getJSON(json_file, function(dataObject) {
-    $.each( dataObject, function (index, value) {
-      console.log(index);
-        $('#testfield').append("<li>"+"<a href=\""+value.path+"\">"+value.flowcell_id+"</a></li>");
-    });
-  });
-};
+        $.each( dataObject, function (index, value) {
+          console.log(index);
+          $('#testfield').append("<li>"+"<a href=\""+value.path+"\">"+value.flowcell_id+"</a></li>");
+        });
+      });
+    };
     </script>
     <title>IGF QC Report</title>
 </head>
@@ -125,11 +199,10 @@
           </div>
           </ul>
           <h2>Sample stats</h2>
-           <div id="barchart_material" style="width: 700px; height: {{ ImageHeight }}px;"></div>
-           <script>
-             plot_data(json_file="{{ sampleReadCountFile }}");
-           </script>
-            
+           <input type="button" value="Column plot - Linear" onclick=drawChart() />
+           <input type="button" value="Column plot - Log" onclick=drawLogChart() />
+           <input type="button" value="Histogram plot" onclick=drawHist() />
+           <div id="barchart_material" ></div>
         </main>
       </div>
     </div>
