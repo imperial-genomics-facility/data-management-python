@@ -11,6 +11,7 @@ class ChangePipelineSeedStatus(IGFBaseProcess):
       igf_session_class = self.param_required('igf_session_class')              # set by base class
       pipeline_name = self.param_required('pipeline_name')
       igf_id=self.param_required('igf_id')
+      task_id=self.param_required('task_id')
       seed_id=self.param_required('seed_id')
       seed_table=self.param_required('seed_table')
       new_status=self.param_required('new_status')
@@ -27,7 +28,7 @@ class ChangePipelineSeedStatus(IGFBaseProcess):
                                         seed_id,\
                                         new_status.upper())                     # format message
       self.post_message_to_slack(message, reaction='pass')                      # send message to slack
-      self.comment_asana_task(task_name=seqrun_igf_id, comment=message)         # send message to asana
+      self.comment_asana_task(task_name=task_id, comment=message)         # send message to asana
     except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
