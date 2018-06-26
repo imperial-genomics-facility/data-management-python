@@ -1,4 +1,5 @@
 import os, subprocess,json
+from shlex import quote
 from igf_data.utils.fileutils import get_datestamp_label
 
 class IGF_irods_uploader:
@@ -60,18 +61,18 @@ class IGF_irods_uploader:
       if response != 0:                                                         # create dir if response is not 0
         make_dir_cmd=[os.path.join(irods_exe_dir,'imkdir'),
                       '-p',
-                      irods_base_dir]
+                      quote(irods_base_dir)]
         subprocess.check_call(make_dir_cmd)                                     # create destination dir
         chmod_cmd=[os.path.join(irods_exe_dir,'ichmod'),
                    '-M',
                    'own',
-                   self.igf_user, \
-                   irods_base_dir]
+                   quote(self.igf_user), \
+                   quote(irods_base_dir)]
         subprocess.check_call(chmod_cmd)                                        # change directory ownership
         inherit_cmd=[os.path.join(irods_exe_dir,'ichmod'),
                      '-r',
                      'inherit',
-                     irods_base_dir]
+                     quote(irods_base_dir)]
         subprocess.check_call(inherit_cmd)                                      # inherit new directory
 
       for filepath in file_list:
@@ -87,7 +88,7 @@ class IGF_irods_uploader:
         if file_response==0:
           file_rm_cmd=[os.path.join(irods_exe_dir,'irm'),
                      '-rf',
-                     irods_filepath]
+                     quote(irods_filepath)]
           subprocess.check_call(file_rm_cmd)                                    # remove existing file to prevent any clash
 
         iput_cmd=[os.path.join(irods_exe_dir,'iput'),
@@ -95,9 +96,9 @@ class IGF_irods_uploader:
                   '-f',
                   '-N','1',
                   '-R',
-                  self.irods_resource,
-                  filepath,
-                  irods_base_dir]
+                  quote(self.irods_resource),
+                  quote(filepath),
+                  quote(irods_base_dir)]
         subprocess.check_call(iput_cmd)                                         # upload file to irods dir, calculate md5sub and overwrite
         if file_tag is None:
           file_meta_info=project_name
@@ -108,21 +109,23 @@ class IGF_irods_uploader:
         meta_project_user=[os.path.join(irods_exe_dir,'imeta'),
                            'add',
                            '-d',
-                           irods_filepath,\
-                           file_meta_info, \
-                           irods_user,\
-                           'iRODSUserTagging:Star']
+                           quote(irods_filepath),\
+                           quote(file_meta_info), \
+                           quote(irods_user),\
+                           quote('iRODSUserTagging:Star')]
         subprocess.check_call(meta_project_user)                                # add more metadata to file
         meta_30d=[os.path.join(irods_exe_dir,'isysmeta'),
                   'mod',
-                  irods_filepath,
-                  '"+30d"']
+                  quote(irods_filepath),
+                  quote('+30d')]
         subprocess.call(meta_30d)                                               # add metadata for file
         meta_file_retentaion=[os.path.join(irods_exe_dir,'imeta'),
                               'add',
                               '-d',
-                              irods_filepath,
-                              'retention "30" "days"']
+                              quote(irods_filepath),
+                              quote('retention'),
+                              quote('30'),
+                              quote('days')]
         subprocess.call(meta_file_retentaion)                                   # adding file retaintion info
     except:
       raise
