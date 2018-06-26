@@ -32,7 +32,7 @@ def full_suite():
   from .reset_samplesheet_md5_test import Reset_samplesheet_md5_test1
   from .modify_pipeline_seed_test import Modify_pipeline_seed_test1
   from .experiment_metadata_updator_test import Experiment_metadata_updator_test
-  from .projectadaptor_test import Projectadaptor_test1
+  from .projectadaptor_test import Projectadaptor_test1,Projectadaptor_test2
   from .analysis_collection_utils_test import Analysis_collection_utils_test1
   from .fileutils_test import Fileutils_test1
   from .pipeseedfactory_utils_test import Pipeseedfactory_utils_test1
@@ -75,6 +75,7 @@ def full_suite():
       unittest.TestLoader().loadTestsFromTestCase(Modify_pipeline_seed_test1),
       unittest.TestLoader().loadTestsFromTestCase(Experiment_metadata_updator_test),
       unittest.TestLoader().loadTestsFromTestCase(Projectadaptor_test1),
+      unittest.TestLoader().loadTestsFromTestCase(Projectadaptor_test2),
       unittest.TestLoader().loadTestsFromTestCase(Analysis_collection_utils_test1),
       unittest.TestLoader().loadTestsFromTestCase(Fileutils_test1),
       unittest.TestLoader().loadTestsFromTestCase(Pipeseedfactory_utils_test1),
