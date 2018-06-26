@@ -217,14 +217,14 @@ class ProjectAdaptor(BaseAdaptor):
       return project_user_check
     except:
       raise
-    
-    
+
+
   def check_data_authority_for_project(self,project_igf_id):
     '''
     A method for checking user data authority for existing projects
     
-    required params:
-    project_igf_id: An unique project igf id
+    :param project_igf_id: An unique project igf id
+    :returns: True if data authority exists for project or false
     '''
     try:
       project_user_check=False
@@ -239,6 +239,31 @@ class ProjectAdaptor(BaseAdaptor):
       if results is not None:
         project_user_check=True
       return project_user_check
+    except:
+      raise
+
+
+  def fetch_data_authority_for_project(self,project_igf_id):
+    '''
+    A method for fetching user data authority for existing projects
+    
+    :param project_igf_id: An unique project igf id
+    :returns: A user object or None, if no entry found
+    '''
+    try:
+      project_user_check=False
+      session=self.session
+      query=session.\
+            query(User).\
+            join(ProjectUser).\
+            join(Project).\
+            filter(Project.project_id==ProjectUser.project_id).\
+            filter(User.user_id==ProjectUser.user_id).\
+            filter(Project.project_igf_id==project_igf_id).\
+            filter(ProjectUser.data_authority=='T')
+      results=self.fetch_records(query=query, \
+                                 output_mode='one_or_none')
+      return results
     except:
       raise
 
