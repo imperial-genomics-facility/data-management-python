@@ -97,7 +97,7 @@ class IGF_irods_uploader:
                   '-R',
                   self.irods_resource,
                   filepath,
-                  irods_dir]
+                  irods_base_dir]
         subprocess.check_call(iput_cmd)                                         # upload file to irods dir, calculate md5sub and overwrite
         if file_tag is None:
           file_meta_info=project_name
