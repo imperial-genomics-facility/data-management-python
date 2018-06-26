@@ -78,9 +78,10 @@ class ConvertBamToCram(IGFBaseProcess):
                                    collection_type=collection_type,
                                    collection_table=collection_table,
                                    base_path=base_result_dir)
-      au.load_file_to_disk_and_db(input_file_list=[cram_file],
-                                  withdraw_exisitng_collection=force_overwrite) # load file to db and disk
-      self.param('dataflow_params',{'bam_file':bam_file})                       # pass on bam output path
+      output_cram_list=au.load_file_to_disk_and_db(input_file_list=[cram_file],
+                                   withdraw_exisitng_collection=force_overwrite) # load file to db and disk
+      self.param('dataflow_params',{'bam_file':bam_file,
+                                    'output_cram_list':output_cram_list})       # pass on bam output path
     except Exception as e:
       message='project: {2}, sample:{3}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
