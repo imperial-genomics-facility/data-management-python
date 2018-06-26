@@ -30,16 +30,13 @@ class UploadFastqToIrods(IGFBaseProcess):
 
       pa=ProjectAdaptor(**{'session_class':igf_session_class})
       pa.start_session()
-      user_info=pa.get_project_user_info(project_igf_id=project_name)           # fetch user info from db
+      user=pa.fetch_data_authority_for_project(project_igf_id=project_name)     # fetch user info from db
       pa.close_session()
 
-      user_info=user_info[user_info['data_authority']=='T']                     # filter dataframe for data authority
-      user_info=user_info.to_dict(orient='records')                             # convert dataframe to list of dictionaries
-      if len(user_info) == 0:
+      if user is None:
         raise ValueError('No user found for project {0}'.format(project_name))
 
-      user_info=user_info[0]
-      username=user_info['username']                                            # get username for irods
+      username=user.username                                                    # get username for irods
 
       report_htmlname=os.path.basename(report_html)
       seqrun_date=seqrun_igf_id.split('_')[0]                                   # collect seqrun date from igf id
