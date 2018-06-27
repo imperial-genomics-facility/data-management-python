@@ -26,7 +26,8 @@ def get_cellranger_count_input_list(db_session_class,experiment_igf_id,
              query(Run.run_igf_id).\
              join(Experiment).\
              filter(Run.experiment_id==Experiment.experiment_id).\
-             filter(Experiment.experiment_igf_id==experiment_igf_id)            # get subquery for run_igf_ids
+             filter(Experiment.experiment_igf_id==experiment_igf_id).\
+             filter(Run.status=='ACTIVE')                                       # get subquery for run_igf_ids
     query=base.session.\
           query(File.file_path).\
           join(Collection_group).\
