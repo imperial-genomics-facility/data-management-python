@@ -21,6 +21,7 @@ class ConvertBamToCram(IGFBaseProcess):
         'collection_type':'ANALYSIS_CRAM',
         'reference_type':'GENOME_FASTA',
         'collection_table':'experiment',
+        'threads':4,
       })
     return params_dict
 
@@ -40,10 +41,12 @@ class ConvertBamToCram(IGFBaseProcess):
     :param collection_table: A database collection table for output file, default experiment
     :param force_overwrite: A toggle for retiring old collection group, default True
     :param reference_type: Reference genome collection type, default GENOME_FASTA
+    :param threads: Number of threads to use for Bam to Cram conversion, default 4
     '''
     try:
       project_igf_id=self.param_required('project_igf_id')
       sample_igf_id=self.param_required('sample_igf_id')
+      experiment_igf_id=self.param_required('experiment_igf_id')
       igf_session_class=self.param_required('igf_session_class')
       species_name=self.param_required('species_name')
       bam_file=self.param_required('bam_file')
@@ -55,6 +58,7 @@ class ConvertBamToCram(IGFBaseProcess):
       tag_name=self.param_required('tag_name')
       force_overwrite=self.param_required('force_overwrite')
       reference_type=self.param('reference_type')
+      threads=self.param('threads')
 
       if collection_type is None or \
          collection_name is None or \
@@ -70,7 +74,8 @@ class ConvertBamToCram(IGFBaseProcess):
       cram_file=os.path.join(temp_work_dir,cram_file)                           # get cram file path in work dir
       convert_bam_to_cram(bam_file=bam_file,
                           reference_file=genome_fasta,
-                          cram_path=cram_file)                                  # create new cramfile
+                          cram_path=cram_file,
+                          threads=threads)                                      # create new cramfile
       au=Analysis_collection_utils(dbsession_class=igf_session_class,
                                    analysis_name=analysis_name,
                                    tag_name=tag_name,
@@ -82,6 +87,12 @@ class ConvertBamToCram(IGFBaseProcess):
                                    withdraw_exisitng_collection=force_overwrite) # load file to db and disk
       self.param('dataflow_params',{'bam_file':bam_file,
                                     'output_cram_list':output_cram_list})       # pass on bam output path
+      message='finished bam to cram conversion for {0}, {1} {2}'.\
+              format(project_igf_id,
+                     sample_igf_id,
+                     experiment_igf_id)
+      self.post_message_to_slack(message,reaction='pass')                       # send log to slack
+      self.comment_asana_task(task_name=project_igf_id, comment=message)        # send comment to Asana
     except Exception as e:
       message='project: {2}, sample:{3}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
