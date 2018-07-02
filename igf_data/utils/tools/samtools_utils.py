@@ -4,13 +4,14 @@ import fnmatch
 from shlex import quote
 from igf_data.utils.fileutils import get_temp_dir,remove_dir,move_file
 
-def convert_bam_to_cram(bam_file,reference_file,cram_path,force=False):
+def convert_bam_to_cram(bam_file,reference_file,cram_path,threads=1,force=False):
   '''
   A function for converting bam files to cram using pysam utility
   
   :param bam_file: A bam filepath with / without index. Index file will be created if its missing
   :param reference_file: Reference genome fasta filepath
   :param cram_path: A cram output file path
+  :param threads: Number of threads to use for conversion, default 1
   :param force: Output cram will be overwritten if force is True, default False
   :returns: Nill
   :raises IOError: It raises IOError if no input or reference fasta file found or
@@ -45,6 +46,7 @@ def convert_bam_to_cram(bam_file,reference_file,cram_path,force=False):
     pysam.samtools.view(bam_file,
                         '-C',
                         '-OCRAM',
+                        '-@{0}'.format(threads),
                         '-T{0}'.format(quote(reference_file)),
                         '-o{0}'.format(quote(temp_file)),
                         catch_stdout=False
