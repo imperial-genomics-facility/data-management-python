@@ -14,6 +14,9 @@ password: {{ userPass }}
 
 Please DO NOT DELETE this information as we will not include the account PASSWORD field to our data dissemination emails in future.
 
+Check our help documents for further details regarding data access from our server:
+https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html
+
 You have received this email because of your requested for a new sequencing project. If you did not intend to, please let us know as soon as possible.
 
 Kind regards
