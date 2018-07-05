@@ -6,13 +6,15 @@ from igf_data.igfdb.igfTables import File,Experiment,Run,Collection,Collection_g
 
 
 def get_cellranger_count_input_list(db_session_class,experiment_igf_id,
-                                    fastq_collection_type='demultiplexed_fastq'):
+                                    fastq_collection_type='demultiplexed_fastq',
+                                    active_status='ACTIVE'):
   '''
   A function for fetching input list for cellranger count run for a specific experiment
   
   :param db_session_class: A database session class
   :param experiment_igf_id: An experiment igf id
   :param fastq_collection_type: Fastq collection type name, default demultiplexed_fastq
+  :param active_status: text label for active runs, default ACTIVE
   :returns: A list of fastq dir path for the cellranger count run
   :raises ValueError: It raises ValueError if no fastq directory found
   '''
@@ -27,7 +29,7 @@ def get_cellranger_count_input_list(db_session_class,experiment_igf_id,
              join(Experiment).\
              filter(Run.experiment_id==Experiment.experiment_id).\
              filter(Experiment.experiment_igf_id==experiment_igf_id).\
-             filter(Run.status=='ACTIVE')                                       # get subquery for run_igf_ids
+             filter(Run.status==active_status)                                  # get subquery for run_igf_ids
     query=base.session.\
           query(File.file_path).\
           join(Collection_group).\
