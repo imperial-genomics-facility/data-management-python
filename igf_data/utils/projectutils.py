@@ -3,19 +3,22 @@ from sqlalchemy import distinct
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.igfdb.igfTables import Project,Sample,Seqrun,Experiment,Run,Run_attribute, Project_attribute
 
-def get_project_read_count(project_igf_id,session_class,run_attribute_name='R1_READ_COUNT'):
+def get_project_read_count(project_igf_id,session_class,run_attribute_name='R1_READ_COUNT',
+                           active_status='ACTIVE'):
   '''
   A utility method for fetching sample read counts for an input project_igf_id
-  required params:
-  project_igf_id: A project_igf_id string
-  session_class: A db session class object
-  run_attribute_name: Attribute name from Run_attribute table for read count lookup
   
-  returns a pandas dataframe containing following columns
-    project_igf_id
-    sample_igf_id
-    flowcell_id
-    attribute_value
+  :param project_igf_id: A project_igf_id string
+  :param session_class: A db session class object
+  :param run_attribute_name: Attribute name from Run_attribute table for read count lookup
+  :param active_status: text label for active runs, default ACTIVE
+  
+  :returns: A pandas dataframe containing following columns
+  
+               project_igf_id
+               sample_igf_id
+               flowcell_id
+               attribute_value
   '''
   try:
     read_count=pd.DataFrame()
@@ -36,7 +39,10 @@ def get_project_read_count(project_igf_id,session_class,run_attribute_name='R1_R
                      filter(Run.experiment_id==Experiment.experiment_id).\
                      filter(Seqrun.seqrun_id==Run.seqrun_id).\
                      filter(Run_attribute.run_id==Run.run_id).\
-                     filter(Run_attribute.attribute_name==run_attribute_name)
+                     filter(Run_attribute.attribute_name==run_attribute_name).\
+                     filter(Run.status==active_status).\
+                     filter(Experiment.status==active_status).\
+                     filter(Sample.status==active_status)
     results=pr.fetch_records(query=query)
     pr.close_session()
     if len(results.index)>0:
