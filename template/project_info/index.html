@@ -21,7 +21,7 @@
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
     <script type="text/javascript" ">
       google.charts.load("current", {packages: ["corechart"]});
-      google.charts.setOnLoadCallback(drawHist);
+      google.charts.setOnLoadCallback(drawChar);
 
       function drawChart() {
        $.getJSON("{{ seqrunInfoFile }}", function(jsonData) {
@@ -166,7 +166,7 @@
               <a class="nav-link" href="index.html">Project Home<span class="sr-only">(current)</span></a>
            </li>
            <li class="nav-item">
-              <a class="nav-link" href="#">Help</a>
+              <a class="nav-link" href="https://imperial-genomics-facility.github.io/igf-pipeline-help/">Help</a>
             </li>
             <li class="nav-item">
               <a class="nav-link" href="http://www.imperial.ac.uk/medicine/research-and-impact/facilities/genomics-facility/about/">About</a>
