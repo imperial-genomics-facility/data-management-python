@@ -12,7 +12,6 @@ def get_project_read_count(project_igf_id,session_class,run_attribute_name='R1_R
   :param session_class: A db session class object
   :param run_attribute_name: Attribute name from Run_attribute table for read count lookup
   :param active_status: text label for active runs, default ACTIVE
-  
   :returns: A pandas dataframe containing following columns
   
                project_igf_id
