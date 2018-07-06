@@ -126,9 +126,9 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       dump(project_output)                                                      # write new project file
       os.chmod(project_output, mode=0o774)
 
-      template_status=Environment(loader=FileSystemLoader\
-                                  (searchpath=os.path.dirname(status_template_path)), \
-                                 autoescape=select_autoescape(['txt', 'xml']))  # set template env for project
+      template_status=Environment(\
+                        loader=FileSystemLoader(searchpath=os.path.dirname(status_template_path)), \
+                        autoescape=select_autoescape(['txt', 'xml']))           # set template env for project
       project_status=template_status.\
                      get_template(os.path.basename(status_template_path))       # read status page template
       status_output=os.path.join(temp_work_dir,\
@@ -217,7 +217,6 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
                        destinationa_path=remote_project_dir, \
                        destination_address='{0}@{1}'.format(remote_user,\
                                                             remote_host))       # copy file to remote
-
       check_status_cmd=['ssh',\
                         '{0}@{1}'.\
                         format(remote_user,\
