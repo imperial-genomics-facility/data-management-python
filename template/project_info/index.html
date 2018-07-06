@@ -19,12 +19,12 @@
     <link href="http://eliot.med.ic.ac.uk/report/static_pages/sticky-footer.css" rel="stylesheet">
    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-    <script type="text/javascript" ">
+    <script type="text/javascript" >
       google.charts.load("current", {packages: ["corechart"]});
       google.charts.setOnLoadCallback(drawChar);
 
       function drawChart() {
-       $.getJSON("{{ seqrunInfoFile }}", function(jsonData) {
+       $.getJSON("{{ sampleReadCountFile }}", function(jsonData) {
           var data = new google.visualization.DataTable(jsonData);
           var options = {
             width: 700,
@@ -66,7 +66,7 @@
        });
       }
       function drawLogChart() {
-       $.getJSON("{{ seqrunInfoFile }}", function(jsonData) {
+       $.getJSON("{{ sampleReadCountFile }}", function(jsonData) {
           var data = new google.visualization.DataTable(jsonData);
           var options = {
             width: 700,
@@ -108,7 +108,7 @@
        });
       } 
       function drawHist() {
-          $.getJSON("{{ seqrunInfoFile }}", function(jsonData) {
+          $.getJSON("{{ sampleReadCountFile }}", function(jsonData) {
             var data = new google.visualization.DataTable(jsonData);
             var options = {
               width: 900,
