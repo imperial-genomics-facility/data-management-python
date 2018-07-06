@@ -26,6 +26,7 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       'remote_host':None,
       'seqruninfofile':'seqruninfofile.json',
       'samplereadcountfile':'samplereadcountfile.json',
+      'status_data_json':'status_data.json',
       'image_height':700,
       'sample_count_threshold':75,
     })
@@ -47,13 +48,16 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       htaccess_filename=self.param('htaccess_filename')
       htpasswd_filename=self.param('htpasswd_filename')
       project_template=self.param('project_template')
+      status_template=self.param('status_template')
       seqruninfofile=self.param('seqruninfofile')
       samplereadcountfile=self.param('samplereadcountfile')
+      status_data_json=self.param('status_data_json')
       image_height=self.param('image_height')
       sample_count_threshold=self.param('sample_count_threshold')
 
       htaccess_template_path=os.path.join(template_dir,htaccess_template_path)  # set path for template dir
       project_template_path=os.path.join(template_dir,project_template)         # set path for project template
+      status_template_path=os.path.join(template_dir,status_template)           # set path for project status template
       pa=ProjectAdaptor(**{'session_class':igf_session_class})
       pa.start_session()
       user_info=pa.get_project_user_info(project_igf_id=project_name)           # fetch user info from db
@@ -121,6 +125,19 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
              ImageHeight=image_height,).\
       dump(project_output)                                                      # write new project file
       os.chmod(project_output, mode=0o774)
+
+      template_status=Environment(loader=FileSystemLoader\
+                                  (searchpath=os.path.dirname(status_template_path)), \
+                                 autoescape=select_autoescape(['txt', 'xml']))  # set template env for project
+      project_status=template_status.\
+                     get_template(os.path.basename(status_template_path))       # read status page template
+      status_output=os.path.join(temp_work_dir,\
+                                 os.path.basename(status_template_path))
+      project_status.\
+      stream(ProjectName=project_name,\
+             status_data_json=status_data_json,).\
+      dump(status_output)                                                       # write new project status file
+      os.chmod(status_output, mode=0o774)
 
       remote_project_dir=os.path.join(remote_project_path,\
                                       project_name
@@ -197,6 +214,30 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
         subprocess.check_call(rm_project_cmd)
 
       copy_remote_file(source_path=project_output, \
+                       destinationa_path=remote_project_dir, \
+                       destination_address='{0}@{1}'.format(remote_user,\
+                                                            remote_host))       # copy file to remote
+
+      check_status_cmd=['ssh',\
+                        '{0}@{1}'.\
+                        format(remote_user,\
+                               remote_host),\
+                        'ls',\
+                        os.path.join(remote_project_dir,\
+                                     os.path.basename(status_template_path))]
+      response=subprocess.call(check_status_cmd)
+      if response !=0:
+        rm_status_cmd=['ssh',\
+                       '{0}@{1}'.\
+                       format(remote_user,\
+                              remote_host),\
+                       'rm',\
+                       '-f',\
+                       os.path.join(remote_project_dir,\
+                                    os.path.basename(status_template_path))]
+        subprocess.check_call(rm_status_cmd)
+
+      copy_remote_file(source_path=status_output, \
                        destinationa_path=remote_project_dir, \
                        destination_address='{0}@{1}'.format(remote_user,\
                                                             remote_host))       # copy file to remote
