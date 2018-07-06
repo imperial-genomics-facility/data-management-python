@@ -1,4 +1,4 @@
-import os, subprocess
+import os, subprocess, math
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.utils.fileutils import get_temp_dir, remove_dir
@@ -20,13 +20,14 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       'htaccess_filename':'.htaccess',
       'htpasswd_filename':'.htpasswd',
       'project_template':'project_info/index.html',
+      'status_template':'project_info/status.html',
       'remote_project_path':None,
       'remote_user':None,
       'remote_host':None,
       'seqruninfofile':'seqruninfofile.json',
       'samplereadcountfile':'samplereadcountfile.json',
       'image_height':700,
-      'sample_count_threshold':50,
+      'sample_count_threshold':75,
     })
     return params_dict
 
@@ -60,8 +61,9 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
                                              only_active=True)                  # get sample counts for the project
       pa.close_session()
 
-      if sample_counts > sample_count_threshold:
-        image_height=image_height*2                                             # change image height for more samples
+      image_height=self.__calculate_image_height(sample_count=sample_counts,
+                                                 height=image_height,
+                                                 threshold=sample_count_threshold) # change image height based on sample count
 
       user_info=user_info.to_dict(orient='records')                             # convert dataframe to list of dictionaries
       if len(user_info) == 0:
@@ -206,4 +208,26 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
                                                       seqrun_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
+      raise
+
+  @staticmethod
+  def __calculate_image_height(sample_count,height=700,threshold=75):
+    '''
+    An internal static method for calculating image height based on the number
+    of samples registered for any projects
+    
+    :param sample_count: Sample count for a given project
+    :param height: Height of the image of display page, default 700
+    :param threshold: Sample count threshold, default 75
+    :returns: Revised image height
+    '''
+    try:
+      if sample_count <= threshold:                                             # low sample count
+        return height
+      else:
+        if (sample_count / threshold) <= 2:                                     # high sample count
+          return height * 2
+        else:                                                                   # very high sample count
+          return int(height * (2+math.log(sample_count / threshold)))
+    except:
       raise
