@@ -5,6 +5,7 @@ from igf_data.utils.fileutils import copy_remote_file
 from igf_data.utils.projectutils import get_project_read_count,get_seqrun_info_for_project
 from igf_data.utils.gviz_utils import convert_to_gviz_json_for_display
 from igf_data.utils.project_data_display_utils import convert_project_data_gviz_data,add_seqrun_path_info
+from igf_data.utils.project_status_utils import Project_status
 
 class UpdateProjectInfo(IGFBaseProcess):
   '''
@@ -18,6 +19,7 @@ class UpdateProjectInfo(IGFBaseProcess):
       'remote_host':None,
       'seqruninfofile':'seqruninfofile.json',
       'samplereadcountfile':'samplereadcountfile.json',
+      'status_data_json':'status_data.json',
     })
     return params_dict
 
@@ -31,6 +33,7 @@ class UpdateProjectInfo(IGFBaseProcess):
       remote_host=self.param_required('remote_host')
       seqruninfofile=self.param('seqruninfofile')
       samplereadcountfile=self.param('samplereadcountfile')
+      status_data_json=self.param('status_data_json')
 
       temp_work_dir=get_temp_dir()                                              # get a temp dir
       temp_read_count_output=os.path.join(temp_work_dir,
@@ -95,6 +98,39 @@ class UpdateProjectInfo(IGFBaseProcess):
                        destinationa_path=remote_project_dir, \
                        destination_address=remote_host)                         # copy file to remote
 
+      ps=Project_status(igf_session_class=igf_session_class,
+                        project_igf_id=project_name)
+      temp_status_output=os.path.join(temp_work_dir,
+                                      status_data_json)                         # get path for temp status file
+      convert_to_gviz_json_for_display(\
+        description=ps.get_status_description(),
+        data=ps.get_seqrun_info(),
+        columns_order=ps.get_status_column_order(),
+        output_file=temp_status_output)                                         # write data to output json file
+      os.chmod(temp_status_output,
+               mode=0o754)                                                      # changed file permission before copy
+      check_status_cmd=['ssh',\
+                        '{0}@{1}'.\
+                        format(remote_user,\
+                               remote_host),\
+                        'ls',\
+                        os.path.join(remote_project_dir,
+                                     status_data_json)]
+      response=subprocess.call(check_status_cmd)                                # check for existing status data file
+      if response !=0:
+        rm_status_cmd=['ssh',\
+                       '{0}@{1}'.\
+                       format(remote_user,\
+                              remote_host),\
+                       'rm',\
+                       '-f',\
+                       os.path.join(remote_project_dir,
+                                    status_data_json)]
+        subprocess.check_call(rm_status_cmd)                                    # remove existing status file
+
+      copy_remote_file(source_path=temp_status_output, \
+                       destinationa_path=remote_project_dir, \
+                       destination_address=remote_host)                         # copy file to remote
       self.param('dataflow_params',{'remote_project_info':'done'})
       remove_dir(temp_work_dir)                                                 # remove temp dir
     except Exception as e:
