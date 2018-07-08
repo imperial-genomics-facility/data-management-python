@@ -9,16 +9,57 @@ class Project_status:
   
   :param igf_session_class: Database session class
   :param project_igf_id: Project igf id for database lookup
+  :param seqrun_work_day: Duration for seqrun jobs in days, default 2 
   '''
-  def __init__(self,igf_session_class,project_igf_id):
+  def __init__(self,igf_session_class,project_igf_id,seqrun_work_day=2):
     self.project_igf_id=project_igf_id
-    self.base_adaptor = BaseAdaptor(**{'session_class':igf_session_class})
+    self.base_adaptor=BaseAdaptor(**{'session_class':igf_session_class})
+    self.seqrun_work_day=seqrun_work_day
+
+  def get_status_description(self):
+    '''
+    A method for getting description for status json data
+    :returns: A dictionary containing status info
+    '''
+    try:
+      description={\
+        'task_id':('string', 'Task ID'),
+        'task_name':('string', 'Task Name'),
+        'start_date':('date', 'Start Date'),
+        'end_date':('date', 'End Date'),
+        'duration':('number', 'Percent Complete'),
+        'percent_complete':('number', 'Duration'),
+        'dependencies':('string', 'Dependencies'),
+      }
+      return description
+    except:
+      raise
+
+  def get_status_column_order(self):
+    '''
+    A method for fetching column order for status json data
+    :return: A list data containing the column order
+    '''
+    try:
+      columns_order=[\
+        'task_id',
+        'task_name',
+        'start_date',
+        'end_date',
+        'duration',
+        'percent_complete',
+        'dependencies'
+      ]
+      return columns_order
+    except:
+      raise
 
   @staticmethod
-  def _reformat_seqrun_data(data,task_id_label='task_id',task_name_label='task_name',
-                            resource_label='resource',resource_name='Demultiplexing',
-                            start_date_label='start_date',end_date_label='end_date',
-                            duration_label='duration',percent_complete_label='percent_complete',
+  def _reformat_seqrun_data(data,seqrun_work_day,task_id_label='task_id',
+                            task_name_label='task_name',resource_label='resource',
+                            resource_name='Demultiplexing',start_date_label='start_date',
+                            end_date_label='end_date',duration_label='duration',
+                            percent_complete_label='percent_complete',
                             dependencies_label='dependencies'):
     '''
     An internal static method for reformatting seqrun data series
@@ -33,8 +74,8 @@ class Project_status:
        task_name_label:'Flowcell {0}'.format(data['flowcell_id']),
        resource_label:resource_name,
        start_date_label:data['date_created'],
-       end_date_label:data['date_created']+timedelta(days=2),
-       duration_label:int(timedelta(days=2).total_seconds()*1000),
+       end_date_label:data['date_created']+timedelta(days=seqrun_work_day),
+       duration_label:int(timedelta(days=seqrun_work_day).total_seconds()*1000),
        percent_complete_label:100,
        dependencies_label:None,
       })
@@ -69,7 +110,9 @@ class Project_status:
                                  output_mode='dataframe')
       base.close_session()
       results=results.\
-              apply(lambda data: self._reformat_seqrun_data(data),
+              apply(lambda data: self._reformat_seqrun_data(\
+                                   data,
+                                   seqrun_work_day=self.seqrun_work_day),
                     axis=1)
       return results
     except:
@@ -162,7 +205,9 @@ if __name__=='__main__':
   ps=Project_status(igf_session_class=base.get_session_class(),
                     project_igf_id='ProjectA')
   data=ps.get_seqrun_info()
-  print(data.to_dict(orient='records')) 
+  print(data.to_dict(orient='records'))
+  print(ps.get_status_description())
+  print(ps.get_status_column_order())
   Base.metadata.drop_all(engine)
   os.remove(dbname)
   
