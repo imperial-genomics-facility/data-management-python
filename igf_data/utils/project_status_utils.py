@@ -88,7 +88,7 @@ class Project_status:
   def get_seqrun_info(self):
     '''
     A method for fetching all active sequencing runs for a project
-    :returns: A pandas dataframe of seqrun ids
+    :returns: A dictionary containing seqrun information
     '''
     try:
       base=self.base_adaptor
@@ -114,6 +114,7 @@ class Project_status:
                                    data,
                                    seqrun_work_day=self.seqrun_work_day),
                     axis=1)
+      results=results.to_dict(orient='records')
       return results
     except:
       raise
@@ -204,8 +205,7 @@ if __name__=='__main__':
   
   ps=Project_status(igf_session_class=base.get_session_class(),
                     project_igf_id='ProjectA')
-  data=ps.get_seqrun_info()
-  print(data.to_dict(orient='records'))
+  print(ps.get_seqrun_info())
   print(ps.get_status_description())
   print(ps.get_status_column_order())
   Base.metadata.drop_all(engine)
