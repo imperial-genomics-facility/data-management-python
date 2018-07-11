@@ -7,28 +7,31 @@ Content-Type: text/plain
 
 Dear {{ customerName }},
 
-Your sequencing data is available for download from:
+Your sequencing data is available for download.
 
-http://eliot.med.ic.ac.uk:8080/idrop-web
+Data access:
+  - Connect to Imperial College network (direct LAN connection or set up VPN)
+  - Go to http://eliot.med.ic.ac.uk:8080/idrop-web and log in using your login credentials
 
-Follow this path
+  Follow this path
 
-{{ projectName }}/fastq/{{ projectRunDate }}/{{ flowcellId }}
+  {{ projectName }}/fastq/{{ projectRunDate }}/{{ flowcellId }}
 
-  User Name: {{ customerUsername }}
+  Login information:
+    User Name: {{ customerUsername }}
 {% if hpcUser %}
-  Password: Your account password for Imperial College
-  Authentication Type: PAM {% else %}
-  Password: Your account password
-  Authentication Type: Standard {% endif %}
+    Password: Your account password for Imperial College
+    Authentication Type: PAM {% else %}
+    Password: Your account password
+    Authentication Type: Standard {% endif %}
 
 QC Report page:
-http://eliot.med.ic.ac.uk/report/project/{{ projectName }}/{{ projectRunDate }}/{{ flowcellId }}
+  http://eliot.med.ic.ac.uk/report/project/{{ projectName }}/{{ projectRunDate }}/{{ flowcellId }}
 
-You have to use your username and password to access these qc reports. {% if not hpcUser %} We fixed the bug related to the report page access. Now you should be able to login to these pages with facility password. {% endif %} 
+You have to use your username and password to access these qc reports. {% if not hpcUser %} Use your facility password for logging in to these pages. {% endif %} 
 
-Please check the help pages for more details regarding the analysis steps and data access:
-https://imperial-genomics-facility.github.io/igf-pipeline-help/
+Help pages for analysis, data access and more:
+  https://imperial-genomics-facility.github.io/igf-pipeline-help/
 
 The data will be available for one month from the date of this e-mail. You can refer to the samplesheets in the fastq tarfiles for mapping facility sample ids to the original sample names.
 
