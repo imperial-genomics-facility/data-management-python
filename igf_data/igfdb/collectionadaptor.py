@@ -171,8 +171,8 @@ class CollectionAdaptor(BaseAdaptor):
         data=pd.DataFrame(data)
 
       if not set(data.columns).issubset(set(required_coumns)):
-        raise ValueError('missing required columns: {0}'.\
-                         format(data.columns))
+        raise ValueError('missing required columns: {0}, found columns:{1}'.\
+                         format(required_coumns,data.columns))
 
       if calculate_file_size_and_md5:
         data['md5']=data['file_path'].\
