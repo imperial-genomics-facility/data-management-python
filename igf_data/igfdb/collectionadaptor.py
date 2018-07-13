@@ -170,8 +170,8 @@ class CollectionAdaptor(BaseAdaptor):
     try:
       if not isinstance(data, pd.DataFrame):
         data=pd.DataFrame(data)
-        data.fillna('',inplace=True)
 
+      data.fillna('',inplace=True)                                              # replace missing value
       if not set(data.columns).issubset(set(required_coumns)):
         raise ValueError('missing required columns: {0}, found columns:{1}'.\
                          format(required_coumns,data.columns))
