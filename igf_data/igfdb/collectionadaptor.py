@@ -156,7 +156,8 @@ class CollectionAdaptor(BaseAdaptor):
   def load_file_and_create_collection(self,data,autosave=True, hasher='md5',
                                       calculate_file_size_and_md5=True,
                                       required_coumns=['name','type','table',
-                                                       'file_path','location']):
+                                                       'file_path','size','md5',
+                                                       'location']):
     '''
     A function for loading files to db and creating collections
     
