@@ -19,7 +19,7 @@ def get_fastq_input_list(db_session_class,experiment_igf_id,combine_fastq_dir=Fa
   :raises ValueError: It raises ValueError if no fastq directory found
   '''
   try:
-    fastq_dir_list=[]                                                           # default list of fastq dirs
+    fastq_output_list=[]                                                        # default list of fastqs
     dbconnected=False
     base=BaseAdaptor(**{'session_class':db_session_class})
     base.start_session()
