@@ -228,29 +228,7 @@ class Analysis_collection_utils:
                                     self.analysis_name)                         # final path for run
 
         if self.rename_file:
-          new_filename=self.collection_name                                     # use collection name to rename file
-
-          if new_filename =='':
-            raise ValueError('New filename not found for input file {0}'.\
-                             format(input_file))
-
-          new_filename='{0}_{1}'.format(new_filename,
-                                        self.analysis_name)
-          if self.tag_name is not None:
-            new_filename='{0}_{1}'.format(new_filename,
-                                          self.tag_name)                        # add tagname to filepath
-
-          if self.add_datestamp:
-            datestamp=get_datestamp_label()                                     # collect datestamp
-            new_filename='{0}_{1}'.format(new_filename,
-                                          datestamp)                            # add datestamp to filepath
-
-          file_suffix=get_file_extension(input_file=input_file)                 # collect file suffix
-          if file_suffix =='':
-            raise ValueError('Missing file extension for new file name of {0}'.\
-                             format(input_file))                                # raise error if not file suffix found
-
-          new_filename='{0}.{1}'.format(new_filename,file_suffix)               # add file suffix to the new name
+          new_filename=self.get_new_file_name(input_file=input_file)
           final_path=os.path.join(final_path,
                                   new_filename)                                 # get new filepath
         else:
@@ -280,3 +258,38 @@ class Analysis_collection_utils:
         base.rollback_session()
         base.close_session()
       raise
+
+
+  def get_new_file_name(self,input_file):
+    '''
+    A method for fetching new file name
+    
+    :param input_file: An input filepath
+    '''
+    try:
+      new_filename=self.collection_name                                         # use collection name to rename file
+      if new_filename =='':
+        raise ValueError('New filename not found for input file {0}'.\
+                         format(input_file))
+
+      new_filename='{0}_{1}'.format(new_filename,
+                                    self.analysis_name)
+      if self.tag_name is not None:
+         new_filename='{0}_{1}'.format(new_filename,
+                                       self.tag_name)                           # add tagname to filepath
+
+      if self.add_datestamp:
+        datestamp=get_datestamp_label()                                         # collect datestamp
+        new_filename='{0}_{1}'.format(new_filename,
+                                      datestamp)                                # add datestamp to filepath
+
+      file_suffix=get_file_extension(input_file=input_file)                     # collect file suffix
+      if file_suffix =='':
+        raise ValueError('Missing file extension for new file name of {0}'.\
+                         format(input_file))                                    # raise error if not file suffix found
+
+      new_filename='{0}.{1}'.format(new_filename,file_suffix)                   # add file suffix to the new name
+      return new_filename
+    except:
+      raise
+
