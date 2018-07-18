@@ -362,5 +362,25 @@ class Analysis_collection_utils_test1(unittest.TestCase):
     self.assertTrue(test_file in output_list)
     base.close_session()
 
+  def test_load_file_to_disk_and_db8(self):
+    au=Analysis_collection_utils(dbsession_class=self.session_class,
+                                 analysis_name='AnalysisA',
+                                 tag_name='TagA',
+                                 collection_name='RunA',
+                                 collection_type='AnalysisA_Files',
+                                 collection_table='run'
+                                )
+    input_file=os.path.join(self.temp_work_dir,
+                            'a.cram')
+    input_file=preprocess_path_name(input_path=input_file)
+    new_file_name=au.get_new_file_name(input_file=input_file)
+    datestamp=get_datestamp_label()
+    test_file_name='{0}_{1}_{2}_{3}.{4}'.format('RunA',
+                                                'AnalysisA',
+                                                'TagA',
+                                                datestamp,
+                                                'cram')
+    self.assertEqual(new_file_name,test_file_name)
+
 if __name__=='__main__':
   unittest.main()
