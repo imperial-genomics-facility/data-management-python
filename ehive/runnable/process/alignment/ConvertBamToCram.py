@@ -14,7 +14,6 @@ class ConvertBamToCram(IGFBaseProcess):
     params_dict=super(ConvertBamToCram,self).param_defaults()
     params_dict.update({
         'force_overwrite':True,
-        'reference_type':None,
         'collection_name':None,
         'analysis_name':None,
         'tag_name':None,
