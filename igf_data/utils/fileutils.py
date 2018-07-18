@@ -31,6 +31,20 @@ def move_file(source_path,destinationa_path, force=False):
     raise
 
 
+def check_file_path(file_path):
+  '''
+  A function for checking existing filepath
+  
+  :param file_path: An input filepath for check
+  :raise IOError: It raises IOError if file not found
+  '''
+  try:
+    if not os.path.exists(file_path):
+      raise IOError('Missing file path {0}'.format(file_path))
+  except:
+    raise
+
+
 def copy_local_file(source_path,destinationa_path, force=False):
   '''
   A method for copy files to local disk
