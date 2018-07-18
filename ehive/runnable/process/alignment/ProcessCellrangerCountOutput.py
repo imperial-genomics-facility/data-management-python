@@ -115,6 +115,4 @@ class ProcessCellrangerCountOutput(IGFBaseProcess):
                                                       sample_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
-      if work_dir:
-        remove_dir(work_dir)
       raise
