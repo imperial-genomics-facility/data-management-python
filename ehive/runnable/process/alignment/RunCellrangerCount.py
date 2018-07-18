@@ -3,7 +3,7 @@ import os, subprocess
 from shlex import quote
 from shutil import copytree
 from fnmatch import fnmatch
-from igf_data.utils.fileutils import get_temp_dir,remove_dir
+from igf_data.utils.fileutils import get_temp_dir,remove_dir,move_file
 from igf_data.utils.fileutils import create_file_manifest_for_dir
 from igf_data.utils.fileutils import prepare_file_archive
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
@@ -171,8 +171,23 @@ class RunCellrangerCount(IGFBaseProcess):
         raise ValueError('More than one bam found for cellranger count run:{0}'.\
                          format(cellranger_output))                             # check number of bams, presence of one bam is already validated by check method
 
+      bam_file=bam_list[0]
+      au=Analysis_collection_utils(dbsession_class=igf_session_class,
+                                   analysis_name=analysis_name,
+                                   tag_name=species_name,
+                                   collection_name=experiment_igf_id,
+                                   collection_type=collection_type,
+                                   collection_table=collection_table)           # initiate bam file rename
+      new_bam_name=au.get_new_file_name(input_file=bam_file)
+      if os.path.basename(bam_file)!=new_bam_name:
+        new_bam_name=os.path.join(os.path.dirname(bam_file),
+                              new_bam_name)                                     # get ne bam path
+        move_file(source_path=bam_file,
+                  destinationa_path=new_bam_name,
+                  force=True)                                                   # move bam file
+
       self.param('dataflow_params',{'cellranger_output':cellranger_output,
-                                    'bam_file':bam_list[0],
+                                    'bam_file':bam_file,
                                     'analysis_output_list':output_file_list
                                    })                                           # pass on cellranger output path
     except Exception as e:
