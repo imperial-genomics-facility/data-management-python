@@ -53,7 +53,8 @@ def get_fastq_input_list(db_session_class,experiment_igf_id,combine_fastq_dir=Fa
                        format(experiment_igf_id))
 
     base.close_session()
-    return fastq_dir_list                                                       # return list of fastq dirs
+    dbconnected=False
+    return fastq_output_list                                                    # return list of fastq dirs
   except:
     if dbconnected:
       base.close_session()
