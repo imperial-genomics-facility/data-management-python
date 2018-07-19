@@ -6,7 +6,7 @@ from igf_data.utils.fileutils import get_temp_dir,remove_dir,move_file
 
 class RunPicard(IGFBaseProcess):
   def param_defaults(self):
-    params_dict=super(ProcessCellrangerCountOutput,self).param_defaults()
+    params_dict=super(RunPicard,self).param_defaults()
     params_dict.update({
         'reference_type':'GENOME_FASTA',
       })
