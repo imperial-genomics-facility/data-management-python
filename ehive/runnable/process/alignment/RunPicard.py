@@ -57,7 +57,7 @@ class RunPicard(IGFBaseProcess):
                   destinationa_path=dest_path,
                   force=True)                                                   # move files to work dir
         output_file_list.append(dest_path)
-
+      remove_dir(temp_output_dir)
       self.param('dataflow_params',{picard_command:output_file_list})           # pass on picard output list
     except Exception as e:
       message='project: {2}, sample:{3}, Error in {0}: {1}'.format(self.__class__.__name__, \
