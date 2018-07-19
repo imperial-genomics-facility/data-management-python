@@ -19,6 +19,7 @@ class RunPicard(IGFBaseProcess):
       experiment_igf_id=self.param_required('experiment_igf_id')
       sample_igf_id=self.param_required('sample_igf_id')
       java_exe=self.param_required('java_exe')
+      java_param=self.param_required('java_param')
       picard_jar=self.param_required('picard_jar')
       input_file=self.param_required('input_file')
       picard_command=self.param_required('picard_command')
@@ -41,6 +42,7 @@ class RunPicard(IGFBaseProcess):
       genome_fasta=ref_genome.get_genome_fasta()                                # get genome fasta
       ref_flat_file=ref_genome.get_gene_reflat()                                # get refFlat file
       picard=Picard_tools(java_exe=java_exe,
+                          java_param=java_param,
                           picard_jar=picard_jar,
                           input_file=input_file,
                           output_dir=temp_output_dir,
