@@ -98,18 +98,28 @@ def convert_bam_to_cram(bam_file,reference_file,cram_path,threads=1,force=False)
     raise
 
 
-  def run_bam_flagstat(bam_file,output_path,threads=1,force=False):
+  def run_bam_flagstat(bam_file,output_dir,threads=1,force=False):
     '''
     A method for generating bam flagstat output
     
     :param bam_file: A bam filepath with / without index. Index file will be created if its missing
-    :param output_path: Bam flagstat output file path
+    :param output_dir: Bam flagstat output directory path
     :param threads: Number of threads to use for conversion, default 1
     :param force: Output flagstat file will be overwritten if force is True, default False
+    :returns: Output file path
     '''
     try:
       _check_bam_file(bam_file=bam_file)                                        # check bam file
       _check_bam_index(bam_file=bam_file)                                       # generate bam index
+      output_path='{0}.{1}.{2}'.\
+                  format(os.path.basename(bam_file),
+                         'flagstat',
+                         'txt')                                                 # get output filename
+      output_path=os.path.join(output_dir,
+                               output_path)                                     # get complete output path
+      if not os.path.exists(output_dir):
+        raise IOError('Output path {0} not found'.format(output_dir))
+
       if os.path.exists(output_path) and not force:
         raise ValueError('Output file {0} already present, use force to overwrite'.\
                          format(output_path))
@@ -118,21 +128,32 @@ def convert_bam_to_cram(bam_file,reference_file,cram_path,threads=1,force=False)
         fp.write(pysam.flagstat(quote(bam_file),
                                 '-@{0}'.format(threads)))                       # write bam flagstat output
 
+      return output_path
     except:
       raise
 
 
-  def run_bam_idxstat(bam_file,output_path,force=False):
+  def run_bam_idxstat(bam_file,output_dir,force=False):
     '''
     A function for running samtools index stats generation
     
     :param bam_file: A bam filepath with / without index. Index file will be created if its missing
-    :param output_path: Bam idxstats output file path
+    :param output_dir: Bam idxstats output directory path
     :param force: Output idxstats file will be overwritten if force is True, default False
+    :returns: Output file path
     '''
     try:
       _check_bam_file(bam_file=bam_file)                                        # check bam file
       _check_bam_index(bam_file=bam_file)                                       # generate bam index
+      output_path='{0}.{1}.{2}'.\
+                  format(os.path.basename(bam_file),
+                         'idxstats',
+                         'txt')                                                 # get output filename
+      output_path=os.path.join(output_dir,
+                               output_path)                                     # get complete output path
+      if not os.path.exists(output_dir):
+        raise IOError('Output path {0} not found'.format(output_dir))
+
       if os.path.exists(output_path) and not force:
         raise ValueError('Output file {0} already present, use force to overwrite'.\
                          format(output_path))
@@ -140,5 +161,6 @@ def convert_bam_to_cram(bam_file,reference_file,cram_path,threads=1,force=False)
       with open(output_path,'w') as fp:
         fp.write(pysam.idxstats(quote(bam_file)))                               # write bam flagstat output
 
+      return output_path
     except:
       raise
