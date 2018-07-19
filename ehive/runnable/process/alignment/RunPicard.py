@@ -9,6 +9,7 @@ class RunPicard(IGFBaseProcess):
     params_dict=super(RunPicard,self).param_defaults()
     params_dict.update({
         'reference_type':'GENOME_FASTA',
+        'reference_refFlat':'GENE_REFFLAT',
       })
     return params_dict
 
@@ -24,6 +25,7 @@ class RunPicard(IGFBaseProcess):
       igf_session_class=self.param_required('igf_session_class')
       species_name=self.param('species_name')
       reference_type=self.param('reference_type')
+      reference_refFlat=self.param('reference_refFlat')
       base_work_dir=self.param_required('base_work_dir')
       work_dir_prefix=os.path.join(base_work_dir,
                                    project_igf_id,
@@ -33,13 +35,17 @@ class RunPicard(IGFBaseProcess):
       temp_output_dir=get_temp_dir()                                            # get temp work dir
       ref_genome=Reference_genome_utils(genome_tag=species_name,
                                         dbsession_class=igf_session_class,
-                                        genome_fasta_type=reference_type)       # setup ref genome utils
+                                        genome_fasta_type=reference_type,
+                                        gene_reflat_type=reference_refFlat
+                                       )                                        # setup ref genome utils
       genome_fasta=ref_genome.get_genome_fasta()                                # get genome fasta
+      ref_flat_file=ref_genome.get_gene_reflat()                                # get refFlat file
       picard=Picard_tools(java_exe=java_exe,
                           picard_jar=picard_jar,
                           input_file=input_file,
                           output_dir=temp_output_dir,
-                          ref_fasta=genome_fasta)                               # setup picard tool
+                          ref_fasta=genome_fasta,
+                          ref_flat_file=ref_flat_file)                          # get genome fasta)                               # setup picard tool
       temp_output_files=picard.run_picard_command(command_name=picard_command)  # run picard command
       output_file_list=list()
       for source_path in temp_output_files:
