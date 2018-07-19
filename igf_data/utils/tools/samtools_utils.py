@@ -13,8 +13,8 @@ def _check_cram_file(cram_path):
   :raises IOError: It raises IOError if the cram_path doesn't exists
   '''
   try:
-    if os.path.exists(cram_path) and not force:
-      raise IOError('Output cram already present {0}, and force is not enabled'.\
+    if not os.path.exists(cram_path):
+      raise IOError('Output cram not present {0}'.\
                     format(cram_path))
 
     if not fnmatch.fnmatch(cram_path, '*.cram'):
