@@ -2,7 +2,7 @@ import os, unittest
 from igf_data.utils.tools.picard_util import Picard_tools
 
 class Picard_util_test1(unittest.TestCase):
-  def test_get_param_for_picard_command(self):
+  def test_get_param_for_picard_command1(self):
     pa=Picard_tools(java_exe='/path/java',
                     picard_jar='/path/picard.jar',
                     input_file='/path/input.bam',
