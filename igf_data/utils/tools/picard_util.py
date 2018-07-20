@@ -164,7 +164,7 @@ class Picard_tools:
     A method for running generic picard command
     
     :param command_name: Picard command name
-    :returns: A list of output files from picard run
+    :returns: A list of output files from picard run and picard run command
     '''
     try:
       command=[self.java_exe,
@@ -186,7 +186,7 @@ class Picard_tools:
                        for param,val in picard_run_patam.items()]
         command.extend(picard_option)                                           # main picard params
         subprocess.check_call(command)                                          # run picard command
-        return output_file_list
+        return output_file_list,command
       else:
         raise ValueError('Picard command {0} not supported yet'.\
                          format(command_name))
