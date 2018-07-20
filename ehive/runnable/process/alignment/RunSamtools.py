@@ -48,12 +48,12 @@ class RunSamtools(IGFBaseProcess):
       if samtools_command == 'idxstats':
         temp_output=run_bam_idxstat(bam_file=bam_file,
                                     output_dir=temp_output_dir,
-                                    force=True)
+                                    force=True)                                 # run samtools idxstats
       elif samtools_command == 'flagstat':
         temp_output=run_bam_flagstat(bam_file=bam_file,
                                      output_dir=temp_output_dir,
                                      threads=threads,
-                                     force=True)
+                                     force=True)                                # run samtools flagstat
       else:
         raise ValueError('Samtools command {0} not supported'.\
                          format(samtools_command))
