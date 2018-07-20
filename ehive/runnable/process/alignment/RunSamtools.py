@@ -21,9 +21,12 @@ class RunSamtools(IGFBaseProcess):
     
     :param project_igf_id: A project igf id
     :param sample_igf_id: A sample igf id
+    :param experiment_igf_id: A experiment igf id
     :param igf_session_class: A database session class
     :param reference_type: Reference genome collection type, default GENOME_FASTA
     :param threads: Number of threads to use for Bam to Cram conversion, default 4
+    :param base_work_dir: Base workd directory
+    :param samtools_command: Samtools command
     '''
     try:
       project_igf_id=self.param_required('project_igf_id')
