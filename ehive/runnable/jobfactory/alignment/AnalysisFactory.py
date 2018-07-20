@@ -1,20 +1,20 @@
 from ehive.runnable.IGFBaseJobFactory import IGFBaseJobFactory
 
-class BamAnalysisFactory(IGFBaseJobFactory):
+class AnalysisFactory(IGFBaseJobFactory):
   '''
-  A job factory for running analysis for a lit of bam files
+  A job factory for running analysis for a list of files
   '''
   def param_defaults(self):
-    params_dict=super(BamAnalysisFactory,self).param_defaults()
+    params_dict=super(AnalysisFactory,self).param_defaults()
     return params_dict
 
   def run(self):
     try:
       project_igf_id=self.param_required('project_igf_id')
       sample_igf_id=self.param_required('sample_igf_id')
-      bam_file_list=self.param_required('bam_file_list')
-      seed_data=[{'bam_file':bam_file}
-                 for bam_file in bam_file_list]                                 # define seed data
+      file_list=self.param_required('file_list')
+      seed_data=[{'input_file':input_file}
+                    for input_file in file_list]                                # define seed data
       self.param('sub_tasks',seed_data)                                         # add param for dataflow
     except Exception as e:
       message='project: {2}, sample:{3}, Error in {0}: {1}'.format(self.__class__.__name__, \
