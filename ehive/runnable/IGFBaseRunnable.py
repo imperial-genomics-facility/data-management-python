@@ -49,12 +49,12 @@ class IGFBaseRunnable(eHive.BaseRunnable):
 
   def run(self):
     pass
-  
-  
+
+
   def write_output(self):
     pass
-  
-  
+
+
   def post_message_to_slack(self,message,reaction=''):
     '''
     A method for posing message to slack channel
@@ -62,16 +62,20 @@ class IGFBaseRunnable(eHive.BaseRunnable):
     :param message: A text message
     :param reaction: Optional parameter for slack emoji
     '''
-    if self.param('log_slack'):
-      igf_slack = self.param_required('igf_slack')
-      igf_slack.post_message_to_channel(message,reaction)
+    try:
+      if self.param('log_slack'):
+        igf_slack = self.param_required('igf_slack')
+        igf_slack.post_message_to_channel(message,reaction)
+    except:
+      raise
+
 
   def post_file_to_slack(self,filepath,message):
     '''
     A method for posting message to slack channel
-    required params:
-    filepath: A filepath
-    message: A message text
+    
+    :param filepath: A filepath
+    :param message: A message text
     '''
     try:
       if self.param('log_slack'):
@@ -79,64 +83,74 @@ class IGFBaseRunnable(eHive.BaseRunnable):
         igf_slack.post_file_to_channel(message=message,filepath=filepath)
     except:
       raise
-  
-  
+
+
   def upload_file_to_asana_task(self,task_name,filepath,comment=None):
     '''
     A base method for uploading file to the asana task
-    required params:
-    task_name: A asana task name
-    filepath: A filepath
-    comment: An optional text comment
+    
+    :param task_name: A asana task name
+    :param filepath: A filepath
+    :param comment: An optional text comment
     '''
     try:
       if self.param('log_asana'):
         igf_asana=self.param_required('igf_asana')
-        igf_asana.attach_file_to_asana_task(task_name=task_name, \
-                                            filepath=filepath, \
-                                            comment=comment)
+        igf_asana.\
+        attach_file_to_asana_task(task_name=task_name,
+                                  filepath=filepath,
+                                  comment=comment)
     except:
       raise
-  
-  
+
+
   def comment_asana_task(self,task_name, comment):
     '''
     A base method for commenting asana task
-    required params:
-    task_name: A task name
-    comment: A text comment
+    
+    :param task_name: A task name
+    :param comment: A text comment
+    :returns: response code asana update
     '''
     try:
+      res=None
       if self.param('log_asana'):
         igf_asana=self.param_required('igf_asana')
-        res=igf_asana.comment_asana_task(task_name, comment)
+        res=igf_asana.comment_asana_task(task_name=task_name,
+                                         comment=comment)
+
+      return res
     except:
       raise
-    
-    
+
+
   def add_asana_notes(self,task_name,notes):
     '''
     A base method for adding asana notes
-    required params:
-    task_name: A task name
-    notes: A set of text notes
+    
+    :param task_name: A task name
+    :param notes: A set of text notes
+    :returns: response code asana update
     '''
     try:
+      res=None
       if self.param('log_asana'):
         igf_asana=self.param_required('igf_asana')
         res=igf_asana.add_notes_for_task(task_name, notes)
+
+      return res
     except:
       raise
-    
-    
+
+
   def get_job_id(self):
     '''
     A method for fetching job process id
     ''' 
     job_pid=os.getpid()
     return job_pid
-  
-  
+
+
   def job_name(self):
     '''
     A method for getting a job name
@@ -145,6 +159,7 @@ class IGFBaseRunnable(eHive.BaseRunnable):
     job_id=self.get_job_id()
     job_name='{0}_{1}'.format(class_name,job_id)
     return job_name
+
 
   def get_datestamp(self):
     '''
@@ -156,6 +171,7 @@ class IGFBaseRunnable(eHive.BaseRunnable):
       return datestamp
     except:
       raise
+
 
   def get_job_work_dir(self,work_dir):
     '''
@@ -174,6 +190,7 @@ class IGFBaseRunnable(eHive.BaseRunnable):
       return work_dir
     except:
       raise
+
 
   def format_tool_options(self,option,separator=None):
     '''
