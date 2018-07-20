@@ -166,7 +166,7 @@ class Picard_tools:
 
       command=[self.java_exe,
                self.java_param,
-               '-jre',
+               '-jar',
                self.picard_jar,
                quote(command_name)]
       if isinstance(self.picard_option,dict) and \
