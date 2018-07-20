@@ -64,6 +64,13 @@ class RunSamtools(IGFBaseProcess):
                 destinationa_path=dest_path,
                 force=True)
       self.param('dataflow_params',{samtools_command:dest_path})                # pass on output list
+      message='finished samtools {0} for {1} {2}: {3}'.\
+              format(samtools_command,
+                     project_igf_id,
+                     sample_igf_id,
+                     dest_path)
+      self.post_message_to_slack(message,reaction='pass')                       # send log to slack
+      self.comment_asana_task(task_name=project_igf_id, comment=message)        # send comment to Asana
     except Exception as e:
       message='project: {2}, sample:{3}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
