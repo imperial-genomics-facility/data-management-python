@@ -67,20 +67,20 @@ class Picard_tools:
       if command_name=='CollectAlignmentSummaryMetrics':
         output_file='{0}.{1}'.format(output_file,
                                     'txt')                                      # add correct extension for output file
-        param_dict={'I':self.input_file,
-                    'O':output_file,
-                    'R':self.ref_fasta
+        param_dict={'I':quote(self.input_file),
+                    'O':quote(output_file),
+                    'R':quote(self.ref_fasta)
                    }
         output_list=[output_file]
 
       elif command_name=='CollectGcBiasMetrics':
         output_file='{0}.{1}'.format(output_file,
                                     'txt')                                      # add correct extension for output file
-        param_dict={'I':self.input_file,
-                    'O':output_file,
-                    'R':self.ref_fasta,
-                    'CHART':chart_file,
-                    'S':metrics_file
+        param_dict={'I':quote(self.input_file),
+                    'O':quote(output_file),
+                    'R':quote(self.ref_fasta),
+                    'CHART':quote(chart_file),
+                    'S':quote(metrics_file)
                    }
         output_list=[output_file,
                      chart_file,
@@ -90,9 +90,9 @@ class Picard_tools:
       elif command_name=='QualityScoreDistribution':
         output_file='{0}.{1}'.format(output_file,
                                     'txt')                                      # add correct extension for output file
-        param_dict={'I':self.input_file,
-                    'O':output_file,
-                    'CHART':chart_file
+        param_dict={'I':quote(self.input_file),
+                    'O':quote(output_file),
+                    'CHART':quote(chart_file)
                    }
         output_list=[output_file,
                      chart_file,
@@ -106,12 +106,12 @@ class Picard_tools:
         check_file_path(file_path=self.ref_flat_file)                                # check refFlat file path
         output_file='{0}.{1}'.format(output_file,
                                     'txt')                                      # add correct extension for output file
-        param_dict={'I':self.input_file,
-                    'O':output_file,
-                    'R':self.ref_fasta,
-                    'REF_FLAT':self.ref_flat_file,
-                    'STRAND':self.strand_info,
-                    'CHART':chart_file
+        param_dict={'I':quote(self.input_file),
+                    'O':quote(output_file),
+                    'R':quote(self.ref_fasta),
+                    'REF_FLAT':quote(self.ref_flat_file),
+                    'STRAND':quote(self.strand_info),
+                    'CHART':quote(chart_file)
                    }
         output_list=[output_file,
                      chart_file,
@@ -120,9 +120,9 @@ class Picard_tools:
       elif command_name=='CollectBaseDistributionByCycle':
         output_file='{0}.{1}'.format(output_file,
                                     'txt')                                      # add correct extension for output file
-        param_dict={'I':self.input_file,
-                    'O':output_file,
-                    'CHART':chart_file
+        param_dict={'I':quote(self.input_file),
+                    'O':quote(output_file),
+                    'CHART':quote(chart_file)
                    }
         output_list=[output_file,
                      chart_file,
@@ -131,9 +131,9 @@ class Picard_tools:
       elif command_name=='MarkDuplicates':
         output_file='{0}.{1}'.format(output_file,
                                     'bam')                                      # add correct extension for output file
-        param_dict={'I':self.input_file,
-                    'O':output_file,
-                    'M':metrics_file
+        param_dict={'I':quote(self.input_file),
+                    'O':quote(output_file),
+                    'M':quote(metrics_file)
                    }
         output_list=[output_file,
                      metrics_file
@@ -142,8 +142,8 @@ class Picard_tools:
       elif command_name=='AddOrReplaceReadGroups':
         output_file='{0}.{1}'.format(output_file,
                                     'bam')                                      # add correct extension for output file
-        param_dict={'I':self.input_file,
-                    'O':output_file
+        param_dict={'I':quote(self.input_file),
+                    'O':quote(output_file)
                    }                                                           # not checking for other required inputs
         output_list=[output_file]
 
