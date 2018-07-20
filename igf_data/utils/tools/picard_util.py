@@ -103,7 +103,7 @@ class Picard_tools:
           raise ValueError('Missing refFlat annotation file for command {0}'.\
                            format(command_name))
 
-        check_file_path(file_path=ref_flat_file)                                # check refFlat file path
+        check_file_path(file_path=self.ref_flat_file)                                # check refFlat file path
         output_file='{0}.{1}'.format(output_file,
                                     'txt')                                      # add correct extension for output file
         param_dict={'I':self.input_file,
