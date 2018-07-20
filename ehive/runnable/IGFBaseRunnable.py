@@ -20,23 +20,32 @@ class IGFBaseRunnable(eHive.BaseRunnable):
 
 
   def fetch_input(self):
-    dbconfig = self.param_required('dbconfig')
-    dbparams = read_dbconf_json(dbconfig)
-    base = BaseAdaptor(**dbparams)
-    session_class = base.get_session_class()
-    self.param('igf_session_class', session_class)      # set session class for pipeline
+    '''
+    Fetch input method for base runnable
+    
+    :param dbconfig: A database configuration json file
+    :param log_slack: A toggle for writing logs to slack
+    :param log_asana: A toggle for writing logs to asana 
+    '''
+    try:
+      dbconfig = self.param_required('dbconfig')
+      dbparams = read_dbconf_json(dbconfig)
+      base = BaseAdaptor(**dbparams)
+      session_class = base.get_session_class()
+      self.param('igf_session_class', session_class)                            # set session class for pipeline
 
-    if self.param('log_slack'):
-      slack_config = self.param_required('slack_config')
-      igf_slack = IGF_slack(slack_config=slack_config)
-      self.param('igf_slack', igf_slack)
+      if self.param('log_slack'):
+        slack_config = self.param_required('slack_config')
+        igf_slack = IGF_slack(slack_config=slack_config)
+        self.param('igf_slack', igf_slack)
 
-    if self.param('log_asana'):
-      asana_config = self.param_required('asana_config')
-      asana_project_id = self.param_required('asana_project_id')
-      igf_asana = IGF_asana(asana_config=asana_config, asana_project_id=asana_project_id)
-      self.param('igf_asana', igf_asana)
-
+      if self.param('log_asana'):
+        asana_config = self.param_required('asana_config')
+        asana_project_id = self.param_required('asana_project_id')
+        igf_asana = IGF_asana(asana_config=asana_config, asana_project_id=asana_project_id)
+        self.param('igf_asana', igf_asana)
+    except:
+      raise
 
   def run(self):
     pass
@@ -49,15 +58,14 @@ class IGFBaseRunnable(eHive.BaseRunnable):
   def post_message_to_slack(self,message,reaction=''):
     '''
     A method for posing message to slack channel
-    required params:
-    message: A text message
-    reaction: Optional parameter for slack emoji
+
+    :param message: A text message
+    :param reaction: Optional parameter for slack emoji
     '''
     if self.param('log_slack'):
       igf_slack = self.param_required('igf_slack')
       igf_slack.post_message_to_channel(message,reaction)
-      
-      
+
   def post_file_to_slack(self,filepath,message):
     '''
     A method for posting message to slack channel
