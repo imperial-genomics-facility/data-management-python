@@ -48,7 +48,8 @@ class RunPicard(IGFBaseProcess):
                           output_dir=temp_output_dir,
                           ref_fasta=genome_fasta,
                           ref_flat_file=ref_flat_file)                          # get genome fasta)                               # setup picard tool
-      temp_output_files=picard.run_picard_command(command_name=picard_command)  # run picard command
+      temp_output_files,picard_command_line=\
+           picard.run_picard_command(command_name=picard_command)               # run picard command
       output_file_list=list()
       for source_path in temp_output_files:
         dest_path=os.path.join(work_dir,
@@ -59,6 +60,16 @@ class RunPicard(IGFBaseProcess):
         output_file_list.append(dest_path)
       remove_dir(temp_output_dir)
       self.param('dataflow_params',{picard_command:output_file_list})           # pass on picard output list
+      message='finished picard {0} for {1} {2}'.\
+              format(picard_command,
+                     project_igf_id,
+                     sample_igf_id)
+      self.post_message_to_slack(message,reaction='pass')                       # send log to slack
+      self.comment_asana_task(task_name=project_igf_id, comment=message)        # send comment to Asana
+      message='Picard {0} command: {1}'.\
+              format(picard_command,
+                     picard_command_line)
+      self.comment_asana_task(task_name=project_igf_id, comment=message)        # send commandline to Asana
     except Exception as e:
       message='project: {2}, sample:{3}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
