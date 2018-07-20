@@ -34,24 +34,16 @@ class Picard_tools:
                                   'CollectBaseDistributionByCycle',
                                   'MarkDuplicates',
                                   'AddOrReplaceReadGroups']):
-    try:
-      check_file_path(file_path=java_exe)
-      self.java_exe=java_exe
-      check_file_path(file_path=picard_jar)
-      self.picard_jar=picard_jar
-      self.java_param=java_param
-      check_file_path(file_path=input_file)
-      self.input_file=input_file
-      self.output_dir=output_dir
-      check_file_path(file_path=ref_fasta)
-      self.ref_fasta=ref_fasta
-      self.picard_option=picard_option
-      self.strand_info=strand_info
-      self.ref_flat_file=ref_flat_file
-      self.suported_commands=suported_commands
-
-    except:
-      raise
+    self.java_exe=java_exe
+    self.picard_jar=picard_jar
+    self.java_param=java_param
+    self.input_file=input_file
+    self.output_dir=output_dir
+    self.ref_fasta=ref_fasta
+    self.picard_option=picard_option
+    self.strand_info=strand_info
+    self.ref_flat_file=ref_flat_file
+    self.suported_commands=suported_commands
 
   def _get_param_for_picard_command(self,command_name):
     '''
@@ -167,6 +159,11 @@ class Picard_tools:
     :returns: A list of output files from picard run and picard run command
     '''
     try:
+      check_file_path(file_path=self.java_exe)
+      check_file_path(file_path=self.picard_jar)
+      check_file_path(file_path=self.input_file)
+      check_file_path(file_path=self.ref_fasta)
+
       command=[self.java_exe,
                self.java_param,
                '-jre',
@@ -178,12 +175,12 @@ class Picard_tools:
                        for param,val in self.picard_option.items()]
         command.extend(picard_option)                                           # additional picard params
 
-      picard_run_patam,output_file_list=\
+      picard_run_param,output_file_list=\
                   self._get_param_for_picard_command(command_name=command_name) # get picard params and output list
-      if isinstance(picard_run_patam,dict) and \
+      if isinstance(picard_run_param,dict) and \
           len(picard_run_patam)>1:
         picard_option=['{0}={1}'.format(param,quote(val))
-                       for param,val in picard_run_patam.items()]
+                       for param,val in picard_run_param.items()]
         command.extend(picard_option)                                           # main picard params
         subprocess.check_call(command)                                          # run picard command
         return output_file_list,command
