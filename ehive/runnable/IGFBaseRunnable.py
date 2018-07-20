@@ -4,7 +4,7 @@ from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.task_tracking.igf_slack import IGF_slack
 from igf_data.task_tracking.igf_asana import IGF_asana
 from igf_data.igfdb.baseadaptor import BaseAdaptor
-from igf_data.utils.fileutils import get_datestamp_label
+from igf_data.utils.fileutils import get_datestamp_label,get_temp_dir,copy_local_file
 from numpy import isin
 
 
@@ -188,6 +188,29 @@ class IGFBaseRunnable(eHive.BaseRunnable):
         os.makedirs(work_dir,mode=0o770)                                        # create work directory
 
       return work_dir
+    except:
+      raise
+
+
+  def copy_input_file_to_temp(self,input_file):
+    '''
+    A method for copying input file to temp diretory
+    
+    :param input_file: A input file path
+    :returns: A temp file path
+    '''
+    try:
+      if not os.path.exists(input_file):
+        raise IOError('File {0} not found'.\
+                      format(input_file))
+
+      temp_dir=get_temp_dir()                                                   # get temp dir
+      destinationa_path=os.path.join(temp_dir,
+                                     os.path.basename(input_file))              # get destination file path
+      copy_local_file(source_path=input_file,
+                      destinationa_path=destinationa_path,
+                      force=True)                                               # copy file to temp dir
+      return destinationa_path
     except:
       raise
 
