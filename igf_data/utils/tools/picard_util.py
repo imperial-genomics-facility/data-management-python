@@ -178,7 +178,7 @@ class Picard_tools:
       picard_run_param,output_file_list=\
                   self._get_param_for_picard_command(command_name=command_name) # get picard params and output list
       if isinstance(picard_run_param,dict) and \
-          len(picard_run_patam)>1:
+          len(picard_run_param)>1:
         picard_option=['{0}={1}'.format(param,quote(val))
                        for param,val in picard_run_param.items()]
         command.extend(picard_option)                                           # main picard params
