@@ -10,6 +10,7 @@ class RunPicard(IGFBaseProcess):
     params_dict.update({
         'reference_type':'GENOME_FASTA',
         'reference_refFlat':'GENE_REFFLAT',
+        'java_param':'-Xmx4g',
       })
     return params_dict
 
