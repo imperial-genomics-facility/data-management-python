@@ -12,21 +12,24 @@ class RunSamtools(IGFBaseProcess):
     params_dict.update({
         'reference_type':'GENOME_FASTA',
         'threads':4,
+        'copy_input':0,
       })
     return params_dict
 
   def run(self):
     '''
-    A method for running bam to cram conversion
+    A method for running samtools commands
     
     :param project_igf_id: A project igf id
     :param sample_igf_id: A sample igf id
     :param experiment_igf_id: A experiment igf id
     :param igf_session_class: A database session class
     :param reference_type: Reference genome collection type, default GENOME_FASTA
+    :param species_name: species_name
     :param threads: Number of threads to use for Bam to Cram conversion, default 4
     :param base_work_dir: Base workd directory
     :param samtools_command: Samtools command
+    :param copy_input: A toggle for copying input file to temp, 1 for True default 0 for False
     '''
     try:
       project_igf_id=self.param_required('project_igf_id')
@@ -39,6 +42,10 @@ class RunSamtools(IGFBaseProcess):
       threads=self.param('threads')
       base_work_dir=self.param_required('base_work_dir')
       samtools_command=self.param_required('samtools_command')
+      copy_input=self.param('copy_input')
+      if copy_input==1:
+        bam_file=self.copy_input_file_to_temp(input_file=bam_file)              # copy input to temp dir
+
       temp_output_dir=get_temp_dir()                                            # get temp work dir
       work_dir_prefix=os.path.join(base_work_dir,
                                    project_igf_id,

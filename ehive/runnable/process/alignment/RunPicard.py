@@ -11,10 +11,28 @@ class RunPicard(IGFBaseProcess):
         'reference_type':'GENOME_FASTA',
         'reference_refFlat':'GENE_REFFLAT',
         'java_param':'-Xmx4g',
+        'copy_input':0,
       })
     return params_dict
 
   def run(self):
+    '''
+    A method for running picard commands
+    
+    :param project_igf_id: A project igf id
+    :param sample_igf_id: A sample igf id
+    :param experiment_igf_id: A experiment igf id
+    :param igf_session_class: A database session class
+    :param reference_type: Reference genome collection type, default GENOME_FASTA
+    :param reference_refFlat: Reference genome collection type, default GENE_REFFLAT
+    :param species_name: species_name
+    :param java_exe: Java path
+    :param java_java_paramexe: Java run parameters
+    :param picard_jar: Picard jar path
+    :param picard_command: Picard command
+    :param base_work_dir: Base workd directory
+    :param copy_input: A toggle for copying input file to temp, 1 for True default 0 for False
+    '''
     try:
       project_igf_id=self.param_required('project_igf_id')
       experiment_igf_id=self.param_required('experiment_igf_id')
@@ -29,11 +47,15 @@ class RunPicard(IGFBaseProcess):
       reference_type=self.param('reference_type')
       reference_refFlat=self.param('reference_refFlat')
       base_work_dir=self.param_required('base_work_dir')
+      copy_input=self.param('copy_input')
       work_dir_prefix=os.path.join(base_work_dir,
                                    project_igf_id,
                                    sample_igf_id,
                                    experiment_igf_id)
       work_dir=self.get_job_work_dir(work_dir=work_dir_prefix)                  # get a run work dir
+      if copy_input==1:
+        input_file=self.copy_input_file_to_temp(input_file=input_file)          # copy input to temp dir
+
       temp_output_dir=get_temp_dir()                                            # get temp work dir
       ref_genome=Reference_genome_utils(genome_tag=species_name,
                                         dbsession_class=igf_session_class,
