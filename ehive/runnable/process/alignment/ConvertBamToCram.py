@@ -21,6 +21,7 @@ class ConvertBamToCram(IGFBaseProcess):
         'reference_type':'GENOME_FASTA',
         'collection_table':'experiment',
         'threads':4,
+        'copy_input':0,
       })
     return params_dict
 
@@ -41,6 +42,7 @@ class ConvertBamToCram(IGFBaseProcess):
     :param force_overwrite: A toggle for retiring old collection group, default True
     :param reference_type: Reference genome collection type, default GENOME_FASTA
     :param threads: Number of threads to use for Bam to Cram conversion, default 4
+    :param copy_input: A toggle for copying input file to temp, 1 for True default 0 for False
     '''
     try:
       project_igf_id=self.param_required('project_igf_id')
@@ -58,6 +60,9 @@ class ConvertBamToCram(IGFBaseProcess):
       force_overwrite=self.param_required('force_overwrite')
       reference_type=self.param('reference_type')
       threads=self.param('threads')
+      copy_input=self.param('copy_input')
+      if copy_input==1:
+        bam_file=self.copy_input_file_to_temp(input_file=bam_file)              # copy input to temp dir
 
       if collection_type is None or \
          collection_name is None or \
