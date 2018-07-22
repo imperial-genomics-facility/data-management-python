@@ -13,6 +13,7 @@ class RunSamtools(IGFBaseProcess):
         'reference_type':'GENOME_FASTA',
         'threads':4,
         'copy_input':0,
+        'analysis_files':[],
       })
     return params_dict
 
@@ -43,6 +44,7 @@ class RunSamtools(IGFBaseProcess):
       base_work_dir=self.param_required('base_work_dir')
       samtools_command=self.param_required('samtools_command')
       copy_input=self.param('copy_input')
+      analysis_files=self.param_required('analysis_files')
       if copy_input==1:
         bam_file=self.copy_input_file_to_temp(input_file=bam_file)              # copy input to temp dir
 
@@ -70,7 +72,8 @@ class RunSamtools(IGFBaseProcess):
       move_file(source_path=temp_output,
                 destinationa_path=dest_path,
                 force=True)
-      self.param('dataflow_params',{samtools_command:dest_path})                # pass on output list
+      analysis_files.extend(output_file_list)
+      self.param('analysis_files',analysis_files)                               # pass on output list
       message='finished samtools {0} for {1} {2}: {3}'.\
               format(samtools_command,
                      project_igf_id,
