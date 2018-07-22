@@ -5,7 +5,7 @@ from igf_data.utils.fileutils import get_temp_dir,remove_dir,get_datestamp_label
 
 class RunAnalysisMultiQC(IGFBaseProcess):
   def param_defaults(self):
-    params_dict=super(RunMutiQC,self).param_defaults()
+    params_dict=super(RunAnalysisMultiQC,self).param_defaults()
     params_dict.update({
       'analysis_name':'cellranger_multiQC',
       'sample_igf_id':None,
