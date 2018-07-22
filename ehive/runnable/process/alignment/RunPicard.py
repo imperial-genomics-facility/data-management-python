@@ -12,6 +12,7 @@ class RunPicard(IGFBaseProcess):
         'reference_refFlat':'GENE_REFFLAT',
         'java_param':'-Xmx4g',
         'copy_input':0,
+        'analysis_files':[],
       })
     return params_dict
 
@@ -48,6 +49,7 @@ class RunPicard(IGFBaseProcess):
       reference_refFlat=self.param('reference_refFlat')
       base_work_dir=self.param_required('base_work_dir')
       copy_input=self.param('copy_input')
+      analysis_files=self.param_required('analysis_files')
       work_dir_prefix=os.path.join(base_work_dir,
                                    project_igf_id,
                                    sample_igf_id,
@@ -82,7 +84,8 @@ class RunPicard(IGFBaseProcess):
                   force=True)                                                   # move files to work dir
         output_file_list.append(dest_path)
       remove_dir(temp_output_dir)
-      self.param('dataflow_params',{picard_command:output_file_list})           # pass on picard output list
+      analysis_files.extend(output_file_list)
+      self.param('dataflow_params',{'analysis_files':analysis_files})           # pass on picard output list
       message='finished picard {0} for {1} {2}'.\
               format(picard_command,
                      project_igf_id,
