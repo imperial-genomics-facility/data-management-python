@@ -27,7 +27,7 @@ class RunAnalysisMultiQC(IGFBaseProcess):
       multiqc_dir_label=self.param('multiqc_dir_label')
       force_overwrite=self.param('force_overwrite')
       base_results_dir=self.param_required('base_results_dir')
-      tag=self.param_required('tag')
+      tag=self.param_required('tag_name')
       analysis_name=self.param_required('analysis_name')
       collection_name=self.param_required('collection_name')
       collection_type=self.param_required('collection_type')
