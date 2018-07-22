@@ -72,7 +72,7 @@ class RunSamtools(IGFBaseProcess):
       move_file(source_path=temp_output,
                 destinationa_path=dest_path,
                 force=True)
-      analysis_files.extend(output_file_list)
+      analysis_files.append(dest_path)
       self.param('analysis_files',analysis_files)                               # pass on output list
       message='finished samtools {0} for {1} {2}: {3}'.\
               format(samtools_command,
