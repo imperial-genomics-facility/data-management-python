@@ -85,7 +85,8 @@ class Analysis_collection_utils:
       file_exists=fa.check_file_records_file_path(file_path=file_path)          # check if file already present in db
       if file_exists and force:
         fa.remove_file_data_for_file_path(file_path=file_path,
-                                          autosave=autosave_db)                 # remove entry from file table
+                                          remove_file=True,
+                                          autosave=autosave_db)                 # remove entry from file table and disk
 
       collection_data=[{'name':self.collection_name,
                         'type':self.collection_type,
