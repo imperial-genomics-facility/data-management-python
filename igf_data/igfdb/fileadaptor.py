@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 from sqlalchemy.sql import column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
@@ -149,11 +150,12 @@ class FileAdaptor(BaseAdaptor):
       raise
 
 
-  def remove_file_data_for_file_path(self,file_path,autosave=True):
+  def remove_file_data_for_file_path(self,file_path,remove_file=False,autosave=True):
     '''
     A method for removing entry for a specific file.
     
     :param file_path: A complete file_path for checking database
+    :param remove_file: A toggle for removing filepath, default False
     :param autosave: A toggle for automatically saving changes to database, default True
     '''
     try:
@@ -165,6 +167,9 @@ class FileAdaptor(BaseAdaptor):
       query(File).\
       filter(File.file_path==file_path).\
       delete(synchronize_session=False)                                         # remove record from db
+
+      if remove_file:
+        os.remove(path=file_path)                                               # removing file from disk
 
       if autosave:
         self.commit_session()                                                   # save changes to database
