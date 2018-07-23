@@ -1,4 +1,5 @@
-import os
+import os,subprocess
+from shlex import quote
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.analysis_collection_utils import Analysis_collection_utils
 from igf_data.utils.fileutils import get_temp_dir,remove_dir,get_datestamp_label
@@ -57,10 +58,11 @@ class RunAnalysisMultiQC(IGFBaseProcess):
                                                          get_datestamp_label)   # add tag and date stamp
       multiqc_param=self.format_tool_options(multiqc_options)                   # format multiqc params
       multiqc_cmd=[multiqc_exe,
-                       '--file-list',multiqc_input_file,
-                       '--outdir',temp_work_dir,
-                       '--title',multiqc_report_title,
+                       '--file-list',quote(multiqc_input_file),
+                       '--outdir',quote(temp_work_dir),
+                       '--title',quote(multiqc_report_title),
                       ]                                                         # multiqc base parameters
+      multiqc_param=[quote(param) for param in multiqc_param]                   # wrap params in quotes
       multiqc_cmd.extend(multiqc_param)                                         # add additional parameters
       subprocess.check_call(multiqc_cmd)                                        # run multiqc
       multiqc_html=None
