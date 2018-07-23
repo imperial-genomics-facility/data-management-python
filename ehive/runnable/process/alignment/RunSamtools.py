@@ -73,7 +73,7 @@ class RunSamtools(IGFBaseProcess):
                 destinationa_path=dest_path,
                 force=True)
       analysis_files.append(dest_path)
-      self.param('analysis_files',analysis_files)                               # pass on output list
+      self.param('dataflow_params',{'analysis_files':analysis_files})           # pass on samtools output list
       message='finished samtools {0} for {1} {2}: {3}'.\
               format(samtools_command,
                      project_igf_id,
