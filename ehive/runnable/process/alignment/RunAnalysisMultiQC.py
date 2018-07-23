@@ -83,7 +83,7 @@ class RunAnalysisMultiQC(IGFBaseProcess):
             output_list=au.load_file_to_disk_and_db(\
                           input_file_list=[multiqc_html],
                           withdraw_exisitng_collection=force_overwrite,
-                          force=True)                                           # load file to db and disk
+                          force=True,remove_file=True)                          # load file to db and disk
 
       self.param('dataflow_params',{'multiqc_html':output_list[0]})             # add output files to dataflow
     except Exception as e:
