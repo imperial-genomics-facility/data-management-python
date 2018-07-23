@@ -1,4 +1,4 @@
-import os,subprocess
+import os,subprocess,fnmatch
 from shlex import quote
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.analysis_collection_utils import Analysis_collection_utils
