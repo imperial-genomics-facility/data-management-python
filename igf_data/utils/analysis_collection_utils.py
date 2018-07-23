@@ -112,7 +112,7 @@ class Analysis_collection_utils:
     run - base_path/project_igf_id/sample_igf_id/experiment_igf_id/run_igf_id/analysis_name
     
     :param input_file_list: A list of input file to load, all using the same collection info
-    :param withdraw_exisitng_collection: Remove existing collection group
+    :param withdraw_exisitng_collection: Remove existing collection group, DO NOT use this while loading a list of files
     :param autosave_db: Save changes to database, default True
     :param file_suffix: Use a specific file suffix, use None if it should be same as original file
                         e.g. input.vcf.gz to  output.vcf.gz
