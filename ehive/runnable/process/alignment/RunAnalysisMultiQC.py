@@ -1,6 +1,5 @@
 import os,subprocess,fnmatch
 from shlex import quote
-from shutil import copy2
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.analysis_collection_utils import Analysis_collection_utils
 from igf_data.utils.fileutils import get_temp_dir,remove_dir,get_datestamp_label
@@ -71,8 +70,7 @@ class RunAnalysisMultiQC(IGFBaseProcess):
       for root, dirs,files in os.walk(top=temp_work_dir):
         for file in files:
           if fnmatch.fnmatch(file, '*.html'):
-            copy2(os.path.join(root,file),multiqc_result_dir)
-            multiqc_html=os.path.join(multiqc_result_dir,file)                  # get multiqc html path
+            multiqc_html=os.path.join(root,file)                                # get multiqc html path
             au=Analysis_collection_utils(\
                  dbsession_class=igf_session_class,
                  analysis_name=analysis_name,
