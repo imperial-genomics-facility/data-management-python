@@ -56,7 +56,7 @@ class RunAnalysisMultiQC(IGFBaseProcess):
 
       multiqc_report_title='{0};tag:{1};date:{2}'.format(multiqc_report_title,
                                                          tag,
-                                                         get_datestamp_label)   # add tag and date stamp
+                                                         get_datestamp_label()) # add tag and date stamp
       multiqc_param=self.format_tool_options(multiqc_options)                   # format multiqc params
       multiqc_cmd=[multiqc_exe,
                        '--file-list',quote(multiqc_input_file),
