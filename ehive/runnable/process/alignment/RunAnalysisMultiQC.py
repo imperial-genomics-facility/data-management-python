@@ -1,5 +1,6 @@
 import os,subprocess,fnmatch
 from shlex import quote
+from shutil import copy2
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.analysis_collection_utils import Analysis_collection_utils
 from igf_data.utils.fileutils import get_temp_dir,remove_dir,get_datestamp_label
