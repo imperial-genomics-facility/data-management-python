@@ -57,7 +57,8 @@ class Analysis_collection_utils:
 
   def create_or_update_analysis_collection(self,file_path,dbsession,
                                            withdraw_exisitng_collection=True,
-                                           autosave_db=True,force=True):
+                                           autosave_db=True,force=True,
+                                           remove_file=False):
     '''
     A method for create or update analysis file collection in db. Required elements will be
     collected from database if base_path element is given.
@@ -66,6 +67,7 @@ class Analysis_collection_utils:
     :param dbsession: An active database session
     :param withdraw_exisitng_collection: Remove existing collection group
     :param autosave_db: Save changes to database, default True
+    :param remove_file: A toggle for removing existing file from disk, default False
     :param force: Toggle for removing existing file collection, default True
     '''
     try:
@@ -85,7 +87,7 @@ class Analysis_collection_utils:
       file_exists=fa.check_file_records_file_path(file_path=file_path)          # check if file already present in db
       if file_exists and force:
         fa.remove_file_data_for_file_path(file_path=file_path,
-                                          remove_file=True,
+                                          remove_file=remove_file,
                                           autosave=autosave_db)                 # remove entry from file table and disk
 
       collection_data=[{'name':self.collection_name,
@@ -99,7 +101,8 @@ class Analysis_collection_utils:
 
 
   def load_file_to_disk_and_db(self,input_file_list,withdraw_exisitng_collection=True,
-                               autosave_db=True,file_suffix=None,force=True):
+                               autosave_db=True,file_suffix=None,force=True,
+                               remove_file=False):
     '''
     A method for loading analysis results to disk and database. File will be moved to a new path if base_path is present.
     Directory structure of the final path is based on the collection_table information.
@@ -117,6 +120,7 @@ class Analysis_collection_utils:
     :param file_suffix: Use a specific file suffix, use None if it should be same as original file
                         e.g. input.vcf.gz to  output.vcf.gz
     :param force: Toggle for removing existing file, default True
+    :param remove_file: A toggle for removing existing file from disk, default False
     :returns: A list of final filepath
     '''
     try:
@@ -247,6 +251,7 @@ class Analysis_collection_utils:
                  file_path=final_path,
                  dbsession=base.session,
                  withdraw_exisitng_collection=withdraw_exisitng_collection,
+                 remove_file=remove_file,
                  autosave_db=autosave_db)                                       # load new file collection in db
         if autosave_db:
           base.commit_session()                                                 # save changes to db for each file
