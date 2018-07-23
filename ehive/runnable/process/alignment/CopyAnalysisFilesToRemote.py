@@ -5,7 +5,7 @@ from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.fileutils import copy_remote_file
 from igf_data.utils.fileutils import get_temp_dir,remove_dir
 
-class CopyAnalysisFilesToRemote():
+class CopyAnalysisFilesToRemote(IGFBaseProcess):
   def param_defaults(self):
     params_dict=super(CopyAnalysisFilesToRemote,self).param_defaults()
     params_dict.update({
