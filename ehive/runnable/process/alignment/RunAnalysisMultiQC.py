@@ -79,7 +79,7 @@ class RunAnalysisMultiQC(IGFBaseProcess):
                  collection_name=collection_name,
                  collection_type=collection_type,
                  collection_table=collection_table,
-                 base_path=base_result_dir)
+                 base_path=base_results_dir)
             output_list=au.load_file_to_disk_and_db(\
                           input_file_list=[multiqc_html],
                           withdraw_exisitng_collection=force_overwrite)         # load file to db and disk
