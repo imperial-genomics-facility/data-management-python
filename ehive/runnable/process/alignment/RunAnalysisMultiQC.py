@@ -33,6 +33,7 @@ class RunAnalysisMultiQC(IGFBaseProcess):
       collection_name=self.param_required('collection_name')
       collection_type=self.param_required('collection_type')
       collection_table=self.param_required('collection_table')
+      igf_session_class=self.param_required('igf_session_class')
       if not isinstance(analysis_files,list) and \
          len(analysis_files) ==0:
         raise ValueError('Failed to run MultiQC for zero analysis list')        # check analysis files
