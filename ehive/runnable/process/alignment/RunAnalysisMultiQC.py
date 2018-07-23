@@ -49,7 +49,8 @@ class RunAnalysisMultiQC(IGFBaseProcess):
 
       multiqc_report_title='Project:{0}'.format(project_igf_id)                 # base multiqc label
       if sample_igf_id is not None:
-        multiqc_report_title='{0},Sample:{1}'.format(multiqc_report_title)      # add sample, if its present
+        multiqc_report_title='{0},Sample:{1}'.format(multiqc_report_title,
+                                                     sample_igf_id)             # add sample, if its present
 
       multiqc_report_title='{0};tag:{1};date:{2}'.format(multiqc_report_title,
                                                          tag,
