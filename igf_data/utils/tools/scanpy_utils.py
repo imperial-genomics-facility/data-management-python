@@ -1,6 +1,7 @@
 import os,base64
 import scanpy.api as sc
 import pandas as pd
+import numpy as np
 from igf_data.utils.fileutils import get_temp_dir,copy_local_file,remove_dir
 from jinja2 import Template,Environment, FileSystemLoader,select_autoescape
 
