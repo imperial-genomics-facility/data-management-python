@@ -23,8 +23,6 @@ class Scanpy_tool:
   :param species_name: A species name for MT-genes lookup
   :param min_gene_count: Minimum gene count for data filtering, default 200
   :param min_cell_count: Minimum cell count for data filtering, default 3
-  :param:
-  :param:
   '''
   def __init__(self,project_name,sample_name,matrix_file,gene_tsv,barcode_tsv,
                output_file,html_template_file,species_name,min_gene_count=200,
