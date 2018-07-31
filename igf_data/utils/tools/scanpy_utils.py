@@ -9,6 +9,10 @@ class Scanpy_tool:
   '''
   A class for running scanpy tool and generating a html report for the input data
   
+  Reference notebooks
+  https://github.com/theislab/scanpy_usage/blob/master/170505_seurat/seurat.ipynb
+  https://github.com/theislab/scanpy_usage/blob/master/170503_zheng17/zheng17.ipynb
+
   :param project_name: A project name string for the report page
   :param sample_name: A sample name string for the report page
   :param matrix_file: A matrix file from cellranger count output
