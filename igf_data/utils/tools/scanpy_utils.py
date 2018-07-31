@@ -126,14 +126,14 @@ class Scanpy_tool:
       # step 5: Filtering data bases on percent mito
       adata=adata[adata.obs['n_genes']<2000,:]
       adata=adata[adata.obs['percent_mito'] < 0.05, :]
-      adata.raw=sc.pp.log1p(adata, copy=True)                                   # copy raw data
+      adata.raw=sc.pp.log1p(adata, copy=True)                                   # logarithmize data and copy raw data
 
       # step 6: Normalise and filter data
       sc.pp.normalize_per_cell(adata)
       filter_result=sc.pp.filter_genes_dispersion(adata.X,
-                                                  flavor='cell_ranger',
-                                                  n_top_genes=1000 )            # identify highly variable genes
-      sc.pl.filter_genes_dispersion(filter_result,save='.png')                  # plot variable genes
+                                                  flavor='seurat')              # identify highly variable genes
+      sc.pl.filter_genes_dispersion(filter_result,
+                                    save='.png')                                # plot variable genes
       genes_dispersion_file=os.path.join(self.work_dir,
                                          'figures/filter_genes_dispersion.png')
       genes_dispersion_data=self._encode_png_image(png_file=genes_dispersion_file)
