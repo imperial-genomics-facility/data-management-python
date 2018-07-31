@@ -4,7 +4,6 @@ import numpy as np
 from igf_data.illumina.samplesheet import SampleSheet
 from igf_data.utils.sequtils import rev_comp
 import matplotlib
-from platform import platform
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
