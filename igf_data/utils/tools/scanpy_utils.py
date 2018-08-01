@@ -102,7 +102,7 @@ class Scanpy_tool:
       sc.pl.violin(adata,
                    ['n_genes', 'n_counts', 'percent_mito'],
                    jitter=0.4,
-                   multi_panel=False,
+                   multi_panel=True,
                    show=False,
                    save='.png')                                                 # violin plot of the computed quality measures /figures/violin.png
       violin_plot=os.path.join(self.work_dir,'figures/violin.png')
