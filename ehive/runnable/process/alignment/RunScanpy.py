@@ -17,7 +17,6 @@ class RunScanpy(IGFBaseProcess):
     params_dict.update({
         'analysis_name':'scanpy',
         'collection_table':'experiment',
-        'output_report':'',
         'report_template_file':'',
         'cellranger_collection_type':'CELLRANGER_RESULTS',
         'scanpy_collection_type':'SCANPY_RESULTS',
@@ -91,7 +90,13 @@ class RunScanpy(IGFBaseProcess):
     :param experiment_igf_id: A experiment igf id
     :param igf_session_class: A database session class
     :param species_name: species_name
-    :param base_work_dir: Base work directory
+    :param base_result_dir: Base results directory
+    :param report_template_file: A template file for writing scanpy report
+    :param analysis_name: Analysis name, default scanpy
+    :param species_name_lookup: A dictionary for ensembl species name lookup
+    :param cellranger_collection_type: Cellranger analysis collection type, default CELLRANGER_RESULTS
+    :param scanpy_collection_type: Scanpy report collection type, default SCANPY_RESULTS
+    :param collection_table: Collection table name for loading scanpy report, default experiment
     '''
     try:
       project_igf_id=self.param_required('project_igf_id')
@@ -102,7 +107,6 @@ class RunScanpy(IGFBaseProcess):
       report_template_file=self.param_required('report_template_file')
       analysis_name=self.param_required('analysis_name')
       base_result_dir=self.param_required('base_result_dir')
-      output_report=self.param('output_report')
       species_name_lookup=self.param('species_name_lookup')
       cellranger_collection_type=self.param('cellranger_collection_type')
       scanpy_collection_type=self.param('scanpy_collection_type')
