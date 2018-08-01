@@ -6,6 +6,7 @@ from igf_data.utils.tools.scanpy_utils import Scanpy_tool
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.igfdb.collectionadaptor import Collection_attribute
 from igf_data.utils.fileutils import move_file,get_temp_dir,remove_dir
+from igf_data.utils.analysis_collection_utils import Analysis_collection_utils
 
 class RunScanpy(IGFBaseProcess):
   '''
@@ -14,9 +15,12 @@ class RunScanpy(IGFBaseProcess):
   def param_defaults(self):
     params_dict=super(RunSamtools,self).param_defaults()
     params_dict.update({
+        'analysis_name':'scanpy',
+        'collection_table':'experiment',
         'output_report':'',
         'report_template_file':'',
         'cellranger_collection_type':'CELLRANGER_RESULTS',
+        'scanpy_collection_type':'SCANPY_RESULTS',
         'species_name_lookup':{'HG38':'hsapiens',
                                'MM10':'mmusculus'},
       })
@@ -96,13 +100,17 @@ class RunScanpy(IGFBaseProcess):
       igf_session_class=self.param_required('igf_session_class')
       species_name=self.param_required('species_name')
       report_template_file=self.param_required('report_template_file')
+      analysis_name=self.param_required('analysis_name')
+      base_result_dir=self.param_required('base_result_dir')
       output_report=self.param('output_report')
       species_name_lookup=self.param('species_name_lookup')
       cellranger_collection_type=self.param('cellranger_collection_type')
+      scanpy_collection_type=self.param('scanpy_collection_type')
+      collection_table=self.param('collection_table')
 
+      output_report=''
       if species_name in species_name_lookup.keys():                            # check for human or mice
         ensembl_species_name=species_name_lookup[species_name]                  # get ensembl species name
-        output_report=''
         # fetch cellranger tar path from db
         ca=Collection_attribute(**{'session_class':igf_session_class})
         ca.start_session()                                                      # connect to database
@@ -117,6 +125,9 @@ class RunScanpy(IGFBaseProcess):
 
         cellranger_tarfile=cellranger_tarfiles['file_path'].values[0]           # select first file as analysis file
         # extract filtered metrics files from tar
+        output_dir=get_temp_dir()                                               # get a temp dir
+        output_report=os.path.join(output_report,
+                                   'report.html')                               # get temp report path
         matrix_file,gene_file,barcode_file=self._extract_cellranger_filtered_metrics(\
                                              tar_file=cellranger_tarfile,
                                              output_dir=output_dir)             # get cellranger output files
@@ -130,8 +141,20 @@ class RunScanpy(IGFBaseProcess):
              species_name=ensembl_species_name,
              output_file=output_report
             )
-        sp.generate_report()                                                    # generate scanpyorwell report
+        sp.generate_report()                                                    # generate scanpy report
         # load files to db and disk
+        au=Analysis_collection_utils(\
+             dbsession_class=igf_session_class,
+             analysis_name=analysis_name,
+             tag_name=species_name,
+             collection_name=experiment_igf_id,
+             collection_type=scanpy_collection_type,
+             collection_table=collection_table,
+             base_path=base_result_dir)                                         # initiate loading of report file
+        output_file_list=au.load_file_to_disk_and_db(\
+                            input_file_list=[output_report],
+                            withdraw_exisitng_collection=True)                  # load file to db and disk
+        output_report=output_file_list[0]
 
       self.param('dataflow_params',{'output_report':output_report})             # pass on output report filepath
     except Exception as e:
