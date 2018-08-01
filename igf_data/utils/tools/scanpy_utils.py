@@ -216,8 +216,8 @@ class Scanpy_tool:
                MarkerGeneViolin=marker_gene_violin_data,
               ).\
         dump(os.path.join(self.work_dir,'test.html'))
-      copy_local_file(source_path=os.path.join(self.work_dir,'test.html'),
-                      destination_path=self.output_file,
+      copy_local_file(os.path.join(self.work_dir,'test.html'),
+                      self.output_file,
                       force=self.force_overwrite)
     except:
       raise
