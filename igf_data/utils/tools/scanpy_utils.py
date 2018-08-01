@@ -23,10 +23,11 @@ class Scanpy_tool:
   :param species_name: A species name for MT-genes lookup
   :param min_gene_count: Minimum gene count for data filtering, default 200
   :param min_cell_count: Minimum cell count for data filtering, default 3
+  :param force_overwrite: A toggle for replacing existing output file, default True
   '''
   def __init__(self,project_name,sample_name,matrix_file,gene_tsv,barcode_tsv,
                output_file,html_template_file,species_name,min_gene_count=200,
-               min_cell_count=3):
+               min_cell_count=3,force_overwrite=True):
     self.project_name=project_name,
     self.sample_name=sample_name
     self.matrix_file=matrix_file
@@ -37,6 +38,7 @@ class Scanpy_tool:
     self.work_dir=get_temp_dir()
     self.min_gene_count=min_gene_count
     self.min_cell_count=min_cell_count
+    self.force_overwrite=force_overwrite
 
   @staticmethod
   def _fetch_mitochondrial_genes(species_name,url='www.ensembl.org'):
@@ -214,7 +216,8 @@ class Scanpy_tool:
                MarkerGeneViolin=marker_gene_violin_data,
               ).\
         dump(os.path.join(self.work_dir,'test.html'))
-      copy_local_file(os.path.join(self.work_dir,'test.html'),
-                      self.output_file)
+      copy_local_file(source_path=os.path.join(self.work_dir,'test.html'),
+                      destination_path=self.output_file,
+                      force=self.force_overwrite)
     except:
       raise
