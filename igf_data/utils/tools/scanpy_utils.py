@@ -105,14 +105,14 @@ class Scanpy_tool:
                    ['n_genes', 'n_counts', 'percent_mito'],
                    jitter=0.4,
                    multi_panel=True,
-                   show=False,
+                   show=True,
                    save='.png')                                                 # violin plot of the computed quality measures /figures/violin.png
       violin_plot=os.path.join(self.work_dir,'figures/violin.png')
       mito_plot_data=self._encode_png_image(png_file=violin_plot)
       sc.pl.scatter(adata,
                     x='n_counts',
                     y='percent_mito',
-                    show=False,
+                    show=True,
                     save='.png')                                                # scatter plots for data quality 1
       mt_scatter_plot1=os.path.join(self.work_dir,
                                     'figures/scatter.png')
@@ -135,7 +135,7 @@ class Scanpy_tool:
       filter_result=sc.pp.filter_genes_dispersion(adata.X,
                                                   flavor='seurat')              # identify highly variable genes
       sc.pl.filter_genes_dispersion(filter_result,
-                                    show=False,
+                                    show=True,
                                     save='.png')                                # plot variable genes
       genes_dispersion_file=os.path.join(self.work_dir,
                                          'figures/filter_genes_dispersion.png')
@@ -148,7 +148,7 @@ class Scanpy_tool:
       sc.pp.scale(adata, max_value=10)                                          # scale the data to unit variance
       sc.tl.pca(adata)                                                          # pca
       sc.pl.pca_loadings(adata,
-                         show=False,
+                         show=True,
                          save='.png')                                           # plot pca loading graph
       pca_file=os.path.join(self.work_dir,
                             'figures/pca_loadings.png')
@@ -160,7 +160,7 @@ class Scanpy_tool:
       sc.tl.louvain(adata)                                                      # louvain graph clustering
       sc.pl.tsne(adata,
                  color='louvain',
-                 show=False,
+                 show=True,
                  save='.png')                            # plot tSNE data
       tsne_file=os.path.join(self.work_dir,
                              'figures/tsne.png')
@@ -170,7 +170,7 @@ class Scanpy_tool:
       sc.tl.rank_genes_groups(adata, 'louvain')
       sc.pl.rank_genes_groups(adata,
                               n_genes=20,
-                              show=False,
+                              show=True,
                               save='.png')                                      # plot rank gene
       rank_genes_groups_file=os.path.join(self.work_dir,
                                           'figures/rank_genes_groups_louvain.png')
@@ -187,7 +187,7 @@ class Scanpy_tool:
         sc.pl.violin(adata,
                      genes,
                      groupby='louvain',
-                     show=False,
+                     show=True,
                      save='.png',
                      multi_panel=True,
                      scale='width',
