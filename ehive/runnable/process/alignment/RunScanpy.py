@@ -103,13 +103,11 @@ class RunScanpy(IGFBaseProcess):
         ensembl_species_name=species_name_lookup[species_name]                  # get ensembl species name
         output_report=''
         # fetch cellranger tar path from db
+        cellranger_tarfile=''
         # extract filtered metrics files from tar
-        input_path=''                                                           # set input path
-        output_report=''                                                        # set output report path
-        matrix_file=os.path.join(input_path,'matrix.mtx')
-        gene_file=os.path.join(input_path,'genes.tsv')
-        barcode_file=os.path.join(input_path,'barcodes.tsv')
-
+        matrix_file,gene_file,barcode_file=self._extract_cellranger_filtered_metrics(\
+                                             tar_file=cellranger_tarfile,
+                                             output_dir=output_dir)             # get cellranger output files
         sp=Scanpy_tool(
              project_name=project_igf_id,
              sample_name=sample_igf_id,
