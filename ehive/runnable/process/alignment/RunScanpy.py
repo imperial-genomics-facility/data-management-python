@@ -4,6 +4,7 @@ import os,re
 import matplotlib.pyplot as plt
 from igf_data.utils.tools.scanpy_utils import Scanpy_tool
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
+from igf_data.igfdb.collectionadaptor import Collection_attribute
 from igf_data.utils.fileutils import move_file,get_temp_dir,remove_dir
 
 class RunScanpy(IGFBaseProcess):
@@ -103,7 +104,18 @@ class RunScanpy(IGFBaseProcess):
         ensembl_species_name=species_name_lookup[species_name]                  # get ensembl species name
         output_report=''
         # fetch cellranger tar path from db
-        cellranger_tarfile=''
+        ca=Collection_attribute(**{'session_class':igf_session_class})
+        ca.start_session()                                                      # connect to database
+        cellranger_tarfiles=ca.get_collection_files(\
+                              collection_name=experiment_igf_id,
+                              collection_type=cellranger_collection_type,
+                              output_mode='dataframe')                          # fetch collection files
+        ca.close_session()
+        if len(cellranger_tarfiles.index)==0:
+          raise ValueError('No cellranger analysis output found for exp {0}'.\
+                           format(experiment_igf_id))
+
+        cellranger_tarfile=cellranger_tarfiles['file_path'].values[0]           # select first file as analysis file
         # extract filtered metrics files from tar
         matrix_file,gene_file,barcode_file=self._extract_cellranger_filtered_metrics(\
                                              tar_file=cellranger_tarfile,
