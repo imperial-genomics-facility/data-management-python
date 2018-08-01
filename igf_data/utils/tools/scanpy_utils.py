@@ -161,7 +161,7 @@ class Scanpy_tool:
       sc.pl.tsne(adata,
                  color='louvain',
                  show=True,
-                 save='.png')                            # plot tSNE data
+                 save='.png')                                                   # plot tSNE data
       tsne_file=os.path.join(self.work_dir,
                              'figures/tsne.png')
       tsne_data=self._encode_png_image(png_file=tsne_file)
