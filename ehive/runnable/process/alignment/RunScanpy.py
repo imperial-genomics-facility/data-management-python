@@ -1,6 +1,6 @@
 import matplotlib
 matplotlib.use('Agg')
-import os
+import os,re
 import matplotlib.pyplot as plt
 from igf_data.utils.tools.scanpy_utils import Scanpy_tool
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
@@ -20,6 +20,62 @@ class RunScanpy(IGFBaseProcess):
                                'MM10':'mmusculus'},
       })
     return params_dict
+
+  @staticmethod
+  def _extract_cellranger_filtered_metrics(tar_file,output_dir,
+                                           matrics_file='matrix.mtx',
+                                           genes_tsv_file='genes.tsv',
+                                           barcodes_tsv_file='barcodes.tsv'):
+    '''
+    A static internal method for extracting cellranger output files from tar
+    
+    :param tar_file: A tar.gz file containing cellranger count outputs
+    :param output_dir: A output directory path
+    :param matrics_file: File name for matrics output, default matrix.mtx
+    :param genes_tsv_file: File name for genes list file, default genes.tsv
+    :param barcodes_tsv_file: File name for barcodes list file, default barcodes.tsv
+    :returns: matrics_file_path,genes_tsv_file_path,barcodes_tsv_file_path
+    '''
+    try:
+      matrics_file_path=''
+      genes_tsv_file_path=''
+      barcodes_tsv_file_path=''
+      matrix_file_pattern=re.compile(r'\S+/filtered_gene_bc_matrices/\S+/{0}'.\
+                                     format(matrics_file))
+      genes_file_pattern=re.compile(r'\S+/filtered_gene_bc_matrices/\S+/{0}'.\
+                                    format(genes_tsv_file))
+      barcodes_file_pattern=re.compile(r'\S+/filtered_gene_bc_matrices/\S+/{0}'.\
+                                       format(barcodes_tsv_file))
+      if not os.path.exists(tar_file):
+        raise IOError('File {0} not found'.format(tar_file))
+
+      tar = tarfile.open(tar_file,'r:gz')                                       # open tar file
+      for tarinfo in tar:
+        if re.match(metrix_file_pattern,tarinfo.name) or \
+           re.match(genes_file_pattern,tarinfo.name) or \
+           re.match(barcodes_file_pattern,tarinfo.name):
+          tar.extract(tarinfo.name,
+                      path=output_dir)                                          # extract target output files
+
+      tar.close()                                                               # close tar file
+      for root,dir,files in os.walk(output_dir):                                # check output dir and find files
+        for file in files:
+          if file==matrics_file:
+            matrics_file_path=os.path.join(root,file)
+          elif file==genes_tsv_file:
+            genes_tsv_file_path=os.path.join(root,file)
+          elif file==barcodes_tsv_file:
+            barcodes_tsv_file_path=os.path.join(root,file)
+  
+      if matrics_file_path=='' or \
+         genes_tsv_file_path=='' or \
+         barcodes_tsv_file_path=='':
+        raise ValueError('Required cellranger output not found in tar {0}'.\
+                         format(tar_file))
+
+      return matrics_file_path,genes_tsv_file_path,barcodes_tsv_file_path
+    except:
+      raise
 
   def run(self):
     '''
@@ -64,7 +120,7 @@ class RunScanpy(IGFBaseProcess):
              species_name=ensembl_species_name,
              output_file=output_report
             )
-        sp.generate_report()                                                    # generate scanpy report
+        sp.generate_report()                                                    # generate scanpyorwell report
         # load files to db and disk
 
       self.param('dataflow_params',{'output_report':output_report})             # pass on output report filepath
@@ -76,3 +132,4 @@ class RunScanpy(IGFBaseProcess):
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise
+
