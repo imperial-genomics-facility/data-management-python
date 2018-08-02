@@ -15,6 +15,7 @@ class RunScanpy(IGFBaseProcess):
   def param_defaults(self):
     params_dict=super(RunSamtools,self).param_defaults()
     params_dict.update({
+        'cellranger_output':'',
         'analysis_name':'scanpy',
         'collection_table':'experiment',
         'report_template_file':'',
@@ -111,23 +112,26 @@ class RunScanpy(IGFBaseProcess):
       cellranger_collection_type=self.param('cellranger_collection_type')
       scanpy_collection_type=self.param('scanpy_collection_type')
       collection_table=self.param('collection_table')
+      cellranger_tarfile=self.param('cellranger_output')
 
       output_report=''
       if species_name in species_name_lookup.keys():                            # check for human or mice
         ensembl_species_name=species_name_lookup[species_name]                  # get ensembl species name
         # fetch cellranger tar path from db
-        ca=Collection_attribute(**{'session_class':igf_session_class})
-        ca.start_session()                                                      # connect to database
-        cellranger_tarfiles=ca.get_collection_files(\
-                              collection_name=experiment_igf_id,
-                              collection_type=cellranger_collection_type,
-                              output_mode='dataframe')                          # fetch collection files
-        ca.close_session()
-        if len(cellranger_tarfiles.index)==0:
-          raise ValueError('No cellranger analysis output found for exp {0}'.\
-                           format(experiment_igf_id))
+        if cellranger_tarfile=='':
+          ca=Collection_attribute(**{'session_class':igf_session_class})
+          ca.start_session()                                                    # connect to database
+          cellranger_tarfiles=ca.get_collection_files(\
+                                collection_name=experiment_igf_id,
+                                collection_type=cellranger_collection_type,
+                                output_mode='dataframe')                        # fetch collection files
+          ca.close_session()
+          if len(cellranger_tarfiles.index)==0:
+            raise ValueError('No cellranger analysis output found for exp {0}'.\
+                             format(experiment_igf_id))
 
-        cellranger_tarfile=cellranger_tarfiles['file_path'].values[0]           # select first file as analysis file
+          cellranger_tarfile=cellranger_tarfiles['file_path'].values[0]         # select first file as analysis file
+
         # extract filtered metrics files from tar
         output_dir=get_temp_dir()                                               # get a temp dir
         output_report=os.path.join(output_report,
