@@ -1,4 +1,5 @@
 import os, json
+import pandas as pd
 from jsonschema import validate, Draft4Validator
 from igf_data.illumina.samplesheet import SampleSheet
 from igf_data.utils.gviz_utils import convert_to_gviz_json_for_display
