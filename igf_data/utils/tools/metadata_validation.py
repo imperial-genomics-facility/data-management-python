@@ -99,11 +99,13 @@ class Validate_project_and_samplesheet_metadata:
     except:
       raise
 
-  def convert_errors_to_gviz(self):
+  def convert_errors_to_gviz(self,output_json=None):
     '''
     A method for converting the list of errors to gviz format json
     
-    :returns: A gviz json data block for the html output
+    :param output_json: A output json file for saving data, default None
+    :returns: A gviz json data block for the html output if output_json is None,
+              or else None
     '''
     try:
       all_errors=self.get_merged_errors()
@@ -127,6 +129,11 @@ class Validate_project_and_samplesheet_metadata:
                                                    data=all_errors,
                                                    columns_order=columns_order
                                                   )
-      return json_data
+        if output_json is None:
+          return json_data
+        else:
+          with open(output_json,'w') as jf:
+            jf.write(json_data)
+          return None
     except:
       raise
