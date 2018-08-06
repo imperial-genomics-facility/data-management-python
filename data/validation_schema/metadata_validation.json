@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-06/schema#",
-    "id": "https://github.com/imperial-genomics-facility/data-management-python/tree/master/data/validation_schema/metadata_validation.json",
+    "id": "https://github.com/imperial-genomics-facility/data-management-python/tree/master/data/validation_schema/metadata_validation.json#",
     "title": "IGF metadata validation schema",
     "description": "Schema for validation of metadata input file",
     "type" : "array",
@@ -16,19 +16,19 @@
             },
             "name" : {
               "type" : "string",
-              "pattern": '^\w+\s\w+\s?\w+?$'
+              "pattern": "^\w+\s\w+\s?\w+?$"
             },
             "hpc_username" : {
               "type" : "string",
-              "pattern": '^\S+$'
+              "pattern": "^\S+$"
             },
             "username" : {
               "type" : "string",
-              "pattern": '^\S+$'
+              "pattern": "^\S+$"
             },
             "email_id" : {
               "type" : "string",
-              "pattern": '\S+\@\S+\.\w+'
+              "pattern": "\S+\@\S+\.\w+"
             },
             "sample_igf_id" : {
               "type" : "string",
