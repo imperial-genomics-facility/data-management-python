@@ -16,19 +16,19 @@
             },
             "name" : {
               "type" : "string",
-              "pattern": "^\w+\s\w+\s?\w+?$"
+              "pattern": "^\\w+\\s\\w+\\s?\\w+?$"
             },
             "hpc_username" : {
               "type" : "string",
-              "pattern": "^\S+$"
+              "pattern": "^\\S+$|^$"
             },
             "username" : {
               "type" : "string",
-              "pattern": "^\S+$"
+              "pattern": "^\\S+$|^$"
             },
             "email_id" : {
               "type" : "string",
-              "pattern": "\S+\@\S+\.\w+"
+              "pattern": "\\S+\\@\\S+\\.\\w+"
             },
             "sample_igf_id" : {
               "type" : "string",
@@ -41,18 +41,20 @@
             "barcode_check" : {
               "type" : "string",
               "enum" : ["ON",
-                        "OFF"]
+                        "OFF",
+                        ""]
             },
             "species_name" : {
               "type" : "string",
               "enum" : ["HG38",
                         "HG19_MM10",
                         "UNKNOWN",
-                        "MM10"]
+                        "MM10",
+                        ""]
             },
             "library_name" : {
               "type" : "string",
-              "pattern": "^IGF[a-zA-Z0-9-_]+$"
+              "pattern": "^IGF[a-zA-Z0-9-_]+$|^$"
             },
             "library_source" : {
               "type" : "string",
@@ -60,7 +62,8 @@
                         "TRANSCRIPTOMIC",
                         "GENOMIC_SINGLE_CELL",
                         "TRANSCRIPTOMIC_SINGLE_CELL",
-                        "UNKNOWN"]
+                        "UNKNOWN",
+                        ""]
             },
             "library_strategy" : {
               "type" : "string",
@@ -69,7 +72,8 @@
                         "RNA-SEQ",
                         "CHIP-SEQ",
                         "ATAC-SEQ",
-                        "UNKNOWN"]
+                        "UNKNOWN",
+                        ""]
             },
             "experiment_type" : {
               "type" : "string",
@@ -89,13 +93,15 @@
                         "TENX-TRANSCRIPTOME",
                         "DROP-SEQ-TRANSCRIPTOME",
                         "TF",
-                        "UNKNOWN"]
+                        "UNKNOWN",
+                        ""]
             },
             "library_layout" : {
               "type" : "string",
               "enum" : ["SINGLE",
                         "PAIRED",
-                        "UNKNOWN"]
+                        "UNKNOWN",
+                        ""]
             },
             "fragment_length_distribution_mean" : {
               "type" : "number"
@@ -113,11 +119,12 @@
             "adapter_removal" : {
               "type" : "string",
               "enum" : ["ON",
-                        "OFF"]
+                        "OFF",
+                        ""]
             },
             "donor_anonymized_id" : {
               "type" : "string",
-              "pattern" : "^\S+^$"
+              "pattern" : "^\\S+$|^$"
             },
             "phenotype" : {
               "type" : "string"
@@ -126,7 +133,7 @@
               "type" : "string"
             },
             "taxon_id" : {
-              "type" : "number"
+              "type" : "string"
             },
             "scientific_name" : {
               "type" : "string"
@@ -142,11 +149,12 @@
               "enum" : ["FEMALE",
                         "MALE",
                         "MIXED",
-                        "UNKNOWN"]
+                        "UNKNOWN",
+                        ""]
             },
             "donor_age" : {
               "type" : "string",
-              "pattern" : "\d+\-\d+\w+"
+              "pattern" : "^\\d+\\-\\d+\\w+$|^$"
             },
             "biomaterial_type" : {
               "type" : "string",
@@ -154,7 +162,8 @@
                         "PRIMARY_CELL",
                         "PRIMARY_CELL_CULTURE",
                         "CELL_LINE",
-                        "UNKNOWN"]
+                        "UNKNOWN",
+                        ""]
             },
             "cell_type" : {
               "type" : "string"
@@ -164,7 +173,7 @@
             },
             "cell_line" : {
               "type" : "string"
-            } 
+            }
         },
         "required": ["project_igf_id",
                      "name",
