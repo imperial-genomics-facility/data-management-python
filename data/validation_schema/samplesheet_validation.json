@@ -48,7 +48,7 @@
            },
            "Description" : {
                "type" : "string",
-               "pattern" : "^10X$|^$"
+               "pattern" : "^10[Xx]$|^$"
            }
         },
         "required": ["Sample_ID","Sample_Name","Sample_Project","I7_Index_ID","index"]
