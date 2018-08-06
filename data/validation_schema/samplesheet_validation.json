@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-06/schema#",
-    "id": "https://github.com/imperial-genomics-facility/data-management-python/samplesheet_schema#",
+    "id": "https://github.com/imperial-genomics-facility/data-management-python/tree/master/data/validation_schema/samplesheet_validation.json",
     "title": "IGF samplesheet validation schema",
     "description": "Schema for validation of samplesheet data",
     "type" : "array",
