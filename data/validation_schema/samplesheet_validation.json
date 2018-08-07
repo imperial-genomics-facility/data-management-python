@@ -4,7 +4,7 @@
     "title": "IGF samplesheet validation schema",
     "description": "Schema for validation of samplesheet data",
     "type" : "array",
-    "version": "1.0",
+    "version": "1.0.1",
     "minItems": 1,
     "uniqueItems": true,
     "items": {
