@@ -115,7 +115,7 @@ class Validate_project_and_samplesheet_metadata:
         data=[{'error':'No error found'}]
         json_data=convert_to_gviz_json_for_display(\
                     description=description,
-                    data=all_errors,
+                    data=data,
                     columns_order=columns_order
                   )
       else:
@@ -129,11 +129,11 @@ class Validate_project_and_samplesheet_metadata:
                                                    data=all_errors,
                                                    columns_order=columns_order
                                                   )
-        if output_json is None:
-          return json_data
-        else:
-          with open(output_json,'w') as jf:
-            jf.write(json_data)
-          return None
+      if output_json is None:
+        return json_data
+      else:
+        with open(output_json,'w') as jf:
+          jf.write(json_data)
+        return None
     except:
       raise
