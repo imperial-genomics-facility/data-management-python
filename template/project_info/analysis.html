@@ -23,13 +23,12 @@
       google.charts.load('current', {'packages':['table']});
       google.charts.setOnLoadCallback(drawTable);
       
-      analysisInfo = function(json_file) {
-        $.getJSON(json_file, function(jsonData) {
+      function analysisInfo() {
+        $.getJSON("{{ analysisInfoFile }}", function(jsonData) {
           var data = new google.visualization.DataTable(jsonData);
-          var table = new google.visualization.Table(document.getElementById('table_div'));
-          table.draw(data, {showRowNumber: true, width: '100%', height: '100%'});
+          var table = new google.visualization.Table(document.getElementById('analysis_table'));
+          table.draw(data, {showRowNumber: true, width: '70%', height: '100%', allowHtml: true});
         });
-      });
     };
     </script>
     <title>IGF Analysis</title>
@@ -84,9 +83,6 @@
           <h2>Analysis</h2>
            <p>List of samples and analysis reports</p>
            <div id="analysis_table" ></div>
-           <script>
-            analysisInfo(json_file="{{ analysisInfoFile }}");
-           </script>
         </main>
       </div>
     </div>
