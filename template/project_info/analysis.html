@@ -20,23 +20,19 @@
    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
     <script type="text/javascript" >
-      google.charts.load('current', {'packages':['gantt']});
-      google.charts.setOnLoadCallback(drawChart);
-      function drawChart() {
-      $.getJSON("{{ status_data_json }}", function(jsonData) {
-        var data = new google.visualization.DataTable(jsonData);
-        var options = {
-          height: 450,
-          timeline: {
-            groupByRowLabel: true
-          }
-        };
-        var chart = new google.visualization.Gantt(document.getElementById('chart_div'));
-        chart.draw(data, options);
+      google.charts.load('current', {'packages':['table']});
+      google.charts.setOnLoadCallback(drawTable);
+      
+      analysisInfo = function(json_file) {
+        $.getJSON(json_file, function(jsonData) {
+          var data = new google.visualization.DataTable(jsonData);
+          var table = new google.visualization.Table(document.getElementById('table_div'));
+          table.draw(data, {showRowNumber: true, width: '100%', height: '100%'});
+        });
       });
-    }
+    };
     </script>
-    <title>IGF Status Report</title>
+    <title>IGF Analysis</title>
 </head>
 <body>
   <header>
@@ -68,11 +64,13 @@
             <li class="nav-item">
               <a class="nav-link" href="index.html">Raw data<span class="sr-only"></span></a>
             </li>
+            <!--
             <li class="nav-item">
-              <a class="nav-link active" href="status.html">Status<span class="sr-only">(current)</span></a>
+            <a class="nav-link" href="status.html">Status<span class="sr-only"></span></a>
             </li>
+            -->
             <li class="nav-item">
-            <a class="nav-link" href="analysis.html">Analysis<span class="sr-only"></span></a>
+            <a class="nav-link active" href="analysis.html">Analysis<span class="sr-only">(current)</span></a>
             </li>
           </ul>
         </nav>
@@ -83,8 +81,14 @@
            <dt class="col-sm-3">Project Name</dt>
            <dd class="col-sm-9">{{ ProjectName }}</dd>
           </dl>
-          <h2>Project status</h2>
-           <div id="chart_div" ></div>
+          <h2>Sequencing runs</h2>
+          <ul>
+          </ul>
+          <h2>Analysis</h2>
+           <div id="analysis_table" ></div>
+           <script>
+            analysisInfo(json_file="{{ analysisInfoFile }}");
+           </script>
         </main>
       </div>
     </div>
