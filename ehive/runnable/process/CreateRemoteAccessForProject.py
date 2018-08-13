@@ -21,6 +21,7 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       'htpasswd_filename':'.htpasswd',
       'project_template':'project_info/index.html',
       'status_template':'project_info/status.html',
+      'analysis_template':'project_info/analysis.html',
       'remote_project_path':None,
       'remote_user':None,
       'remote_host':None,
@@ -31,6 +32,48 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       'sample_count_threshold':75,
     })
     return params_dict
+
+  @staticmethod
+  def _check_and_copy_remote_file(remote_user,remote_host,
+                                  source_file,remote_file):
+    '''
+    An internal static method for copying files to remote path
+    
+    :param remote_user: Username for the remote server
+    :param remote_host: Hostname for the remote server
+    :param source_file: Source filepath
+    :param remote_file: Remote filepath
+    '''
+    try:
+      if not os.path.exists(source_file):
+        raise IOError('Source file {0} not found for copy'.\
+                      format(source_file))
+
+      check_remote_cmd=['ssh',
+                        '{0}@{1}'.\
+                        format(remote_user,
+                               remote_host),
+                        'ls',
+                        '-a',
+                        remote_file]                                            # remote check cmd
+      response=subprocess.call(check_remote_cmd)                                # look for existing remote file
+      if response !=0:
+        rm_remote_cmd=['ssh',
+                       '{0}@{1}'.\
+                       format(remote_user,
+                              remote_host),
+                       'rm',
+                       '-f',
+                       remote_file]                                             # remote rm cmd
+        subprocess.check_call(rm_remote_cmd)                                    # remove existing file
+
+      copy_remote_file(source_path=source_file,
+                       destinationa_path=remote_file,
+                       destination_address='{0}@{1}'.\
+                                           format(remote_user,
+                                                  remote_host))                 # create dir and copy file to remote
+    except:
+      raise
 
   def run(self):
     try:
@@ -49,6 +92,7 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       htpasswd_filename=self.param('htpasswd_filename')
       project_template=self.param('project_template')
       status_template=self.param('status_template')
+      analysis_template=self.param('analysis_template')
       seqruninfofile=self.param('seqruninfofile')
       samplereadcountfile=self.param('samplereadcountfile')
       status_data_json=self.param('status_data_json')
@@ -140,106 +184,31 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       os.chmod(status_output, mode=0o774)
 
       remote_project_dir=os.path.join(remote_project_path,\
-                                      project_name
-                                     )
-      remote_mkdir_cmd=['ssh',\
-                       '{0}@{1}'.\
-                       format(remote_user,\
-                              remote_host),\
-                       'mkdir',\
-                       '-p',\
-                       remote_project_dir]
-      subprocess.check_call(remote_mkdir_cmd)
-
-      check_htaccess_cmd=['ssh',\
-                          '{0}@{1}'.\
-                          format(remote_user,\
-                                 remote_host),\
-                          'ls',\
-                          '-a', \
-                          os.path.join(remote_project_dir,htaccess_filename)]
-      response=subprocess.call(check_htaccess_cmd)
-      if response !=0:
-        rm_htaccess_cmd=['ssh',\
-                         '{0}@{1}'.\
-                         format(remote_user,\
-                                remote_host),\
-                         'rm',\
-                         '-f',\
-                         os.path.join(remote_project_dir,htaccess_filename)]
-        subprocess.check_call(rm_htaccess_cmd)
-
-      copy_remote_file(source_path=htaccess_output, \
-                       destinationa_path=remote_project_dir, \
-                       destination_address=remote_host)                         # copy file to remote
-      check_htpasswd_cmd=['ssh',\
-                          '{0}@{1}'.\
-                          format(remote_user,\
-                                 remote_host),\
-                          'ls',\
-                          '-a', \
-                          os.path.join(remote_project_dir,htpasswd_filename)]
-      response=subprocess.call(check_htpasswd_cmd)
-      if response !=0:
-        rm_htpasswd_cmd=['ssh',\
-                         '{0}@{1}'.\
-                         format(remote_user,\
-                                remote_host),\
-                         'rm',\
-                         '-f',\
-                         os.path.join(remote_project_dir,htpasswd_filename)]
-        subprocess.check_call(rm_htpasswd_cmd)
-
-      copy_remote_file(source_path=htpasswd_output, \
-                       destinationa_path=remote_project_dir, \
-                       destination_address='{0}@{1}'.format(remote_user,\
-                                                            remote_host))       # copy file to remote
-      check_project_cmd=['ssh',\
-                         '{0}@{1}'.\
-                         format(remote_user,\
-                                remote_host),\
-                         'ls',\
-                          os.path.join(remote_project_dir,\
-                                       os.path.basename(project_template_path))]
-      response=subprocess.call(check_project_cmd)
-      if response !=0:
-        rm_project_cmd=['ssh',\
-                         '{0}@{1}'.\
-                         format(remote_user,\
-                                remote_host),\
-                         'rm',\
-                         '-f',\
-                         os.path.join(remote_project_dir,\
-                                      os.path.basename(project_template_path))]
-        subprocess.check_call(rm_project_cmd)
-
-      copy_remote_file(source_path=project_output, \
-                       destinationa_path=remote_project_dir, \
-                       destination_address='{0}@{1}'.format(remote_user,\
-                                                            remote_host))       # copy file to remote
-      check_status_cmd=['ssh',\
-                        '{0}@{1}'.\
-                        format(remote_user,\
-                               remote_host),\
-                        'ls',\
-                        os.path.join(remote_project_dir,\
-                                     os.path.basename(status_template_path))]
-      response=subprocess.call(check_status_cmd)
-      if response !=0:
-        rm_status_cmd=['ssh',\
-                       '{0}@{1}'.\
-                       format(remote_user,\
-                              remote_host),\
-                       'rm',\
-                       '-f',\
-                       os.path.join(remote_project_dir,\
-                                    os.path.basename(status_template_path))]
-        subprocess.check_call(rm_status_cmd)
-
-      copy_remote_file(source_path=status_output, \
-                       destinationa_path=remote_project_dir, \
-                       destination_address='{0}@{1}'.format(remote_user,\
-                                                            remote_host))       # copy file to remote
+                                      project_name)
+      remote_htaccess_file=os.path.join(remote_project_dir,
+                                        htaccess_filename)                      # remote htaccess filepath
+      self._check_and_copy_remote_file(remote_user=remote_user,
+                                       remote_host=remote_host,
+                                       source_file=htaccess_output,
+                                       remote_file=remote_htaccess_file)        # copy htaccess file to remote dir
+      remote_htpasswd_file=os.path.join(remote_project_dir,
+                                        htpasswd_filename)                      # remote htpasswd filepath
+      self._check_and_copy_remote_file(remote_user=remote_user,
+                                       remote_host=remote_host,
+                                       source_file=htpasswd_output,
+                                       remote_file=remote_htpasswd_file)        # copy htpasswd file to remote dir
+      remote_project_output_file=os.path.join(remote_project_dir,
+                                              os.path.basename(project_output)) # remote project output filepath
+      self._check_and_copy_remote_file(remote_user=remote_user,
+                                       remote_host=remote_host,
+                                       source_file=project_output,
+                                       remote_file=remote_project_output_file)  # copy project output file to remote dir
+      remote_status_output_file=os.path.join(remote_project_dir,
+                                              os.path.basename(status_output))  # remote project status output filepath
+      self._check_and_copy_remote_file(remote_user=remote_user,
+                                       remote_host=remote_host,
+                                       source_file=status_output,
+                                       remote_file=remote_status_output_file)   # copy project status output file to remote dir
       self.param('dataflow_params',{'remote_dir_status':'done'})
       remove_dir(temp_work_dir)
     except Exception as e:
