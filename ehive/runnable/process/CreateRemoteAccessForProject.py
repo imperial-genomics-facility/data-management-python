@@ -34,48 +34,6 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
     })
     return params_dict
 
-  @staticmethod
-  def _check_and_copy_remote_file(remote_user,remote_host,
-                                  source_file,remote_file):
-    '''
-    An internal static method for copying files to remote path
-    
-    :param remote_user: Username for the remote server
-    :param remote_host: Hostname for the remote server
-    :param source_file: Source filepath
-    :param remote_file: Remote filepath
-    '''
-    try:
-      if not os.path.exists(source_file):
-        raise IOError('Source file {0} not found for copy'.\
-                      format(source_file))
-
-      check_remote_cmd=['ssh',
-                        '{0}@{1}'.\
-                        format(remote_user,
-                               remote_host),
-                        'ls',
-                        '-a',
-                        remote_file]                                            # remote check cmd
-      response=subprocess.call(check_remote_cmd)                                # look for existing remote file
-      if response !=0:
-        rm_remote_cmd=['ssh',
-                       '{0}@{1}'.\
-                       format(remote_user,
-                              remote_host),
-                       'rm',
-                       '-f',
-                       remote_file]                                             # remote rm cmd
-        subprocess.check_call(rm_remote_cmd)                                    # remove existing file
-
-      copy_remote_file(source_path=source_file,
-                       destinationa_path=remote_file,
-                       destination_address='{0}@{1}'.\
-                                           format(remote_user,
-                                                  remote_host))                 # create dir and copy file to remote
-    except:
-      raise
-
   def run(self):
     try:
       seqrun_igf_id=self.param_required('seqrun_igf_id')
@@ -270,5 +228,47 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
           return height * 2
         else:                                                                   # very high sample count
           return int(height * (2+math.log(sample_count / threshold)))
+    except:
+      raise
+
+  @staticmethod
+  def _check_and_copy_remote_file(remote_user,remote_host,
+                                  source_file,remote_file):
+    '''
+    An internal static method for copying files to remote path
+    
+    :param remote_user: Username for the remote server
+    :param remote_host: Hostname for the remote server
+    :param source_file: Source filepath
+    :param remote_file: Remote filepath
+    '''
+    try:
+      if not os.path.exists(source_file):
+        raise IOError('Source file {0} not found for copy'.\
+                      format(source_file))
+
+      check_remote_cmd=['ssh',
+                        '{0}@{1}'.\
+                        format(remote_user,
+                               remote_host),
+                        'ls',
+                        '-a',
+                        remote_file]                                            # remote check cmd
+      response=subprocess.call(check_remote_cmd)                                # look for existing remote file
+      if response !=0:
+        rm_remote_cmd=['ssh',
+                       '{0}@{1}'.\
+                       format(remote_user,
+                              remote_host),
+                       'rm',
+                       '-f',
+                       remote_file]                                             # remote rm cmd
+        subprocess.check_call(rm_remote_cmd)                                    # remove existing file
+
+      copy_remote_file(source_path=source_file,
+                       destinationa_path=remote_file,
+                       destination_address='{0}@{1}'.\
+                                           format(remote_user,
+                                                  remote_host))                 # create dir and copy file to remote
     except:
       raise
