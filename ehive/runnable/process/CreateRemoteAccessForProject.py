@@ -28,6 +28,7 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       'seqruninfofile':'seqruninfofile.json',
       'samplereadcountfile':'samplereadcountfile.json',
       'status_data_json':'status_data.json',
+      'analysis_data_json':'analysis_data.json',
       'image_height':700,
       'sample_count_threshold':75,
     })
@@ -96,12 +97,18 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       seqruninfofile=self.param('seqruninfofile')
       samplereadcountfile=self.param('samplereadcountfile')
       status_data_json=self.param('status_data_json')
+      analysis_data_json=self.param('analysis_data_json')
       image_height=self.param('image_height')
       sample_count_threshold=self.param('sample_count_threshold')
 
-      htaccess_template_path=os.path.join(template_dir,htaccess_template_path)  # set path for template dir
-      project_template_path=os.path.join(template_dir,project_template)         # set path for project template
-      status_template_path=os.path.join(template_dir,status_template)           # set path for project status template
+      htaccess_template_path=os.path.join(template_dir,
+                                          htaccess_template_path)               # set path for template dir
+      project_template_path=os.path.join(template_dir,
+                                         project_template)                      # set path for project template
+      status_template_path=os.path.join(template_dir,
+                                        status_template)                        # set path for project status template
+      analysis_template_path=os.path.join(template_dir,
+                                          analysis_template)                    # set path for project analysis template
       pa=ProjectAdaptor(**{'session_class':igf_session_class})
       pa.start_session()
       user_info=pa.get_project_user_info(project_igf_id=project_name)           # fetch user info from db
@@ -109,9 +116,9 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
                                              only_active=True)                  # get sample counts for the project
       pa.close_session()
 
-      image_height=self.__calculate_image_height(sample_count=sample_counts,
-                                                 height=image_height,
-                                                 threshold=sample_count_threshold) # change image height based on sample count
+      image_height=self._calculate_image_height(sample_count=sample_counts,
+                                                height=image_height,
+                                                threshold=sample_count_threshold) # change image height based on sample count
 
       user_info=user_info.to_dict(orient='records')                             # convert dataframe to list of dictionaries
       if len(user_info) == 0:
@@ -150,12 +157,14 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
              htpasswd_filename=htpasswd_filename, \
              customerUsernameList=' '.join(user_list)).\
       dump(htaccess_output)                                                     # write new htacces file
-      os.chmod(htaccess_output, mode=0o774)
-               
+      os.chmod(htaccess_output,
+               mode=0o774)
+
       htpasswd.\
       stream(userDict=user_passwd_dict).\
       dump(htpasswd_output)                                                     # write new htpass file
-      os.chmod(htpasswd_output, mode=0o774)
+      os.chmod(htpasswd_output,
+               mode=0o774)
 
       template_prj=Environment(loader=FileSystemLoader(searchpath=os.path.dirname(project_template_path)), \
                                autoescape=select_autoescape(['txt', 'xml']))    # set template env for project
@@ -166,9 +175,10 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       stream(ProjectName=project_name,\
              seqrunInfoFile=seqruninfofile, \
              sampleReadCountFile=samplereadcountfile,
-             ImageHeight=image_height,).\
+             ImageHeight=image_height).\
       dump(project_output)                                                      # write new project file
-      os.chmod(project_output, mode=0o774)
+      os.chmod(project_output,
+               mode=0o774)
 
       template_status=Environment(\
                         loader=FileSystemLoader(searchpath=os.path.dirname(status_template_path)), \
@@ -178,10 +188,25 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       status_output=os.path.join(temp_work_dir,\
                                  os.path.basename(status_template_path))
       project_status.\
-      stream(ProjectName=project_name,\
-             status_data_json=status_data_json,).\
+      stream(ProjectName=project_name,
+             status_data_json=status_data_json).\
       dump(status_output)                                                       # write new project status file
-      os.chmod(status_output, mode=0o774)
+      os.chmod(status_output,
+               mode=0o774)
+
+      template_analysis=Environment(\
+                        loader=FileSystemLoader(searchpath=os.path.dirname(analysis_template_path)),
+                        autoescape=select_autoescape(['txt', 'xml']))           # set template env for analysis
+      project_analysis=template_analysis.\
+                       get_template(os.path.basename(analysis_template_path))   # read analysis page template
+      analysis_output=os.path.join(temp_work_dir,\
+                                 os.path.basename(analysis_template_path))
+      project_analysis.\
+      stream(ProjectName=project_name,
+             analysisInfoFile=analysis_data_json).\
+      dump(analysis_output)                                                     # write new project analysis file
+      os.chmod(analysis_output,
+               mode=0o774)
 
       remote_project_dir=os.path.join(remote_project_path,\
                                       project_name)
@@ -209,6 +234,13 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
                                        remote_host=remote_host,
                                        source_file=status_output,
                                        remote_file=remote_status_output_file)   # copy project status output file to remote dir
+      remote_analysis_output_file=os.path.join(remote_project_dir,
+                                              os.path.basename(analysis_output))# remote project analysis output filepath
+      self._check_and_copy_remote_file(remote_user=remote_user,
+                                       remote_host=remote_host,
+                                       source_file=analysis_output,
+                                       remote_file=remote_analysis_output_file) # copy project analysis output file to remote dir
+
       self.param('dataflow_params',{'remote_dir_status':'done'})
       remove_dir(temp_work_dir)
     except Exception as e:
@@ -220,7 +252,7 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       raise
 
   @staticmethod
-  def __calculate_image_height(sample_count,height=700,threshold=75):
+  def _calculate_image_height(sample_count,height=700,threshold=75):
     '''
     An internal static method for calculating image height based on the number
     of samples registered for any projects
