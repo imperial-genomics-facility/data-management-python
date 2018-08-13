@@ -73,13 +73,13 @@ def copy_local_file(source_path,destinationa_path, force=False):
 def copy_remote_file(source_path,destinationa_path, source_address=None, destination_address=None, copy_method='rsync',check_file=True):
     '''
     A method for copy files from or to remote location
-    required params:
-    source_path: A source file path
-    destination_path: A destination file path
-    source_address: Address of the source server
-    destination_address: Address of the destination server
-    copy_method: A nethod for copy files, default is 'rsync'
-    check_file: Check file after transfer using checksum, default True
+    
+    :param source_path: A source file path
+    :param destination_path: A destination file path
+    :param source_address: Address of the source server
+    :param destination_address: Address of the destination server
+    :param copy_method: A nethod for copy files, default is 'rsync'
+    :param check_file: Check file after transfer using checksum, default True
     '''
     try:
         if source_address is None and destination_address is None:
@@ -89,11 +89,17 @@ def copy_remote_file(source_path,destinationa_path, source_address=None, destina
             source_path='{0}:{1}'.format(source_address,source_path)
 
         if destination_address is not None:
-          dir_cmd=['ssh',destination_address,'mkdir','-p',os.path.dirname(destinationa_path)]
+          dir_cmd=['ssh',
+                   destination_address,
+                   'mkdir',
+                   '-p',
+                   os.path.dirname(destinationa_path)]
           subprocess.check_call(dir_cmd)
           destinationa_path='{0}:{1}'.format(destination_address,destinationa_path)
         else:
-          dir_cmd=['mkdir','-p',os.path.dirname(destinationa_path)]
+          dir_cmd=['mkdir',
+                   '-p',
+                   os.path.dirname(destinationa_path)]
           subprocess.check_call(dir_cmd)
 
         if copy_method == 'rsync':
