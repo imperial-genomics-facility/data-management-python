@@ -55,11 +55,11 @@ class Project_status:
       raise
 
   @staticmethod
-  def _reformat_seqrun_data(data,seqrun_work_day,task_id_label='task_id',
-                            task_name_label='task_name',resource_label='resource',
-                            resource_name='Demultiplexing',start_date_label='start_date',
-                            end_date_label='end_date',duration_label='duration',
-                            percent_complete_label='percent_complete',
+  def _reformat_seqrun_data(data,seqrun_work_day,active_seqrun_igf_id=None,
+                            task_id_label='task_id',task_name_label='task_name',
+                            resource_label='resource',resource_name='Demultiplexing',
+                            start_date_label='start_date',end_date_label='end_date',
+                            duration_label='duration',percent_complete_label='percent_complete',
                             dependencies_label='dependencies'):
     '''
     An internal static method for reformatting seqrun data series
@@ -68,15 +68,36 @@ class Project_status:
     :returns: A pandas data series containing the required keys
     '''
     try:
+      if 'date_created' not in data:
+        raise ValueError('Missing seqrun creation date')
+
+      start_date=data['date_created']
+      if 'status' in data and \
+          data['status']=='FINISHED':
+        end_date=data['date_stamp']
+        percent_complete=100
+      else:
+        end_date=data['date_created']+timedelta(days=seqrun_work_day)
+
+      if 'status' in data and \
+         data['status']!='FINISHED':
+        if active_seqrun_igf_id is not None and \
+           active_seqrun_igf_id==data['seqrun_igf_id']:
+          percent_complete=100
+          end_date=data['date_stamp']
+        else:
+          percent_complete=0
+
+      duration=int((end_date-start_date).total_seconds()*1000)
       new_data=dict()
       new_data.update(\
       {task_id_label:data['flowcell_id'],
        task_name_label:'Flowcell {0}'.format(data['flowcell_id']),
        resource_label:resource_name,
        start_date_label:data['date_created'],
-       end_date_label:data['date_created']+timedelta(days=seqrun_work_day),
-       duration_label:int(timedelta(days=seqrun_work_day).total_seconds()*1000),
-       percent_complete_label:100,
+       end_date_label:end_date,
+       duration_label:duration,
+       percent_complete_label:percent_complete,
        dependencies_label:None,
       })
 
@@ -110,9 +131,23 @@ class Project_status:
             filter(Project.project_id==Sample.project_id).\
             filter(Project.project_igf_id==self.project_igf_id)
       if demultiplexing_pipeline is not None:
-        query=query.\
+        query=base.session.\
+              query(Seqrun.seqrun_igf_id,
+                  Seqrun.flowcell_id,
+                  Seqrun.date_created,
+                  Pipeline_seed.status,
+                  Pipeline_seed.date_stamp).\
+              join(Run).\
+              join(Experiment).\
+              join(Sample).\
+              join(Project).\
               join(Pipeline_seed,Seqrun.seqrun_id==Pipeline_seed.seed_id).\
               join(Pipeline).\
+              filter(Seqrun.seqrun_id==Run.seqrun_id).\
+              filter(Experiment.experiment_id==Run.experiment_id).\
+              filter(Sample.sample_id==Experiment.sample_id).\
+              filter(Project.project_id==Sample.project_id).\
+              filter(Project.project_igf_id==self.project_igf_id).\
               filter(Pipeline_seed.seed_table=='seqrun').\
               filter(Pipeline.pipeline_name==demultiplexing_pipeline)
 
@@ -122,7 +157,8 @@ class Project_status:
       results=results.\
               apply(lambda data: self._reformat_seqrun_data(\
                                    data,
-                                   seqrun_work_day=self.seqrun_work_day),
+                                   seqrun_work_day=self.seqrun_work_day,
+                                   active_seqrun_igf_id=active_seqrun_igf_id),
                     axis=1)
       results=results.to_dict(orient='records')
       return results
@@ -211,14 +247,29 @@ if __name__=='__main__':
   ea.store_project_and_attribute_data(data=experiment_data)                     # load experiment data
   ra=RunAdaptor(**{'session':base.session})
   ra.store_run_and_attribute_data(data=run_data)                                # load run data
+  pipeline_data=[{ "pipeline_name" : "DemultiplexIlluminaFastq",
+                   "pipeline_db" : "sqlite:////bcl2fastq.db", 
+                 }]
+
+  pipeline_seed_data=[{'pipeline_name':'DemultiplexIlluminaFastq',
+                       'seed_id':1, 'seed_table':'seqrun'},
+                      {'pipeline_name':'DemultiplexIlluminaFastq',
+                       'seed_id':2, 'seed_table':'seqrun'},
+                      {'pipeline_name':'DemultiplexIlluminaFastq',
+                       'seed_id':3, 'seed_table':'seqrun'}
+                     ]
+  pla=PipelineAdaptor(**{'session':base.session})
+  pla.store_pipeline_data(data=pipeline_data)
+  pla.create_pipeline_seed(data=pipeline_seed_data)
   base.commit_session()
   base.close_session()
   
   ps=Project_status(igf_session_class=base.get_session_class(),
                     project_igf_id='ProjectA')
-  print(ps.get_seqrun_info())
-  print(ps.get_status_description())
-  print(ps.get_status_column_order())
+  print(ps.get_seqrun_info(demultiplexing_pipeline='DemultiplexIlluminaFastq',
+                           active_seqrun_igf_id='SeqrunA'))
+  #print(ps.get_status_description())
+  #print(ps.get_status_column_order())
   Base.metadata.drop_all(engine)
   os.remove(dbname)
   
