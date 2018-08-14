@@ -145,6 +145,37 @@ class Project_status:
     except:
       raise
 
+  def get_analysis_info(self,project_igf_id,analysis_pipeline):
+    '''
+    A method for fetching all active experiments and their run status for a project
+    :param project_igf_id: A project igf id
+    :param analysis_pipeline: Name of the analysis pipeline
+    :return: A list of dictionaries containing the analysis information
+    '''
+    try:
+      base=self.base_adaptor
+      base.start_session()
+      query=base.session.\
+            query(Experiment.experiment_igf_id,
+                  Pipeline_seed.seed_id).\
+            join(Sample).\
+            join(project).\
+            join(Pipeline_seed,Experiment.experiment_id==Pipeline_seed.seed_id).\
+            join(Pipeline).\
+            filter(Experiment.sample_id==Sample.sample_id).\
+            filter(Sample.project_id==Project.project_id).\
+            filter(Pipeline_seed.seed_table=='experiment').\
+            filter(Sample.status=='ACTIVE').\
+            filter(Experiment.status=='ACTIVE').\
+            filter(Pipeline.pipeline_id==Pipeline_seed.pipeline_id).\
+            filter(Pipeline.pipeline_name==analysis_pipeline).\
+            filter(Project.project_igf_id==project_igf_id)
+      results=base.fetch_records(query=query,
+                                 output_mode='dataframe')
+      base.close_session()
+    except:
+      raise
+
   def get_seqrun_info(self,active_seqrun_igf_id=None,
                       demultiplexing_pipeline=None):
     '''
@@ -194,14 +225,15 @@ class Project_status:
                                  output_mode='dataframe')
       base.close_session()
       new_data=list()
-      new_data.extend(\
-        results.\
-          apply(lambda data: self._reformat_seqrun_data(\
-                             data,
-                             seqrun_work_day=self.seqrun_work_day,
-                             active_seqrun_igf_id=active_seqrun_igf_id),
-                axis=1))
-      new_data=[entry for data in new_data 
+      if len(results.index)>0:
+        new_data.extend(\
+          results.\
+            apply(lambda data: self._reformat_seqrun_data(\
+                               data,
+                               seqrun_work_day=self.seqrun_work_day,
+                               active_seqrun_igf_id=active_seqrun_igf_id),
+                  axis=1))
+        new_data=[entry for data in new_data 
                         for entry in data]
       return new_data
     except:
