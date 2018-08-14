@@ -1,7 +1,7 @@
 import pandas as pd
 from datetime import datetime,date,timedelta
 from igf_data.igfdb.baseadaptor import BaseAdaptor
-from igf_data.igfdb.igfTables import Base, Project,Sample,Experiment,Run,Seqrun
+from igf_data.igfdb.igfTables import Base, Project,Sample,Experiment,Run,Seqrun,Pipeline,Pipeline_seed
 
 class Project_status:
   '''
@@ -85,9 +85,12 @@ class Project_status:
     except:
       raise
 
-  def get_seqrun_info(self):
+  def get_seqrun_info(self,active_seqrun_igf_id=None,
+                      demultiplexing_pipeline=None):
     '''
     A method for fetching all active sequencing runs for a project
+    :param active_seqrun_igf_id: Seqrun igf id for the current run, default None
+    :param demultiplexing_pipeline: Name of the demultiplexing pipeline, default None
     :returns: A dictionary containing seqrun information
     '''
     try:
@@ -106,6 +109,13 @@ class Project_status:
             filter(Sample.sample_id==Experiment.sample_id).\
             filter(Project.project_id==Sample.project_id).\
             filter(Project.project_igf_id==self.project_igf_id)
+      if demultiplexing_pipeline is not None:
+        query=query.\
+              join(Pipeline_seed,Seqrun.seqrun_id==Pipeline_seed.seed_id).\
+              join(Pipeline).\
+              filter(Pipeline_seed.seed_table=='seqrun').\
+              filter(Pipeline.pipeline_name==demultiplexing_pipeline)
+
       results=base.fetch_records(query=query,
                                  output_mode='dataframe')
       base.close_session()
@@ -130,6 +140,7 @@ if __name__=='__main__':
   from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
   from igf_data.igfdb.experimentadaptor import ExperimentAdaptor
   from igf_data.igfdb.runadaptor import RunAdaptor
+  from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 
   
   dbconfig = 'data/dbconfig.json'
