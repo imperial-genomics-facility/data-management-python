@@ -20,6 +20,7 @@ class UpdateProjectInfo(IGFBaseProcess):
       'seqruninfofile':'seqruninfofile.json',
       'samplereadcountfile':'samplereadcountfile.json',
       'status_data_json':'status_data.json',
+      'pipeline_name':None,
     })
     return params_dict
 
@@ -34,6 +35,7 @@ class UpdateProjectInfo(IGFBaseProcess):
       seqruninfofile=self.param('seqruninfofile')
       samplereadcountfile=self.param('samplereadcountfile')
       status_data_json=self.param('status_data_json')
+      pipeline_name=self.param('pipeline_name')
 
       temp_work_dir=get_temp_dir()                                              # get a temp dir
       temp_read_count_output=os.path.join(temp_work_dir,
@@ -104,7 +106,8 @@ class UpdateProjectInfo(IGFBaseProcess):
                                       status_data_json)                         # get path for temp status file
       convert_to_gviz_json_for_display(\
         description=ps.get_status_description(),
-        data=ps.get_seqrun_info(),
+        data=ps.get_seqrun_info(demultiplexing_pipeline=pipeline_name,
+                                active_seqrun_igf_id=seqrun_igf_id),
         columns_order=ps.get_status_column_order(),
         output_file=temp_status_output)                                         # write data to output json file
       os.chmod(temp_status_output,

@@ -268,6 +268,7 @@ if __name__=='__main__':
   ps=Project_status(igf_session_class=base.get_session_class(),
                     project_igf_id='ProjectA')
   #print(ps.get_seqrun_info())
+  #print(ps.get_seqrun_info(active_seqrun_igf_id='SeqrunA'))
   #print(ps.get_seqrun_info(demultiplexing_pipeline='DemultiplexIlluminaFastq',
   #                         active_seqrun_igf_id='SeqrunA'))
   #print(ps.get_status_description())
