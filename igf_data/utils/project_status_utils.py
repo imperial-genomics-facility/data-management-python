@@ -1,6 +1,8 @@
 import pandas as pd
 from datetime import datetime,date,timedelta
+from dateutil.parser import parse
 from igf_data.igfdb.baseadaptor import BaseAdaptor
+from igf_data.utils.seqrunutils import get_seqrun_date_from_igf_id
 from igf_data.igfdb.igfTables import Base, Project,Sample,Experiment,Run,Seqrun,Pipeline,Pipeline_seed
 
 class Project_status:
@@ -25,6 +27,7 @@ class Project_status:
       description={\
         'task_id':('string', 'Task ID'),
         'task_name':('string', 'Task Name'),
+        'resource':('string', 'Resource'),
         'start_date':('date', 'Start Date'),
         'end_date':('date', 'End Date'),
         'duration':('number', 'Percent Complete'),
@@ -44,6 +47,7 @@ class Project_status:
       columns_order=[\
         'task_id',
         'task_name',
+        'resource',
         'start_date',
         'end_date',
         'duration',
@@ -51,6 +55,36 @@ class Project_status:
         'dependencies'
       ]
       return columns_order
+    except:
+      raise
+
+  @staticmethod
+  def _add_seqrun_info(flowcell_id,seqrun_igf_id,seqrun_work_day,
+                       task_id_label='task_id',task_name_label='task_name',
+                       resource_label='resource',resource_name='Sequencing',
+                      start_date_label='start_date',end_date_label='end_date',
+                      duration_label='duration',percent_complete_label='percent_complete',
+                      dependencies_label='dependencies'):
+    '''
+    An internal static method for adding sequencing run info to the status page
+    '''
+    try:
+      start_date=parse(get_seqrun_date_from_igf_id(seqrun_igf_id))
+      end_date=start_date+timedelta(days=seqrun_work_day)
+      duration=int((end_date-start_date).total_seconds()*1000)
+      percent_complete=100
+      new_data=dict()
+      new_data.update(\
+      {task_id_label:'Run {0}'.format(flowcell_id),
+      task_name_label:'Run {0}'.format(flowcell_id),
+      resource_label:resource_name,
+      start_date_label:start_date,
+      end_date_label:end_date,
+      duration_label:duration,
+      percent_complete_label:percent_complete,
+      dependencies_label:None,
+      })
+      return new_data
     except:
       raise
 
@@ -99,11 +133,15 @@ class Project_status:
        end_date_label:end_date,
        duration_label:duration,
        percent_complete_label:percent_complete,
-       dependencies_label:None,
+       dependencies_label:'Run {0}'.format(data['flowcell_id']),
       })
 
-      new_data=pd.Series(new_data)
-      return  new_data
+      seqrun_data=Project_status._add_seqrun_info(\
+                    flowcell_id=data['flowcell_id'],
+                    seqrun_igf_id=data['seqrun_igf_id'],
+                    seqrun_work_day=2)                                          # fetch seqrun information
+      new_data_list=[seqrun_data,new_data]
+      return  new_data_list
     except:
       raise
 
@@ -155,14 +193,17 @@ class Project_status:
       results=base.fetch_records(query=query,
                                  output_mode='dataframe')
       base.close_session()
-      results=results.\
-              apply(lambda data: self._reformat_seqrun_data(\
-                                   data,
-                                   seqrun_work_day=self.seqrun_work_day,
-                                   active_seqrun_igf_id=active_seqrun_igf_id),
-                    axis=1)
-      results=results.to_dict(orient='records')
-      return results
+      new_data=list()
+      new_data.extend(\
+        results.\
+          apply(lambda data: self._reformat_seqrun_data(\
+                             data,
+                             seqrun_work_day=self.seqrun_work_day,
+                             active_seqrun_igf_id=active_seqrun_igf_id),
+                axis=1))
+      new_data=[entry for data in new_data 
+                        for entry in data]
+      return new_data
     except:
       raise
 
@@ -203,15 +244,15 @@ if __name__=='__main__':
   project_data=[{'project_igf_id':'ProjectA'}]                                  # project data
   sample_data=[{'sample_igf_id':'SampleA',
                 'project_igf_id':'ProjectA'}]                                   # sample data
-  seqrun_data=[{'seqrun_igf_id':'SeqrunA', 
+  seqrun_data=[{'seqrun_igf_id':'180810_K00345_0063_AHWL7CBBXX', 
                 'flowcell_id':'000000000-D0YLK', 
                 'platform_igf_id':'M001',
                 'flowcell':'MISEQ'},
-                {'seqrun_igf_id':'SeqrunB', 
+                {'seqrun_igf_id':'180610_K00345_0063_AHWL7CBBXX', 
                 'flowcell_id':'000000000-D0YLJ', 
                 'platform_igf_id':'M001',
                 'flowcell':'MISEQ'},
-                {'seqrun_igf_id':'SeqrunC', 
+                {'seqrun_igf_id':'180410_K00345_0063_AHWL7CBBXX', 
                 'flowcell_id':'000000000-D0YLI', 
                 'platform_igf_id':'M001',
                 'flowcell':'MISEQ'}
@@ -223,15 +264,15 @@ if __name__=='__main__':
                     'project_igf_id':'ProjectA'}]
   run_data=[{'run_igf_id':'RunA',
              'experiment_igf_id':'ExperimentA',
-             'seqrun_igf_id':'SeqrunA',
+             'seqrun_igf_id':'180810_K00345_0063_AHWL7CBBXX',
              'lane_number':'1'},
              {'run_igf_id':'RunB',
              'experiment_igf_id':'ExperimentA',
-             'seqrun_igf_id':'SeqrunB',
+             'seqrun_igf_id':'180610_K00345_0063_AHWL7CBBXX',
              'lane_number':'1'},
              {'run_igf_id':'RunC',
              'experiment_igf_id':'ExperimentA',
-             'seqrun_igf_id':'SeqrunC',
+             'seqrun_igf_id':'180410_K00345_0063_AHWL7CBBXX',
              'lane_number':'1'}
            ]                                                                    # run data
   base.start_session()
@@ -267,7 +308,7 @@ if __name__=='__main__':
   
   ps=Project_status(igf_session_class=base.get_session_class(),
                     project_igf_id='ProjectA')
-  #print(ps.get_seqrun_info())
+  print(ps.get_seqrun_info())
   #print(ps.get_seqrun_info(active_seqrun_igf_id='SeqrunA'))
   #print(ps.get_seqrun_info(demultiplexing_pipeline='DemultiplexIlluminaFastq',
   #                         active_seqrun_igf_id='SeqrunA'))
