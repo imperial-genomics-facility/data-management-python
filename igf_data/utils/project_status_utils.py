@@ -145,34 +145,77 @@ class Project_status:
     except:
       raise
 
-  def get_analysis_info(self,project_igf_id,analysis_pipeline):
+  def get_analysis_info(self,project_igf_id,analysis_pipeline,analysis_work_day=1,
+                        task_id_label='task_id',task_name_label='task_name',
+                        resource_label='resource',resource_name='Demultiplexing',
+                        start_date_label='start_date',end_date_label='end_date',
+                        duration_label='duration',percent_complete_label='percent_complete',
+                        dependencies_label='dependencies'):
     '''
     A method for fetching all active experiments and their run status for a project
     :param project_igf_id: A project igf id
     :param analysis_pipeline: Name of the analysis pipeline
-    :return: A list of dictionaries containing the analysis information
+    :return: A list of dictionary containing the analysis information
     '''
     try:
       base=self.base_adaptor
       base.start_session()
       query=base.session.\
             query(Experiment.experiment_igf_id,
-                  Pipeline_seed.seed_id).\
+                  Pipeline_seed.seed_id,
+                  Seqrun.flowcell_id).\
+            join(Run).\
             join(Sample).\
             join(project).\
             join(Pipeline_seed,Experiment.experiment_id==Pipeline_seed.seed_id).\
             join(Pipeline).\
+            join(Seqrun).\
+            filter(Run.experiment_id==Experiment.experiment_id).\
+            filter(Seqrun.seqrun_id==Run.seqrun_id).\
             filter(Experiment.sample_id==Sample.sample_id).\
             filter(Sample.project_id==Project.project_id).\
             filter(Pipeline_seed.seed_table=='experiment').\
             filter(Sample.status=='ACTIVE').\
             filter(Experiment.status=='ACTIVE').\
+            filter(Run.status=='ACTIVE').\
+            filter(Seqrun.reject_run=='N').\
             filter(Pipeline.pipeline_id==Pipeline_seed.pipeline_id).\
             filter(Pipeline.pipeline_name==analysis_pipeline).\
             filter(Project.project_igf_id==project_igf_id)
       results=base.fetch_records(query=query,
                                  output_mode='dataframe')
       base.close_session()
+      new_data=list()
+      if len(results.index)>0:
+        flowcell_ids=list(set(results['flowcell_id'].values))
+        results=results.drop(['flowcell_id'],axis=1).drop_duplicates()
+        status_data=[ {grp:len(g_data.index),'total':len(results.index)} 
+                        for grp, g_data in results.groupby('status')]
+        pct_complete=0
+        incomplete_exp=0
+        for status in status_data:
+          if 'FINISHED' in status:
+            pct_complete=int(status['FINISHED']/status['total']*100)            # get percent complete
+            incomplete_exp=int(status['total']-status['FINISHED'])
+
+        first_update=results['date_stamp'].min()
+        start_date=parse(first_update)-timedelta(days=analysis_work_day)        # get analysis start date
+        last_update=results['date_stamp'].max()
+        if incomplete_exp>0:
+          end_date=parse(last_update)+incomplete_exp*timedelta(days=analysis_work_day) # expected end date
+        else:
+          end_date=parse(last_update)                                           # end date if all done
+
+        duration=int((end_date-start_date).total_seconds()*1000)
+        new_data=[{task_id_label:'Primary Analysis',
+                   task_name_label:'Primary Analysis',
+                   resource_label:'Primary Analysis',
+                   start_date_label:start_date,
+                   end_date_label:end_date,
+                   duration_label:duration,
+                   percent_complete_label:pct_complete,
+                   dependencies_label:','.join(flowcell_ids),}]
+      return new_data
     except:
       raise
 
@@ -196,6 +239,7 @@ class Project_status:
             join(Sample).\
             join(Project).\
             filter(Seqrun.seqrun_id==Run.seqrun_id).\
+            filter(Seqrun.reject_run=='N').\
             filter(Experiment.experiment_id==Run.experiment_id).\
             filter(Sample.sample_id==Experiment.sample_id).\
             filter(Project.project_id==Sample.project_id).\
