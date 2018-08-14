@@ -162,11 +162,12 @@ class Project_status:
       base.start_session()
       query=base.session.\
             query(Experiment.experiment_igf_id,
-                  Pipeline_seed.seed_id,
+                  Pipeline_seed.status,
+                  Pipeline_seed.date_stamp,
                   Seqrun.flowcell_id).\
             join(Run).\
             join(Sample).\
-            join(project).\
+            join(Project).\
             join(Pipeline_seed,Experiment.experiment_id==Pipeline_seed.seed_id).\
             join(Pipeline).\
             join(Seqrun).\
@@ -199,12 +200,12 @@ class Project_status:
             incomplete_exp=int(status['total']-status['FINISHED'])
 
         first_update=results['date_stamp'].min()
-        start_date=parse(first_update)-timedelta(days=analysis_work_day)        # get analysis start date
+        start_date=first_update-timedelta(days=analysis_work_day)        # get analysis start date
         last_update=results['date_stamp'].max()
         if incomplete_exp>0:
-          end_date=parse(last_update)+incomplete_exp*timedelta(days=analysis_work_day) # expected end date
+          end_date=last_update+incomplete_exp*timedelta(days=analysis_work_day) # expected end date
         else:
-          end_date=parse(last_update)                                           # end date if all done
+          end_date=last_update                                           # end date if all done
 
         duration=int((end_date-start_date).total_seconds()*1000)
         new_data=[{task_id_label:'Primary Analysis',
@@ -371,12 +372,21 @@ if __name__=='__main__':
 
   pipeline_seed_data=[{'pipeline_name':'DemultiplexIlluminaFastq',
                        'seed_id':1, 'seed_table':'seqrun'},
-                      {'pipeline_name':'DemultiplexIlluminaFastq',
-                       'seed_id':2, 'seed_table':'seqrun'},
-                      {'pipeline_name':'DemultiplexIlluminaFastq',
-                       'seed_id':3, 'seed_table':'seqrun'}
                      ]
   pla=PipelineAdaptor(**{'session':base.session})
+  pla.store_pipeline_data(data=pipeline_data)
+  pla.create_pipeline_seed(data=pipeline_seed_data)
+  pipeline_data=[{ "pipeline_name" : "PrimaryAnalysis",
+                   "pipeline_db" : "sqlite:////analysis.db", 
+                 }]
+
+  pipeline_seed_data=[{'pipeline_name':'PrimaryAnalysis',
+                       'seed_id':1, 'seed_table':'experiment'},
+                      {'pipeline_name':'PrimaryAnalysis',
+                       'seed_id':2, 'seed_table':'experiment'},
+                      {'pipeline_name':'PrimaryAnalysis',
+                       'seed_id':3, 'seed_table':'experiment'}
+                     ]
   pla.store_pipeline_data(data=pipeline_data)
   pla.create_pipeline_seed(data=pipeline_seed_data)
   base.commit_session()
@@ -384,12 +394,14 @@ if __name__=='__main__':
   
   ps=Project_status(igf_session_class=base.get_session_class(),
                     project_igf_id='ProjectA')
-  print(ps.get_seqrun_info())
+  #print(ps.get_seqrun_info())
   #print(ps.get_seqrun_info(active_seqrun_igf_id='SeqrunA'))
   #print(ps.get_seqrun_info(demultiplexing_pipeline='DemultiplexIlluminaFastq',
   #                         active_seqrun_igf_id='SeqrunA'))
   #print(ps.get_status_description())
   #print(ps.get_status_column_order())
+  print(ps.get_analysis_info(project_igf_id='ProjectA',
+                             analysis_pipeline='PrimaryAnalysis'))
   Base.metadata.drop_all(engine)
   os.remove(dbname)
   
