@@ -78,6 +78,7 @@ class Project_status:
         percent_complete=100
       else:
         end_date=data['date_created']+timedelta(days=seqrun_work_day)
+        percent_complete=0
 
       if 'status' in data and \
          data['status']!='FINISHED':
@@ -266,8 +267,9 @@ if __name__=='__main__':
   
   ps=Project_status(igf_session_class=base.get_session_class(),
                     project_igf_id='ProjectA')
-  print(ps.get_seqrun_info(demultiplexing_pipeline='DemultiplexIlluminaFastq',
-                           active_seqrun_igf_id='SeqrunA'))
+  #print(ps.get_seqrun_info())
+  #print(ps.get_seqrun_info(demultiplexing_pipeline='DemultiplexIlluminaFastq',
+  #                         active_seqrun_igf_id='SeqrunA'))
   #print(ps.get_status_description())
   #print(ps.get_status_column_order())
   Base.metadata.drop_all(engine)
