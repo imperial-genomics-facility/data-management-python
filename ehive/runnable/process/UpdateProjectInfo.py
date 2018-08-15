@@ -21,6 +21,7 @@ class UpdateProjectInfo(IGFBaseProcess):
       'samplereadcountfile':'samplereadcountfile.json',
       'status_data_json':'status_data.json',
       'pipeline_name':None,
+      'analysis_pipeline_name':None,
     })
     return params_dict
 
