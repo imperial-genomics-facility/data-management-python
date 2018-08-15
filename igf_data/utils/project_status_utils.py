@@ -3,6 +3,7 @@ from datetime import datetime,date,timedelta
 from dateutil.parser import parse
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.utils.seqrunutils import get_seqrun_date_from_igf_id
+from igf_data.utils.gviz_utils import convert_to_gviz_json_for_display
 from igf_data.igfdb.igfTables import Base, Project,Sample,Experiment,Run,Seqrun,Pipeline,Pipeline_seed
 
 class Project_status:
@@ -208,14 +209,14 @@ class Project_status:
           end_date=last_update                                           # end date if all done
 
         duration=int((end_date-start_date).total_seconds()*1000)
-        new_data=[{task_id_label:'Primary Analysis',
+        new_data.append({task_id_label:'Primary Analysis',
                    task_name_label:'Primary Analysis',
                    resource_label:'Primary Analysis',
                    start_date_label:start_date,
                    end_date_label:end_date,
                    duration_label:duration,
                    percent_complete_label:pct_complete,
-                   dependencies_label:','.join(flowcell_ids),}]
+                   dependencies_label:','.join(flowcell_ids),})
       return new_data
     except:
       raise
