@@ -346,7 +346,6 @@ class Project_status:
           results.\
             apply(lambda data: self._reformat_seqrun_data(\
                                data,
-                               seqrun_work_day=self.seqrun_work_day,
                                active_seqrun_igf_id=active_seqrun_igf_id),
                   axis=1))
         new_data=[entry for data in new_data 
@@ -471,8 +470,7 @@ if __name__=='__main__':
   #                         active_seqrun_igf_id='SeqrunA'))
   #print(ps.get_status_description())
   #print(ps.get_status_column_order())
-  print(ps.get_analysis_info(project_igf_id='ProjectA',
-                             analysis_pipeline='PrimaryAnalysis'))
+  #print(ps.get_analysis_info(analysis_pipeline='PrimaryAnalysis'))
   Base.metadata.drop_all(engine)
   os.remove(dbname)
   
