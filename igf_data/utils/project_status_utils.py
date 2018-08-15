@@ -83,7 +83,7 @@ class Project_status:
           data=data,
           description=description,
           columns_order=column_order,
-          output_file=output_file)                                              # create gviz json file
+          output_file=None)                                                     # create gviz json file
       else:
         with open(output_file,'w') as fp:
           fp.write('')                                                          # create an empty file
@@ -267,7 +267,12 @@ class Project_status:
             incomplete_exp=int(status['total']-status['FINISHED'])
 
         first_update=results['date_stamp'].min()
-        start_date=first_update-timedelta(days=self.analysis_work_day)          # get analysis start date
+        first_update_status=results[results['date_stamp']==first_update]['status'].values[0]
+        if first_update_status=='SEEDED':
+          start_date=first_update
+        else:
+          start_date=first_update-timedelta(days=self.analysis_work_day)        # get analysis start date
+
         last_update=results['date_stamp'].max()
         if incomplete_exp>0:
           end_date=last_update+incomplete_exp*timedelta(days=self.analysis_work_day) # expected end date
@@ -442,6 +447,10 @@ if __name__=='__main__':
 
   pipeline_seed_data=[{'pipeline_name':'DemultiplexIlluminaFastq',
                        'seed_id':1, 'seed_table':'seqrun'},
+                       {'pipeline_name':'DemultiplexIlluminaFastq',
+                       'seed_id':2, 'seed_table':'seqrun'},
+                       {'pipeline_name':'DemultiplexIlluminaFastq',
+                       'seed_id':3, 'seed_table':'seqrun'},
                      ]
   pla=PipelineAdaptor(**{'session':base.session})
   pla.store_pipeline_data(data=pipeline_data)
@@ -464,13 +473,17 @@ if __name__=='__main__':
   
   ps=Project_status(igf_session_class=base.get_session_class(),
                     project_igf_id='ProjectA')
-  #print(ps.get_seqrun_info())
+  #print(ps.get_seqrun_info(demultiplexing_pipeline='DemultiplexIlluminaFastq'))
   #print(ps.get_seqrun_info(active_seqrun_igf_id='SeqrunA'))
   #print(ps.get_seqrun_info(demultiplexing_pipeline='DemultiplexIlluminaFastq',
-  #                         active_seqrun_igf_id='SeqrunA'))
+  #                         active_seqrun_igf_id='180410_K00345_0063_AHWL7CBBXX'))
   #print(ps.get_status_description())
   #print(ps.get_status_column_order())
   #print(ps.get_analysis_info(analysis_pipeline='PrimaryAnalysis'))
+  #ps.generate_gviz_json_file(output_file='a',
+  #                           demultiplexing_pipeline='DemultiplexIlluminaFastq',
+  #                           analysis_pipeline='PrimaryAnalysis',
+  #                           active_seqrun_igf_id='180410_K00345_0063_AHWL7CBBXX')
   Base.metadata.drop_all(engine)
   os.remove(dbname)
   
