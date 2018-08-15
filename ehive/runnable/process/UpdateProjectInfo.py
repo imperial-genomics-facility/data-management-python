@@ -35,7 +35,8 @@ class UpdateProjectInfo(IGFBaseProcess):
       seqruninfofile=self.param('seqruninfofile')
       samplereadcountfile=self.param('samplereadcountfile')
       status_data_json=self.param('status_data_json')
-      pipeline_name=self.param('pipeline_name')
+      pipeline_name=self.param_required('pipeline_name')
+      analysis_pipeline_name=self.param_required('analysis_pipeline_name')
 
       temp_work_dir=get_temp_dir()                                              # get a temp dir
       temp_read_count_output=os.path.join(temp_work_dir,
@@ -104,12 +105,11 @@ class UpdateProjectInfo(IGFBaseProcess):
                         project_igf_id=project_name)
       temp_status_output=os.path.join(temp_work_dir,
                                       status_data_json)                         # get path for temp status file
-      convert_to_gviz_json_for_display(\
-        description=ps.get_status_description(),
-        data=ps.get_seqrun_info(demultiplexing_pipeline=pipeline_name,
-                                active_seqrun_igf_id=seqrun_igf_id),
-        columns_order=ps.get_status_column_order(),
-        output_file=temp_status_output)                                         # write data to output json file
+      ps.generate_gviz_json_file(\
+           output_file=temp_status_output,
+           demultiplexing_pipeline=pipeline_name,
+           analysis_pipeline=analysis_pipeline_name,
+           active_seqrun_igf_id=seqrun_igf_id)                                  # write data to output json file
       os.chmod(temp_status_output,
                mode=0o754)                                                      # changed file permission before copy
       check_status_cmd=['ssh',\
