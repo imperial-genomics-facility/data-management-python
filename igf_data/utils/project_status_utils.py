@@ -8,19 +8,47 @@ from igf_data.igfdb.igfTables import Base, Project,Sample,Experiment,Run,Seqrun,
 
 class Project_status:
   '''
-  A class for project status info calculation
+  A class for project status fetch and gviz json file generation for Google chart grantt plot
   
   :param igf_session_class: Database session class
   :param project_igf_id: Project igf id for database lookup
-  :param seqrun_work_day: Duration for seqrun jobs in days, default 2 
-  :param analysis_work_day: Duration for analysis jobs in days, default 1 
+  :param seqrun_work_day: Duration for seqrun jobs in days, default 2
+  :param analysis_work_day: Duration for analysis jobs in days, default 1
+  :param sequencing_resource_name: Resource name for sequencing data, default Sequencing
+  :param demultiplexing_resource_name: Resource name for demultiplexing data,default Demultiplexing
+  :param analysis_resource_name: Resource name for analysis data, default Primary Analysis
+  :param task_id_label: Label for task id field, default task_id
+  :param task_name_label: Label for task name field, default task_name
+  :param resource_label: Label for resource field, default resource
+  :param start_date_label: Label for start date field, default start_date
+  :param end_date_label: Label for end date field, default end_date
+  :param duration_label: Label for duration field, default duration
+  :param percent_complete_label: Label for percent complete field, default percent_complete
+  :param dependencies_label: Label for dependencies field, default dependencies
   '''
   def __init__(self,igf_session_class,project_igf_id,seqrun_work_day=2,
-               analysis_work_day=1):
+               analysis_work_day=1,sequencing_resource_name='Sequencing',
+               demultiplexing_resource_name='Demultiplexing',
+               analysis_resource_name='Primary Analysis',
+               task_id_label='task_id',task_name_label='task_name',
+               resource_label='resource',dependencies_label='dependencies',
+               start_date_label='start_date',end_date_label='end_date',
+               duration_label='duration',percent_complete_label='percent_complete'):
     self.project_igf_id=project_igf_id
     self.base_adaptor=BaseAdaptor(**{'session_class':igf_session_class})
     self.seqrun_work_day=seqrun_work_day
     self.analysis_work_day=analysis_work_day
+    self.sequencing_resource_name=sequencing_resource_name
+    self.demultiplexing_resource_name=demultiplexing_resource_name
+    self.analysis_resource_name=analysis_resource_name
+    self.task_id_label=task_id_label
+    self.task_name_label=task_name_label
+    self.resource_label=resource_label
+    self.start_date_label=start_date_label
+    self.end_date_label=end_date_label
+    self.duration_label=duration_label
+    self.percent_complete_label=percent_complete_label
+    self.dependencies_label=dependencies_label
 
 
   def generate_gviz_json_file(self,output_file,demultiplexing_pipeline,
@@ -33,6 +61,7 @@ class Project_status:
     :param demultiplexing_pipeline: Name of the demultiplexing pipeline
     :param analysis_pipeline: name of the analysis pipeline
     :param active_seqrun_igf_id: Igf id go the active seqrun, default None
+    :returns: None
     '''
     try:
       data=list()
@@ -44,7 +73,8 @@ class Project_status:
       if len(seqrun_data)>0:
         data.extend(seqrun_data)                                                # add seqrun data
 
-      analysis_data=self.get_analysis_info(analysis_pipeline=analysis_pipeline) # get analysis status
+      analysis_data=self.get_analysis_info(\
+                           analysis_pipeline=analysis_pipeline)                 # get analysis status
       if len(analysis_data)>0:
         data.extend(analysis_data)                                              # add analysis status
 
@@ -57,12 +87,15 @@ class Project_status:
       else:
         with open(output_file,'w') as fp:
           fp.write('')                                                          # create an empty file
+
     except:
       raise
+
 
   def get_status_description(self):
     '''
     A method for getting description for status json data
+    
     :returns: A dictionary containing status info
     '''
     try:
@@ -80,9 +113,11 @@ class Project_status:
     except:
       raise
 
+
   def get_status_column_order(self):
     '''
     A method for fetching column order for status json data
+    
     :return: A list data containing the column order
     '''
     try:
@@ -100,48 +135,43 @@ class Project_status:
     except:
       raise
 
-  @staticmethod
-  def _add_seqrun_info(flowcell_id,seqrun_igf_id,seqrun_work_day,
-                       task_id_label='task_id',task_name_label='task_name',
-                       resource_label='resource',resource_name='Sequencing',
-                      start_date_label='start_date',end_date_label='end_date',
-                      duration_label='duration',percent_complete_label='percent_complete',
-                      dependencies_label='dependencies'):
+
+  def _add_seqrun_info(self,flowcell_id,seqrun_igf_id):
     '''
-    An internal static method for adding sequencing run info to the status page
+    An internal method for adding sequencing run info to the status page
+    
+    :param flowcell_id:
+    :param seqrun_igf_id:
+    :returns: A dictionary with seqrun data for the grantt plot
     '''
     try:
-      start_date=parse(get_seqrun_date_from_igf_id(seqrun_igf_id))
-      end_date=start_date+timedelta(days=seqrun_work_day)
-      duration=int((end_date-start_date).total_seconds()*1000)
-      percent_complete=100
+      start_date=parse(get_seqrun_date_from_igf_id(seqrun_igf_id))              # fetch seqrun date
+      end_date=start_date+timedelta(days=self.seqrun_work_day)                  # calculate seqrun finish date
+      duration=int((end_date-start_date).total_seconds()*1000)                  # calculate seqrun duration
+      percent_complete=100                                                      # seqrun is already done
       new_data=dict()
       new_data.update(\
-      {task_id_label:'Run {0}'.format(flowcell_id),
-      task_name_label:'Run {0}'.format(flowcell_id),
-      resource_label:resource_name,
-      start_date_label:start_date,
-      end_date_label:end_date,
-      duration_label:duration,
-      percent_complete_label:percent_complete,
-      dependencies_label:None,
+      {self.task_id_label:'Run {0}'.format(flowcell_id),
+       self.task_name_label:'Run {0}'.format(flowcell_id),
+       self.resource_label:self.sequencing_resource_name,
+       self.start_date_label:start_date,
+       self.end_date_label:end_date,
+       self.duration_label:duration,
+       self.percent_complete_label:percent_complete,
+       self.dependencies_label:None,
       })
       return new_data
     except:
       raise
 
-  @staticmethod
-  def _reformat_seqrun_data(data,seqrun_work_day,active_seqrun_igf_id=None,
-                            task_id_label='task_id',task_name_label='task_name',
-                            resource_label='resource',resource_name='Demultiplexing',
-                            start_date_label='start_date',end_date_label='end_date',
-                            duration_label='duration',percent_complete_label='percent_complete',
-                            dependencies_label='dependencies'):
+
+  def _reformat_seqrun_data(self,data,active_seqrun_igf_id=None):
     '''
-    An internal static method for reformatting seqrun data series
+    An internal method for reformatting seqrun data series
     
-    :param data: A pandas data series
-    :returns: A pandas data series containing the required keys
+    :param data: A pandas data series containing seqrun entries for a project
+    :param active_seqrun_igf_id: Igf id of the active seqrun, default None
+    :returns: A list of dictionaries containing the required entries for sequencing runs
     '''
     try:
       if 'date_created' not in data:
@@ -153,7 +183,7 @@ class Project_status:
         end_date=data['date_stamp']
         percent_complete=100
       else:
-        end_date=data['date_created']+timedelta(days=seqrun_work_day)
+        end_date=data['date_created']+timedelta(days=self.seqrun_work_day)
         percent_complete=0
 
       if 'status' in data and \
@@ -168,33 +198,29 @@ class Project_status:
       duration=int((end_date-start_date).total_seconds()*1000)
       new_data=dict()
       new_data.update(\
-      {task_id_label:data['flowcell_id'],
-       task_name_label:'Flowcell {0}'.format(data['flowcell_id']),
-       resource_label:resource_name,
-       start_date_label:data['date_created'],
-       end_date_label:end_date,
-       duration_label:duration,
-       percent_complete_label:percent_complete,
-       dependencies_label:'Run {0}'.format(data['flowcell_id']),
+      {self.task_id_label:data['flowcell_id'],
+       self.task_name_label:'Flowcell {0}'.format(data['flowcell_id']),
+       self.resource_label:self.demultiplexing_resource_name,
+       self.start_date_label:data['date_created'],
+       self.end_date_label:end_date,
+       self.duration_label:duration,
+       self.percent_complete_label:percent_complete,
+       self.dependencies_label:'Run {0}'.format(data['flowcell_id']),
       })
 
-      seqrun_data=Project_status._add_seqrun_info(\
+      seqrun_data=self._add_seqrun_info(\
                     flowcell_id=data['flowcell_id'],
-                    seqrun_igf_id=data['seqrun_igf_id'],
-                    seqrun_work_day=2)                                          # fetch seqrun information
+                    seqrun_igf_id=data['seqrun_igf_id'])                        # fetch seqrun information
       new_data_list=[seqrun_data,new_data]
       return  new_data_list
     except:
       raise
 
-  def get_analysis_info(self,analysis_pipeline,
-                        task_id_label='task_id',task_name_label='task_name',
-                        resource_label='resource',resource_name='Demultiplexing',
-                        start_date_label='start_date',end_date_label='end_date',
-                        duration_label='duration',percent_complete_label='percent_complete',
-                        dependencies_label='dependencies'):
+
+  def get_analysis_info(self,analysis_pipeline):
     '''
     A method for fetching all active experiments and their run status for a project
+    
     :param analysis_pipeline: Name of the analysis pipeline
     :return: A list of dictionary containing the analysis information
     '''
@@ -241,25 +267,28 @@ class Project_status:
             incomplete_exp=int(status['total']-status['FINISHED'])
 
         first_update=results['date_stamp'].min()
-        start_date=first_update-timedelta(days=self.analysis_work_day)        # get analysis start date
+        start_date=first_update-timedelta(days=self.analysis_work_day)          # get analysis start date
         last_update=results['date_stamp'].max()
         if incomplete_exp>0:
           end_date=last_update+incomplete_exp*timedelta(days=self.analysis_work_day) # expected end date
         else:
-          end_date=last_update                                           # end date if all done
+          end_date=last_update                                                  # end date if all done
 
-        duration=int((end_date-start_date).total_seconds()*1000)
-        new_data.append({task_id_label:'Primary Analysis',
-                   task_name_label:'Primary Analysis',
-                   resource_label:'Primary Analysis',
-                   start_date_label:start_date,
-                   end_date_label:end_date,
-                   duration_label:duration,
-                   percent_complete_label:pct_complete,
-                   dependencies_label:','.join(flowcell_ids),})
+        duration=int((end_date-start_date).total_seconds()*1000)                # calculate analysis duration
+        new_data.append(\
+          {self.task_id_label:'Primary Analysis',
+           self.task_name_label:'Primary Analysis',
+           self.resource_label:self.analysis_resource_name,
+           self.start_date_label:start_date,
+           self.end_date_label:end_date,
+           self.duration_label:duration,
+           self.percent_complete_label:pct_complete,
+           self.dependencies_label:','.join(flowcell_ids),
+          })
       return new_data
     except:
       raise
+
 
   def get_seqrun_info(self,active_seqrun_igf_id=None,
                       demultiplexing_pipeline=None):
