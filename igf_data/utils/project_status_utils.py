@@ -13,11 +13,52 @@ class Project_status:
   :param igf_session_class: Database session class
   :param project_igf_id: Project igf id for database lookup
   :param seqrun_work_day: Duration for seqrun jobs in days, default 2 
+  :param analysis_work_day: Duration for analysis jobs in days, default 1 
   '''
-  def __init__(self,igf_session_class,project_igf_id,seqrun_work_day=2):
+  def __init__(self,igf_session_class,project_igf_id,seqrun_work_day=2,
+               analysis_work_day=1):
     self.project_igf_id=project_igf_id
     self.base_adaptor=BaseAdaptor(**{'session_class':igf_session_class})
     self.seqrun_work_day=seqrun_work_day
+    self.analysis_work_day=analysis_work_day
+
+
+  def generate_gviz_json_file(self,output_file,demultiplexing_pipeline,
+                              analysis_pipeline,active_seqrun_igf_id=None):
+    '''
+    A wrapper method for writing a gviz json file with project status information
+    
+    :param output_file: A filepath for writing project status
+    :param analysis_pipeline: Name of the analysis pipeline
+    :param demultiplexing_pipeline: Name of the demultiplexing pipeline
+    :param analysis_pipeline: name of the analysis pipeline
+    :param active_seqrun_igf_id: Igf id go the active seqrun, default None
+    '''
+    try:
+      data=list()
+      description=self.get_status_description()                                 # get gviz description
+      column_order=self.get_status_column_order()                               # get gviz column order
+      seqrun_data=self.get_seqrun_info(\
+                         active_seqrun_igf_id=active_seqrun_igf_id,
+                         demultiplexing_pipeline=demultiplexing_pipeline)       # get seqrun data
+      if len(seqrun_data)>0:
+        data.extend(seqrun_data)                                                # add seqrun data
+
+      analysis_data=self.get_analysis_info(analysis_pipeline=analysis_pipeline) # get analysis status
+      if len(analysis_data)>0:
+        data.extend(analysis_data)                                              # add analysis status
+
+      if len(data)>0:
+        convert_to_gviz_json_for_display(\
+          data=data,
+          description=description,
+          columns_order=column_order,
+          output_file=output_file)                                              # create gviz json file
+      else:
+        with open(output_file,'w') as fp:
+          fp.write('')                                                          # create an empty file
+    except:
+      raise
 
   def get_status_description(self):
     '''
@@ -146,7 +187,7 @@ class Project_status:
     except:
       raise
 
-  def get_analysis_info(self,project_igf_id,analysis_pipeline,analysis_work_day=1,
+  def get_analysis_info(self,analysis_pipeline,
                         task_id_label='task_id',task_name_label='task_name',
                         resource_label='resource',resource_name='Demultiplexing',
                         start_date_label='start_date',end_date_label='end_date',
@@ -154,7 +195,6 @@ class Project_status:
                         dependencies_label='dependencies'):
     '''
     A method for fetching all active experiments and their run status for a project
-    :param project_igf_id: A project igf id
     :param analysis_pipeline: Name of the analysis pipeline
     :return: A list of dictionary containing the analysis information
     '''
@@ -183,7 +223,7 @@ class Project_status:
             filter(Seqrun.reject_run=='N').\
             filter(Pipeline.pipeline_id==Pipeline_seed.pipeline_id).\
             filter(Pipeline.pipeline_name==analysis_pipeline).\
-            filter(Project.project_igf_id==project_igf_id)
+            filter(Project.project_igf_id==self.project_igf_id)
       results=base.fetch_records(query=query,
                                  output_mode='dataframe')
       base.close_session()
@@ -201,10 +241,10 @@ class Project_status:
             incomplete_exp=int(status['total']-status['FINISHED'])
 
         first_update=results['date_stamp'].min()
-        start_date=first_update-timedelta(days=analysis_work_day)        # get analysis start date
+        start_date=first_update-timedelta(days=self.analysis_work_day)        # get analysis start date
         last_update=results['date_stamp'].max()
         if incomplete_exp>0:
-          end_date=last_update+incomplete_exp*timedelta(days=analysis_work_day) # expected end date
+          end_date=last_update+incomplete_exp*timedelta(days=self.analysis_work_day) # expected end date
         else:
           end_date=last_update                                           # end date if all done
 
@@ -225,6 +265,7 @@ class Project_status:
                       demultiplexing_pipeline=None):
     '''
     A method for fetching all active sequencing runs for a project
+    
     :param active_seqrun_igf_id: Seqrun igf id for the current run, default None
     :param demultiplexing_pipeline: Name of the demultiplexing pipeline, default None
     :returns: A dictionary containing seqrun information
