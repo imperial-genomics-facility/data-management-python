@@ -56,7 +56,7 @@ class RunScanpy(IGFBaseProcess):
 
       tar = tarfile.open(tar_file,'r:gz')                                       # open tar file
       for tarinfo in tar:
-        if re.match(metrix_file_pattern,tarinfo.name) or \
+        if re.match(matrix_file_pattern,tarinfo.name) or \
            re.match(genes_file_pattern,tarinfo.name) or \
            re.match(barcodes_file_pattern,tarinfo.name):
           tar.extract(tarinfo.name,
