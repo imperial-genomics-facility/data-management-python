@@ -1,6 +1,6 @@
 import matplotlib
 matplotlib.use('Agg')
-import os,re
+import os,re,tarfile
 import matplotlib.pyplot as plt
 from igf_data.utils.tools.scanpy_utils import Scanpy_tool
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
@@ -13,7 +13,7 @@ class RunScanpy(IGFBaseProcess):
   A ehive process class for running scanpy analysis
   '''
   def param_defaults(self):
-    params_dict=super(RunSamtools,self).param_defaults()
+    params_dict=super(RunScanpy,self).param_defaults()
     params_dict.update({
         'cellranger_output':'',
         'analysis_name':'scanpy',
