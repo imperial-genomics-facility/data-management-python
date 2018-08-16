@@ -4,7 +4,7 @@ import os,re,tarfile
 import matplotlib.pyplot as plt
 from igf_data.utils.tools.scanpy_utils import Scanpy_tool
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
-from igf_data.igfdb.collectionadaptor import Collection_attribute
+from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.utils.fileutils import move_file,get_temp_dir,remove_dir
 from igf_data.utils.analysis_collection_utils import Analysis_collection_utils
 
@@ -119,7 +119,7 @@ class RunScanpy(IGFBaseProcess):
         ensembl_species_name=species_name_lookup[species_name]                  # get ensembl species name
         # fetch cellranger tar path from db
         if cellranger_tarfile=='':
-          ca=Collection_attribute(**{'session_class':igf_session_class})
+          ca=CollectionAdaptor(**{'session_class':igf_session_class})
           ca.start_session()                                                    # connect to database
           cellranger_tarfiles=ca.get_collection_files(\
                                 collection_name=experiment_igf_id,
