@@ -45,11 +45,11 @@ class RunScanpy(IGFBaseProcess):
       matrics_file_path=''
       genes_tsv_file_path=''
       barcodes_tsv_file_path=''
-      matrix_file_pattern=re.compile(r'\S+/filtered_gene_bc_matrices/\S+/{0}'.\
+      matrix_file_pattern=re.compile(r'filtered_gene_bc_matrices/\S+/{0}$'.\
                                      format(matrics_file))
-      genes_file_pattern=re.compile(r'\S+/filtered_gene_bc_matrices/\S+/{0}'.\
+      genes_file_pattern=re.compile(r'filtered_gene_bc_matrices/\S+/{0}$'.\
                                     format(genes_tsv_file))
-      barcodes_file_pattern=re.compile(r'\S+/filtered_gene_bc_matrices/\S+/{0}'.\
+      barcodes_file_pattern=re.compile(r'filtered_gene_bc_matrices/\S+/{0}$'.\
                                        format(barcodes_tsv_file))
       if not os.path.exists(tar_file):
         raise IOError('File {0} not found'.format(tar_file))
@@ -112,7 +112,7 @@ class RunScanpy(IGFBaseProcess):
       cellranger_collection_type=self.param('cellranger_collection_type')
       scanpy_collection_type=self.param('scanpy_collection_type')
       collection_table=self.param('collection_table')
-      cellranger_tarfile=self.param('cellranger_output')
+      #cellranger_tarfile=self.param('cellranger_output')
 
       output_report=''
       if species_name in species_name_lookup.keys():                            # check for human or mice
