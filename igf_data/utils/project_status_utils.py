@@ -83,7 +83,7 @@ class Project_status:
           data=data,
           description=description,
           columns_order=column_order,
-          output_file=None)                                                     # create gviz json file
+          output_file=output_file)                                              # create gviz json file
       else:
         with open(output_file,'w') as fp:
           fp.write('')                                                          # create an empty file
