@@ -41,6 +41,8 @@ class UpdateProjectAnalysisStats(IGFBaseProcess):
       remote_file_path=os.path.join(remote_project_path,
                                     project_igf_id,
                                     analysis_data_json)
+      os.chmod(output_file,
+               mode=0o754)                                                      # changed file permission before copy
       self._check_and_copy_remote_file(remote_user=remote_user,
                                        remote_host=remote_host,
                                        source_file=output_file,
