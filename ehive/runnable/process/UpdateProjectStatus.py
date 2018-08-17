@@ -43,8 +43,7 @@ class UpdateProjectStatus(IGFBaseProcess):
       ps.generate_gviz_json_file(\
            output_file=temp_status_output,
            demultiplexing_pipeline=demultiplexing_pipeline_name,
-           analysis_pipeline=analysis_pipeline_name,
-           active_seqrun_igf_id=seqrun_igf_id)                                  # write data to output json file
+           analysis_pipeline=analysis_pipeline_name)                            # write data to output json file
       os.chmod(temp_status_output,
                mode=0o754)                                                      # changed file permission before copy
       remote_file_path=os.path.join(remote_project_dir,
