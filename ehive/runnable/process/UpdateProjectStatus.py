@@ -35,7 +35,7 @@ class UpdateProjectStatus(IGFBaseProcess):
 
       temp_work_dir=get_temp_dir()                                              # get a temp dir
       ps=Project_status(igf_session_class=igf_session_class,
-                        project_igf_id=project_name)
+                        project_igf_id=project_igf_id)
       temp_status_output=os.path.join(temp_work_dir,
                                       status_data_json)                         # get path for temp status file
       remote_project_dir=os.path.join(remote_project_path,\
