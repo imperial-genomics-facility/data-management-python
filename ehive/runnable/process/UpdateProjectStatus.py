@@ -39,7 +39,7 @@ class UpdateProjectStatus(IGFBaseProcess):
       temp_status_output=os.path.join(temp_work_dir,
                                       status_data_json)                         # get path for temp status file
       remote_project_dir=os.path.join(remote_project_path,\
-                                      project_name)                             # get remote project directory path
+                                      project_igf_id)                           # get remote project directory path
       ps.generate_gviz_json_file(\
            output_file=temp_status_output,
            demultiplexing_pipeline=demultiplexing_pipeline_name,
