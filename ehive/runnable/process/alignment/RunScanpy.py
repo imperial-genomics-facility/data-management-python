@@ -134,7 +134,7 @@ class RunScanpy(IGFBaseProcess):
 
         # extract filtered metrics files from tar
         output_dir=get_temp_dir()                                               # get a temp dir
-        output_report=os.path.join(output_report,
+        output_report=os.path.join(output_dir,
                                    'report.html')                               # get temp report path
         matrix_file,gene_file,barcode_file=self._extract_cellranger_filtered_metrics(\
                                              tar_file=cellranger_tarfile,
