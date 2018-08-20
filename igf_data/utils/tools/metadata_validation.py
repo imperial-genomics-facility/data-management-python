@@ -29,10 +29,15 @@ class Validate_project_and_samplesheet_metadata:
       samplesheet_errors=samplesheet.validate_samplesheet_data(schema_json=self.samplesheet_schema)
       errors=list()
       if len(samplesheet_errors)>0:
-        errors=[{'column':err.schema_path[2],
+        errors=[{'column':'',
+                 'line':'',
+                 'filename':os.path.basename(self.samplesheet_file),
+                 'error':err} 
+                 if isinstance(err,str) else 
+                {'column':err.schema_path[2],
                  'line':err.path[0]+1,
                  'filename':os.path.basename(self.samplesheet_file),
-                 'error':err.message} 
+                 'error':err.message}
                 for err in samplesheet_errors]
       return errors
     except:
@@ -57,7 +62,12 @@ class Validate_project_and_samplesheet_metadata:
 
         json_data=metadata.to_dict(orient='records')
         errors=sorted(metadata_validator.iter_errors(json_data), key=lambda e: e.path)
-        errors=[{'column':err.schema_path[2],
+        errors=[{'column':'',
+                 'line':'',
+                 'filename':os.path.basename(self.samplesheet_file),
+                 'error':err} 
+                 if isinstance(err,str) else 
+                {'column':err.schema_path[2],
                  'line':err.path[0]+1,
                  'filename':os.path.basename(metadata_file),
                  'error':err.message} 
