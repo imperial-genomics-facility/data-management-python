@@ -26,13 +26,11 @@ class Validate_project_and_samplesheet_metadata:
     '''
     try:
       samplesheet=SampleSheet(infile=self.samplesheet_file)
-      samplesheet_errors=samplesheet.validate_samplesheet_data(schema_json=self.samplesheet_schema)
       with open(self.samplesheet_schema,'r') as jp:
         json_data=json.load(jp)
 
       samplesheet_json_fields=list(json_data['items']['properties'].keys())
       errors=list()
-
       if header_name in samplesheet._data_header:
         if header_name not in samplesheet_json_fields:
           errors.append({'column':'',
@@ -41,9 +39,10 @@ class Validate_project_and_samplesheet_metadata:
                          'error':'Header {0} is not supported. Validation incomplete.'.\
                          format(header_name)}
                        )
-        if len(errors)>0:
+      if len(errors)>0:
           return errors                                                         # stop checking samplesheet
 
+      samplesheet_errors=samplesheet.validate_samplesheet_data(schema_json=self.samplesheet_schema)
       if len(samplesheet_errors)>0:
         errors=[{'column':'',
                  'line':'',
