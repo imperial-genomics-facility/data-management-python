@@ -69,9 +69,24 @@ class Validate_project_and_samplesheet_metadata:
       with open(self.metadata_schema,'r') as jf:
         schema=json.load(jf)
       metadata_validator=Draft4Validator(schema)
+      metadata_json_fields=list(schema['items']['properties'].keys())
 
       for metadata_file in self.metadata_files:
         metadata=pd.read_csv(metadata_file)
+        metadata_error_list=list()
+        for header_name in metadata.columns:
+          if not header_name.startswith('Unnamed') and \
+             not header_name in metadata_json_fields:                           # ignore any column without a header
+            metadata_error_list.append({'column':'',
+                                        'line':'',
+                                        'filename':os.path.basename(metadata_file),
+                                        'error':'Header {0} is not supported. Validation incomplete.'.\
+                                        format(header_name)}
+                                      )
+        if len(metadata_error_list)>0:
+          error_list.extend(metadata_error_list)
+          continue                                                              # skip validation check for metadata file
+
         metadata=metadata.fillna("").applymap(lambda x: str(x))
         if 'taxon_id' in metadata.columns:
           metadata['taxon_id']=metadata['taxon_id'].astype(str)
