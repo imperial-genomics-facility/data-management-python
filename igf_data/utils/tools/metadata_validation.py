@@ -31,7 +31,7 @@ class Validate_project_and_samplesheet_metadata:
 
       samplesheet_json_fields=list(json_data['items']['properties'].keys())
       errors=list()
-      if header_name in samplesheet._data_header:
+      for header_name in samplesheet._data_header:
         if header_name not in samplesheet_json_fields:
           errors.append({'column':'',
                          'line':'',
