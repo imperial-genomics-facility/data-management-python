@@ -49,8 +49,8 @@
               "enum" : ["HG38",
                         "HG19_MM10",
                         "UNKNOWN",
-                        "MM10",
-                        ""]
+                        "MM10"
+                       ]
             },
             "library_name" : {
               "type" : "string",
