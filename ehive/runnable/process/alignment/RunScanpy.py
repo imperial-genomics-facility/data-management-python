@@ -15,7 +15,7 @@ class RunScanpy(IGFBaseProcess):
   def param_defaults(self):
     params_dict=super(RunScanpy,self).param_defaults()
     params_dict.update({
-        'cellranger_output':'',
+        'cellranger_tarfile':'',
         'analysis_name':'scanpy',
         'collection_table':'experiment',
         'report_template_file':'',
@@ -112,7 +112,7 @@ class RunScanpy(IGFBaseProcess):
       cellranger_collection_type=self.param('cellranger_collection_type')
       scanpy_collection_type=self.param('scanpy_collection_type')
       collection_table=self.param('collection_table')
-      #cellranger_tarfile=self.param('cellranger_output')
+      cellranger_tarfile=self.param('cellranger_tarfile')
 
       output_report=''
       if species_name in species_name_lookup.keys():                            # check for human or mice
