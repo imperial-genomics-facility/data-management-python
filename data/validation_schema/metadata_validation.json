@@ -112,7 +112,11 @@
             "insert_length" : {
               "type" : "number"
             },
-            "adapter_seq" : {
+            "adapter_seq1" : {
+              "type" : "string",
+              "pattern" : "^[ATCG]+$|^$"
+            },
+            "adapter_seq2" : {
               "type" : "string",
               "pattern" : "^[ATCG]+$|^$"
             },
