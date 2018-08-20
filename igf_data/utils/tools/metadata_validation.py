@@ -64,7 +64,7 @@ class Validate_project_and_samplesheet_metadata:
         errors=sorted(metadata_validator.iter_errors(json_data), key=lambda e: e.path)
         errors=[{'column':'',
                  'line':'',
-                 'filename':os.path.basename(self.samplesheet_file),
+                 'filename':os.path.basename(metadata_file),
                  'error':err} 
                  if isinstance(err,str) else 
                 {'column':err.schema_path[2],
