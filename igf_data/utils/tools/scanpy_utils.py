@@ -197,14 +197,18 @@ class Scanpy_tool:
         violin_plot_data=self._encode_png_image(png_file=violin_plot)
         marker_gene_violin_data.append({'cluster':group,
                                         'violin_data':violin_plot_data})
-        
+
+      project_name=self.project_name
+      project_name=project_name[0] \
+                   if isinstance(project_name, tuple) \
+                   else project_name                                            # check for project_name object
       template_env=Environment(\
                      loader=FileSystemLoader(\
                               searchpath=os.path.dirname(self.html_template_file)), \
                      autoescape=select_autoescape(['xml']))
       template_file=template_env.get_template(os.path.basename(self.html_template_file))
       template_file.\
-        stream(ProjectName=self.project_name,
+        stream(ProjectName=project_name,
                SampleName=self.sample_name,
                MitoPlot=mito_plot_data,
                MitoScatter1=mito_plot_scatter1,
