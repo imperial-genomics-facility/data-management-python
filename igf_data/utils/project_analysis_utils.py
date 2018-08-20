@@ -98,11 +98,11 @@ class Project_analysis:
         description={'Sample':('string','Sample')}
         column_order=['Sample']
 
-        for sample, sg_data in results.groupby(sample_igf_id_column):              # reformat analysis data
+        for sample, sg_data in results.groupby(sample_igf_id_column):           # reformat analysis data
           row_data=dict({'Sample':sample})
           for analysis_type, tg_data in sg_data.groupby(type_column):
             row_data.update({analysis_type:' ;'.join(tg_data[file_path_column].values)})
-            analysis_data.append(row_data)
+          analysis_data.append(row_data)                                        # collect analysis data for a sample
 
         for analysis_type, tg_data in results.groupby(type_column):
           description.update({analysis_type:('string',analysis_type)})
