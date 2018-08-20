@@ -183,13 +183,13 @@ class Scanpy_tool:
       marker_gene_violin_data=list()
       for group in result['names'].dtype.names:
         key='{0}_names'.format(group)
-        genes=gene_score[key].head(10).to_dict().values()
+        genes=gene_score[key].head(5).to_dict().values()
         sc.pl.violin(adata,
                      genes,
                      groupby='louvain',
                      show=True,
                      save='.png',
-                     multi_panel=True,
+                     multi_panel=False,
                      scale='width',
                      multi_panel_figsize=[8.0,16.0])                            # violin plot for marker genes
         violin_plot=os.path.join(self.work_dir,
