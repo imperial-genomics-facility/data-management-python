@@ -197,7 +197,7 @@ class Project_status:
 
       duration=int((end_date-start_date).total_seconds()*1000)
       if duration < 86400000:
-        duration=86400000                                                       # minimum duration is 1 day for the plot
+        end_date=None                                                           # minimum duration is 1 day for the plot
 
       new_data=dict()
       new_data.update(\
