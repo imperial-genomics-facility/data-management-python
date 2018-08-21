@@ -79,6 +79,10 @@ class Project_analysis:
             join(Collection_group).\
             join(File).\
             filter(Project.project_igf_id==project_igf_id).\
+            filter(Sample.project_id==Project.project_id).\
+            filter(Sample.sample_id==Experiment.sample_id).\
+            filter(Collection.collection_id==Collection_group.collection_id).\
+            filter(Collection_group.file_id==File.file_id).\
             filter(Collection.table=='experiment').\
             filter(Collection.type.in_(self.collection_type_list))
       results=base.fetch_records(query=query,
