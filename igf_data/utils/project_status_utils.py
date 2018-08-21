@@ -345,6 +345,7 @@ class Project_status:
       results=base.fetch_records(query=query,
                                  output_mode='dataframe')
       base.close_session()
+      results.drop_duplicates(inplace=True)
       new_data=list()
       if len(results.index)>0:
         new_data.extend(\
