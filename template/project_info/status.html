@@ -26,6 +26,7 @@
       $.getJSON("{{ status_data_json }}", function(jsonData) {
         var data = new google.visualization.DataTable(jsonData);
         var options = {
+          height: 750,
           timeline: {
             groupByRowLabel: true
           }
