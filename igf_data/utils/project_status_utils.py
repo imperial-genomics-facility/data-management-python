@@ -196,6 +196,9 @@ class Project_status:
           percent_complete=0
 
       duration=int((end_date-start_date).total_seconds()*1000)
+      if duration < 86400000:
+        duration=86400000                                                       # minimum duration is 1 day for the plot
+
       new_data=dict()
       new_data.update(\
       {self.task_id_label:data['flowcell_id'],
