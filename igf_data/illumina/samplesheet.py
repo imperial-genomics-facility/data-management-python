@@ -49,6 +49,8 @@ class SampleSheet:
       if not isinstance(data_series,pd.Series):
         raise AttributeError(type(data_series))
 
+      single_cell_flag_pattern=re.compile(r'^{0}$'.format(single_cell_flag),
+                                          re.IGNORECASE)
       err=list()
       if data_series['Sample_ID']==data_series['Sample_Name']:
         err.append("Same sample id and sample names are not allowed, {0}".\
@@ -60,17 +62,17 @@ class SampleSheet:
                    format(data_series['Sample_ID']))
 
       single_cell_index_pattern=re.compile(r'^SI-GA-[A-Z][0-9]+')
-      if data_series['Description']==single_cell_flag and \
+      if re.search(single_cell_flag_pattern,data_series['Description']) and \
          not re.search(single_cell_index_pattern,data_series['index']):
         err.append("Required I_7 single cell indexes for 10X sample {0}".\
                    format(data_series['Sample_ID']))
 
-      if data_series['Description']!=single_cell_flag and \
+      if not re.search(single_cell_flag_pattern,data_series['Description']) and \
          re.search(single_cell_index_pattern,data_series['index']):
         err.append("Found I_7 single cell indexes, missing 10X description sample {0}".\
                    format(data_series['Sample_ID']))
 
-      if data_series['Description']==single_cell_flag and \
+      if re.search(single_cell_flag_pattern,data_series['Description']) and \
          re.search(single_cell_index_pattern,data_series['index']) and \
          'index2' in data_series and data_series['index2'] !='':
         err.append("Found I_5 index(2) for single cell sample {0}".\

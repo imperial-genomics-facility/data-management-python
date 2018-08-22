@@ -1,0 +1,188 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "id": "https://github.com/imperial-genomics-facility/data-management-python/tree/master/data/validation_schema/metadata_validation.json#",
+    "title": "IGF metadata validation schema",
+    "description": "Schema for validation of metadata input file",
+    "type" : "array",
+    "version": "1.0",
+    "minItems": 1,
+    "uniqueItems": true,
+    "items": {
+        "type": "object",
+        "properties" : {
+            "project_igf_id" : {
+              "type" : "string",
+              "pattern": "^IGF[a-zA-Z0-9-_]+$"
+            },
+            "name" : {
+              "type" : "string",
+              "pattern": "^\\w+\\s\\w+\\s?\\w+?$"
+            },
+            "hpc_username" : {
+              "type" : "string",
+              "pattern": "^\\S+$|^$"
+            },
+            "username" : {
+              "type" : "string",
+              "pattern": "^\\S+$|^$"
+            },
+            "email_id" : {
+              "type" : "string",
+              "pattern": "\\S+\\@\\S+\\.\\w+"
+            },
+            "sample_igf_id" : {
+              "type" : "string",
+              "pattern": "^IGF[a-zA-Z0-9-_]+$"
+            },
+            "sample_submitter_id" : {
+              "type" : "string",
+              "pattern": "^[a-zA-Z0-9-]+$"
+            },
+            "barcode_check" : {
+              "type" : "string",
+              "enum" : ["ON",
+                        "OFF",
+                        ""]
+            },
+            "species_name" : {
+              "type" : "string",
+              "enum" : ["HG38",
+                        "HG19_MM10",
+                        "UNKNOWN",
+                        "MM10"
+                       ]
+            },
+            "library_name" : {
+              "type" : "string",
+              "pattern": "^IGF[a-zA-Z0-9-_]+$|^$"
+            },
+            "library_source" : {
+              "type" : "string",
+              "enum" : ["GENOMIC",
+                        "TRANSCRIPTOMIC",
+                        "GENOMIC_SINGLE_CELL",
+                        "TRANSCRIPTOMIC_SINGLE_CELL",
+                        "UNKNOWN",
+                        ""]
+            },
+            "library_strategy" : {
+              "type" : "string",
+              "enum" : ["WGS",
+                        "EXOME",
+                        "RNA-SEQ",
+                        "CHIP-SEQ",
+                        "ATAC-SEQ",
+                        "UNKNOWN",
+                        ""]
+            },
+            "experiment_type" : {
+              "type" : "string",
+              "enum" : ["POLYA-RNA",
+                        "TOTAL-RNA",
+                        "SMALL-RNA",
+                        "H3K4ME3",
+                        "WGS",
+                        "EXOME",
+                        "H3K27ME3",
+                        "H3K27AC",
+                        "H3K9ME3",
+                        "H3K36ME3",
+                        "ATAC-SEQ",
+                        "HISTONE-NARROW",
+                        "HISTONE-BROAD",
+                        "TENX-TRANSCRIPTOME",
+                        "DROP-SEQ-TRANSCRIPTOME",
+                        "TF",
+                        "UNKNOWN",
+                        ""]
+            },
+            "library_layout" : {
+              "type" : "string",
+              "enum" : ["SINGLE",
+                        "PAIRED",
+                        "UNKNOWN",
+                        ""]
+            },
+            "fragment_length_distribution_mean" : {
+              "type" : "number"
+            },
+            "fragment_length_distribution_sd" : {
+              "type" : "number"
+            },
+            "insert_length" : {
+              "type" : "number"
+            },
+            "adapter_seq1" : {
+              "type" : "string",
+              "pattern" : "^[ATCG]+$|^$"
+            },
+            "adapter_seq2" : {
+              "type" : "string",
+              "pattern" : "^[ATCG]+$|^$"
+            },
+            "adapter_removal" : {
+              "type" : "string",
+              "enum" : ["ON",
+                        "OFF",
+                        ""]
+            },
+            "donor_anonymized_id" : {
+              "type" : "string",
+              "pattern" : "^\\S+$|^$"
+            },
+            "phenotype" : {
+              "type" : "string"
+            },
+            "treatment" : {
+              "type" : "string"
+            },
+            "taxon_id" : {
+              "type" : "string"
+            },
+            "scientific_name" : {
+              "type" : "string"
+            },
+            "trait" : {
+              "type" : "string"
+            },
+            "population" : {
+              "type" : "string"
+            },
+            "sex" : {
+              "type" : "string",
+              "enum" : ["FEMALE",
+                        "MALE",
+                        "MIXED",
+                        "UNKNOWN",
+                        ""]
+            },
+            "donor_age" : {
+              "type" : "string",
+              "pattern" : "^\\d+\\-\\d+\\w+$|^$"
+            },
+            "biomaterial_type" : {
+              "type" : "string",
+              "enum" : ["PRIMARY_TISSUE",
+                        "PRIMARY_CELL",
+                        "PRIMARY_CELL_CULTURE",
+                        "CELL_LINE",
+                        "UNKNOWN",
+                        ""]
+            },
+            "cell_type" : {
+              "type" : "string"
+            },
+            "tissue_type" : {
+              "type" : "string"
+            },
+            "cell_line" : {
+              "type" : "string"
+            }
+        },
+        "required": ["project_igf_id",
+                     "name",
+                     "email_id",
+                     "sample_igf_id"
+                     ]
+    }
+}

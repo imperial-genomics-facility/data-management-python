@@ -1,10 +1,10 @@
-numpy==1.13.3
-multiqc==1.2
+numpy==1.14
+multiqc==1.4
 coveralls
 html5lib
 lxml
 bs4
-pandas==0.20.3
+pandas==0.23.0
 sqlalchemy
 pymysql
 slackclient
@@ -16,3 +16,6 @@ gviz_api
 xlrd
 jsonschema
 pysam==0.14.1
+bioservices
+python-igraph
+scanpy[louvain]

@@ -1,0 +1,39 @@
+<html>
+    <head>
+    </head>
+    <body>
+        <h2>Project info</h2>
+        <dt>Project Name</dt>
+           <dd>{{ ProjectName }}</dd>
+        <p></p>
+        <dt>Sample Name</dt>
+           <dd>{{ SampleName }}</dd>
+        
+        <h2>Check for mitochondrial gene expression</h2>
+          <h3>Violin plot for MT gene expression counts</h3>
+          <img src="data:image/png;base64,{{ MitoPlot }}">
+        
+          <h3>Scatter plots for MT gene expression counts</h3>
+          <img src="data:image/png;base64,{{ MitoScatter1 }}">
+          <img src="data:image/png;base64,{{ MitoScatter2 }}">
+        
+        <h2>Genes dispersion plot</h2>
+        <img src="data:image/png;base64,{{ GenesDispersion }}">
+        
+        <h2>PCA ranking plot</h2>
+        <img src="data:image/png;base64,{{ Pca }}">
+        
+        <h2>tSNE Plot of louvain clusters</h2>
+        <img src="data:image/png;base64,{{ Tsne }}">
+        
+        <h2>Rank Genes Groups</h2>
+        <img src="data:image/png;base64,{{ RankGenesGroups }}">
+        
+        <h2>Check for marker genes in cluster</h2>
+        {% for data in MarkerGeneViolin %}
+          <h3>Violin plot for cell cluster {{ data['cluster'] }}</h2>
+          <img src="data:image/png;base64,{{ data['violin_data'] }}">
+        
+        {% endfor %}
+    </body>
+</html>
