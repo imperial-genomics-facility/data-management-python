@@ -8,6 +8,9 @@ from igf_data.igfdb.platformadaptor import PlatformAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.igfdb.sampleadaptor import SampleAdaptor
 from igf_data.igfdb.experimentadaptor import ExperimentAdaptor
+from igf_data.igfdb.runadaptor import RunAdaptor
+from igf_data.igfdb.fileadaptor import FileAdaptor
+from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.utils.dbutils import read_json_data, read_dbconf_json
 
 class Pipelineadaptor_test1(unittest.TestCase):
@@ -39,7 +42,8 @@ class Pipelineadaptor_test1(unittest.TestCase):
   
   def tearDown(self):
     Base.metadata.drop_all(self.engine)
-    os.remove(self.dbname)
+    if os.path.exists(self.dbname):
+      os.remove(self.dbname)
 
 
   def test_fetch_pipeline_records_pipeline_name(self):
@@ -141,6 +145,11 @@ class Pipelineadaptor_test2(unittest.TestCase):
     pl.create_pipeline_seed(data=pipeline_seed_data)
     base.close_session()
 
+  def tearDown(self):
+    Base.metadata.drop_all(self.engine)
+    if os.path.exists(self.dbname):
+      os.remove(self.dbname)
+
   def test_fetch_pipeline_seed_with_table_data(self):
     pl=PipelineAdaptor(**{'session_class': self.session_class})
     pl.start_session()
@@ -155,5 +164,113 @@ class Pipelineadaptor_test2(unittest.TestCase):
     self.assertEqual(project_id, 'IGFP0001_test_22-8-2017_rna_sc')
     self.assertTrue('experiment_igf_id' in list(table_data.columns))
 
+class Pipelineadaptor_test3(unittest.TestCase):
+  def setUp(self):
+    self.dbconfig='data/dbconfig.json'
+    dbparam=read_dbconf_json(self.dbconfig)
+    base=BaseAdaptor(**dbparam)
+    self.engine=base.engine
+    self.dbname=dbparam['dbname']
+    Base.metadata.create_all(self.engine)
+    self.session_class=base.get_session_class()
+    base.start_session()
+    platform_data=[{"platform_igf_id" : "M03291" ,
+                    "model_name" : "MISEQ" ,
+                    "vendor_name" : "ILLUMINA" ,
+                    "software_name" : "RTA" ,
+                    "software_version" : "RTA1.18.54"},
+                  ]
+    flowcell_rule_data=[{"platform_igf_id":"M03291",
+                         "flowcell_type":"MISEQ",
+                         "index_1":"NO_CHANGE",
+                         "index_2":"NO_CHANGE"}
+                       ]
+    pl=PlatformAdaptor(**{'session':base.session})
+    pl.store_platform_data(data=platform_data)
+    pl.store_flowcell_barcode_rule(data=flowcell_rule_data)
+    project_data=[{'project_igf_id':'IGFQ000123_avik_10-4-2018_Miseq'}]
+    pa=ProjectAdaptor(**{'session':base.session})
+    pa.store_project_and_attribute_data(data=project_data)
+    sample_data=[{'sample_igf_id':'IGF103923',
+                  'project_igf_id':'IGFQ000123_avik_10-4-2018_Miseq',
+                  'species_name':'HG38'}
+                ]
+    sa=SampleAdaptor(**{'session':base.session})
+    sa.store_sample_and_attribute_data(data=sample_data)
+    seqrun_data=[{'seqrun_igf_id':'180416_M03291_0139_000000000-BRN47',
+                  'flowcell_id':'000000000-BRN47',
+                  'platform_igf_id':'M03291',
+                  'flowcell':'MISEQ'},
+                ]
+    sra=SeqrunAdaptor(**{'session':base.session})
+    sra.store_seqrun_and_attribute_data(data=seqrun_data)
+    pipeline_data=[{"pipeline_name" : "PrimaryAnalysis",
+                    "pipeline_db" : "sqlite:////bcl2fastq.db"},
+                   {"pipeline_name" : "DemultiplexIlluminaFastq",
+                    "pipeline_db" : "sqlite:////bcl2fastq.db"},
+                  ]
+    pla=PipelineAdaptor(**{'session':base.session})
+    pla.store_pipeline_data(data=pipeline_data)
+    file_data=[{'file_path':'/path/S20180405S_S1_L001_R1_001.fastq.gz',
+                'location':'HPC_PROJECT',
+                'md5':'fd5a95c18ebb7145645e95ce08d729e4',
+                'size':'1528121404'},
+               {'file_path':'/path/S20180405S_S1_L001_R2_001.fastq.gz',
+                'location':'HPC_PROJECT',
+                'md5':'fd5a95c18ebb7145645e95ce08d729e4',
+                'size':'1467047580'},
+              ]
+    fa=FileAdaptor(**{'session':base.session})
+    fa.store_file_and_attribute_data(data=file_data)
+    collection_data=[{'name':'IGF103923_MISEQ_000000000-BRN47_1',
+                      'type':'demultiplexed_fastq','table':'run'},
+                    ]
+    collection_files_data=[{'name':'IGF103923_MISEQ_000000000-BRN47_1',
+                            'type':'demultiplexed_fastq',
+                            'file_path':'/path/S20180405S_S1_L001_R1_001.fastq.gz'},
+                           {'name':'IGF103923_MISEQ_000000000-BRN47_1',
+                            'type':'demultiplexed_fastq',
+                            'file_path':'/path/S20180405S_S1_L001_R2_001.fastq.gz'}
+                          ]
+    ca=CollectionAdaptor(**{'session':base.session})
+    ca.store_collection_and_attribute_data(data=collection_data) 
+    ca.create_collection_group(data=collection_files_data)
+    experiment_data=[{'project_igf_id':'IGFQ000123_avik_10-4-2018_Miseq',
+                      'sample_igf_id':'IGF103923',
+                      'experiment_igf_id':'IGF103923_MISEQ',
+                      'library_name':'IGF103923',
+                      'library_source':'TRANSCRIPTOMIC_SINGLE_CELL',
+                      'library_strategy':'RNA-SEQ',
+                      'experiment_type':'TENX-TRANSCRIPTOME',
+                      'library_layout':'PAIRED',
+                      'platform_name':'MISEQ'}
+                    ]
+    ea=ExperimentAdaptor(**{'session':base.session})
+    ea.store_project_and_attribute_data(data=experiment_data)
+    run_data=[{'experiment_igf_id':'IGF103923_MISEQ',
+               'seqrun_igf_id':'180416_M03291_0139_000000000-BRN47',
+               'run_igf_id':'IGF103923_MISEQ_000000000-BRN47_1',
+               'lane_number':'1'}
+              ]
+    ra=RunAdaptor(**{'session':base.session})
+    ra.store_run_and_attribute_data(data=run_data)
+    base.close_session()
+
+
+  def tearDown(self):
+    Base.metadata.drop_all(self.engine)
+    if os.path.exists(self.dbname):
+      os.remove(self.dbname)
+
+  def test_seed_new_experiments(self):
+    pl=PipelineAdaptor(**{'session_class': self.session_class})
+    pl.start_session()
+    (new_exps)=pl.seed_new_experiments(pipeline_name='PrimaryAnalysis',
+                                       species_name_list=['HG38'],
+                                       fastq_type='demultiplexed_fastq',
+                                      )
+    self.assertEqual(len(new_exps),1)
+    self.assertEqual(new_exps[0],'IGFQ000123_avik_10-4-2018_Miseq')
+  
 if __name__ == '__main__':
   unittest.main()
