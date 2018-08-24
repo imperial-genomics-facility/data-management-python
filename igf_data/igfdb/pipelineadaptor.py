@@ -265,7 +265,7 @@ class PipelineAdaptor(BaseAdaptor):
 
 
   def seed_new_experiments(self,pipeline_name,species_name_list,fastq_type,project_list=None,
-                           active_status='ACTIVE',autosave=True,seed_tabel='experiment'):
+                           active_status='ACTIVE',autosave=True,seed_table='experiment'):
     '''
     A method for seeding new experiments for primary analysis
     
@@ -284,7 +284,7 @@ class PipelineAdaptor(BaseAdaptor):
                          join(Pipeline).\
                          filter(Pipeline.pipeline_name==pipeline_name).\
                          filter(Pipeline_seed.pipeline_id==Pipeline.pipeline_id).\
-                         filter(Pipeline_seed.seed_table==seed_tabel).\
+                         filter(Pipeline_seed.seed_table==seed_table).\
                          filter(Pipeline_seed.status.in_(['SEEDED','RUNNING'])).\
                          subquery()                                             # get list of seeded and running experiments
       new_experiments_query=self.session.\
