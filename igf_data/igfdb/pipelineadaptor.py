@@ -279,16 +279,16 @@ class PipelineAdaptor(BaseAdaptor):
     '''
     try:
       seeded_experiments=self.session.\
-                         query(Experiment.experiment.id).\
+                         query(Experiment.experiment_id).\
                          join(Pipeline_seed,Experiment.experiment_id==Pipeline_seed.seed_id).\
                          join(Pipeline).\
                          filter(Pipeline.pipeline_name==pipeline_name).\
                          filter(Pipeline_seed.pipeline_id==Pipeline.pipeline_id).\
                          filter(Pipeline_seed.seed_table==seed_tabel).\
-                         filter(Pipeline_seed.status.in_('SEEDED','RUNNING')).\
+                         filter(Pipeline_seed.status.in_(['SEEDED','RUNNING'])).\
                          subquery()                                             # get list of seeded and running experiments
       new_experiments_query=self.session.\
-                      query(Experiment.experiment.id,
+                      query(Experiment.experiment_id,
                             Project.project_igf_id).\
                       join(Sample).\
                       join(Project).\
@@ -305,7 +305,7 @@ class PipelineAdaptor(BaseAdaptor):
                       filter(File.file_id==Collection_group.file_id).\
                       filter(Experiment.status==active_status).\
                       filter(Run.status==active_status).\
-                      filter(Experiment.experiment_id.in_(seeded_experiments))
+                      filter(Experiment.experiment_id.notin_(seeded_experiments))
       if project_list is not None and \
          isinstance(project_list, list) and \
          len(project_list) >0:
