@@ -264,3 +264,18 @@ class PipelineAdaptor(BaseAdaptor):
       raise  
 
 
+  def seed_new_experiments(self,pipeline_name,project_list,species_name_list,
+                           active_status='ACTIVE',autosave=True,seed_tabel='experiment'):
+    '''
+    A method for seeding new experiments for primary analysis
+    
+    :param pipeline_name: Name of the analysis pipeline
+    :param project_list: List of projects to consider for seeding analysis pipeline
+    :param species_name_list: List of sample species to consider for seeding analysis pipeline
+    :param :
+    :param :
+    :param :
+    '''
+    try:
+    except:
+      raise
