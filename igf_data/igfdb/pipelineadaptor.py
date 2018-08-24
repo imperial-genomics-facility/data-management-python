@@ -303,6 +303,8 @@ class PipelineAdaptor(BaseAdaptor):
                       filter(Collection.type==fastq_type).\
                       filter(Collection.collection_id==Collection_group.collection_id).\
                       filter(File.file_id==Collection_group.file_id).\
+                      filter(Experiment.status==active_status).\
+                      filter(Run.status==active_status).\
                       filter(Experiment.experiment_id.in_(seeded_experiments))
       if project_list is not None and \
          isinstance(project_list, list) and \
