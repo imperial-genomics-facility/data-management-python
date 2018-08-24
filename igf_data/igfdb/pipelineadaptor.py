@@ -2,7 +2,7 @@ import pandas as pd
 from sqlalchemy import update
 from sqlalchemy.sql import column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
-from igf_data.igfdb.igfTables import Pipeline, Pipeline_seed, Platform, Project, Sample, Experiment, Run, Collection, File, Seqrun
+from igf_data.igfdb.igfTables import Pipeline, Pipeline_seed, Platform, Project, Sample, Experiment, Run, Collection, File, Seqrun, Collection_group
 
 class PipelineAdaptor(BaseAdaptor):
   '''
@@ -264,7 +264,7 @@ class PipelineAdaptor(BaseAdaptor):
       raise  
 
 
-  def seed_new_experiments(self,pipeline_name,project_list,species_name_list,
+  def seed_new_experiments(self,pipeline_name,species_name_list,fastq_type,project_list=None,
                            active_status='ACTIVE',autosave=True,seed_tabel='experiment'):
     '''
     A method for seeding new experiments for primary analysis
@@ -272,10 +272,63 @@ class PipelineAdaptor(BaseAdaptor):
     :param pipeline_name: Name of the analysis pipeline
     :param project_list: List of projects to consider for seeding analysis pipeline
     :param species_name_list: List of sample species to consider for seeding analysis pipeline
-    :param :
-    :param :
-    :param :
+    :param active_status: Label for active status, default ACTIVE
+    :param autosave: A toggle for autosaving records in database, default True
+    :param seed_tabel: Seed table for pipeseed table, default experiment
+    :returns: A list of available projects for seeding analysis table (if project_list is None) or None
     '''
     try:
+      seeded_experiments=self.session.\
+                         query(Experiment.experiment.id).\
+                         join(Pipeline_seed,Experiment.experiment_id==Pipeline_seed.seed_id).\
+                         join(Pipeline).\
+                         filter(Pipeline.pipeline_name==pipeline_name).\
+                         filter(Pipeline_seed.pipeline_id==Pipeline.pipeline_id).\
+                         filter(Pipeline_seed.seed_table==seed_tabel).\
+                         filter(Pipeline_seed.status.in_('SEEDED','RUNNING')).\
+                         subquery()                                             # get list of seeded and running experiments
+      new_experiments_query=self.session.\
+                      query(Experiment.experiment.id,
+                            Project.project_igf_id).\
+                      join(Sample).\
+                      join(Project).\
+                      join(Run).\
+                      join(Collection, Run.run_igf_id==Collection.name).\
+                      join(Collection_group).\
+                      join(File).\
+                      filter(Experiment.sample_id==Sample.sample_id).\
+                      filter(Project.project_id==Sample.project_id).\
+                      filter(Run.experiment_id==Experiment.experiment_id).\
+                      filter(Sample.species_name.in_(species_name_list)).\
+                      filter(Collection.type==fastq_type).\
+                      filter(Collection.collection_id==Collection_group.collection_id).\
+                      filter(File.file_id==Collection_group.file_id).\
+                      filter(Experiment.experiment_id.in_(seeded_experiments))
+      if project_list is not None and \
+         isinstance(project_list, list) and \
+         len(project_list) >0:
+        new_experiments_query=new_experiments_query.\
+                              filter(Project.project_igf_id.in_(project_list))
+
+      new_experiments=self.fetch_records(query=new_experiments_query,
+                                         output_mode='dataframe')
+      if project_list is None or \
+         (isinstance(project_list, list) and \
+          len(project_list)==0):
+        available_project_list=list(set(new_experiments['project_igf_id'].values)) # get unique list of available projects
+        return available_project_list
+      else:
+        available_experiments_list=list(set(new_experiments['experiment_id'].values)) # get available experiments
+        exp_data=list()
+        for exp_id in available_experiments_list: 
+          exp_data.append({'seed_id':exp_id,
+                           'seed_table':seed_table,
+                           'pipeline_name':pipeline_name})
+ 
+        if len(exp_data) > 0:
+          self.create_pipeline_seed(data=exp_data,
+                                    autosave=autosave)
+        return None
+
     except:
       raise
