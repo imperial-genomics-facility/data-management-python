@@ -271,6 +271,23 @@ class Pipelineadaptor_test3(unittest.TestCase):
                                       )
     self.assertEqual(len(new_exps),1)
     self.assertEqual(new_exps[0],'IGFQ000123_avik_10-4-2018_Miseq')
+
+  def test_seed_new_experiments1(self):
+    pl=PipelineAdaptor(**{'session_class': self.session_class})
+    pl.start_session()
+    (new_exps)=pl.seed_new_experiments(pipeline_name='PrimaryAnalysis',
+                                       species_name_list=['HG38'],
+                                       fastq_type='demultiplexed_fastq',
+                                       project_list=['IGFQ000123_avik_10-4-2018_Miseq']
+                                      )
+    self.assertFalse(new_exps)
+    pl.close_session()
+    pl=PipelineAdaptor(**{'session_class': self.session_class})
+    pl.start_session()
+    (seed_data,exp_data)=pl.fetch_pipeline_seed_with_table_data(pipeline_name='PrimaryAnalysis',
+                                                                table_name='experiment',
+                                                                status='SEEDED')
+    self.assertEqual(exp_data['experiment_igf_id'].values[0],'IGF103923_MISEQ')
   
 if __name__ == '__main__':
   unittest.main()
