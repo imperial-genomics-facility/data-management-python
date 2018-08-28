@@ -86,6 +86,13 @@ class Validate_project_and_samplesheet_metadata:
           error_list.extend(metadata_error_list)
           continue                                                              # skip validation check for metadata file
 
+        if 'library_source' in metadata.columns and \
+             'library_strategy' in metadata.columns and \
+             'experiment_type' in metadata.columns:
+          error_msg=self.validate_metadata_library_type(library_source=,
+                                                        library_strategy=,
+                                                        experiment_type=
+                                                       )
         metadata=metadata.fillna("").applymap(lambda x: str(x))
         if 'taxon_id' in metadata.columns:
           metadata['taxon_id']=metadata['taxon_id'].astype(str)
@@ -177,12 +184,39 @@ class Validate_project_and_samplesheet_metadata:
         return None
     except:
       raise
-  
+
   @staticmethod
-  def validate_metadata_library_type(library_source,library_strategy,experiment_type):
+  def check_metadata_library_by_row(data):
+    '''
+    A static method for checking library type metadata per row
+    
+    :param data: A pandas data series containing sample metadata
+    :returns: An error message or None
+    '''
+    try:
+      err=None
+      if 'sample_igf_id' not in data:
+        err='Sample igf id not found'
+      else:
+        if 'library_source' in data and \
+           'library_strategy' in data and \
+           'experiment_type' in data:
+          err=Validate_project_and_samplesheet_metadata.validate_metadata_library_type(\
+                sample_id=data['sample_igf_id'],
+                library_source=data['library_source'],
+                library_strategy=data['library_strategy'],
+                experiment_type=data['experiment_type'])
+
+      return err
+    except:
+      raise
+
+  @staticmethod
+  def validate_metadata_library_type(sample_id,library_source,library_strategy,experiment_type):
     '''
     A staticmethod for validating library metadata information for sample
-  
+    
+    :param sample_id: Sample name
     :param library_source: Library source information
     :param library_strategy: Library strategy information
     :param experiment_type: Experiment type information
@@ -207,26 +241,26 @@ class Validate_project_and_samplesheet_metadata:
                                     'HISTONE-BROAD',
                                     'TF',
                                     'UNKNOWN']:
-          error_msg='library_strategy {0} or experiment_type {1} is not compatible with  library_source {2}'.\
-                    format(library_strategy,experiment_type,library_source)
+          error_msg='{0}: library_strategy {1} or experiment_type {2} is not compatible with library_source {3}'.\
+                    format(sample_id,library_strategy,experiment_type,library_source)
       elif library_source == 'TRANSCRIPTOMIC':
         if library_strategy not in ['RNA-SEQ'] or \
            experiment_type not in ['POLYA-RNA',
                                    'TOTAL-RNA',
                                    'SMALL-RNA']:
-          error_msg='library_strategy {0} or experiment_type {1} is not compatible with  library_source {2}'.\
-                    format(library_strategy,experiment_type,library_source)
+          error_msg='{0}: library_strategy {1} or experiment_type {2} is not compatible with library_source {3}'.\
+                    format(sample_id,library_strategy,experiment_type,library_source)
       elif library_source == 'GENOMIC_SINGLE_CELL':
         if library_strategy not in ['UNKNOWN'] or \
            experiment_type not in ['UNKNOWN']:
-          error_msg='library_strategy {0} or experiment_type {1} is not compatible with  library_source {2}'.\
-                    format(library_strategy,experiment_type,library_source)
+          error_msg='{0}: library_strategy {1} or experiment_type {2} is not compatible with library_source {3}'.\
+                    format(sample_id,library_strategy,experiment_type,library_source)
       elif library_source == 'TRANSCRIPTOMIC_SINGLE_CELL':
         if library_strategy not in ['RNA-SEQ'] or \
            experiment_type not in ['TENX-TRANSCRIPTOME',
                                    'DROP-SEQ-TRANSCRIPTOME']:
-          error_msg='library_strategy {0} or experiment_type {1} is not compatible with  library_source {2}'.\
-                    format(library_strategy,experiment_type,library_source)
+          error_msg='{0}: library_strategy {1} or experiment_type {2} is not compatible with library_source {3}'.\
+                    format(sample_id,library_strategy,experiment_type,library_source)
 
       return error_msg
     except:
