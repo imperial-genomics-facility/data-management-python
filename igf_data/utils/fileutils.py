@@ -169,16 +169,17 @@ def get_temp_dir(work_dir=None, prefix='temp'):
     raise
 
 
-def remove_dir(dir_path):
+def remove_dir(dir_path,ignore_errors=True):
   '''
   A function for removing directory containing files
-  required params:
-  dir_path: A directory path
+  
+  :param dir_path: A directory path
+  :param ignore_errors: Ignore errors while removing dir, default True
   '''
   try:
     if not os.path.isdir(dir_path):
       raise IOError('directory path {0} is not present'.format(dir_path))
-    rmtree(dir_path)
+    rmtree(dir_path,ignore_errors=ignore_errors)
   except:
     raise
 
