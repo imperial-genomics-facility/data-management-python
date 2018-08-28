@@ -177,3 +177,57 @@ class Validate_project_and_samplesheet_metadata:
         return None
     except:
       raise
+  
+  @staticmethod
+  def validate_metadata_library_type(library_source,library_strategy,experiment_type):
+    '''
+    A staticmethod for validating library metadata information for sample
+  
+    :param library_source: Library source information
+    :param library_strategy: Library strategy information
+    :param experiment_type: Experiment type information
+    :returns: A error message string or None
+    '''
+    try:
+      error_msg=None
+      if library_source == 'GENOMIC':
+        if library_strategy not in ['WGS',
+                                    'EXOME',
+                                    'CHIP-SEQ',
+                                    'ATAC-SEQ',
+                                    'UNKNOWN'] or \
+            experiment_type not in ['WGS',
+                                    'EXOME',
+                                    'ATAC-SEQ',
+                                    'H3K4ME3',
+                                    'H3K27ME3',
+                                    'H3K27AC',
+                                    'H3K36ME3',
+                                    'HISTONE-NARROW',
+                                    'HISTONE-BROAD',
+                                    'TF',
+                                    'UNKNOWN']:
+          error_msg='library_strategy {0} or experiment_type {1} is not compatible with  library_source {2}'.\
+                    format(library_strategy,experiment_type,library_source)
+      elif library_source == 'TRANSCRIPTOMIC':
+        if library_strategy not in ['RNA-SEQ'] or \
+           experiment_type not in ['POLYA-RNA',
+                                   'TOTAL-RNA',
+                                   'SMALL-RNA']:
+          error_msg='library_strategy {0} or experiment_type {1} is not compatible with  library_source {2}'.\
+                    format(library_strategy,experiment_type,library_source)
+      elif library_source == 'GENOMIC_SINGLE_CELL':
+        if library_strategy not in ['UNKNOWN'] or \
+           experiment_type not in ['UNKNOWN']:
+          error_msg='library_strategy {0} or experiment_type {1} is not compatible with  library_source {2}'.\
+                    format(library_strategy,experiment_type,library_source)
+      elif library_source == 'TRANSCRIPTOMIC_SINGLE_CELL':
+        if library_strategy not in ['RNA-SEQ'] or \
+           experiment_type not in ['TENX-TRANSCRIPTOME',
+                                   'DROP-SEQ-TRANSCRIPTOME']:
+          error_msg='library_strategy {0} or experiment_type {1} is not compatible with  library_source {2}'.\
+                    format(library_strategy,experiment_type,library_source)
+
+      return error_msg
+    except:
+      raise
