@@ -86,13 +86,15 @@ class Validate_project_and_samplesheet_metadata:
           error_list.extend(metadata_error_list)
           continue                                                              # skip validation check for metadata file
 
-        if 'library_source' in metadata.columns and \
-             'library_strategy' in metadata.columns and \
-             'experiment_type' in metadata.columns:
-          error_msg=self.validate_metadata_library_type(library_source=,
-                                                        library_strategy=,
-                                                        experiment_type=
-                                                       )
+        library_errors=list()
+        library_errors=(metadata.apply(lambda x: self.check_metadata_library_by_row(data=x),
+                                       axis=1,
+                                       result_type=None))                       # check metadata per row
+        library_errors=[i for i in library_errors
+                            if i is not None]                                   # filter library errors
+        if len(library_errors)>0:
+          error_list.extend(library_errors)                                     # add library errors to the list of final errors
+
         metadata=metadata.fillna("").applymap(lambda x: str(x))
         if 'taxon_id' in metadata.columns:
           metadata['taxon_id']=metadata['taxon_id'].astype(str)
