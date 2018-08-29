@@ -93,6 +93,11 @@ class Validate_project_and_samplesheet_metadata:
         library_errors=[i for i in library_errors
                             if i is not None]                                   # filter library errors
         if len(library_errors)>0:
+          library_errors=[{'column':'',
+                           'line':'',
+                           'filename':os.path.basename(metadata_file),
+                           'error':err}
+                           for err in library_errors]                           # reformat library errors
           error_list.extend(library_errors)                                     # add library errors to the list of final errors
 
         metadata=metadata.fillna("").applymap(lambda x: str(x))
