@@ -311,8 +311,8 @@ class PipelineAdaptor(BaseAdaptor):
       if library_source_list is not None and \
          isinstance(library_source_list, list) and \
          len(library_source_list)>0:
-        new_experiments_query.\
-        filter(Experiment.library_source.in_(new_experiments_query))            # filter experiment based on library source
+        new_experiments_query=new_experiments_query.\
+                              filter(Experiment.library_source.in_(library_source_list)) # filter experiment based on library source
 
       if project_list is not None and \
          isinstance(project_list, list) and \
