@@ -265,12 +265,14 @@ class PipelineAdaptor(BaseAdaptor):
 
 
   def seed_new_experiments(self,pipeline_name,species_name_list,fastq_type,project_list=None,
-                           active_status='ACTIVE',autosave=True,seed_table='experiment'):
+                           library_source_list=None,active_status='ACTIVE',
+                           autosave=True,seed_table='experiment'):
     '''
     A method for seeding new experiments for primary analysis
     
     :param pipeline_name: Name of the analysis pipeline
-    :param project_list: List of projects to consider for seeding analysis pipeline
+    :param project_list: List of projects to consider for seeding analysis pipeline, default None
+    :param library_source_list: List of library source to consider for analysis, default None
     :param species_name_list: List of sample species to consider for seeding analysis pipeline
     :param active_status: Label for active status, default ACTIVE
     :param autosave: A toggle for autosaving records in database, default True
@@ -306,6 +308,12 @@ class PipelineAdaptor(BaseAdaptor):
                       filter(Experiment.status==active_status).\
                       filter(Run.status==active_status).\
                       filter(Experiment.experiment_id.notin_(seeded_experiments))
+      if library_source_list is not None and \
+         isinstance(library_source_list, list) and \
+         len(library_source_list)>0:
+        new_experiments_query.\
+        filter(Experiment.library_source.in_(new_experiments_query))            # filter experiment based on library source
+
       if project_list is not None and \
          isinstance(project_list, list) and \
          len(project_list) >0:
