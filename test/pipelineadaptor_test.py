@@ -219,10 +219,16 @@ class Pipelineadaptor_test3(unittest.TestCase):
                 'location':'HPC_PROJECT',
                 'md5':'fd5a95c18ebb7145645e95ce08d729e4',
                 'size':'1467047580'},
+               {'file_path':'/path/S20180405S_S3_L001_R2_001.fastq.gz',
+                'location':'HPC_PROJECT',
+                'md5':'fd5a95c18ebb7145645e95ce08d729e4',
+                'size':'1467047580'},
               ]
     fa=FileAdaptor(**{'session':base.session})
     fa.store_file_and_attribute_data(data=file_data)
     collection_data=[{'name':'IGF103923_MISEQ_000000000-BRN47_1',
+                      'type':'demultiplexed_fastq','table':'run'},
+                      {'name':'IGF103923_MISEQ1_000000000-BRN47_1',
                       'type':'demultiplexed_fastq','table':'run'},
                     ]
     collection_files_data=[{'name':'IGF103923_MISEQ_000000000-BRN47_1',
@@ -230,7 +236,10 @@ class Pipelineadaptor_test3(unittest.TestCase):
                             'file_path':'/path/S20180405S_S1_L001_R1_001.fastq.gz'},
                            {'name':'IGF103923_MISEQ_000000000-BRN47_1',
                             'type':'demultiplexed_fastq',
-                            'file_path':'/path/S20180405S_S1_L001_R2_001.fastq.gz'}
+                            'file_path':'/path/S20180405S_S1_L001_R2_001.fastq.gz'},
+                           {'name':'IGF103923_MISEQ1_000000000-BRN47_1',
+                            'type':'demultiplexed_fastq',
+                            'file_path':'/path/S20180405S_S3_L001_R2_001.fastq.gz'},
                           ]
     ca=CollectionAdaptor(**{'session':base.session})
     ca.store_collection_and_attribute_data(data=collection_data) 
@@ -243,6 +252,15 @@ class Pipelineadaptor_test3(unittest.TestCase):
                       'library_strategy':'RNA-SEQ',
                       'experiment_type':'TENX-TRANSCRIPTOME',
                       'library_layout':'PAIRED',
+                      'platform_name':'MISEQ'},
+                      {'project_igf_id':'IGFQ000123_avik_10-4-2018_Miseq',
+                      'sample_igf_id':'IGF103923',
+                      'experiment_igf_id':'IGF103923_MISEQ1',
+                      'library_name':'IGF103923_1',
+                      'library_source':'GENOMIC_SINGLE_CELL',
+                      'library_strategy':'WGS',
+                      'experiment_type':'UNKNOWN',
+                      'library_layout':'PAIRED',
                       'platform_name':'MISEQ'}
                     ]
     ea=ExperimentAdaptor(**{'session':base.session})
@@ -250,6 +268,10 @@ class Pipelineadaptor_test3(unittest.TestCase):
     run_data=[{'experiment_igf_id':'IGF103923_MISEQ',
                'seqrun_igf_id':'180416_M03291_0139_000000000-BRN47',
                'run_igf_id':'IGF103923_MISEQ_000000000-BRN47_1',
+               'lane_number':'1'},
+               {'experiment_igf_id':'IGF103923_MISEQ1',
+               'seqrun_igf_id':'180416_M03291_0139_000000000-BRN47',
+               'run_igf_id':'IGF103923_MISEQ1_000000000-BRN47_1',
                'lane_number':'1'}
               ]
     ra=RunAdaptor(**{'session':base.session})
@@ -275,18 +297,22 @@ class Pipelineadaptor_test3(unittest.TestCase):
   def test_seed_new_experiments1(self):
     pl=PipelineAdaptor(**{'session_class': self.session_class})
     pl.start_session()
-    (new_exps)=pl.seed_new_experiments(pipeline_name='PrimaryAnalysis',
-                                       species_name_list=['HG38'],
-                                       fastq_type='demultiplexed_fastq',
-                                       project_list=['IGFQ000123_avik_10-4-2018_Miseq']
-                                      )
+    (new_exps)=pl.seed_new_experiments(\
+                    pipeline_name='PrimaryAnalysis',
+                    species_name_list=['HG38'],
+                    fastq_type='demultiplexed_fastq',
+                    project_list=['IGFQ000123_avik_10-4-2018_Miseq'],
+                    library_source_list=['TRANSCRIPTOMIC_SINGLE_CELL']
+                  )
     self.assertFalse(new_exps)
     pl.close_session()
     pl=PipelineAdaptor(**{'session_class': self.session_class})
     pl.start_session()
-    (seed_data,exp_data)=pl.fetch_pipeline_seed_with_table_data(pipeline_name='PrimaryAnalysis',
-                                                                table_name='experiment',
-                                                                status='SEEDED')
+    (seed_data,exp_data)=pl.fetch_pipeline_seed_with_table_data(\
+                              pipeline_name='PrimaryAnalysis',
+                              table_name='experiment',
+                              status='SEEDED')
+    self.assertEqual(len(list(exp_data['experiment_igf_id'].values)),1)
     self.assertEqual(exp_data['experiment_igf_id'].values[0],'IGF103923_MISEQ')
   
 if __name__ == '__main__':
