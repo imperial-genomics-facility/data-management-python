@@ -16,10 +16,10 @@ def load_new_pipeline_data(data_file, dbconfig):
   except:
     raise
 
-def find_new_analysis_seeds(dbconfig_path,slack_config,pipeline_name,project_name_file,
+def find_new_analysis_seeds(dbconfig_path,pipeline_name,project_name_file,
                             species_name_list,fastq_type,library_source_list):
   '''
-  A utils method for finding and seeding new experiments for anlsysis
+  A utils method for finding and seeding new experiments for analysis
   
   :param dbconfig_path: A database configuration file
   :param slack_config: A slack configuration file
@@ -31,7 +31,6 @@ def find_new_analysis_seeds(dbconfig_path,slack_config,pipeline_name,project_nam
   :returns: List of alvailabe experiments or None
   '''
   try:
-    slack_obj=IGF_slack(slack_config=slack_config)                              # get slack instance
     available_exps=None
     if not os.path.exists(project_name_file):
       raise IOError('File {0} not found'.format(project_name_file))
