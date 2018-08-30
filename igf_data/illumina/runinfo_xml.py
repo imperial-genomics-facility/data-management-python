@@ -3,14 +3,23 @@ from collections import defaultdict
 from bs4 import BeautifulSoup
 
 class RunInfo_xml:
+  '''
+  A class for reading runinfo xml file from illumina sequencing runs
+  
+  :param xml_file: A runinfo xml file
+  '''
   def __init__(self, xml_file):
     self.xml_file=xml_file
     self._read_xml()
 
   def get_reads_stats(self, root_tag='read', number_tag='number', tags=['isindexedread','numcycles']):
     '''
-    Function for getting read and index stats from the RunInfo.xml file
-    Output is a dictionary with the read number as the key
+    A method for getting read and index stats from the RunInfo.xml file
+    
+    :param root_tag: Root tag for xml file, default read
+    :param number_tag: Number tag for xml file, default number
+    :param tags: List of tags for xml lookup, default ['isindexedread','numcycles']
+    :returns: A dictionary with the read number as the key
     '''
     reads_stats=defaultdict(lambda: defaultdict(dict))
     pattern=re.compile(number_tag, re.IGNORECASE)
