@@ -3,6 +3,14 @@ from igf_data.illumina.samplesheet import SampleSheet
 from igf_data.illumina.runinfo_xml import RunInfo_xml
 
 class BasesMask:
+  '''
+  A class for bases mask value calculation for demultiplexing of sequencing runs
+  
+  :param samplesheet_file: A samplesheet file containing sample index barcodes
+  :param runinfo_file: A runinfo xml file from sequencing run
+  :param read_offset: Read offset value in bp
+  :param index_offset: Index offset value in bp
+  '''
   def __init__(self, samplesheet_file, runinfo_file, read_offset, index_offset):
     self.samplesheet_file = samplesheet_file
     self.runinfo_file     = runinfo_file
@@ -11,7 +19,11 @@ class BasesMask:
 
   def calculate_bases_mask(self, numcycle_label='numcycles', isindexedread_label='isindexedread'):
     '''
-    Function for bases mask value calculation
+    A method for bases mask value calculation
+    
+    :param numcycle_label: Cycle label in runinfo xml file, default numcycles
+    :param isindexedread_label: Index cycle label in runinfo xml file, default isindexedread
+    :returns:
     '''
 
     samplesheet_file = self.samplesheet_file
