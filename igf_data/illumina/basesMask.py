@@ -23,7 +23,7 @@ class BasesMask:
     
     :param numcycle_label: Cycle label in runinfo xml file, default numcycles
     :param isindexedread_label: Index cycle label in runinfo xml file, default isindexedread
-    :returns:
+    :returns: A formatted bases mask value for bcl2fastq run
     '''
 
     samplesheet_file = self.samplesheet_file
