@@ -115,6 +115,25 @@ Platform helper adaptor
 .. automodule:: igf_data.utils.platformutils
    :members:
 
+New pipeline seed utils
+^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.ehive_utils.pipeseedfactory_utils
+   :members:
+
+Calculate storage statistics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.disk_usage_utils
+   :members:
+
+
+Helper api for report page
+-------------------------------
+
+Process Google chart json data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.gviz_utils
+   :members:
+
 Generate data for QC project page
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. automodule:: igf_data.utils.project_data_display_utils
@@ -130,22 +149,43 @@ Generate data for QC analysis page
 .. automodule:: igf_data.utils.project_analysis_utils
    :members:
 
-Process Google chart json data
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. automodule:: igf_data.utils.gviz_utils
-   :members:
 
-
-Calculate storage statistics
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. automodule:: igf_data.utils.disk_usage_utils
-   :members:
-
+Helper api for tools
+---------------------
 
 Process fastqc output file
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. automodule:: igf_data.utils.fastqc_utils
    :members:
+
+Cellranger count utils
+^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.tools.cellranger.cellranger_count_utils
+   :members:
+
+Picard utils
+^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.tools.picard_utils
+   :members:
+
+Reference genome utils
+^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.tools.reference_genome_utils
+   :members:
+
+Samtools utils
+^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.tools.samtools_utils
+   :members:
+
+Scanpy utils
+^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.tools.scanpy_utils
+   :members:
+
+
+Helper api for analysis
+-----------------------
 
 Fetch fastq files for analysis
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -156,4 +196,3 @@ Load analysis result to database and file system
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. autoclass:: igf_data.utils.analysis_collection_utils.Analysis_collection_utils
    :members:
-
