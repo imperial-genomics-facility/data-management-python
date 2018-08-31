@@ -14,6 +14,9 @@ except:
 class SampleSheet:
   '''
   A class for processing SampleSheet files for Illumina sequencing runs
+  
+  :param infile: A samplesheet file
+  :param data_header_name: name of the data section, default Data
   '''
 
   def __init__(self, infile, data_header_name='Data'):
@@ -90,8 +93,7 @@ class SampleSheet:
     '''
     A method for validation of samplesheet data
     
-    :param schema, A JSON schema for validation of the samplesheet data
-    
+    :param schema: A JSON schema for validation of the samplesheet data
     :return a list of error messages or an empty list if no error found
     '''
     try:
@@ -125,8 +127,9 @@ class SampleSheet:
   def group_data_by_index_length(self):
     '''
     Function for grouping samplesheet rows based on the combined length of index columns
-    Output: A dictionary of samplesheet objects, with combined index length as the key
     By default, this function removes Ns from the index
+    
+    :returns: A dictionary of samplesheet objects, with combined index length as the key
     '''
     data=self._data
     index_columns=self.index_columns
@@ -155,7 +158,8 @@ class SampleSheet:
   def _get_index_columns(self):
     '''
     An internal function for retrieving the index column names
-    Output: a list of index column names
+    
+    :returns: A list of index column names
     '''
     data_header=self._data_header
     pattern=re.compile('^index', re.IGNORECASE)
@@ -172,10 +176,11 @@ class SampleSheet:
 
   def get_project_names(self, tag='sample_project'):
     '''
-    Function for retrieving unique project names from samplesheet
-    Output: A list of unique project name
-    Default tag for search: sample_project
+    Function for retrieving unique project names from samplesheet.
     If there are multiple matching headers, the first column will be used
+    
+    :param tag: Name of tag for project lookup, default sample_project
+    :returns: A list of unique project name
     '''
     data_header=self._data_header
     data=self._data
@@ -197,11 +202,10 @@ class SampleSheet:
   def get_project_and_lane(self, project_tag='Sample_Project',lane_tag='Lane'):
     '''
     A method for fetching project and lane information from samplesheet
-    required params:
-    project_tag: A string for project name column in the samplesheet, default Sample_Project
-    lane_tag: A string for Lane id column in the samplesheet, default Lane
     
-    returns: A list of project name (for all) and lane information (only for hiseq)
+    :param project_tag: A string for project name column in the samplesheet, default Sample_Project
+    :param lane_tag: A string for Lane id column in the samplesheet, default Lane
+    :returns: A list of project name (for all) and lane information (only for hiseq)
     '''
     try:
       samplesheet_data=pd.DataFrame(self._data)
@@ -223,8 +227,9 @@ class SampleSheet:
 
   def get_index_count(self):
     '''
-    Function for getting index length counts
-    Output is a dictionary, with the index columns as the key
+    A function for getting index length counts
+    
+    :returns: A dictionary, with the index columns as the key
     '''
     data=self._data
     index_columns=self.index_columns
@@ -241,7 +246,8 @@ class SampleSheet:
   def get_indexes(self):
     '''
     A method for retrieving the indexes from the samplesheet
-    returns a list of indexes
+    
+    :returns: A list of index barcodes
     '''
     data=self._data
     index_columns=self.index_columns
@@ -281,6 +287,9 @@ class SampleSheet:
   def add_pseudo_lane_for_nextseq(self,lanes=['1','2','3','4']):
     '''
     A method for adding pseudo lane information for the nextseq platform
+    
+    :param lanes: A list of pseudo lanes, default ['1','2','3','4']
+    :returns:None
     '''
     try:
       data=self._data
@@ -293,15 +302,18 @@ class SampleSheet:
       self._data=newdata
     except:
       raise
-  
-      
-  def _reformat_project_and_description(self, project_field='Sample_Project', description_field='Description' ):
+
+
+  def _reformat_project_and_description(self, project_field='Sample_Project',
+                                        description_field='Description' ):
     '''
     A Function for removing the user information from Project field and
     converting ':' to '-' in the description field
+    
+    :param project_field: A column name for project lookup, default Sample_Project
+    :param description_field: A column name for description lookup, default Description
     '''
     data=self._data
-    
     for row in data:
       if project_field not in list(row.keys()):
         raise ValueError('project field {0} not found in sample sheet {1}'.format(project_field, self.infile))
@@ -318,16 +330,16 @@ class SampleSheet:
 
   def get_reverse_complement_index(self, index_field='index2'):
     '''
-    Function for changing the I5_index present in the index2 field of the 
+    A function for changing the I5_index present in the index2 field of the 
     samplesheet to intsreverse complement base
+    
+    :param index_field: Column name for index 2, default index2
     '''
     data=self._data
-
     for row in data:
       if index_field in list(row.keys()):
         # Only run the reverse complement function if index2 exists
         index=row[index_field]
-     
         try:
           if sys.version_info[0] < 3:
             # For Python 2.x, use maketrans
@@ -337,14 +349,15 @@ class SampleSheet:
             row[index_field]=index.upper().translate(str.maketrans('ACGT','TGCA'))[::-1]
         except:
           raise
-
     self._data=data
 
 
   def get_platform_name(self, section='Header', field='Application'):
     '''
     Function for getting platform details from samplesheet header
-    Default section is 'Header' and field is 'Application'
+    
+    :param section: File section for lookup, default 'Header'
+    :param field: Field name for platform info, default 'Application'
     '''
     header_section_data=self._header_data[section]
     pattern=re.compile('^{},'.format(field), re.IGNORECASE)
@@ -361,6 +374,10 @@ class SampleSheet:
     '''
     Function for getting the lane information for HiSeq runs
     It will return 1 for both MiSeq and NextSeq runs
+    
+    :param lane_field: Column name for lane info, default 'Lane'
+    :param target_platform: Hiseq platform tag, default 'HiSeq'
+    :returns: A list of lanes present in samplesheet file
     '''
     data=self._data
     platform_name=self.get_platform_name()
@@ -379,7 +396,10 @@ class SampleSheet:
   def check_sample_header(self, section, condition_key):
     '''
     Function for checking SampleSheet header
-    Output: zero if its not present or number of occurrence of the term
+    
+    :param section: A field name for header info check
+    :param condition_key: A condition key for header info check
+    :returns: zero if its not present or number of occurrence of the term
     '''
     header_data=self._header_data
     if not condition_key or not section:
@@ -394,8 +414,11 @@ class SampleSheet:
   def modify_sample_header(self, section, type, condition_key, condition_value=''):
     '''
     Function for modifying SampleSheet header
-    Supported type: 'add' or 'remove'
-    condition_value is required for 'add' type
+    
+    :param section: A field name for header info check
+    :param condition_key: A condition key for header info check
+    :param type: Mode type, 'add' or 'remove'
+    :param condition_value: Its is required for 'add' type
     '''
     header_data=self._header_data
     if ( type.lower().strip() == 'add' ):
@@ -428,11 +451,11 @@ class SampleSheet:
   def filter_sample_data( self, condition_key, condition_value , method='include',lane_header='Lane',lane_default_val='1'):
     '''
     Function for filtering SampleSheet data based on matching condition
-    required params:
-    condition_key: A samplesheet column name
-    condition_value: A keyword present in the selected column
-    method: 'include' or 'exclude' for adding or removing selected column from the samplesheet
-             default is include
+    
+    :param condition_key: A samplesheet column name
+    :param condition_value: A keyword present in the selected column
+    :param method: 'include' or 'exclude' for adding or removing selected column from the samplesheet
+                   default is include
     '''
     condition_value=str(condition_value).strip()
     data_header=self._data_header
@@ -460,6 +483,8 @@ class SampleSheet:
   def print_sampleSheet(self, outfile):
     '''
     Function for printing output SampleSheet
+    
+    :param outfile: A output samplesheet path
     '''
     header_data=self._header_data
     data_header=self._data_header

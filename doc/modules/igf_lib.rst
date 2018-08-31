@@ -14,12 +14,11 @@ Register metadata for new projects
 Sequencing run
 ----------------
 
-Find and process new sequencing run for demultiplexing
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Modify samplesheet
+^^^^^^^^^^^^^^^^^^^
 
-.. automodule:: igf_data.process.seqrun_processing.find_and_process_new_seqrun
+.. automodule:: igf_data.illumina.samplesheet
    :members:
-
 
 Fetch read cycle info from RunInfo.xml file
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -31,6 +30,12 @@ Fetch flowcell info from runparameters xml file
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: igf_data.illumina.runparameters_xml
+   :members:
+
+Find and process new sequencing run for demultiplexing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automodule:: igf_data.process.seqrun_processing.find_and_process_new_seqrun
    :members:
 
 
