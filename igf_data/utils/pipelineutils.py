@@ -1,5 +1,5 @@
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
-from igf_data.utils.dbutils import read_dbconf_json
+from igf_data.utils.dbutils import read_dbconf_json,read_json_data
 
 
 def load_new_pipeline_data(data_file, dbconfig):
