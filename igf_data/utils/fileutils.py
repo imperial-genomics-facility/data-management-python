@@ -130,9 +130,10 @@ def copy_remote_file(source_path,destinationa_path, source_address=None, destina
 def calculate_file_checksum(filepath, hasher='md5'):
   '''
   A method for file checksum calculation
-  required param:
-  filepath: a file path
-  hasher: default is md5, allowed: md5 or sha256
+  
+  :param filepath: a file path
+  :param hasher: default is md5, allowed: md5 or sha256
+  :returns: file checksum value
   '''
   try:
     with open(filepath, 'rb') as infile:
@@ -151,10 +152,10 @@ def calculate_file_checksum(filepath, hasher='md5'):
 def get_temp_dir(work_dir=None, prefix='temp'):
   '''
   A function for creating temp directory
-  required params:
-  work_dir: A path for work directory, default None
-  prefix: A prefix for directory path, default 'temp'
-  returns temp_dir
+  
+  :param work_dir: A path for work directory, default None
+  :param prefix: A prefix for directory path, default 'temp'
+  :returns: A temp_dir
   '''
   try:
     if work_dir is not None and not os.path.isdir(work_dir):                    # check if work directory is present
@@ -250,7 +251,7 @@ def prepare_file_archive(results_dirpath,output_file,gzip_output=True,
   :param gzip_output: A toggle for creating gzip output tarfile, default True
   :param exclude_list: A list of file pattern to exclude from the archive, default None
   :param force: A toggle for replacing output file, if its already present, default True
-  :returns: Nill
+  :returns: None
   '''
   try:
     output_mode='w'                                                             # write mode for non compressed output

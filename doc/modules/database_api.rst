@@ -80,10 +80,17 @@ Base database utils
 .. automodule:: igf_data.utils.dbutils
    :members:
 
+Base file utils
+^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.fileutils
+   :members:
+
+
 Calculate storage statistics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. automodule:: igf_data.utils.disk_usage_utils
    :members:
+
 
 Process fastqc output file
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
