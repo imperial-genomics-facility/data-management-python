@@ -85,6 +85,56 @@ Base file utils
 .. automodule:: igf_data.utils.fileutils
    :members:
 
+Irods client
+^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.igf_irods_client
+   :members:
+
+Base fastq sequence utils
+^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.sequtils
+   :members:
+
+Project helper adaptor
+^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.projectutils
+   :members:
+
+Sequencing run helper adaptor
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.seqrunutils
+   :members:
+
+Pipeline helper adaptor
+^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.pipelineutils
+   :members:
+
+Platform helper adaptor
+^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.platformutils
+   :members:
+
+Generate data for QC project page
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.project_data_display_utils
+   :members:
+
+Generate data for QC status page
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.project_status_utils
+   :members:
+
+Generate data for QC analysis page
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.project_analysis_utils
+   :members:
+
+Process Google chart json data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.gviz_utils
+   :members:
+
 
 Calculate storage statistics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
