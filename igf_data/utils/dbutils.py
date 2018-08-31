@@ -6,9 +6,9 @@ from igf_data.igfdb.baseadaptor import BaseAdaptor
 def read_json_data(data_file):
   '''
   A method for reading data from json file
-  required params:
-  data_file: A Json format file
-  returns a list of dictionaries
+
+  :param data_file: A Json format file
+  :returns: A list of dictionaries
   '''
   data=None
   try:
@@ -22,7 +22,7 @@ def read_json_data(data_file):
       raise ValueError('No data found in file {0}'.format(data))
 
     if not isinstance(data, list):
-      data=[data]                      # convert data dictionary to a list of dictionaries
+      data=[data]                                                               # convert data dictionary to a list of dictionaries
     return data
   except:
     raise
@@ -31,11 +31,11 @@ def read_json_data(data_file):
 def read_dbconf_json(dbconfig):
   '''
   A method for reading dbconfig json file
-  required params:
-  dbconfig: A json file containing the database connection info
-  e.g. {"dbhost":"DBHOST","dbport": PORT,"dbuser":"USER","dbpass":"DBPASS","dbname":"DBNAME","driver":"mysql","connector":"pymysql"}
+  
+  :param dbconfig: A json file containing the database connection info
+                   e.g. {"dbhost":"DBHOST","dbport": PORT,"dbuser":"USER","dbpass":"DBPASS","dbname":"DBNAME","driver":"mysql","connector":"pymysql"}
 
-  returns: a dictionary containing dbparms
+  :returns: a dictionary containing dbparms
   '''
   dbparam=dict()
   try:
@@ -52,8 +52,8 @@ def read_dbconf_json(dbconfig):
 def clean_and_rebuild_database(dbconfig):
   '''
   A method for deleting data in database and create empty tables
-  required params:
-  dbconfig: A json file containing the database connection info
+  
+  :param  dbconfig: A json file containing the database connection info
   '''
   try:
     dbparam=read_dbconf_json(dbconfig)

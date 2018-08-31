@@ -2,7 +2,7 @@ IGF database api
 =================
 
 
-Core adaptor classes
+Core adaptor class
 ---------------------
 
 
@@ -72,8 +72,18 @@ Pipeline adaptor
    :members:
 
 
-Helper utility classes
+Helper api class
 ------------------------
+
+Database utils
+^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.dbutils
+   :members:
+
+Fetch fastq files for analysis
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.analysis_fastq_fetch_utils
+   :members:
 
 Load analysis result to database and file system
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

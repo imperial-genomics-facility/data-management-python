@@ -14,8 +14,8 @@ Register metadata for new projects
 Sequencing run
 ----------------
 
-Modify samplesheet
-^^^^^^^^^^^^^^^^^^^
+Process samplesheet file
+^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 .. automodule:: igf_data.illumina.samplesheet
    :members:
