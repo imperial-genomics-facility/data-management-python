@@ -75,9 +75,14 @@ Pipeline adaptor
 Helper api class
 ------------------------
 
-Database utils
-^^^^^^^^^^^^^^^
+Base database utils
+^^^^^^^^^^^^^^^^^^^^
 .. automodule:: igf_data.utils.dbutils
+   :members:
+
+Calculate storage statistics
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.disk_usage_utils
    :members:
 
 Fetch fastq files for analysis
