@@ -85,6 +85,11 @@ Calculate storage statistics
 .. automodule:: igf_data.utils.disk_usage_utils
    :members:
 
+Process fastqc output file
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.fastqc_utils
+   :members:
+
 Fetch fastq files for analysis
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. automodule:: igf_data.utils.analysis_fastq_fetch_utils

@@ -4,6 +4,10 @@ from igf_data.utils.fileutils import get_temp_dir
 def get_fastq_info_from_fastq_zip(fastqc_zip,fastqc_datafile='*/fastqc_data.txt'):
   '''
   A function for retriving total reads and fastq file name from fastqc_zip file
+  
+  :param fastqc_zip: A zip file containing fastqc results
+  :param fastqc_datafile: A pattern f
+  :returns: return total read count and fastq filename
   '''
   try:
     zip_obj=zipfile.ZipFile(file=fastqc_zip)
