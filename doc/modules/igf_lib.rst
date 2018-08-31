@@ -20,6 +20,20 @@ Find and process new sequencing run for demultiplexing
 .. automodule:: igf_data.process.seqrun_processing.find_and_process_new_seqrun
    :members:
 
+
+Fetch read cycle info from RunInfo.xml file
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automodule:: igf_data.illumina.runinfo_xml
+   :members:
+
+Fetch flowcell info from runparameters xml file
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+.. automodule:: igf_data.illumina.runparameters_xml
+   :members:
+
+
 Demultiplexing
 ---------------
 

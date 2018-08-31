@@ -1,6 +1,11 @@
 from bs4 import BeautifulSoup
 
 class RunParameter_xml:
+  '''
+  A class for reading runparameters xml file from Illumina sequencing runs
+  
+  :param xml_file: A runparameters xml file
+  '''
   def __init__(self, xml_file):
     self.xml_file=xml_file
     self._read_xml()
@@ -19,7 +24,8 @@ class RunParameter_xml:
   def get_hiseq_flowcell(self):
     '''
     A method for fetching flowcell details for hiseq run
-    It returns None of MiSeq and NextSeq runs
+    
+    :returns: Flowcell info or None (for MiSeq and NextSeq runs)
     '''
     soup=self._soup
     try:
