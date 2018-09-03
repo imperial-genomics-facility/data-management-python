@@ -287,7 +287,9 @@ class PipelineAdaptor(BaseAdaptor):
                          filter(Pipeline.pipeline_name==pipeline_name).\
                          filter(Pipeline_seed.pipeline_id==Pipeline.pipeline_id).\
                          filter(Pipeline_seed.seed_table==seed_table).\
-                         filter(Pipeline_seed.status.in_(['SEEDED','RUNNING'])).\
+                         filter(Pipeline_seed.status.in_(['SEEDED',
+                                                          'RUNNING',
+                                                          'FINISHED'])).\
                          subquery()                                             # get list of seeded and running experiments
       new_experiments_query=self.session.\
                       query(Experiment.experiment_id,
