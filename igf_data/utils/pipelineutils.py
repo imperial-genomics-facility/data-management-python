@@ -28,7 +28,7 @@ def find_new_analysis_seeds(dbconfig_path,pipeline_name,project_name_file,
   :param project_name_file: A file containing the list of projects for seeding pipeline
   :param species_name_list: A list of species to consider for seeding analysis
   :param library_source_list: A list of library source info to consider for seeding analysis
-  :returns: List of alvailabe experiments or None
+  :returns: List of available experiments or None
   '''
   try:
     available_exps=None
