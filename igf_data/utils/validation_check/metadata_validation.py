@@ -28,6 +28,11 @@ class Validate_project_and_samplesheet_metadata:
     '''
     try:
       samplesheet=SampleSheet(infile=self.samplesheet_file)
+      samplesheet_header_count=0
+      for key,val in samplesheet._header_data.items():
+        samplesheet_header_count += 1+len(val)                                  # count samplesheet header lines
+
+      samplesheet_header_count += 2                                             # for data and header
       with open(self.samplesheet_schema,'r') as jp:
         json_data=json.load(jp)
 
@@ -62,7 +67,7 @@ class Validate_project_and_samplesheet_metadata:
                  'error':err} 
                  if isinstance(err,str) else 
                 {'column':err.schema_path[2],
-                 'line':err.path[0]+1,
+                 'line':err.path[0]+1+samplesheet_header_count,
                  'filename':os.path.basename(self.samplesheet_file),
                  'error':err.message}
                 for err in samplesheet_errors
