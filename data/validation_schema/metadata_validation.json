@@ -12,7 +12,8 @@
         "properties" : {
             "project_igf_id" : {
               "type" : "string",
-              "pattern": "^IGF[a-zA-Z0-9-_]+$"
+              "pattern": "^IGF[a-zA-Z0-9-_]+$",
+              "maxLength": 50
             },
             "name" : {
               "type" : "string",
@@ -24,11 +25,11 @@
             },
             "username" : {
               "type" : "string",
-              "pattern": "^\\S+$|^$"
+              "pattern": "^\\S+$|^$",
+              "maxLength": 10
             },
             "email_id" : {
-              "type" : "string",
-              "pattern": "\\S+\\@\\S+\\.\\w+"
+              "type" : "email"
             },
             "sample_igf_id" : {
               "type" : "string",
@@ -36,7 +37,8 @@
             },
             "sample_submitter_id" : {
               "type" : "string",
-              "pattern": "^[a-zA-Z0-9-]+$"
+              "pattern": "^[a-zA-Z0-9-]+$",
+              "maxLength": 40
             },
             "barcode_check" : {
               "type" : "string",
