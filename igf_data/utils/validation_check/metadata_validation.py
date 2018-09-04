@@ -148,6 +148,7 @@ class Validate_project_and_samplesheet_metadata:
       all_errors=list()
       all_errors.extend(self.get_samplesheet_validation_report())
       all_errors.extend(self.get_metadata_validation_report())
+      all_errors.extend(self.compare_metadata())
       return all_errors
     except:
       raise
