@@ -54,7 +54,7 @@ class Validate_project_and_samplesheet_metadata:
         errors.append({'column':'',
                        'line':'',
                        'filename':os.path.basename(self.samplesheet_file),
-                       'error':'samplesheet file should be {0}, name {1} is not supported.'.\
+                       'error':'samplesheet file should be {1}, name {0} is not supported.'.\
                          format(os.path.basename(self.samplesheet_file),
                                 self.samplesheet_name)}
                        )
