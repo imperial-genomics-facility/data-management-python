@@ -106,13 +106,16 @@
                         ""]
             },
             "fragment_length_distribution_mean" : {
-              "type" : "number"
+              "type" : "string",
+              "pattern" : "^[0-9]+$|^$"
             },
             "fragment_length_distribution_sd" : {
-              "type" : "number"
+              "type" : "string",
+              "pattern" : "^[0-9]+$|^$"
             },
             "insert_length" : {
-              "type" : "number"
+              "type" : "string",
+              "pattern" : "^[0-9]+$|^$"
             },
             "adapter_seq1" : {
               "type" : "string",
