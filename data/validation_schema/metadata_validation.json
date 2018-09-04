@@ -29,7 +29,8 @@
               "maxLength": 10
             },
             "email_id" : {
-              "type" : "email"
+              "type" : "string",
+              "pattern": "\\S+\\@\\S+\\.\\w+"
             },
             "sample_igf_id" : {
               "type" : "string",
