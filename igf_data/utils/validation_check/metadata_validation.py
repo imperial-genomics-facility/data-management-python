@@ -13,11 +13,13 @@ class Validate_project_and_samplesheet_metadata:
   :param samplesheet_schema: A json schema for samplesheet file validation
   :param metadata_schema: A json schema for metadata file validation
   '''
-  def __init__(self,samplesheet_file,metadata_files,samplesheet_schema,metadata_schema):
+  def __init__(self,samplesheet_file,metadata_files,samplesheet_schema,
+               metadata_schema,samplesheet_name='SampleSheet.csv'):
     self.samplesheet_file=samplesheet_file
     self.metadata_files=metadata_files
     self.samplesheet_schema=samplesheet_schema
     self.metadata_schema=metadata_schema
+    self.samplesheet_name=samplesheet_name
 
   def get_samplesheet_validation_report(self):
     '''
@@ -42,9 +44,19 @@ class Validate_project_and_samplesheet_metadata:
       if len(errors)>0:
           return errors                                                         # stop checking samplesheet
 
+      if os.path.basename(self.samplesheet_file) != self.samplesheet_name:
+        errors.append({'column':'',
+                       'line':'',
+                       'filename':os.path.basename(self.samplesheet_file),
+                       'error':'samplesheet file should be {0}, name {0} is not supported.'.\
+                         format(os.path.basename(self.samplesheet_file),
+                                self.samplesheet_name)}
+                       )
+
       samplesheet_errors=samplesheet.validate_samplesheet_data(schema_json=self.samplesheet_schema)
       if len(samplesheet_errors)>0:
-        errors=[{'column':'',
+        errors.\
+        extend([{'column':'',
                  'line':'',
                  'filename':os.path.basename(self.samplesheet_file),
                  'error':err} 
@@ -53,7 +65,8 @@ class Validate_project_and_samplesheet_metadata:
                  'line':err.path[0]+1,
                  'filename':os.path.basename(self.samplesheet_file),
                  'error':err.message}
-                for err in samplesheet_errors]
+                for err in samplesheet_errors
+               ])
       return errors
     except:
       raise
