@@ -4,7 +4,7 @@
     "title": "IGF metadata validation schema",
     "description": "Schema for validation of metadata input file",
     "type" : "array",
-    "version": "1.0",
+    "version": "1.0.1",
     "minItems": 1,
     "uniqueItems": true,
     "items": {
