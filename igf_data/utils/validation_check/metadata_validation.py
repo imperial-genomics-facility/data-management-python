@@ -290,3 +290,112 @@ class Validate_project_and_samplesheet_metadata:
       return error_msg
     except:
       raise
+
+  def compare_metadata(self):
+    '''
+    A function for comparing samplesheet and metadata files
+    
+    :returns: A list of error or an empty list
+    '''
+    try:
+      errors=list()
+      err_template={'column':'',
+                    'line':'',
+                    'filename':'',
+                    'error':''
+                   }
+      # read metadata file to data structure
+      metadata_data=defaultdict(lambda: defaultdict(lambda: set()))
+
+      for metadata_file in self.metadata_files:
+        metadata=pd.read_csv(metadata_file)
+        for row in metadata.to_dict(orient='records'):
+          project=row['project_igf_id']
+          sample=row['sample_igf_id']
+          email=row['email_id']
+          user=row['name']
+          metadata_data[project]['sample'].add(sample)
+          metadata_data[project]['email'].add(email)
+          metadata_data[project]['user'].add(user)
+
+      # read samplesheet to data structure 
+      samplesheet_data=defaultdict(lambda: defaultdict(lambda: set()))
+      sa=SampleSheet(infile=self.samplesheet_file)
+      for row in sa._data:
+        project=row['Sample_Project']
+        sample=row['Sample_ID']
+        samplesheet_data[project]['sample'].add(sample)
+
+      # count project and check difference
+      if len(metadata_data.keys()) != len(samplesheet_data.keys()):
+        errors.append({'column':'Sample_Project',
+                       'line':'',
+                       'filename':os.path.basename(self.samplesheet_file),
+                       'error':'Metadata files have {0} projects, samplesheet has {1} projects'.\
+                               format(len(metadata_data.keys()),
+                                      len(samplesheet_data.keys())
+                                     )
+                      })                                                        # project counts are not matching between samplesheet and metadata
+
+      non_matching_projects=list(set(samplesheet_data.keys()).\
+                                 difference(set(metadata_data.keys())))         # look for missing project metadata
+      if len(non_matching_projects)>0:
+        errors.append({'column':'Sample_Project',
+                       'line':'',
+                       'filename':os.path.basename(self.samplesheet_file),
+                       'error':'Metadata missing for following projects: {0}'.\
+                               format(non_matching_projects)
+                      })                                                        # project names are not matching
+
+      # count sample and check difference
+      for project in samplesheet_data.keys():
+        metadata_samples=set()
+        samplesheet_samples=samplesheet_data.get(project).get('sample')
+        metadata_project=metadata_data.get(project)
+        if metadata_project is not None:
+          metadata_samples=metadata_data.get(project).get('sample')
+
+        if len(metadata_samples) != len(samplesheet_samples):
+          errors.append({'column':'Sample_ID',
+                         'line':'',
+                         'filename':os.path.basename(self.samplesheet_file),
+                         'error':'Metadata files have {0} samples, samplesheet has {1} samples, for project {2}'.\
+                                 format(len(metadata_samples),
+                                        len(samplesheet_samples),
+                                        project
+                                       )
+                      })                                                        # check for sample count mismatch
+        non_matching_samples=list(samplesheet_samples.\
+                                  difference(metadata_samples))
+        if len(non_matching_samples)>0:
+          errors.append({'column':'Sample_ID',
+                         'line':'',
+                         'filename':os.path.basename(self.samplesheet_file),
+                         'error':'Metadata missing for {0} samples for project {1}. Small list {2}'.\
+                                 format(len(non_matching_samples),
+                                        project,
+                                        non_matching_samples \
+                                        if len(non_matching_samples)<5 \
+                                        else non_matching_samples[0:5]
+                                       )
+                      })                                                        # printing top 5 non matching samples
+
+      # count project user and email
+      for project in metadata_data.keys():
+        users=metadata_data.get(project).get('user')
+        email=metadata_data.get(project).get('email')
+        if len(users)>1 or len(email)>1:
+          errors.append({'column':'name / email_id',
+                         'line':'',
+                         'filename':' ,'.join([os.path.basename(metadata_file)
+                                                for metadata_file in self.metadata_files]),
+                         'error':'Metadata files have {0} users and {1} email_ids, for project {2}'.\
+                                 format(len(users),
+                                        len(email),
+                                        project
+                                       )
+                      })                                                        # check for project user info
+
+      return errors
+    except:
+      raise
