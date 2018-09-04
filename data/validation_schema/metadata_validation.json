@@ -108,15 +108,15 @@
             },
             "fragment_length_distribution_mean" : {
               "type" : "string",
-              "pattern" : "^[0-9]+$|^$"
+              "pattern" : "^\\d+?\\.?\\d+$|^$"
             },
             "fragment_length_distribution_sd" : {
               "type" : "string",
-              "pattern" : "^[0-9]+$|^$"
+              "pattern" : "^\\d+?\\.?\\d+$|^$"
             },
             "insert_length" : {
               "type" : "string",
-              "pattern" : "^[0-9]+$|^$"
+              "pattern" : "^\\d+?\\.?\\d+$|^$"
             },
             "adapter_seq1" : {
               "type" : "string",
