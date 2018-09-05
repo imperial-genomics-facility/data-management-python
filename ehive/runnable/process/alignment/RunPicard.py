@@ -10,6 +10,7 @@ class RunPicard(IGFBaseProcess):
     params_dict.update({
         'reference_type':'GENOME_FASTA',
         'reference_refFlat':'GENE_REFFLAT',
+        'ribosomal_interval_type':'RIBOSOMAL_INTERVAL',
         'java_param':'-Xmx4g',
         'copy_input':0,
         'analysis_files':[],
@@ -26,6 +27,7 @@ class RunPicard(IGFBaseProcess):
     :param igf_session_class: A database session class
     :param reference_type: Reference genome collection type, default GENOME_FASTA
     :param reference_refFlat: Reference genome collection type, default GENE_REFFLAT
+    :param ribosomal_interval_type: Collection type for ribosomal interval list, default RIBOSOMAL_INTERVAL
     :param species_name: species_name
     :param java_exe: Java path
     :param java_java_paramexe: Java run parameters
@@ -47,6 +49,7 @@ class RunPicard(IGFBaseProcess):
       species_name=self.param('species_name')
       reference_type=self.param('reference_type')
       reference_refFlat=self.param('reference_refFlat')
+      ribosomal_interval_type=self.param('ribosomal_interval_type')
       base_work_dir=self.param_required('base_work_dir')
       copy_input=self.param('copy_input')
       analysis_files=self.param_required('analysis_files')
@@ -59,20 +62,24 @@ class RunPicard(IGFBaseProcess):
         input_file=self.copy_input_file_to_temp(input_file=input_file)          # copy input to temp dir
 
       temp_output_dir=get_temp_dir()                                            # get temp work dir
-      ref_genome=Reference_genome_utils(genome_tag=species_name,
-                                        dbsession_class=igf_session_class,
-                                        genome_fasta_type=reference_type,
-                                        gene_reflat_type=reference_refFlat
-                                       )                                        # setup ref genome utils
+      ref_genome=Reference_genome_utils(\
+                   genome_tag=species_name,
+                   dbsession_class=igf_session_class,
+                   genome_fasta_type=reference_type,
+                   gene_reflat_type=reference_refFlat,
+                   ribosomal_interval_type=ribosomal_interval_type)             # setup ref genome utils
       genome_fasta=ref_genome.get_genome_fasta()                                # get genome fasta
       ref_flat_file=ref_genome.get_gene_reflat()                                # get refFlat file
-      picard=Picard_tools(java_exe=java_exe,
-                          java_param=java_param,
-                          picard_jar=picard_jar,
-                          input_file=input_file,
-                          output_dir=temp_output_dir,
-                          ref_fasta=genome_fasta,
-                          ref_flat_file=ref_flat_file)                          # get genome fasta)                               # setup picard tool
+      ribosomal_interval_file=ref_genome.get_ribosomal_interval()               # get ribosomal interval file
+      picard=Picard_tools(\
+               java_exe=java_exe,
+               java_param=java_param,
+               picard_jar=picard_jar,
+               input_file=input_file,
+               output_dir=temp_output_dir,
+               ref_fasta=genome_fasta,
+               ref_flat_file=ref_flat_file,
+               ribisomal_interval=ribosomal_interval_file)                      # get picard wrapper                               # setup picard tool
       temp_output_files,picard_command_line=\
            picard.run_picard_command(command_name=picard_command)               # run picard command
       output_file_list=list()
