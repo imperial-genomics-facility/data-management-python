@@ -13,7 +13,8 @@ class Reference_genome_utils:
                star_ref_type='TRANSCRIPTOME_STAR',
                genome_dbsnp_type='DBSNP_VCF',
                gatk_snp_ref_type='GATK_SNP_REF',
-               gatk_indel_ref_type='GATK_INDEL_REF'):
+               gatk_indel_ref_type='GATK_INDEL_REF',
+               ribosomal_interval_type='RIBOSOMAL_INTERVAL'):
     '''
     :param genome_tag: Collection name of the reference genome file
     :param dbsession_class: A sqlalchemy session class for database connection
@@ -29,6 +30,7 @@ class Reference_genome_utils:
     :param gatk_snp_ref_type: Collection type for the GATK SNP reference bundle files, default GATK_SNP_REF
     :param gatk_indel_ref_type: Collection type for the GATK INDEL reference bundle files, default gatk_indel_ref_type
     :param genome_dbsnp_type: Collection type for the dbSNP vcf file, default DBSNP_VCF
+    :param ribosomal_interval_type: Collection type for ribosomal interval, default RIBOSOMAL_INTERVAL
     '''
     self.genome_tag=genome_tag
     self.dbsession_class=dbsession_class
@@ -44,6 +46,7 @@ class Reference_genome_utils:
     self.gatk_snp_ref_type=gatk_snp_ref_type
     self.gatk_indel_ref_type=gatk_indel_ref_type
     self.genome_dbsnp_type=genome_dbsnp_type
+    self.ribosomal_interval_type=ribosomal_interval_type
 
 
   def _fetch_collection_files(self,collection_type,check_missing=False,
@@ -76,6 +79,21 @@ class Reference_genome_utils:
         raise ValueError('No file collection found for reference genome {0}:{1}'.\
                          format(self.genome_tag,collection_type))
       return ref_file
+    except:
+      raise
+
+  def get_ribosomal_interval(self,check_missing=True):
+    '''
+    A method for fetching ribosomal interval filepath for a specific genome build
+    
+    :param check_missing: A toggle for checking errors for missing files, default True
+    :returns: A filepath string
+    '''
+    try:
+      ribosomal_interval=self._fetch_collection_files(\
+                           collection_type=self.ribosomal_interval_type,
+                           check_missing=check_missing)
+      return  ribosomal_interval
     except:
       raise
 
