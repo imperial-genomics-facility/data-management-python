@@ -26,7 +26,8 @@ class Picard_tools:
                            AddOrReplaceReadGroups
   '''
   def __init__(self,java_exe,picard_jar,input_file,output_dir,ref_fasta,
-               picard_option=None,java_param='-Xmx4g',strand_info='NONE',ref_flat_file=None,
+               picard_option=None,java_param='-Xmx4g',strand_info='NONE',
+               ref_flat_file=None,ribisomal_interval=None,
                suported_commands=['CollectAlignmentSummaryMetrics',
                                   'CollectGcBiasMetrics',
                                   'QualityScoreDistribution',
@@ -44,6 +45,7 @@ class Picard_tools:
     self.strand_info=strand_info
     self.ref_flat_file=ref_flat_file
     self.suported_commands=suported_commands
+    self.ribisomal_interval=ribisomal_interval
 
   def _get_param_for_picard_command(self,command_name):
     '''
