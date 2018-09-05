@@ -115,6 +115,10 @@ class Picard_tools:
                     'STRAND':self.strand_info,
                     'CHART':chart_file
                    }
+        if self.ribisomal_interval is not None:
+          check_file_path(file_path=self.ribisomal_interval)
+          param_dict.update({'RIBOSOMAL_INTERVALS':self.ribisomal_interval})
+
         output_list=[output_file,
                      chart_file,
                     ]
