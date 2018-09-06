@@ -234,5 +234,18 @@ class TestValidateSampleSheet(unittest.TestCase):
     errors=samplesheet.validate_samplesheet_data(schema_json='data/validation_schema/samplesheet_validation.json')
     self.assertEqual(len(errors),1)
 
+class TestValidateSampleSheet1(unittest.TestCase):
+  def setUp(self):
+    file='doc/data/SampleSheet/HiSeq4000/SampleSheet.csv'
+    self.file=file
+    self.samplesheet_data=SampleSheet(infile=self.file)
+
+  def test_group_data_by_index_length(self):
+    data_group=self.\
+               samplesheet_data.\
+               group_data_by_index_length()
+    self.assertTrue(16 in [i for i in data_group])
+    self.assertFalse(12 in [i for i in data_group])
+
 if __name__ == '__main__':
   unittest.main()
