@@ -1,5 +1,6 @@
 import unittest,re
 from igf_data.illumina.samplesheet import SampleSheet
+from pandas.io.stata import _data_method_doc
 
 class Hiseq4000SampleSheet(unittest.TestCase):
   def setUp(self):
@@ -246,6 +247,19 @@ class TestValidateSampleSheet1(unittest.TestCase):
                group_data_by_index_length()
     self.assertTrue(16 in [i for i in data_group])
     self.assertFalse(12 in [i for i in data_group])
+
+class TestValidateSampleSheet2(unittest.TestCase):
+  def setUp(self):
+    file='doc/data/SampleSheet/MiSeq/SampleSheet.csv'
+    self.file=file
+    self.samplesheet_data=SampleSheet(infile=self.file)
+
+  def test_add_pseudo_lane_for_miseq(self):
+    self.assertEqual(self.samplesheet_data._data[0].get('PseudoLane'),None)
+    self.\
+    samplesheet_data.\
+    add_pseudo_lane_for_miseq()
+    self.assertEqual(self.samplesheet_data._data[0].get('PseudoLane'),'1')
 
 if __name__ == '__main__':
   unittest.main()
