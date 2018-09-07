@@ -66,6 +66,8 @@ def full_suite():
       unittest.TestLoader().loadTestsFromTestCase(Hiseq4000RunParam),
       unittest.TestLoader().loadTestsFromTestCase(Hiseq4000SampleSheet),
       unittest.TestLoader().loadTestsFromTestCase(TestValidateSampleSheet),
+      unittest.TestLoader().loadTestsFromTestCase(TestValidateSampleSheet1),
+      unittest.TestLoader().loadTestsFromTestCase(TestValidateSampleSheet2),
       unittest.TestLoader().loadTestsFromTestCase(Find_and_register_project_data1),
       unittest.TestLoader().loadTestsFromTestCase(Useradaptor_test1),
       unittest.TestLoader().loadTestsFromTestCase(Sampleadaptor_test1),
