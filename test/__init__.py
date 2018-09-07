@@ -21,6 +21,7 @@ def full_suite():
   from .runinfo_xml_test import Hiseq4000RunInfo as Hiseq4000RunInfo_runinfo_xml
   from .runparameters_xml_test import Hiseq4000RunParam
   from .samplesheet_test import Hiseq4000SampleSheet,TestValidateSampleSheet
+  from .samplesheet_test import TestValidateSampleSheet1,TestValidateSampleSheet2
   from .find_and_register_new_project_data_test import Find_and_register_project_data1
   from .useradaptor_test import Useradaptor_test1
   from .sampleadaptor_test import Sampleadaptor_test1
