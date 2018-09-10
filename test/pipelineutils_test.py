@@ -12,6 +12,7 @@ from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.utils.dbutils import read_json_data, read_dbconf_json
 from igf_data.utils.pipelineutils import load_new_pipeline_data,find_new_analysis_seeds
+from igf_data.utils.fileutils import get_temp_dir,remove_dir
 
 class Pipelineutils_test1(unittest.TestCase):
   def setUp(self):
@@ -49,15 +50,9 @@ class Pipelineutils_test2(unittest.TestCase):
     base = BaseAdaptor(**dbparam)
     self.engine = base.engine
     self.dbname = dbparam['dbname']
+    self.temp_dir=get_temp_dir()
     Base.metadata.create_all(self.engine)
     self.session_class = base.get_session_class()
-
-  def tearDown(self):
-    Base.metadata.drop_all(self.engine)
-    os.remove(self.dbname)
-
-  def test_find_new_analysis_seeds(self):
-    base = BaseAdaptor(**{'session_class':self.session_class})
     base.start_session()
     platform_data = [{"platform_igf_id" : "M03291" ,
                       "model_name" : "MISEQ" ,
@@ -228,15 +223,54 @@ class Pipelineutils_test2(unittest.TestCase):
     pla = PipelineAdaptor(**{'session':base.session})
     pla.store_pipeline_data(data=pipeline_data)
     base.close_session()
+
+  def tearDown(self):
+    Base.metadata.drop_all(self.engine)
+    os.remove(self.dbname)
+    if os.path.exists(self.temp_dir):
+      remove_dir(dir_path=self.temp_dir)
+
+  def test_find_new_analysis_seeds1(self):
+    base = BaseAdaptor(**{'session_class':self.session_class})
+    project_name_file=os.path.join(self.temp_dir,
+                                   'project_name_list.txt')
+    with open(project_name_file,'w') as fp:
+      fp.write('')
+
     available_exps = find_new_analysis_seeds(dbconfig_path=self.dbconfig,
                                              pipeline_name='PrimaryAnalysis',
-                                             project_name_file=None,
+                                             project_name_file=project_name_file,
                                              species_name_list=['HG38'],
                                              fastq_type='demultiplexed_fastq',
                                              library_source_list=['TRANSCRIPTOMIC_SINGLE_CELL']
                                             )
-    print(available_exps)
+    self.assertTrue('projectA' in available_exps)
 
+  def test_find_new_analysis_seeds2(self):
+    base = BaseAdaptor(**{'session_class':self.session_class})
+    project_name_file=os.path.join(self.temp_dir,
+                                   'project_name_list.txt')
+    with open(project_name_file,'w') as fp:
+      fp.write('projectA')
+
+    available_exps = find_new_analysis_seeds(dbconfig_path=self.dbconfig,
+                                             pipeline_name='PrimaryAnalysis',
+                                             project_name_file=project_name_file,
+                                             species_name_list=['HG38'],
+                                             fastq_type='demultiplexed_fastq',
+                                             library_source_list=['TRANSCRIPTOMIC_SINGLE_CELL']
+                                            )
+    self.assertTrue(available_exps is None)
+    pla = PipelineAdaptor(**{'session_class':self.session_class})
+    pla.start_session()
+    seeded_data, exp_data = pla.fetch_pipeline_seed_with_table_data(\
+                              pipeline_name='PrimaryAnalysis',
+                              table_name='experiment',
+                              status='SEEDED')
+    pla.close_session()
+    exp_data = exp_data.to_dict(orient='records')
+    self.assertTrue(len(exp_data),1)
+    self.assertEqual(exp_data[0]['experiment_igf_id'],'sampleA_MISEQ')
 
 if __name__ == '__main__':
   unittest.main()
