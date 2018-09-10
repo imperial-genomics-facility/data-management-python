@@ -1,6 +1,4 @@
 import unittest,os
-import pandas as pd
-from sqlalchemy import create_engine
 from igf_data.igfdb.igfTables import Base,Project
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.utils.dbutils import read_dbconf_json
