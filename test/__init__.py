@@ -4,43 +4,43 @@ def get_tests():
   return full_suite()
 
 def full_suite():
-  from .basesmask_test import BasesMask_testA,BasesMask_testB,BasesMask_testC,BasesMask_testD
-  from .checksequenceIndexbarcodes_test import CheckSequenceIndexBarcodes_test1
-  from .collect_seqrun_fastq_to_db_test import Collect_fastq_test1,Collect_fastq_test_sc1
-  from .collectionadaptor_test import CollectionAdaptor_test1
-  from .dbutils_test import Dbutils_test1
-  from .find_and_process_new_seqrun_test import Find_seqrun_test1
-  from .flowcell_rules_test import Flowcell_barcode_rule_test1
-  from .moveBclFilesForDemultiplexing_test import MiSeqRunInfo
-  from .moveBclFilesForDemultiplexing_test import Hiseq4000RunInfo as Hiseq4000RunInfo_moveBcl
-  from .pipelineadaptor_test import Pipelineadaptor_test1
-  from .pipelineadaptor_test import Pipelineadaptor_test2,Pipelineadaptor_test3
-  from .pipelineutils_test import Pipelineutils_test1,Pipelineutils_test2
-  from .platformutils_test import Platformutils_test1,Platformutils_test2
-  from .runadaptor_test import RunAdaptor_test1
-  from .runinfo_xml_test import Hiseq4000RunInfo as Hiseq4000RunInfo_runinfo_xml
-  from .runparameters_xml_test import Hiseq4000RunParam
-  from .samplesheet_test import Hiseq4000SampleSheet,TestValidateSampleSheet
-  from .samplesheet_test import TestValidateSampleSheet1,TestValidateSampleSheet2
-  from .find_and_register_new_project_data_test import Find_and_register_project_data1
-  from .useradaptor_test import Useradaptor_test1
-  from .sampleadaptor_test import Sampleadaptor_test1
-  from .processsinglecellsamplesheet_test import ProcessSingleCellSamplesheet_testA
-  from .mergesinglecellfastq_test import MergeSingleCellFastq_testA
-  from .project_data_display_utils_test import Convert_project_data_gviz_data1,Add_seqrun_path_info1
-  from .projectutils_test import Projectutils_test1
-  from .fileadaptor_test import Fileadaptor_test1
-  from .reset_samplesheet_md5_test import Reset_samplesheet_md5_test1
-  from .modify_pipeline_seed_test import Modify_pipeline_seed_test1
-  from .experiment_metadata_updator_test import Experiment_metadata_updator_test
-  from .projectadaptor_test import Projectadaptor_test1,Projectadaptor_test2
-  from .analysis_collection_utils_test import Analysis_collection_utils_test1
-  from .fileutils_test import Fileutils_test1
-  from .pipeseedfactory_utils_test import Pipeseedfactory_utils_test1
-  from .reference_genome_utils_test import Reference_genome_utils_test1
-  from .experimentadaptor_test import ExperimentAdaptor_test1
-  from .picard_util_test import Picard_util_test1
-  from .baseadaptor_test import Baseadaptor_test1
+  from .process.basesmask_test import BasesMask_testA,BasesMask_testB,BasesMask_testC,BasesMask_testD
+  from .process.checksequenceIndexbarcodes_test import CheckSequenceIndexBarcodes_test1
+  from .process.collect_seqrun_fastq_to_db_test import Collect_fastq_test1,Collect_fastq_test_sc1
+  from .dbadaptor.collectionadaptor_test import CollectionAdaptor_test1
+  from .utils.dbutils_test import Dbutils_test1
+  from .process.find_and_process_new_seqrun_test import Find_seqrun_test1
+  from .process.flowcell_rules_test import Flowcell_barcode_rule_test1
+  from .process.moveBclFilesForDemultiplexing_test import MiSeqRunInfo
+  from .process.moveBclFilesForDemultiplexing_test import Hiseq4000RunInfo as Hiseq4000RunInfo_moveBcl
+  from .dbadaptor.pipelineadaptor_test import Pipelineadaptor_test1
+  from .dbadaptor.pipelineadaptor_test import Pipelineadaptor_test2,Pipelineadaptor_test3
+  from .utils.pipelineutils_test import Pipelineutils_test1,Pipelineutils_test2
+  from .utils.platformutils_test import Platformutils_test1,Platformutils_test2
+  from .dbadaptor.runadaptor_test import RunAdaptor_test1
+  from .process.runinfo_xml_test import Hiseq4000RunInfo as Hiseq4000RunInfo_runinfo_xml
+  from .process.runparameters_xml_test import Hiseq4000RunParam
+  from .process.samplesheet_test import Hiseq4000SampleSheet,TestValidateSampleSheet
+  from .process.samplesheet_test import TestValidateSampleSheet1,TestValidateSampleSheet2
+  from .process.find_and_register_new_project_data_test import Find_and_register_project_data1
+  from .dbadaptor.useradaptor_test import Useradaptor_test1
+  from .dbadaptor.sampleadaptor_test import Sampleadaptor_test1
+  from .process.processsinglecellsamplesheet_test import ProcessSingleCellSamplesheet_testA
+  from .process.mergesinglecellfastq_test import MergeSingleCellFastq_testA
+  from .utils.project_data_display_utils_test import Convert_project_data_gviz_data1,Add_seqrun_path_info1
+  from .utils.projectutils_test import Projectutils_test1
+  from .dbadaptor.fileadaptor_test import Fileadaptor_test1
+  from .process.reset_samplesheet_md5_test import Reset_samplesheet_md5_test1
+  from .process.modify_pipeline_seed_test import Modify_pipeline_seed_test1
+  from .process.experiment_metadata_updator_test import Experiment_metadata_updator_test
+  from .dbadaptor.projectadaptor_test import Projectadaptor_test1,Projectadaptor_test2
+  from .utils.analysis_collection_utils_test import Analysis_collection_utils_test1
+  from .utils.fileutils_test import Fileutils_test1
+  from .utils.pipeseedfactory_utils_test import Pipeseedfactory_utils_test1
+  from .utils.reference_genome_utils_test import Reference_genome_utils_test1
+  from .dbadaptor.experimentadaptor_test import ExperimentAdaptor_test1
+  from .utils.picard_util_test import Picard_util_test1
+  from .dbadaptor.baseadaptor_test import Baseadaptor_test1
 
   return unittest.TestSuite([ \
       unittest.TestLoader().loadTestsFromTestCase(BasesMask_testA), 
