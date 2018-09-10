@@ -15,7 +15,7 @@ def full_suite():
   from .moveBclFilesForDemultiplexing_test import Hiseq4000RunInfo as Hiseq4000RunInfo_moveBcl
   from .pipelineadaptor_test import Pipelineadaptor_test1
   from .pipelineadaptor_test import Pipelineadaptor_test2,Pipelineadaptor_test3
-  from .pipelineutils_test import Pipelineutils_test1
+  from .pipelineutils_test import Pipelineutils_test1,Pipelineutils_test2
   from .platformutils_test import Platformutils_test1,Platformutils_test2
   from .runadaptor_test import RunAdaptor_test1
   from .runinfo_xml_test import Hiseq4000RunInfo as Hiseq4000RunInfo_runinfo_xml
@@ -60,6 +60,7 @@ def full_suite():
       unittest.TestLoader().loadTestsFromTestCase(Pipelineadaptor_test2),
       unittest.TestLoader().loadTestsFromTestCase(Pipelineadaptor_test3),
       unittest.TestLoader().loadTestsFromTestCase(Pipelineutils_test1),
+      unittest.TestLoader().loadTestsFromTestCase(Pipelineutils_test2),
       unittest.TestLoader().loadTestsFromTestCase(Platformutils_test1),
       unittest.TestLoader().loadTestsFromTestCase(Platformutils_test2),
       unittest.TestLoader().loadTestsFromTestCase(RunAdaptor_test1),
