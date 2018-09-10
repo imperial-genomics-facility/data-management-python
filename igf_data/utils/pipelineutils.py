@@ -1,3 +1,4 @@
+import os
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.utils.dbutils import read_dbconf_json,read_json_data
 
