@@ -245,6 +245,14 @@ class Pipelineutils_test2(unittest.TestCase):
                                              library_source_list=['TRANSCRIPTOMIC_SINGLE_CELL']
                                             )
     self.assertTrue('projectA' in available_exps)
+    pla = PipelineAdaptor(**{'session_class':self.session_class})
+    pla.start_session()
+    seeded_data, exp_data = pla.fetch_pipeline_seed_with_table_data(\
+                              pipeline_name='PrimaryAnalysis',
+                              table_name='experiment',
+                              status='SEEDED')
+    pla.close_session()
+    self.assertEqual(len(seeded_data.index),0)
 
   def test_find_new_analysis_seeds2(self):
     base = BaseAdaptor(**{'session_class':self.session_class})
