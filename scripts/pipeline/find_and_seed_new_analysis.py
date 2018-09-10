@@ -1,6 +1,39 @@
+#!/usr/bin/env python
 import argparse,os
 from igf_data.task_tracking.igf_slack import IGF_slack
 from igf_data.utils.pipelineutils import find_new_analysis_seeds
+
+'''
+A script for finding new experiment entries for seeding analysis pipeline
+
+:usage: find_and_seed_new_analysis.py 
+        [-h]
+        -d DBCONFIG_PATH
+        -s SLACK_CONFIG
+        -p PIPELINE_NAME
+        -t FASTQ_TYPE
+        -f PROJECT_NAME_FILE
+        [-m SPECIES_NAME]
+        [-l LIBRARY_SOURCE]
+
+:parameters:
+  -h, --help            show this help message and exit
+  -d , --dbconfig_path DBCONFIG_PATH
+                        Database configuration json file
+  -s , --slack_config SLACK_CONFIG
+                        Slack configuration json file
+  -p , --pipeline_name PIPELINE_NAME
+                        IGF pipeline name
+  -t , --fastq_type FASTQ_TYPE
+                        Fastq collection type
+  -f , --project_name_file PROJECT_NAME_FILE
+                        File containing project names for seeding analysis
+                        pipeline
+  -m , --species_name SPECIES_NAME
+                        Species name to filter analysis
+  -l , --library_source LIBRARY_SOURCE
+                        Library source to filter analysis
+'''
 
 parser=argparse.ArgumentParser()
 parser.add_argument('-d','--dbconfig_path', required=True, help='Database configuration json file')
