@@ -73,6 +73,35 @@ class Validate_project_and_samplesheet_metadata:
                  'error':err.message}
                 for err in samplesheet_errors
                ])
+
+      duplicate_entries=list()
+      if 'Lane' in samplesheet._data_header:
+        lanes=samplesheet.get_lane_count()
+        for lane in lanes:
+          sa=SampleSheet(infile=self.samplesheet_file)
+          sa.filter_sample_data(condition_key='Lane',
+                                condition_value=lane)
+          data=pd.DataFrame(sa._data)
+          data=data[['Lane','Sample_ID','Sample_Name']][data['Sample_Name'].duplicated()].to_dict(orient='records')
+          if len(data)>0:
+            duplicate_entries.append(data)
+      else:
+        sa=SampleSheet(infile=self.samplesheet_file)
+        sa.filter_sample_data(condition_key='Lane',
+                              condition_value=lane)
+        data=pd.DataFrame(sa._data)
+        data=data[['Sample_ID','Sample_Name']][data['Sample_Name'].duplicated()].to_dict(orient='records')
+        if len(data)>0:
+          duplicate_entries.append(data)
+
+      if len(duplicate_entries)>0:
+         errors.\
+         extend([{'column':'',
+                  'line':'',
+                  'filename':os.path.basename(self.samplesheet_file),
+                  'error':err}
+                  for err in duplicate_entries])
+
       return errors
     except:
       raise
