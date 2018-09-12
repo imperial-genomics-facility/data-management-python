@@ -307,6 +307,18 @@ class Seqrun(Base):
 
 
 class Seqrun_stats(Base):
+  '''
+  A table for loading sequencing stats information
+  
+  :column seqrun_stats_id: An integer id for seqrun_stats table
+  :column seqrun_id: An integer seqrun id (foreign key)
+  :column lane_number: A required enum list for specifying lane information,
+                       allowed values 1, 2, 3, 4, 5, 6, 7 and 8
+  :column bases_mask: An optional string field for storing bases mask information
+  :column undetermined_barcodes: An optional json field to store barcode info for undetermined samples
+  :column known_barcodes: An optional json field to store barcode info for known samples
+  :column undetermined_fastqc: An optional json field to store qc info for undetermined samples
+  '''
   __tablename__  = 'seqrun_stats'
   __table_args__ = (
     UniqueConstraint('seqrun_id', 'lane_number'),
@@ -331,6 +343,31 @@ class Seqrun_stats(Base):
 
 
 class Experiment(Base):
+  '''
+  A table for loading experiment information
+  
+  :column experiment_id: An integer id for experiment table
+  :column experiment_igf_id: A required string as experiment id specific to IGF team, allowed length 40
+  :column project_id: A required integer id from project table (foreign key)
+  :column sample_id: A required integer id from sample table (foreign key)
+  :column library_name: A required string to specify library name, allowed length 50
+  :column library_source: An optional enum list to specify library source information, default is UNKNOWN,
+                          allowed values are GENOMIC, TRANSCRIPTOMIC, GENOMIC_SINGLE_CELL, TRANSCRIPTOMIC_SINGLE_CELL
+                          and UNKNOWN
+  :column library_strategy: An optional enum list to specify library strategy information, default is UNKNOWN,
+                            allowed values are WGS, EXOME, RNA-SEQ, CHIP-SEQ, ATAC-SEQ and UNKNOWN
+  :column experiment_type: An optional enum list as experiment type information, default is UNKNOWN,
+                           allowed values are POLYA-RNA, TOTAL-RNA, SMALL-RNA, H3K4ME3, WGS, EXOME,
+                           H3K27ME3, H3K27AC, H3K9ME3, H3K36ME3, HISTONE-NARROW, HISTONE-BROAD, ATAC-SEQ,
+                           TENX-TRANSCRIPTOME, DROP-SEQ-TRANSCRIPTOME, TF and UNKNOWN
+  :column library_layout: An optional enum list to specify library layout, default is UNONWN
+                          allowed values are SINGLE, PAIRED and UNKNOWN
+  :column status: An optional enum list to specify experiment status, default is ACTIVE,
+                  allowed values are ACTIVE, FAILED and WITHDRAWN
+  :column date_created: An optional timestamp column to record entry creation or modification time, default current timestamp
+  :column platform_name: An optional enum list to specify platform model, default is UNKNOWN,
+                         allowed values are HISEQ2500, HISEQ4000, MISEQ, NEXTSEQ NANOPORE_MINION and UNKNOWN
+  '''
   __tablename__ = 'experiment'
   __table_args__ = (
     UniqueConstraint('sample_id', 'library_name', 'platform_name'),
