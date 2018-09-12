@@ -11,14 +11,15 @@ Base = declarative_base()
 
 class Project(Base):
   '''
-  A table for loading project information.
+  A table for loading project information
   
   :column project_id: An integer id for project table
   :column project_igf_id: A required string as project id specific to IGF team, allowed length 50
   :column project_name: An optional string as project name
   :column start_timestamp: An optional timestamp for project creation, default current timestamp
   :column description: An optional text column to document project description
-  :column deliverable: An enum list to document project deliverable, default FASTQ
+  :column deliverable: An enum list to document project deliverable, default FASTQ,
+                       allowed entries are FASTQ, ALIGNMENT and ANALYSIS
   '''
   __tablename__ = 'project'
   __table_args__ = (
@@ -46,6 +47,24 @@ class Project(Base):
                    
 
 class User(Base):
+  '''
+  A table for loading user information
+  
+  :column user_id:  An integer id for user table
+  :column user_igf_id: An optional string as user id specific to IGF team, allowed length 10
+  :column name: A required string as user name, allowed length 30
+  :column email_id: A required string as email id, allowed length 40
+  :column username: A required string as IGF username, allowed length 20
+  :column hpc_username: An optional string as Imperial College's HPC login name, allowed length 20
+  :column twitter_user: An optional string as twitter user name, allowed length 20
+  :column category: An optional enum list as user category, default NON_HPC_USER,
+                    allowed values are HPC_USER, NON_HPC_USER and EXTERNAL
+  :column status: An optional enum list as user status, default is ACTIVE,
+                  allowed values are ACTIVE, BLOCKED and WITHDRAWN
+  :column password: An optional string field to store encrypted password
+  :column encryption_salt: An optional string field to store encryption salt
+  :column ht_password: An optional field to store password for htaccess
+  '''
   __tablename__ = 'user'
   __table_args__ = (
     UniqueConstraint('name'),
