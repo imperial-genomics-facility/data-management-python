@@ -50,7 +50,7 @@ class User(Base):
   '''
   A table for loading user information
   
-  :column user_id:  An integer id for user table
+  :column user_id: An integer id for user table
   :column user_igf_id: An optional string as user id specific to IGF team, allowed length 10
   :column name: A required string as user name, allowed length 30
   :column email_id: A required string as email id, allowed length 40
@@ -61,6 +61,7 @@ class User(Base):
                     allowed values are HPC_USER, NON_HPC_USER and EXTERNAL
   :column status: An optional enum list as user status, default is ACTIVE,
                   allowed values are ACTIVE, BLOCKED and WITHDRAWN
+  :column date_created: An optional timestamp, default current timestamp
   :column password: An optional string field to store encrypted password
   :column encryption_salt: An optional string field to store encryption salt
   :column ht_password: An optional field to store password for htaccess
