@@ -642,6 +642,19 @@ class Pipeline_seed(Base):
                          "date_stamp = '{self.date_stamp}')".format(self=self)
 
 class History(Base):
+  '''
+  A table for loading history information
+  
+  :column log_id: An integer id for history table
+  :column log_type: A required enum value to specify log type, allowed values are 
+                    CREATED, MODIFIED and DELETED
+  :column table_name: A required enum value to specify table information, allowed values are
+                      PROJECT, USER, SAMPLE, EXPERIMENT, RUN, COLLECTION, FILE, PLATFORM,
+                      PROJECT_ATTRIBUTE, EXPERIMENT_ATTRIBUTE, COLLECTION_ATTRIBUTE,
+                      SAMPLE_ATTRIBUTE, RUN_ATTRIBUTE, FILE_ATTRIBUTE
+  :column log_date: An optional timestamp column to record file creation or modification time, default current timestamp
+  :column message: An optional text field to specify message
+  '''
   __tablename__ = 'history'
   __table_args__ = ( { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
@@ -660,6 +673,14 @@ class History(Base):
 
 
 class Project_attribute(Base):
+  '''
+  A table for loading project attributes
+  
+  :column project_attribute_id: An integer id for project_attribute table
+  :column attribute_name: An optional string attribute name, allowed length 50
+  :column attribute_value: An optional string attribute value, allowed length 50
+  :column project_id: An integer id from project table (foreign key)
+  '''
   __tablename__ = 'project_attribute'
   __table_args__ = (
     UniqueConstraint('project_id', 'attribute_name', 'attribute_value'),
@@ -678,6 +699,14 @@ class Project_attribute(Base):
 
 
 class Experiment_attribute(Base):
+  '''
+  A table for loading experiment attributes
+  
+  :column experiment_attribute_id: An integer id for experiment_attribute table
+  :column attribute_name: An optional string attribute name, allowed length 30
+  :column attribute_value: An optional string attribute value, allowed length 50
+  :column experiment_id: An integer id from experiment table (foreign key)
+  '''
   __tablename__ = 'experiment_attribute'
   __table_args__ = (
     UniqueConstraint('experiment_id', 'attribute_name', 'attribute_value'),
@@ -696,6 +725,14 @@ class Experiment_attribute(Base):
   
 
 class Collection_attribute(Base):
+  '''
+  A table for loading collection attributes
+  
+  :column collection_attribute_id: An integer id for collection_attribute table
+  :column attribute_name: An optional string attribute name, allowed length 45
+  :column attribute_value: An optional string attribute value, allowed length 45
+  :column collection_id: An integer id from collection table (foreign key)
+  '''
   __tablename__ = 'collection_attribute'
   __table_args__ = (
     UniqueConstraint('collection_id', 'attribute_name', 'attribute_value'),
@@ -714,6 +751,14 @@ class Collection_attribute(Base):
 
 
 class Sample_attribute(Base):
+  '''
+  A table for loading sample attributes
+  
+  :column sample_attribute_id: An integer id for sample_attribute table
+  :column attribute_name: An optional string attribute name, allowed length 30
+  :column attribute_value: An optional string attribute value, allowed length 50
+  :column sample_id: An integer id from sample table (foreign key)
+  '''
   __tablename__ = 'sample_attribute'
   __table_args__ = (
     UniqueConstraint('sample_id', 'attribute_name', 'attribute_value'),
@@ -732,6 +777,14 @@ class Sample_attribute(Base):
 
 
 class Seqrun_attribute(Base):
+  '''
+  A table for loading seqrun attributes
+  
+  :column seqrun_attribute_id: An integer id for seqrun_attribute table
+  :column attribute_name: An optional string attribute name, allowed length 50
+  :column attribute_value: An optional string attribute value, allowed length 100
+  :column seqrun_id: An integer id from seqrun table (foreign key)
+  '''
   __tablename__ = 'seqrun_attribute'
   __table_args__ = (
     UniqueConstraint('seqrun_id', 'attribute_name', 'attribute_value'),
@@ -743,6 +796,14 @@ class Seqrun_attribute(Base):
 
 
 class Run_attribute(Base):
+  '''
+  A table for loading run attributes
+  
+  :column run_attribute_id: An integer id for run_attribute table
+  :column attribute_name: An optional string attribute name, allowed length 30
+  :column attribute_value: An optional string attribute value, allowed length 50
+  :column run_id: An integer id from run table (foreign key)
+  '''
   __tablename__ = 'run_attribute'
   __table_args__ = (
     UniqueConstraint('run_id', 'attribute_name', 'attribute_value'),
@@ -761,6 +822,14 @@ class Run_attribute(Base):
 
 
 class File_attribute(Base):
+  '''
+  A table for loading file attributes
+  
+  :column file_attribute_id: An integer id for file_attribute table
+  :column attribute_name: An optional string attribute name, allowed length 30
+  :column attribute_value: An optional string attribute value, allowed length 50
+  :column file_id: An integer id from file table (foreign key)
+  '''
   __tablename__ = 'file_attribute'
   __table_args__ = (
     UniqueConstraint('file_id', 'attribute_name', 'attribute_value'),
