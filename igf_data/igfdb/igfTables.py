@@ -12,7 +12,7 @@ Base = declarative_base()
 class Project(Base):
   '''
   A table for loading project information
-  
+
   :column project_id: An integer id for project table
   :column project_igf_id: A required string as project id specific to IGF team, allowed length 50
   :column project_name: An optional string as project name
@@ -49,7 +49,7 @@ class Project(Base):
 class User(Base):
   '''
   A table for loading user information
-  
+
   :column user_id: An integer id for user table
   :column user_igf_id: An optional string as user id specific to IGF team, allowed length 10
   :column name: A required string as user name, allowed length 30
@@ -73,7 +73,7 @@ class User(Base):
     UniqueConstraint('email_id'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  user_id         = Column(INTEGER(unsigned=True), primary_key=True, nullable=False) 
+  user_id         = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   user_igf_id     = Column(String(10))
   name            = Column(String(30), nullable=False)
   email_id        = Column(String(40), nullable=False)
@@ -87,7 +87,7 @@ class User(Base):
   encryption_salt = Column(String(129))
   ht_password     = Column(String(40))
   projectuser     = relationship('ProjectUser', backref="user")
-  
+
   def __repr__(self):
     return "User(user_id = '{self.user_id}'," \
                 "user_igf_id = '{self.user_igf_id}'," \
@@ -101,12 +101,12 @@ class User(Base):
                 "date_created = '{self.date_created}'," \
                 "password = '{self.password}'," \
                 "ht_password = '{self.ht_password}'," \
-                "encryption_salt = '{self.encryption_salt}')".format(self=self) 
+                "encryption_salt = '{self.encryption_salt}')".format(self=self)
 
 class ProjectUser(Base):
   '''
   A table for linking users to the projects
-  
+
   :column project_user_id: An integer id for project_user table
   :column project_id: An integer id for project table (foreign key)
   :column user_id: An integer id for user table (foreign key)
@@ -133,7 +133,7 @@ class ProjectUser(Base):
 class Sample(Base):
   '''
   A table for loading sample information
-  
+
   :column sample_id: An integer id for sample table
   :column sample_igf_id: A required string as sample id specific to IGF team, allowed length 20
   :column sample_submitter_id: An optional string as sample name from user, allowed value 40
@@ -203,12 +203,12 @@ class Sample(Base):
 class Platform(Base):
   '''
   A table for loading sequencing platform information
-  
+
   :column platform_id: An integer id for platform table
   :column platform_igf_id: A required string as platform id specific to IGF team, allowed length 10
   :column model_name: A required enum list to specify platform model, allowed values are HISEQ2500,
                       HISEQ4000, MISEQ, NEXTSEQ, NOVASEQ6000 and NANOPORE_MINION
-  :column vendor_name: A required enum list to specify vendor's name, allowed values are 
+  :column vendor_name: A required enum list to specify vendor's name, allowed values are
                        ILLUMINA and NANOPORE
   :column software_name: A required enum list for specifying platform software, allowed values are
                          RTA and UNKNOWN
@@ -243,7 +243,7 @@ class Platform(Base):
 class Flowcell_barcode_rule(Base):
   '''
   A table for loading flowcell specific barcode rules information
-  
+
   :column flowcell_rule_id: An integer id for flowcell_barcode_rule table
   :column platform_id: An integer id for platform table (foreign key)
   :column flowcell_type: A required string as flowcell type name, allowed length 50
@@ -273,7 +273,7 @@ class Flowcell_barcode_rule(Base):
 class Seqrun(Base):
   '''
   A table for loading sequencing run information
-  
+
   :column seqrun_id: An integer id for seqrun table
   :column seqrun_igf_id: A required string as seqrun id specific to IGF team, allowed length 50
   :column reject_run: An optional enum list to specify rejected run information ,default N,
@@ -345,7 +345,7 @@ class Seqrun_stats(Base):
 class Experiment(Base):
   '''
   A table for loading experiment (unique combination of sample, library and platform) information.
-  
+
   :column experiment_id: An integer id for experiment table
   :column experiment_igf_id: A required string as experiment id specific to IGF team, allowed length 40
   :column project_id: A required integer id from project table (foreign key)
@@ -401,7 +401,7 @@ class Experiment(Base):
                       "library_layout = '{self.library_layout}'," \
                       "status = '{self.status}'," \
                       "date_created = '{self.date_created}'," \
-                      "platform_name = '{self.platform_id}')".format(self=self)
+                      "platform_name = '{self.platform_name}')".format(self=self)
 
 
 class Run(Base):
@@ -490,7 +490,7 @@ class Collection(Base):
   name          = Column(String(70), nullable=False)
   type          = Column(String(50), nullable=False)
   table         = Column(Enum('sample', 'experiment', 'run', 'file', 'project', 'seqrun','unknown'), nullable=False, server_default='unknown')
-  date_stamp    = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now) 
+  date_stamp    = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
   collection_group      = relationship('Collection_group', backref='collection')
   collection_attribute  = relationship('Collection_attribute', backref='collection')
 
@@ -583,7 +583,7 @@ class Pipeline(Base):
   :column date_stamp: An optional timestamp column to record file creation or modification time, default current timestamp
   '''
   __tablename__ = 'pipeline'
-  __table_args__ = ( 
+  __table_args__ = (
     UniqueConstraint('pipeline_name'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
@@ -646,7 +646,7 @@ class History(Base):
   A table for loading history information
   
   :column log_id: An integer id for history table
-  :column log_type: A required enum value to specify log type, allowed values are 
+  :column log_type: A required enum value to specify log type, allowed values are
                     CREATED, MODIFIED and DELETED
   :column table_name: A required enum value to specify table information, allowed values are
                       PROJECT, USER, SAMPLE, EXPERIMENT, RUN, COLLECTION, FILE, PLATFORM,
@@ -747,7 +747,7 @@ class Collection_attribute(Base):
     return "Collection_attribute(collection_attribute_id = '{self.collection_attribute_id}'," \
                                 "attribute_name = '{self.attribute_name}'," \
                                 "attribute_value = '{self.attribute_value}'," \
-                                "collection_id = '{self.collection_id}')".format(self=self)  
+                                "collection_id = '{self.collection_id}')".format(self=self)
 
 
 class Sample_attribute(Base):
