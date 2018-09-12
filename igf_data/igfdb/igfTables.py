@@ -241,6 +241,17 @@ class Platform(Base):
                     "date_created = '{self.date_created}')".format(self=self)
 
 class Flowcell_barcode_rule(Base):
+  '''
+  A table for loading flowcell specific barcode rules information
+  
+  :column flowcell_rule_id: An integer id for flowcell_barcode_rule table
+  :column platform_id: An integer id for platform table (foreign key)
+  :column flowcell_type: A required string as flowcell type name, allowed length 50
+  :column index_1: An optional enum list as index_1 specific rule, default UNKNOWN,
+                   allowed values NO_CHANGE, REVCOMP and UNKNOWN
+  :column index_2: An optional enum list as index_2 specific rule, default UNKNOWN,
+                   allowed values NO_CHANGE, REVCOMP and UNKNOWN
+  '''
   __tablename__ = 'flowcell_barcode_rule'
   __table_args__ = (
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
