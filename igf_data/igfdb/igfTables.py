@@ -108,8 +108,8 @@ class ProjectUser(Base):
   A table for linking users to the projects
   
   :column project_user_id: An integer id for project_user table
-  :column project_id: An integer id for project table
-  :column user_id: An integer id for user table
+  :column project_id: An integer id for project table (foreign key)
+  :column user_id: An integer id for user table (foreign key)
   :column data_authority: An optional enum value to denote primary user for the project,
                           allowed value T
   '''
@@ -153,6 +153,7 @@ class Sample(Base):
   :column tissue_type: An optional string to specify sample tissue information, if biomaterial_type is PRIMARY_TISSUE
   :column cell_line: An optional string to specify cell line information ,if biomaterial_type is CELL_LINE
   :column date_created: An optional timestamp column to specify entry creation date, default current timestamp
+  :column project_id:  An integer id for project table (foreign key)
   '''
   __tablename__ = 'sample'
   __table_args__ = (
@@ -200,6 +201,21 @@ class Sample(Base):
 
 
 class Platform(Base):
+  '''
+  A table for loading sequencing platform information
+  
+  :column platform_id: An integer id for platform table
+  :column platform_igf_id: A required string as platform id specific to IGF team, allowed length 10
+  :column model_name: A required enum list to specify platform model, allowed values are HISEQ2500,
+                      HISEQ4000, MISEQ, NEXTSEQ, NOVASEQ6000 and NANOPORE_MINION
+  :column vendor_name: A required enum list to specify vendor's name, allowed values are 
+                       ILLUMINA and NANOPORE
+  :column software_name: A required enum list for specifying platform software, allowed values are
+                         RTA and UNKNOWN
+  :column software_version: A required enum list for specifying the software version number,
+                            allowed values are RTA1.18.54, RTA1.18.64, RTA2 and UNKNOWN
+  :column date_created: An optional timestamp column to record entry creation time, default current timestamp
+  '''
   __tablename__ = 'platform'
   __table_args__ = (
     UniqueConstraint('platform_igf_id'),
