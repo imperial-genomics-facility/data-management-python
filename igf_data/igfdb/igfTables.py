@@ -10,6 +10,16 @@ from sqlalchemy import Table, Column, String, Enum, TIMESTAMP, TEXT, ForeignKey,
 Base = declarative_base()
 
 class Project(Base):
+  '''
+  A table for loading project information.
+  
+  :column project_id: An integer id for project table
+  :column project_igf_id: A required string as project id specific to IGF team, allowed length 50
+  :column project_name: An optional string as project name
+  :column start_timestamp: An optional timestamp for project creation, default current timestamp
+  :column description: An optional text column to document project description
+  :column deliverable: An enum list to document project deliverable, default FASTQ
+  '''
   __tablename__ = 'project'
   __table_args__ = (
      UniqueConstraint('project_igf_id'),
