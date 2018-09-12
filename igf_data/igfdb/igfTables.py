@@ -443,6 +443,16 @@ class Run(Base):
                "date_created = '{self.date_created}')".format(self=self)
   
 class Analysis(Base):
+  '''
+  A table for loading analysis design information
+  
+  :column analysis_id: An integer id for analysis table
+  :column project_id: A required integer id from project table (foreign key)
+  :column analysis_type: An optional enum list to specify analysis type, default is UNKNOWN,
+                         allowed values are RNA_DIFFERENTIAL_EXPRESSION, RNA_TIME_SERIES,
+                         CHIP_PEAK_CALL, SOMATIC_VARIANT_CALLING and UNKNOWN
+  :column analysis_description: An optional json description for analysis
+  '''
   __tablename__ = 'analysis'
   __table_args__ = (
     UniqueConstraint('project_id', 'analysis_type'),
@@ -461,6 +471,16 @@ class Analysis(Base):
 
 
 class Collection(Base):
+  '''
+  A table for loading collection information
+  
+  :column collection_id: An integer id for collection table
+  :column name: A required string to specify collection name, allowed length 70
+  :column type: A required string to specify collection type, allowed length 50
+  :column table: An optional enum list to specify collection table information, default unknown,
+                 allowed values are sample, experiment, run, file, project, seqrun and unknown
+  :column date_stamp: An optional timestamp column to record entry creation or modification time, default current timestamp
+  '''
   __tablename__ = 'collection'
   __table_args__ = (
     UniqueConstraint('name','type'),
@@ -483,6 +503,20 @@ class Collection(Base):
 
 
 class File(Base):
+  '''
+  A table for loading file information
+  
+  :column file_id: An integer id for file table
+  :column file_path: A required string to specify file path information, allowed length 500
+  :column location: An optional enum list to specify storage location, default UNKNOWN,
+                    allowed values are ORWELL, HPC_PROJECT, ELIOT, IRODS and UNKNOWN
+  :column status: An optional enum list to specify experiment status, default is ACTIVE,
+                  allowed values are ACTIVE, FAILED and WITHDRAWN
+  :column md5: An optional string to specify file md5 value, allowed length 33
+  :column size: An optional string to specify file size, allowed value 15
+  :column date_created: An optional timestamp column to record file creation time, default current timestamp
+  :column date_updated: An optional timestamp column to record file modification time, default current timestamp
+  '''
   __tablename__ = 'file'
   __table_args__ = (
     UniqueConstraint('file_path'),
@@ -511,6 +545,13 @@ class File(Base):
 
 
 class Collection_group(Base):
+  '''
+  A table for linking files to the collection entries
+  
+  :column collection_group_id: An integer id for collection_group table
+  :column collection_id: A required integer id from collection table (foreign key)
+  :column file_id: A required integer id from file table (foreign key)
+  '''
   __tablename__ = 'collection_group'
   __table_args__ = (
     UniqueConstraint('collection_id','file_id'),
