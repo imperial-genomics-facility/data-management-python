@@ -104,6 +104,15 @@ class User(Base):
                 "encryption_salt = '{self.encryption_salt}')".format(self=self) 
 
 class ProjectUser(Base):
+  '''
+  A table for linking users to the projects
+  
+  :column project_user_id: An integer id for project_user table
+  :column project_id: An integer id for project table
+  :column user_id: An integer id for user table
+  :column data_authority: An optional enum value to denote primary user for the project,
+                          allowed value T
+  '''
   __tablename__ = 'project_user'
   __table_args__ = (
     UniqueConstraint('project_id','data_authority'),
@@ -122,6 +131,29 @@ class ProjectUser(Base):
 
 
 class Sample(Base):
+  '''
+  A table for loading sample information
+  
+  :column sample_id: An integer id for sample table
+  :column sample_igf_id: A required string as sample id specific to IGF team, allowed length 20
+  :column sample_submitter_id: An optional string as sample name from user, allowed value 40
+  :column taxon_id: An optional integer NCBI taxonomy information for sample
+  :column scientific_name: An optional string as scientific name of the species
+  :column species_name: An optional string as the species name (genome build code) information
+  :column donor_anonymized_id: An optional string as anonymous donor name
+  :column description: An optional string as sample description
+  :column phenotype: An optional string as sample phenotype information
+  :column sex: An optional enum list to specify sample sex, default UNKNOWN
+               allowed values are FEMALE, MALE, MIXED and UNKNOWN
+  :column status: An optional enum list to specify sample status, default ACTIVE,
+                  allowed values are ACTIVE, FAILED and WITHDRAWS
+  :column biomaterial_type: An optional enum list as sample biomaterial type, default UNKNOWN,
+                            allowed values are PRIMARY_TISSUE, PRIMARY_CELL, PRIMARY_CELL_CULTURE, CELL_LINE and UNKNOWN
+  :column cell_type: An optional string to specify sample cell_type information, if biomaterial_type is PRIMARY_CELL or PRIMARY_CELL_CULTURE
+  :column tissue_type: An optional string to specify sample tissue information, if biomaterial_type is PRIMARY_TISSUE
+  :column cell_line: An optional string to specify cell line information ,if biomaterial_type is CELL_LINE
+  :column date_created: An optional timestamp column to specify entry creation date, default current timestamp
+  '''
   __tablename__ = 'sample'
   __table_args__ = (
     UniqueConstraint('sample_igf_id'),
