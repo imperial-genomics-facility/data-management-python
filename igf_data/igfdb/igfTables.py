@@ -568,6 +568,20 @@ class Collection_group(Base):
 
 
 class Pipeline(Base):
+  '''
+  A table for loading pipeline information
+  
+  :column pipeline_id: An integer id for pipeline table
+  :column pipeline_name: A required string to specify pipeline name, allowed length 50
+  :column pipeline_db: A required string to specify pipeline database url, allowed length 200
+  :column pipeline_init_conf: An optional json field to specify initial pipeline configuration
+  :column pipeline_run_conf: An optional json field to specify modified pipeline configuration
+  :column pipeline_type: An optional enum list to specify pipeline type, default EHIVE,
+                         allowed values are EHIVE and UNKNOWN
+  :column is_active: An optional enum list to specify the status of pipeline, default Y,
+                     allowed values are Y and N
+  :column date_stamp: An optional timestamp column to record file creation or modification time, default current timestamp
+  '''
   __tablename__ = 'pipeline'
   __table_args__ = ( 
     UniqueConstraint('pipeline_name'),
@@ -595,6 +609,18 @@ class Pipeline(Base):
 
 
 class Pipeline_seed(Base):
+  '''
+  A table for loading pipeline seed information
+  
+  :column pipeline_seed_id: An integer id for pipeline_seed table
+  :column seed_id: A required integer id
+  :column seed_table: An optional enum list to specify seed table information, default unknown,
+                      allowed values project, sample, experiment, run, file, seqrun, collection and unknown
+  :column pipeline_id: An integer id from pipeline table (foreign key)
+  :column status: An optional enum list to specify the status of pipeline, default UNKNOWN,
+                  allowed values are SEEDED, RUNNING, FINISHED, FAILED and UNKNOWN
+  :column date_stamp: An optional timestamp column to record file creation or modification time, default current timestamp
+  '''
   __tablename__ = 'pipeline_seed'
   __table_args__ = (
     UniqueConstraint('pipeline_id','seed_id','seed_table'),
