@@ -271,6 +271,17 @@ class Flowcell_barcode_rule(Base):
 
 
 class Seqrun(Base):
+  '''
+  A table for loading sequencing run information
+  
+  :column seqrun_id: An integer id for seqrun table
+  :column seqrun_igf_id: A required string as seqrun id specific to IGF team, allowed length 50
+  :column reject_run: An optional enum list to specify rejected run information ,default N,
+                      allowed values Y and N
+  :column date_created: An optional timestamp column to record entry creation time, default current timestamp
+  :column flowcell_id: A required string column for storing flowcell_id information, allowed length 20
+  :column platform_id: An integer platform id (foreign key)
+  '''
   __tablename__ = 'seqrun'
   __table_args__ = (
     UniqueConstraint('seqrun_igf_id'),
