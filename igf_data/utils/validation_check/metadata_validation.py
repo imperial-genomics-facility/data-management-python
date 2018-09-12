@@ -74,33 +74,69 @@ class Validate_project_and_samplesheet_metadata:
                 for err in samplesheet_errors
                ])
 
-      duplicate_entries=list()
+      duplicate_sample_entries=list()
+      duplicate_igf_entries=list()
+      data=pd.DataFrame(samplesheet._data)
       if 'Lane' in samplesheet._data_header:
-        lanes=samplesheet.get_lane_count()
-        for lane in lanes:
-          sa=SampleSheet(infile=self.samplesheet_file)
-          sa.filter_sample_data(condition_key='Lane',
-                                condition_value=lane)
-          data=pd.DataFrame(sa._data)
-          data=data[['Lane','Sample_ID','Sample_Name']][data['Sample_Name'].duplicated()].to_dict(orient='records')
-          if len(data)>0:
-            duplicate_entries.append(data)
-      else:
-        sa=SampleSheet(infile=self.samplesheet_file)
-        sa.filter_sample_data(condition_key='Lane',
-                              condition_value=lane)
-        data=pd.DataFrame(sa._data)
-        data=data[['Sample_ID','Sample_Name']][data['Sample_Name'].duplicated()].to_dict(orient='records')
-        if len(data)>0:
-          duplicate_entries.append(data)
+        data_grp=data.groupby(['Lane',
+                               'Sample_Name'])
+        for key,grp in data_grp:
+          dup_sample=grp[grp['Sample_Name'].duplicated()]['Sample_Name']
+          if len(dup_sample.index)>0:
+            for entry in dup_sample.values:
+              dup_data=grp[grp['Sample_Name']==entry][['Lane',
+                                                       'Sample_ID',
+                                                       'Sample_Name']]
+              duplicate_sample_entries.\
+              append(dup_data.to_dict(orient='records'))
 
-      if len(duplicate_entries)>0:
+        data_igf_grp=data.groupby(['Lane',
+                                   'Sample_ID'])
+        for key,grp in data_igf_grp:
+          dup_sample=grp[grp['Sample_ID'].duplicated()]['Sample_ID']
+          if len(dup_sample.index)>0:
+            for entry in dup_sample.values:
+              dup_data=grp[grp['Sample_ID']==entry][['Lane',
+                                                     'Sample_ID',
+                                                     'Sample_Name']]
+              duplicate_igf_entries.\
+              append(dup_data.to_dict(orient='records'))
+      else:
+        data_grp=data.groupby(['Sample_Name'])
+        for key,grp in data_grp:
+          dup_sample=grp[grp['Sample_Name'].duplicated()]['Sample_Name']
+          if len(dup_sample.index)>0:
+            for entry in dup_sample.values:
+              dup_data=grp[grp['Sample_Name']==entry][['Sample_ID',
+                                                       'Sample_Name']]
+              duplicate_sample_entries.\
+              append(dup_data.to_dict(orient='records'))
+
+        data_igf_grp=data.groupby(['Sample_ID'])
+        for key,grp in data_igf_grp:
+          dup_sample=grp[grp['Sample_ID'].duplicated()]['Sample_ID']
+          if len(dup_sample.index)>0:
+            for entry in dup_sample.values:
+              dup_data=grp[grp['Sample_ID']==entry][['Sample_ID',
+                                                     'Sample_Name']]
+              duplicate_igf_entries.\
+              append(dup_data.to_dict(orient='records'))
+
+      if len(duplicate_sample_entries)>0:
          errors.\
-         extend([{'column':'',
+         extend([{'column':'Sample_Name',
                   'line':'',
                   'filename':os.path.basename(self.samplesheet_file),
-                  'error':err}
-                  for err in duplicate_entries])
+                  'error':'Duplicate sample name found: {0}'.format(err)}
+                  for err in duplicate_sample_entries])
+
+      if len(duplicate_igf_entries)>0:
+         errors.\
+         extend([{'column':'Sample_ID',
+                  'line':'',
+                  'filename':os.path.basename(self.samplesheet_file),
+                  'error':'Duplicate sample IGF id found: {0}'.format(err)}
+                  for err in duplicate_igf_entries])
 
       return errors
     except:
