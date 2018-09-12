@@ -344,7 +344,7 @@ class Seqrun_stats(Base):
 
 class Experiment(Base):
   '''
-  A table for loading experiment information
+  A table for loading experiment (unique combination of sample, library and platform) information.
   
   :column experiment_id: An integer id for experiment table
   :column experiment_igf_id: A required string as experiment id specific to IGF team, allowed length 40
@@ -405,6 +405,19 @@ class Experiment(Base):
 
 
 class Run(Base):
+  '''
+  A table for loading run (unique combination of experiment, sequencing flowcell and lane) information
+  
+  :column run_id: An integer id for run table
+  :column run_igf_id: A required string as run id specific to IGF team, allowed length 70
+  :column experiment_id: A required integer id from experiment table (foreign key)
+  :column seqrun_id: A required integer id from seqrun table (foreign key)
+  :column status: An optional enum list to specify experiment status, default is ACTIVE,
+                  allowed values are ACTIVE, FAILED and WITHDRAWN
+  :column lane_number: A required enum list for specifying lane information,
+                       allowed values 1, 2, 3, 4, 5, 6, 7 and 8
+  :column date_created: An optional timestamp column to record entry creation time, default current timestamp
+  '''
   __tablename__ = 'run'
   __table_args__ = (
     UniqueConstraint('run_igf_id'),
