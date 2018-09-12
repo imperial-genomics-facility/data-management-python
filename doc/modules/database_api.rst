@@ -1,3 +1,11 @@
+IGF database
+=============
+
+Database schema
+-----------------
+.. automodule:: igf_data.igfdb.igfTables
+   :members:
+
 IGF database api
 =================
 

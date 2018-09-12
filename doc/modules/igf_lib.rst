@@ -1,11 +1,6 @@
 Sequencing data processing
 ==========================
 
-IGF Database
--------------
-.. automodule:: igf_data.igfdb.igfTables
-   :members:
-
 Metadata processing
 --------------------
 
