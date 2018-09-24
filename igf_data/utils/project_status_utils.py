@@ -136,17 +136,21 @@ class Project_status:
       raise
 
 
-  def _add_seqrun_info(self,flowcell_id,seqrun_igf_id):
+  def _add_seqrun_info(self,flowcell_id,seqrun_igf_id,run_found):
     '''
     An internal method for adding sequencing run info to the status page
     
-    :param flowcell_id:
-    :param seqrun_igf_id:
+    :param flowcell_id: A flowcell id for sequencing info
+    :param seqrun_igf_id: A seqrun igf id
+    :param run_found: A timestamp when run is found
     :returns: A dictionary with seqrun data for the grantt plot
     '''
     try:
       start_date=parse(get_seqrun_date_from_igf_id(seqrun_igf_id))              # fetch seqrun date
       end_date=start_date+timedelta(days=self.seqrun_work_day)                  # calculate seqrun finish date
+      if end_date > run_found:
+        end_date=run_found                                                      # reset run end timestamp
+
       duration=int((end_date-start_date).total_seconds()*1000)                  # calculate seqrun duration
       percent_complete=100                                                      # seqrun is already done
       new_data=dict()
@@ -213,7 +217,8 @@ class Project_status:
 
       seqrun_data=self._add_seqrun_info(\
                     flowcell_id=data['flowcell_id'],
-                    seqrun_igf_id=data['seqrun_igf_id'])                        # fetch seqrun information
+                    seqrun_igf_id=data['seqrun_igf_id'],
+                    run_found=start_date)                                       # fetch seqrun information
       new_data_list=[seqrun_data,new_data]
       return  new_data_list
     except:
