@@ -15,6 +15,7 @@ A script for finding new experiment entries for seeding analysis pipeline
         -f PROJECT_NAME_FILE
         [-m SPECIES_NAME]
         [-l LIBRARY_SOURCE]
+        [-r]
 
 :parameters:
   -h, --help            show this help message and exit
@@ -33,6 +34,8 @@ A script for finding new experiment entries for seeding analysis pipeline
                         Species name to filter analysis
   -l , --library_source LIBRARY_SOURCE
                         Library source to filter analysis
+  -r , --reset_project_list
+                        Clean up project info file
 '''
 
 parser=argparse.ArgumentParser()
@@ -43,6 +46,7 @@ parser.add_argument('-t','--fastq_type', required=True, help='Fastq collection t
 parser.add_argument('-f','--project_name_file', required=True, help='File containing project names for seeding analysis pipeline')
 parser.add_argument('-m','--species_name', action='append', default=None, help='Species name to filter analysis')
 parser.add_argument('-l','--library_source', action='append', default=None, help='Library source to filter analysis')
+parser.add_argument('-r','--reset_project_list', default=False, action='store_true', help='Clean up project info file')
 args=parser.parse_args()
 
 dbconfig_path=args.dbconfig_path
@@ -52,8 +56,13 @@ fastq_type=args.fastq_type
 project_name_file=args.project_name_file
 species_name=args.species_name
 library_source=args.library_source
+reset_project_list=args.reset_project_list
 
 try:
+  if not os.path.exists(project_name_file):
+    raise IOError('File {0} not found'.\
+                  format(project_name_file))
+
   slack_obj=IGF_slack(slack_config=slack_config)                                # get slack instance
   available_projects=find_new_analysis_seeds(\
                        dbconfig_path=dbconfig_path,
@@ -69,9 +78,21 @@ try:
     slack_obj.\
     post_message_to_channel(\
       message=message,
+      reaction='pass')                                                          # post list of active projects to slack
+
+  if reset_project_list:
+    with open(project_name_file,'w') as fp:
+      fp.write('')
+    message='Resetting project list file: {0}'.\
+            format(project_name_file)
+    slack_obj.\
+    post_message_to_channel(\
+      message=message,
       reaction='pass')
+
 except Exception as e:
   message='Error: {0}'.format(e)
+  print(message)
   slack_obj.\
   post_message_to_channel(\
     message=message,
