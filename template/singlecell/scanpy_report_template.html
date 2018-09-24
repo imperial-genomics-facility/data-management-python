@@ -19,6 +19,14 @@
         <dt>Sample Name</dt>
            <dd>{{ SampleName }}</dd>
         
+        <h2>Description</h2>
+        <p>Scanpy tool is used for checking an initial qc of the single cell data after cellranger count run.</p>
+        <p>This analysis is based on the following Scanpy tutorials:</p>
+        <ul>
+          <li><a href="https://nbviewer.jupyter.org/github/theislab/scanpy_usage/blob/master/170505_seurat/seurat.ipynb">Clustering 3k PBMCs following a Seurat Tutorial</a></li>
+          <li><a href="https://nbviewer.jupyter.org/github/theislab/scanpy_usage/blob/master/170503_zheng17/zheng17.ipynb">Profiling Scanpy for 68k PBMC cells of Zheng et al., Nat. Comm. (2017)</a></li>
+        </ul>
+
         <h2>Check for mitochondrial gene expression</h2>
           <h3>Violin plot for MT gene expression counts</h3>
           <img src="data:image/png;base64,{{ MitoPlot }}">
