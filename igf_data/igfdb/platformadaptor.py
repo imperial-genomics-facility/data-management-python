@@ -21,7 +21,8 @@ class PlatformAdaptor(BaseAdaptor):
       raise
 
 
-  def fetch_platform_records_igf_id(self, platform_igf_id, target_column_name='platform_igf_id'):
+  def fetch_platform_records_igf_id(self, platform_igf_id, target_column_name='platform_igf_id',
+                                   output_mode='one'):
     '''
     A method for fetching data for Platform table
     required params:
@@ -34,7 +35,7 @@ class PlatformAdaptor(BaseAdaptor):
       platform=self.fetch_records_by_column(table=Platform, \
       	                                   column_name=column, \
       	                                   column_id=platform_igf_id, \
-      	                                   output_mode='one')
+      	                                   output_mode=output_mode)
       return platform  
     except:
       raise
