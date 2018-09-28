@@ -1,4 +1,4 @@
-import os,subprocess
+import os,subprocess,re
 
 class Fastp_utils:
   '''
@@ -40,9 +40,44 @@ class Fastp_utils:
         raise IOError('Output directory path {0} not found'.\
                       format(self.output_dir))
 
+      if len(self.input_fastq_list) > 2:
+        raise ValueError('Expecting max 2 fastq files, got {0}'.\
+                         format(len(self.input_fastq_list)))
+
     except:
       raise
+
+  @staticmethod
+  def _identify_fastq_pair(input_list):
+    '''
+    An internal static method for fastq pair identification
     
+    :patam input_list:
+    :returns: A list for read1 and another list for read2
+    '''
+    try:
+      read1_list=list()
+      read2_list=list()
+      read1_pattern=re.compile(r'\S+_R1_\d+\.fastq(\.\gz)?')
+      read2_pattern=re.compile(r'\S+_R2_\d+\.fastq?(\.\gz)?')
+      for file in input_list:
+        if re.match(read1_pattern,file):
+          read1_list.append(file)
+
+        if re.match(read2_pattern,file):
+          read2_list.append(file)
+
+      if len(read1_list) == 0:
+        raise ValueError('No fastq file found for read 1')
+
+      if len(read1_list) != len(read2_list):
+        raise ValueError('Number of fastq files are not same for read 1 :{0} and read2:{1}'.\
+                         format(len(read1_list),len(read2_list)))
+
+      return read1_list, read2_list
+    except:
+      raise
+
   def run_adapter_trimming(self):
     '''
     A method for running fastp adapter trimming
@@ -50,7 +85,7 @@ class Fastp_utils:
     :returns: A list of output fastq files and a html report path
     '''
     try:
-      
+      self._run_checks()
     except:
       raise
 
@@ -61,6 +96,6 @@ class Fastp_utils:
     :returns: A list of list for output fastq files and a html report path
     '''
     try:
-      pass
+      self._run_checks()
     except:
       raise
