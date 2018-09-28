@@ -1,6 +1,6 @@
 import os,subprocess,re
 from shlex import quote
-from igf_data.utils.fileutils import get_temp_dir,remove_dir,copy_local_file
+from igf_data.utils.fileutils import get_temp_dir,remove_dir,copy_local_file,check_file_path
 
 class Fastp_utils:
   '''
@@ -30,23 +30,11 @@ class Fastp_utils:
     An internal method for running initial checks before fastp run
     '''
     try:
-      if not os.path.exists(self.fastp_exe):
-        raise IOError('Fastp executable {0} not found'.\
-                      format(self.fastp_exe))
-
-      file_check=0
+      check_file_path(self.fastp_exe)
       for file in self.input_fastq_list:
-        if not os.path.exists(file):
-          file_check += 1
+        check_file_path(file)
 
-      if file_check > 0:
-        raise IOError('Fastq input files not found: {0}'.\
-                      format(self.input_fastq_list))
-
-      if not os.path.exists(self.output_dir):
-        raise IOError('Output directory path {0} not found'.\
-                      format(self.output_dir))
-
+      check_file_path(self.output_dir)
       if len(self.input_fastq_list) > 2:
         raise ValueError('Expecting max 2 fastq files, got {0}'.\
                          format(len(self.input_fastq_list)))
