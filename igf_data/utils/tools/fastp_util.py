@@ -15,6 +15,9 @@ class Fastp_utils:
 
   def run_adapter_trimming(self):
     '''
+    A method for running fastp adapter trimming
+    
+    :returns: A list of output fastq files, a html report path
     '''
     try:
       pass
