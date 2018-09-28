@@ -1,5 +1,6 @@
 import os,subprocess,re
 from shlex import quote
+from igf_data.utils.fastq_utils import identify_fastq_pair
 from igf_data.utils.fileutils import get_temp_dir,remove_dir,copy_local_file,check_file_path
 
 class Fastp_utils:
@@ -42,48 +43,6 @@ class Fastp_utils:
     except:
       raise
 
-  @staticmethod
-  def _identify_fastq_pair(input_list):
-    '''
-    An internal static method for fastq pair identification
-    
-    :param input_list:
-    :returns: A list for read1 files and another list of read2 files
-    '''
-    try:
-      read1_list=list()
-      read2_list=list()
-      read1_pattern=re.compile(r'\S+_R1_\d+\.fastq(\.\gz)?')
-      read2_pattern=re.compile(r'\S+_R2_\d+\.fastq?(\.\gz)?')
-      for file in input_list:
-        if re.match(read1_pattern,file):
-          read1_list.append(file)
-
-        if re.match(read2_pattern,file):
-          read2_list.append(file)
-
-      if len(read1_list) == 0:
-        raise ValueError('No fastq file found for read 1')
-
-      if len(read1_list) != len(read2_list) and \
-         len(read2_list) > 0:
-        raise ValueError('Number of fastq files are not same for read 1 :{0} and read2:{1}'.\
-                         format(len(read1_list),len(read2_list)))
-
-      if len(read1_list)==len(read2_list):                                      # if fastq input list is not properly sorted
-        sorted_read2_list=list()
-        for file1 in read1_list:
-          temp_file2=file1.replace('R1','R2')
-          if temp_file2 not in read2_list:
-            raise ValueError('No read2 found for file {0}'.format(file1))
-          else:
-            sorted_read2_list.append(temp_file2)
-        read2_list=sorted_read2_list                                            # reset read2 list
-
-      return read1_list, read2_list
-    except:
-      raise
-
   def run_adapter_trimming(self,split_fastq=False):
     '''
     A method for running fastp adapter trimming
@@ -93,8 +52,7 @@ class Fastp_utils:
     '''
     try:
       self._run_checks()
-      read1_list,read2_list=self._identify_fastq_pair(\
-                                    input_list=self.input_fastq_list)           # fetch input files
+      read1_list,read2_list=identify_fastq_pair(input_list=self.input_fastq_list) # fetch input files
       temp_dir=get_temp_dir()
       cmd=[self.fastp_exe,
            '--in1',quote(read1_list[0]),
