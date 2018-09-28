@@ -1,5 +1,5 @@
 import os,subprocess,re
-from shlex import quote
+from shlex import quote,split
 from igf_data.utils.fastq_utils import identify_fastq_pair
 from igf_data.utils.fileutils import get_temp_dir,remove_dir,copy_local_file,check_file_path
 
@@ -72,6 +72,8 @@ class Fastp_utils:
                                       os.path.basename(read2_list[0]))))
 
       if len(self.fastp_options)>0:
+        fastp_options=split(fastp_options)                                      # split options
+        fastp_options=[quote(opt) for opt in fastp_options]                     # wrap options in quotes
         cmd.extend(self.fastp_options)                                          # add fastp options
 
       if split_fastq:
