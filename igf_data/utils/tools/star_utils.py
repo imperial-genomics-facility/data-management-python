@@ -1,0 +1,97 @@
+import os,subprocess,re,fnmatch
+from shlex import quote
+from igf_data.utils.fastq_utils import detect_non_fastq_in_file_list,identify_fastq_pair
+from igf_data.utils.fileutils import check_file_path,get_temp_dir,remove_dir,copy_local_file
+
+class Star_utils:
+  def __init__(self,star_exe,input_files,genome_dir,reference_gtf,
+               output_dir,output_prefix,threads=1):
+    self.star_exe=star_exe
+    self.input_files=input_files
+    self.genome_dir=genome_dir
+    self.reference_gtf=reference_gtf
+    self.output_dir=output_dir
+    self.output_prefix=output_prefix
+    self.threads=threads
+
+  def _run_checks(self):
+    '''
+    '''
+    try:
+      check_file_path(self.star_exe)                                            # checking star exe
+      if not isinstance(self.input_files, list) or \
+         len(self.input_files)==0:
+        raise ValueError('No input file list found for star')
+
+      for file in self.input_files:
+        check_file_path(file_path=file)                                         # checking input file paths
+
+      check_file_path(file_path=self.reference_gtf)                             # checking input gtf filepath
+    except:
+      raise
+
+  def generate_aligned_bams(self,two_pass_mode=True,
+                            star_patameters={
+                              "--genomeLoad":"NoSharedMemory",
+                              "--outFilterType":"BySJout",
+                              "--outFilterMultimapNmax":20,
+                              "--alignSJoverhangMin":8,
+                              "--alignSJDBoverhangMin":1,
+                              "--outFilterMismatchNmax":999,
+                              "--outFilterMismatchNoverReadLmax":0.04,
+                              "--alignIntronMin":20,
+                              "--alignIntronMax":1000000,
+                              "--alignMatesGapMax":1000000,
+                              "--outSAMtype": "BAM SortedByCoordinate",
+                              "--outSAMattributes":"NH HI AS NM MD",
+                              "--outSAMunmapped":"Within",
+                              "--limitBAMsortRAM":12000000000}):
+    '''
+    '''
+    try:
+      temp_dir=get_temp_dir()                                                   # get a temp dir
+      temp_path_prefix='{0}/{1}'.format(temp_dir,
+                                        self.output_prefix)
+      star_cmd=[self.star_exe,
+                "--runThreadN",quotes(self.threads),
+                "--genomeLoad","NoSharedMemory",
+                "--runMode","alignReads",
+                "--quantMode","TranscriptomeSAM",
+                "--sjdbGTFfile",quotes(self.reference_gtf),
+                "--outFileNamePrefix",quote(temp_path_prefix)
+               ]                                                                # get default paramteres for star
+      if not isinstance(star_patameters, dict):
+        raise TypeError('Expecting a dictionary for star run parameters and got {0}'.\
+                        format(type(star_patameters)))
+      if len(star_param)>0:
+        param_list=[quotes(field)
+                      for key,val in star_param.items() 
+                        for field in [key,val]]                                 # flatten param dictionary
+        star_cmd.extend(param_list)                                             # add params to command line
+
+      if detect_non_fastq_in_file_list(self.input_files):
+        raise ValueError('Expecting only fastq files as input')
+
+      zipped_pattern=re.compile(r'\S+\.gz')
+      read1_list,read2_list=identify_fastq_pair(input_list=self.input_files)    # fetch input fastq files
+      if re.match(zipped_pattern,os.path.basename(read1_list[0])):
+        star_cmd.append("--readFilesCommand","zcat")                            # command for gzipped reads
+
+      star_cmd.append("--readFilesIn",quotes(read1_list[0]))                    # add read 1
+      if len(read2_list)>0:
+        star_cmd.append(quotes(read2_list[0]))                                  # add read 2
+
+      subprocess.check_call(star_cmd,shell=False)
+      output_bams=list()
+      for files in os.listdir(temp_dir):
+        if fnmatch.fnmatch(file, '*.bam'):
+          source_path=os.path.join(temp_dir,file)
+          destinationa_path=os.path.join(self.output_dir,file)
+          copy_local_file(source_path=source_path,
+                          destinationa_path=destinationa_path)                  # copying bams to output dir
+          output_bams.append(destinationa_path)
+
+      remove_dir(temp_dir)
+      return output_bams
+    except:
+      raise
