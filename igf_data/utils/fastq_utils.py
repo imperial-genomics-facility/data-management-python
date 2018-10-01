@@ -54,7 +54,7 @@ def identify_fastq_pair(input_list,sort_output=True):
       fastq_pattern=re.compile(r'\S+\.fastq(\.gz)?')
       non_fastq_found=False
       for file in input_list:
-        if not re.match(fastq_pattern,file):
+        if not re.match(fastq_pattern,os.path.basename(file)):
           non_fastq_found=True
 
       return non_fastq_found
