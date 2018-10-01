@@ -42,3 +42,21 @@ def identify_fastq_pair(input_list,sort_output=True):
     return read1_list, read2_list
   except:
     raise
+
+  def detect_non_fastq_in_file_list(input_list):
+    '''
+    A method for detecting non fastq file within a list of input fastq
+    
+    :param input_list: A list of filepath to check
+    :returns: True in non fastq files are present or else False
+    '''
+    try:
+      fastq_pattern=re.compile(r'\S+\.fastq(\.gz)?')
+      non_fastq_found=False
+      for file in input_list:
+        if not re.match(fastq_pattern,file):
+          non_fastq_found=True
+
+      return non_fastq_found
+    except:
+      raise
