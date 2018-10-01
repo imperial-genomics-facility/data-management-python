@@ -16,6 +16,7 @@ class Star_utils:
 
   def _run_checks(self):
     '''
+    An internal method for running initial checks before star run
     '''
     try:
       check_file_path(self.star_exe)                                            # checking star exe
@@ -50,6 +51,7 @@ class Star_utils:
     :returns: A genomic_bam and a transcriptomic bam
     '''
     try:
+      self._run_checks()
       temp_dir=get_temp_dir()                                                   # get a temp dir
       temp_path_prefix='{0}/{1}'.format(temp_dir,
                                         self.output_prefix)
