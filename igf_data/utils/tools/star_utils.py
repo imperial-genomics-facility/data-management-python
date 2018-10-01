@@ -2,6 +2,8 @@ import os,subprocess,re,fnmatch
 from shlex import quote
 from igf_data.utils.fastq_utils import detect_non_fastq_in_file_list,identify_fastq_pair
 from igf_data.utils.fileutils import check_file_path,get_temp_dir,remove_dir,copy_local_file
+from tables.expression import out
+from prompt_toolkit import output
 
 class Star_utils:
   def __init__(self,star_exe,input_files,genome_dir,reference_gtf,
@@ -76,6 +78,9 @@ class Star_utils:
                         for field in [key,val]]                                 # flatten param dictionary
         star_cmd.extend(param_list)                                             # add params to command line
 
+      if two_pass_mode:
+        star_cmd.append("--twopassMode","Basic")                                # enable two-pass more for star
+
       if detect_non_fastq_in_file_list(self.input_files):
         raise ValueError('Expecting only fastq files as input')
 
@@ -109,5 +114,58 @@ class Star_utils:
 
       remove_dir(temp_dir)                                                      # removing temp run dir
       return genomic_bam,transcriptomic_bam
+    except:
+      raise
+
+  def generate_rna_bigwig(self,bedGraphToBigWig_path,chrom_length_file,
+                          stranded=True):
+    '''
+    A method for generating bigWig signal tracks from star aligned bams files
+    
+    :param bedGraphToBigWig_path: bedGraphToBigWig_path executable path
+    :param chrom_length_file: A file containing chromosome length, e.g. .fai file
+    :param stranded:Param for stranded analysis, default True
+    :returns: A list of bigWig files
+    '''
+    try:
+      self._run_checks()
+      check_file_path(bedGraphToBigWig_path)
+      check_file_path(chrom_length_file)
+      temp_dir=get_temp_dir()                                                   # get a temp dir
+      temp_path_prefix='{0}/{1}'.format(temp_dir,
+                                        self.output_prefix)
+      star_cmd=[self.star_exe,
+                "--runThreadN",quotes(self.threads),
+                "--genomeLoad","NoSharedMemory",
+                "--runMode","inputAlignmentsFromBAM",
+                "--outWigType","bedGraph",
+                "--outFileNamePrefix",quote(temp_path_prefix)
+               ]
+      if stranded:
+        star_cmd.append("--outWigStrand","Stranded")                            # stranded rnaseq
+
+      bam_pattern=re.compile(r'\S+\.bam$')
+      input_files=self.input_files
+      if not re.match(bam_pattern,input_files[0]):
+        raise ValueError('Input bam file not found in input filelist star run')
+
+      star_cmd.append("--inputBAMfile",quotes(input_files[0]))                  # set input for star run
+      subprocess.check_call(star_cmd)
+      output_list=list()
+      for file in os.listdir(temp_dir):
+        if fnmatch.fnmatch(file,'*.bg'):
+          output_path=os.path.join(temp_dir,file.replace('.bg','.bw'))
+          bw_cmd=[bedGraphToBigWig_path,
+                  os.path.join(temp_dir,file),
+                  chrom_length_file,
+                  output_path,
+                 ]
+          subprocess.check_call(bw_cmd)
+          output_list.append(output_path)
+
+      if len(output_path)==0:
+        raise ValueError('No bigwig file found from star run')
+
+      return output_path
     except:
       raise
