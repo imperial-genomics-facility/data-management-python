@@ -11,8 +11,8 @@ def identify_fastq_pair(input_list,sort_output=True):
   try:
     read1_list=list()
     read2_list=list()
-    read1_pattern=re.compile(r'\S+_R1_\d+\.fastq(\.\gz)?')
-    read2_pattern=re.compile(r'\S+_R2_\d+\.fastq?(\.\gz)?')
+    read1_pattern=re.compile(r'\S+_R1_\d+\.fastq(\.gz)?')
+    read2_pattern=re.compile(r'\S+_R2_\d+\.fastq?(\.gz)?')
     for file in input_list:
       if re.match(read1_pattern,file):
         read1_list.append(file)
