@@ -32,8 +32,6 @@ class Star_utils:
 
   def generate_aligned_bams(self,two_pass_mode=True,
                             star_patameters={
-                              "--genomeLoad":"NoSharedMemory",
-                              "--outFilterType":"BySJout",
                               "--outFilterMultimapNmax":20,
                               "--alignSJoverhangMin":8,
                               "--alignSJDBoverhangMin":1,
@@ -42,11 +40,14 @@ class Star_utils:
                               "--alignIntronMin":20,
                               "--alignIntronMax":1000000,
                               "--alignMatesGapMax":1000000,
-                              "--outSAMtype": "BAM SortedByCoordinate",
                               "--outSAMattributes":"NH HI AS NM MD",
-                              "--outSAMunmapped":"Within",
                               "--limitBAMsortRAM":12000000000}):
     '''
+    A method running star alignment
+    
+    :param two_pass_mode: Run two-pass mode of star, default True
+    :param star_patameters: A dictionary of star parameters, default encode parameters
+    :returns: A genomic_bam and a transcriptomic bam
     '''
     try:
       temp_dir=get_temp_dir()                                                   # get a temp dir
@@ -57,6 +58,10 @@ class Star_utils:
                 "--genomeLoad","NoSharedMemory",
                 "--runMode","alignReads",
                 "--quantMode","TranscriptomeSAM",
+                "--outSAMtype","BAM SortedByCoordinate",
+                "--genomeLoad","NoSharedMemory",
+                "--outFilterType","BySJout",
+                "--outSAMunmapped","Within",
                 "--sjdbGTFfile",quotes(self.reference_gtf),
                 "--outFileNamePrefix",quote(temp_path_prefix)
                ]                                                                # get default paramteres for star
@@ -82,16 +87,25 @@ class Star_utils:
         star_cmd.append(quotes(read2_list[0]))                                  # add read 2
 
       subprocess.check_call(star_cmd,shell=False)
-      output_bams=list()
+      genomic_bam=''
+      transcriptomic_bam=''
+      genomic_bam_pattern=re.compile(r'sortedByCoord.out.bam')                  # pattern for genomic bam
+      transcriptomic_bam_pattern=re.compile(r'toTranscriptome.out.bam')         # pattern for transcriptomic bam
       for files in os.listdir(temp_dir):
         if fnmatch.fnmatch(file, '*.bam'):
           source_path=os.path.join(temp_dir,file)
           destinationa_path=os.path.join(self.output_dir,file)
           copy_local_file(source_path=source_path,
                           destinationa_path=destinationa_path)                  # copying bams to output dir
-          output_bams.append(destinationa_path)
+          if re.match(genomic_bam_pattern,
+                      os.path.basename(destinationa_path)):
+            genomic_bam=destinationa_path
 
-      remove_dir(temp_dir)
-      return output_bams
+          if re.match(transcriptomic_bam_pattern,
+                      os.path.basename(destinationa_path)):
+            transcriptomic_bam=destinationa_path
+
+      remove_dir(temp_dir)                                                      # removing temp run dir
+      return genomic_bam,transcriptomic_bam
     except:
       raise
