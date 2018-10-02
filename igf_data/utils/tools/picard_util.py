@@ -204,11 +204,12 @@ class Picard_tools:
     except:
       raise
 
-  def run_picard_command(self,command_name):
+  def run_picard_command(self,command_name,dry_run=False):
     '''
     A method for running generic picard command
     
     :param command_name: Picard command name
+    :param dry_run: A toggle for returning picard command without the actual run, default False
     :returns: A list of output files from picard run and picard run command
     '''
     try:
@@ -245,6 +246,9 @@ class Picard_tools:
                        for param_dicts in picard_run_param
                          for param,val in param_dicts.items()]
         command.extend(picard_option)                                           # main picard params
+        if dry_run:
+          return command,output_file_list
+
         subprocess.check_call(command)                                          # run picard command
         return output_file_list,command
       else:
