@@ -109,7 +109,41 @@ class GATK_tools:
     except:
       raise
 
+  def run_AnalyzeCovariates(self,before_report_file,after_report_file,output_pdf_path,
+                            force=False,dry_run=False):
+    '''
+    A method for running GATK AnalyzeCovariates tool
+    
+    :param before_report_file: A file containing bqsr output before recalibration
+    :param after_report_file: A file containing bqsr output after recalibration
+    :param output_pdf_path: An output pdf filepath
+    :param force: Overwrite output file, if force is True
+    :param dry_run: Return GATK command, if its true, default False
+    '''
+    try:
+      self._run_gatk_checks()                                                   # run initial checks
+      check_file_path(before_report_file)
+      check_file_path(after_report_file)
+      temp_dir=get_temp_dir()                                                   # get temp dir
+      temp_output=os.path.join(temp_dir,
+                               os.path.basename(output_pdf_path))
+      gatk_cmd=[quotes(self.gatk_exe),
+                'AnalyzeCovariates',
+                '--before-report-file',quotes(before_report_file),
+                '--after-report-file',quotes(after_report_file),
+                '--plots-report-file',quotes(temp_output),
+                '--java-options',quotes(self.java_param)
+               ]
+      if dry_run:
+        return gatk_cmd
 
+      subprocess.check_call(gatk_cmd)
+      copy_local_file(source_path=temp_output,
+                      destinationa_path=output_pdf_path,
+                      force=force)
+      remove_dir(temp_dir)
+    except:
+      raise
 
 
 
