@@ -80,10 +80,10 @@ class Picard_tools:
 
         output_file='{0}.{1}'.format(output_file,
                                     'txt')                                      # add correct extension for output file
-        param_dict={'I':input_list[0],
-                    'O':output_file,
-                    'R':self.ref_fasta
-                   }
+        param_dict=[{'I':input_list[0],
+                     'O':output_file,
+                     'R':self.ref_fasta}
+                   ]
         output_list=[output_file]
 
       elif command_name=='CollectGcBiasMetrics':
@@ -93,12 +93,12 @@ class Picard_tools:
 
         output_file='{0}.{1}'.format(output_file,
                                     'txt')                                      # add correct extension for output file
-        param_dict={'I':input_list[0],
-                    'O':output_file,
-                    'R':self.ref_fasta,
-                    'CHART':chart_file,
-                    'S':metrics_file
-                   }
+        param_dict=[{'I':input_list[0],
+                     'O':output_file,
+                     'R':self.ref_fasta,
+                     'CHART':chart_file,
+                     'S':metrics_file}
+                   ]
         output_list=[output_file,
                      chart_file,
                      metrics_file
@@ -111,10 +111,10 @@ class Picard_tools:
 
         output_file='{0}.{1}'.format(output_file,
                                     'txt')                                      # add correct extension for output file
-        param_dict={'I':input_list[0],
-                    'O':output_file,
-                    'CHART':chart_file
-                   }
+        param_dict=[{'I':input_list[0],
+                     'O':output_file,
+                     'CHART':chart_file}
+                   ]
         output_list=[output_file,
                      chart_file,
                     ]
@@ -131,13 +131,13 @@ class Picard_tools:
         check_file_path(file_path=self.ref_flat_file)                                # check refFlat file path
         output_file='{0}.{1}'.format(output_file,
                                     'txt')                                      # add correct extension for output file
-        param_dict={'I':input_list[0],
-                    'O':output_file,
-                    'R':self.ref_fasta,
-                    'REF_FLAT':self.ref_flat_file,
-                    'STRAND':self.strand_info,
-                    'CHART':chart_file
-                   }
+        param_dict=[{'I':input_list[0],
+                     'O':output_file,
+                     'R':self.ref_fasta,
+                     'REF_FLAT':self.ref_flat_file,
+                     'STRAND':self.strand_info,
+                     'CHART':chart_file}
+                   ]
         if self.ribisomal_interval is not None:
           check_file_path(file_path=self.ribisomal_interval)
           param_dict.update({'RIBOSOMAL_INTERVALS':self.ribisomal_interval})
@@ -153,10 +153,10 @@ class Picard_tools:
 
         output_file='{0}.{1}'.format(output_file,
                                     'txt')                                      # add correct extension for output file
-        param_dict={'I':input_list[0],
-                    'O':output_file,
-                    'CHART':chart_file
-                   }
+        param_dict=[{'I':input_list[0],
+                     'O':output_file,
+                     'CHART':chart_file}
+                   ]
         output_list=[output_file,
                      chart_file,
                     ]
@@ -164,9 +164,9 @@ class Picard_tools:
       elif command_name=='MarkDuplicates':
         output_file='{0}.{1}'.format(output_file,
                                     'bam')                                      # add correct extension for output file
-        param_dict={'O':output_file,
-                    'M':metrics_file
-                   }
+        param_dict=[{'O':output_file,
+                     'M':metrics_file}
+                   ]
         for file in input_list:
           param_dict.append({'I':file})
 
@@ -192,9 +192,9 @@ class Picard_tools:
 
         output_file='{0}.{1}'.format(output_file,
                                     'bam')                                      # add correct extension for output file
-        param_dict={'I':input_list[0],
-                    'O':output_file
-                   }                                                           # not checking for other required inputs
+        param_dict=[{'I':input_list[0],
+                     'O':output_file}
+                   ]                                                           # not checking for other required inputs
         output_list=[output_file]
 
       return param_dict, output_list
@@ -233,11 +233,12 @@ class Picard_tools:
 
       picard_run_param,output_file_list=\
                   self._get_param_for_picard_command(command_name=command_name) # get picard params and output list
-      if isinstance(picard_run_param,dict) and \
-          len(picard_run_param.keys())>1:
+      if isinstance(picard_run_param,list) and \
+          len(picard_run_param)>1:
         picard_option=['{0}={1}'.format(quote(param),
                                         quote(val))
-                       for param,val in picard_run_param.items()]
+                       for param_dicts in picard_run_param
+                         for param,val in param_dicts.items()]
         command.extend(picard_option)                                           # main picard params
         subprocess.check_call(command)                                          # run picard command
         return output_file_list,command
