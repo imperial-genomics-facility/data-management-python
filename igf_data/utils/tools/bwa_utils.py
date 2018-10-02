@@ -35,13 +35,15 @@ class BWA_util:
     except:
       raise
 
-  def run_mem(self,mem_cmd='mem',option_list=['-M'],samtools_cmd='view'):
+  def run_mem(self,mem_cmd='mem',option_list=['-M'],samtools_cmd='view',
+              dry_run=False):
     '''
     A method for running Bwa mem and generate output alignment
     
     :param mem_cmd: Bwa mem command, default mem
     :param option_list: List of bwa mem option, default -M
     :param samtools_cmd: Samtools view command, default view
+    :param dry_run: A toggle for returning the bwa cmd without running it, default False
     :return: A alignment file path
     '''
     try:
@@ -73,6 +75,9 @@ class BWA_util:
           quote('--threads'),quote(self.thread),
           quote('-bo'),quote(temp_output_path)
           ]
+        if dry_run:
+          return bwa_cmd,samtools_cmd                                           # return bwa and samtools cmd
+
         with subprocess.Popen(bwa_cmd, stdout=PIPE) as proc:
           proc2=subprocess.Popen(samtools_cmd, stdin=proc.stdout)
 
