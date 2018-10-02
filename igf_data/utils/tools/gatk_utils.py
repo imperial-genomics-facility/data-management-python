@@ -71,3 +71,48 @@ class GATK_tools:
       remove_dir(temp_dir)                                                      # remove temp dir
     except:
       raise
+
+  def run_ApplyBQSR(self,bqsr_recal_file,input_bam,output_bam_path,force=False,
+                    dry_run=False):
+    '''
+    A method for running GATK ApplyBQSR
+    
+    :param input_bam: An input bam file
+    :param bqsr_recal_file: An bqsr table filepath
+    :param output_bam_path: A bam output file
+    :param force: Overwrite output file, if force is True
+    :param dry_run: Return GATK command, if its true, default False
+    '''
+    try:
+      self._run_gatk_checks()                                                   # run initial checks
+      check_file_path(input_bam)
+      check_file_path(bqsr_recal_file)
+      temp_dir=get_temp_dir()                                                   # get temp dir
+      temp_output=os.path.join(temp_dir,
+                               os.path.basename(output_bam_path))
+      gatk_cmd=[quotes(self.gatk_exe),
+                'ApplyBQSR',
+                '--emit_original_quals',
+                '--bqsr-recal-file',quotes(bqsr_recal_file),
+                '-I',quotes(input_bam),
+                '-O',quotes(temp_output),
+                '--java-options',quotes(self.java_param)
+               ]
+      if dry_run:
+        return gatk_cmd
+
+      subprocess.check_call(gatk_cmd)
+      copy_local_file(source_path=temp_output,
+                      destinationa_path=output_bam_path,
+                      force=force)
+      remove_dir(temp_dir)
+    except:
+      raise
+
+
+
+
+
+
+
+
