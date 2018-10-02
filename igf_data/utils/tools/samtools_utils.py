@@ -184,3 +184,45 @@ def run_bam_idxstat(samtools_exe,bam_file,output_dir,force=False):
     return output_path
   except:
     raise
+
+
+def run_sort_bam(samtools_exe,input_bam_path,output_bam_path,sort_by_name=False,
+                 threads=1,force=False):
+  '''
+  A function for sorting input bam file and generate a output bam
+  
+  :param samtools_exe: samtools executable path
+  :param input_bam_path: A bam filepath
+  :param output_bam_path: A bam output filepath
+  :param sort_by_name: Sort bam file by read_name, default False (for coordinate sorting)
+  :param threads: Number of threads to use for sorting, default 1
+  :param force: Output bam file will be overwritten if force is True, default False
+  :return: None
+  '''
+  try:
+    check_file_path(samtools_exe)
+    _check_bam_file(bam_file=input_bam_path)
+    sort_cmd=[quotes(samtools_exe),
+              'sort',
+              '--output-fmt','BAM',
+              '--threads',quotes(threads)
+              ]
+    if sort_by_name:
+      sort_cmd.append('-n')                                                     # sorting by read name
+
+    sort_cmd.append(quotes(input_bam_path))
+
+    temp_dir=get_temp_dir()
+    temp_bam=os.path.join(temp_dir,
+                          os.path.basename(output_bam_path))
+
+    with open(temp_bam,'w') as bam:
+      with subprocess.Popen(sort_cmd, stdout=PIPE) as proc:
+        bam.write(proc.stdout.read())                                           # write temp bam files
+
+    copy_local_file(source_path=temp_bam,
+                    destinationa_path=output_bam_path,
+                    force=force)                                                # copy output bam
+  except:
+    raise
+
