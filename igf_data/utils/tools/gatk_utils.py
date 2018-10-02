@@ -45,20 +45,20 @@ class GATK_tools:
       temp_output=os.path.join(temp_dir,
                                os.path.basename(output_table))
       gatk_cmd=[quotes(self.gatk_exe),
-                'BaseRecalibrator',
-                '-I',quotes(input_bam),
-                '-O',quotes(temp_output),
-                '--reference',quotes(self.ref_fasta),
-                '--java-options',quotes(self.java_param)
+                "BaseRecalibrator",
+                "-I",quotes(input_bam),
+                "-O",quotes(temp_output),
+                "--reference",quotes(self.ref_fasta),
+                "--java-options",quotes(self.java_param)
                ]
       if known_snp_sites is not None:
         check_file_path(known_snp_sites)
-        gatk_cmd.append('--known-sites',
+        gatk_cmd.append("--known-sites",
                         quotes(known_snp_sites))
 
       if known_indel_sites:
         check_file_path(known_indel_sites)
-        gatk_cmd.append('--known-sites',
+        gatk_cmd.append("--known-sites",
                         quotes(known_indel_sites))
 
       if dry_run:
@@ -91,12 +91,12 @@ class GATK_tools:
       temp_output=os.path.join(temp_dir,
                                os.path.basename(output_bam_path))
       gatk_cmd=[quotes(self.gatk_exe),
-                'ApplyBQSR',
-                '--emit_original_quals',
-                '--bqsr-recal-file',quotes(bqsr_recal_file),
-                '-I',quotes(input_bam),
-                '-O',quotes(temp_output),
-                '--java-options',quotes(self.java_param)
+                "ApplyBQSR",
+                "--emit_original_quals",
+                "--bqsr-recal-file",quotes(bqsr_recal_file),
+                "-I",quotes(input_bam),
+                "-O",quotes(temp_output),
+                "--java-options",quotes(self.java_param)
                ]
       if dry_run:
         return gatk_cmd
@@ -128,11 +128,11 @@ class GATK_tools:
       temp_output=os.path.join(temp_dir,
                                os.path.basename(output_pdf_path))
       gatk_cmd=[quotes(self.gatk_exe),
-                'AnalyzeCovariates',
-                '--before-report-file',quotes(before_report_file),
-                '--after-report-file',quotes(after_report_file),
-                '--plots-report-file',quotes(temp_output),
-                '--java-options',quotes(self.java_param)
+                "AnalyzeCovariates",
+                "--before-report-file",quotes(before_report_file),
+                "--after-report-file",quotes(after_report_file),
+                "--plots-report-file",quotes(temp_output),
+                "--java-options",quotes(self.java_param)
                ]
       if dry_run:
         return gatk_cmd
@@ -145,7 +145,46 @@ class GATK_tools:
     except:
       raise
 
+  def run_HaplotypeCaller(self,input_bam,output_vcf_path,dbsnp_vcf,emit_gvcf=True,
+                          force=False,dry_run=False):
+    '''
+    A method for running GATK HaplotypeCaller
+    
+    :param input_bam: A input bam file
+    :param output_vcf_path: A output vcf filepath
+    :param dbsnp_vcf: A dbsnp vcf file
+    :param emit_gvcf: A toggle for GVCF generation, default True
+    :param force: Overwrite output file, if force is True
+    :param dry_run: Return GATK command, if its true, default False
+    '''
+    try:
+      self._run_gatk_checks()                                                   # run initial checks
+      check_file_path(input_bam)
+      check_file_path(dbsnp_vcf)
+      temp_dir=get_temp_dir()                                                   # get temp dir
+      temp_output=os.path.join(temp_dir,
+                               os.path.basename(output_vcf_path))
+      gatk_cmd=[quotes(self.gatk_exe),
+                "HaplotypeCaller",
+                "-I",quotes(input_bam),
+                "-O",quotes(temp_output),
+                "--reference",quotes(self.ref_fasta),
+                "--dbsnp",quotes(dbsnp_vcf),
+                "--java-options",quotes(self.java_param)
+               ]
+      if emit_gvcf:
+        gatk_cmd.append("--emit-ref-confidence","GVCF")
 
+      if dry_run:
+        return gatk_cmd
+
+      subprocess.check_call(gatk_cmd)
+      copy_local_file(source_path=temp_output,
+                      destinationa_path=output_vcf_path,
+                      force=force)
+      remove_dir(temp_dir)
+    except:
+      raise
 
 
 
