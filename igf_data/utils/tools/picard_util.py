@@ -17,6 +17,7 @@ class Picard_tools:
   :param ref_flat_file: Input ref_flat file path, default None
   :param suported_commands: A list of supported picard commands
   :param output_prefix: Output prefix name, default None
+  :param threads: Number of threads to run for java, default 1
   
                            CollectAlignmentSummaryMetrics
                            CollectGcBiasMetrics
@@ -29,6 +30,7 @@ class Picard_tools:
   def __init__(self,java_exe,picard_jar,input_files,output_dir,ref_fasta,
                picard_option=None,java_param='-Xmx4g',strand_info='NONE',
                ref_flat_file=None,ribisomal_interval=None,output_prefix=None,
+               threads=1,
                suported_commands=['CollectAlignmentSummaryMetrics',
                                   'CollectGcBiasMetrics',
                                   'QualityScoreDistribution',
@@ -48,6 +50,7 @@ class Picard_tools:
     self.suported_commands=suported_commands
     self.ribisomal_interval=ribisomal_interval
     self.output_prefix=output_prefix
+    self.threads=threads
 
   def _get_param_for_picard_command(self,command_name):
     '''
@@ -220,6 +223,8 @@ class Picard_tools:
         check_file_path(file_path=file)
 
       command=[self.java_exe,
+               '-XX:ParallelGCThreads={0}'.\
+               format(self.threads),
                self.java_param,
                '-jar',
                self.picard_jar,
