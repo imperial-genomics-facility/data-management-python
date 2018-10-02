@@ -33,7 +33,7 @@ class Star_utils:
     except:
       raise
 
-  def generate_aligned_bams(self,two_pass_mode=True,
+  def generate_aligned_bams(self,two_pass_mode=True,dry_run=False,
                             star_patameters={
                               "--outFilterMultimapNmax":20,
                               "--alignSJoverhangMin":8,
@@ -49,6 +49,7 @@ class Star_utils:
     A method running star alignment
     
     :param two_pass_mode: Run two-pass mode of star, default True
+    :param dry_run: A toggle forreturning the star cmd without actual run, default False
     :param star_patameters: A dictionary of star parameters, default encode parameters
     :returns: A genomic_bam and a transcriptomic bam
     '''
@@ -93,6 +94,9 @@ class Star_utils:
       if len(read2_list)>0:
         star_cmd.append(quotes(read2_list[0]))                                  # add read 2
 
+      if dry_run:
+        return star_cmd                                                         # return star cmd
+
       subprocess.check_call(star_cmd,shell=False)
       genomic_bam=''
       transcriptomic_bam=''
@@ -118,13 +122,14 @@ class Star_utils:
       raise
 
   def generate_rna_bigwig(self,bedGraphToBigWig_path,chrom_length_file,
-                          stranded=True):
+                          stranded=True,dry_run=False):
     '''
     A method for generating bigWig signal tracks from star aligned bams files
     
     :param bedGraphToBigWig_path: bedGraphToBigWig_path executable path
     :param chrom_length_file: A file containing chromosome length, e.g. .fai file
     :param stranded:Param for stranded analysis, default True
+    :param dry_run: A toggle forreturning the star cmd without actual run, default False
     :returns: A list of bigWig files
     '''
     try:
@@ -150,6 +155,9 @@ class Star_utils:
         raise ValueError('Input bam file not found in input filelist star run')
 
       star_cmd.append("--inputBAMfile",quotes(input_files[0]))                  # set input for star run
+      if dry_run:
+        return star_cmd                                                         # return star cmd
+
       subprocess.check_call(star_cmd)
       output_list=list()
       for file in os.listdir(temp_dir):
