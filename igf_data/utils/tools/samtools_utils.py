@@ -223,6 +223,47 @@ def run_sort_bam(samtools_exe,input_bam_path,output_bam_path,sort_by_name=False,
     copy_local_file(source_path=temp_bam,
                     destinationa_path=output_bam_path,
                     force=force)                                                # copy output bam
+    remove_dir(temp_dir)                                                        # remove temp dir
+    _check_bam_file(output_bam_path)
+  except:
+    raise
+
+
+def merge_multiple_bam(samtools_exe,input_bam_list,output_bam_path,sorted_by_name=False,
+                       threads=1,force=False):
+  '''
+  A function for merging multiple input bams to a single output bam
+  
+  :param samtools_exe: samtools executable path
+  :param input_bam_list: A file containing list of bam filepath
+  :param output_bam_path: A bam output filepath
+  :param sorted_by_name: Sort bam file by read_name, default False (for coordinate sorted bams)
+  :param threads: Number of threads to use for merging, default 1
+  :param force: Output bam file will be overwritten if force is True, default False
+  :return: None
+  '''
+  try:
+    check_file_path(samtools_exe)
+    check_file_path(input_bam_list)
+    temp_dir=get_temp_dir()
+    temp_bam=os.path.join(temp_dir,
+                          os.path.basename(output_bam_path))
+    merge_cmd=[quotes(samtools_exe),
+               'merge',
+               '--output-fmt','BAM',
+               '--threads',quotes(threads),
+               '-b',quotes(input_bam_list)
+              ]
+    if sorted_by_name:
+      merge_cmd.append('-n')                                                    # Input files are sorted by read name
+
+    merge_cmd.append(quotes(temp_bam))
+    subprocess.check_call(merge_cmd)                                            # run samtools merge
+    copy_local_file(source_path=temp_bam,
+                    destinationa_path=output_bam_path,
+                    force=force)                                                # copy bamfile
+    remove_dir(temp_dir)                                                        # remove temp dir
+    _check_bam_file(output_bam_path)
   except:
     raise
 
