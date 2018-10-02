@@ -1,4 +1,4 @@
-import os, subprocess
+import os,subprocess
 from shlex import quote
 from igf_data.utils.fileutils import check_file_path
 
@@ -15,9 +15,9 @@ class Picard_tools:
   :param java_param: Java parameter, default '-Xmx4g'
   :param strand_info: RNA-Seq strand information, default NONE
   :param ref_flat_file: Input ref_flat file path, default None
-  :param suported_commands: A list of supported picard commands
   :param output_prefix: Output prefix name, default None
   :param threads: Number of threads to run for java, default 1
+  :param suported_commands: A list of supported picard commands
   
                            CollectAlignmentSummaryMetrics
                            CollectGcBiasMetrics
