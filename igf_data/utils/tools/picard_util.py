@@ -8,7 +8,7 @@ class Picard_tools:
   
   :param java_exe: Java executable path
   :param picard_jar: Picard path
-  :param input_file: Input bam filepath
+  :param input_files: Input bam filepaths list
   :param output_dir: Output directory filepath
   :param ref_fasta: Input reference fasta filepath
   :param picard_option: Additional picard run parameters as dictionary, default None
@@ -16,6 +16,7 @@ class Picard_tools:
   :param strand_info: RNA-Seq strand information, default NONE
   :param ref_flat_file: Input ref_flat file path, default None
   :param suported_commands: A list of supported picard commands
+  :param output_prefix: Output prefix name, default None
   
                            CollectAlignmentSummaryMetrics
                            CollectGcBiasMetrics
@@ -25,9 +26,9 @@ class Picard_tools:
                            MarkDuplicates
                            AddOrReplaceReadGroups
   '''
-  def __init__(self,java_exe,picard_jar,input_file,output_dir,ref_fasta,
+  def __init__(self,java_exe,picard_jar,input_files,output_dir,ref_fasta,
                picard_option=None,java_param='-Xmx4g',strand_info='NONE',
-               ref_flat_file=None,ribisomal_interval=None,
+               ref_flat_file=None,ribisomal_interval=None,output_prefix=None,
                suported_commands=['CollectAlignmentSummaryMetrics',
                                   'CollectGcBiasMetrics',
                                   'QualityScoreDistribution',
@@ -38,7 +39,7 @@ class Picard_tools:
     self.java_exe=java_exe
     self.picard_jar=picard_jar
     self.java_param=java_param
-    self.input_file=input_file
+    self.input_file=input_files
     self.output_dir=output_dir
     self.ref_fasta=ref_fasta
     self.picard_option=picard_option
@@ -46,6 +47,7 @@ class Picard_tools:
     self.ref_flat_file=ref_flat_file
     self.suported_commands=suported_commands
     self.ribisomal_interval=ribisomal_interval
+    self.output_prefix=output_prefix
 
   def _get_param_for_picard_command(self,command_name):
     '''
@@ -58,8 +60,13 @@ class Picard_tools:
     try:
       param_dict=None
       output_list=list()
-      output_prefix=os.path.join(self.output_dir,
-                                 os.path.basename(self.input_file))             # set output file prefix
+      input_list=self.input_files
+      if self.output_prefix is None:
+        output_prefix=os.path.join(self.output_dir,
+                                   os.path.basename(input_list[0]))             # set output file prefix
+      else:
+        output_prefix=self.output_prefix
+
       output_file='{0}.{1}'.format(output_prefix,
                                      command_name)                              # set output path without any extension
       chart_file='{0}.{1}'.format(output_file,
@@ -67,18 +74,26 @@ class Picard_tools:
       metrics_file='{0}.{1}'.format(output_file,
                                     'summary.txt')                              # set summary metrics path
       if command_name=='CollectAlignmentSummaryMetrics':
+        if len(input_list)>1:
+          raise ValueError('More than one input file found for picard command {0}'.\
+                           format(command_name))
+
         output_file='{0}.{1}'.format(output_file,
                                     'txt')                                      # add correct extension for output file
-        param_dict={'I':self.input_file,
+        param_dict={'I':input_list[0],
                     'O':output_file,
                     'R':self.ref_fasta
                    }
         output_list=[output_file]
 
       elif command_name=='CollectGcBiasMetrics':
+        if len(input_list)>1:
+          raise ValueError('More than one input file found for picard command {0}'.\
+                           format(command_name))
+
         output_file='{0}.{1}'.format(output_file,
                                     'txt')                                      # add correct extension for output file
-        param_dict={'I':self.input_file,
+        param_dict={'I':input_list[0],
                     'O':output_file,
                     'R':self.ref_fasta,
                     'CHART':chart_file,
@@ -90,9 +105,13 @@ class Picard_tools:
                     ]
 
       elif command_name=='QualityScoreDistribution':
+        if len(input_list)>1:
+          raise ValueError('More than one input file found for picard command {0}'.\
+                           format(command_name))
+
         output_file='{0}.{1}'.format(output_file,
                                     'txt')                                      # add correct extension for output file
-        param_dict={'I':self.input_file,
+        param_dict={'I':input_list[0],
                     'O':output_file,
                     'CHART':chart_file
                    }
@@ -101,6 +120,10 @@ class Picard_tools:
                     ]
 
       elif command_name=='CollectRnaSeqMetrics':
+        if len(input_list)>1:
+          raise ValueError('More than one input file found for picard command {0}'.\
+                           format(command_name))
+
         if self.ref_flat_file is None:
           raise ValueError('Missing refFlat annotation file for command {0}'.\
                            format(command_name))
@@ -108,7 +131,7 @@ class Picard_tools:
         check_file_path(file_path=self.ref_flat_file)                                # check refFlat file path
         output_file='{0}.{1}'.format(output_file,
                                     'txt')                                      # add correct extension for output file
-        param_dict={'I':self.input_file,
+        param_dict={'I':input_list[0],
                     'O':output_file,
                     'R':self.ref_fasta,
                     'REF_FLAT':self.ref_flat_file,
@@ -124,9 +147,13 @@ class Picard_tools:
                     ]
 
       elif command_name=='CollectBaseDistributionByCycle':
+        if len(input_list)>1:
+          raise ValueError('More than one input file found for picard command {0}'.\
+                           format(command_name))
+
         output_file='{0}.{1}'.format(output_file,
                                     'txt')                                      # add correct extension for output file
-        param_dict={'I':self.input_file,
+        param_dict={'I':input_list[0],
                     'O':output_file,
                     'CHART':chart_file
                    }
@@ -137,15 +164,21 @@ class Picard_tools:
       elif command_name=='MarkDuplicates':
         output_file='{0}.{1}'.format(output_file,
                                     'bam')                                      # add correct extension for output file
-        param_dict={'I':self.input_file,
-                    'O':output_file,
+        param_dict={'O':output_file,
                     'M':metrics_file
                    }
+        for file in input_list:
+          param_dict.append({'I':file})
+
         output_list=[output_file,
                      metrics_file
                     ]
 
       elif command_name=='AddOrReplaceReadGroups':
+        if len(input_list)>1:
+          raise ValueError('More than one input file found for picard command {0}'.\
+                           format(command_name))
+
         required_RG_params=["RGID",
                             "RGLB",
                             "RGPL",
@@ -159,7 +192,7 @@ class Picard_tools:
 
         output_file='{0}.{1}'.format(output_file,
                                     'bam')                                      # add correct extension for output file
-        param_dict={'I':self.input_file,
+        param_dict={'I':input_list[0],
                     'O':output_file
                    }                                                           # not checking for other required inputs
         output_list=[output_file]
@@ -178,8 +211,13 @@ class Picard_tools:
     try:
       check_file_path(file_path=self.java_exe)
       check_file_path(file_path=self.picard_jar)
-      check_file_path(file_path=self.input_file)
       check_file_path(file_path=self.ref_fasta)
+      if not isinstance(self.input_files, list) or \
+         len(self.input_files)==0:
+        raise ValueError('Missing input file list for picard run')
+
+      for file in self.input_files:
+        check_file_path(file_path=file)
 
       command=[self.java_exe,
                self.java_param,
