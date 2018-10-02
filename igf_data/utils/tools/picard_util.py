@@ -146,6 +146,17 @@ class Picard_tools:
                     ]
 
       elif command_name=='AddOrReplaceReadGroups':
+        required_RG_params=["RGID",
+                            "RGLB",
+                            "RGPL",
+                            "RGPU",
+                            "RGSM",
+                            "RGCN"
+                           ]
+        if not set(required_RG_params).issubset(set(self.picard_option.keys())):
+          raise ValueError('Missing required options for picard cmd {0}:{1}'.\
+                           format(command_name,required_RG_params))             # check for required params
+
         output_file='{0}.{1}'.format(output_file,
                                     'bam')                                      # add correct extension for output file
         param_dict={'I':self.input_file,
