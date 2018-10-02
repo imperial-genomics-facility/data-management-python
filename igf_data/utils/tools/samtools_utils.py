@@ -35,12 +35,13 @@ def _check_bam_file(bam_file):
   except:
     raise
 
-def _check_bam_index(samtools_exe,bam_file):
+def _check_bam_index(samtools_exe,bam_file,dry_run=False):
   '''
   An internal method for checking bam index files. It will generate a new index if its not found.
   
   :param samtools_exe: samtools executable path
   :param bam_file: A bam file path
+  :param dry_run: A toggle for returning the samtools command without actually running it, default False
   '''
   try:
     check_file_path(samtools_exe)
@@ -50,6 +51,9 @@ def _check_bam_index(samtools_exe,bam_file):
                  'index',
                  quote(bam_file)
                 ]                                                               # generate bam index, if its not present
+      if dry_run:
+        return index_cmd
+
       subprocess.check_call(index_cmd,
                             shell=False)
 
@@ -58,7 +62,7 @@ def _check_bam_index(samtools_exe,bam_file):
 
 
 def convert_bam_to_cram(samtools_exe,bam_file,reference_file,cram_path,threads=1,
-                        force=False):
+                        force=False,dry_run=False):
   '''
   A function for converting bam files to cram using pysam utility
   
@@ -68,6 +72,7 @@ def convert_bam_to_cram(samtools_exe,bam_file,reference_file,cram_path,threads=1
   :param cram_path: A cram output file path
   :param threads: Number of threads to use for conversion, default 1
   :param force: Output cram will be overwritten if force is True, default False
+  :param dry_run: A toggle for returning the samtools command without actually running it, default False
   :returns: Nill
   :raises IOError: It raises IOError if no input or reference fasta file found or
                    output file already present and force is not True
@@ -90,8 +95,12 @@ def convert_bam_to_cram(samtools_exe,bam_file,reference_file,cram_path,threads=1
               '-T{0}'.format(quote(reference_file)),
               '-o{0}'.format(quote(temp_file)),
               quotes(bam_file)
-             ]                                                                  # convert bam to cram using pysam view
-    subprocess.check_call(view_cmd)
+             ]                                                                  # convert bam to cram using samtools
+    if dry_run:
+      return view_cmd
+
+    subprocess.check_call(view_cmd,
+                          shell=False)
     _check_cram_file(cram_path=temp_file)                                       # check cram output
     copy_local_file(\
       source_path=temp_file,
@@ -102,7 +111,8 @@ def convert_bam_to_cram(samtools_exe,bam_file,reference_file,cram_path,threads=1
     raise
 
 
-def run_bam_flagstat(samtools_exe,bam_file,output_dir,threads=1,force=False):
+def run_bam_flagstat(samtools_exe,bam_file,output_dir,threads=1,force=False,
+                     dry_run=False):
   '''
   A method for generating bam flagstat output
   
@@ -111,6 +121,7 @@ def run_bam_flagstat(samtools_exe,bam_file,output_dir,threads=1,force=False):
   :param output_dir: Bam flagstat output directory path
   :param threads: Number of threads to use for conversion, default 1
   :param force: Output flagstat file will be overwritten if force is True, default False
+  :param dry_run: A toggle for returning the samtools command without actually running it, default False
   :returns: Output file path
   '''
   try:
@@ -136,6 +147,9 @@ def run_bam_flagstat(samtools_exe,bam_file,output_dir,threads=1,force=False):
                   '-@{0}'.format(quotes(threads)),
                   quotes(bam_file)
                  ]
+    if dry_run:
+      return flagstat_cmd
+
     with open(output_path,'w') as fp:
       with subprocess.Popen(flagstat_cmd, stdout=PIPE) as proc:
         fp.write(proc.stdout.read())                                        # write bam flagstat output
@@ -145,7 +159,7 @@ def run_bam_flagstat(samtools_exe,bam_file,output_dir,threads=1,force=False):
     raise
 
 
-def run_bam_idxstat(samtools_exe,bam_file,output_dir,force=False):
+def run_bam_idxstat(samtools_exe,bam_file,output_dir,force=False,dry_run=False):
   '''
   A function for running samtools index stats generation
   
@@ -153,6 +167,7 @@ def run_bam_idxstat(samtools_exe,bam_file,output_dir,force=False):
   :param bam_file: A bam filepath with / without index. Index file will be created if its missing
   :param output_dir: Bam idxstats output directory path
   :param force: Output idxstats file will be overwritten if force is True, default False
+  :param dry_run: A toggle for returning the samtools command without actually running it, default False
   :returns: Output file path
   '''
   try:
@@ -177,6 +192,9 @@ def run_bam_idxstat(samtools_exe,bam_file,output_dir,force=False):
                   'idxstats',
                   quotes(bam_file)
                 ]
+    if dry_run:
+      return idxstat_cmd
+
     with open(output_path,'w') as fp:
       with subprocess.Popen(idxstat_cmd, stdout=PIPE) as proc:
         fp.write(proc.stdout.read())                                            # write bam flagstat output
@@ -187,7 +205,7 @@ def run_bam_idxstat(samtools_exe,bam_file,output_dir,force=False):
 
 
 def run_sort_bam(samtools_exe,input_bam_path,output_bam_path,sort_by_name=False,
-                 threads=1,force=False):
+                 threads=1,force=False,dry_run=False):
   '''
   A function for sorting input bam file and generate a output bam
   
@@ -197,6 +215,7 @@ def run_sort_bam(samtools_exe,input_bam_path,output_bam_path,sort_by_name=False,
   :param sort_by_name: Sort bam file by read_name, default False (for coordinate sorting)
   :param threads: Number of threads to use for sorting, default 1
   :param force: Output bam file will be overwritten if force is True, default False
+  :param dry_run: A toggle for returning the samtools command without actually running it, default False
   :return: None
   '''
   try:
@@ -216,6 +235,9 @@ def run_sort_bam(samtools_exe,input_bam_path,output_bam_path,sort_by_name=False,
     temp_bam=os.path.join(temp_dir,
                           os.path.basename(output_bam_path))
 
+    if dry_run:
+      return sort_cmd
+
     with open(temp_bam,'w') as bam:
       with subprocess.Popen(sort_cmd, stdout=PIPE) as proc:
         bam.write(proc.stdout.read())                                           # write temp bam files
@@ -230,7 +252,7 @@ def run_sort_bam(samtools_exe,input_bam_path,output_bam_path,sort_by_name=False,
 
 
 def merge_multiple_bam(samtools_exe,input_bam_list,output_bam_path,sorted_by_name=False,
-                       threads=1,force=False):
+                       threads=1,force=False,force=False,dry_run=False):
   '''
   A function for merging multiple input bams to a single output bam
   
@@ -240,6 +262,7 @@ def merge_multiple_bam(samtools_exe,input_bam_list,output_bam_path,sorted_by_nam
   :param sorted_by_name: Sort bam file by read_name, default False (for coordinate sorted bams)
   :param threads: Number of threads to use for merging, default 1
   :param force: Output bam file will be overwritten if force is True, default False
+  :param dry_run: A toggle for returning the samtools command without actually running it, default False
   :return: None
   '''
   try:
@@ -258,6 +281,9 @@ def merge_multiple_bam(samtools_exe,input_bam_list,output_bam_path,sorted_by_nam
       merge_cmd.append('-n')                                                    # Input files are sorted by read name
 
     merge_cmd.append(quotes(temp_bam))
+    if dry_run:
+      return merge_cmd
+
     subprocess.check_call(merge_cmd)                                            # run samtools merge
     copy_local_file(source_path=temp_bam,
                     destinationa_path=output_bam_path,
