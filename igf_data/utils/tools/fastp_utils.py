@@ -49,6 +49,7 @@ class Fastp_utils:
     
     :param split_fastq: Split fastq output files by line counts, default False
     :returns: A list for read1 files, list of read2 files and a html report file
+              and the fastp commandline
     '''
     try:
       self._run_checks()
