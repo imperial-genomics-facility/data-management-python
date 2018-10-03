@@ -23,7 +23,7 @@ class RSEM_utils:
                          allowed values are none, forward and reverse
     :param options: A dictionary for rsem run, default None
     :param force: Overwrite existing data if force is True, default False
-    :returns: RSEM commandline
+    :returns: RSEM commandline and output file list
     '''
     try:
       rsem_exe=os.path.join(rsem_exe_dir,
@@ -60,6 +60,6 @@ class RSEM_utils:
                           destinationa_path=os.path.join(output_dir,file),
                           force=force)
 
-      return rsem_cmd
+      return rsem_cmd,rsem_output_list
     except:
       raise
