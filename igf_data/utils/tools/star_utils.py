@@ -2,8 +2,6 @@ import os,subprocess,re,fnmatch
 from shlex import quote
 from igf_data.utils.fastq_utils import detect_non_fastq_in_file_list,identify_fastq_pair
 from igf_data.utils.fileutils import check_file_path,get_temp_dir,remove_dir,copy_local_file
-from tables.expression import out
-from prompt_toolkit import output
 
 class Star_utils:
   def __init__(self,star_exe,input_files,genome_dir,reference_gtf,
