@@ -14,7 +14,6 @@ class GATK_tools:
     self.gatk_exe=gatk_exe
     self.java_param=java_param
     self.ref_fasta=ref_fasta
-    self.suported_commands=suported_commands
 
   def _run_gatk_checks(self):
     '''
@@ -37,6 +36,7 @@ class GATK_tools:
     :param known_indel_sites: Known indel sites (e.g.Mills_and_1000G_gold_standard indels vcf), default None
     :param force: Overwrite output file, if force is True
     :param dry_run: Return GATK command, if its true, default False
+    :returns: GATK commandline
     '''
     try:
       self._run_gatk_checks()                                                   # run initial checks
@@ -69,6 +69,7 @@ class GATK_tools:
                       destinationa_path=output_table,
                       force=force)                                              # copy output file
       remove_dir(temp_dir)                                                      # remove temp dir
+      return gatk_cmd
     except:
       raise
 
@@ -82,6 +83,7 @@ class GATK_tools:
     :param output_bam_path: A bam output file
     :param force: Overwrite output file, if force is True
     :param dry_run: Return GATK command, if its true, default False
+    :returns: GATK commandline
     '''
     try:
       self._run_gatk_checks()                                                   # run initial checks
@@ -106,6 +108,7 @@ class GATK_tools:
                       destinationa_path=output_bam_path,
                       force=force)
       remove_dir(temp_dir)
+      return gatk_cmd
     except:
       raise
 
@@ -119,6 +122,7 @@ class GATK_tools:
     :param output_pdf_path: An output pdf filepath
     :param force: Overwrite output file, if force is True
     :param dry_run: Return GATK command, if its true, default False
+    :returns: GATK commandline
     '''
     try:
       self._run_gatk_checks()                                                   # run initial checks
@@ -142,6 +146,7 @@ class GATK_tools:
                       destinationa_path=output_pdf_path,
                       force=force)
       remove_dir(temp_dir)
+      return gatk_cmd
     except:
       raise
 
@@ -156,6 +161,7 @@ class GATK_tools:
     :param emit_gvcf: A toggle for GVCF generation, default True
     :param force: Overwrite output file, if force is True
     :param dry_run: Return GATK command, if its true, default False
+    :returns: GATK commandline
     '''
     try:
       self._run_gatk_checks()                                                   # run initial checks
@@ -183,6 +189,7 @@ class GATK_tools:
                       destinationa_path=output_vcf_path,
                       force=force)
       remove_dir(temp_dir)
+      return gatk_cmd
     except:
       raise
 
