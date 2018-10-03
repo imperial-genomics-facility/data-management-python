@@ -44,7 +44,7 @@ class BWA_util:
     :param option_list: List of bwa mem option, default -M
     :param samtools_cmd: Samtools view command, default view
     :param dry_run: A toggle for returning the bwa cmd without running it, default False
-    :return: A alignment file path
+    :return: A alignment file path and bwa run cmd
     '''
     try:
       self._run_checks()                                                        # check input params
@@ -96,6 +96,6 @@ class BWA_util:
       else:
         raise IOError('Alignment temp output missing')
 
-      return final_output_file
+      return final_output_file,bwa_cmd
     except:
       raise
