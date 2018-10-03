@@ -209,7 +209,7 @@ class Reference_genome_utils:
     except:
       raise
 
-  def get_transcriptome_star(self,check_missing=True):
+  def get_transcriptome_star(self,check_missing=False):
     '''
     A method for fetching filepath of STAR reference transcriptome, for a specific genome build
     
