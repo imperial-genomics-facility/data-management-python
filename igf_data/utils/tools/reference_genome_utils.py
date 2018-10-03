@@ -5,9 +5,13 @@ class Reference_genome_utils:
   A class for accessing different components of the reference genome for a specific build
   '''
   def __init__(self,genome_tag,dbsession_class,
-               genome_fasta_type='GENOME_FASTA',genome_dict_type='GENOME_DICT',
-               gene_gtf_type='GENE_GTF',gene_reflat_type='GENE_REFFLAT',
-               bwa_ref_type='GENOME_BWA',minimap2_ref_type='GENOME_MINIMAP2',
+               genome_fasta_type='GENOME_FASTA',
+               genome_dict_type='GENOME_DICT',
+               gene_gtf_type='GENE_GTF',
+               gene_reflat_type='GENE_REFFLAT',
+               gene_rsem_type='TRANSCRIPTOME_RSEM',
+               bwa_ref_type='GENOME_BWA',
+               minimap2_ref_type='GENOME_MINIMAP2',
                bowtie2_ref_type='GENOME_BOWTIE2',
                tenx_ref_type='TRANSCRIPTOME_TENX',
                star_ref_type='TRANSCRIPTOME_STAR',
@@ -47,6 +51,7 @@ class Reference_genome_utils:
     self.gatk_indel_ref_type=gatk_indel_ref_type
     self.genome_dbsnp_type=genome_dbsnp_type
     self.ribosomal_interval_type=ribosomal_interval_type
+    self.gene_rsem_type=gene_rsem_type
 
 
   def _fetch_collection_files(self,collection_type,check_missing=False,
@@ -204,6 +209,20 @@ class Reference_genome_utils:
     '''
     try:
       ref_file=self._fetch_collection_files(collection_type=self.tenx_ref_type,
+                                            check_missing=check_missing)
+      return  ref_file
+    except:
+      raise
+
+  def get_transcriptome_rsem(self,check_missing=False):
+    '''
+    A method for fetching filepath of RSEM reference transcriptome, for a specific genome build
+    
+    :param check_missing: A toggle for checking errors for missing files, default True
+    :returns: A filepath string
+    '''
+    try:
+      ref_file=self._fetch_collection_files(collection_type=self.gene_rsem_type,
                                             check_missing=check_missing)
       return  ref_file
     except:
