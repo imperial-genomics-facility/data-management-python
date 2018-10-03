@@ -49,7 +49,7 @@ class Star_utils:
     :param two_pass_mode: Run two-pass mode of star, default True
     :param dry_run: A toggle forreturning the star cmd without actual run, default False
     :param star_patameters: A dictionary of star parameters, default encode parameters
-    :returns: A genomic_bam and a transcriptomic bam
+    :returns: A genomic_bam and a transcriptomic bam and star commandline
     '''
     try:
       self._run_checks()
@@ -115,7 +115,7 @@ class Star_utils:
             transcriptomic_bam=destinationa_path
 
       remove_dir(temp_dir)                                                      # removing temp run dir
-      return genomic_bam,transcriptomic_bam
+      return genomic_bam,transcriptomic_bam,star_cmd
     except:
       raise
 
@@ -128,7 +128,7 @@ class Star_utils:
     :param chrom_length_file: A file containing chromosome length, e.g. .fai file
     :param stranded:Param for stranded analysis, default True
     :param dry_run: A toggle forreturning the star cmd without actual run, default False
-    :returns: A list of bigWig files
+    :returns: A list of bigWig files and star commandline
     '''
     try:
       self._run_checks()
@@ -172,6 +172,6 @@ class Star_utils:
       if len(output_path)==0:
         raise ValueError('No bigwig file found from star run')
 
-      return output_path
+      return output_path,star_cmd
     except:
       raise
