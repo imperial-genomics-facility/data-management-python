@@ -105,6 +105,6 @@ class Fastp_utils:
 
       remove_dir(temp_dir)                                                      # clean up temp dir
       output_read1,output_read2=self._identify_fastq_pair(output_fastq_list)
-      return output_read1,output_read2,output_html_file
+      return output_read1,output_read2,output_html_file,cmd
     except:
       raise
