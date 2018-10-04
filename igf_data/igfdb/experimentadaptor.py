@@ -1,7 +1,7 @@
 import pandas as pd
 from sqlalchemy.sql import column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
-from igf_data.igfdb.igfTables import Project, Sample, Experiment, Experiment_attribute, Sample,Sample_attribute
+from igf_data.igfdb.igfTables import Project,Sample,Experiment,Experiment_attribute,Sample,Sample_attribute,Run
 
 class ExperimentAdaptor(BaseAdaptor):
   '''
@@ -14,7 +14,6 @@ class ExperimentAdaptor(BaseAdaptor):
     
     :param data: A list of dictionaries or a Pandas DataFrame
     :param autosave: A toggle for automatically saving data to db, default True
-    
     '''
     (experiment_data, experiment_attr_data)=self.divide_data_to_table_and_attribute(data=data)
     
@@ -262,6 +261,31 @@ class ExperimentAdaptor(BaseAdaptor):
         sample_igf_id=data.sample_igf_id
 
       return project_igf_id,sample_igf_id
+    except:
+      raise
+
+  def fetch_runs_for_igf_id(self,experiment_igf_id,include_active_runs=True,
+                            output_mode='dataframe'):
+    '''
+    A method for fetching all the runs for a specific experiment_igf_id
+    
+    :param experiment_igf_id: An experiment_igf_id
+    :param include_active_runs: Include only active runs, if its True, default True
+    :param output_mode: Record fetch mode, default dataframe
+    '''
+    try:
+      query=self.session.\
+            query(Run.run_igf_id).\
+            join(Experiment).\
+            filter(Experiment.experiment_id==Run.experiment_id).\
+            filter(Experiment.experiment_igf_id==experiment_igf_id)
+      if include_active_runs:
+        query=query.\
+              filter(Run.status=='ACTIVE')
+
+      data=self.fetch_records(query=query,
+                              output_mode=output_mode)
+      return data
     except:
       raise
 
