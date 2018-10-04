@@ -21,7 +21,7 @@ class RunFactory(IGFBaseJobFactory):
                                     include_active_runs=True,
                                     output_mode='dataframe')                    # fetch active runs for an experiment
       ea.close_session()
-      runs=list(runs['run_igf_id'].values)                                      # convert run ids to a list
+      runs=runs.to_dict(orient='records')                                       # convert run ids to a list
       self.param('sub_tasks',runs)                                              # pass on run factory output list
     except Exception as e:
       message='project: {2}, sample:{3}, Error in {0}: {1}'.format(self.__class__.__name__, \
