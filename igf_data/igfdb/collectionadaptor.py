@@ -331,12 +331,14 @@ class CollectionAdaptor(BaseAdaptor):
       raise
 
 
-  def get_collection_files(self, collection_name, collection_type='', output_mode='dataframe'):
+  def get_collection_files(self, collection_name, collection_type='',collection_table='',
+                            output_mode='dataframe'):
     '''
     A method for fetching information from Collection, File, Collection_group tables
     
-    :param collection_name: a collection name to fetch the linked files
-    :param collection_type: a collection type 
+    :param collection_name: A collection name to fetch the linked files
+    :param collection_type: A collection type 
+    :param collection_table: A collection table
     :param output_mode: dataframe / object
     '''
     try:
@@ -352,6 +354,10 @@ class CollectionAdaptor(BaseAdaptor):
       if collection_type: 
         query=query.\
               filter(Collection.type.in_([collection_type]))                    # filter query on collection_type, if its present
+
+      if collection_table !='':
+        query=query.\
+              filter(Collection.table==collection_table)
 
       results=self.fetch_records(query=query,
                                  output_mode=output_mode)                       # get results
