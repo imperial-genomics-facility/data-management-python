@@ -11,6 +11,7 @@ class RunSTAR(IGFBaseProcess):
         'reference_gtf_type':'GENE_GTF',
         'two_pass_mode':True,
         'run_thread':4,
+        'r2_read_file':None,
         'star_patameters':{"--outFilterMultimapNmax":20,
                            "--alignSJoverhangMin":8,
                            "--alignSJDBoverhangMin":1,
@@ -36,7 +37,8 @@ class RunSTAR(IGFBaseProcess):
       sample_igf_id=self.param_required('sample_igf_id')
       run_igf_id=self.param_required('run_igf_id')
       star_exe=self.param_required('star_exe')
-      input_fastq_list=self.param_required('input_fastq_list')
+      r1_read_file=self.param_required('r1_read_file')
+      r2_read_file=self.param('r2_read_file')
       output_prefix=self.param_required('output_prefix')
       run_thread=self.param('run_thread')
       igf_session_class=self.param_required('igf_session_class')
@@ -45,6 +47,11 @@ class RunSTAR(IGFBaseProcess):
       reference_gtf_type=self.param('reference_gtf_type')
       star_patameters=self.partam('star_patameters')
       two_pass_mode=self.param('two_pass_mode')
+      input_fastq_list=list()
+      input_fastq_list.append(r1_read_file)
+      if r2_read_file is not None:
+        input_fastq_list.append(r2_read_file)
+
       work_dir_prefix=os.path.join(base_work_dir,
                                    project_igf_id,
                                    sample_igf_id,
