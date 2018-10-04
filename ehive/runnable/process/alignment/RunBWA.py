@@ -8,7 +8,8 @@ class RunBWA(IGFBaseProcess):
     params_dict=super(RunBWA,self).param_defaults()
     params_dict.update({
         'reference_type':'GENOME_BWA',
-        'run_thread':1
+        'run_thread':1,
+        'r2_read_file':None
       })
     return params_dict
 
@@ -24,12 +25,18 @@ class RunBWA(IGFBaseProcess):
       run_igf_id=self.param_required('run_igf_id')
       bwa_exe=self.param_required('bwa_exe')
       samtools_exe=self.param_required('samtools_exe')
-      input_fastq_list=self.param_required('input_fastq_list')
+      r1_read_file=self.param_required('r1_read_file')
+      r2_read_file=self.param('r2_read_file')
       run_thread=self.param('run_thread')
       output_prefix=self.param_required('output_prefix')
       igf_session_class=self.param_required('igf_session_class')
       species_name=self.param('species_name')
       reference_type=self.param('reference_type')
+      input_fastq_list=list()
+      input_fastq_list.append(r1_read_file)
+      if r2_read_file is not None:
+        input_fastq_list.append(r2_read_file)
+
       work_dir_prefix=os.path.join(base_work_dir,
                                    project_igf_id,
                                    sample_igf_id,
