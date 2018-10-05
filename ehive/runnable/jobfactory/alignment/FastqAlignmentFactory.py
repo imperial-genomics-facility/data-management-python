@@ -41,6 +41,7 @@ class FastqAlignmentFactory(IGFBaseJobFactory):
       else:
         combined_read_df=pd.DataFrame({'r1_read_file':sorted_r1_list})
 
+      combined_read_df['chunk_id']=combined_read_df.index
       fastq_reads_list=combined_read_df.to_dict(orient='records')
       self.param('sub_tasks',fastq_reads_list)                                  # pass on fastq factory output list
     except Exception as e:
