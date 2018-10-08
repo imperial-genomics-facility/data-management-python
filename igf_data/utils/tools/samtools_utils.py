@@ -252,7 +252,7 @@ def run_sort_bam(samtools_exe,input_bam_path,output_bam_path,sort_by_name=False,
 
 
 def merge_multiple_bam(samtools_exe,input_bam_list,output_bam_path,sorted_by_name=False,
-                       threads=1,force=False,force=False,dry_run=False):
+                       threads=1,force=False,dry_run=False):
   '''
   A function for merging multiple input bams to a single output bam
   
