@@ -43,7 +43,7 @@ def identify_fastq_pair(input_list,sort_output=True):
   except:
     raise
 
-  def detect_non_fastq_in_file_list(input_list):
+def detect_non_fastq_in_file_list(input_list):
     '''
     A method for detecting non fastq file within a list of input fastq
     
