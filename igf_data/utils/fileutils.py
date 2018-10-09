@@ -3,6 +3,7 @@ import pandas as pd
 import os,subprocess,hashlib,string,re
 import tarfile,fnmatch
 from datetime import datetime
+from dateutil.parser import parse
 from tempfile import mkdtemp,gettempdir
 from shutil import rmtree, move, copy2
 
@@ -184,13 +185,26 @@ def remove_dir(dir_path,ignore_errors=True):
   except:
     raise
 
-def get_datestamp_label():
+def get_datestamp_label(datetime_str=None):
   '''
   A method for fetching datestamp
+  
+  :param datetime_str: A datetime string to parse, default None
   :returns: A padded string of format YYYYMMDD
   '''
   try:
-    time_tuple=datetime.now().timetuple()
+    if datetime_str is None:
+      time_tuple=datetime.now().timetuple()                                     # get current date
+    else:
+      if isinstance(datetime_str,str):
+        datetime_obj=parse(datetime_str)                                        # parse a string
+      elif isinstance(datetime_str,datetime):
+        datetime_obj=datetime_str                                               # check for datetime object
+      else:
+        raise ValueError('Expecting a datetime string and got : {0}'.\
+                         format(type(datetime_str)))
+      time_tuple=datetime_obj.timetuple()
+
     datestamp='{0}{1:02d}{2:02d}'.format(time_tuple.tm_year,
                                          time_tuple.tm_mon,
                                          time_tuple.tm_mday)
