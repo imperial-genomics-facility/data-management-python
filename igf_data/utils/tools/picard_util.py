@@ -41,7 +41,7 @@ class Picard_tools:
     self.java_exe=java_exe
     self.picard_jar=picard_jar
     self.java_param=java_param
-    self.input_file=input_files
+    self.input_files=input_files
     self.output_dir=output_dir
     self.ref_fasta=ref_fasta
     self.picard_option=picard_option
