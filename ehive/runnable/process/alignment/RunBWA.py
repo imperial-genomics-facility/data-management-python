@@ -1,6 +1,7 @@
 import os
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.tools.bwa_utils import BWA_util
+from igf_data.utils.fileutils import get_datestamp_label
 from igf_data.utils.tools.reference_genome_utils import Reference_genome_utils
 
 class RunBWA(IGFBaseProcess):
@@ -32,6 +33,8 @@ class RunBWA(IGFBaseProcess):
       igf_session_class=self.param_required('igf_session_class')
       species_name=self.param('species_name')
       reference_type=self.param('reference_type')
+      seed_date_stamp=self.param_required('date_stamp')
+      seed_date_stamp=get_datestamp_label(seed_date_stamp)
       input_fastq_list=list()
       input_fastq_list.append(r1_read_file)
       if r2_read_file is not None:
@@ -58,7 +61,7 @@ class RunBWA(IGFBaseProcess):
                        thread=run_thread)                                       # set up bwa for run
       final_output_file,bwa_cmd=BWA_util.run_mem()                              # run bwa mem
       self.param('dataflow_params',{'bwa_bam':final_output_file,
-                                    'output_prefix':output_prefix
+                                    'seed_date_stamp':seed_date_stamp
                                    })                                           # pass on bwa output list
       message='finished bwa {0} for {1} {2} {3}'.\
               format(bwa_cmd,
