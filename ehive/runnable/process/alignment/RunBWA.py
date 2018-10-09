@@ -33,6 +33,7 @@ class RunBWA(IGFBaseProcess):
       igf_session_class=self.param_required('igf_session_class')
       species_name=self.param('species_name')
       reference_type=self.param('reference_type')
+      base_work_dir=self.param_required('base_work_dir')
       seed_date_stamp=self.param_required('date_stamp')
       seed_date_stamp=get_datestamp_label(seed_date_stamp)
       input_fastq_list=list()

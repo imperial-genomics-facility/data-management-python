@@ -49,6 +49,7 @@ class RunSTAR(IGFBaseProcess):
       star_patameters=self.partam('star_patameters')
       two_pass_mode=self.param('two_pass_mode')
       seed_date_stamp=self.param_required('date_stamp')
+      base_work_dir=self.param_required('base_work_dir')
       seed_date_stamp=get_datestamp_label(seed_date_stamp)
       input_fastq_list=list()
       input_fastq_list.append(r1_read_file)
