@@ -1,7 +1,8 @@
 import pandas as pd
 import os,tarfile,unittest
+from dateutil.parser import parse
 from igf_data.utils.fileutils import prepare_file_archive,get_temp_dir,remove_dir
-from igf_data.utils.fileutils import create_file_manifest_for_dir
+from igf_data.utils.fileutils import create_file_manifest_for_dir,get_datestamp_label
 
 class Fileutils_test1(unittest.TestCase):
   def setUp(self):
@@ -82,6 +83,11 @@ class Fileutils_test1(unittest.TestCase):
     html_size=html_data['size'].values[0]
     self.assertEqual(len(html_data.index),1)
     self.assertEqual(html_size,1)
+
+  def test_get_datestamp_label(self):
+    date_str='2018-08-23 15:15:01'
+    self.assertEqual(get_datestamp_label(date_str),'20180823')
+    self.assertEqual(get_datestamp_label(parse(date_str)),'20180823')
 
 
 if __name__ == '__main__':
