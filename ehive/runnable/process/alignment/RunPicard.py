@@ -2,7 +2,7 @@ import os
 from igf_data.utils.tools.picard_util import Picard_tools
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.tools.reference_genome_utils import Reference_genome_utils
-from igf_data.utils.fileutils import get_temp_dir,remove_dir,move_file
+from igf_data.utils.fileutils import get_temp_dir,remove_dir,move_file,get_datestamp_label
 
 class RunPicard(IGFBaseProcess):
   def param_defaults(self):
@@ -53,6 +53,8 @@ class RunPicard(IGFBaseProcess):
       base_work_dir=self.param_required('base_work_dir')
       copy_input=self.param('copy_input')
       analysis_files=self.param_required('analysis_files')
+      seed_date_stamp=self.param_required('date_stamp')
+      seed_date_stamp=get_datestamp_label(seed_date_stamp)
       work_dir_prefix=os.path.join(base_work_dir,
                                    project_igf_id,
                                    sample_igf_id,
@@ -92,7 +94,8 @@ class RunPicard(IGFBaseProcess):
         output_file_list.append(dest_path)
       remove_dir(temp_output_dir)
       analysis_files.extend(output_file_list)
-      self.param('dataflow_params',{'analysis_files':analysis_files})           # pass on picard output list
+      self.param('dataflow_params',{'analysis_files':analysis_files,
+                                    'seed_date_stamp':seed_date_stamp})         # pass on picard output list
       message='finished picard {0} for {1} {2}'.\
               format(picard_command,
                      project_igf_id,
