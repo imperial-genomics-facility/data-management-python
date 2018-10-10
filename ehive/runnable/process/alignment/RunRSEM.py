@@ -12,8 +12,8 @@ class RunRSEM(IGFBaseProcess):
       'threads':1,
       'memory_limit':4000,
       'rsem_options':None,
-      'force_overwrite':True
-      
+      'force_overwrite':True,
+      'rsem_options':None,
     })
     return params_dict
 
@@ -29,6 +29,7 @@ class RunRSEM(IGFBaseProcess):
       reference_type=self.param_required('reference_type')
       igf_session_class=self.param_required('igf_session_class')
       output_prefix=self.param_required('output_prefix')
+      base_work_dir=self.param_required('base_work_dir')
       input_bam=self.param_required('input_bam')
       strandedness=self.param('strandedness')
       threads=self.param('threads')
