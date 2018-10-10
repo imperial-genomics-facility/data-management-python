@@ -6,6 +6,7 @@ class Reference_genome_utils:
   '''
   def __init__(self,genome_tag,dbsession_class,
                genome_fasta_type='GENOME_FASTA',
+               fasta_fai_type='GENOME_FAI',
                genome_dict_type='GENOME_DICT',
                gene_gtf_type='GENE_GTF',
                gene_reflat_type='GENE_REFFLAT',
@@ -23,6 +24,7 @@ class Reference_genome_utils:
     :param genome_tag: Collection name of the reference genome file
     :param dbsession_class: A sqlalchemy session class for database connection
     :param genome_fasta_type: Collection type for genome fasta file, default GENOME_FASTA
+    :param fasta_fai_type: Collection type for genome fasta fai index file, default GENOME_FAI
     :param genome_dict_type: Collection type for genome dict file, default GENOME_DICT
     :param gene_gtf_type: Collection type for gene gtf file, default GENE_GTF
     :param gene_reflat_type: Collection type for gene refflat file, default GENE_REFFLAT
@@ -39,6 +41,7 @@ class Reference_genome_utils:
     self.genome_tag=genome_tag
     self.dbsession_class=dbsession_class
     self.genome_fasta_type=genome_fasta_type
+    self.fasta_fai_type=fasta_fai_type
     self.genome_dict_type=genome_dict_type
     self.gene_gtf_type=gene_gtf_type
     self.gene_reflat_type=gene_reflat_type
@@ -111,6 +114,20 @@ class Reference_genome_utils:
     '''
     try:
       ref_file=self._fetch_collection_files(collection_type=self.genome_fasta_type,
+                                            check_missing=check_missing)
+      return  ref_file
+    except:
+      raise
+
+  def get_genome_fasta_fai(self,check_missing=True):
+    '''
+    A method for fetching reference genome fasta fai index filepath for a specific genome build
+    
+    :param check_missing: A toggle for checking errors for missing files, default True
+    :returns: A filepath string
+    '''
+    try:
+      ref_file=self._fetch_collection_files(collection_type=self.fasta_fai_type,
                                             check_missing=check_missing)
       return  ref_file
     except:
