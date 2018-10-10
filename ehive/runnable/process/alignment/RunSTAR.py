@@ -10,6 +10,7 @@ class RunSTAR(IGFBaseProcess):
     params_dict.update({
         'run_mode':'generate_aligned_bams',
         'reference_type':'TRANSCRIPTOME_STAR',
+        'fasta_fai_reference_type':'GENOME_FAI',
         'reference_gtf_type':'GENE_GTF',
         'two_pass_mode':True,
         'run_thread':4,
@@ -47,6 +48,7 @@ class RunSTAR(IGFBaseProcess):
       species_name=self.param('species_name')
       reference_type=self.param('reference_type')
       reference_gtf_type=self.param('reference_gtf_type')
+      fasta_fai_reference_type=self.param('fasta_fai_reference_type')
       star_patameters=self.partam('star_patameters')
       two_pass_mode=self.param('two_pass_mode')
       seed_date_stamp=self.param_required('date_stamp')
@@ -62,9 +64,11 @@ class RunSTAR(IGFBaseProcess):
                    genome_tag=species_name,
                    dbsession_class=igf_session_class,
                    gene_gtf_type=reference_gtf_type,
+                   fasta_fai_type=fasta_fai_reference_type,
                    star_ref_type=reference_type)                                # setup ref genome utils
       star_ref=ref_genome.get_transcriptome_star                                # get star ref
       gene_gtf=ref_genome.get_gene_gtf()                                        # get gtf file
+      genome_fai=ref_genome.get_genome_fasta_fai()                              # fetch genomic fasta fai index 
       if run_mode=='generate_aligned_bams':
         r1_read_file=self.param_required('r1_read_file')
         r2_read_file=self.param('r2_read_file')
@@ -96,7 +100,7 @@ class RunSTAR(IGFBaseProcess):
       elif run_mode=='generate_rna_bigwig':
         input_bam=self.param_required('input_bam')
         bedGraphToBigWig_path=self.param_required('bedGraphToBigWig_path')
-        chrom_length_file=self.param_required('chrom_length_file')
+        chrom_length_file=genome_fai
         stranded=self.param('stranded')
 
         star_obj=Star_utils(star_exe=star_exe,
