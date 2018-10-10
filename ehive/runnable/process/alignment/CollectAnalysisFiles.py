@@ -26,7 +26,7 @@ class CollectAnalysisFiles(IGFBaseProcess):
       experiment_igf_id=self.param_required('experiment_igf_id')
       sample_igf_id=self.param_required('sample_igf_id')
       igf_session_class=self.param_required('igf_session_class')
-      species_name=self.param('species_name')
+      tag_name=self.param('tag_name')
       input_files=self.param_required('input_files')
       base_result_dir=self.param_required('base_results_dir')
       analysis_name=self.param('analysis_name')
@@ -42,7 +42,7 @@ class CollectAnalysisFiles(IGFBaseProcess):
       au=Analysis_collection_utils(\
            dbsession_class=igf_session_class,
            analysis_name=analysis_name,
-           tag_name=species_name,
+           tag_name=tag_name,
            collection_name=collection_name,
            collection_type=collection_type,
            collection_table=collection_table)                                   # initiate analysis file loading
