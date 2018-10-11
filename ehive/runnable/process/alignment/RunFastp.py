@@ -10,7 +10,7 @@ class RunFastp(IGFBaseProcess):
                               '--length_required 15'],
         'split_by_lines_count':5000000,
         'run_thread':1,
-        'split_fastq':False
+        'split_fastq':None
       })
     return params_dict
 
@@ -35,9 +35,7 @@ class RunFastp(IGFBaseProcess):
                                    sample_igf_id,
                                    experiment_igf_id)
       work_dir=self.get_job_work_dir(work_dir=work_dir_prefix)                  # get a run work dir
-      if split_fastq is None:
-        split_fastq=False                                                       # set default value for split fastq
-
+      split_fastq=False if split_fastq is None else True                        # set default value for split fastq
       fastp_obj=Fastp_utils(fastp_exe=fastp_exe,
                             input_fastq_list=input_fastq_list,
                             output_dir=work_dir,
