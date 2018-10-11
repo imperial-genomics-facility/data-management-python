@@ -10,7 +10,7 @@ class RunFastp(IGFBaseProcess):
                               '--length_required 15'],
         'split_by_lines_count':5000000,
         'run_thread':1,
-        'split_fastq':None
+        'split_fastq':False
       })
     return params_dict
 
