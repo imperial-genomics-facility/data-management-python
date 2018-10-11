@@ -33,7 +33,7 @@ class Fastp_utils:
     try:
       check_file_path(self.fastp_exe)
       if not isinstance(self.input_fastq_list, list):
-        raise ValueError('No input fastq list found: {0}'.format(input_fastq_list))
+        raise ValueError('No input fastq list found: {0}'.format(self.input_fastq_list))
 
       for file in self.input_fastq_list:
         check_file_path(file)
