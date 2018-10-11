@@ -30,9 +30,12 @@ class FetchFastqForRun(IGFBaseJobFactory):
                                           output_mode='dataframe')
       ca.close_session()
       fastq_counts=len(fastq_files.index)
-      fastq_list=list(fastq_files['file_path'].values)                         # converting fastq filepaths to a list
-      self.param('dataflow_params',{'fastq_files':fastq_list,
-                                    'fastq_counts':fastq_counts})               # add fastq filepaths to dataflow#
+      fastq_list=list(fastq_files['file_path'].values)                          # converting fastq filepaths to a list
+      if not isinstance(fastq_list, list) or \
+         len(fastq_list)==0:
+        raise ValueError('No fastq file found for run {0}'.format(run_igf_id))
+
+      self.param('dataflow_params',{'fastq_files_list':fastq_list})             # add fastq filepaths to dataflow
     except Exception as e:
       message='project: {2}, sample:{3}, Error in {0}: {1}'.\
               format(self.__class__.__name__,
