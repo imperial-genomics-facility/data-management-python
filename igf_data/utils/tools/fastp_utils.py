@@ -24,7 +24,7 @@ class Fastp_utils:
     self.output_dir=output_dir
     self.run_thread=run_thread
     self.split_by_lines_count=split_by_lines_count
-    self.fastp_options=fastp_options
+    self.fastp_options_list=fastp_options_list
 
   def _run_checks(self):
     '''
