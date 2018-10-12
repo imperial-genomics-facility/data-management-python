@@ -92,8 +92,8 @@ class RunSTAR(IGFBaseProcess):
         elif two_pass_mode==0:
           two_pass_mode=False                                                   # reset srat twopass mode
 
-        if isinstance(star_patameters, str):
-          star_patameters=json.loads(star_patameters)                            # convert string param to dict
+        #if isinstance(star_patameters, str):                                   # FIXME
+        #  star_patameters=json.loads(star_patameters)                            # convert string param to dict
 
         genomic_bam,transcriptomic_bam,star_cmd=\
             star_obj.generate_aligned_bams(two_pass_mode=two_pass_mode)        # FIXME
