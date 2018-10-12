@@ -35,6 +35,9 @@ class Fastp_utils:
       if not isinstance(self.input_fastq_list, list):
         raise ValueError('No input fastq list found: {0}'.format(self.input_fastq_list))
 
+      if  isinstance(self.run_thread, int):
+        self.run_thread=str(self.run_thread)                                    # convert run thread param to str
+
       for file in self.input_fastq_list:
         check_file_path(file)
 
