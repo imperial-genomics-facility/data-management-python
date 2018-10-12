@@ -80,8 +80,9 @@ class Fastp_utils:
 
       if isinstance(self.fastp_options_list,list) and \
          len(self.fastp_options_list)>0:
-        fastp_options_list=split(self.fastp_options_list)                       # split options
-        fastp_options_list=[quote(opt) for opt in fastp_options_list]           # wrap options in quotes
+        fastp_options_list=[quote(opt)
+                              for line in self.fastp_options_list
+                                for opt in split(line)]                         # wrap options in quotes
         cmd.extend(self.fastp_options_list)                                     # add fastp options
 
       if split_fastq:
