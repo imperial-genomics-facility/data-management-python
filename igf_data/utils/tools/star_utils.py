@@ -78,7 +78,7 @@ class Star_utils:
         star_cmd.extend(param_list)                                             # add params to command line
 
       if two_pass_mode:
-        star_cmd.append("--twopassMode","Basic")                                # enable two-pass more for star
+        star_cmd.extend(["--twopassMode","Basic"])                              # enable two-pass more for star
 
       if detect_non_fastq_in_file_list(self.input_files):
         raise ValueError('Expecting only fastq files as input')
@@ -86,9 +86,9 @@ class Star_utils:
       zipped_pattern=re.compile(r'\S+\.gz')
       read1_list,read2_list=identify_fastq_pair(input_list=self.input_files)    # fetch input fastq files
       if re.match(zipped_pattern,os.path.basename(read1_list[0])):
-        star_cmd.append("--readFilesCommand","zcat")                            # command for gzipped reads
+        star_cmd.extend(["--readFilesCommand","zcat"])                          # command for gzipped reads
 
-      star_cmd.append("--readFilesIn",quotes(read1_list[0]))                    # add read 1
+      star_cmd.extend(["--readFilesIn",quotes(read1_list[0])])                  # add read 1
       if len(read2_list)>0:
         star_cmd.append(quotes(read2_list[0]))                                  # add read 2
 
