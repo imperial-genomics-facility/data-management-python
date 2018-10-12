@@ -1,3 +1,4 @@
+import os
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from ehive.runnable.IGFBaseJobFactory import IGFBaseJobFactory
 
@@ -34,6 +35,11 @@ class FetchFastqForRun(IGFBaseJobFactory):
       if not isinstance(fastq_list, list) or \
          len(fastq_list)==0:
         raise ValueError('No fastq file found for run {0}'.format(run_igf_id))
+
+      for file in fastq_list:
+        if not os.path.exists(file):
+          raise IOError('Fastq file path {0} not found for run {1}'.\
+                        format(file,run_igf_id))
 
       self.param('dataflow_params',{'fastq_files_list':fastq_list})             # add fastq filepaths to dataflow
     except Exception as e:
