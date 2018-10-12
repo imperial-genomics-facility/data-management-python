@@ -81,7 +81,7 @@ class Fastp_utils:
       if len(self.fastp_options)>0:
         fastp_options=split(fastp_options)                                      # split options
         fastp_options=[quote(opt) for opt in fastp_options]                     # wrap options in quotes
-        cmd.extend(self.fastp_options)                                          # add fastp options
+        cmd.extend(self.fastp_options_list)                                     # add fastp options
 
       if split_fastq:
         cmd.append('--split_by_lines',
