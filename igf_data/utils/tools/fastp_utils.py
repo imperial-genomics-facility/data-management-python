@@ -49,11 +49,12 @@ class Fastp_utils:
     except:
       raise
 
-  def run_adapter_trimming(self,split_fastq=False):
+  def run_adapter_trimming(self,split_fastq=False,force_overwrite=True):
     '''
     A method for running fastp adapter trimming
     
     :param split_fastq: Split fastq output files by line counts, default False
+    :pram force_overwrite: A toggle for overwriting existing file, default True
     :returns: A list for read1 files, list of read2 files and a html report file
               and the fastp commandline
     '''
@@ -90,8 +91,8 @@ class Fastp_utils:
                    quote(self.split_by_lines_count))
 
       subprocess.check_call(cmd,shell=False)                                    # run fastp
-      fastq_pattern=re.compile(r'\S+\.fastq(\.\gz)?')
-      html_pattern=re.compile(r'\S+\.html')
+      fastq_pattern=re.compile(r'\S+\.fastq(\.\gz)?$')
+      html_pattern=re.compile(r'\S+\.html$')
       output_fastq_list=list()
       output_html_file=''
       for out_file in os.listdir(temp_dir):
@@ -99,12 +100,14 @@ class Fastp_utils:
         if re.match(fastq_pattern,out_file):
           output_fastq_list.append(output_file)
           copy_local_file(source_path=os.path.join(temp_dir,out_file),
-                          destinationa_path=output_file)                        # copy fastq file to output dir
+                          destinationa_path=output_file,
+                          force=force_overwrite)                                # copy fastq file to output dir
 
         if re.match(html_pattern,out_file):
           output_html_file=output_file
           copy_local_file(source_path=os.path.join(temp_dir,out_file),
-                          destinationa_path=output_file)                        # copy fastq file to output dir
+                          destinationa_path=output_file,
+                          force=force_overwrite)                                # copy fastq file to output dir
 
       if len(output_fastq_list) == 0:
         raise ValueError('No output fastq files found as fastp output')
