@@ -62,7 +62,6 @@ class Star_utils:
                 "--runMode","alignReads",
                 "--quantMode","TranscriptomeSAM",
                 "--outSAMtype","BAM SortedByCoordinate",
-                "--genomeLoad","NoSharedMemory",
                 "--outFilterType","BySJout",
                 "--outSAMunmapped","Within",
                 "--sjdbGTFfile",quote(self.reference_gtf),
