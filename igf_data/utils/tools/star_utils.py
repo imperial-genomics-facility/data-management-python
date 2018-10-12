@@ -57,7 +57,7 @@ class Star_utils:
       temp_path_prefix='{0}/{1}'.format(temp_dir,
                                         self.output_prefix)
       star_cmd=[self.star_exe,
-                "--runThreadN",quotes(str(self.threads)),
+                "--runThreadN",quote(str(self.threads)),
                 "--genomeLoad","NoSharedMemory",
                 "--runMode","alignReads",
                 "--quantMode","TranscriptomeSAM",
@@ -65,14 +65,14 @@ class Star_utils:
                 "--genomeLoad","NoSharedMemory",
                 "--outFilterType","BySJout",
                 "--outSAMunmapped","Within",
-                "--sjdbGTFfile",quotes(self.reference_gtf),
+                "--sjdbGTFfile",quote(self.reference_gtf),
                 "--outFileNamePrefix",quote(temp_path_prefix)
                ]                                                                # get default paramteres for star
       if not isinstance(star_patameters, dict):
         raise TypeError('Expecting a dictionary for star run parameters and got {0}'.\
                         format(type(star_patameters)))
       if len(star_param)>0:
-        param_list=[quotes(str(field))
+        param_list=[quote(str(field))
                       for key,val in star_param.items() 
                         for field in [key,val]]                                 # flatten param dictionary
         star_cmd.extend(param_list)                                             # add params to command line
@@ -88,9 +88,9 @@ class Star_utils:
       if re.match(zipped_pattern,os.path.basename(read1_list[0])):
         star_cmd.extend(["--readFilesCommand","zcat"])                          # command for gzipped reads
 
-      star_cmd.extend(["--readFilesIn",quotes(read1_list[0])])                  # add read 1
+      star_cmd.extend(["--readFilesIn",quote(read1_list[0])])                  # add read 1
       if len(read2_list)>0:
-        star_cmd.append(quotes(read2_list[0]))                                  # add read 2
+        star_cmd.append(quote(read2_list[0]))                                  # add read 2
 
       if dry_run:
         return star_cmd                                                         # return star cmd
