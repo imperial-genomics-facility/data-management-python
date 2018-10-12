@@ -78,9 +78,9 @@ class Fastp_utils:
                     quote(os.path.join(temp_dir,
                                       os.path.basename(read2_list[0])))])
 
-      if len(self.fastp_options)>0:
-        fastp_options=split(fastp_options)                                      # split options
-        fastp_options=[quote(opt) for opt in fastp_options]                     # wrap options in quotes
+      if len(self.fastp_options_list)>0:
+        fastp_options_list=split(fastp_options_list)                            # split options
+        fastp_options_list=[quote(opt) for opt in fastp_options_list]           # wrap options in quotes
         cmd.extend(self.fastp_options_list)                                     # add fastp options
 
       if split_fastq:
