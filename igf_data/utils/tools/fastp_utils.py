@@ -73,10 +73,10 @@ class Fastp_utils:
            '--thread',quote(self.run_thread)
           ]
       if len(read2_list) > 0:                                                   # add read 2 options
-        cmd.append('--in2',quote(read2_list[0]))
-        cmd.append('--out2',
-                   quote(os.path.join(temp_dir,
-                                      os.path.basename(read2_list[0]))))
+        cmd.extend(['--in2',quote(read2_list[0])])
+        cmd.extend(['--out2',
+                    quote(os.path.join(temp_dir,
+                                      os.path.basename(read2_list[0])))])
 
       if len(self.fastp_options)>0:
         fastp_options=split(fastp_options)                                      # split options
