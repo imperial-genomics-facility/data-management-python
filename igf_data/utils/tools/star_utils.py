@@ -72,7 +72,7 @@ class Star_utils:
         raise TypeError('Expecting a dictionary for star run parameters and got {0}'.\
                         format(type(star_patameters)))
       if len(star_param)>0:
-        param_list=[quotes(field)
+        param_list=[quotes(str(field))
                       for key,val in star_param.items() 
                         for field in [key,val]]                                 # flatten param dictionary
         star_cmd.extend(param_list)                                             # add params to command line
