@@ -139,7 +139,7 @@ class Star_utils:
                                         self.output_prefix)
       star_cmd=[self.star_exe,
                 "--runThreadN",quotes(self.threads),
-                "--genomeLoad","NoSharedMemory",
+                #"--genomeLoad","NoSharedMemory",                              # FIXME
                 "--runMode","inputAlignmentsFromBAM",
                 "--outWigType","bedGraph",
                 "--outFileNamePrefix",quote(temp_path_prefix)
