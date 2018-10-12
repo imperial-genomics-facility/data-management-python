@@ -116,7 +116,8 @@ class Fastp_utils:
         raise ValueError('No fastp html report found')
 
       remove_dir(temp_dir)                                                      # clean up temp dir
-      output_read1,output_read2=self._identify_fastq_pair(output_fastq_list)
+      output_read1,output_read2=\
+          identify_fastq_pair(input_list=output_fastq_list)                     #identify fastq pairs
       return output_read1,output_read2,output_html_file,cmd
     except:
       raise
