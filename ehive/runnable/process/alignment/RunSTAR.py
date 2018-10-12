@@ -16,6 +16,7 @@ class RunSTAR(IGFBaseProcess):
         'run_thread':4,
         'r2_read_file':None,
         'stranded':True,
+        'chunk_id':'0',
         'star_patameters':{"--outFilterMultimapNmax":20,
                            "--alignSJoverhangMin":8,
                            "--alignSJDBoverhangMin":1,
@@ -52,6 +53,7 @@ class RunSTAR(IGFBaseProcess):
       star_patameters=self.partam('star_patameters')
       two_pass_mode=self.param('two_pass_mode')
       seed_date_stamp=self.param_required('date_stamp')
+      chunk_id=self.param('chunk_id')
       base_work_dir=self.param_required('base_work_dir')
       seed_date_stamp=get_datestamp_label(seed_date_stamp)
       work_dir_prefix=os.path.join(base_work_dir,
