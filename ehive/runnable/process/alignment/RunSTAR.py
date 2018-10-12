@@ -43,6 +43,7 @@ class RunSTAR(IGFBaseProcess):
       run_igf_id=self.param_required('run_igf_id')
       star_exe=self.param_required('star_exe')
       run_mode=self.param_required('run_mode')
+      chunk_id=self.param('chunk_id')
       output_prefix=self.param_required('output_prefix')
       run_thread=self.param('run_thread')
       igf_session_class=self.param_required('igf_session_class')
@@ -53,7 +54,6 @@ class RunSTAR(IGFBaseProcess):
       star_patameters=self.partam('star_patameters')
       two_pass_mode=self.param('two_pass_mode')
       seed_date_stamp=self.param_required('date_stamp')
-      chunk_id=self.param('chunk_id')
       base_work_dir=self.param_required('base_work_dir')
       seed_date_stamp=get_datestamp_label(seed_date_stamp)
       work_dir_prefix=os.path.join(base_work_dir,
