@@ -57,7 +57,7 @@ class Star_utils:
       temp_path_prefix='{0}/{1}'.format(temp_dir,
                                         self.output_prefix)
       star_cmd=[self.star_exe,
-                "--runThreadN",quotes(self.threads),
+                "--runThreadN",quotes(str(self.threads)),
                 "--genomeLoad","NoSharedMemory",
                 "--runMode","alignReads",
                 "--quantMode","TranscriptomeSAM",
