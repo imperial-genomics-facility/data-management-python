@@ -96,12 +96,12 @@ class Fastp_utils:
       output_html_file=''
       for out_file in os.listdir(temp_dir):
         output_file=os.path.join(self.output_dir,out_file)
-        if re.match(out_file,fastq_pattern):
+        if re.match(fastq_pattern,out_file):
           output_fastq_list.append(output_file)
           copy_local_file(source_path=os.path.join(temp_dir,out_file),
                           destinationa_path=output_file)                        # copy fastq file to output dir
 
-        if re.match(out_file,html_pattern):
+        if re.match(html_pattern,out_file):
           output_html_file=output_file
           copy_local_file(source_path=os.path.join(temp_dir,out_file),
                           destinationa_path=output_file)                        # copy fastq file to output dir
