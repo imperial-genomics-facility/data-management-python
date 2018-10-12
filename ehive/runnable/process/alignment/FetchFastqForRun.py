@@ -1,10 +1,10 @@
 import os
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
-from ehive.runnable.IGFBaseJobFactory import IGFBaseJobFactory
+from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 
-class FetchFastqForRun(IGFBaseJobFactory):
+class FetchFastqForRun(IGFBaseProcess):
   '''
-  A IGF jobfactory runnable for fetching all fastq files for an experiment
+  A IGF process runnable for fetching all fastq files for an experiment
   '''
   def param_defaults(self):
     params_dict=super(FetchFastqForRun,self).param_defaults()
