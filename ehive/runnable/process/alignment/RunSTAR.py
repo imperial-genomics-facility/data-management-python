@@ -76,9 +76,9 @@ class RunSTAR(IGFBaseProcess):
         r1_read_file=self.param_required('r1_read_file')
         r2_read_file=self.param('r2_read_file')
         input_fastq_list=list()
-        input_fastq_list.append(r1_read_file)
+        input_fastq_list.append(r1_read_file[0])                                # get the first input
         if r2_read_file is not None:
-          input_fastq_list.append(r2_read_file)
+          input_fastq_list.append(r2_read_file[0])                              # get the first input
 
         star_obj=Star_utils(star_exe=star_exe,
                             input_files=input_fastq_list,
