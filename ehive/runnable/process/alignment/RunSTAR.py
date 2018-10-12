@@ -51,7 +51,7 @@ class RunSTAR(IGFBaseProcess):
       reference_type=self.param('reference_type')
       reference_gtf_type=self.param('reference_gtf_type')
       fasta_fai_reference_type=self.param('fasta_fai_reference_type')
-      star_patameters=self.partam('star_patameters')
+      star_patameters=self.param('star_patameters')
       two_pass_mode=self.param('two_pass_mode')
       seed_date_stamp=self.param_required('date_stamp')
       base_work_dir=self.param_required('base_work_dir')
