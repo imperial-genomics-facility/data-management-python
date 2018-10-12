@@ -71,9 +71,9 @@ class Star_utils:
       if not isinstance(star_patameters, dict):
         raise TypeError('Expecting a dictionary for star run parameters and got {0}'.\
                         format(type(star_patameters)))
-      if len(star_param)>0:
+      if len(star_patameters)>0:
         param_list=[quote(str(field))
-                      for key,val in star_param.items() 
+                      for key,val in star_patameters.items() 
                         for field in [key,val]]                                 # flatten param dictionary
         star_cmd.extend(param_list)                                             # add params to command line
 
