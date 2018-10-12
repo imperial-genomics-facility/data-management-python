@@ -16,7 +16,8 @@ class RunSTAR(IGFBaseProcess):
         'run_thread':4,
         'r2_read_file':None,
         'stranded':True,
-        'chunk_id':'0',
+        'chunk_id':'0',                                                         # FIXME
+        'base_work_dir':'/project/tgu/data2/test_dir/test18_rna_pipeline/run1/run', # FIXME
         'star_patameters':{"--outFilterMultimapNmax":20,
                            "--alignSJoverhangMin":8,
                            "--alignSJDBoverhangMin":1,
@@ -43,7 +44,7 @@ class RunSTAR(IGFBaseProcess):
       run_igf_id=self.param_required('run_igf_id')
       star_exe=self.param_required('star_exe')
       run_mode=self.param_required('run_mode')
-      chunk_id=self.param('chunk_id')
+      chunk_id=self.param('chunk_id')                                           ## FIXME
       output_prefix=self.param_required('output_prefix')
       run_thread=self.param('run_thread')
       igf_session_class=self.param_required('igf_session_class')
