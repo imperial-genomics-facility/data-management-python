@@ -1,4 +1,4 @@
-import os
+import os,json
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.tools.star_utils import Star_utils
 from igf_data.utils.fileutils import get_datestamp_label
@@ -18,17 +18,17 @@ class RunSTAR(IGFBaseProcess):
         'stranded':True,
         'chunk_id':'0',                                                         # FIXME
         'base_work_dir':'/project/tgu/data2/test_dir/test18_rna_pipeline/run1/run', # FIXME
-        'star_patameters':{"--outFilterMultimapNmax":20,
-                           "--alignSJoverhangMin":8,
-                           "--alignSJDBoverhangMin":1,
-                           "--outFilterMismatchNmax":999,
-                           "--outFilterMismatchNoverReadLmax":0.04,
-                           "--alignIntronMin":20,
-                           "--alignIntronMax":1000000,
-                           "--alignMatesGapMax":1000000,
-                           "--outSAMattributes":"NH HI AS NM MD",
-                           "--limitBAMsortRAM":12000000000
-                          }
+        'star_patameters':'{"--outFilterMultimapNmax":20, \
+                           "--alignSJoverhangMin":8, \
+                           "--alignSJDBoverhangMin":1, \
+                           "--outFilterMismatchNmax":999, \
+                           "--outFilterMismatchNoverReadLmax":0.04, \
+                           "--alignIntronMin":20, \
+                           "--alignIntronMax":1000000, \
+                           "--alignMatesGapMax":1000000, \
+                           "--outSAMattributes":"NH HI AS NM MD", \
+                           "--limitBAMsortRAM":12000000000 \
+                          }'
     })
     return params_dict
 
@@ -91,6 +91,9 @@ class RunSTAR(IGFBaseProcess):
           two_pass_mode=True
         elif two_pass_mode==0:
           two_pass_mode=False                                                   # reset srat twopass mode
+
+        if isinstance(star_patameters, str):
+          star_patameters=json.loads(star_patameters)                            # convert string param to dict
 
         genomic_bam,transcriptomic_bam,star_cmd=\
             star_obj.generate_aligned_bams(two_pass_mode=two_pass_mode,
