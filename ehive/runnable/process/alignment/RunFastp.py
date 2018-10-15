@@ -10,7 +10,9 @@ class RunFastp(IGFBaseProcess):
                               '--length_required=15'],
         'split_by_lines_count':5000000,
         'run_thread':1,
-        'split_fastq':None
+        'split_fastq':None,
+        'polyg_platform_list':['NextSeq','NOVASEQ6000'],
+        'enable_polyg_trim':False
       })
     return params_dict
 
@@ -30,16 +32,23 @@ class RunFastp(IGFBaseProcess):
       split_fastq=self.param('split_fastq')
       split_by_lines_count=self.param('split_by_lines_count')
       fastp_options_list=self.param('fastp_options_list')
+      platform_name=self.param_required('platform_name')
+      polyg_platform_list=self.param('polyg_platform_list')
+      enable_polyg_trim=self.param('enable_polyg_trim')
       work_dir_prefix=os.path.join(base_work_dir,
                                    project_igf_id,
                                    sample_igf_id,
                                    experiment_igf_id)
       work_dir=self.get_job_work_dir(work_dir=work_dir_prefix)                  # get a run work dir
       split_fastq=False if split_fastq is None else True                        # set default value for split fastq
+      if platform_name in polyg_platform_list:
+        enable_polyg_trim=True                                                  # enable poly G trim for new Illumin platforms
+
       fastp_obj=Fastp_utils(fastp_exe=fastp_exe,
                             input_fastq_list=input_fastq_list,
                             output_dir=work_dir,
                             run_thread=run_thread,
+                            enable_polyg_trim=enable_polyg_trim,
                             split_by_lines_count=split_by_lines_count,
                             fastp_options_list=fastp_options_list)              # setup fastp tool for run
       output_read1,output_read2,output_html_file,fastp_cmd=\
