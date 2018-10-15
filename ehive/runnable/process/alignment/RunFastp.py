@@ -20,6 +20,19 @@ class RunFastp(IGFBaseProcess):
     '''
     A method for running Fastp commands
     
+    :param project_igf_id: A project_igf_id from dataflow
+    :param experiment_igf_id: A experiment_igf_id from dataflow
+    :param sample_igf_id: A sample_igf_id from dataflow
+    :param fastp_exe: Fastp exe path from analysis config
+    :param input_fastq_list: Input fastq list from dataflow
+    :param base_work_dir: Base work dir path from analysis config
+    :param run_thread: Number of threads for fastp run, default 1
+    :param split_fastq: Enable splitting fastq files, default None
+    :param split_by_lines_count: Number of fastq lines to be used if split_fastq is True, default 5000000
+    :param fastp_options_list: A list of fasrp tool options, default ['--qualified_quality_phred=15','--length_required=15']
+    :param platform_name: Sequencing platform name from dataflow
+    :param polyg_platform_list: A list of Illumin platforms which emit poly Gs for empty cycles, default ['NextSeq','NOVASEQ6000']
+    :param enable_polyg_trim: Enable Fastp poly G trim, default False
     '''
     try:
       project_igf_id=self.param_required('project_igf_id')
