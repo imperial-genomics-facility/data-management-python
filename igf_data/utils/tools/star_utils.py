@@ -41,7 +41,6 @@ class Star_utils:
                               "--alignIntronMin":20,
                               "--alignIntronMax":1000000,
                               "--alignMatesGapMax":1000000,
-                              "--outSAMattributes":"NH HI AS NM MD",
                               "--limitBAMsortRAM":12000000000}):
     '''
     A method running star alignment
@@ -56,24 +55,39 @@ class Star_utils:
       temp_dir=get_temp_dir()                                                   # get a temp dir
       temp_path_prefix='{0}/{1}'.format(temp_dir,
                                         self.output_prefix)
-      star_cmd=[self.star_exe,
-                "--runThreadN",quote(str(self.threads)),
-                "--genomeLoad","NoSharedMemory",
-                "--runMode","alignReads",
-                "--quantMode","TranscriptomeSAM",
-                "--outSAMtype","BAM", "SortedByCoordinate",
-                "--outFilterType","BySJout",
-                "--outSAMunmapped","Within",
-                "--sjdbGTFfile",quote(self.reference_gtf),
-                "--outFileNamePrefix",quote(temp_path_prefix)
-               ]                                                                # get default paramteres for star
+      default_star_align_params=\
+            {"--runThreadN":quote(str(self.threads)),
+             "--genomeLoad":"NoSharedMemory",
+             "--runMode":"alignReads",
+             "--quantMode":"TranscriptomeSAM",
+             "--outSAMtype":["BAM","SortedByCoordinate"],
+             "--outFilterType":"BySJout",
+             "--outSAMunmapped":"Within",
+             "--sjdbGTFfile":quote(self.reference_gtf),
+             "--outFileNamePrefix":quote(temp_path_prefix),
+             "--outSAMattributes":["NH","HI","AS","NM","MD"],
+            }
+      star_cmd=[self.star_exe]
+      for key,val in default_star_align_params.items():
+        for field in [key,val]:
+          if isinstance(field,list):
+            star_cmd.extend(field)
+          else:
+            star_cmd.append(field)
+
       if not isinstance(star_patameters, dict):
         raise TypeError('Expecting a dictionary for star run parameters and got {0}'.\
                         format(type(star_patameters)))
+
       if len(star_patameters)>0:
+        unique_keys=set(star_patameters.keys()).\
+                    difference(set(default_star_align_params.keys()))           # filter default params from star cmdline
         param_list=[quote(str(field))
-                      for key,val in star_patameters.items() 
-                        for field in [key,val]]                                 # flatten param dictionary
+                      for key,val in star_patameters.items()
+                        if key in unique_keys
+                          for field in [key,val]
+                            if field is not None and field != ''
+                   ]                                                            # flatten param dictionary
         star_cmd.extend(param_list)                                             # add params to command line
 
       if two_pass_mode:
