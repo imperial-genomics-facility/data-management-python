@@ -69,7 +69,7 @@ class RunSTAR(IGFBaseProcess):
                    gene_gtf_type=reference_gtf_type,
                    fasta_fai_type=fasta_fai_reference_type,
                    star_ref_type=reference_type)                                # setup ref genome utils
-      star_ref=ref_genome.get_transcriptome_star                                # get star ref
+      star_ref=ref_genome.get_transcriptome_star()                              # get star ref
       gene_gtf=ref_genome.get_gene_gtf()                                        # get gtf file
       genome_fai=ref_genome.get_genome_fasta_fai()                              # fetch genomic fasta fai index 
       if run_mode=='generate_aligned_bams':
