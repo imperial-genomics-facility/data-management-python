@@ -102,9 +102,9 @@ class Star_utils:
       if re.match(zipped_pattern,os.path.basename(read1_list[0])):
         star_cmd.extend(["--readFilesCommand","zcat"])                          # command for gzipped reads
 
-      star_cmd.extend(["--readFilesIn",quote(read1_list[0])])                  # add read 1
+      star_cmd.extend(["--readFilesIn",quote(read1_list[0])])                   # add read 1
       if len(read2_list)>0:
-        star_cmd.append(quote(read2_list[0]))                                  # add read 2
+        star_cmd.append(quote(read2_list[0]))                                   # add read 2
 
       if dry_run:
         return star_cmd                                                         # return star cmd
@@ -114,7 +114,7 @@ class Star_utils:
       transcriptomic_bam=''
       genomic_bam_pattern=re.compile(r'sortedByCoord.out.bam')                  # pattern for genomic bam
       transcriptomic_bam_pattern=re.compile(r'toTranscriptome.out.bam')         # pattern for transcriptomic bam
-      for files in os.listdir(temp_dir):
+      for file in os.listdir(temp_dir):
         if fnmatch.fnmatch(file, '*.bam'):
           source_path=os.path.join(temp_dir,file)
           destinationa_path=os.path.join(self.output_dir,file)
