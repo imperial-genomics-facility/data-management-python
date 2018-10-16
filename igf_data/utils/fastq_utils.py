@@ -1,4 +1,4 @@
-import os,re
+import os,re,gzip
 
 def identify_fastq_pair(input_list,sort_output=True):
   '''
@@ -60,3 +60,51 @@ def detect_non_fastq_in_file_list(input_list):
       return non_fastq_found
     except:
       raise
+
+def count_fastq_lines(fastq_file):
+  '''
+  A method for counting fastq lines
+  
+  :param fastq_file: A gzipped or unzipped fastq file
+  :returns: Fastq line count
+  '''
+  try:
+    gzipped_pattern=re.compile(r'\S+\.fastq\.gz$')
+    unzipped_pattern=re.compile(r'\S+\.fastq$')
+    lines=0
+    if not os.path.exists(fastq_file):
+      raise IOError('Fastq file {0} not found'.\
+                    format(fastq_file))
+
+    if re.match(gzipped_pattern,fastq_file):                                    # read gzipped file
+      with gzip.open(fastq_file, 'rb') as f:
+        buf_size = 1024 * 1024
+        read_f = f.read
+        buf = read_f(buf_size)
+        while buf:
+          lines += buf.count(b'\n')
+          buf = read_f(buf_size)
+
+    elif re.match(unzipped_pattern,fastq_file):                                 # read unzipped file
+      with open(filename, 'rb') as f:
+        buf_size = 1024 * 1024
+        read_f = f.raw.read
+        buf = read_f(buf_size)
+        while buf:
+          lines += buf.count(b'\n')
+          buf = read_f(buf_size)
+
+    else:
+      raise ValueError('Failed to detect read mode for fastq file {0}'.\
+                       format(fastq_file))
+
+    if lines >= 4 :
+      if lines % 4 != 0:
+        raise ValueError('Fastq file missing have block of 4 lines:{0}'.\
+                         format(fastq_file))
+
+      lines = int(lines/4)
+
+    return lines
+  except:
+    raise
