@@ -57,6 +57,7 @@ class Star_utils:
                                         self.output_prefix)
       default_star_align_params=\
             {"--runThreadN":quote(str(self.threads)),
+             "--genomeDir":quote(self.genome_dir),
              "--genomeLoad":"NoSharedMemory",
              "--runMode":"alignReads",
              "--quantMode":"TranscriptomeSAM",
