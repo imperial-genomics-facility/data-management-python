@@ -96,7 +96,7 @@ class Fastp_utils:
                    quote(self.split_by_lines_count))
 
       subprocess.check_call(cmd,shell=False)                                    # run fastp
-      fastq_pattern=re.compile(r'\S+\.fastq(\.\gz)?$')
+      fastq_pattern=re.compile(r'\S+\.fastq(\.gz)?$')
       html_pattern=re.compile(r'\S+\.html$')
       output_fastq_list=list()
       output_html_file=''
