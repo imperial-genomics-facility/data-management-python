@@ -15,11 +15,9 @@ class Fastp_utils:
   :param enable_polyg_trim: Enable poly G trim for NextSeq and NovaSeq, default False
   :param fastp_options_list: A list of options for running fastp, default
                                --qualified_quality_phred 15
-                               --length_required 15
   '''
   def __init__(self,fastp_exe,input_fastq_list,output_dir,run_thread=1,enable_polyg_trim=False,
-               split_by_lines_count=5000000,fastp_options_list=['--qualified_quality_phred=15',
-                                                                '--length_required=15']):
+               split_by_lines_count=5000000,fastp_options_list=['--qualified_quality_phred=15']):
     self.fastp_exe=fastp_exe
     self.input_fastq_list=input_fastq_list
     self.output_dir=output_dir
