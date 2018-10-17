@@ -112,8 +112,8 @@ class Star_utils:
       subprocess.check_call(star_cmd,shell=False)
       genomic_bam=''
       transcriptomic_bam=''
-      genomic_bam_pattern=re.compile(r'sortedByCoord.out.bam')                  # pattern for genomic bam
-      transcriptomic_bam_pattern=re.compile(r'toTranscriptome.out.bam')         # pattern for transcriptomic bam
+      genomic_bam_pattern=re.compile(r'\S+sortedByCoord.out.bam$')              # pattern for genomic bam
+      transcriptomic_bam_pattern=re.compile(r'\S+toTranscriptome.out.bam$')     # pattern for transcriptomic bam
       for file in os.listdir(temp_dir):
         if fnmatch.fnmatch(file, '*.bam'):
           source_path=os.path.join(temp_dir,file)
@@ -127,6 +127,10 @@ class Star_utils:
           if re.match(transcriptomic_bam_pattern,
                       os.path.basename(destinationa_path)):
             transcriptomic_bam=destinationa_path
+
+      if genomic_bam == '' or \
+         transcriptomic_bam == '':
+        raise ValueError('Star output bam files not found')
 
       remove_dir(temp_dir)                                                      # removing temp run dir
       return genomic_bam,transcriptomic_bam,star_cmd
