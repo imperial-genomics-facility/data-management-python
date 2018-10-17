@@ -6,7 +6,8 @@ class RunFastp(IGFBaseProcess):
   def param_defaults(self):
     params_dict=super(RunFastp,self).param_defaults()
     params_dict.update({
-        'fastp_options_list':['--qualified_quality_phred=15'],
+        'fastp_options_list':['--qualified_quality_phred=15',
+                              '--length_required=15'],
         'split_by_lines_count':5000000,
         'run_thread':1,
         'split_fastq':None,
@@ -28,7 +29,7 @@ class RunFastp(IGFBaseProcess):
     :param run_thread: Number of threads for fastp run, default 1
     :param split_fastq: Enable splitting fastq files, default None
     :param split_by_lines_count: Number of fastq lines to be used if split_fastq is True, default 5000000
-    :param fastp_options_list: A list of fasrp tool options, default ['--qualified_quality_phred=15']
+    :param fastp_options_list: A list of fasrp tool options, default ['--qualified_quality_phred=15','--length_required=15']
     :param platform_name: Sequencing platform name from dataflow
     :param polyg_platform_list: A list of Illumin platforms which emit poly Gs for empty cycles, default ['NextSeq','NOVASEQ6000']
     :param enable_polyg_trim: Enable Fastp poly G trim, default False
