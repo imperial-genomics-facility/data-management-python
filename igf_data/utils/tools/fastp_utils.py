@@ -122,7 +122,9 @@ class Fastp_utils:
 
       remove_dir(temp_dir)                                                      # clean up temp dir
       output_read1,output_read2=\
-          identify_fastq_pair(input_list=output_fastq_list)                     #identify fastq pairs
+          identify_fastq_pair(input_list=output_fastq_list,
+                              sort_output=True,
+                              check_count=True)                                 #identify fastq pairs and validate output fastq pairs
       return output_read1,output_read2,output_html_file,cmd
     except:
       raise
