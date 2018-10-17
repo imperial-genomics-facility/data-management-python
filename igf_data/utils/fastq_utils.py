@@ -95,8 +95,8 @@ def count_fastq_lines(fastq_file):
   :returns: Fastq line count
   '''
   try:
-    gzipped_pattern=re.compile(r'\S+\.fastq\.gz$')
-    unzipped_pattern=re.compile(r'\S+\.fastq$')
+    gzipped_pattern=re.compile(r'\S+\.(fastq|fq)\.gz$')
+    unzipped_pattern=re.compile(r'\S+\.(fastq|fq)$')
     lines=0
     check_file_path(fastq_file)
     if re.match(gzipped_pattern,fastq_file):                                    # read gzipped file
