@@ -75,6 +75,11 @@ def detect_non_fastq_in_file_list(input_list):
 
 def compare_fastq_files_read_counts(r1_file,r2_file):
   '''
+  A method for comparing read counts for fastq pairs
+  
+  :param r1_file: Fastq pair R1 file path
+  :param r2_file: Fastq pair R2 file path
+  :raises: ValueError if counts are not same
   '''
   try:
     check_file_path(r1_file)
