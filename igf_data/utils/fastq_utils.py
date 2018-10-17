@@ -1,11 +1,14 @@
+import pandas as pd
 import os,re,gzip
+from igf_data.utils.fileutils import check_file_path
 
-def identify_fastq_pair(input_list,sort_output=True):
+def identify_fastq_pair(input_list,sort_output=True,check_count=False):
   '''
   A method for fastq read pair identification
 
   :param input_list: A list of input fastq files
   :param sort_output: Sort output list, default true
+  :param check_count: Check read count for fastq pair, only available if sort_output is True, default False
   :returns: A list for read1 files and another list of read2 files
   '''
   try:
@@ -39,6 +42,15 @@ def identify_fastq_pair(input_list,sort_output=True):
           sorted_read2_list.append(temp_file2)
       read2_list=sorted_read2_list                                              # reset read2 list
 
+      if check_count and \
+         len(read1_list) > 0 and \
+         len(read2_list) > 0 :
+        fastq_df=pd.DataFrame({'R1_file':read1_list,
+                               'R2_file':read2_list})
+        for entry in fastq_df.to_dict(orient='records'):
+          compare_fastq_files_read_counts(r1_file=entry['R1_file'],
+                                          r2_file=entry['R2_file'])
+
     return read1_list, read2_list
   except:
     raise
@@ -61,6 +73,20 @@ def detect_non_fastq_in_file_list(input_list):
     except:
       raise
 
+def compare_fastq_files_read_counts(r1_file,r2_file):
+  '''
+  '''
+  try:
+    check_file_path(r1_file)
+    check_file_path(r2_file)
+    r1_count=count_fastq_lines(r1_file)
+    r2_count=count_fastq_lines(r2_file)
+    if r1_count != r2_count:
+      raise ValueError('Fastq pair does not have same number of reads: {0} {1}'.\
+                       format(r1_file,r2_file))
+  except:
+    raise
+
 def count_fastq_lines(fastq_file):
   '''
   A method for counting fastq lines
@@ -72,10 +98,7 @@ def count_fastq_lines(fastq_file):
     gzipped_pattern=re.compile(r'\S+\.fastq\.gz$')
     unzipped_pattern=re.compile(r'\S+\.fastq$')
     lines=0
-    if not os.path.exists(fastq_file):
-      raise IOError('Fastq file {0} not found'.\
-                    format(fastq_file))
-
+    check_file_path(fastq_file)
     if re.match(gzipped_pattern,fastq_file):                                    # read gzipped file
       with gzip.open(fastq_file, 'rb') as f:
         buf_size = 1024 * 1024
