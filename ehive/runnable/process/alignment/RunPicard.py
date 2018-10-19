@@ -43,7 +43,7 @@ class RunPicard(IGFBaseProcess):
       java_exe=self.param_required('java_exe')
       java_param=self.param_required('java_param')
       picard_jar=self.param_required('picard_jar')
-      input_file=self.param_required('input_files')
+      input_files=self.param_required('input_files')
       picard_command=self.param_required('picard_command')
       igf_session_class=self.param_required('igf_session_class')
       species_name=self.param('species_name')
