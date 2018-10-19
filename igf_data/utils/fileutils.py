@@ -150,22 +150,30 @@ def calculate_file_checksum(filepath, hasher='md5'):
     raise
 
 
-def get_temp_dir(work_dir=None, prefix='temp'):
+def get_temp_dir(work_dir=None, prefix='temp',use_ephemeral_space=False):
   '''
   A function for creating temp directory
   
   :param work_dir: A path for work directory, default None
   :param prefix: A prefix for directory path, default 'temp'
+  :param use_ephemeral_space: Use env variable $EPHEMERAL to get work directory, default False
   :returns: A temp_dir
   '''
   try:
     if work_dir is not None and not os.path.isdir(work_dir):                    # check if work directory is present
       raise IOError('work directory {0} is not present'.format(work_dir))
-    
-    if work_dir is None:
-      work_dir=gettempdir()
 
-    temp_dir=mkdtemp(prefix=prefix,dir=work_dir)                                # create a temp dir
+    if work_dir is None:
+      if use_ephemeral_space:
+        work_dir=os.environ.get('EPHEMERAL')
+        if work_dir is None:
+          raise ValueError('Env variable EPHEMERAL is not available, set use_ephemeral_space as False')
+
+      else:
+        work_dir=gettempdir()
+
+    temp_dir=mkdtemp(prefix=prefix,
+                     dir=work_dir)                                              # create a temp dir
     return temp_dir
   except:
     raise
