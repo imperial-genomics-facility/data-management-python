@@ -149,10 +149,10 @@ class Star_utils:
     :returns: A list of bigWig files and star commandline
     '''
     try:
+      temp_dir=get_temp_dir(use_ephemeral_space=True)                           # get a temp dir
       self._run_checks()
       check_file_path(bedGraphToBigWig_path)
       check_file_path(chrom_length_file)
-      temp_dir=get_temp_dir()                                                   # get a temp dir
       temp_path_prefix='{0}/{1}'.format(temp_dir,
                                         self.output_prefix)
       star_cmd=[self.star_exe,
@@ -192,4 +192,6 @@ class Star_utils:
 
       return output_path,star_cmd
     except:
+      if os.path.exists(temp_dir):
+        remove_dir(temp_dir)
       raise
