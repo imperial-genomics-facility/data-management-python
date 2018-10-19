@@ -61,9 +61,9 @@ class Fastp_utils:
               and the fastp commandline
     '''
     try:
+      temp_dir=get_temp_dir(use_ephemeral_space=True)                           # create temp dir in ephemeral space
       self._run_checks()
       read1_list,read2_list=identify_fastq_pair(input_list=self.input_fastq_list) # fetch input files
-      temp_dir=get_temp_dir()
       cmd=[self.fastp_exe,
            '--in1',quote(read1_list[0]),
            '--out1',quote(os.path.join(temp_dir,
@@ -127,4 +127,6 @@ class Fastp_utils:
                               check_count=True)                                 #identify fastq pairs and validate output fastq pairs
       return output_read1,output_read2,output_html_file,cmd
     except:
+      if os.path.exists(temp_dir):
+        remove_dir(temp_dir)                                                    # remove temp dir
       raise
