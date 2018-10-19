@@ -43,7 +43,7 @@ class RunPicard(IGFBaseProcess):
       java_exe=self.param_required('java_exe')
       java_param=self.param_required('java_param')
       picard_jar=self.param_required('picard_jar')
-      input_file=self.param_required('input_file')
+      input_file=self.param_required('input_files')
       picard_command=self.param_required('picard_command')
       igf_session_class=self.param_required('igf_session_class')
       species_name=self.param('species_name')
@@ -60,9 +60,6 @@ class RunPicard(IGFBaseProcess):
                                    sample_igf_id,
                                    experiment_igf_id)
       work_dir=self.get_job_work_dir(work_dir=work_dir_prefix)                  # get a run work dir
-      if copy_input==1:
-        input_file=self.copy_input_file_to_temp(input_file=input_file)          # copy input to temp dir
-
       temp_output_dir=get_temp_dir()                                            # get temp work dir
       ref_genome=Reference_genome_utils(\
                    genome_tag=species_name,
@@ -77,7 +74,7 @@ class RunPicard(IGFBaseProcess):
                java_exe=java_exe,
                java_param=java_param,
                picard_jar=picard_jar,
-               input_file=input_file,
+               input_files=input_files,
                output_dir=temp_output_dir,
                ref_fasta=genome_fasta,
                ref_flat_file=ref_flat_file,
