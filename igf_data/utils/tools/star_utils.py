@@ -51,8 +51,8 @@ class Star_utils:
     :returns: A genomic_bam and a transcriptomic bam and star commandline
     '''
     try:
+      temp_dir=get_temp_dir(use_ephemeral_space=True)                           # get a temp dir
       self._run_checks()
-      temp_dir=get_temp_dir()                                                   # get a temp dir
       temp_path_prefix='{0}/{1}'.format(temp_dir,
                                         self.output_prefix)
       default_star_align_params=\
@@ -135,6 +135,8 @@ class Star_utils:
       remove_dir(temp_dir)                                                      # removing temp run dir
       return genomic_bam,transcriptomic_bam,star_cmd
     except:
+      if os.path.exists(temp_dir):
+        remove_dir(temp_dir)
       raise
 
   def generate_rna_bigwig(self,bedGraphToBigWig_path,chrom_length_file,
