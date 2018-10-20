@@ -28,7 +28,7 @@ class Picard_tools:
                            AddOrReplaceReadGroups
   '''
   def __init__(self,java_exe,picard_jar,input_files,output_dir,ref_fasta,
-               picard_option=None,java_param='-Xmx4g -XX:ParallelGCThreads=1',
+               picard_option=None,java_param='-Xmx4g',
                strand_info='NONE',threads=1,output_prefix=None,
                ref_flat_file=None,ribisomal_interval=None,
                suported_commands=['CollectAlignmentSummaryMetrics',

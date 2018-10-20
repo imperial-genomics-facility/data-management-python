@@ -11,7 +11,7 @@ class RunPicard(IGFBaseProcess):
         'reference_type':'GENOME_FASTA',
         'reference_refFlat':'GENE_REFFLAT',
         'ribosomal_interval_type':'RIBOSOMAL_INTERVAL',
-        'java_param':'-Xmx4g -XX:ParallelGCThreads=1',
+        'java_param':'-Xmx4g',
         'copy_input':0,
         'analysis_files':[],
         'picard_option':{},
