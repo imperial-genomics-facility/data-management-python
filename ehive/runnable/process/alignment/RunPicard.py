@@ -14,6 +14,7 @@ class RunPicard(IGFBaseProcess):
         'java_param':'-Xmx4g',
         'copy_input':0,
         'analysis_files':[],
+        'picard_option':{},
       })
     return params_dict
 
@@ -53,6 +54,7 @@ class RunPicard(IGFBaseProcess):
       base_work_dir=self.param_required('base_work_dir')
       copy_input=self.param('copy_input')
       analysis_files=self.param_required('analysis_files')
+      picard_option=self.param('picard_option')
       seed_date_stamp=self.param_required('date_stamp')
       seed_date_stamp=get_datestamp_label(seed_date_stamp)
       work_dir_prefix=os.path.join(base_work_dir,
@@ -78,6 +80,7 @@ class RunPicard(IGFBaseProcess):
                output_dir=temp_output_dir,
                ref_fasta=genome_fasta,
                ref_flat_file=ref_flat_file,
+               picard_option=picard_option,
                ribisomal_interval=ribosomal_interval_file)                      # get picard wrapper                               # setup picard tool
       temp_output_files,picard_command_line=\
            picard.run_picard_command(command_name=picard_command)               # run picard command
