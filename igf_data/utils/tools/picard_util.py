@@ -67,6 +67,9 @@ class Picard_tools:
       if self.output_prefix is None:
         output_prefix=os.path.join(self.output_dir,
                                    os.path.basename(input_list[0]))             # set output file prefix
+        if output_prefix.endswith('.bam'):
+          output_prefix=output_prefix.replace('.bam','')                        # remove .bam from filepath prefix
+
       else:
         output_prefix=self.output_prefix
 
@@ -240,7 +243,7 @@ class Picard_tools:
       picard_run_param,output_file_list=\
                   self._get_param_for_picard_command(command_name=command_name) # get picard params and output list
       if isinstance(picard_run_param,list) and \
-          len(picard_run_param)>1:
+          len(picard_run_param)>0:
         picard_option=['{0}={1}'.format(quote(param),
                                         quote(val))
                        for param_dicts in picard_run_param
