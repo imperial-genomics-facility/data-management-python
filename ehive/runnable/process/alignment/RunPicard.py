@@ -11,7 +11,7 @@ class RunPicard(IGFBaseProcess):
         'reference_type':'GENOME_FASTA',
         'reference_refFlat':'GENE_REFFLAT',
         'ribosomal_interval_type':'RIBOSOMAL_INTERVAL',
-        'java_param':'-Xmx4g',
+        'java_param':'-Xmx4g -XX:ParallelGCThreads=1',
         'copy_input':0,
         'analysis_files':[],
         'picard_option':{},
@@ -62,7 +62,7 @@ class RunPicard(IGFBaseProcess):
                                    sample_igf_id,
                                    experiment_igf_id)
       work_dir=self.get_job_work_dir(work_dir=work_dir_prefix)                  # get a run work dir
-      temp_output_dir=get_temp_dir()                                            # get temp work dir
+      temp_output_dir=get_temp_dir(use_ephemeral_space=True)                    # get temp work dir
       ref_genome=Reference_genome_utils(\
                    genome_tag=species_name,
                    dbsession_class=igf_session_class,
@@ -107,6 +107,10 @@ class RunPicard(IGFBaseProcess):
                      picard_command_line)
       self.comment_asana_task(task_name=project_igf_id, comment=message)        # send commandline to Asana
     except Exception as e:
+      if temp_output_dir and \
+         os.path.exists(temp_output_dir):
+        remove_dir(temp_output_dir)
+
       message='project: {2}, sample:{3}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
                                                       project_igf_id,
