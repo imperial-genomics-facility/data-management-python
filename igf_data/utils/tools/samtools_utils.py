@@ -47,7 +47,7 @@ def _check_bam_index(samtools_exe,bam_file,dry_run=False):
     check_file_path(samtools_exe)
     bam_index='{0}.bai'.format(bam_file)
     if not os.path.exists(bam_index):
-      index_cmd=[quotes(samtools_exe),
+      index_cmd=[quote(samtools_exe),
                  'index',
                  quote(bam_file)
                 ]                                                               # generate bam index, if its not present
@@ -87,14 +87,14 @@ def convert_bam_to_cram(samtools_exe,bam_file,reference_file,cram_path,threads=1
                      bam_file=bam_file)                                         # check bam index
     temp_file=os.path.join(get_temp_dir(),
                            os.path.basename(cram_path))                         # get temp cram file path
-    view_cmd=[quotes(samtools_exe),
+    view_cmd=[quote(samtools_exe),
               'view',
               '-C',
               '-OCRAM',
-              '-@{0}'.format(quotes(threads)),
+              '-@{0}'.format(quote(threads)),
               '-T{0}'.format(quote(reference_file)),
               '-o{0}'.format(quote(temp_file)),
-              quotes(bam_file)
+              quote(bam_file)
              ]                                                                  # convert bam to cram using samtools
     if dry_run:
       return view_cmd
@@ -142,10 +142,10 @@ def run_bam_flagstat(samtools_exe,bam_file,output_dir,threads=1,force=False,
       raise ValueError('Output file {0} already present, use force to overwrite'.\
                        format(output_path))
 
-    flagstat_cmd=[quotes(samtools_exe),
+    flagstat_cmd=[quote(samtools_exe),
                   'flagstat',
-                  '-@{0}'.format(quotes(threads)),
-                  quotes(bam_file)
+                  '-@{0}'.format(quote(threads)),
+                  quote(bam_file)
                  ]
     if dry_run:
       return flagstat_cmd
@@ -188,9 +188,9 @@ def run_bam_idxstat(samtools_exe,bam_file,output_dir,force=False,dry_run=False):
       raise ValueError('Output file {0} already present, use force to overwrite'.\
                        format(output_path))
 
-    idxstat_cmd=[quotes(samtools_exe),
+    idxstat_cmd=[quote(samtools_exe),
                   'idxstats',
-                  quotes(bam_file)
+                  quote(bam_file)
                 ]
     if dry_run:
       return idxstat_cmd
@@ -221,15 +221,15 @@ def run_sort_bam(samtools_exe,input_bam_path,output_bam_path,sort_by_name=False,
   try:
     check_file_path(samtools_exe)
     _check_bam_file(bam_file=input_bam_path)
-    sort_cmd=[quotes(samtools_exe),
+    sort_cmd=[quote(samtools_exe),
               'sort',
               '--output-fmt','BAM',
-              '--threads',quotes(threads)
+              '--threads',quote(threads)
               ]
     if sort_by_name:
       sort_cmd.append('-n')                                                     # sorting by read name
 
-    sort_cmd.append(quotes(input_bam_path))
+    sort_cmd.append(quote(input_bam_path))
 
     temp_dir=get_temp_dir()
     temp_bam=os.path.join(temp_dir,
@@ -271,16 +271,16 @@ def merge_multiple_bam(samtools_exe,input_bam_list,output_bam_path,sorted_by_nam
     temp_dir=get_temp_dir()
     temp_bam=os.path.join(temp_dir,
                           os.path.basename(output_bam_path))
-    merge_cmd=[quotes(samtools_exe),
+    merge_cmd=[quote(samtools_exe),
                'merge',
                '--output-fmt','BAM',
-               '--threads',quotes(threads),
-               '-b',quotes(input_bam_list)
+               '--threads',quote(threads),
+               '-b',quote(input_bam_list)
               ]
     if sorted_by_name:
       merge_cmd.append('-n')                                                    # Input files are sorted by read name
 
-    merge_cmd.append(quotes(temp_bam))
+    merge_cmd.append(quote(temp_bam))
     if dry_run:
       return merge_cmd
 
