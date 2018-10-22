@@ -50,6 +50,9 @@ class RSEM_utils:
                           for key,val in options.items()])
 
       rsem_cmd.append(self.input_bam)
+      if self.reference_rsem is None:
+        raise ValueError('No reference genome found for Rsem')
+
       rsem_cmd.append(self.reference_rsem)
       rsem_cmd.append(temp_output)
       subprocess.check_call(rsem_cmd)
