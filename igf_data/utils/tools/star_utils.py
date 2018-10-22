@@ -157,20 +157,29 @@ class Star_utils:
       check_file_path(chrom_length_file)
       temp_path_prefix='{0}/{1}'.format(temp_dir,
                                         self.output_prefix)
-      star_cmd=[self.star_exe,
-                "--runThreadN",quotes(self.threads),
-                #"--genomeLoad","NoSharedMemory",                              # FIXME
-                "--runMode","inputAlignmentsFromBAM",
-                "--outWigType","bedGraph",
-                "--outFileNamePrefix",quote(temp_path_prefix)
-               ]
+      default_star_signal_params=\
+            {"--runThreadN":quotes(str(self.threads)),
+             "--genomeLoad":"NoSharedMemory",
+             "--runMode":"inputAlignmentsFromBAM",
+             "--outWigType":"bedGraph",
+             "--outFileNamePrefix":quote(temp_path_prefix),
+            }
+      star_cmd=[self.star_exe]
+      for key,val in default_star_signal_params.items():
+        for field in [key,val]:
+          if isinstance(field,list):
+            star_cmd.extend(field)
+          else:
+            star_cmd.append(field)
+
       if stranded:
         star_cmd.append("--outWigStrand","Stranded")                            # stranded rnaseq
 
       bam_pattern=re.compile(r'\S+\.bam$')
       input_files=self.input_files
       if not re.match(bam_pattern,input_files[0]):
-        raise ValueError('Input bam file not found in input filelist star run')
+        raise ValueError('Input bam file not found in input file list star run: {0}'.\
+                         format(input_files))
 
       star_cmd.append("--inputBAMfile",quotes(input_files[0]))                  # set input for star run
       if dry_run:
