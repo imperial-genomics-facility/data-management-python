@@ -36,6 +36,7 @@ class RunRSEM(IGFBaseProcess):
       memory_limit=self.param('memory_limit')
       rsem_options=self.param('rsem_options')
       force_overwrite=self.param('force_overwrite')
+      species_name=self.param('species_name')
       if not isinstance(input_bams,list) or \
          len(input_bams) != 1:
         raise ValueError('Expecting one input bam for rsem and got : {0}'.\
