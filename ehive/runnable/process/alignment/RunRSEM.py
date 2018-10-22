@@ -30,12 +30,17 @@ class RunRSEM(IGFBaseProcess):
       igf_session_class=self.param_required('igf_session_class')
       output_prefix=self.param_required('output_prefix')
       base_work_dir=self.param_required('base_work_dir')
-      input_bam=self.param_required('input_bam')
+      input_bams=self.param_required('input_bams')
       strandedness=self.param('strandedness')
       threads=self.param('threads')
       memory_limit=self.param('memory_limit')
       rsem_options=self.param('rsem_options')
       force_overwrite=self.param('force_overwrite')
+      if not isinstance(input_bams,list) or \
+         len(input_bams) != 1:
+        raise ValueError('Expecting one input bam for rsem and got : {0}'.\
+                         format(len(input_bams)))
+
       work_dir_prefix=os.path.join(base_work_dir,
                                    project_igf_id,
                                    sample_igf_id,
@@ -54,7 +59,7 @@ class RunRSEM(IGFBaseProcess):
       rsem_obj=RSEM_utils(\
                 rsem_exe_dir=rsem_exe_dir,
                 reference_rsem=rsem_ref,
-                input_bam=input_bam,
+                input_bam=input_bams[0],
                 threads=threads,
                 memory_limit=memory_limit)                                      # prepare rsem for run
       rsem_cmd,rsem_output_list=rsem_obj.\
