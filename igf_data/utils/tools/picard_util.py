@@ -1,6 +1,6 @@
 import os,subprocess
 from shlex import quote
-from igf_data.utils.fileutils import check_file_path
+from igf_data.utils.fileutils import check_file_path, get_temp_dir
 
 class Picard_tools:
   '''
@@ -226,10 +226,12 @@ class Picard_tools:
       for file in self.input_files:
         check_file_path(file_path=file)
 
+      picard_temp_run_dir=get_temp_dir()
       command=[self.java_exe,
                '-XX:ParallelGCThreads={0}'.\
                format(self.threads),
                self.java_param,
+               '-Djava.io.tmpdir={0}'.format(picard_temp_run_dir),
                '-jar',
                self.picard_jar,
                quote(command_name)]
