@@ -91,7 +91,7 @@ def convert_bam_to_cram(samtools_exe,bam_file,reference_file,cram_path,threads=1
               'view',
               '-C',
               '-OCRAM',
-              '-@{0}'.format(quote(threads)),
+              '-@{0}'.format(quote(str(threads))),
               '-T{0}'.format(quote(reference_file)),
               '-o{0}'.format(quote(temp_file)),
               quote(bam_file)
@@ -144,7 +144,7 @@ def run_bam_flagstat(samtools_exe,bam_file,output_dir,threads=1,force=False,
 
     flagstat_cmd=[quote(samtools_exe),
                   'flagstat',
-                  '-@{0}'.format(quote(threads)),
+                  '-@{0}'.format(quote(str(threads))),
                   quote(bam_file)
                  ]
     if dry_run:
@@ -224,7 +224,7 @@ def run_sort_bam(samtools_exe,input_bam_path,output_bam_path,sort_by_name=False,
     sort_cmd=[quote(samtools_exe),
               'sort',
               '--output-fmt','BAM',
-              '--threads',quote(threads)
+              '--threads',quote(str(threads))
               ]
     if sort_by_name:
       sort_cmd.append('-n')                                                     # sorting by read name
@@ -274,7 +274,7 @@ def merge_multiple_bam(samtools_exe,input_bam_list,output_bam_path,sorted_by_nam
     merge_cmd=[quote(samtools_exe),
                'merge',
                '--output-fmt','BAM',
-               '--threads',quote(threads),
+               '--threads',quote(str(threads)),
                '-b',quote(input_bam_list)
               ]
     if sorted_by_name:
