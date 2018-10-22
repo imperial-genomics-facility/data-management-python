@@ -188,7 +188,7 @@ class Star_utils:
       subprocess.check_call(star_cmd)
       output_list=list()
       for file in os.listdir(temp_dir):
-        if fnmatch.fnmatch(file,'*.bg'):
+        if fnmatch.fnmatch(file,'*.bg$'):
           output_path=os.path.join(temp_dir,file.replace('.bg','.bw'))
           bw_cmd=[bedGraphToBigWig_path,
                   os.path.join(temp_dir,file),
@@ -200,6 +200,10 @@ class Star_utils:
 
       if len(output_path)==0:
         raise ValueError('No bigwig file found from star run')
+
+      for file in output_list:
+        if not os.path.exists(file):
+          raise IOError('Bigwig output {0} not found'.format(file))
 
       return output_path,star_cmd
     except:
