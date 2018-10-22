@@ -26,7 +26,7 @@ class RSEM_utils:
     :returns: RSEM commandline and output file list
     '''
     try:
-      rsem_exe=os.path.join(rsem_exe_dir,
+      rsem_exe=os.path.join(self.rsem_exe_dir,
                             'rsem-calculate-expression')
       check_file_path(rsem_exe)
       check_file_path(self.input_bam)
