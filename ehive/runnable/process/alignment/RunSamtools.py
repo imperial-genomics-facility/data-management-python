@@ -81,7 +81,7 @@ class RunSamtools(IGFBaseProcess):
         raise ValueError('Samtools command {0} not supported'.\
                          format(samtools_command))
 
-      dest_path=os.path.join(work_dir_prefix,
+      dest_path=os.path.join(work_dir,
                              os.path.basename(temp_output))
       if dest_path !=temp_output:
         move_file(source_path=temp_output,
