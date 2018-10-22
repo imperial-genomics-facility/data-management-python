@@ -83,7 +83,7 @@ class RunSamtools(IGFBaseProcess):
 
       dest_path=os.path.join(work_dir,
                              os.path.basename(temp_output))
-      if dest_path !=temp_output:
+      if dest_path != temp_output:
         move_file(source_path=temp_output,
                   destinationa_path=dest_path,
                   force=True)
