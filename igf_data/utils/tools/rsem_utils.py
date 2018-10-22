@@ -37,8 +37,8 @@ class RSEM_utils:
                 '--no-bam-output',
                 '--alignments',
                 '--strandedness',quotes(strandedness),
-                '--num-threads',quotes(self.threads),
-                '--ci-memory',quotes(self.memory_limit),
+                '--num-threads',quotes(str(self.threads)),
+                '--ci-memory',quotes(str(self.memory_limit)),
                 '--estimate-rspd'
                ]
       if paired_end:
