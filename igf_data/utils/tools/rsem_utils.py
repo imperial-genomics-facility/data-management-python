@@ -32,13 +32,13 @@ class RSEM_utils:
       check_file_path(self.input_bam)
       temp_dir=get_temp_dir()
       temp_output=os.path.join(temp_dir,output_prefix)
-      rsem_cmd=[quotes(rsem_exe),
+      rsem_cmd=[quote(rsem_exe),
                 '--quiet',
                 '--no-bam-output',
                 '--alignments',
-                '--strandedness',quotes(strandedness),
-                '--num-threads',quotes(str(self.threads)),
-                '--ci-memory',quotes(str(self.memory_limit)),
+                '--strandedness',quote(strandedness),
+                '--num-threads',quote(str(self.threads)),
+                '--ci-memory',quote(str(self.memory_limit)),
                 '--estimate-rspd'
                ]
       if paired_end:
