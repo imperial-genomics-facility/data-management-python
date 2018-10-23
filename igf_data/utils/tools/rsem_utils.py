@@ -30,7 +30,7 @@ class RSEM_utils:
                             'rsem-calculate-expression')
       check_file_path(rsem_exe)
       check_file_path(self.input_bam)
-      temp_dir=get_temp_dir()
+      temp_dir=get_temp_dir(use_ephemeral_space=True)
       temp_output=os.path.join(temp_dir,output_prefix)
       rsem_cmd=[quote(rsem_exe),
                 '--quiet',
@@ -59,9 +59,10 @@ class RSEM_utils:
       rsem_output_list=list()
       for file in os.listdir(temp_dir):
         if fnmatch.fnmatch(file,'*.results'):
+          rsem_output_list.append(os.path.join(output_dir,file))                # add output files to the list
           copy_local_file(source_path=os.path.join(temp_dir,file),
                           destinationa_path=os.path.join(output_dir,file),
-                          force=force)
+                          force=force)                                          # copy output files to work dir
 
       return rsem_cmd,rsem_output_list
     except:
