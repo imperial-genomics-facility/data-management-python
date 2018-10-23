@@ -94,7 +94,13 @@ class RunPicard(IGFBaseProcess):
         output_file_list.append(dest_path)
       remove_dir(temp_output_dir)
       analysis_files.extend(output_file_list)
+      bam_files=list()
+      for file in output_file_list:
+        if file.endswith('.bam'):
+          bam_files.append(file)
+
       self.param('dataflow_params',{'analysis_files':analysis_files,
+                                    'bam_files':bam_files,
                                     'seed_date_stamp':seed_date_stamp})         # pass on picard output list
       message='finished picard {0} for {1} {2}'.\
               format(picard_command,
