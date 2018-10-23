@@ -71,6 +71,10 @@ class RunRSEM(IGFBaseProcess):
                  strandedness=strandedness,
                  options=rsem_options,
                  force=force_overwrite)
+      if not isinstance(rsem_output_list,list) or \
+         len(rsem_output_list)==0:
+        raise ValueError('No RSEM output files found')                          # check output files
+
       self.param('dataflow_params',{'rsem_output':rsem_output_list})            # pass on rsem output list
       message='Finished RSEM {0} for {1}: {2}'.\
               format(project_igf_id,
