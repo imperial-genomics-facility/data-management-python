@@ -233,7 +233,8 @@ class Analysis_collection_utils:
                                     self.analysis_name)                         # final path for run
 
         if self.rename_file:
-          new_filename=self.get_new_file_name(input_file=input_file)
+          new_filename=self.get_new_file_name(input_file=input_file,
+                                              file_suffix=file_suffix)
           final_path=os.path.join(final_path,
                                   new_filename)                                 # get new filepath
         else:
@@ -266,7 +267,7 @@ class Analysis_collection_utils:
       raise
 
 
-  def get_new_file_name(self,input_file,file_suffix=''):
+  def get_new_file_name(self,input_file,file_suffix=None):
     '''
     A method for fetching new file name
     
@@ -290,7 +291,7 @@ class Analysis_collection_utils:
         new_filename='{0}_{1}'.format(new_filename,
                                       datestamp)                                # add datestamp to filepath
 
-      if file_suffix == '':
+      if file_suffix is None:
         file_suffix=get_file_extension(input_file=input_file)                   # collect file suffix
 
       if file_suffix =='':
