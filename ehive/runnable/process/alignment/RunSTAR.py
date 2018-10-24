@@ -58,8 +58,11 @@ class RunSTAR(IGFBaseProcess):
       work_dir_prefix=os.path.join(base_work_dir,
                                    project_igf_id,
                                    sample_igf_id,
-                                   experiment_igf_id,
-                                   run_igf_id)
+                                   experiment_igf_id)
+      if run_igf_id is not None:
+        work_dir_prefix=os.path.join(work_dir_prefix,
+                                     run_igf_id)
+
       work_dir=self.get_job_work_dir(work_dir=work_dir_prefix)                  # get a run work dir
       ref_genome=Reference_genome_utils(\
                    genome_tag=species_name,
