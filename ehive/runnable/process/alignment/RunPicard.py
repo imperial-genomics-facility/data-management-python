@@ -38,6 +38,7 @@ class RunPicard(IGFBaseProcess):
     :param copy_input: A toggle for copying input file to temp, 1 for True default 0 for False
     '''
     try:
+      temp_output_dir=False
       project_igf_id=self.param_required('project_igf_id')
       experiment_igf_id=self.param_required('experiment_igf_id')
       sample_igf_id=self.param_required('sample_igf_id')
