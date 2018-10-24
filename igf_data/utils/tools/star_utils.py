@@ -173,7 +173,7 @@ class Star_utils:
             star_cmd.append(field)
 
       if stranded:
-        star_cmd.append(["--outWigStrand","Stranded"])                          # stranded rnaseq
+        star_cmd.extend(["--outWigStrand","Stranded"])                          # stranded rnaseq
 
       bam_pattern=re.compile(r'\S+\.bam$')
       input_files=self.input_files
@@ -181,7 +181,7 @@ class Star_utils:
         raise ValueError('Input bam file not found in input file list star run: {0}'.\
                          format(input_files))
 
-      star_cmd.append(["--inputBAMfile",quote(input_files[0])])                 # set input for star run
+      star_cmd.extend(["--inputBAMfile",quote(input_files[0])])                 # set input for star run
       if dry_run:
         return star_cmd                                                         # return star cmd
 
