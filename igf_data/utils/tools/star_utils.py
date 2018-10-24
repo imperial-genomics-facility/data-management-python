@@ -206,7 +206,7 @@ class Star_utils:
         if not os.path.exists(file):
           raise IOError('Bigwig output {0} not found'.format(file))
 
-      return output_path,star_cmd
+      return output_list,star_cmd
     except:
       if os.path.exists(temp_dir):
         remove_dir(temp_dir)
