@@ -198,7 +198,7 @@ class Star_utils:
           subprocess.check_call(bw_cmd)
           output_list.append(output_path)
 
-      if len(output_path)==0:
+      if len(output_list)==0:
         raise ValueError('No bigwig file found from star run')
 
       for file in output_list:
