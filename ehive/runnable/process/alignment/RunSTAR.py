@@ -16,6 +16,7 @@ class RunSTAR(IGFBaseProcess):
         'run_thread':4,
         'r2_read_file':None,
         'stranded':True,
+        'run_igf_id':None,
         'star_patameters':'{"--outFilterMultimapNmax":20, \
                            "--alignSJoverhangMin":8, \
                            "--alignSJDBoverhangMin":1, \
@@ -70,6 +71,9 @@ class RunSTAR(IGFBaseProcess):
       gene_gtf=ref_genome.get_gene_gtf()                                        # get gtf file
       genome_fai=ref_genome.get_genome_fasta_fai()                              # fetch genomic fasta fai index 
       if run_mode=='generate_aligned_bams':
+        if run_igf_id is None:
+          raise ValueError('No Run igf id found')
+
         r1_read_file=self.param_required('r1_read_file')
         r2_read_file=self.param('r2_read_file')
         input_fastq_list=list()
