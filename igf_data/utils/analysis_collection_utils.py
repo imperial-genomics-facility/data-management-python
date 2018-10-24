@@ -266,11 +266,12 @@ class Analysis_collection_utils:
       raise
 
 
-  def get_new_file_name(self,input_file):
+  def get_new_file_name(self,input_file,file_suffix=''):
     '''
     A method for fetching new file name
     
     :param input_file: An input filepath
+    :param file_suffix: A file suffix
     '''
     try:
       new_filename=self.collection_name                                         # use collection name to rename file
@@ -289,7 +290,9 @@ class Analysis_collection_utils:
         new_filename='{0}_{1}'.format(new_filename,
                                       datestamp)                                # add datestamp to filepath
 
-      file_suffix=get_file_extension(input_file=input_file)                     # collect file suffix
+      if file_suffix == '':
+        file_suffix=get_file_extension(input_file=input_file)                   # collect file suffix
+
       if file_suffix =='':
         raise ValueError('Missing file extension for new file name of {0}'.\
                          format(input_file))                                    # raise error if not file suffix found
