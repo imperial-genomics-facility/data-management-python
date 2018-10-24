@@ -65,6 +65,47 @@
           chart.draw(data, options);
        });
       }
+      function drawCSChart() {
+       $.getJSON("{{ sampleReadCountFile }}", function(jsonData) {
+          var data = new google.visualization.DataTable(jsonData);
+          var options = {
+            width: 700,
+            height: {{ ImageHeight }},
+            title: 'Column plot for sample read count',
+            animation: {startup: true,
+                        duration: 800,
+                        easing: 'in'},
+            bar: { groupWidth: "60%" },
+            vAxis: {title: 'Sample ID',
+                    textStyle:{fontSize: 10}
+                   },
+            hAxis: {title: 'Number of Reads',
+                    slantedText : true,
+                    slantedTextAngle : 45,
+                    textStyle:{fontSize: 10}
+                    },
+            orientation: 'vertical',
+            legend: {position: 'right',
+                     textStyle: {color: '#708090',
+                                 fontSize: 10}
+                    },
+            colors:['#313695',
+                    '#4575b4',
+                    '#74add1',
+                    '#abd9e9',
+                    '#e0f3f8',
+                    '#ffffbf',
+                    '#fee090',
+                    '#fdae61',
+                    '#f46d43',
+                    '#d73027',
+                    '#a50026'
+                   ],
+          }
+          var chart = new google.visualization.ColumnChart(document.getElementById('barchart_material'));
+          chart.draw(data, options);
+       });
+      }
       function drawLogChart() {
        $.getJSON("{{ sampleReadCountFile }}", function(jsonData) {
           var data = new google.visualization.DataTable(jsonData);
@@ -134,6 +175,38 @@
                       '#00FFFF',  // Aqua
                       '#FFD700',  // Gold
                       '#DC143C',  // Crimson
+                     ],
+            };
+            var chart = new google.visualization.Histogram(document.getElementById('barchart_material'));
+            chart.draw(data, options);
+          });
+        }
+        function drawCSHist() {
+          $.getJSON("{{ sampleReadCountFile }}", function(jsonData) {
+            var data = new google.visualization.DataTable(jsonData);
+            var options = {
+              width: 900,
+              height: 400,
+              title: 'Histogram plot for sample read count',
+              legend: { position: 'right',
+                        textStyle: {color: '#708090',
+                                    fontSize: 10}},
+              hAxis: { textStyle:{fontSize: 10,
+                                  color: '#708090'},
+                       slantedText : true,
+                       slantedTextAngle : 45,},
+              histogram: { maxNumBuckets: 20, },
+              colors:['#313695',
+                      '#4575b4',
+                      '#74add1',
+                      '#abd9e9',
+                      '#e0f3f8',
+                      '#ffffbf',
+                      '#fee090',
+                      '#fdae61',
+                      '#f46d43',
+                      '#d73027',
+                      '#a50026'
                      ],
             };
             var chart = new google.visualization.Histogram(document.getElementById('barchart_material'));
@@ -210,6 +283,9 @@
            <input type="button" value="Column plot - Linear" onclick=drawChart() />
            <input type="button" value="Column plot - Log" onclick=drawLogChart() />
            <input type="button" value="Histogram plot" onclick=drawHist() />
+           <p></p>
+           <input type="button" value="Column plot - Linear (CS)" onclick=drawCSChart() />
+           <input type="button" value="Histogram plot(CS)" onclick=drawCSHist() />
            <div id="barchart_material" ></div>
         </main>
       </div>
