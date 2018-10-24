@@ -89,8 +89,10 @@ class ConvertBamToCram(IGFBaseProcess):
                                    collection_type=collection_type,
                                    collection_table=collection_table,
                                    base_path=base_result_dir)
-      output_cram_list=au.load_file_to_disk_and_db(input_file_list=[cram_file],
-                                   withdraw_exisitng_collection=force_overwrite) # load file to db and disk
+      output_cram_list=au.load_file_to_disk_and_db(\
+                            input_file_list=[cram_file],
+                            file_suffix='cram',
+                            withdraw_exisitng_collection=force_overwrite)       # load file to db and disk
       self.param('dataflow_params',{'output_cram_list':output_cram_list})       # pass on bam output path
       message='finished bam to cram conversion for {0}, {1} {2}'.\
               format(project_igf_id,
