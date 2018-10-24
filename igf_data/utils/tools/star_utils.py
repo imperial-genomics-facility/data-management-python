@@ -158,7 +158,7 @@ class Star_utils:
       temp_path_prefix='{0}/{1}'.format(temp_dir,
                                         self.output_prefix)
       default_star_signal_params=\
-            {"--runThreadN":quotes(str(self.threads)),
+            {"--runThreadN":quote(str(self.threads)),
              "--genomeLoad":"NoSharedMemory",
              "--runMode":"inputAlignmentsFromBAM",
              "--outWigType":"bedGraph",
@@ -181,7 +181,7 @@ class Star_utils:
         raise ValueError('Input bam file not found in input file list star run: {0}'.\
                          format(input_files))
 
-      star_cmd.append("--inputBAMfile",quotes(input_files[0]))                  # set input for star run
+      star_cmd.append("--inputBAMfile",quote(input_files[0]))                  # set input for star run
       if dry_run:
         return star_cmd                                                         # return star cmd
 
