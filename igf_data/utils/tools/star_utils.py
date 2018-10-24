@@ -188,8 +188,9 @@ class Star_utils:
       subprocess.check_call(star_cmd)
       output_list=list()
       for file in os.listdir(temp_dir):
-        if fnmatch.fnmatch(file,'*.bg$'):
-          output_path=os.path.join(temp_dir,file.replace('.bg','.bw'))
+        if file.endswith('.bg'):
+          output_path=os.path.join(temp_dir,
+                                   file.replace('.bg','.bw'))
           bw_cmd=[bedGraphToBigWig_path,
                   os.path.join(temp_dir,file),
                   chrom_length_file,
