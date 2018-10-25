@@ -22,6 +22,7 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       'project_template':'project_info/index.html',
       'status_template':'project_info/status.html',
       'analysis_template':'project_info/analysis.html',
+      'analysis_viewer_template':'project_info/analysis_viewer.html',
       'remote_project_path':None,
       'remote_user':None,
       'remote_host':None,
@@ -29,6 +30,7 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       'samplereadcountfile':'samplereadcountfile.json',
       'status_data_json':'status_data.json',
       'analysis_data_json':'analysis_data.json',
+      'analysis_view_js':'viewer.js',
       'image_height':700,
       'sample_count_threshold':75,
     })
@@ -52,35 +54,47 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       project_template=self.param('project_template')
       status_template=self.param('status_template')
       analysis_template=self.param('analysis_template')
+      analysis_viewer_template=self.param('analysis_viewer_template')
       seqruninfofile=self.param('seqruninfofile')
       samplereadcountfile=self.param('samplereadcountfile')
       status_data_json=self.param('status_data_json')
       analysis_data_json=self.param('analysis_data_json')
+      analysis_view_js=self.param('analysis_view_js')
       image_height=self.param('image_height')
       sample_count_threshold=self.param('sample_count_threshold')
 
-      htaccess_template_path=os.path.join(template_dir,
-                                          htaccess_template_path)               # set path for template dir
-      project_template_path=os.path.join(template_dir,
-                                         project_template)                      # set path for project template
-      status_template_path=os.path.join(template_dir,
-                                        status_template)                        # set path for project status template
-      analysis_template_path=os.path.join(template_dir,
-                                          analysis_template)                    # set path for project analysis template
+      htaccess_template_path=\
+          os.path.join(template_dir,
+                       htaccess_template_path)                                  # set path for template dir
+      project_template_path=\
+          os.path.join(template_dir,
+                       project_template)                                        # set path for project template
+      status_template_path=\
+          os.path.join(template_dir,
+                       status_template)                                         # set path for project status template
+      analysis_template_path=\
+          os.path.join(template_dir,
+                       analysis_template)                                       # set path for project analysis template
+      analysis_viewer_template=\
+          os.path.join(template_dir,
+                       analysis_viewer_template)                                # set path for analysis viewer template
       pa=ProjectAdaptor(**{'session_class':igf_session_class})
       pa.start_session()
       user_info=pa.get_project_user_info(project_igf_id=project_name)           # fetch user info from db
-      sample_counts=pa.count_project_samples(project_igf_id=project_name,
-                                             only_active=True)                  # get sample counts for the project
+      sample_counts=pa.count_project_samples(\
+                        project_igf_id=project_name,
+                        only_active=True)                                       # get sample counts for the project
       pa.close_session()
 
-      image_height=self._calculate_image_height(sample_count=sample_counts,
-                                                height=image_height,
-                                                threshold=sample_count_threshold) # change image height based on sample count
+      image_height=\
+          self._calculate_image_height(\
+              sample_count=sample_counts,
+              height=image_height,
+              threshold=sample_count_threshold)                                 # change image height based on sample count
 
       user_info=user_info.to_dict(orient='records')                             # convert dataframe to list of dictionaries
       if len(user_info) == 0:
-        raise ValueError('No user found for project {0}'.format(project_name)) 
+        raise ValueError('No user found for project {0}'.format(project_name))
 
       user_list=list()
       user_passwd_dict=dict()
@@ -99,20 +113,23 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
           hpc_user=False                                                        # switch to non-hpc settings if primary user is non-hpc
 
       temp_work_dir=get_temp_dir()                                              # get a temp dir
-      template_env=Environment(loader=FileSystemLoader(searchpath=htaccess_template_path), \
-                               autoescape=select_autoescape(['html', 'xml']))   # set template env
+      template_env=\
+          Environment(loader=FileSystemLoader(\
+                                searchpath=htaccess_template_path),
+                      autoescape=select_autoescape(['html', 'xml']))            # set template env
 
       htaccess=template_env.get_template(htaccess_template)                     # read htaccess template
       htpasswd=template_env.get_template(htpasswd_template)                     # read htpass template
-
-      htaccess_output=os.path.join(temp_work_dir,htaccess_filename)
-      htpasswd_output=os.path.join(temp_work_dir,htpasswd_filename)
+      htaccess_output=os.path.join(temp_work_dir,
+                                   htaccess_filename)
+      htpasswd_output=os.path.join(temp_work_dir,
+                                   htpasswd_filename)
 
       htaccess.\
-      stream(remote_project_dir=remote_project_path,\
-             project_tag=project_name,\
-             hpcUser=hpc_user,\
-             htpasswd_filename=htpasswd_filename, \
+      stream(remote_project_dir=remote_project_path,
+             project_tag=project_name,
+             hpcUser=hpc_user,
+             htpasswd_filename=htpasswd_filename,
              customerUsernameList=' '.join(user_list)).\
       dump(htaccess_output)                                                     # write new htacces file
       os.chmod(htaccess_output,
@@ -124,27 +141,35 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       os.chmod(htpasswd_output,
                mode=0o774)
 
-      template_prj=Environment(loader=FileSystemLoader(searchpath=os.path.dirname(project_template_path)), \
-                               autoescape=select_autoescape(['txt', 'xml']))    # set template env for project
-      project_index=template_prj.get_template(os.path.basename(project_template_path)) # read htaccess template
-      project_output=os.path.join(temp_work_dir,\
-                                  os.path.basename(project_template_path))
+      template_prj=\
+          Environment(loader=FileSystemLoader(\
+                                searchpath=os.path.dirname(project_template_path)),
+                      autoescape=select_autoescape(['txt', 'xml']))             # set template env for project
+      project_index=\
+          template_prj.\
+          get_template(os.path.basename(project_template_path))                 # read htaccess template
+      project_output=\
+          os.path.join(temp_work_dir,
+                       os.path.basename(project_template_path))
       project_index.\
-      stream(ProjectName=project_name,\
-             seqrunInfoFile=seqruninfofile, \
+      stream(ProjectName=project_name,
+             seqrunInfoFile=seqruninfofile,
              sampleReadCountFile=samplereadcountfile,
              ImageHeight=image_height).\
       dump(project_output)                                                      # write new project file
       os.chmod(project_output,
                mode=0o774)
 
-      template_status=Environment(\
-                        loader=FileSystemLoader(searchpath=os.path.dirname(status_template_path)), \
-                        autoescape=select_autoescape(['txt', 'xml']))           # set template env for project
-      project_status=template_status.\
-                     get_template(os.path.basename(status_template_path))       # read status page template
-      status_output=os.path.join(temp_work_dir,\
-                                 os.path.basename(status_template_path))
+      template_status=\
+          Environment(loader=FileSystemLoader(\
+                                searchpath=os.path.dirname(status_template_path)),
+                      autoescape=select_autoescape(['txt', 'xml']))             # set template env for project
+      project_status=\
+          template_status.\
+          get_template(os.path.basename(status_template_path))                  # read status page template
+      status_output=\
+          os.path.join(temp_work_dir,
+                       os.path.basename(status_template_path))
       project_status.\
       stream(ProjectName=project_name,
              status_data_json=status_data_json).\
@@ -152,13 +177,16 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       os.chmod(status_output,
                mode=0o774)
 
-      template_analysis=Environment(\
-                        loader=FileSystemLoader(searchpath=os.path.dirname(analysis_template_path)),
-                        autoescape=select_autoescape(['txt', 'xml']))           # set template env for analysis
-      project_analysis=template_analysis.\
-                       get_template(os.path.basename(analysis_template_path))   # read analysis page template
-      analysis_output=os.path.join(temp_work_dir,\
-                                 os.path.basename(analysis_template_path))
+      template_analysis=\
+          Environment(loader=FileSystemLoader(\
+                                searchpath=os.path.dirname(analysis_template_path)),
+                      autoescape=select_autoescape(['txt', 'xml']))             # set template env for analysis
+      project_analysis=\
+          template_analysis.\
+          get_template(os.path.basename(analysis_template_path))                # read analysis page template
+      analysis_output=\
+          os.path.join(temp_work_dir,
+                       os.path.basename(analysis_template_path))
       project_analysis.\
       stream(ProjectName=project_name,
              analysisInfoFile=analysis_data_json).\
@@ -166,39 +194,75 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       os.chmod(analysis_output,
                mode=0o774)
 
-      remote_project_dir=os.path.join(remote_project_path,\
-                                      project_name)
-      remote_htaccess_file=os.path.join(remote_project_dir,
-                                        htaccess_filename)                      # remote htaccess filepath
-      self._check_and_copy_remote_file(remote_user=remote_user,
-                                       remote_host=remote_host,
-                                       source_file=htaccess_output,
-                                       remote_file=remote_htaccess_file)        # copy htaccess file to remote dir
-      remote_htpasswd_file=os.path.join(remote_project_dir,
-                                        htpasswd_filename)                      # remote htpasswd filepath
-      self._check_and_copy_remote_file(remote_user=remote_user,
-                                       remote_host=remote_host,
-                                       source_file=htpasswd_output,
-                                       remote_file=remote_htpasswd_file)        # copy htpasswd file to remote dir
-      remote_project_output_file=os.path.join(remote_project_dir,
-                                              os.path.basename(project_output)) # remote project output filepath
-      self._check_and_copy_remote_file(remote_user=remote_user,
-                                       remote_host=remote_host,
-                                       source_file=project_output,
-                                       remote_file=remote_project_output_file)  # copy project output file to remote dir
-      remote_status_output_file=os.path.join(remote_project_dir,
-                                              os.path.basename(status_output))  # remote project status output filepath
-      self._check_and_copy_remote_file(remote_user=remote_user,
-                                       remote_host=remote_host,
-                                       source_file=status_output,
-                                       remote_file=remote_status_output_file)   # copy project status output file to remote dir
-      remote_analysis_output_file=os.path.join(remote_project_dir,
-                                              os.path.basename(analysis_output))# remote project analysis output filepath
-      self._check_and_copy_remote_file(remote_user=remote_user,
-                                       remote_host=remote_host,
-                                       source_file=analysis_output,
-                                       remote_file=remote_analysis_output_file) # copy project analysis output file to remote dir
+      template_analysis_viewer=\
+            Environment(loader=FileSystemLoader(\
+                                  searchpath=os.path.dirname(analysis_viewer_template)),
+                        autoescape=select_autoescape(['txt', 'xml']))           # set template env for analysis viewer
+      project_analysis_viewer=\
+          template_analysis_viewer.\
+          get_template(os.path.basename(analysis_viewer_template))              # read analysis viewer page template
+      analysis_viewer_output=\
+          os.path.join(temp_work_dir,
+                       os.path.basename(analysis_viewer_template))
+      project_analysis_viewer.\
+      stream(ProjectName=project_name,
+             analysisJsFile=analysis_view_js).\
+      dump(analysis_viewer_output)                                              # write new project analysis viewer file
+      os.chmod(analysis_viewer_output,
+               mode=0o774)
 
+      remote_project_dir=\
+            os.path.join(remote_project_path,
+                         project_name)                                          # ger remote project dir path
+      remote_htaccess_file=\
+              os.path.join(remote_project_dir,
+                           htaccess_filename)                                   # remote htaccess filepath
+      self._check_and_copy_remote_file(\
+              remote_user=remote_user,
+              remote_host=remote_host,
+              source_file=htaccess_output,
+              remote_file=remote_htaccess_file)                                 # copy htaccess file to remote dir
+      remote_htpasswd_file=\
+              os.path.join(remote_project_dir,
+                           htpasswd_filename)                                   # remote htpasswd filepath
+      self._check_and_copy_remote_file(\
+              remote_user=remote_user,
+              remote_host=remote_host,
+              source_file=htpasswd_output,
+              remote_file=remote_htpasswd_file)                                 # copy htpasswd file to remote dir
+      remote_project_output_file=\
+              os.path.join(remote_project_dir,
+                           os.path.basename(project_output))                    # remote project output filepath
+      self._check_and_copy_remote_file(\
+              remote_user=remote_user,
+              remote_host=remote_host,
+              source_file=project_output,
+              remote_file=remote_project_output_file)                           # copy project output file to remote dir
+      remote_status_output_file=\
+              os.path.join(remote_project_dir,
+                           os.path.basename(status_output))                     # remote project status output filepath
+      self._check_and_copy_remote_file(\
+              remote_user=remote_user,
+              remote_host=remote_host,
+              source_file=status_output,
+              remote_file=remote_status_output_file)                            # copy project status output file to remote dir
+      remote_analysis_output_file=\
+              os.path.join(remote_project_dir,
+                           os.path.basename(analysis_output))                   # remote project analysis output filepath
+      self._check_and_copy_remote_file(\
+              remote_user=remote_user,
+              remote_host=remote_host,
+              source_file=analysis_output,
+              remote_file=remote_analysis_output_file)                          # copy project analysis output file to remote dir
+
+      remote_analysis_viewer_output_file=\
+              os.path.join(remote_project_dir,
+                           os.path.basename(analysis_viewer_output))            # remote project analysis viewer output filepath
+      self._check_and_copy_remote_file(\
+              remote_user=remote_user,
+              remote_host=remote_host,
+              source_file=analysis_viewer_output,
+              remote_file=remote_analysis_viewer_output_file)                   # copy project analysis viewer output file to remote dir
       self.param('dataflow_params',{'remote_dir_status':'done'})
       remove_dir(temp_work_dir)
     except Exception as e:
