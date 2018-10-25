@@ -42,6 +42,7 @@ class CollectAnalysisFiles(IGFBaseProcess):
       au=Analysis_collection_utils(\
            dbsession_class=igf_session_class,
            analysis_name=analysis_name,
+           base_path=base_result_dir,
            tag_name=tag_name,
            collection_name=collection_name,
            collection_type=collection_type,
