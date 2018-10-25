@@ -14,7 +14,8 @@ class CollectAnalysisFiles(IGFBaseProcess):
         'collection_type':None,
         'collection_table':None,
         'withdraw_exisitng_collection':False,
-        'remove_existing_file':False
+        'remove_existing_file':False,
+        'file_suffix':None
       })
     return params_dict
 
@@ -35,6 +36,7 @@ class CollectAnalysisFiles(IGFBaseProcess):
       collection_table=self.param('collection_table')
       withdraw_exisitng_collection=self.param('withdraw_exisitng_collection')
       remove_existing_file=self.param('remove_existing_file')
+      file_suffix=self.param('file_suffix')
       for file in input_files:
         if not os.path.exists(file):
           raise IOError('File {0} not found'.format(file))                      # check analysis files before loading
@@ -50,6 +52,7 @@ class CollectAnalysisFiles(IGFBaseProcess):
       output_file_list=au.load_file_to_disk_and_db(\
                             input_file_list=input_files,
                             remove_file=remove_existing_file,
+                            file_suffix=file_suffix,
                             withdraw_exisitng_collection=withdraw_exisitng_collection) # load file to db and disk
       self.param('dataflow_params',{'analysis_output_list':output_file_list})   # pass on analysis files to data flow
     except Exception as e:
