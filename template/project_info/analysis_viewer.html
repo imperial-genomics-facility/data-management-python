@@ -19,24 +19,9 @@
     <link href="http://eliot.med.ic.ac.uk/report/static_pages/sticky-footer.css" rel="stylesheet">
    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
-    <script type="text/javascript" >
-      google.charts.load('current', {'packages':['gantt']});
-      google.charts.setOnLoadCallback(drawChart);
-      function drawChart() {
-      $.getJSON("{{ status_data_json }}", function(jsonData) {
-        var data = new google.visualization.DataTable(jsonData);
-        var options = {
-          height: 750,
-          timeline: {
-            groupByRowLabel: true
-          }
-        };
-        var chart = new google.visualization.Gantt(document.getElementById('chart_div'));
-        chart.draw(data, options);
-      });
-    }
-    </script>
-    <title>IGF Status Report</title>
+    <script language="javascript" src="//www.biodalliance.org/release-0.13/dalliance-compiled.js"></script>
+    <script language="javascript" src="viewer.js"></script>
+    <title>IGF Analysis Viewer</title>
 </head>
 <body>
   <header>
@@ -69,13 +54,13 @@
               <a class="nav-link" href="index.html">Raw data<span class="sr-only"></span></a>
             </li>
             <li class="nav-item">
-              <a class="nav-link active" href="status.html">Status<span class="sr-only">(current)</span></a>
+            <a class="nav-link" href="status.html">Status<span class="sr-only"></span></a>
             </li>
             <li class="nav-item">
             <a class="nav-link" href="analysis.html">Analysis<span class="sr-only"></span></a>
             </li>
             <li class="nav-item">
-            <a class="nav-link" href="analysis_viewer.html">Analysis tracks<span class="sr-only"></span></a>
+            <a class="nav-link active" href="analysis_viewer.html">Analysis tracks<span class="sr-only">(current)</span></a>
             </li>
           </ul>
         </nav>
@@ -86,8 +71,8 @@
            <dt class="col-sm-3">Project Name</dt>
            <dd class="col-sm-9">{{ ProjectName }}</dd>
           </dl>
-          <h2>Project status</h2>
-           <div id="chart_div" ></div>
+          <h2>Analysis track viewer</h2>
+           <div id="svgHolder"></div>
         </main>
       </div>
     </div>
