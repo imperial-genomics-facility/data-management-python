@@ -56,6 +56,7 @@ class RunSamtools(IGFBaseProcess):
         raise ValueError('More than one input file found: {0}'.\
                          format(input_files))
 
+      input_file=input_files[0]
       temp_output_dir=get_temp_dir()                                            # get temp work dir
       work_dir_prefix=os.path.join(base_work_dir,
                                    project_igf_id,
@@ -64,7 +65,7 @@ class RunSamtools(IGFBaseProcess):
       work_dir=self.get_job_work_dir(work_dir=work_dir_prefix)                  # get a run work dir
       if samtools_command == 'idxstats':
         temp_output=run_bam_idxstat(samtools_exe=samtools_exe,
-                                    bam_file=input_files[0],
+                                    bam_file=input_file,
                                     output_dir=temp_output_dir,
                                     force=True)                                 # run samtools idxstats
       elif samtools_command == 'flagstat':
