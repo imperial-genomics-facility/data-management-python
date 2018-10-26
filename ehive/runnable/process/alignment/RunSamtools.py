@@ -34,12 +34,13 @@ class RunSamtools(IGFBaseProcess):
     :param copy_input: A toggle for copying input file to temp, 1 for True default 0 for False
     '''
     try:
+      temp_output_dir=False
       project_igf_id=self.param_required('project_igf_id')
       sample_igf_id=self.param_required('sample_igf_id')
       experiment_igf_id=self.param_required('experiment_igf_id')
       igf_session_class=self.param_required('igf_session_class')
       species_name=self.param_required('species_name')
-      input_file=self.param_required('input_file')
+      input_files=self.param_required('input_files')
       samtools_exe=self.param_required('samtools_exe')
       reference_type=self.param('reference_type')
       threads=self.param('threads')
@@ -47,8 +48,13 @@ class RunSamtools(IGFBaseProcess):
       samtools_command=self.param_required('samtools_command')
       copy_input=self.param('copy_input')
       analysis_files=self.param_required('analysis_files')
-      if copy_input==1:
-        input_file=self.copy_input_file_to_temp(input_file=input_file)            # copy input to temp dir
+      if not isinstance(input_files, list) or \
+         len(input_files) == 0:
+        raise ValueError('No input file found')
+
+      if len(input_files)>1:
+        raise ValueError('More than one input file found: {0}'.\
+                         format(input_files))
 
       temp_output_dir=get_temp_dir()                                            # get temp work dir
       work_dir_prefix=os.path.join(base_work_dir,
@@ -58,7 +64,7 @@ class RunSamtools(IGFBaseProcess):
       work_dir=self.get_job_work_dir(work_dir=work_dir_prefix)                  # get a run work dir
       if samtools_command == 'idxstats':
         temp_output=run_bam_idxstat(samtools_exe=samtools_exe,
-                                    bam_file=input_file,
+                                    bam_file=input_files[0],
                                     output_dir=temp_output_dir,
                                     force=True)                                 # run samtools idxstats
       elif samtools_command == 'flagstat':
