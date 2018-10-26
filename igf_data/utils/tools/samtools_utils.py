@@ -152,7 +152,7 @@ def run_bam_flagstat(samtools_exe,bam_file,output_dir,threads=1,force=False,
 
     with open(output_path,'w') as fp:
       with subprocess.Popen(flagstat_cmd, stdout=subprocess.PIPE) as proc:
-        fp.write(proc.stdout.read())                                        # write bam flagstat output
+        fp.write(proc.stdout.read().decode('utf-8'))                            # write bam flagstat output
 
     return output_path
   except:
@@ -197,7 +197,7 @@ def run_bam_idxstat(samtools_exe,bam_file,output_dir,force=False,dry_run=False):
 
     with open(output_path,'w') as fp:
       with subprocess.Popen(idxstat_cmd, stdout=subprocess.PIPE) as proc:
-        fp.write(proc.stdout.read())                                            # write bam flagstat output
+        fp.write(proc.stdout.read().decode('utf-8'))                            # write bam flagstat output
 
     return output_path
   except:
@@ -238,7 +238,7 @@ def run_sort_bam(samtools_exe,input_bam_path,output_bam_path,sort_by_name=False,
     if dry_run:
       return sort_cmd
 
-    with open(temp_bam,'w') as bam:
+    with open(temp_bam,'wb') as bam:
       with subprocess.Popen(sort_cmd, stdout=subprocess.PIPE) as proc:
         bam.write(proc.stdout.read())                                           # write temp bam files
 
