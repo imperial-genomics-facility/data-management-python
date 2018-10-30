@@ -306,15 +306,16 @@ class Reference_genome_utils:
     except:
       raise
 
-  def get_remote_twobit_genome(self):
+  def get_twobit_genome_url(self,check_missing=True):
     '''
     A method for fetching filepath for twobit genome url, for a specific genome build
     
+    :param check_missing: A toggle for checking errors for missing files, default True
     :returns: A url string
     '''
     try:
       ref_file=self._fetch_collection_files(collection_type=self.genome_twobit_uri_type,
-                                            check_missing=False)
+                                            check_missing=check_missing)
       return  ref_file
     except:
       raise
