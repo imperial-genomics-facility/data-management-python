@@ -4,6 +4,7 @@ from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.utils.fileutils import get_temp_dir,remove_dir,copy_local_file
 from igf_data.utils.tools.reference_genome_utils import Reference_genome_utils
+from jinja2 import Template,Environment, FileSystemLoader, select_autoescape
 from igf_data.igfdb.igfTables import Base,Project,Sample,Experiment,Collection,Collection_group,File,Pipeline,Pipeline_seed
 
 class Config_genome_browser:
@@ -115,7 +116,8 @@ class Config_genome_browser:
 
       records=self._fetch_track_files_with_metadata(level='experiment')
       if len(records.index)>0:
-        records.apply(lambda x: self._reformat_track_info(data=x),
+        records=records.\
+                apply(lambda x: self._reformat_track_info(data=x),
                       axis=1)                                                   # reformat data for track config
         template_env=\
           Environment(loader=FileSystemLoader(\
@@ -164,6 +166,7 @@ class Config_genome_browser:
       if species_name.upper() == 'HG38':
         ref_data={'chrname':1,
                   'startPosition':30700000,
+                  'endPosition':30900000,
                   'speciesCommonName':'Human',
                   'ensemblSpecies':'human',
                   'speciesTaxon':9606,
