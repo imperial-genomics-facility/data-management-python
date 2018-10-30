@@ -6,7 +6,7 @@ from igf_data.utils.fileutils import get_temp_dir,remove_dir,copy_local_file
 from igf_data.utils.tools.reference_genome_utils import Reference_genome_utils
 from igf_data.igfdb.igfTables import Base,Project,Sample,Experiment,Collection,Collection_group,File,Pipeline,Pipeline_seed
 
-class config_genome_browser:
+class Config_genome_browser:
   '''
   A class for configuring genome browser input files for analysis track visualization
   
