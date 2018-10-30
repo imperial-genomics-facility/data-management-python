@@ -13,6 +13,7 @@ class RunPicard(IGFBaseProcess):
         'ribosomal_interval_type':'RIBOSOMAL_INTERVAL',
         'java_param':'-Xmx4g',
         'copy_input':0,
+        'patterned_flowcell_list':['HISEQ4000','NEXTSEQ'],
         'analysis_files':[],
         'picard_option':{},
       })
@@ -36,6 +37,7 @@ class RunPicard(IGFBaseProcess):
     :param picard_command: Picard command
     :param base_work_dir: Base workd directory
     :param copy_input: A toggle for copying input file to temp, 1 for True default 0 for False
+    :param patterned_flowcell_list: A list of paterned flowcells, default ['HISEQ4000','NEXTSEQ']
     '''
     try:
       temp_output_dir=False
@@ -56,6 +58,8 @@ class RunPicard(IGFBaseProcess):
       copy_input=self.param('copy_input')
       analysis_files=self.param_required('analysis_files')
       picard_option=self.param('picard_option')
+      patterned_flowcell_list=self.param('patterned_flowcell_list')
+      platform_name=self.param_required('platform_name')
       seed_date_stamp=self.param_required('date_stamp')
       seed_date_stamp=get_datestamp_label(seed_date_stamp)
       work_dir_prefix=os.path.join(base_work_dir,
@@ -73,6 +77,10 @@ class RunPicard(IGFBaseProcess):
       genome_fasta=ref_genome.get_genome_fasta()                                # get genome fasta
       ref_flat_file=ref_genome.get_gene_reflat()                                # get refFlat file
       ribosomal_interval_file=ref_genome.get_ribosomal_interval()               # get ribosomal interval file
+      patterned_flowcell=False
+      if platform_name in patterned_flowcell_list:                              # check for patterned flowcell
+        patterned_flowcell=True
+
       picard=Picard_tools(\
                java_exe=java_exe,
                java_param=java_param,
@@ -80,6 +88,7 @@ class RunPicard(IGFBaseProcess):
                input_files=input_files,
                output_dir=temp_output_dir,
                ref_fasta=genome_fasta,
+               patterned_flowcell=patterned_flowcell,
                ref_flat_file=ref_flat_file,
                picard_option=picard_option,
                ribisomal_interval=ribosomal_interval_file)                      # get picard wrapper                               # setup picard tool
