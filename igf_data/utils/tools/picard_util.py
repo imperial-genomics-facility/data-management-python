@@ -17,6 +17,7 @@ class Picard_tools:
   :param ref_flat_file: Input ref_flat file path, default None
   :param output_prefix: Output prefix name, default None
   :param threads: Number of threads to run for java, default 1
+  :param patterned_flowcell: Toggle for marking the patterned flowcell, default False
   :param suported_commands: A list of supported picard commands
   
                            CollectAlignmentSummaryMetrics
@@ -30,7 +31,7 @@ class Picard_tools:
   def __init__(self,java_exe,picard_jar,input_files,output_dir,ref_fasta,
                picard_option=None,java_param='-Xmx4g',
                strand_info='NONE',threads=1,output_prefix=None,
-               ref_flat_file=None,ribisomal_interval=None,
+               ref_flat_file=None,ribisomal_interval=None,patterned_flowcell=False,
                suported_commands=['CollectAlignmentSummaryMetrics',
                                   'CollectGcBiasMetrics',
                                   'QualityScoreDistribution',
@@ -51,6 +52,7 @@ class Picard_tools:
     self.ribisomal_interval=ribisomal_interval
     self.output_prefix=output_prefix
     self.threads=threads
+    self.patterned_flowcell=patterned_flowcell
 
   def _get_param_for_picard_command(self,command_name):
     '''
@@ -173,6 +175,9 @@ class Picard_tools:
         param_dict=[{'O':output_file,
                      'M':metrics_file}
                    ]
+        if self.patterned_flowcell:
+          param_dict.append({'OPTICAL_DUPLICATE_PIXEL_DISTANCE':2500})
+
         for file in input_list:
           param_dict.append({'I':file})
 
