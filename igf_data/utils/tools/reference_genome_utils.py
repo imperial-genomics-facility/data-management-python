@@ -19,7 +19,8 @@ class Reference_genome_utils:
                genome_dbsnp_type='DBSNP_VCF',
                gatk_snp_ref_type='GATK_SNP_REF',
                gatk_indel_ref_type='GATK_INDEL_REF',
-               ribosomal_interval_type='RIBOSOMAL_INTERVAL'):
+               ribosomal_interval_type='RIBOSOMAL_INTERVAL',
+               genome_twobit_uri_type='GENOME_TWOBIT_URI',):
     '''
     :param genome_tag: Collection name of the reference genome file
     :param dbsession_class: A sqlalchemy session class for database connection
@@ -37,6 +38,7 @@ class Reference_genome_utils:
     :param gatk_indel_ref_type: Collection type for the GATK INDEL reference bundle files, default gatk_indel_ref_type
     :param genome_dbsnp_type: Collection type for the dbSNP vcf file, default DBSNP_VCF
     :param ribosomal_interval_type: Collection type for ribosomal interval, default RIBOSOMAL_INTERVAL
+    :param genome_twobit_uri_type: Collection type for twobit genome uri, for remote ftp
     '''
     self.genome_tag=genome_tag
     self.dbsession_class=dbsession_class
@@ -55,6 +57,7 @@ class Reference_genome_utils:
     self.genome_dbsnp_type=genome_dbsnp_type
     self.ribosomal_interval_type=ribosomal_interval_type
     self.gene_rsem_type=gene_rsem_type
+    self.genome_twobit_uri_type=genome_twobit_uri_type
 
 
   def _fetch_collection_files(self,collection_type,check_missing=False,
@@ -298,6 +301,33 @@ class Reference_genome_utils:
     '''
     try:
       ref_file=self._fetch_collection_files(collection_type=self.genome_dbsnp_type,
+                                            check_missing=check_missing)
+      return  ref_file
+    except:
+      raise
+
+  def get_remote_twobit_genome(self):
+    '''
+    A method for fetching filepath for twobit genome url, for a specific genome build
+    
+    :returns: A url string
+    '''
+    try:
+      ref_file=self._fetch_collection_files(collection_type=self.genome_twobit_uri_type,
+                                            check_missing=False)
+      return  ref_file
+    except:
+      raise
+
+  def get_generic_ref_files(self,collection_type,check_missing=True):
+    '''
+    A method for fetching filepath for generic reference genome file, for a specific genome build
+    
+    :param check_missing: A toggle for checking errors for missing files, default True
+    :returns: A filepath string or list (if more than one found)
+    '''
+    try:
+      ref_file=self._fetch_collection_files(collection_type=collection_type,
                                             check_missing=check_missing)
       return  ref_file
     except:
