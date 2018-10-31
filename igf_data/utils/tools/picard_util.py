@@ -176,7 +176,7 @@ class Picard_tools:
                      'M':metrics_file}
                    ]
         if self.patterned_flowcell:
-          param_dict.append({'OPTICAL_DUPLICATE_PIXEL_DISTANCE':2500})
+          param_dict.append({'OPTICAL_DUPLICATE_PIXEL_DISTANCE':'2500'})
 
         for file in input_list:
           param_dict.append({'I':file})
@@ -252,7 +252,7 @@ class Picard_tools:
       if isinstance(picard_run_param,list) and \
           len(picard_run_param)>0:
         picard_option=['{0}={1}'.format(quote(param),
-                                        quote(val))
+                                        quote(str(val)))
                        for param_dicts in picard_run_param
                          for param,val in param_dicts.items()]
         command.extend(picard_option)                                           # main picard params
