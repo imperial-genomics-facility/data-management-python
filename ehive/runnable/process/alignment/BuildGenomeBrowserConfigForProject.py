@@ -46,6 +46,8 @@ class BuildGenomeBrowserConfigForProject(IGFBaseProcess):
             output_file=output_file)
       if os.path.exists(output_file):
         self.param('dataflow_params',{'genome_browser_config':output_file})     # populate dataflow if the output file found
+      else:
+        self.param('dataflow_params',{'genome_browser_config':''})              # send empty string to dataflow
 
       message='Greated genome browser config for {1}: {2}'.\
               format(project_igf_id,
