@@ -13,7 +13,7 @@ class CopyAnalysisFilesToRemote(IGFBaseProcess):
       'remote_project_path':None,
       'remote_seqrun_path':None,
       'force_overwrite':True,
-      'dir_label':'analysis',
+      'dir_labels':[],
       'sample_igf_id':None,
       })
     return params_dict
@@ -26,14 +26,17 @@ class CopyAnalysisFilesToRemote(IGFBaseProcess):
       remote_user=self.param_required('remote_user')
       remote_host=self.param_required('remote_host')
       remote_project_path=self.param_required('remote_project_path')
-      dir_label=self.param_required('dir_label')
+      dir_labels=self.param_required('dir_labels')
       force_overwrite=self.param('force_overwrite')
       destination_output_path=os.path.join(remote_project_path,
-                                           project_igf_id,
-                                           dir_label)                           # get base destination path
-      if sample_igf_id is not None:
+                                           project_igf_id)                      # get base destination path
+      if isinstance(dir_labels, list) and \
+         len(dir_labels) > 0:
         destination_output_path=os.path.join(destination_output_path,
-                                             sample_igf_id)                     # add sample name to the destination path
+                                             *dir_labels)
+      #if sample_igf_id is not None:
+      #  destination_output_path=os.path.join(destination_output_path,
+      #                                       sample_igf_id)                     # add sample name to the destination path
 
       output_file_list=list()
       temp_work_dir=get_temp_dir()                                              # get temp dir
