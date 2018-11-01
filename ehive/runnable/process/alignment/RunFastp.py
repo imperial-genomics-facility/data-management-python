@@ -70,11 +70,14 @@ class RunFastp(IGFBaseProcess):
                                     'output_read2':output_read2,
                                     'output_html_file':output_html_file
                                    })                                           # pass on fastp output list
+      message='finished fastp for {0} {1}'.\
+              format(project_igf_id,
+                     sample_igf_id)
+      self.post_message_to_slack(message,reaction='pass')                       # send log to slack
       message='finished fastp {0} for {1} {2}'.\
               format(fastp_cmd,
                      project_igf_id,
                      sample_igf_id)
-      self.post_message_to_slack(message,reaction='pass')                       # send log to slack
       self.comment_asana_task(task_name=project_igf_id, comment=message)        # send comment to Asana
       message='Fastp {0} command: {1}'.\
               format(experiment_igf_id,
