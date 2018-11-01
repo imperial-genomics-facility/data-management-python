@@ -122,7 +122,7 @@ def run_bam_flagstat(samtools_exe,bam_file,output_dir,threads=1,force=False,
   :param threads: Number of threads to use for conversion, default 1
   :param force: Output flagstat file will be overwritten if force is True, default False
   :param dry_run: A toggle for returning the samtools command without actually running it, default False
-  :returns: Output file path
+  :returns: Output file path and a list containing samtools command
   '''
   try:
     check_file_path(samtools_exe)
@@ -154,7 +154,7 @@ def run_bam_flagstat(samtools_exe,bam_file,output_dir,threads=1,force=False,
       with subprocess.Popen(flagstat_cmd, stdout=subprocess.PIPE) as proc:
         fp.write(proc.stdout.read().decode('utf-8'))                            # write bam flagstat output
 
-    return output_path
+    return output_path,flagstat_cmd
   except:
     raise
 
@@ -168,7 +168,7 @@ def run_bam_idxstat(samtools_exe,bam_file,output_dir,force=False,dry_run=False):
   :param output_dir: Bam idxstats output directory path
   :param force: Output idxstats file will be overwritten if force is True, default False
   :param dry_run: A toggle for returning the samtools command without actually running it, default False
-  :returns: Output file path
+  :returns: Output file path and a list containing samtools command
   '''
   try:
     check_file_path(samtools_exe)
@@ -199,7 +199,7 @@ def run_bam_idxstat(samtools_exe,bam_file,output_dir,force=False,dry_run=False):
       with subprocess.Popen(idxstat_cmd, stdout=subprocess.PIPE) as proc:
         fp.write(proc.stdout.read().decode('utf-8'))                            # write bam flagstat output
 
-    return output_path
+    return output_path,idxstat_cmd
   except:
     raise
 
@@ -263,7 +263,7 @@ def merge_multiple_bam(samtools_exe,input_bam_list,output_bam_path,sorted_by_nam
   :param threads: Number of threads to use for merging, default 1
   :param force: Output bam file will be overwritten if force is True, default False
   :param dry_run: A toggle for returning the samtools command without actually running it, default False
-  :return: None
+  :return: samtools command
   '''
   try:
     check_file_path(samtools_exe)
@@ -290,6 +290,7 @@ def merge_multiple_bam(samtools_exe,input_bam_list,output_bam_path,sorted_by_nam
                     force=force)                                                # copy bamfile
     remove_dir(temp_dir)                                                        # remove temp dir
     _check_bam_file(output_bam_path)
+    return merge_cmd
   except:
     raise
 

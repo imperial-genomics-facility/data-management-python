@@ -63,27 +63,31 @@ class RunSamtools(IGFBaseProcess):
                                    sample_igf_id,
                                    experiment_igf_id)
       work_dir=self.get_job_work_dir(work_dir=work_dir_prefix)                  # get a run work dir
+      samtools_cmdline=''
       if samtools_command == 'idxstats':
-        temp_output=run_bam_idxstat(samtools_exe=samtools_exe,
+        temp_output,samtools_cmdline=run_bam_idxstat(\
+                                    samtools_exe=samtools_exe,
                                     bam_file=input_file,
                                     output_dir=temp_output_dir,
                                     force=True)                                 # run samtools idxstats
       elif samtools_command == 'flagstat':
-        temp_output=run_bam_flagstat(samtools_exe=samtools_exe,
-                                     bam_file=input_file,
-                                     output_dir=temp_output_dir,
-                                     threads=threads,
-                                     force=True)                                # run samtools flagstat
+        temp_output,samtools_cmdline=run_bam_flagstat(\
+                                    samtools_exe=samtools_exe,
+                                    bam_file=input_file,
+                                    output_dir=temp_output_dir,
+                                    threads=threads,
+                                    force=True)                                 # run samtools flagstat
       elif samtools_command == 'merge':
         output_prefix=self.param_required('output_prefix')
         sorted_by_name=self.param('sorted_by_name')
         temp_output=os.path.join(work_dir,'{0}_merged.bam'.format(output_prefix))
-        merge_multiple_bam(samtools_exe=samtools_exe,
-                           input_bam_list=input_file,
-                           output_bam_path=temp_output,
-                           sorted_by_name=sorted_by_name,
-                           threads=threads,
-                           force=True)
+        samtools_cmdline=merge_multiple_bam(\
+                          samtools_exe=samtools_exe,
+                          input_bam_list=input_file,
+                          output_bam_path=temp_output,
+                          sorted_by_name=sorted_by_name,
+                          threads=threads,
+                          force=True)
       else:
         raise ValueError('Samtools command {0} not supported'.\
                          format(samtools_command))
@@ -97,12 +101,16 @@ class RunSamtools(IGFBaseProcess):
 
       analysis_files.append(dest_path)
       self.param('dataflow_params',{'analysis_files':analysis_files})           # pass on samtools output list
+      message='finished samtools {0} for {1} {2}'.\
+              format(samtools_command,
+                     project_igf_id,
+                     sample_igf_id)
+      self.post_message_to_slack(message,reaction='pass')                       # send log to slack
       message='finished samtools {0} for {1} {2}: {3}'.\
               format(samtools_command,
                      project_igf_id,
                      sample_igf_id,
-                     dest_path)
-      self.post_message_to_slack(message,reaction='pass')                       # send log to slack
+                     samtools_cmdline)
       self.comment_asana_task(task_name=project_igf_id, comment=message)        # send comment to Asana
     except Exception as e:
       message='project: {2}, sample:{3}, Error in {0}: {1}'.format(self.__class__.__name__, \
