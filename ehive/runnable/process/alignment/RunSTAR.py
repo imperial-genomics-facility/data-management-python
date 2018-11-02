@@ -128,12 +128,10 @@ class RunSTAR(IGFBaseProcess):
                               )                                                 # generate bigwig signal tracks
         self.param('dataflow_params',{'star_bigwigs':output_paths})             # passing bigwig paths to dataflow
 
-      message='finished star {0} for {1} {2}'.\
-              format(star_cmd,
-                     project_igf_id,
+      message='finished star for {0} {1}'.\
+              format(project_igf_id,
                      run_igf_id)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
-      self.comment_asana_task(task_name=project_igf_id, comment=message)        # send comment to Asana
       message='STAR {0} {1} command: {2}'.\
               format(run_igf_id,
                      output_prefix,
