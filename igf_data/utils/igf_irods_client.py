@@ -53,8 +53,11 @@ class IGF_irods_uploader:
         irods_base_dir=os.path.join(irods_base_dir,
                                     datestamp)                                  # use datestamp
 
-      irods_base_dir=os.path.join(irods_base_dir,
-                                  analysis_name)                                # add analysis name to the irods dir
+      if not isinstance(dir_path_list, list) or \
+         analysis_name not in dir_path_list:
+        irods_base_dir=os.path.join(irods_base_dir,
+                                    analysis_name)                              # add analysis name to the irods dir
+
       chk_cmd=[os.path.join(irods_exe_dir,'ils'),
                irods_base_dir]
       response=subprocess.call(chk_cmd)                                         # check for existing dir in irods
