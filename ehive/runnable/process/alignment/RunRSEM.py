@@ -80,11 +80,6 @@ class RunRSEM(IGFBaseProcess):
               format(project_igf_id,
                      sample_igf_id)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
-      message='Finished RSEM {0} for {1}: {2}'.\
-              format(project_igf_id,
-                     sample_igf_id,
-                     rsem_cmd)
-      self.comment_asana_task(task_name=project_igf_id, comment=message)        # send comment to Asana
       message='RSEM {0} command: {1}'.\
               format(experiment_igf_id,
                      rsem_cmd)
