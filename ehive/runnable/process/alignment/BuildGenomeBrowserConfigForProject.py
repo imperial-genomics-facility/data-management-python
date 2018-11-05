@@ -49,7 +49,7 @@ class BuildGenomeBrowserConfigForProject(IGFBaseProcess):
       else:
         self.param('dataflow_params',{'genome_browser_config':''})              # send empty string to dataflow
 
-      message='Greated genome browser config for {0}: {1}'.\
+      message='Generated genome browser config for {0}: {1}'.\
               format(project_igf_id,
                      sample_igf_id)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
