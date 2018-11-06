@@ -28,7 +28,7 @@ Data access:
 QC Report page:
   http://eliot.med.ic.ac.uk/report/project/{{ projectName }}/{{ projectRunDate }}/{{ flowcellId }}
 
-You have to use your username and password to access these qc reports. {% if not hpcUser %} Use your facility password for logging in to these pages. {% endif %} 
+  You have to use your username and password to access these qc reports. {% if not hpcUser %} Use your facility password for logging in to these pages. {% endif %} 
 
 Help pages for analysis, data access and more:
   https://imperial-genomics-facility.github.io/igf-pipeline-help/
@@ -37,6 +37,9 @@ Quick data transfer tips for CX1/AX4 (Imperial College's HPC cluster) users:
   - module load irods/4.2.0
   - iget -Pr /igfZone/home/{{ customerUsername }}/{{ projectName }}/fastq/{{ projectRunDate }}/{{ flowcellId }}
 
+Irods server downtime:
+  Irods server will not be available for file transfer from 1st December 2018, due to relocation of the server to new data center. This server is expected to back online within two weeks, but in case of any technical difficulties, all services may not be restored before Christmas. Please take backup copies of your raw data and qc reports, as soon as you receive notification about data availability.
+  
 The data will be available for one month from the date of this e-mail. You can refer to the samplesheets in the fastq tarfiles for mapping facility sample ids to the original sample names.
 
 We have updated our QC report page for the fastq files and included following details
