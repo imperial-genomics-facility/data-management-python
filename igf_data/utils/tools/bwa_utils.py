@@ -1,5 +1,5 @@
 import os,subprocess
-from shlex import quote,split
+from shlex import quote
 from igf_data.utils.fileutils import check_file_path,get_temp_dir,remove_dir,copy_local_file
 from igf_data.utils.fastq_utils import identify_fastq_pair
 
@@ -35,7 +35,7 @@ class BWA_util:
     except:
       raise
 
-  def run_mem(self,mem_cmd='mem',option_list=['-M'],samtools_cmd='view',
+  def run_mem(self,mem_cmd='mem',parameter_options={"-M":""},samtools_cmd='view',
               dry_run=False):
     '''
     A method for running Bwa mem and generate output alignment
@@ -49,17 +49,19 @@ class BWA_util:
     try:
       self._run_checks()                                                        # check input params
       read1_list,read2_list=identify_fastq_pair(input_list=self.input_fastq_list) # fetch input files
-      temp_dir=get_temp_dir()
+      temp_dir=get_temp_dir(use_ephemeral_space=True)
       bwa_cmd=[
         quote(self.bwa_exe),
         quite(mem_cmd),
-        '-t',quote(self.thread),
+        '-t',quote(str(self.thread)),
       ]
-      if isinstance(option_list,list) and \
-         len(option_list)>0:
-        option_list=split(option_list)                                          # split option lists
-        option_list=[quote(opt) for opt in option_list]                         # wrap options in quotes
-        bwa_cmd.append(option_list)                                             # add mem specific options
+      if isinstance(parameter_options,dict) and \
+         len(parameter_options)>0:
+        parameter_options=[quote(str(field))
+                           for key,val in parameter_options
+                             for field in [key,val]
+                               if field != '']                                  # flatten param list
+        bwa_cmd.extend(parameter_options)                                       # add mem specific options
 
       bwa_cmd.append(quote(self.ref_genome))
       bwa_cmd.append(quote(read1_list[0]))                                      # add read 1
@@ -72,21 +74,24 @@ class BWA_util:
         samtools_cmd=[
           quote(self.samtools_exe),
           quote(samtools_cmd),
-          quote('--threads'),quote(self.thread),
+          quote('--threads'),quote(str(self.thread)),
           quote('-bo'),quote(temp_output_path)
           ]
         if dry_run:
           return bwa_cmd,samtools_cmd                                           # return bwa and samtools cmd
 
-        with subprocess.Popen(bwa_cmd, stdout=PIPE) as proc:
+        with subprocess.Popen(bwa_cmd, stdout=subprocess.PIPE) as proc:
           proc2=subprocess.Popen(samtools_cmd, stdin=proc.stdout)
 
       else:
         temp_output_path=os.path.join(temp_dir,
                                       '{0}.sam'.format(self.output_prefix))     # sam output
+        if dry_run:
+          return bwa_cmd
+
         with open(temp_output_path,'w') as sam:
-          with subprocess.Popen(bwa_cmd, stdout=PIPE) as proc:
-            sam.write(proc.stdout.read())
+          with subprocess.Popen(bwa_cmd, stdout=subprocess.PIPE) as proc:
+            sam.write(proc.stdout.read().decode('utf-8'))                       # writing sam output
 
       if os.path.exists(temp_output_path):
           final_output_file=os.path.join(self.output_dir,
