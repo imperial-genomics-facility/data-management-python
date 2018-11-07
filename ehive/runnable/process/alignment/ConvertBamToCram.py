@@ -74,7 +74,7 @@ class ConvertBamToCram(IGFBaseProcess):
                                         dbsession_class=igf_session_class,
                                         genome_fasta_type=reference_type)
       genome_fasta=ref_genome.get_genome_fasta()                                # get genome fasta 
-      temp_work_dir=get_temp_dir()                                              # get temp dir
+      temp_work_dir=get_temp_dir(use_ephemeral_space=True)                      # get temp dir
       cram_file=os.path.basename(bam_file).replace('.bam','.cram')              # get base cram file name
       cram_file=os.path.join(temp_work_dir,cram_file)                           # get cram file path in work dir
       convert_bam_to_cram(samtools_exe=samtools_exe,
