@@ -1,4 +1,4 @@
-import os
+import os,json
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.tools.bwa_utils import BWA_util
 from igf_data.utils.fileutils import get_datestamp_label
@@ -10,7 +10,8 @@ class RunBWA(IGFBaseProcess):
     params_dict.update({
         'reference_type':'GENOME_BWA',
         'run_thread':1,
-        'r2_read_file':None
+        'r2_read_file':None,
+        'parameter_options':'{"-M":""}'
       })
     return params_dict
 
@@ -34,12 +35,13 @@ class RunBWA(IGFBaseProcess):
       species_name=self.param('species_name')
       reference_type=self.param('reference_type')
       base_work_dir=self.param_required('base_work_dir')
+      parameter_options=self.param('parameter_options')
       seed_date_stamp=self.param_required('date_stamp')
       seed_date_stamp=get_datestamp_label(seed_date_stamp)
       input_fastq_list=list()
-      input_fastq_list.append(r1_read_file)
+      input_fastq_list.append(r1_read_file[0])
       if r2_read_file is not None:
-        input_fastq_list.append(r2_read_file)
+        input_fastq_list.append(r2_read_file[0])
 
       work_dir_prefix=os.path.join(base_work_dir,
                                    project_igf_id,
@@ -60,20 +62,21 @@ class RunBWA(IGFBaseProcess):
                        output_prefix=output_prefix,
                        bam_output=True,
                        thread=run_thread)                                       # set up bwa for run
-      final_output_file,bwa_cmd=BWA_util.run_mem()                              # run bwa mem
+      if isinstance(parameter_options, str):
+          parameter_options=json.loads(parameter_options)                       # convert string param to dict
+
+      final_output_file,bwa_cmd=BWA_util.\
+                                run_mem(parameter_options=parameter_options)    # run bwa mem
       self.param('dataflow_params',{'bwa_bam':final_output_file,
                                     'seed_date_stamp':seed_date_stamp
                                    })                                           # pass on bwa output list
-      message='finished bwa {0} for {1} {2} {3}'.\
-              format(bwa_cmd,
-                     project_igf_id,
-                     run_igf_id,
-                     output_prefix)
+      message='finished bwa {0} {1}'.\
+              format(project_igf_id,
+                     run_igf_id)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
       self.comment_asana_task(task_name=project_igf_id, comment=message)        # send comment to Asana
-      message='Bwa {0} {1} command: {2}'.\
+      message='Bwa {0} {1}'.\
               format(run_igf_id,
-                     output_prefix,
                      bwa_cmd)
       self.comment_asana_task(task_name=project_igf_id, comment=message)        # send commandline to Asana
     except Exception as e:
