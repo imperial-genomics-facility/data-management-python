@@ -74,10 +74,6 @@ class RunFastp(IGFBaseProcess):
               format(project_igf_id,
                      sample_igf_id)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
-      message='Fastp {0} command: {1}'.\
-              format(experiment_igf_id,
-                     fastp_cmd)
-      self.comment_asana_task(task_name=project_igf_id, comment=message)        # send commandline to Asana
     except Exception as e:
       message='project: {2}, sample:{3}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
