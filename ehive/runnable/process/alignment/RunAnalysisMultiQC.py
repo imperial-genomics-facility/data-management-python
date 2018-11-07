@@ -38,7 +38,7 @@ class RunAnalysisMultiQC(IGFBaseProcess):
          len(analysis_files) ==0:
         raise ValueError('Failed to run MultiQC for zero analysis list')        # check analysis files
 
-      temp_work_dir=get_temp_dir()                                              # get temp work dir
+      temp_work_dir=get_temp_dir(use_ephemeral_space=True)                      # get temp work dir
       multiqc_input_file=os.path.join(temp_work_dir,
                                       'multiqc.txt')                            # get temp multiqc list
       with open(multiqc_input_file,'w') as fp:
