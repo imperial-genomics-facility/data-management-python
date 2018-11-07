@@ -50,7 +50,7 @@ class ConvertBamToCram(IGFBaseProcess):
       experiment_igf_id=self.param_required('experiment_igf_id')
       igf_session_class=self.param_required('igf_session_class')
       species_name=self.param_required('species_name')
-      bam_file=self.param_required('bam_file')
+      bam_files=self.param_required('bam_files')
       base_result_dir=self.param_required('base_result_dir')
       collection_name=self.param_required('collection_name')
       collection_type=self.param_required('collection_type')
@@ -62,8 +62,15 @@ class ConvertBamToCram(IGFBaseProcess):
       reference_type=self.param('reference_type')
       threads=self.param('threads')
       copy_input=self.param('copy_input')
-      if copy_input==1:
-        bam_file=self.copy_input_file_to_temp(input_file=bam_file)              # copy input to temp dir
+      bam_file=None
+      if isinstance(bam_files, list) and \
+         len(bam_files)>0:
+        bam_file=bam_files[0]
+        if len(bam_files)>1:
+          raise ValueError('Received more than one bam')
+
+      if bam_file is None:
+        raise ValueError('No input bam found')
 
       if collection_type is None or \
          collection_name is None or \
