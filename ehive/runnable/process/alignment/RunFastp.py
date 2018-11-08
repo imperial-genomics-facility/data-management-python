@@ -64,11 +64,12 @@ class RunFastp(IGFBaseProcess):
                             enable_polyg_trim=enable_polyg_trim,
                             split_by_lines_count=split_by_lines_count,
                             fastp_options_list=fastp_options_list)              # setup fastp tool for run
-      output_read1,output_read2,output_html_file,fastp_cmd=\
+      output_read1,output_read2,output_html_file,output_json_file,fastp_cmd=\
           fastp_obj.run_adapter_trimming(split_fastq=split_fastq)               # run fastp trimming
       self.param('dataflow_params',{'output_read1':output_read1,
                                     'output_read2':output_read2,
-                                    'output_html_file':output_html_file
+                                    'output_html_file':output_html_file,
+                                    'output_json_file':output_json_file
                                    })                                           # pass on fastp output list
       message='finished fastp for {0} {1}'.\
               format(project_igf_id,

@@ -70,7 +70,7 @@ class Fastp_utils:
                                        os.path.basename(read1_list[0]))),
            '--html',quote(os.path.join(temp_dir,'{0}.html'.\
                                        format(os.path.basename(read1_list[0])))),
-           '--json',quote(os.path.join(temp_dir,'{0}.json'.\
+           '--json',quote(os.path.join(temp_dir,'{0}.fastp.json'.\
                                        format(os.path.basename(read1_list[0])))),
            '--report_title',quote(os.path.basename(read1_list[0])),
            '--thread',quote(self.run_thread)
@@ -98,8 +98,10 @@ class Fastp_utils:
       subprocess.check_call(cmd,shell=False)                                    # run fastp
       fastq_pattern=re.compile(r'\S+\.fastq(\.gz)?$')
       html_pattern=re.compile(r'\S+\.html$')
+      json_pattern=re.compile(r'\S+\.json$')
       output_fastq_list=list()
       output_html_file=''
+      output_json_file=''
       for out_file in os.listdir(temp_dir):
         output_file=os.path.join(self.output_dir,out_file)
         if re.match(fastq_pattern,out_file):
@@ -112,20 +114,27 @@ class Fastp_utils:
           output_html_file=output_file
           copy_local_file(source_path=os.path.join(temp_dir,out_file),
                           destinationa_path=output_file,
-                          force=force_overwrite)                                # copy fastq file to output dir
+                          force=force_overwrite)                                # copy html file to output dir
+
+        if re.match(json_pattern,out_file):
+          output_json_file=output_file
+          copy_local_file(source_path=os.path.join(temp_dir,out_file),
+                          destinationa_path=output_file,
+                          force=force_overwrite)                                # copy json file to output dir
 
       if len(output_fastq_list) == 0:
         raise ValueError('No output fastq files found as fastp output')
 
-      if output_html_file == '':
-        raise ValueError('No fastp html report found')
+      if output_html_file == '' or \
+         output_json_file == '':
+        raise ValueError('No fastp html or json report found')
 
       remove_dir(temp_dir)                                                      # clean up temp dir
       output_read1,output_read2=\
           identify_fastq_pair(input_list=output_fastq_list,
                               sort_output=True,
                               check_count=True)                                 #identify fastq pairs and validate output fastq pairs
-      return output_read1,output_read2,output_html_file,cmd
+      return output_read1,output_read2,output_html_file,output_json_file,cmd
     except:
       if os.path.exists(temp_dir):
         remove_dir(temp_dir)                                                    # remove temp dir
