@@ -29,7 +29,7 @@ class CollectExpAnalysisChunks(IGFBaseProcess):
         raise ValueError('No data found in accu table for exp {0} and date_stamp {1}'.\
                          format(experiment_igf_id,seed_date_stamp))             # incorrect data structure
 
-      if isinstance(exp_analysis_files,list) and \
+      if not isinstance(exp_analysis_files,list) or \
          len(exp_analysis_files)==0:
         raise ValueError('No run level file found in accu data for exp {0} and date_stamp {1}'.\
                          format(experiment_igf_id,seed_date_stamp))             # zero input file
