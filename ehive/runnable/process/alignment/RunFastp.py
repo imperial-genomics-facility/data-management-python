@@ -1,6 +1,7 @@
 import os
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.tools.fastp_utils import Fastp_utils
+from igf_data.utils.fileutils import get_datestamp_label
 
 class RunFastp(IGFBaseProcess):
   def param_defaults(self):
@@ -48,6 +49,8 @@ class RunFastp(IGFBaseProcess):
       platform_name=self.param_required('platform_name')
       polyg_platform_list=self.param('polyg_platform_list')
       enable_polyg_trim=self.param('enable_polyg_trim')
+      seed_date_stamp=self.param_required('date_stamp')
+      seed_date_stamp=get_datestamp_label(seed_date_stamp)
       work_dir_prefix=os.path.join(base_work_dir,
                                    project_igf_id,
                                    sample_igf_id,
@@ -69,7 +72,8 @@ class RunFastp(IGFBaseProcess):
       self.param('dataflow_params',{'output_read1':output_read1,
                                     'output_read2':output_read2,
                                     'output_html_file':output_html_file,
-                                    'output_json_file':output_json_file
+                                    'output_json_file':output_json_file,
+                                    'seed_date_stamp':seed_date_stamp
                                    })                                           # pass on fastp output list
       message='finished fastp for {0} {1}'.\
               format(project_igf_id,
