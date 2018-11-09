@@ -24,7 +24,10 @@ class CollectExpAnalysisChunks(IGFBaseProcess):
       seed_date_stamp=self.param_required('date_stamp')
       seed_date_stamp=get_datestamp_label(seed_date_stamp)
       exp_analysis_files=accu_data.get(experiment_igf_id).get(seed_date_stamp)
-      exp_analysis_files=reduce(lambda x,y: x+y, exp_analysis_files)
+      if isinstance(exp_analysis_files,list) and \
+         isinstance(exp_analysis_files[0],list):
+        exp_analysis_files=reduce(lambda x,y: x+y, exp_analysis_files)          # reduce list of list to a list
+
       if exp_analysis_files is None:
         raise ValueError('No data found in accu table for exp {0} and date_stamp {1}'.\
                          format(experiment_igf_id,seed_date_stamp))             # incorrect data structure
