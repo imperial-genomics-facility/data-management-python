@@ -112,13 +112,14 @@ def convert_bam_to_cram(samtools_exe,bam_file,reference_file,cram_path,threads=1
 
 
 def run_bam_flagstat(samtools_exe,bam_file,output_dir,threads=1,force=False,
-                     dry_run=False):
+                     output_prefix=None,dry_run=False):
   '''
   A method for generating bam flagstat output
   
   :param samtools_exe: samtools executable path
   :param bam_file: A bam filepath with / without index. Index file will be created if its missing
   :param output_dir: Bam flagstat output directory path
+  :param output_prefix: Output file prefix, default None
   :param threads: Number of threads to use for conversion, default 1
   :param force: Output flagstat file will be overwritten if force is True, default False
   :param dry_run: A toggle for returning the samtools command without actually running it, default False
@@ -129,8 +130,11 @@ def run_bam_flagstat(samtools_exe,bam_file,output_dir,threads=1,force=False,
     _check_bam_file(bam_file=bam_file)                                          # check bam file
     _check_bam_index(samtools_exe=samtools_exe,
                      bam_file=bam_file)                                         # generate bam index
+    if output_prefix is None:
+      output_prefix=os.path.basename(bam_file)
+
     output_path='{0}.{1}.{2}'.\
-                format(os.path.basename(bam_file),
+                format(output_prefix,
                        'flagstat',
                        'txt')                                                   # get output filename
     output_path=os.path.join(output_dir,
@@ -159,13 +163,15 @@ def run_bam_flagstat(samtools_exe,bam_file,output_dir,threads=1,force=False,
     raise
 
 
-def run_bam_idxstat(samtools_exe,bam_file,output_dir,force=False,dry_run=False):
+def run_bam_idxstat(samtools_exe,bam_file,output_dir,output_prefix=None,
+                    force=False,dry_run=False):
   '''
   A function for running samtools index stats generation
   
   :param samtools_exe: samtools executable path
   :param bam_file: A bam filepath with / without index. Index file will be created if its missing
   :param output_dir: Bam idxstats output directory path
+  :param output_prefix: Output file prefix, default None
   :param force: Output idxstats file will be overwritten if force is True, default False
   :param dry_run: A toggle for returning the samtools command without actually running it, default False
   :returns: Output file path and a list containing samtools command
@@ -175,8 +181,11 @@ def run_bam_idxstat(samtools_exe,bam_file,output_dir,force=False,dry_run=False):
     _check_bam_file(bam_file=bam_file)                                          # check bam file
     _check_bam_index(samtools_exe=samtools_exe,
                      bam_file=bam_file)                                         # generate bam index
+    if output_prefix is None:
+      output_prefix=os.path.basename(bam_file)
+
     output_path='{0}.{1}.{2}'.\
-                format(os.path.basename(bam_file),
+                format(output_prefix,
                        'idxstats',
                        'txt')                                                   # get output filename
     output_path=os.path.join(output_dir,

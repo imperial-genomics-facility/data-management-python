@@ -14,7 +14,8 @@ class RunSamtools(IGFBaseProcess):
         'threads':4,
         'copy_input':0,
         'analysis_files':[],
-        'sorted_by_name':False
+        'sorted_by_name':False,
+        'output_prefix':None,
       })
     return params_dict
 
@@ -48,6 +49,7 @@ class RunSamtools(IGFBaseProcess):
       samtools_command=self.param_required('samtools_command')
       copy_input=self.param('copy_input')
       analysis_files=self.param_required('analysis_files')
+      output_prefix=self.param_required('output_prefix')
       if not isinstance(input_files, list) or \
          len(input_files) == 0:
         raise ValueError('No input file found')
@@ -69,16 +71,20 @@ class RunSamtools(IGFBaseProcess):
                                     samtools_exe=samtools_exe,
                                     bam_file=input_file,
                                     output_dir=temp_output_dir,
+                                    output_prefix=output_prefix,
                                     force=True)                                 # run samtools idxstats
       elif samtools_command == 'flagstat':
         temp_output,samtools_cmdline=run_bam_flagstat(\
                                     samtools_exe=samtools_exe,
                                     bam_file=input_file,
                                     output_dir=temp_output_dir,
+                                    output_prefix=output_prefix,
                                     threads=threads,
                                     force=True)                                 # run samtools flagstat
       elif samtools_command == 'merge':
-        output_prefix=self.param_required('output_prefix')
+        if output_prefix is None:
+          raise ValueError('Missing output filename prefix for merged bam')
+
         sorted_by_name=self.param('sorted_by_name')
         temp_output=os.path.join(work_dir,'{0}_merged.bam'.format(output_prefix))
         samtools_cmdline=merge_multiple_bam(\
