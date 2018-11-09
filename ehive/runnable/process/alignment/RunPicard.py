@@ -16,6 +16,7 @@ class RunPicard(IGFBaseProcess):
         'patterned_flowcell_list':['HISEQ4000','NEXTSEQ'],
         'analysis_files':[],
         'picard_option':{},
+        'output_prefix':None,
       })
     return params_dict
 
@@ -60,6 +61,7 @@ class RunPicard(IGFBaseProcess):
       picard_option=self.param('picard_option')
       patterned_flowcell_list=self.param('patterned_flowcell_list')
       platform_name=self.param_required('platform_name')
+      output_prefix=self.param('output_prefix')
       seed_date_stamp=self.param_required('date_stamp')
       seed_date_stamp=get_datestamp_label(seed_date_stamp)
       work_dir_prefix=os.path.join(base_work_dir,
@@ -91,6 +93,7 @@ class RunPicard(IGFBaseProcess):
                patterned_flowcell=patterned_flowcell,
                ref_flat_file=ref_flat_file,
                picard_option=picard_option,
+               output_prefix=output_prefix,
                ribisomal_interval=ribosomal_interval_file)                      # get picard wrapper                               # setup picard tool
       temp_output_files,picard_command_line=\
            picard.run_picard_command(command_name=picard_command)               # run picard command
