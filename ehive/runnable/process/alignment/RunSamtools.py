@@ -1,6 +1,6 @@
 import os
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
-from igf_data.utils.fileutils import move_file,get_temp_dir,remove_dir
+from igf_data.utils.fileutils import move_file,get_temp_dir,remove_dir,get_datestamp_label
 from igf_data.utils.tools.samtools_utils import run_bam_flagstat,run_bam_idxstat,merge_multiple_bam
 
 class RunSamtools(IGFBaseProcess):
@@ -50,6 +50,12 @@ class RunSamtools(IGFBaseProcess):
       copy_input=self.param('copy_input')
       analysis_files=self.param_required('analysis_files')
       output_prefix=self.param_required('output_prefix')
+      seed_date_stamp=self.param_required('date_stamp')
+      seed_date_stamp=get_datestamp_label(seed_date_stamp)
+      if output_prefix is not None:
+        output_prefix='{0}_{1}'.format(output_prefix,
+                                       seed_date_stamp)                         # adding datestamp to the output file prefix
+
       if not isinstance(input_files, list) or \
          len(input_files) == 0:
         raise ValueError('No input file found')
