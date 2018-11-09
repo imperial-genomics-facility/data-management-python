@@ -64,6 +64,10 @@ class RunPicard(IGFBaseProcess):
       output_prefix=self.param('output_prefix')
       seed_date_stamp=self.param_required('date_stamp')
       seed_date_stamp=get_datestamp_label(seed_date_stamp)
+      if output_prefix is not None:
+        output_prefix='{0}_{1}'.format(output_prefix,
+                                       seed_date_stamp)                         # adding seed datestamp to output prefix
+
       work_dir_prefix=os.path.join(base_work_dir,
                                    project_igf_id,
                                    sample_igf_id,
