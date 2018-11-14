@@ -39,6 +39,7 @@ class RunFastp(IGFBaseProcess):
       project_igf_id=self.param_required('project_igf_id')
       experiment_igf_id=self.param_required('experiment_igf_id')
       sample_igf_id=self.param_required('sample_igf_id')
+      run_igf_id=self.param_required('run_igf_id')
       fastp_exe=self.param_required('fastp_exe')
       input_fastq_list=self.param_required('input_fastq_list')
       base_work_dir=self.param_required('base_work_dir')
@@ -62,6 +63,7 @@ class RunFastp(IGFBaseProcess):
 
       fastp_obj=Fastp_utils(fastp_exe=fastp_exe,
                             input_fastq_list=input_fastq_list,
+                            log_output_prefix=run_igf_id,
                             output_dir=work_dir,
                             run_thread=run_thread,
                             enable_polyg_trim=enable_polyg_trim,
