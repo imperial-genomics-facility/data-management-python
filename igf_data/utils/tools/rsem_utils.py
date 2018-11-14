@@ -23,7 +23,7 @@ class RSEM_utils:
                          allowed values are none, forward and reverse
     :param options: A dictionary for rsem run, default None
     :param force: Overwrite existing data if force is True, default False
-    :returns: RSEM commandline and output file list
+    :returns: RSEM commandline, output file list and logfile
     '''
     try:
       rsem_exe=os.path.join(self.rsem_exe_dir,
@@ -57,6 +57,7 @@ class RSEM_utils:
       rsem_cmd.append(temp_output)
       subprocess.check_call(rsem_cmd)
       rsem_output_list=list()
+      rsem_log_file=None
       for file in os.listdir(temp_dir):
         if fnmatch.fnmatch(file,'*.results'):
           rsem_output_list.append(os.path.join(output_dir,file))                # add output files to the list
@@ -64,6 +65,18 @@ class RSEM_utils:
                           destinationa_path=os.path.join(output_dir,file),
                           force=force)                                          # copy output files to work dir
 
-      return rsem_cmd,rsem_output_list
+      for root, dirs, files in os.walk(temp_dir):
+        for file in files:
+          if fnmatch.fnmatch(file,'*.cnt'):
+            rsem_log_file=os.path.join(output_dir,file)
+            copy_local_file(source_path=os.path.join(root,file),
+                            destinationa_path=rsem_log_file,
+                            force=force)
+
+      if len(rsem_output_list)==0 or \
+         rsem_log_file is None:
+        raise ValueError('Rsem output file not found')
+
+      return rsem_cmd,rsem_output_list,rsem_log_file
     except:
       raise
