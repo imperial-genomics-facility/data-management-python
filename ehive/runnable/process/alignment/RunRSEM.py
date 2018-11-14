@@ -63,7 +63,8 @@ class RunRSEM(IGFBaseProcess):
                 input_bam=input_bams[0],
                 threads=threads,
                 memory_limit=memory_limit)                                      # prepare rsem for run
-      rsem_cmd,rsem_output_list=rsem_obj.\
+      rsem_cmd,rsem_output_list,rsem_log_file=\
+               rsem_obj.\
                run_rsem_calculate_expression(\
                  output_dir=work_dir,
                  output_prefix=output_prefix,
@@ -75,7 +76,8 @@ class RunRSEM(IGFBaseProcess):
          len(rsem_output_list)==0:
         raise ValueError('No RSEM output files found')                          # check output files
 
-      self.param('dataflow_params',{'rsem_output':rsem_output_list})            # pass on rsem output list
+      self.param('dataflow_params',{'rsem_output':rsem_output_list,
+                                    'rsem_log_file':rsem_log_file})             # pass on rsem output list
       message='Finished RSEM {0} for {1}'.\
               format(project_igf_id,
                      sample_igf_id)
@@ -85,10 +87,11 @@ class RunRSEM(IGFBaseProcess):
                      rsem_cmd)
       self.comment_asana_task(task_name=project_igf_id, comment=message)        # send commandline to Asana
     except Exception as e:
-      message='project: {2}, sample:{3}, Error in {0}: {1}'.format(self.__class__.__name__, \
-                                                      e, \
-                                                      project_igf_id,
-                                                      sample_igf_id)
+      message='project: {2}, sample:{3}, Error in {0}: {1}'.\
+              format(self.__class__.__name__,
+                     e,
+                     project_igf_id,
+                     sample_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise
