@@ -110,6 +110,57 @@ def convert_bam_to_cram(samtools_exe,bam_file,reference_file,cram_path,threads=1
   except:
     raise
 
+def run_bam_stats(samtools_exe,bam_file,output_dir,threads=1,force=False,
+                  output_prefix=None,dry_run=False):
+  '''
+  A method for generating samtools stats output
+  
+  :param samtools_exe: samtools executable path
+  :param bam_file: A bam filepath with / without index. Index file will be created if its missing
+  :param output_dir: Bam stats output directory path
+  :param output_prefix: Output file prefix, default None
+  :param threads: Number of threads to use for conversion, default 1
+  :param force: Output flagstat file will be overwritten if force is True, default False
+  :param dry_run: A toggle for returning the samtools command without actually running it, default False
+  :returns: Output file path and a list containing samtools command
+  '''
+  try:
+    check_file_path(samtools_exe)
+    _check_bam_file(bam_file=bam_file)
+    _check_bam_index(samtools_exe=samtools_exe,
+                     bam_file=bam_file)
+    if output_prefix is None:
+      output_prefix=os.path.basename(bam_file)
+
+    output_path='{0}.{1}.{2}'.\
+                format(output_prefix,
+                       'stats',
+                       'txt')
+    output_path=os.path.join(output_dir,
+                             output_path)
+    if not os.path.exists(output_dir):
+      raise IOError('Output path {0} not found'.format(output_dir))
+
+    if os.path.exists(output_path) and not force:
+      raise ValueError('Output file {0} already present, use force to overwrite'.\
+                       format(output_path))
+
+    stats_cmd=[quote(samtools_exe),
+               'stats',
+               '-@{0}'.format(quote(str(threads))),
+                quote(bam_file)
+              ]
+    if dry_run:
+      return stats_cmd
+
+    with open(output_path,'w') as fp:
+      with subprocess.Popen(stats_cmd, stdout=subprocess.PIPE) as proc:
+        fp.write(proc.stdout.read().decode('utf-8'))                            # write bam stats output
+
+    return output_path,stats_cmd
+  except:
+    raise
+
 
 def run_bam_flagstat(samtools_exe,bam_file,output_dir,threads=1,force=False,
                      output_prefix=None,dry_run=False):
