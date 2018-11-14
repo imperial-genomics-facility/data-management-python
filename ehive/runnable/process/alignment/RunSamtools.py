@@ -87,6 +87,14 @@ class RunSamtools(IGFBaseProcess):
                                     output_prefix=output_prefix,
                                     threads=threads,
                                     force=True)                                 # run samtools flagstat
+      elif samtools_command == 'stats':
+        temp_output,samtools_cmdline=run_bam_stats(\
+                                    samtools_exe=samtools_exe,
+                                    bam_file=input_file,
+                                    output_dir=temp_output_dir,
+                                    output_prefix=output_prefix,
+                                    threads=threads,
+                                    force=True)                                 # run samtools stats
       elif samtools_command == 'merge':
         if output_prefix is None:
           raise ValueError('Missing output filename prefix for merged bam')
