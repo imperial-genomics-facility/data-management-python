@@ -1,6 +1,7 @@
 import os
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.tools.rsem_utils import RSEM_utils
+from igf_data.utils.fileutils import get_datestamp_label
 from igf_data.utils.tools.reference_genome_utils import Reference_genome_utils
 
 class RunRSEM(IGFBaseProcess):
@@ -37,6 +38,8 @@ class RunRSEM(IGFBaseProcess):
       rsem_options=self.param('rsem_options')
       force_overwrite=self.param('force_overwrite')
       species_name=self.param('species_name')
+      base_work_dir=self.param_required('base_work_dir')
+      seed_date_stamp=get_datestamp_label(seed_date_stamp)
       if not isinstance(input_bams,list) or \
          len(input_bams) != 1:
         raise ValueError('Expecting one input bam for rsem and got : {0}'.\
@@ -76,8 +79,10 @@ class RunRSEM(IGFBaseProcess):
          len(rsem_output_list)==0:
         raise ValueError('No RSEM output files found')                          # check output files
 
-      self.param('dataflow_params',{'rsem_output':rsem_output_list,
-                                    'rsem_log_file':rsem_log_file})             # pass on rsem output list
+      self.param('dataflow_params',
+                 {'rsem_output':rsem_output_list,
+                  'rsem_log_file':rsem_log_file,
+                  'seed_date_stamp':seed_date_stamp})                           # pass on rsem output list
       message='Finished RSEM {0} for {1}'.\
               format(project_igf_id,
                      sample_igf_id)
