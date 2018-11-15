@@ -85,7 +85,7 @@ def convert_bam_to_cram(samtools_exe,bam_file,reference_file,cram_path,threads=1
     _check_bam_file(bam_file=bam_file)                                          # check bam file
     _check_bam_index(samtools_exe=samtools_exe,
                      bam_file=bam_file)                                         # check bam index
-    temp_file=os.path.join(get_temp_dir(),
+    temp_file=os.path.join(get_temp_dir(use_ephemeral_space=True),
                            os.path.basename(cram_path))                         # get temp cram file path
     view_cmd=[quote(samtools_exe),
               'view',
@@ -291,7 +291,7 @@ def run_sort_bam(samtools_exe,input_bam_path,output_bam_path,sort_by_name=False,
 
     sort_cmd.append(quote(input_bam_path))
 
-    temp_dir=get_temp_dir()
+    temp_dir=get_temp_dir(use_ephemeral_space=True)
     temp_bam=os.path.join(temp_dir,
                           os.path.basename(output_bam_path))
 
@@ -328,7 +328,7 @@ def merge_multiple_bam(samtools_exe,input_bam_list,output_bam_path,sorted_by_nam
   try:
     check_file_path(samtools_exe)
     check_file_path(input_bam_list)
-    temp_dir=get_temp_dir()
+    temp_dir=get_temp_dir(use_ephemeral_space=True)
     temp_bam=os.path.join(temp_dir,
                           os.path.basename(output_bam_path))
     merge_cmd=[quote(samtools_exe),
