@@ -231,7 +231,7 @@ class Picard_tools:
       for file in self.input_files:
         check_file_path(file_path=file)
 
-      picard_temp_run_dir=get_temp_dir()
+      picard_temp_run_dir=get_temp_dir(use_ephemeral_space=True)
       command=[self.java_exe,
                '-XX:ParallelGCThreads={0}'.\
                format(self.threads),
