@@ -1,0 +1,16 @@
+report_header_info:
+    - Project name: '{{ project_igf_id }}' {% if sample_igf_id %}
+    - Sample id: '{{ sample_igf_id }}' {% endif %} {% if platform_name %}
+    - Sequencing Platform: '{{ platform_name }}' {% endif %} {% if flowcell_id %}
+    - Flowcell id: '{{ flowcell_id }}' {% endif %} {% if tag_name %}
+    - Tag: '{{ tag_name }}' {% endif %}
+    - Report date: '{{ date_stamp }}'
+    - Created by: 'Imperial BRC Genomics Facility'
+    - Help page: 'https://imperial-genomics-facility.github.io/igf-pipeline-help'
+    - Contact information: 'https://www.imperial.ac.uk/medicine/research-and-impact/facilities/genomics-facility/contact/'
+
+
+module_order:
+{% for tool_name in tool_order_list %}
+    - {{ tool_name }}
+{% endfor %}
