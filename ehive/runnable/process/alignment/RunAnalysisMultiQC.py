@@ -1,8 +1,10 @@
 import os,subprocess,fnmatch
 from shlex import quote
+from datetime import datetime
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.analysis_collection_utils import Analysis_collection_utils
-from igf_data.utils.fileutils import get_temp_dir,remove_dir,get_datestamp_label
+from jinja2 import Template,Environment, FileSystemLoader, select_autoescape
+from igf_data.utils.fileutils import get_temp_dir,remove_dir,get_datestamp_label,check_file_path
 
 class RunAnalysisMultiQC(IGFBaseProcess):
   def param_defaults(self):
@@ -15,6 +17,8 @@ class RunAnalysisMultiQC(IGFBaseProcess):
       'multiqc_dir_label':'multiqc',
       'multiqc_exe':'multiqc',
       'multiqc_options':{'--zip-data-dir':''},
+      'platform_name':False,
+      'tool_order_list':['fastp','picard','samtools']
       })
     return params_dict
 
@@ -34,6 +38,9 @@ class RunAnalysisMultiQC(IGFBaseProcess):
       collection_type=self.param_required('collection_type')
       collection_table=self.param_required('collection_table')
       igf_session_class=self.param_required('igf_session_class')
+      multiqc_template_file=self.param_required('multiqc_template_file')
+      platform_name=self.param('platform_name')
+      tool_order_list=self.param('tool_order_list')
       if not isinstance(analysis_files,list) and \
          len(analysis_files) ==0:
         raise ValueError('Failed to run MultiQC for zero analysis list')        # check analysis files
@@ -49,6 +56,25 @@ class RunAnalysisMultiQC(IGFBaseProcess):
 
           fp.write('{}\n'.format(file))                                         # write file to temp file
 
+      date_stamp=datetime.now().strftime('%d-%b-%Y %H:%M:%S')
+      check_file_path(multiqc_template_file)
+      multiqc_conf_file=\
+        os.path.join(temp_work_dir,
+                     os.path.basename(multiqc_template_file))
+      template_env=\
+        Environment(loader=FileSystemLoader(\
+                             searchpath=os.path.dirname(multiqc_template_file)),
+                    autoescape=select_autoescape(['html', 'xml']))
+      multiqc_conf=\
+        template_env.get_template(os.path.basename(multiqc_template_file))
+      multiqc_conf.\
+      stream(project_igf_id=project_igf_id,
+             sample_igf_id=sample_igf_id,
+             platform_name=platform_name,
+             tag_name=tag,
+             date_stamp=date_stamp,
+             tool_order_list=tool_order_list).\
+      dump(multiqc_conf_file)
       multiqc_report_title='Project:{0}'.format(project_igf_id)                 # base multiqc label
       if sample_igf_id is not None:
         multiqc_report_title='{0},Sample:{1}'.format(multiqc_report_title,
@@ -62,6 +88,7 @@ class RunAnalysisMultiQC(IGFBaseProcess):
                        '--file-list',quote(multiqc_input_file),
                        '--outdir',quote(temp_work_dir),
                        '--title',quote(multiqc_report_title),
+                       '-c',quote(multiqc_conf_file)
                       ]                                                         # multiqc base parameters
       multiqc_param=[quote(param) for param in multiqc_param]                   # wrap params in quotes
       multiqc_cmd.extend(multiqc_param)                                         # add additional parameters
