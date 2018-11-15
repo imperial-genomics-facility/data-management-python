@@ -39,6 +39,7 @@ class RunRSEM(IGFBaseProcess):
       force_overwrite=self.param('force_overwrite')
       species_name=self.param('species_name')
       base_work_dir=self.param_required('base_work_dir')
+      seed_date_stamp=self.param_required('date_stamp')
       seed_date_stamp=get_datestamp_label(seed_date_stamp)
       if not isinstance(input_bams,list) or \
          len(input_bams) != 1:
