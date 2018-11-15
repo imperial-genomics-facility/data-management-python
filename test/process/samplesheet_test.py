@@ -36,7 +36,7 @@ class Hiseq4000SampleSheet(unittest.TestCase):
   def test_get_project_and_lane(self):
     samplesheet_data=self.samplesheet_data
     platform_list=samplesheet_data.get_project_and_lane()
-    self.assertTrue('project_3:8' in platform_list)
+    self.assertTrue('project_3 : 8' in platform_list)
 
   def test_filter_sample_data(self):
     samplesheet_data=self.samplesheet_data

@@ -228,7 +228,7 @@ class SampleSheet:
 
       for project_lane, _ in data_group:
         if isinstance(project_lane,tuple):
-          project_lane=':'.join(project_lane)                                   # for hiseq samplesheet
+          project_lane=' : '.join(project_lane)                                   # for hiseq samplesheet
         project_list.append(project_lane)
       return project_list
     except:
