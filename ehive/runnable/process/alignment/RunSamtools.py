@@ -1,7 +1,7 @@
 import os
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.fileutils import move_file,get_temp_dir,remove_dir,get_datestamp_label
-from igf_data.utils.tools.samtools_utils import run_bam_flagstat,run_bam_idxstat,merge_multiple_bam
+from igf_data.utils.tools.samtools_utils import run_bam_flagstat,run_bam_idxstat,merge_multiple_bam,run_bam_stats
 
 class RunSamtools(IGFBaseProcess):
   '''
