@@ -66,7 +66,7 @@ class RunBWA(IGFBaseProcess):
       if isinstance(parameter_options, str):
           parameter_options=json.loads(parameter_options)                       # convert string param to dict
 
-      final_output_file,bwa_cmd=BWA_util.\
+      final_output_file,bwa_cmd=bwa_obj.\
                                 run_mem(parameter_options=parameter_options)    # run bwa mem
       self.param('dataflow_params',{'bwa_bam':final_output_file,
                                     'seed_date_stamp':seed_date_stamp
