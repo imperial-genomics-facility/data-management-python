@@ -58,7 +58,7 @@ class BWA_util:
       if isinstance(parameter_options,dict) and \
          len(parameter_options)>0:
         parameter_options=[quote(str(field))
-                           for key,val in parameter_options
+                           for key,val in parameter_options.items()
                              for field in [key,val]
                                if field != '']                                  # flatten param list
         bwa_cmd.extend(parameter_options)                                       # add mem specific options
