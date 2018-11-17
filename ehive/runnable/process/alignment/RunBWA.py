@@ -40,7 +40,8 @@ class RunBWA(IGFBaseProcess):
       seed_date_stamp=get_datestamp_label(seed_date_stamp)
       input_fastq_list=list()
       input_fastq_list.append(r1_read_file[0])
-      if r2_read_file is not None:
+      if r2_read_file is not None and \
+         len(r2_read_file)>0:
         input_fastq_list.append(r2_read_file[0])
 
       work_dir_prefix=os.path.join(base_work_dir,
