@@ -52,7 +52,7 @@ class BWA_util:
       temp_dir=get_temp_dir(use_ephemeral_space=True)
       bwa_cmd=[
         quote(self.bwa_exe),
-        quite(mem_cmd),
+        quote(mem_cmd),
         '-t',quote(str(self.thread)),
       ]
       if isinstance(parameter_options,dict) and \
