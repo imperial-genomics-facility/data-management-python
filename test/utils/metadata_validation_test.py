@@ -39,7 +39,12 @@ class Validate_project_and_samplesheet_metadata_test1(unittest.TestCase):
           metadata_schema=self.metadata_schema
         )
     errors=va.get_metadata_validation_report()
-    print(errors)
+    for err_line in errors:
+      error=err_line.get('error')
+      column_name=err_line.get('column')
+      if column_name=='sample_submitter_id' and \
+         error.startswith('\'KDSC_77'):
+        self.assertTrue('KDSC_77' in error)
 
 if __name__=='__main__':
   unittest.main()
