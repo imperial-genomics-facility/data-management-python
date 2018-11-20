@@ -3,10 +3,10 @@ import os, asana, json
 class IGF_asana:
   '''
   A python class for accessing Asana
-  required params:
-  asana_config: A json config file with personal token
-                e.g. { "asana_personal_token" : "zyx" }
-  asana_project_id: A project id
+  
+  :params asana_config: A json config file with personal token
+                        e.g. { "asana_personal_token" : "zyx" }
+  :param asana_project_id: A project id
   '''
 
   def __init__(self, asana_config, asana_project_id, **asana_label):
@@ -15,12 +15,12 @@ class IGF_asana:
 
     self.asana_personal_token=None
     self.asana_config=asana_config
-    self.asana_project_id=asana_project_id                                 # project name can change, project id is stable
-    self._read_and_set_asana_config()                                      # read config file and set parameters
-    self.asanaclient=asana.Client.access_token(self.asana_personal_token)  # create asana client instance
-    self.asana_personal_token=None                                         # reset asana token value
-    self._get_user_details()                                               # load user information
-    self._check_project_id()                                               # check user given project id
+    self.asana_project_id=asana_project_id                                      # project name can change, project id is stable
+    self._read_and_set_asana_config()                                           # read config file and set parameters
+    self.asanaclient=asana.Client.access_token(self.asana_personal_token)       # create asana client instance
+    self.asana_personal_token=None                                              # reset asana token value
+    self._get_user_details()                                                    # load user information
+    self._check_project_id()                                                    # check user given project id
 
 
   def get_asana_task_id(self, task_name):
@@ -33,8 +33,11 @@ class IGF_asana:
       asana_task_id=None
       matched_tasks=list()
       try:
+        all_asana_tasks=self.asanaclient.\
+                        tasks.\
+                        find_all({'project':self.asana_project_id})
         matched_tasks=[p 
-                       for p in self.asanaclient.tasks.find_all({'project':self.asana_project_id})
+                       for p in all_asana_tasks
                          if p['name']==task_name]
         asana_task_id=matched_tasks[0]['id']
       except:
@@ -56,8 +59,8 @@ class IGF_asana:
     :params task_name: A task name
     :param notes: A task description
     '''
-    task_id=None
     try:
+      task_id=None
       results=self.asanaclient.tasks.\
                    create_in_workspace( \
                      self.asana_workspace_id,
@@ -80,11 +83,14 @@ class IGF_asana:
     :params task_name: A task name
     :returns: asana task id
     '''
-    task_id=self.get_asana_task_id(task_name)
-    if task_id is None:
-      task_id=self.create_asana_task(task_name)
+    try:
+      task_id=self.get_asana_task_id(task_name)
+      if task_id is None:
+        task_id=self.create_asana_task(task_name)
 
-    return task_id
+      return task_id
+    except:
+      raise
 
 
   def comment_asana_task(self, task_name, comment):
@@ -97,8 +103,10 @@ class IGF_asana:
     '''
     try:
       asana_task_id=self.fetch_task_id_for_task_name(task_name)
-      res=self.asanaclient.stories.create_on_task(asana_task_id,
-                                                  {'text':comment})
+      res=self.asanaclient.\
+          stories.\
+          create_on_task(asana_task_id,
+                         {'text':comment})
       return res
     except:
       raise
@@ -113,8 +121,10 @@ class IGF_asana:
     '''
     try:
       asana_task_id=self.fetch_task_id_for_task_name(task_name)
-      res=self.asanaclient.tasks.update(task=asana_task_id,\
-                                          params={'notes':notes})
+      res=self.asanaclient.\
+          tasks.\
+          update(task=asana_task_id,
+                 params={'notes':notes})
       return res
     except:
       raise
@@ -137,7 +147,10 @@ class IGF_asana:
       if os.stat(filepath).st_size > 5000000:
         comment='skipped uploading file {0}, size {1}'.\
                 format(os.path.basename(filepath),os.stat(filepath).st_size)    # skip uploading files more than 5Mb in size
-        res=self.asanaclient.stories.create_on_task(asana_task_id,{'text':comment})
+        res=self.asanaclient.\
+            stories.\
+            create_on_task(asana_task_id,
+                           {'text':comment})
       else:
         res=self.asanaclient.attachments.\
             create_on_task(\
@@ -152,13 +165,20 @@ class IGF_asana:
     '''
     An internal method for checking user given project id
     '''
-    matched_projects=[p for p in self.asanaclient.projects.\
-                                   find_all({'workspace':self.asana_workspace_id}) \
-                                     if p['id']==int(self.asana_project_id) ]
-    if len(matched_projects)==0:
-      raise ValueError('project id {0} not found in workspace {1}'.\
-                       format(self.asana_project_id,
-                              self.asana_workspace_name))
+    try:
+      all_asana_projects=self.asanaclient.\
+                         projects.\
+                         find_all({'workspace':self.asana_workspace_id})
+      matched_projects=\
+        [p 
+         for p in all_asana_projects
+           if p['id']==int(self.asana_project_id) ]
+      if len(matched_projects)==0:
+        raise ValueError('project id {0} not found in workspace {1}'.\
+                         format(self.asana_project_id,
+                                self.asana_workspace_name))
+    except:
+      raise
 
 
   def _get_user_details(self):
@@ -179,9 +199,13 @@ class IGF_asana:
     '''
     An internal method for reading asana config json file
     '''
-    asana_params=dict()
-    with open(self.asana_config,'r') as json_data:
-      asana_params=json.load(json_data)
-    if self.asana_personal_token_label in asana_params:
-      self.asana_personal_token=asana_params[self.asana_personal_token_label]
+    try:
+      asana_params=dict()
+      with open(self.asana_config,'r') as json_data:
+        asana_params=json.load(json_data)
 
+      if self.asana_personal_token_label in asana_params:
+        self.asana_personal_token=asana_params[self.asana_personal_token_label]
+
+    except:
+      raise
