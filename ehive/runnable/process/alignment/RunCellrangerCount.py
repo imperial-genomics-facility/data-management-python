@@ -3,7 +3,7 @@ import os, subprocess
 from shlex import quote
 from shutil import copytree
 from fnmatch import fnmatch
-from igf_data.utils.fileutils import get_temp_dir,remove_dir,move_file
+from igf_data.utils.fileutils import get_temp_dir,remove_dir,move_file,check_file_path
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.tools.cellranger.cellranger_count_utils import get_cellranger_count_input_list
 from igf_data.utils.tools.cellranger.cellranger_count_utils import check_cellranger_count_output
@@ -133,8 +133,12 @@ class RunCellrangerCount(IGFBaseProcess):
       self.comment_asana_task(task_name=project_igf_id, comment=message)        # send comment to Asana
       # validate output files after cellranger run
       check_cellranger_count_output(output_path=cellranger_output)              # check output file
+      cellranger_report=os.path.join(cellranger_output,
+                                     'web_summary.html')
+      check_file_path(cellranger_report)
 
-      self.param('dataflow_params',{'cellranger_output':cellranger_output})     # pass on cellranger output path
+      self.param('dataflow_params',{'cellranger_output':cellranger_output,
+                                    'cellranger_report':cellranger_report})     # pass on cellranger output path
     except Exception as e:
       message='project: {2}, sample:{3}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \
