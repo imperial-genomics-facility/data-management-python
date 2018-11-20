@@ -23,7 +23,6 @@ class RunFeatureCounts(IGFBaseProcess):
       project_igf_id=self.param_required('project_igf_id')
       experiment_igf_id=self.param_required('experiment_igf_id')
       sample_igf_id=self.param_required('sample_igf_id')
-      run_igf_id=self.param_required('run_igf_id')
       featurecounts_exe=self.param_required('featurecounts_exe')
       input_files=self.param_required('input_files')
       reference_gtf=self.param('reference_gtf')
@@ -64,10 +63,10 @@ class RunFeatureCounts(IGFBaseProcess):
                      })
       message='finished featureCounts for {0} {1}'.\
               format(project_igf_id,
-                     run_igf_id)
+                     experiment_igf_id)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
       message='featureCounts {0} command: {1}'.\
-              format(run_igf_id,
+              format(experiment_igf_id,
                      featureCount_cmd)
       self.comment_asana_task(task_name=project_igf_id,
                               comment=message)                                  # send commandline to Asana
