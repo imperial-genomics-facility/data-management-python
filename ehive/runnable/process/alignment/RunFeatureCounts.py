@@ -58,7 +58,8 @@ class RunFeatureCounts(IGFBaseProcess):
                           options=parameter_options)
       self.param('dataflow_params',
                      {'featureCounts_output':output_file,
-                      'featureCounts_summary':summary_file
+                      'featureCounts_summary':summary_file,
+                      'seed_date_stamp':seed_date_stamp
                      })
       message='finished featureCounts for {0} {1}'.\
               format(project_igf_id,
