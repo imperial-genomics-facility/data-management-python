@@ -100,13 +100,14 @@ class RunSTAR(IGFBaseProcess):
         if isinstance(star_patameters, str):
           star_patameters=json.loads(star_patameters)                           # convert string param to dict
 
-        genomic_bam,transcriptomic_bam,star_log_file,star_cmd=\
+        genomic_bam,transcriptomic_bam,star_log_file,star_gene_count_file,star_cmd=\
             star_obj.generate_aligned_bams(two_pass_mode=two_pass_mode,
                                            star_patameters=star_patameters)     # run star cmd
         self.param('dataflow_params',
                      {'star_genomic_bam':genomic_bam,
                       'star_transcriptomic_bam':transcriptomic_bam,
                       'star_log_file':star_log_file,
+                      'star_gene_count_file':star_gene_count_file,
                       'seed_date_stamp':seed_date_stamp
                      })
       elif run_mode=='generate_rna_bigwig':

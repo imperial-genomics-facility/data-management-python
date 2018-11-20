@@ -48,7 +48,7 @@ class Star_utils:
     :param two_pass_mode: Run two-pass mode of star, default True
     :param dry_run: A toggle forreturning the star cmd without actual run, default False
     :param star_patameters: A dictionary of star parameters, default encode parameters
-    :returns: A genomic_bam and a transcriptomic bam,log file and star commandline
+    :returns: A genomic_bam and a transcriptomic bam,log file, gene count file and star commandline
     '''
     try:
       temp_dir=get_temp_dir(use_ephemeral_space=True)                           # get a temp dir
@@ -60,7 +60,7 @@ class Star_utils:
              "--genomeDir":quote(self.genome_dir),
              "--genomeLoad":"NoSharedMemory",
              "--runMode":"alignReads",
-             "--quantMode":"TranscriptomeSAM",
+             "--quantMode":["TranscriptomeSAM","GeneCounts"],
              "--outSAMtype":["BAM","SortedByCoordinate"],
              "--outFilterType":"BySJout",
              "--outSAMunmapped":"Within",
@@ -113,9 +113,11 @@ class Star_utils:
       genomic_bam=''
       transcriptomic_bam=''
       star_log_file=''
+      star_gene_count_file=''
       genomic_bam_pattern=re.compile(r'\S+sortedByCoord\.out\.bam$')            # pattern for genomic bam
       transcriptomic_bam_pattern=re.compile(r'\S+toTranscriptome\.out\.bam$')   # pattern for transcriptomic bam
       star_log_pattern=re.compile(r'\S+Log\.final\.out$')                       # pattern for star final log
+      star_count_pattern=re.compile(r'\S+ReadsPerGene.out\.tab$')               # pattern for star gene count file
       for file in os.listdir(temp_dir):
         if fnmatch.fnmatch(file, '*.bam'):
           source_path=os.path.join(temp_dir,file)
@@ -132,15 +134,20 @@ class Star_utils:
           star_log_file=os.path.join(self.output_dir,file)
           copy_local_file(source_path=os.path.join(temp_dir,file),
                           destinationa_path=star_log_file)                      # copy star log file
-          
+
+        if re.match(star_count_pattern,file):
+          star_gene_count_file=os.path.join(self.output_dir,file)
+          copy_local_file(source_path=os.path.join(temp_dir,file),
+                          destinationa_path=star_gene_count_file)               # copy star gene count file
 
       if genomic_bam == '' or \
          transcriptomic_bam == '' or \
-         star_log_file=='':
-        raise ValueError('Star output bam files or log file not found')
+         star_log_file=='' or \
+         star_gene_count_file=='':
+        raise ValueError('Star output bam files, log file or gene count file not found')
 
       remove_dir(temp_dir)                                                      # removing temp run dir
-      return genomic_bam,transcriptomic_bam,star_log_file,star_cmd
+      return genomic_bam,transcriptomic_bam,star_log_file,star_gene_count_file,star_cmd
     except:
       if os.path.exists(temp_dir):
         remove_dir(temp_dir)
