@@ -23,6 +23,7 @@ class RunFeatureCounts(IGFBaseProcess):
       project_igf_id=self.param_required('project_igf_id')
       experiment_igf_id=self.param_required('experiment_igf_id')
       sample_igf_id=self.param_required('sample_igf_id')
+      run_igf_id=self.param_required('run_igf_id')
       featurecounts_exe=self.param_required('featurecounts_exe')
       input_files=self.param_required('input_files')
       reference_gtf=self.param('reference_gtf')
