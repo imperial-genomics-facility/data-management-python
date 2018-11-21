@@ -41,6 +41,9 @@ class CollectExpAnalysisChunks(IGFBaseProcess):
 
       if isinstance(exp_chunk_list,list):
          exp_chunk_list.extend(exp_analysis_files)
+      else:
+         raise ValueError('Expecting a list for exp_chunk_list, got {0}'.\
+                          type(exp_chunk_list))
 
       if output_mode=='list':
         self.param('dataflow_params',{'exp_chunk_list':exp_chunk_list})
