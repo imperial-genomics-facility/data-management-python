@@ -43,6 +43,7 @@ def full_suite():
   from .dbadaptor.baseadaptor_test import Baseadaptor_test1
   from .dbadaptor.platformadaptor_test import Platformadaptor_test1
   from .utils.metadata_validation_test import Validate_project_and_samplesheet_metadata_test1
+  from .utils.project_analysis_utils_test import Project_analysis_test1,Project_analysis_test2
 
   return unittest.TestSuite([ \
       unittest.TestLoader().loadTestsFromTestCase(BasesMask_testA), 
@@ -94,5 +95,7 @@ def full_suite():
       unittest.TestLoader().loadTestsFromTestCase(Picard_util_test1),
       unittest.TestLoader().loadTestsFromTestCase(Baseadaptor_test1),
       unittest.TestLoader().loadTestsFromTestCase(Platformadaptor_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Validate_project_and_samplesheet_metadata_test1)
+      unittest.TestLoader().loadTestsFromTestCase(Validate_project_and_samplesheet_metadata_test1),
+      unittest.TestLoader().loadTestsFromTestCase(Project_analysis_test1),
+      unittest.TestLoader().loadTestsFromTestCase(Project_analysis_test2)
     ])

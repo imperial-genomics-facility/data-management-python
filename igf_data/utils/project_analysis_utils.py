@@ -41,13 +41,15 @@ class Project_analysis:
     try:
       if file_path_column in data_series and \
          sample_igf_id_column in data_series:
-        base_path=os.path.basename(data_series[file_path_column])
+        file_path=data_series.get(file_path_column)
+        base_path=os.path.basename(file_path)
         remote_path=os.path.join(remote_prefix,
-                                 data_series[sample_igf_id_column],
-                                 base_path
-                                )
-        data_series['file_path']='<a href=\"{0}\">{1}</a>'.format(remote_path,
-                                                                  base_path)
+                                 file_path,
+                                 base_path)
+        file_path='<a href=\"{0}\">{1}</a>'.\
+                  format(remote_path,
+                         base_path)
+        data_series['file_path']=file_path
       return data_series
     except:
       raise
