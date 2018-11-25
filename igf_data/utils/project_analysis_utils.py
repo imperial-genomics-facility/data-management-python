@@ -43,13 +43,16 @@ class Project_analysis:
          sample_igf_id_column in data_series:
         file_path=data_series.get(file_path_column)
         base_path=os.path.basename(file_path)
+        dir_name=os.path.basename(\
+                    os.path.dirname(file_path))
+        sample_igf_id=data_series.get(sample_igf_id_column)
         remote_path=os.path.join(remote_prefix,
-                                 file_path,
+                                 sample_igf_id,
                                  base_path)
         file_path='<a href=\"{0}\">{1}</a>'.\
                   format(remote_path,
                          base_path)
-        data_series['file_path']=file_path
+        data_series[file_path_column]=file_path
       return data_series
     except:
       raise
@@ -99,7 +102,8 @@ class Project_analysis:
                                   data_series=x,
                                   sample_igf_id_column=sample_igf_id_column,
                                   file_path_column=file_path_column),
-                      axis=1)                                                   # add html tags to filepath
+                      axis=1,
+                      result_type='expand')                                                   # add html tags to filepath
         analysis_data=list()
         description={'Sample':('string','Sample')}
         column_order=['Sample']
