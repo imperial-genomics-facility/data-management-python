@@ -113,8 +113,8 @@ class RunMutiQC(IGFBaseProcess):
       stream(project_igf_id=project_name,
              flowcell_id=flowcell_id,
              platform_name=model_name,
-             tag_name='{0}_{1}'.format(lane_index_info,tag),
-             date_stamp=seqrun_date,
+             tag_name='{0} {1}'.format(lane_index_info,tag),
+             date_stamp=date_stamp,
              tool_order_list=tool_order_list).\
       dump(multiqc_conf_file)
       multiqc_cmd=[multiqc_exe,
