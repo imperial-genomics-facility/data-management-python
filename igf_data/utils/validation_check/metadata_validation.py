@@ -58,7 +58,9 @@ class Validate_project_and_samplesheet_metadata:
                          format(os.path.basename(self.samplesheet_file),
                                 self.samplesheet_name)}
                        )
-
+      samplesheet._data=pd.DataFrame(samplesheet._data).\
+                        drop_duplicates().\
+                        to_dict(orient='records')
       samplesheet_errors=samplesheet.\
                          validate_samplesheet_data(\
                             schema_json=self.samplesheet_schema)
@@ -157,7 +159,8 @@ class Validate_project_and_samplesheet_metadata:
       metadata_json_fields=list(schema['items']['properties'].keys())
 
       for metadata_file in self.metadata_files:
-        metadata=pd.read_csv(metadata_file)
+        metadata=pd.read_csv(metadata_file).\
+                 drop_duplicates()
         metadata_error_list=list()
         for header_name in metadata.columns:
           if not header_name.startswith('Unnamed') and \
