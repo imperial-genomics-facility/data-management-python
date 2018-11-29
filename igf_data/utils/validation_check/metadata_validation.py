@@ -88,10 +88,38 @@ class Validate_project_and_samplesheet_metadata:
                  'error':err.message}
                 for err in samplesheet_errors
                ])
+      index_lookup_list=['index']
+      if 'index2' in samplesheet._data_header:
+        index_lookup_list.append('index2')
+      if 'Lane' in samplesheet._data_header:
+        for lane,l_data in pd.DataFrame(samplesheet._data).drop_duplicates().groupby('Lane'):
+          for index, i_data in l_data.groupby(index_lookup_list):
+            if(len(i_data)>1):
+              errors.\
+              append({\
+                'column':'',
+                'line':'',
+                'filename':os.path.basename(self.samplesheet_file),
+                'error':'Duplicate barcodes found, Index: {0}, lane: {1}'.\
+                        format(index,
+                               lane)}
+              )
+      else:
+        for index, i_data in pd.DataFrame(samplesheet._data).drop_duplicates().groupby(index_lookup_list):
+          if(len(i_data)>1):
+              errors.\
+              append({\
+                'column':'',
+                'line':'',
+                'filename':os.path.basename(self.samplesheet_file),
+                'error':'Duplicate barcodes found, Index: {0}'.\
+                        format(index)}
+              )
 
       duplicate_sample_entries=list()
       duplicate_igf_entries=list()
-      data=pd.DataFrame(samplesheet._data)
+      data=pd.DataFrame(samplesheet._data).\
+           drop_duplicates()
       if 'Lane' in samplesheet._data_header:
         data_grp=data.groupby(['Lane',
                                'Sample_Name'])
