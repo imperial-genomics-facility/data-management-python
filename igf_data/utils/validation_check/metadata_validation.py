@@ -4,6 +4,7 @@ from jsonschema import validate, Draft4Validator
 from igf_data.illumina.samplesheet import SampleSheet
 from igf_data.utils.gviz_utils import convert_to_gviz_json_for_display
 from collections import defaultdict
+from igf_data.utils.fileutils import check_file_path
 
 class Validate_project_and_samplesheet_metadata:
   '''
@@ -58,7 +59,17 @@ class Validate_project_and_samplesheet_metadata:
                          format(os.path.basename(self.samplesheet_file),
                                 self.samplesheet_name)}
                        )
-      samplesheet._data=pd.DataFrame(samplesheet._data).\
+      samplesheet_data=pd.DataFrame(samplesheet._data)
+      for line,l_data in samplesheet_data.groupby(samplesheet_data.columns.tolist(),as_index=False):
+        if len(l_data.index) > 1:
+          errors.append({'column':'',
+                         'line':'',
+                         'filename':os.path.basename(self.samplesheet_file),
+                         'error':'Duplicate entry:{0}, {1}'.\
+                         format(len(l_data.index),
+                                line)}
+                       )
+      samplesheet._data=samplesheet_data.\
                         drop_duplicates().\
                         to_dict(orient='records')
       samplesheet_errors=samplesheet.\
@@ -159,7 +170,20 @@ class Validate_project_and_samplesheet_metadata:
       metadata_json_fields=list(schema['items']['properties'].keys())
 
       for metadata_file in self.metadata_files:
-        metadata=pd.read_csv(metadata_file).\
+        check_file_path(metadata_file)
+        metadata=pd.read_csv(metadata_file)
+        for line,l_data in metadata.fillna('').groupby(metadata.columns.tolist(),as_index=False):
+          if len(l_data.index) > 1:
+            error_list.append(\
+                        {'column':'',
+                         'line':'',
+                         'filename':os.path.basename(metadata_file),
+                         'error':'Duplicate entry:{0}, {1}'.\
+                         format(len(l_data.index),
+                                line)}
+                       )
+
+        metadata=metadata.\
                  drop_duplicates()
         metadata_error_list=list()
         for header_name in metadata.columns:

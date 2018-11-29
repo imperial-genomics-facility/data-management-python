@@ -53,7 +53,7 @@ class Validate_project_and_samplesheet_metadata_test2(unittest.TestCase):
     self.samplesheet_schema='data/validation_schema/samplesheet_validation.json'
     self.metadata_schema='data/validation_schema/metadata_validation.json'
 
-  def test_get_samplesheet_validation_report(self):
+  def test_get_samplesheet_validation_report2(self):
     va=Validate_project_and_samplesheet_metadata(\
           samplesheet_file=self.samplesheet_file,
           metadata_files=self.metadata_file,
@@ -76,7 +76,7 @@ class Validate_project_and_samplesheet_metadata_test2(unittest.TestCase):
         elif column_name=='Sample_Name':
           self.assertTrue('KDSC_76' in error)
 
-  def test_get_metadata_validation_report(self):
+  def test_get_metadata_validation_report2(self):
     va=Validate_project_and_samplesheet_metadata(\
           samplesheet_file=self.samplesheet_file,
           metadata_files=[self.metadata_file],
