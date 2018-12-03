@@ -1,4 +1,6 @@
 import os, asana, json
+from datetime import datetime
+from asana.error import ForbiddenError
 
 class IGF_asana:
   '''
@@ -52,7 +54,7 @@ class IGF_asana:
       raise
 
 
-  def rename_task(self,task_name,new_name):
+  def rename_asana_task(self,task_name,new_name):
     '''
     A method for renaming asana task
     
@@ -124,6 +126,12 @@ class IGF_asana:
           create_on_task(asana_task_id,
                          {'text':comment})
       return res
+    except ForbiddenError:
+      time_stamp=datetime.strftime(datetime.now(),'%Y-%M-%d-%H-%M-%S')
+      new_task_name='{0}_{1}'.format(task_name,time_stamp)
+      self.rename_asana_task(\
+            task_name=task_name,
+            new_name=new_task_name)                                             # rename task if can't comment on it, likely due to 1k limit
     except:
       raise
 
