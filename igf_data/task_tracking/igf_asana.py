@@ -111,12 +111,13 @@ class IGF_asana:
       raise
 
 
-  def comment_asana_task(self, task_name, comment):
+  def comment_asana_task(self, task_name, comment,rename_task=True):
     '''
     A method for adding comments to asana tasks. Task will be created if it doesn't exist.
     
     :params task_name: A task name
     :param comment: A comment for the target task
+    :param rename_task: Rename task if cvoan't comment, default True
     :returns: A output story as dictionary
     '''
     try:
@@ -127,11 +128,13 @@ class IGF_asana:
                          {'text':comment})
       return res
     except ForbiddenError:
-      time_stamp=datetime.strftime(datetime.now(),'%Y-%M-%d-%H-%M-%S')
-      new_task_name='{0}_{1}'.format(task_name,time_stamp)
-      self.rename_asana_task(\
-            task_name=task_name,
-            new_name=new_task_name)                                             # rename task if can't comment on it, likely due to 1k limit
+      if rename_task:
+        time_stamp=datetime.strftime(datetime.now(),'%Y-%M-%d-%H-%M-%S')
+        new_task_name='{0}_{1}'.format(task_name,time_stamp)
+        self.rename_asana_task(\
+              task_name=task_name,
+              new_name=new_task_name)                                           # rename task if can't comment on it, likely due to 1k limit
+      raise
     except:
       raise
 
