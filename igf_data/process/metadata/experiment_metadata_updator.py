@@ -62,6 +62,7 @@ class Experiment_metadata_updator:
             filter(Experiment.library_source=='UNKNOWN').\
             filter(Experiment.library_strategy=='UNKNOWN').\
             filter(Experiment.experiment_type=='UNKNOWN').\
+            filter(Sample_attribute.attribute_value.notin_('UNKNOWN')).\
             filter(Sample_attribute.attribute_name.in_(sample_attribute_names)) # base query for db lookup
       if experiment_igf_id is not None:
         query=query.filter(Experiment.experiment_igf_id==experiment_igf_id)     # look for specific experiment_igf_id

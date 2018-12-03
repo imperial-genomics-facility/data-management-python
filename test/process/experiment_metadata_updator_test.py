@@ -103,3 +103,6 @@ class Experiment_metadata_updator_test(unittest.TestCase):
     exp2=ea.fetch_experiment_records_id(experiment_igf_id='IGF00003_HISEQ4000')
     self.assertEqual(exp2.library_source,'UNKNOWN')
     ea.close_session()
+
+if __name__=='__main__':
+  unittest.main()
