@@ -52,6 +52,22 @@ class IGF_asana:
       raise
 
 
+  def rename_task(self,task_name,new_name):
+    '''
+    A method for renaming asana task
+    
+    :params task_name: A task name
+    :params new_name: A new task name
+    '''
+    try:
+      asana_task_id=self.get_asana_task_id(task_name=task_name)
+      self.asanaclient.\
+      tasks.\
+      update(asana_task_id,{'name':new_name})
+    except:
+      raise
+
+
   def create_asana_task(self,task_name, notes=''):
     '''
     A method for creating new task in Asana. Tasks will get assigned to the creator.
