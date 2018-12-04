@@ -287,23 +287,26 @@ class Pipelineadaptor_test3(unittest.TestCase):
   def test_seed_new_experiments(self):
     pl=PipelineAdaptor(**{'session_class': self.session_class})
     pl.start_session()
-    (new_exps)=pl.seed_new_experiments(pipeline_name='PrimaryAnalysis',
-                                       species_name_list=['HG38'],
-                                       fastq_type='demultiplexed_fastq',
-                                      )
+    new_exps,seeded_exps=\
+      pl.seed_new_experiments(\
+        pipeline_name='PrimaryAnalysis',
+        species_name_list=['HG38'],
+        fastq_type='demultiplexed_fastq',
+      )
     self.assertEqual(len(new_exps),1)
     self.assertEqual(new_exps[0],'IGFQ000123_avik_10-4-2018_Miseq')
 
   def test_seed_new_experiments1(self):
     pl=PipelineAdaptor(**{'session_class': self.session_class})
     pl.start_session()
-    (new_exps)=pl.seed_new_experiments(\
-                    pipeline_name='PrimaryAnalysis',
-                    species_name_list=['HG38'],
-                    fastq_type='demultiplexed_fastq',
-                    project_list=['IGFQ000123_avik_10-4-2018_Miseq'],
-                    library_source_list=['TRANSCRIPTOMIC_SINGLE_CELL']
-                  )
+    new_exps,seeded_exps=\
+      pl.seed_new_experiments(\
+        pipeline_name='PrimaryAnalysis',
+        species_name_list=['HG38'],
+        fastq_type='demultiplexed_fastq',
+        project_list=['IGFQ000123_avik_10-4-2018_Miseq'],
+        library_source_list=['TRANSCRIPTOMIC_SINGLE_CELL']
+      )
     self.assertFalse(new_exps)
     pl.close_session()
     pl=PipelineAdaptor(**{'session_class': self.session_class})
