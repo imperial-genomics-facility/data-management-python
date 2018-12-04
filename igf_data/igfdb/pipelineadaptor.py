@@ -278,6 +278,7 @@ class PipelineAdaptor(BaseAdaptor):
     :param autosave: A toggle for autosaving records in database, default True
     :param seed_tabel: Seed table for pipeseed table, default experiment
     :returns: A list of available projects for seeding analysis table (if project_list is None) or None
+              and a list of seeded experiments or None
     '''
     try:
       seeded_experiments=self.session.\
@@ -314,7 +315,8 @@ class PipelineAdaptor(BaseAdaptor):
          isinstance(library_source_list, list) and \
          len(library_source_list)>0:
         new_experiments_query=new_experiments_query.\
-                              filter(Experiment.library_source.in_(library_source_list)) # filter experiment based on library source
+                              filter(Experiment.\
+                                     library_source.in_(library_source_list))   # filter experiment based on library source
 
       if project_list is not None and \
          isinstance(project_list, list) and \
@@ -327,20 +329,32 @@ class PipelineAdaptor(BaseAdaptor):
       if project_list is None or \
          (isinstance(project_list, list) and \
           len(project_list)==0):
-        available_project_list=list(set(new_experiments['project_igf_id'].values)) # get unique list of available projects
-        return available_project_list
+        available_project_list=list(set(new_experiments['project_igf_id'].\
+                                        values))                                # get unique list of available projects
+        return available_project_list, None
       else:
-        available_experiments_list=list(set(new_experiments['experiment_id'].values)) # get available experiments
+        available_experiments_list=list(set(new_experiments['experiment_id'].\
+                                            values))                            # get available experiments
         exp_data=list()
-        for exp_id in available_experiments_list: 
+        for exp_id in available_experiments_list:
           exp_data.append({'seed_id':exp_id,
                            'seed_table':seed_table,
                            'pipeline_name':pipeline_name})
  
+        seeded_project_list=None
         if len(exp_data) > 0:
           self.create_pipeline_seed(data=exp_data,
-                                    autosave=autosave)
-        return None
+                                    autosave=autosave)                          # seed pipeline
+
+          seeded_project_list=list(set(new_experiments['project_igf_id'].\
+                                       drop_duplicates().\
+                                       values))
+
+        if isinstance(seeded_project_list,list) and \
+           len(seeded_project_list)==0:
+          seeded_project_list=None
+
+        return None,seeded_project_list
 
     except:
       raise

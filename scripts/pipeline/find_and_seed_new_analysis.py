@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import argparse,os
 from igf_data.task_tracking.igf_slack import IGF_slack
+from igf_data.task_tracking.igf_asana import IGF_asana
 from igf_data.utils.pipelineutils import find_new_analysis_seeds
 
 '''
@@ -41,6 +42,8 @@ A script for finding new experiment entries for seeding analysis pipeline
 parser=argparse.ArgumentParser()
 parser.add_argument('-d','--dbconfig_path', required=True, help='Database configuration json file')
 parser.add_argument('-s','--slack_config', required=True, help='Slack configuration json file')
+parser.add_argument('-a','--asana_config', required=True, help='Asana configuration json file')
+parser.add_argument('-q','--asana_project_id', required=True, help='Asana project id')
 parser.add_argument('-p','--pipeline_name', required=True, help='IGF pipeline name')
 parser.add_argument('-t','--fastq_type', required=True, help='Fastq collection type')
 parser.add_argument('-f','--project_name_file', required=True, help='File containing project names for seeding analysis pipeline')
@@ -51,6 +54,8 @@ args=parser.parse_args()
 
 dbconfig_path=args.dbconfig_path
 slack_config=args.slack_config
+asana_config=args.asana_config
+asana_project_id=args.asana_project_id
 pipeline_name=args.pipeline_name
 fastq_type=args.fastq_type
 project_name_file=args.project_name_file
@@ -64,14 +69,17 @@ try:
                   format(project_name_file))
 
   slack_obj=IGF_slack(slack_config=slack_config)                                # get slack instance
-  available_projects=find_new_analysis_seeds(\
-                       dbconfig_path=dbconfig_path,
-                       pipeline_name=pipeline_name,
-                       project_name_file=project_name_file,
-                       species_name_list=species_name,
-                       fastq_type=fastq_type,
-                       library_source_list=library_source
-                     )
+  asana_obj=IGF_asana(asana_config=asana_config,
+                      asana_project_id=asana_project_id)                        # get asana object
+  available_projects,seeded_projects=\
+    find_new_analysis_seeds(\
+      dbconfig_path=dbconfig_path,
+      pipeline_name=pipeline_name,
+      project_name_file=project_name_file,
+      species_name_list=species_name,
+      fastq_type=fastq_type,
+      library_source_list=library_source
+    )
   if available_projects is not None:
     message='New projects available for seeding: {0}'.\
             format(available_projects)
@@ -79,6 +87,13 @@ try:
     post_message_to_channel(\
       message=message,
       reaction='pass')                                                          # post list of active projects to slack
+
+  if seeded_projects is not None and \
+     isinstance(seeded_projects,list) and \
+     len(seeded_projects)>0:
+    for project_name in seeded_projects:
+      asana_obj.comment_asana_task(task_name=project_name,
+                                   comment='Seeded project for analysis')       # create asana task for seeded projects
 
   if reset_project_list:
     with open(project_name_file,'w') as fp:

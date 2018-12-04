@@ -237,14 +237,17 @@ class Pipelineutils_test2(unittest.TestCase):
     with open(project_name_file,'w') as fp:
       fp.write('')
 
-    available_exps = find_new_analysis_seeds(dbconfig_path=self.dbconfig,
-                                             pipeline_name='PrimaryAnalysis',
-                                             project_name_file=project_name_file,
-                                             species_name_list=['HG38'],
-                                             fastq_type='demultiplexed_fastq',
-                                             library_source_list=['TRANSCRIPTOMIC_SINGLE_CELL']
-                                            )
+    available_exps,seeded_exps = \
+      find_new_analysis_seeds(\
+        dbconfig_path=self.dbconfig,
+        pipeline_name='PrimaryAnalysis',
+        project_name_file=project_name_file,
+        species_name_list=['HG38'],
+        fastq_type='demultiplexed_fastq',
+        library_source_list=['TRANSCRIPTOMIC_SINGLE_CELL']
+      )
     self.assertTrue('projectA' in available_exps)
+    self.assertTrue(seeded_exps is None)
     pla = PipelineAdaptor(**{'session_class':self.session_class})
     pla.start_session()
     seeded_data, exp_data = pla.fetch_pipeline_seed_with_table_data(\
@@ -261,14 +264,18 @@ class Pipelineutils_test2(unittest.TestCase):
     with open(project_name_file,'w') as fp:
       fp.write('projectA')
 
-    available_exps = find_new_analysis_seeds(dbconfig_path=self.dbconfig,
-                                             pipeline_name='PrimaryAnalysis',
-                                             project_name_file=project_name_file,
-                                             species_name_list=['HG38'],
-                                             fastq_type='demultiplexed_fastq',
-                                             library_source_list=['TRANSCRIPTOMIC_SINGLE_CELL']
-                                            )
+    available_exps,seeded_exps = \
+      find_new_analysis_seeds(\
+        dbconfig_path=self.dbconfig,
+        pipeline_name='PrimaryAnalysis',
+        project_name_file=project_name_file,
+        species_name_list=['HG38'],
+        fastq_type='demultiplexed_fastq',
+        library_source_list=['TRANSCRIPTOMIC_SINGLE_CELL']
+      )
     self.assertTrue(available_exps is None)
+    self.assertTrue('projectA' in seeded_exps)
+    
     pla = PipelineAdaptor(**{'session_class':self.session_class})
     pla.start_session()
     seeded_data, exp_data = pla.fetch_pipeline_seed_with_table_data(\
