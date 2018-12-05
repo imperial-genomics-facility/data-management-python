@@ -25,12 +25,12 @@ class IGF_asana:
     self._check_project_id()                                                    # check user given project id
 
 
-  def get_asana_task_id(self,task_name,strict_check=True):
+  def get_asana_task_id(self,task_name,strict_check=False):
     '''
     A method for fetching task id from asana server
     
     :param task_name: A task name
-    :param strict_check: Perform strict checking for task id count
+    :param strict_check: Perform strict checking for task id count, default False
     :returns: A asana task id
     '''
     try:
