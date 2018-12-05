@@ -80,7 +80,7 @@ class RunBcl2Fastq(IGFBaseProcess):
       message='started fastq conversion for {0}, {1} : {2}_{3}'.\
               format(seqrun_igf_id,project_name,flowcell_lane,index_length)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
-      seqrun_temp_dir=get_temp_dir()                                            # create a new input directory in TMPDIR
+      seqrun_temp_dir=get_temp_dir(use_ephemeral_space=True)                    # create a new input directory in TMPDIR
       move_file=moveBclFilesForDemultiplexing(input_dir=seqrun_dir,
                                               output_dir=seqrun_temp_dir,
                                               samplesheet=samplesheet_file,
@@ -88,7 +88,7 @@ class RunBcl2Fastq(IGFBaseProcess):
                                               platform_model=model_name)        # get lists of files to move to TMPDIR
       move_file.copy_bcl_files()                                                # move files to TMPDIR
       job_name=self.job_name()
-      output_temp_dir=get_temp_dir(work_dir=os.environ['TMPDIR'])               # create tmp directory in TMPDIR for cluster
+      output_temp_dir=get_temp_dir(use_ephemeral_space=True)                    # create tmp directory in TMPDIR for cluster
       report_dir=os.path.join(base_work_dir, \
                             seqrun_igf_id, \
                             job_name, \
