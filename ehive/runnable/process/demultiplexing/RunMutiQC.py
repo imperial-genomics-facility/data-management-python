@@ -64,7 +64,7 @@ class RunMutiQC(IGFBaseProcess):
       if not os.path.exists(multiqc_result_dir):
         os.makedirs(multiqc_result_dir,mode=0o775)                              # create output dir if its not present
 
-      temp_work_dir=get_temp_dir()                                              # get a temp work dir
+      temp_work_dir=get_temp_dir(use_ephemeral_space=True)                      # get a temp work dir
       multiqc_input_list=\
         os.path.join(temp_work_dir,
                      'multiqc_input_file.txt')                                  # get name of multiqc input file
