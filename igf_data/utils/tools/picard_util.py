@@ -73,7 +73,8 @@ class Picard_tools:
           output_prefix=output_prefix.replace('.bam','')                        # remove .bam from filepath prefix
 
       else:
-        output_prefix=self.output_prefix
+        output_prefix=os.path.join(self.output_dir,
+                                   self.output_prefix)
 
       output_file='{0}.{1}'.format(output_prefix,
                                      command_name)                              # set output path without any extension
