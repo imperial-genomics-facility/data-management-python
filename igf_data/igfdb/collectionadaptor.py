@@ -159,8 +159,8 @@ class CollectionAdaptor(BaseAdaptor):
     
     :param data: A list of dictionaries, containing following entries
     
-                 collection_name
-                 collection_type
+                 name
+                 type
                  attribute_name
                  attribute_value
     :param autosave: A toggle for saving changes to database, default True
@@ -171,8 +171,8 @@ class CollectionAdaptor(BaseAdaptor):
         raise ValueError('No data found for collection attribute update')
 
       for entry in data:
-        collection_name=entry.get('collection_name')
-        collection_type=entry.get('collection_type')
+        collection_name=entry.get('name')
+        collection_type=entry.get('type')
         attribute_name=entry.get('attribute_name')
         attribute_value=entry.get('attribute_value')
         if collection_name is None or \
@@ -507,6 +507,7 @@ class CollectionAdaptor(BaseAdaptor):
       return results
     except:
        raise
+
 
   def _check_and_remove_collection_group(self,data,autosave=True,collection_name_col='name',
                                          collection_type_col='type',file_path_col='file_path',

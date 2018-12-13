@@ -1,7 +1,7 @@
 import pandas as pd
 import unittest, json, os, shutil
 from sqlalchemy import create_engine
-from igf_data.igfdb.igfTables import Base
+from igf_data.igfdb.igfTables import Base,Collection,Collection_attribute
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
@@ -134,6 +134,246 @@ class CollectionAdaptor_test1(unittest.TestCase):
     self.assertEqual(ca_exists['name'].values[0],'IGF001_MISEQ')
     self.assertEqual(ca_not_exists['name'].values[0],'IGF003_MISEQ')
     ca.close_session()
+
+
+class CollectionAdaptor_test2(unittest.TestCase):
+  def setUp(self):
+    self.dbconfig='data/dbconfig.json'
+    dbparam = None
+    with open(self.dbconfig, 'r') as json_data:
+      dbparam = json.load(json_data)
+    base = BaseAdaptor(**dbparam)
+    self.engine = base.engine
+    self.dbname=dbparam['dbname']
+    Base.metadata.create_all(self.engine)
+    self.session_class=base.session_class
+
+  def tearDown(self):
+    Base.metadata.drop_all(self.engine)
+    os.remove(self.dbname)
+
+  def test_store_collection_and_attribute_data(self):
+    collection_data=[{'name':'IGF001_MISEQ',
+                      'type':'ALIGNMENT_CRAM',
+                      'table':'experiment',
+                      'read_count':1000,
+                    },
+                    {'name':'IGF002_MISEQ',
+                     'type':'ALIGNMENT_CRAM',
+                     'table':'experiment',
+                     'read_count':2000,
+                    },
+                    {'name':'IGF003_MISEQ',
+                     'type':'ALIGNMENT_CRAM',
+                     'table':'experiment',
+                     'read_count':3000,
+                    },
+                    {'name':'IGF004_MISEQ',
+                     'type':'ALIGNMENT_CRAM',
+                     'table':'experiment',
+                     'read_count':4000,
+                   }]
+    ca=CollectionAdaptor(**{'session_class':self.session_class})
+    ca.start_session()
+    ca.store_collection_and_attribute_data(\
+        data=collection_data,
+        autosave=True)
+    query=ca.session.\
+            query(Collection,
+                  Collection_attribute.attribute_name,
+                  Collection_attribute.attribute_value).\
+            join(Collection_attribute).\
+            filter(Collection.collection_id==Collection_attribute.collection_id).\
+            filter(Collection.name=='IGF001_MISEQ').\
+            filter(Collection.type=='ALIGNMENT_CRAM')
+    results=ca.fetch_records(\
+                 query=query,
+                 output_mode='dataframe')
+    self.assertEqual(results['attribute_value'].astype(int).values[0],1000)
+    self.assertEqual(results['attribute_name'].values[0],'read_count')
+
+  def test_check_collection_attribute(self):
+    collection_data=[{'name':'IGF001_MISEQ',
+                      'type':'ALIGNMENT_CRAM',
+                      'table':'experiment',
+                      'read_count':1000,
+                    },
+                    {'name':'IGF002_MISEQ',
+                     'type':'ALIGNMENT_CRAM',
+                     'table':'experiment',
+                     'read_count':2000,
+                    },
+                    {'name':'IGF003_MISEQ',
+                     'type':'ALIGNMENT_CRAM',
+                     'table':'experiment',
+                     'read_count':3000,
+                    },
+                    {'name':'IGF004_MISEQ',
+                     'type':'ALIGNMENT_CRAM',
+                     'table':'experiment',
+                     'read_count':4000,
+                   }]
+    ca=CollectionAdaptor(**{'session_class':self.session_class})
+    ca.start_session()
+    ca.store_collection_and_attribute_data(\
+       data=collection_data,
+       autosave=True
+      )
+    collection_exists=\
+      ca.check_collection_attribute(\
+        collection_name='IGF004_MISEQ',
+        collection_type='ALIGNMENT_CRAM',
+        attribute_name='read_count')
+    self.assertTrue(collection_exists)
+    collection_exists=\
+      ca.check_collection_attribute(\
+        collection_name='IGF004_MISEQ',
+        collection_type='ALIGNMENT_CRAM',
+        attribute_name='read_counts')
+    self.assertFalse(collection_exists)
+
+  def test_update_collection_attribute(self):
+    collection_data=[{'name':'IGF001_MISEQ',
+                      'type':'ALIGNMENT_CRAM',
+                      'table':'experiment',
+                      'read_count':1000,
+                    },
+                    {'name':'IGF002_MISEQ',
+                     'type':'ALIGNMENT_CRAM',
+                     'table':'experiment',
+                     'read_count':2000,
+                    },
+                    {'name':'IGF003_MISEQ',
+                     'type':'ALIGNMENT_CRAM',
+                     'table':'experiment',
+                     'read_count':3000,
+                    },
+                    {'name':'IGF004_MISEQ',
+                     'type':'ALIGNMENT_CRAM',
+                     'table':'experiment',
+                     'read_count':4000,
+                   }]
+    ca=CollectionAdaptor(**{'session_class':self.session_class})
+    ca.start_session()
+    ca.store_collection_and_attribute_data(\
+         data=collection_data,
+         autosave=True)
+    query=ca.session.\
+            query(Collection,
+                  Collection_attribute.attribute_name,
+                  Collection_attribute.attribute_value).\
+            join(Collection_attribute).\
+            filter(Collection.collection_id==Collection_attribute.collection_id).\
+            filter(Collection.name=='IGF001_MISEQ').\
+            filter(Collection.type=='ALIGNMENT_CRAM')
+    results=ca.fetch_records(\
+                 query=query,
+                 output_mode='dataframe')
+    self.assertEqual(results['attribute_value'].astype(int).values[0],1000)
+    ca.update_collection_attribute(\
+         collection_name='IGF001_MISEQ',
+         collection_type='ALIGNMENT_CRAM',
+         attribute_name='read_count',
+         attribute_value='2000',
+         autosave=True)
+    results=ca.fetch_records(\
+                 query=query,
+                 output_mode='dataframe')
+    self.assertEqual(results['attribute_value'].astype(int).values[0],2000)
+
+  def test_create_or_update_collection_attributes(self):
+    collection_data=[{'name':'IGF001_MISEQ',
+                      'type':'ALIGNMENT_CRAM',
+                      'table':'experiment',
+                      'read_count':1000,
+                    },
+                    {'name':'IGF002_MISEQ',
+                     'type':'ALIGNMENT_CRAM',
+                     'table':'experiment',
+                     'read_count':2000,
+                    },
+                    {'name':'IGF003_MISEQ',
+                     'type':'ALIGNMENT_CRAM',
+                     'table':'experiment',
+                     'read_count':3000,
+                    },
+                    {'name':'IGF004_MISEQ',
+                     'type':'ALIGNMENT_CRAM',
+                     'table':'experiment',
+                     'read_count':4000,
+                   }]
+    ca=CollectionAdaptor(**{'session_class':self.session_class})
+    ca.start_session()
+    ca.store_collection_and_attribute_data(\
+         data=collection_data,
+         autosave=True)
+    query=ca.session.\
+            query(Collection,
+                  Collection_attribute.attribute_name,
+                  Collection_attribute.attribute_value).\
+            join(Collection_attribute).\
+            filter(Collection.collection_id==Collection_attribute.collection_id).\
+            filter(Collection.name=='IGF001_MISEQ').\
+            filter(Collection.type=='ALIGNMENT_CRAM')
+    results=ca.fetch_records(\
+                 query=query,
+                 output_mode='dataframe')
+    self.assertEqual(results['attribute_value'].astype(int).values[0],1000)
+    data=[{'name':'IGF001_MISEQ',
+           'type':'ALIGNMENT_CRAM',
+           'attribute_name':'read_count',
+           'attribute_value':'2000'
+         }]
+    ca.create_or_update_collection_attributes(\
+         data=data,
+         autosave=True)
+    results=ca.fetch_records(\
+                 query=query,
+                 output_mode='dataframe')
+    self.assertEqual(results['attribute_value'].astype(int).values[0],2000)
+    self.assertFalse('read_count2' in results['attribute_name'].values)
+    data=[{'name':'IGF001_MISEQ',
+           'type':'ALIGNMENT_CRAM',
+           'attribute_name':'read_count2',
+           'attribute_value':'10000'
+         }]
+    ca.create_or_update_collection_attributes(\
+         data=data,
+         autosave=True)
+    query=ca.session.\
+            query(Collection,
+                  Collection_attribute.attribute_name,
+                  Collection_attribute.attribute_value).\
+            join(Collection_attribute).\
+            filter(Collection.collection_id==Collection_attribute.collection_id).\
+            filter(Collection.name=='IGF001_MISEQ').\
+            filter(Collection.type=='ALIGNMENT_CRAM')
+    results=ca.fetch_records(\
+                 query=query,
+                 output_mode='dataframe')
+    self.assertTrue('read_count2' in results['attribute_name'].values)
+    data=[{'name':'IGF007_MISEQ',
+           'type':'ALIGNMENT_CRAM',
+           'attribute_name':'read_count2',
+           'attribute_value':'10000'
+         }]
+    with self.assertRaises(ValueError):
+      ca.create_or_update_collection_attributes(\
+         data=data,
+         autosave=True)
+    query=ca.session.\
+            query(Collection,
+                  Collection_attribute.attribute_name,
+                  Collection_attribute.attribute_value).\
+            join(Collection_attribute).\
+            filter(Collection.collection_id==Collection_attribute.collection_id).\
+            filter(Collection.name=='IGF007_MISEQ').\
+            filter(Collection.type=='ALIGNMENT_CRAM')
+    results=ca.fetch_records(\
+                 query=query,
+                 output_mode='dataframe')
+    self.assertEqual(len(results.index),0)
+
 
 
 

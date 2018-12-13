@@ -7,7 +7,7 @@ def full_suite():
   from .process.basesmask_test import BasesMask_testA,BasesMask_testB,BasesMask_testC,BasesMask_testD
   from .process.checksequenceIndexbarcodes_test import CheckSequenceIndexBarcodes_test1
   from .process.collect_seqrun_fastq_to_db_test import Collect_fastq_test1,Collect_fastq_test_sc1
-  from .dbadaptor.collectionadaptor_test import CollectionAdaptor_test1
+  from .dbadaptor.collectionadaptor_test import CollectionAdaptor_test1,CollectionAdaptor_test2
   from .utils.dbutils_test import Dbutils_test1
   from .process.find_and_process_new_seqrun_test import Find_seqrun_test1
   from .process.flowcell_rules_test import Flowcell_barcode_rule_test1
@@ -55,6 +55,7 @@ def full_suite():
       unittest.TestLoader().loadTestsFromTestCase(Collect_fastq_test1),
       unittest.TestLoader().loadTestsFromTestCase(Collect_fastq_test_sc1),
       unittest.TestLoader().loadTestsFromTestCase(CollectionAdaptor_test1),
+      unittest.TestLoader().loadTestsFromTestCase(CollectionAdaptor_test2),
       unittest.TestLoader().loadTestsFromTestCase(Dbutils_test1),
       unittest.TestLoader().loadTestsFromTestCase(Find_seqrun_test1),
       unittest.TestLoader().loadTestsFromTestCase(Flowcell_barcode_rule_test1),
