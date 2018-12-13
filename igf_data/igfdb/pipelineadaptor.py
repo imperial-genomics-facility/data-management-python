@@ -229,7 +229,8 @@ class PipelineAdaptor(BaseAdaptor):
       if autosave:
         self.commit_session()                                                          # commit changes in db
     except:
-      self.rollback_session()
+      if autosave:
+        self.rollback_session()
       raise
 
 
