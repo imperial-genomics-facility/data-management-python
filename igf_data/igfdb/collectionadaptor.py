@@ -80,6 +80,33 @@ class CollectionAdaptor(BaseAdaptor):
         self.rollback_session()
       raise
 
+  def check_collection_attribute(self,collection_name,collection_type,attribute_name):
+    '''
+    A method for checking collection attribute records for an attribute_name
+    
+    :param collection_name: A collection name
+    :param collection_type: A collection type
+    :param attribute_name: A collection attribute name
+    :returns: Boolean, True if record exists or False
+    '''
+    try:
+      record_exists=False
+      query=self.session.\
+            query(Collection).\
+            join(Collection_attribute).\
+            filter(Collection.name==collection_name).\
+            filter(Collection.type==collection_type).\
+            filter(Collection.collection_id==Collection_attribute.collection_id).\
+            filter(Collection_attribute.attribute_name==attribute_name)
+      records=self.fetch_records(query=query,
+                                 output_mode='dataframe')                       # attribute can present more than one time
+      if len(records.index)>0:
+        record_exists=True
+
+      return record_exists
+    except:
+      raise
+
 
   def store_collection_attributes(self, data, collection_id='', autosave=False):
     '''
