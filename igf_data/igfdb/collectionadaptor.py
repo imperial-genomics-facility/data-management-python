@@ -148,17 +148,87 @@ class CollectionAdaptor(BaseAdaptor):
       if autosave:
         self.commit_session()                                                   # commit changes
     except:
-      self.rollback_session()
+      if autosave:
+        self.rollback_session()
       raise
 
 
-  def store_collection_attributes(self, data, collection_id='', autosave=False):
+  def create_or_update_collection_attributes(self,data,autosave=True):
+    '''
+    A method for creating or updating collection attribute table, if the collection exists
+    
+    :param data: A list of dictionaries, containing following entries
+    
+                 collection_name
+                 collection_type
+                 attribute_name
+                 attribute_value
+    :param autosave: A toggle for saving changes to database, default True
+    '''
+    try:
+      if not isinstance(data,list) or \
+         len(data)==0:
+        raise ValueError('No data found for collection attribute update')
+
+      for entry in data:
+        collection_name=entry.get('collection_name')
+        collection_type=entry.get('collection_type')
+        attribute_name=entry.get('attribute_name')
+        attribute_value=entry.get('attribute_value')
+        if collection_name is None or \
+           collection_type is None or \
+           attribute_name is None or \
+           attribute_value is None:
+          raise ValueError('Required data not found for collection attribute updates: {0}'.\
+                           format(entry))
+        collection_exists=\
+          self.check_collection_records_name_and_type(\
+            collection_name=collection_name,
+            collection_type=collection_type
+          )
+        if not collection_exists:
+          raise ValueError('No collection found for name: {0} and type: {1}'.\
+                           format(collection_name,collection_type))
+
+        collection_attribute_exists=\
+          self.check_collection_attribute(\
+            collection_name=collection_name,
+            collection_type=collection_type,
+            attribute_name=attribute_name
+          )
+        if collection_attribute_exists:
+          self.update_collection_attribute(\
+            collection_name=collection_name,
+            collection_type=collection_type,
+            attribute_name=attribute_name,
+            attribute_value=attribute_value,
+            autosave=False
+          )
+        else:
+          attribute_data=[{'name':collection_name,
+                           'type':collection_type,
+                           'attribute_name':attribute_name,
+                           'attribute_value':attribute_value
+                         }]
+          self.store_collection_attributes(\
+                 data=attribute_data,
+                 autosave=False
+               )
+      if autosave:
+        self.commit_session()
+    except:
+      if autosave:
+        self.rollback_session()
+      raise
+
+
+  def store_collection_attributes(self,data,collection_id='',autosave=False):
     '''
     A method for storing data to Collectionm_attribute table
     
     :param data: A list of dictionary or a Pandas DataFrame
     :param collection_id: A collection id, optional
-    :param autosave: A toggle for saving changes to database, default True
+    :param autosave: A toggle for saving changes to database, default False
     '''
     try:
       if not isinstance(data, pd.DataFrame):
@@ -286,6 +356,8 @@ class CollectionAdaptor(BaseAdaptor):
       if autosave:
         self.commit_session()
     except:
+      if autosave:
+        self.rollback_session()
       raise
 
 
@@ -481,6 +553,8 @@ class CollectionAdaptor(BaseAdaptor):
       if autosave:
         self.commit_session()                                                   # save changes to db
     except:
+      if autosave:
+        self.rollback_session()
       raise
 
 
