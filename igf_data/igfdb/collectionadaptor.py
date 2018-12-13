@@ -80,6 +80,7 @@ class CollectionAdaptor(BaseAdaptor):
         self.rollback_session()
       raise
 
+
   def check_collection_attribute(self,collection_name,collection_type,attribute_name):
     '''
     A method for checking collection attribute records for an attribute_name
@@ -105,6 +106,49 @@ class CollectionAdaptor(BaseAdaptor):
 
       return record_exists
     except:
+      raise
+
+
+  def update_collection_attribute(self,collection_name,collection_type,attribute_name,
+                                  attribute_value,autosave=True):
+    '''
+    A method for updating collection attribute
+    
+    :param collection_name: A collection name
+    :param collection_type: A collection type
+    :param attribute_name: A collection attribute name
+    :param attribute_value: A collection attribute value
+    :param autosave: A toggle for committing changes to db, default True
+    '''
+    try:
+      data=[{'name':collection_name,
+             'type':collection_type,
+             'attribute_name':attribute_name,
+             'attribute_value':attribute_value
+           }]
+      data=pd.DataFrame(data)
+      map_function=lambda x: \
+                   self.map_foreign_table_and_store_attribute(\
+                     data=x,
+                     lookup_table=Collection,
+                     lookup_column_name=['name','type'],
+                     target_column_name='collection_id'
+                    )                                                           # prep function
+      data=data.apply(map_function, axis=1)                                     # add collection id
+      for entry in data.to_dict(orient='records'):
+        if entry.get('collection_id') is None:
+          raise ValueError('Collection id not found')
+
+        self.session.\
+        query(Collection_attribute).\
+        filter(Collection_attribute.collection_id==entry.get('collection_id')).\
+        filter(Collection_attribute.attribute_name==entry.get('attribute_name')).\
+        update({'attribute_value':entry.get('attribute_value')})                # update collection value
+
+      if autosave:
+        self.commit_session()                                                   # commit changes
+    except:
+      self.rollback_session()
       raise
 
 
@@ -140,7 +184,7 @@ class CollectionAdaptor(BaseAdaptor):
       raise
 
 
-  def check_collection_records_name_and_type(self, collection_name, collection_type):
+  def check_collection_records_name_and_type(self,collection_name,collection_type):
     '''
     A method for checking existing data for Collection table
     
