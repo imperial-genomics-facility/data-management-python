@@ -1,4 +1,6 @@
-import os
+import os,tarfile
+import pandas as pd
+from igf_data.utils.fileutils import check_file_path,get_temp_dir,remove_dir
 from igf_data.utils.analysis_fastq_fetch_utils import get_fastq_input_list
 
 def get_cellranger_count_input_list(db_session_class,experiment_igf_id,
@@ -77,3 +79,35 @@ def check_cellranger_count_output(output_path,
 
   except:
     raise
+
+
+def extract_cellranger_count_metrics_summary(cellranger_tar,
+                                             target_filename='metrics_summary.csv'):
+  '''
+  A function for extracting metrics summary file for cellranger ourput tar and parse the file
+  
+  :param cellranger_tar: A cellranger output tar file
+  :param target_filename: A filename for metrics summary file lookup, default metrics_summary.csv
+  '''
+  try:
+    check_file_path(cellranger_tar)
+    temp_work_dir=get_temp_dir(use_ephemeral_space=True)
+    metrics_file=None
+    with tarfile.open(cellranger_tar,mode='r') as tar:
+      for file_name in tar.getnames():
+        if os.path.basename(file_name) == target_filename:
+            tar.extract(file_name,path=temp_work_dir)
+            metrics_file=os.path.join(temp_work_dir,
+                                      file)
+
+    if metrics_file is None:
+      raise IOError('Required file {0} not found in tar {1}'.\
+                    format(target_filename,cellranger_tar))
+
+    attribute_data=pd.read_csv(metrics_file).\
+                   to_dict(orient='records')
+    return attribute_data
+  except:
+    raise
+
+
