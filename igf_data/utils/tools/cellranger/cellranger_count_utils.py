@@ -98,7 +98,7 @@ def extract_cellranger_count_metrics_summary(cellranger_tar,
         if os.path.basename(file_name) == target_filename:
             tar.extract(file_name,path=temp_work_dir)
             metrics_file=os.path.join(temp_work_dir,
-                                      file)
+                                      file_name)
 
     if metrics_file is None:
       raise IOError('Required file {0} not found in tar {1}'.\
@@ -106,6 +106,7 @@ def extract_cellranger_count_metrics_summary(cellranger_tar,
 
     attribute_data=pd.read_csv(metrics_file).\
                    to_dict(orient='records')
+    remove_dir(temp_work_dir)
     return attribute_data
   except:
     raise
