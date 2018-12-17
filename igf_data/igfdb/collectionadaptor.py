@@ -222,6 +222,33 @@ class CollectionAdaptor(BaseAdaptor):
       raise
 
 
+  @staticmethod
+  def prepare_data_for_collection_attribute(collection_name,collection_type,data_list):
+    '''
+    A static method for building data structure for collection attribute table update
+    
+    :param collection_name: A collection name
+    :param collection_type: A collection type
+    :param data: A list of dictionaries containing the data for attribute table
+    :returns: A new list of dictionary for the collection attribute table
+    '''
+    try:
+      if not isinstance(data_list,list) or \
+         len(data_list)==0 or \
+         not isinstance(data_list[0],dict):
+        raise ValueError('No data found for attribute table')
+
+      attribute_data_list=[{'name':collection_name,
+                            'type':collection_type,
+                            'attribute_name':key,
+                            'attribute_value':val}
+                            for item in data_list
+                              for key,val in item.items()]
+      return attribute_data_list
+    except:
+      raise
+
+
   def store_collection_attributes(self,data,collection_id='',autosave=False):
     '''
     A method for storing data to Collectionm_attribute table
