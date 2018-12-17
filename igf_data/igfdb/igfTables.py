@@ -739,8 +739,8 @@ class Collection_attribute(Base):
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
   collection_attribute_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
-  attribute_name          = Column(String(45))
-  attribute_value         = Column(String(45))
+  attribute_name          = Column(String(200))
+  attribute_value         = Column(String(200))
   collection_id           = Column(INTEGER(unsigned=True), ForeignKey('collection.collection_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
 
   def __repr__(self):
