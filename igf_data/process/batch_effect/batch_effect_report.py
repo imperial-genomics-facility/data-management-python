@@ -54,6 +54,7 @@ class Batch_effect_report:
       temp_pca_flowcell=os.path.join(temp_dir,'pca_flowcell.png')
       temp_pca_flowcell_lane=os.path.join(temp_dir,'pca_flowcell_lane.png')
       check_file_path(self.input_json_file)
+      check_file_path(self.rscript_path)
       with open(self.input_json_file,'r') as json_data:
         input_list=json.load(json_data)
 
