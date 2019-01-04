@@ -1,10 +1,10 @@
-import subprocess,re,os,json
 from shlex import quote
 import pandas as pd
 from copy import copy
 import matplotlib
 from sklearn.decomposition import PCA
-from igf_data.utils.fileutils import get_temp_dir,remove_dir,check_file_path
+import subprocess,re,os,json,base64
+from igf_data.utils.fileutils import get_temp_dir,remove_dir,check_file_path,copy_local_file
 from jinja2 import Template,Environment, FileSystemLoader,select_autoescape
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -40,7 +40,33 @@ class Batch_effect_report:
     self.allowed_strands=allowed_strands
     self.read_threshold=read_threshold
 
-  def check_lane_effect_and_log_report(self):
+
+  @staticmethod
+  def _encode_png_image(png_file):
+    '''
+    A static method for encoding png files to string data
+    
+    :param png_file: A png filepath
+    :returns: A string data
+    '''
+    try:
+      if not os.path.exists(png_file):
+        raise ValueError('File not present')
+    
+      encoded=base64.b64encode(open(png_file, "rb").read()).decode()
+      return encoded
+    except:
+        raise
+
+
+  def check_lane_effect_and_log_report(self,project_name,sample_name,output_file):
+    '''
+    A function for generating batch effect report for a sample and project
+    
+    :param project_name: A project name for the report file
+    :param sample_name: A sample name for the report file
+    :param output_file: Path of the output report file
+    '''
     try:
       if self.strand_info not in self.allowed_strands:
         raise ValueError('{0} is not a valid strand'.format(self.strand_info))
@@ -53,6 +79,8 @@ class Batch_effect_report:
       temp_corr=os.path.join(temp_dir,'corr.png')
       temp_pca_flowcell=os.path.join(temp_dir,'pca_flowcell.png')
       temp_pca_flowcell_lane=os.path.join(temp_dir,'pca_flowcell_lane.png')
+      temp_html_report=os.path.join(temp_dir,
+                                    os.path.basename(self.template_file))
       check_file_path(self.input_json_file)
       check_file_path(self.rscript_path)
       with open(self.input_json_file,'r') as json_data:
@@ -163,6 +191,25 @@ class Batch_effect_report:
                           data=results_df,
                           fit_reg=False);
       pca_plot.fig.savefig(temp_pca_flowcell_lane)                              # plot flowcell-lane level pca
+      template_env=Environment(\
+                     loader=FileSystemLoader(\
+                              searchpath=os.path.dirname(self.template_file)),
+                     autoescape=select_autoescape(['xml']))
+      template_file=template_env.\
+                    get_template(os.path.basename(self.template_file))
+      template_file.\
+        stream(ProjectName=project_name,
+               SampleName=sample_name,
+               mdsPlot=self._encode_png_image(png_file=temp_png_output),
+               clustermapPlot=self._encode_png_image(png_file=temp_clustermap),
+               corrPlot=self._encode_png_image(png_file=temp_corr),
+               pca1Plot=self._encode_png_image(png_file=temp_pca_flowcell),
+               pca2Plot=self._encode_png_image(png_file=temp_pca_flowcell_lane),
+              ).\
+        dump(temp_html_report)
+      copy_local_file(temp_html_report,
+                      output_file,
+                      force=True)
     except:
       raise
         
