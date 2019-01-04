@@ -1,0 +1,41 @@
+<html>
+    <head>
+      <!-- Global site tag (gtag.js) - Google Analytics -->
+      <script async src="https://www.googletagmanager.com/gtag/js?id=UA-111031356-1"></script>
+      <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+
+        gtag('config', 'UA-111031356-1');
+      </script>
+      <title>Scanpy Report {{ ProjectName }} {{ SampleName }}</title>
+    </head>
+    <body>
+        <h2>Project info</h2>
+        <dt>Project Name</dt>
+           <dd>{{ ProjectName }}</dd>
+        <p></p>
+        <dt>Sample Name</dt>
+           <dd>{{ SampleName }}</dd>
+        
+        <h2>Description</h2>
+        <p>This report shows the presence of any batch effect introduced by different sequencing flowcell or lane</p>
+
+        <h3>MDS plot from edgeR</h3>
+        <img src="data:image/png;base64,{{ mdsPlot }}">
+
+        <h3>Clustering plot for multiple flowells or lanes</h3>
+        <img src="data:image/png;base64,{{ clustermapPlot }}">
+        
+        <h3>Correlation plot for multiple flowells or lanes</h3>
+        <img src="data:image/png;base64,{{ corrPlot }}">
+        
+        <h3>PCA plot for multiple flowells</h3>
+        <img src="data:image/png;base64,{{ pca1Plot }}">
+        
+        <h3>PCA plot for multiple flowells and lanes</h3>
+        <img src="data:image/png;base64,{{ pca2Plot }}">
+        
+     </body>
+</html>
