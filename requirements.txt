@@ -15,4 +15,3 @@ jinja2
 gviz_api
 xlrd
 jsonschema
-pysam==0.14.1
