@@ -92,4 +92,5 @@ ENV/
 .pydevproject
 .settings/
 /de.loskutov.anyedit.AnyEditTools.prefs
+.vscode
 
