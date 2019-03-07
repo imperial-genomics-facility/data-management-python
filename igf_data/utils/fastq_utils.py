@@ -35,7 +35,7 @@ def identify_fastq_pair(input_list,sort_output=True,check_count=False):
        len(read1_list)==len(read2_list):                                        # if fastq input list is not properly sorted
       sorted_read2_list=list()
       for file1 in read1_list:
-        temp_file2=file1.replace('R1','R2')
+        temp_file2=file1.replace('_R1_','_R2_')
         if temp_file2 not in read2_list:
           raise ValueError('No read2 found for file {0}'.format(file1))
         else:
