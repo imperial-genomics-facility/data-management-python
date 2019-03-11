@@ -28,8 +28,10 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       'remote_host':None,
       'seqruninfofile':'seqruninfofile.json',
       'samplereadcountfile':'samplereadcountfile.json',
+      'samplereadcountcsvfile':'samplereadcountfile.csv',
       'status_data_json':'status_data.json',
       'analysis_data_json':'analysis_data.json',
+      'analysis_data_csv':'analysis_data.csv',
       'analysis_view_js':'viewer.js',
       'image_height':700,
       'sample_count_threshold':75,
@@ -57,8 +59,10 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       analysis_viewer_template=self.param('analysis_viewer_template')
       seqruninfofile=self.param('seqruninfofile')
       samplereadcountfile=self.param('samplereadcountfile')
+      samplereadcountcsvfile=self.param('samplereadcountcsvfile')
       status_data_json=self.param('status_data_json')
       analysis_data_json=self.param('analysis_data_json')
+      analysis_data_csv=self.param('analysis_data_csv')
       analysis_view_js=self.param('analysis_view_js')
       image_height=self.param('image_height')
       sample_count_threshold=self.param('sample_count_threshold')
@@ -155,6 +159,7 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       stream(ProjectName=project_name,
              seqrunInfoFile=seqruninfofile,
              sampleReadCountFile=samplereadcountfile,
+             sampleReadCountCsvFile=samplereadcountcsvfile,
              ImageHeight=image_height).\
       dump(project_output)                                                      # write new project file
       os.chmod(project_output,
@@ -189,7 +194,9 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
                        os.path.basename(analysis_template_path))
       project_analysis.\
       stream(ProjectName=project_name,
-             analysisInfoFile=analysis_data_json).\
+             analysisInfoFile=analysis_data_json,
+             analysisInfoCsvFile=analysis_data_csv
+             ).\
       dump(analysis_output)                                                     # write new project analysis file
       os.chmod(analysis_output,
                mode=0o774)
