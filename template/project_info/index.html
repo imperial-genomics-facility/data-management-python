@@ -20,6 +20,25 @@
     <link href="http://eliot.med.ic.ac.uk/report/static_pages/sticky-footer.css" rel="stylesheet">
    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
     <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script type="text/javascript">
+      google.charts.load('current', {'packages':['table']});
+      function drawTable() {
+        $.getJSON("{{ sampleReadCountFile }}", function(jsonData) {
+          var data = new google.visualization.DataTable(jsonData);
+          var table = new google.visualization.Table(document.getElementById('barchart_material'));
+          table.draw(data, {showRowNumber: false, width: '100%', height: '100%', page: 'enable',pageSize: 15});
+        });
+    }
+    </script>
+    <script type="text/javascript">
+      google.charts.setOnLoadCallback(drawToolbar);
+      function drawToolbar() {
+        var components = [{type: 'csv', datasource: "{{ sampleReadCountCsvFile }}" }];
+        var container = document.getElementById('toolbar_div');
+        google.visualization.drawToolbar(container, components);
+      
+    };
+    </script>
     <script type="text/javascript" >
       google.charts.load("current", {packages: ["corechart"]});
       google.charts.setOnLoadCallback(drawChart);
@@ -287,9 +306,11 @@
            <input type="button" value="Column plot - Linear" onclick=drawChart() />
            <input type="button" value="Column plot - Log" onclick=drawLogChart() />
            <input type="button" value="Histogram plot" onclick=drawHist() />
+           <input type="button" value="Data table" onclick=drawTable() />
            <p></p>
            <input type="button" value="Column plot - Linear (CB)" onclick=drawCSChart() />
            <input type="button" value="Histogram plot (CB)" onclick=drawCSHist() />
+           <div id="toolbar_div"></div>
            <div id="barchart_material" ></div>
         </main>
       </div>
