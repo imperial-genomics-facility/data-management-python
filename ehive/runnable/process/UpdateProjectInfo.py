@@ -1,4 +1,5 @@
 import os,subprocess
+import pandas as pd
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.fileutils import get_temp_dir, remove_dir
 from igf_data.utils.fileutils import copy_remote_file
@@ -19,6 +20,7 @@ class UpdateProjectInfo(IGFBaseProcess):
       'remote_host':None,
       'seqruninfofile':'seqruninfofile.json',
       'samplereadcountfile':'samplereadcountfile.json',
+      'samplereadcountcsvfile':'samplereadcountfile.csv',
       'status_data_json':'status_data.json',
       'pipeline_name':None,
       'analysis_pipeline_name':None,
@@ -35,13 +37,16 @@ class UpdateProjectInfo(IGFBaseProcess):
       remote_host=self.param_required('remote_host')
       seqruninfofile=self.param('seqruninfofile')
       samplereadcountfile=self.param('samplereadcountfile')
+      samplereadcountcsvfile=self.param('samplereadcountcsvfile')
       status_data_json=self.param('status_data_json')
       pipeline_name=self.param_required('pipeline_name')
       analysis_pipeline_name=self.param_required('analysis_pipeline_name')
 
-      temp_work_dir=get_temp_dir()                                              # get a temp dir
+      temp_work_dir=get_temp_dir(use_ephemeral_space=True)                      # get a temp dir
       temp_read_count_output=os.path.join(temp_work_dir,
                                           samplereadcountfile)                  # get path for temp read count file
+      temp_read_count_csv_output=os.path.join(temp_work_dir,
+                                              samplereadcountcsvfile)           # get path for temp read count csv file
       temp_seqrun_info=os.path.join(temp_work_dir,
                                     seqruninfofile)                             # get path for temp seqrun info file
       raw_read_count=get_project_read_count(session_class=igf_session_class,
@@ -52,55 +57,40 @@ class UpdateProjectInfo(IGFBaseProcess):
                                        data=read_count_data,
                                        columns_order=column_order,
                                        output_file=temp_read_count_output)      # write data to output json file
-      seqrun_data=get_seqrun_info_for_project(session_class=igf_session_class,
-                                            project_igf_id=project_name)        # fetch seqrun info for each projects
+      if not isinstance(read_count_data,pd.DataFrame):
+        raise ValueError('Expecting a pandas dataframe, and got {0}'.\
+          format(type(read_count_data)))
+
+      read_count_data.to_csv(temp_read_count_csv_output,index=False)            # create csv output for project data
+      seqrun_data=get_seqrun_info_for_project(\
+        session_class=igf_session_class,
+        project_igf_id=project_name)                                            # fetch seqrun info for each projects
       add_seqrun_path_info(input_data=seqrun_data,
                            output_file=temp_seqrun_info)                        # write seqrun info json
-      remote_project_dir=os.path.join(remote_project_path,\
+      remote_project_dir=os.path.join(remote_project_path,
                                       project_name)                             # get remote project directory path
-      check_seqrun_cmd=['ssh',\
-                        '{0}@{1}'.\
-                        format(remote_user,\
-                               remote_host),\
-                        'ls',\
-                        os.path.join(remote_project_dir,seqruninfofile)]
-      response=subprocess.call(check_seqrun_cmd)                                # check for existing seqruninfofile
-      if response !=0:
-        rm_seqrun_cmd=['ssh',\
-                       '{0}@{1}'.\
-                       format(remote_user,\
-                              remote_host),\
-                       'rm',\
-                       '-f',\
-                       os.path.join(remote_project_dir,
-                                    seqruninfofile)]
-        subprocess.check_call(rm_seqrun_cmd)                                    # remove existing seqruninfofile
-      os.chmod(temp_seqrun_info, mode=0o754)                                    # changed file permission before copy
-      copy_remote_file(source_path=temp_seqrun_info, \
-                       destinationa_path=remote_project_dir, \
-                       destination_address=remote_host)                         # copy file to remote
-      check_readcount_cmd=['ssh',\
-                           '{0}@{1}'.\
-                           format(remote_user,\
-                                  remote_host),\
-                           'ls',\
-                           os.path.join(remote_project_dir,
-                                        samplereadcountfile)]                   # check for existing samplereadcountfile
-      response=subprocess.call(check_readcount_cmd)
-      if response !=0:
-        rm_readcount_cmd=['ssh',\
-                          '{0}@{1}'.\
-                          format(remote_user,\
-                                 remote_host),\
-                          'rm',\
-                          '-f',\
-                          os.path.join(remote_project_dir,
-                                       samplereadcountfile)]
-        subprocess.check_call(rm_readcount_cmd)                                 # remove existing samplereadcountfile
+      os.chmod(temp_seqrun_info,
+               mode=0o754)                                                      # changed file permission before copy
+      self._check_and_copy_remote_file(\
+        remote_user=remote_user,
+        remote_host=remote_host,
+        source_file=temp_seqrun_info,
+        remote_file=os.path.join(remote_project_dir,
+                                 seqruninfofile))                               # copy seqrun info file to remote
       os.chmod(temp_read_count_output, mode=0o754)                              # changed file permission before copy
-      copy_remote_file(source_path=temp_read_count_output, \
-                       destinationa_path=remote_project_dir, \
-                       destination_address=remote_host)                         # copy file to remote
+      self._check_and_copy_remote_file(\
+        remote_user=remote_user,
+        remote_host=remote_host,
+        source_file=temp_read_count_output,
+        remote_file=os.path.join(remote_project_dir,
+                                 samplereadcountfile))                          # copy file sample read count json file to remote
+      os.chmod(temp_read_count_csv_output, mode=0o754)                          # changed file permission before copy
+      self._check_and_copy_remote_file(\
+        remote_user=remote_user,
+        remote_host=remote_host,
+        source_file=temp_read_count_csv_output,
+        remote_file=os.path.join(remote_project_dir,
+                                 samplereadcountcsvfile))                       # copy file sample read count csv file to remote
 
       ps=Project_status(igf_session_class=igf_session_class,
                         project_igf_id=project_name)
@@ -113,28 +103,12 @@ class UpdateProjectInfo(IGFBaseProcess):
            active_seqrun_igf_id=seqrun_igf_id)                                  # write data to output json file
       os.chmod(temp_status_output,
                mode=0o754)                                                      # changed file permission before copy
-      check_status_cmd=['ssh',\
-                        '{0}@{1}'.\
-                        format(remote_user,\
-                               remote_host),\
-                        'ls',\
-                        os.path.join(remote_project_dir,
-                                     status_data_json)]
-      response=subprocess.call(check_status_cmd)                                # check for existing status data file
-      if response !=0:
-        rm_status_cmd=['ssh',\
-                       '{0}@{1}'.\
-                       format(remote_user,\
-                              remote_host),\
-                       'rm',\
-                       '-f',\
-                       os.path.join(remote_project_dir,
-                                    status_data_json)]
-        subprocess.check_call(rm_status_cmd)                                    # remove existing status file
-
-      copy_remote_file(source_path=temp_status_output, \
-                       destinationa_path=remote_project_dir, \
-                       destination_address=remote_host)                         # copy file to remote
+      self._check_and_copy_remote_file(\
+        remote_user=remote_user,
+        remote_host=remote_host,
+        source_file=temp_status_output,
+        remote_file=os.path.join(remote_project_dir,
+                                 status_data_json))                             # copy file project status file to remote
       self.param('dataflow_params',{'remote_project_info':'done'})
       remove_dir(temp_work_dir)                                                 # remove temp dir
     except Exception as e:
@@ -143,4 +117,46 @@ class UpdateProjectInfo(IGFBaseProcess):
                                                       seqrun_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
+      raise
+
+  @staticmethod
+  def _check_and_copy_remote_file(remote_user,remote_host,
+                                  source_file,remote_file):
+    '''
+    An internal static method for copying files to remote path
+    
+    :param remote_user: Username for the remote server
+    :param remote_host: Hostname for the remote server
+    :param source_file: Source filepath
+    :param remote_file: Remote filepath
+    '''
+    try:
+      if not os.path.exists(source_file):
+        raise IOError('Source file {0} not found for copy'.\
+                      format(source_file))
+
+      check_remote_cmd=['ssh',
+                        '{0}@{1}'.\
+                        format(remote_user,
+                               remote_host),
+                        'ls',
+                        '-a',
+                        remote_file]                                            # remote check cmd
+      response=subprocess.call(check_remote_cmd)                                # look for existing remote file
+      if response !=0:
+        rm_remote_cmd=['ssh',
+                       '{0}@{1}'.\
+                       format(remote_user,
+                              remote_host),
+                       'rm',
+                       '-f',
+                       remote_file]                                             # remote rm cmd
+        subprocess.check_call(rm_remote_cmd)                                    # remove existing file
+
+      copy_remote_file(source_path=source_file,
+                       destinationa_path=remote_file,
+                       destination_address='{0}@{1}'.\
+                                           format(remote_user,
+                                                  remote_host))                 # create dir and copy file to remote
+    except:
       raise
