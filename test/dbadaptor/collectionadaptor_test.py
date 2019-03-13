@@ -50,7 +50,7 @@ class CollectionAdaptor_test1(unittest.TestCase):
     ca=CollectionAdaptor(**{'session_class':self.session_class})
     ca.start_session()
     ca.load_file_and_create_collection(data)
-    (name,table)=ca.fetch_collection_name_and_table_from_file_path(file_path)
+    (name,_)=ca.fetch_collection_name_and_table_from_file_path(file_path)
     ca.close_session()
     self.assertEqual(name, 'IGF00001_MISEQ_000000000-D0YLK_1')
 

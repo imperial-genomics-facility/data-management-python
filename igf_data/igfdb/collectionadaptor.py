@@ -558,7 +558,7 @@ class CollectionAdaptor(BaseAdaptor):
          collection_type_col not in data or \
          file_path_col not in data:
         raise ValueError('Missing required fields for checking existing collection group'.\
-                         format(data.to-dict()))
+                         format(data.to_dict()))
 
       collection_files=self.get_collection_files(collection_name=data[collection_name_col],
                                                  collection_type=data[collection_type_col],
