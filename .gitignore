@@ -94,3 +94,6 @@ ENV/
 /de.loskutov.anyedit.AnyEditTools.prefs
 .vscode
 
+test/dbadaptor/data
+test/process/data
+test/utils/data
