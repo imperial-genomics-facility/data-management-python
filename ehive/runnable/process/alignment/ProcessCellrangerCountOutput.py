@@ -42,13 +42,10 @@ class ProcessCellrangerCountOutput(IGFBaseProcess):
       project_igf_id=self.param_required('project_igf_id')
       experiment_igf_id=self.param_required('experiment_igf_id')
       sample_igf_id=self.param_required('sample_igf_id')
-      sample_submitter_id=self.param_required('sample_submitter_id')
       igf_session_class=self.param_required('igf_session_class')
       cellranger_output=self.param_required('cellranger_output')
-      base_work_dir=self.param_required('base_work_dir')
       base_result_dir=self.param_required('base_results_dir')
       species_name=self.param('species_name')
-      reference_type=self.param('reference_type')
       manifest_filename=self.param('manifest_filename')
       analysis_name=self.param('analysis_name')
       collection_type=self.param('collection_type')
@@ -110,10 +107,11 @@ class ProcessCellrangerCountOutput(IGFBaseProcess):
                                     'analysis_output_list':output_file_list
                                    })                                           # pass on cellranger output path
     except Exception as e:
-      message='project: {2}, sample:{3}, Error in {0}: {1}'.format(self.__class__.__name__, \
-                                                      e, \
-                                                      project_igf_id,
-                                                      sample_igf_id)
+      message='project: {2}, sample:{3}, Error in {0}: {1}'.\
+              format(self.__class__.__name__,
+                     e,
+                     project_igf_id,
+                     sample_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise
