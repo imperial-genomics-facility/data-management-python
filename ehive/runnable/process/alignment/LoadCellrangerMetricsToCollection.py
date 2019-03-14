@@ -51,7 +51,8 @@ class LoadCellrangerMetricsToCollection(IGFBaseProcess):
       try:
         ca.create_or_update_collection_attributes(\
            data=cellranger_metrics,
-           autosave=True)                                                       # load cellranger metrics to collection attribute table
+           autosave=False)                                                      # load cellranger metrics to collection attribute table
+        ca.commit_session()
         ca.close_session()
       except:
           ca.rollback_session()
