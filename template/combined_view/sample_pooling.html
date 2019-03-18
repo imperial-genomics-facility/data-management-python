@@ -1,0 +1,47 @@
+<html>
+  <head>
+    <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript" src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+    <script type="text/javascript">
+      google.charts.load('current', {'packages':['corechart', 'controls']});
+      google.charts.setOnLoadCallback(drawDashboard);
+      function drawDashboard() {
+          $.getJSON("sample_pooling_info.json", function(jsonData) {
+              var data = new google.visualization.DataTable(jsonData);
+              //var table = new google.visualization.Table(document.getElementById('table_div'));
+              var dashboard = new google.visualization.Dashboard(
+                                 document.getElementById('dashboard_div'));
+              
+              var filter_col = new google.visualization.ControlWrapper({
+                                     'controlType': 'StringFilter',
+                                     'containerId': 'filter_div',
+                                     'options': {
+                                         'filterColumnLabel': 'Project',
+                                         'matchType': 'any'
+                                     }
+                               });
+              var table = new google.visualization.ChartWrapper({
+                             'chartType': 'Table',
+                             'containerId': 'table_div',
+                             'options': {'showRowNumber': false, 
+                                         'width': '100%', 
+                                         'height': '75%', 
+                                         'page': 'enable',
+                                         'showRowNumber': true,
+                                         'allowHtml': true,
+                                         'pageSize': 100}
+                             });
+             dashboard.bind(filter_col, table);
+             dashboard.draw(data);
+        });
+      }
+    </script>
+  </head>
+  <body>
+    <div id="dashboard_div">
+    <!--Divs that will hold each control and chart-->
+      <div id="filter_div"></div>
+      <div id="table_div"></div>
+    </div>
+  </body>
+</html>
