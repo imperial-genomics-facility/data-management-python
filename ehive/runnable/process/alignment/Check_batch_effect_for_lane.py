@@ -92,7 +92,7 @@ class Check_batch_effect_for_lane(IGFBaseProcess):
           au.load_file_to_disk_and_db(\
                input_file_list=[temp_output_file])                              # load file to db and disk
         self.param('dataflow_params',
-                   {'batch_effect_report':output_file_list[0]})                 # populating data flow only if report is present
+                   {'batch_effect_reports':output_file_list})                   # populating data flow only if report is present
     except Exception as e:
       message='project: {2}, sample:{3}, Error in {0}: {1}'.\
               format(self.__class__.__name__,
