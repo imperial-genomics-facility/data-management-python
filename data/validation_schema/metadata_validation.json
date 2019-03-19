@@ -183,6 +183,10 @@
             },
             "cell_line" : {
               "type" : "string"
+            },
+            "expected_read" : {
+              "type" : "string",
+              "pattern" : "^\\d+$|^$"
             }
         },
         "required": ["project_igf_id",
