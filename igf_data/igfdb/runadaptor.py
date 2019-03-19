@@ -230,3 +230,32 @@ class RunAdaptor(BaseAdaptor):
       return project_igf_id,sample_igf_id,experiment_igf_id
     except:
       raise
+
+  def fetch_flowcell_and_lane_for_run(self,run_igf_id):
+    '''
+    A run adapter method for fetching flowcell id and lane info for each run
+
+    :param run_igf_id: A run igf id string
+    :returns: Flowcell id and lane number
+              It will return None if no records found
+    '''
+    try:
+      flowcell_id=None
+      lane_number=None
+      query=self.session.\
+            query(Run.run_igf_id,
+                  Run.lane_number,
+                  Seqrun.flowcell_id
+            ).\
+            join(Seqrun,Run.seqrun_id==Seqrun.seqrun_id).\
+            filter(Run.run_igf_id==run_igf_id)
+      data=self.fetch_records(query=query,
+                              output_mode='one_or_none'
+                             )
+      if data is not None:
+        flowcell_id=data.flowcell_id
+        lane_number=data.lane_number
+
+      return flowcell_id,lane_number
+    except:
+      raise

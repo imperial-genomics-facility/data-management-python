@@ -84,6 +84,16 @@ class RunAdaptor_test1(unittest.TestCase):
     ra.start_session()
     sample=ra.fetch_sample_info_for_run(run_igf_id='IGF00001_MISEQ_000000000-D0YLK_1')
     self.assertEqual(sample['sample_igf_id'], 'IGF00001')
-    
+    ra.close_session()
+
+  def test_fetch_flowcell_and_lane_for_run(self):
+    ra=RunAdaptor(**{'session_class':self.session_class})
+    ra.start_session()
+    flowcell_id,lane_number = \
+      ra.fetch_flowcell_and_lane_for_run(run_igf_id='IGF00001_MISEQ_000000000-D0YLK_1')
+    ra.close_session()
+    self.assertEqual(flowcell_id,'000000000-D0YLK')
+    self.assertEqual(int(lane_number),1)
+
 if __name__=='__main__':
   unittest.main()
