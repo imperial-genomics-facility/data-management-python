@@ -57,6 +57,7 @@ class UpdateProjectInfo(IGFBaseProcess):
                                        data=read_count_data,
                                        columns_order=column_order,
                                        output_file=temp_read_count_output)      # write data to output json file
+      read_count_data = pd.DataFrame(read_count_data)
       if not isinstance(read_count_data,pd.DataFrame):
         raise ValueError('Expecting a pandas dataframe, and got {0}'.\
           format(type(read_count_data)))
