@@ -19,8 +19,8 @@ class FastqFileFactory(IGFBaseJobFactory):
     try:
       fastq_dir=self.param_required('fastq_dir')
       seqrun_igf_id=self.param_required('seqrun_igf_id')
-      required_keyword=self.param_required('required_keyword')
-      filter_keyword=self.param_required('filter_keyword')
+      required_keyword=self.param('required_keyword')
+      filter_keyword=self.param('filter_keyword')
       read_pattern=self.param_required('read_pattern')
 
       read_pattern=re.compile(r'{0}'.format(read_pattern))                      # compile read pattern
