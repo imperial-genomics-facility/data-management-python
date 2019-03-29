@@ -23,6 +23,10 @@ class FastqFileFactory(IGFBaseJobFactory):
       filter_keyword=self.param('filter_keyword')
       read_pattern=self.param_required('read_pattern')
 
+      if required_keyword is None and \
+         filter_keyword is None:
+         raise ValueError('Required either required_keyword or filter_keyword')
+
       read_pattern=re.compile(r'{0}'.format(read_pattern))                      # compile read pattern
       if not os.path.exists(fastq_dir):
         raise IOError('fastq dir {0} not accessible'.format(fastq_dir))
