@@ -16,6 +16,7 @@ class SendEmailToUser(IGFBaseProcess):
         'remote_user':None,
         'remote_host':None,
         'user_info_file':None,
+        'sendmail_exe':'/usr/sbin/sendmail',
       })
     return params_dict
   
@@ -32,6 +33,7 @@ class SendEmailToUser(IGFBaseProcess):
       user_info_file=self.param('user_info_file')
       email_template_path=self.param('email_template_path')
       email_template=self.param('email_template')
+      sendmail_exe=self.param('sendmail_exe')
       hpcUser=False                                                             # default value for hpc users
 
       pa=ProjectAdaptor(**{'session_class':igf_session_class})
@@ -76,7 +78,7 @@ class SendEmailToUser(IGFBaseProcess):
                              report_output_file
                             ], \
                             stdout=subprocess.PIPE)
-      sendmail_cmd=['sendmail',\
+      sendmail_cmd=[sendmail_exe,\
                     '-t',\
                    ]
       subprocess.check_call(sendmail_cmd,stdin=proc.stdout)
