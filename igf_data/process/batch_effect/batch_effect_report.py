@@ -112,17 +112,17 @@ class Batch_effect_report:
                          unstranded_label,
                          forward_strand_label,
                          reverse_strand_label])
-        if strand_info=='reverse_strand':
+        if self.strand_info=='reverse_strand':
           data=data[[gene_name_label,
                      reverse_strand_label
                    ]]
           data=data[data[reverse_strand_label]>read_threshold]                  # filter series and remove any low value gene
-        elif strand_info=='forward_strand':
+        elif self.strand_info=='forward_strand':
           data=data[[gene_name_label,
                      forward_strand_label
                    ]]
           data=data[data[forward_strand_label]>read_threshold]                  # filter series and remove any low value gene
-        elif strand_info=='unstranded':
+        elif self.strand_info=='unstranded':
           data=data[[gene_name_label,
                      unstranded_label
                    ]]
