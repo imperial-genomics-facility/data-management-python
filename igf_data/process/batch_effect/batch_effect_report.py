@@ -116,17 +116,17 @@ class Batch_effect_report:
           data=data[[gene_name_label,
                      reverse_strand_label
                    ]]
-          data=data[data[reverse_strand_label]>read_threshold]                  # filter series and remove any low value gene
+          data=data[data[reverse_strand_label]>self.read_threshold]                  # filter series and remove any low value gene
         elif self.strand_info=='forward_strand':
           data=data[[gene_name_label,
                      forward_strand_label
                    ]]
-          data=data[data[forward_strand_label]>read_threshold]                  # filter series and remove any low value gene
+          data=data[data[forward_strand_label]>self.read_threshold]                  # filter series and remove any low value gene
         elif self.strand_info=='unstranded':
           data=data[[gene_name_label,
                      unstranded_label
                    ]]
-          data=data[data[unstranded_label]>read_threshold]                      # filter series and remove any low value gene
+          data=data[data[unstranded_label]>self.read_threshold]                      # filter series and remove any low value gene
         if len(final_df.index)==0:
           final_df=copy(data)
         else:
