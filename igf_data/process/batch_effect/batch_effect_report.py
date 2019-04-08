@@ -90,6 +90,7 @@ class Batch_effect_report:
         raise ValueError('Minimum two input files are required for lane level batch effect checking')
 
       gene_name_label='gene_name'
+      final_df=pd.DataFrame()
       for entry in input_list:
         file=entry.get('file')
         flowcell=entry.get('flowcell')
