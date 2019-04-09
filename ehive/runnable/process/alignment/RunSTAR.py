@@ -40,7 +40,7 @@ class RunSTAR(IGFBaseProcess):
       project_igf_id=self.param_required('project_igf_id')
       experiment_igf_id=self.param_required('experiment_igf_id')
       sample_igf_id=self.param_required('sample_igf_id')
-      run_igf_id=self.param_required('run_igf_id')
+      run_igf_id=self.param('run_igf_id')
       star_exe=self.param_required('star_exe')
       run_mode=self.param_required('run_mode')
       output_prefix=self.param_required('output_prefix')
