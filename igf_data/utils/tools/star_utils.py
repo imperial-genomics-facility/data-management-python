@@ -4,6 +4,17 @@ from igf_data.utils.fastq_utils import detect_non_fastq_in_file_list,identify_fa
 from igf_data.utils.fileutils import check_file_path,get_temp_dir,remove_dir,copy_local_file
 
 class Star_utils:
+  '''
+  A wrapper python class for running STAR alignment
+
+  :param star_exe: STAR executable path
+  :param input_files: List of input files for running alignment
+  :param genome_dir: STAR reference transcriptome path
+  :param reference_gtf: Reference GTF file for gene annotation
+  :param output_dir: Path for output alignment and results
+  :param output_prefix: File output prefix
+  :param threads: No. of threads for STAR run, default 1
+  '''
   def __init__(self,star_exe,input_files,genome_dir,reference_gtf,
                output_dir,output_prefix,threads=1):
     self.star_exe=star_exe

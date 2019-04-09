@@ -1,18 +1,13 @@
-IGF database
-=============
+IGF database schema and api
+============================
 
 Database schema
 -----------------
 .. automodule:: igf_data.igfdb.igfTables
    :members:
 
-IGF database api
-=================
-
-
-Core adaptor class
----------------------
-
+Database adaptor api
+--------------------
 
 Base adaptor
 ^^^^^^^^^^^^^
@@ -80,52 +75,83 @@ Pipeline adaptor
    :members:
 
 
-Helper api class
-------------------------
+Utility functions for database access
+-------------------------------------
 
-Base database utils
-^^^^^^^^^^^^^^^^^^^^
+Database utility functions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. automodule:: igf_data.utils.dbutils
    :members:
 
-Base file utils
-^^^^^^^^^^^^^^^^
-.. automodule:: igf_data.utils.fileutils
-   :members:
-
-Irods client
-^^^^^^^^^^^^^
-.. automodule:: igf_data.utils.igf_irods_client
-   :members:
-
-Base fastq sequence utils
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. automodule:: igf_data.utils.sequtils
-   :members:
-
-Project helper adaptor
-^^^^^^^^^^^^^^^^^^^^^^^
+Project adaptor utility functions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. automodule:: igf_data.utils.projectutils
    :members:
 
-Sequencing run helper adaptor
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Sequencing adaptor utility functions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. automodule:: igf_data.utils.seqrunutils
    :members:
 
-Pipeline helper adaptor
-^^^^^^^^^^^^^^^^^^^^^^^^^
+Pipeline adaptor utility functions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. automodule:: igf_data.utils.pipelineutils
    :members:
 
-Platform helper adaptor
-^^^^^^^^^^^^^^^^^^^^^^^^^
+Platform adaptor utility functions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. automodule:: igf_data.utils.platformutils
    :members:
 
-New pipeline seed utils
-^^^^^^^^^^^^^^^^^^^^^^^^
+Pipeline seed adaptor utility functions
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. automodule:: igf_data.utils.ehive_utils.pipeseedfactory_utils
+   :members:
+
+
+
+IGF pipeline api
+=================
+
+Pipeline api
+-------------------------------
+
+Fetch fastq files for analysis
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.analysis_fastq_fetch_utils
+   :members:
+
+Load analysis result to database and file system
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. autoclass:: igf_data.utils.analysis_collection_utils.Analysis_collection_utils
+   :members:
+
+Run metadata validation checks
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.validation_check.metadata_validation
+   :members:
+
+Generic utility functions
+--------------------------
+
+Basic fasta sequence processing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.sequtils
+   :members:
+
+Advanced fastq file processing
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.fastq_utils
+   :members:
+
+Process local and remote files
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.fileutils
+   :members:
+
+Load files to irods server
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.igf_irods_client
    :members:
 
 Calculate storage statistics
@@ -134,8 +160,81 @@ Calculate storage statistics
    :members:
 
 
-Helper api for report page
+Run analysis tools
+---------------------
+
+Process fastqc output file
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.fastqc_utils
+   :members:
+
+Cellranger count utils
+^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.tools.cellranger.cellranger_count_utils
+   :members:
+
+BWA utils
+^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.tools.bwa_utils
+   :members:
+
+Picard utils
+^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.tools.picard_util
+   :members:
+
+Fastp utils
+^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.tools.fastp_utils
+   :members:
+
+GATK utils
+^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.tools.gatk_utils
+   :members:
+
+RSEM utils
+^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.tools.rsem_utils
+   :members:
+
+Samtools utils
+^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.tools.samtools_utils
+   :members:
+
+STAR utils
+^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.tools.star_utils
+   :members:
+
+Subread utils
+^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.tools.subread_utils
+   :members:
+
+Reference genome fetch utils
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.tools.reference_genome_utils
+   :members:
+
+Samtools utils
+^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.tools.samtools_utils
+   :members:
+
+Scanpy utils
+^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.tools.scanpy_utils
+   :members:
+
+Report page building
 -------------------------------
+
+Configure Biodalliance genome browser for qc page
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: igf_data.utils.config_genome_browser
+   :members:
 
 Process Google chart json data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -155,52 +254,4 @@ Generate data for QC status page
 Generate data for QC analysis page
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. automodule:: igf_data.utils.project_analysis_utils
-   :members:
-
-
-Helper api for tools
----------------------
-
-Process fastqc output file
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. automodule:: igf_data.utils.fastqc_utils
-   :members:
-
-Cellranger count utils
-^^^^^^^^^^^^^^^^^^^^^^^
-.. automodule:: igf_data.utils.tools.cellranger.cellranger_count_utils
-   :members:
-
-Picard utils
-^^^^^^^^^^^^^^
-.. automodule:: igf_data.utils.tools.picard_utils
-   :members:
-
-Reference genome utils
-^^^^^^^^^^^^^^^^^^^^^^^^^
-.. automodule:: igf_data.utils.tools.reference_genome_utils
-   :members:
-
-Samtools utils
-^^^^^^^^^^^^^^^^
-.. automodule:: igf_data.utils.tools.samtools_utils
-   :members:
-
-Scanpy utils
-^^^^^^^^^^^^^^^^
-.. automodule:: igf_data.utils.tools.scanpy_utils
-   :members:
-
-
-Helper api for analysis
------------------------
-
-Fetch fastq files for analysis
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. automodule:: igf_data.utils.analysis_fastq_fetch_utils
-   :members:
-
-Load analysis result to database and file system
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. autoclass:: igf_data.utils.analysis_collection_utils.Analysis_collection_utils
    :members:

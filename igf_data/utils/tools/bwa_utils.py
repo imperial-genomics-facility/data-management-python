@@ -4,6 +4,18 @@ from igf_data.utils.fileutils import check_file_path,get_temp_dir,remove_dir,cop
 from igf_data.utils.fastq_utils import identify_fastq_pair
 
 class BWA_util:
+  '''
+  Pipeline utils class for running BWA
+
+  :param bwa_exe: BWA executable path
+  :param samtools_exe: Samtools executable path
+  :param ref_genome: Reference genome index for BWA run
+  :param input_fastq_list: List of input fastq files for alignment
+  :param output_dir: Output directory path
+  :param output_prefix: Output prefix for alignment
+  :param bam_output: A toggle for writing bam output, default True
+  :param thread: No. of threads for BWA run, default 1
+  '''
   def __init__(self,bwa_exe,samtools_exe,ref_genome,input_fastq_list,output_dir,
                output_prefix,bam_output=True,thread=1):
     self.bwa_exe=bwa_exe
@@ -44,7 +56,7 @@ class BWA_util:
     :param option_list: List of bwa mem option, default -M
     :param samtools_cmd: Samtools view command, default view
     :param dry_run: A toggle for returning the bwa cmd without running it, default False
-    :return: A alignment file path and bwa run cmd
+    :returns: A alignment file path and bwa run cmd
     '''
     try:
       self._run_checks()                                                        # check input params

@@ -3,6 +3,15 @@ from shlex import quote
 from igf_data.utils.fileutils import check_file_path,get_temp_dir,remove_dir,copy_local_file
 
 class RSEM_utils:
+  '''
+  A python wrapper for running RSEM tool
+
+  :param rsem_exe_dir: RSEM executable path
+  :param reference_rsem: RSEM reference transcriptome path
+  :param input_bam: Input bam file path for RSEM
+  :param threads: No. of threads for RSEM run, default 1
+  :param memory_limit: Memory usage limit for RSEM, default 4Gb
+  '''
   def __init__(self,rsem_exe_dir,reference_rsem,input_bam,threads=1,
                memory_limit=4000):
     self.rsem_exe_dir=rsem_exe_dir
