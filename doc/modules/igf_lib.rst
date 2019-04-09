@@ -1,6 +1,5 @@
 Sequencing data processing
-==========================
-
+============================
 Metadata processing
 --------------------
 
@@ -13,7 +12,6 @@ Update experiment metadata from sample attributes
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. automodule:: igf_data.process.metadata.experiment_metadata_updator
    :members:
-
 
 Sequencing run
 ----------------
