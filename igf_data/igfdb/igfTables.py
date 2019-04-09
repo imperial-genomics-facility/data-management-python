@@ -19,7 +19,12 @@ class Project(Base):
   :column start_timestamp: An optional timestamp for project creation, default current timestamp
   :column description: An optional text column to document project description
   :column deliverable: An enum list to document project deliverable, default FASTQ,
-                       allowed entries are FASTQ, ALIGNMENT and ANALYSIS
+                       allowed entries are
+
+                       * FASTQ
+                       * ALIGNMENT
+                       * ANALYSIS
+
   '''
   __tablename__ = 'project'
   __table_args__ = (
@@ -58,9 +63,19 @@ class User(Base):
   :column hpc_username: An optional string as Imperial College's HPC login name, allowed length 20
   :column twitter_user: An optional string as twitter user name, allowed length 20
   :column category: An optional enum list as user category, default NON_HPC_USER,
-                    allowed values are HPC_USER, NON_HPC_USER and EXTERNAL
+                    allowed values are 
+                    
+                    * HPC_USER
+                    * NON_HPC_USER
+                    * EXTERNAL
+
   :column status: An optional enum list as user status, default is ACTIVE,
-                  allowed values are ACTIVE, BLOCKED and WITHDRAWN
+                  allowed values are 
+                  
+                  * ACTIVE
+                  * BLOCKED
+                  * WITHDRAWN
+
   :column date_created: An optional timestamp, default current timestamp
   :column password: An optional string field to store encrypted password
   :column encryption_salt: An optional string field to store encryption salt
@@ -144,11 +159,29 @@ class Sample(Base):
   :column description: An optional string as sample description
   :column phenotype: An optional string as sample phenotype information
   :column sex: An optional enum list to specify sample sex, default UNKNOWN
-               allowed values are FEMALE, MALE, MIXED and UNKNOWN
+               allowed values are 
+               
+               * FEMALE
+               * MALE
+               * MIXED
+               * UNKNOWN
+
   :column status: An optional enum list to specify sample status, default ACTIVE,
-                  allowed values are ACTIVE, FAILED and WITHDRAWS
+                  allowed values are 
+                  
+                  * ACTIVE
+                  * FAILED
+                  * WITHDRAWS
+
   :column biomaterial_type: An optional enum list as sample biomaterial type, default UNKNOWN,
-                            allowed values are PRIMARY_TISSUE, PRIMARY_CELL, PRIMARY_CELL_CULTURE, CELL_LINE and UNKNOWN
+                            allowed values are 
+                            
+                            * PRIMARY_TISSUE
+                            * PRIMARY_CELL
+                            * PRIMARY_CELL_CULTURE
+                            * CELL_LINE
+                            * UNKNOWN
+
   :column cell_type: An optional string to specify sample cell_type information, if biomaterial_type is PRIMARY_CELL or PRIMARY_CELL_CULTURE
   :column tissue_type: An optional string to specify sample tissue information, if biomaterial_type is PRIMARY_TISSUE
   :column cell_line: An optional string to specify cell line information ,if biomaterial_type is CELL_LINE
@@ -206,12 +239,25 @@ class Platform(Base):
 
   :column platform_id: An integer id for platform table
   :column platform_igf_id: A required string as platform id specific to IGF team, allowed length 10
-  :column model_name: A required enum list to specify platform model, allowed values are HISEQ2500,
-                      HISEQ4000, MISEQ, NEXTSEQ, NOVASEQ6000 and NANOPORE_MINION
+  :column model_name: A required enum list to specify platform model, allowed values are 
+  
+                      * HISEQ2500
+                      * HISEQ4000
+                      * MISEQ
+                      * NEXTSEQ
+                      * NOVASEQ6000
+                      * NANOPORE_MINION
+
   :column vendor_name: A required enum list to specify vendor's name, allowed values are
-                       ILLUMINA and NANOPORE
+                       
+                       * ILLUMINA
+                       * NANOPORE
+
   :column software_name: A required enum list for specifying platform software, allowed values are
-                         RTA and UNKNOWN
+                         
+                         * RTA
+                         * UNKNOWN
+                         
   :column software_version: A required enum list for specifying the software version number,
                             allowed values are RTA1.18.54, RTA1.18.64, RTA2 and UNKNOWN
   :column date_created: An optional timestamp column to record entry creation time, default current timestamp
@@ -248,9 +294,18 @@ class Flowcell_barcode_rule(Base):
   :column platform_id: An integer id for platform table (foreign key)
   :column flowcell_type: A required string as flowcell type name, allowed length 50
   :column index_1: An optional enum list as index_1 specific rule, default UNKNOWN,
-                   allowed values NO_CHANGE, REVCOMP and UNKNOWN
+                   allowed values are 
+                   
+                   * NO_CHANGE
+                   * REVCOMP
+                   * UNKNOWN
+
   :column index_2: An optional enum list as index_2 specific rule, default UNKNOWN,
-                   allowed values NO_CHANGE, REVCOMP and UNKNOWN
+                   allowed values are 
+                   
+                   * NO_CHANGE
+                   * REVCOMP
+                   * UNKNOWN
   '''
   __tablename__ = 'flowcell_barcode_rule'
   __table_args__ = (
@@ -313,7 +368,7 @@ class Seqrun_stats(Base):
   :column seqrun_stats_id: An integer id for seqrun_stats table
   :column seqrun_id: An integer seqrun id (foreign key)
   :column lane_number: A required enum list for specifying lane information,
-                       allowed values 1, 2, 3, 4, 5, 6, 7 and 8
+                       allowed values are 1, 2, 3, 4, 5, 6, 7 and 8
   :column bases_mask: An optional string field for storing bases mask information
   :column undetermined_barcodes: An optional json field to store barcode info for undetermined samples
   :column known_barcodes: An optional json field to store barcode info for known samples
@@ -352,21 +407,69 @@ class Experiment(Base):
   :column sample_id: A required integer id from sample table (foreign key)
   :column library_name: A required string to specify library name, allowed length 50
   :column library_source: An optional enum list to specify library source information, default is UNKNOWN,
-                          allowed values are GENOMIC, TRANSCRIPTOMIC, GENOMIC_SINGLE_CELL, TRANSCRIPTOMIC_SINGLE_CELL
-                          and UNKNOWN
+                          allowed values are 
+                          
+                          * GENOMIC
+                          * TRANSCRIPTOMIC
+                          * GENOMIC_SINGLE_CELL
+                          * TRANSCRIPTOMIC_SINGLE_CELL
+                          * UNKNOWN
+
   :column library_strategy: An optional enum list to specify library strategy information, default is UNKNOWN,
-                            allowed values are WGS, EXOME, RNA-SEQ, CHIP-SEQ, ATAC-SEQ and UNKNOWN
+                            allowed values are 
+                            
+                            * WGS
+                            * EXOME
+                            * RNA-SEQ
+                            * CHIP-SEQ
+                            * ATAC-SEQ
+                            * UNKNOWN
+
   :column experiment_type: An optional enum list as experiment type information, default is UNKNOWN,
-                           allowed values are POLYA-RNA, TOTAL-RNA, SMALL-RNA, H3K4ME3, WGS, EXOME,
-                           H3K27ME3, H3K27AC, H3K9ME3, H3K36ME3, HISTONE-NARROW, HISTONE-BROAD, ATAC-SEQ,
-                           TENX-TRANSCRIPTOME, DROP-SEQ-TRANSCRIPTOME, TF and UNKNOWN
+                           allowed values are 
+                           
+                           * POLYA-RNA
+                           * TOTAL-RNA
+                           * SMALL-RNA
+                           * H3K4ME3
+                           * WGS
+                           * EXOME
+                           * H3K27ME3
+                           * H3K27AC
+                           * H3K9ME3
+                           * H3K36ME3
+                           * HISTONE-NARROW
+                           * HISTONE-BROAD
+                           * ATAC-SEQ
+                           * TENX-TRANSCRIPTOME
+                           * DROP-SEQ-TRANSCRIPTOME
+                           * TF
+                           * UNKNOWN
+
   :column library_layout: An optional enum list to specify library layout, default is UNONWN
-                          allowed values are SINGLE, PAIRED and UNKNOWN
+                          allowed values are 
+                          
+                          * SINGLE
+                          * PAIRED
+                          * UNKNOWN
+
   :column status: An optional enum list to specify experiment status, default is ACTIVE,
-                  allowed values are ACTIVE, FAILED and WITHDRAWN
+                  allowed values are 
+                  
+                  * ACTIVE
+                  * FAILED
+                  * WITHDRAWN
+
   :column date_created: An optional timestamp column to record entry creation or modification time, default current timestamp
   :column platform_name: An optional enum list to specify platform model, default is UNKNOWN,
-                         allowed values are HISEQ2500, HISEQ4000, MISEQ, NEXTSEQ NANOPORE_MINION and UNKNOWN
+                         allowed values are 
+                         
+                         * HISEQ250
+                         * HISEQ4000
+                         * MISEQ
+                         * NEXTSEQ
+                         * NANOPORE_MINION
+                         * UNKNOWN
   '''
   __tablename__ = 'experiment'
   __table_args__ = (
@@ -413,7 +516,12 @@ class Run(Base):
   :column experiment_id: A required integer id from experiment table (foreign key)
   :column seqrun_id: A required integer id from seqrun table (foreign key)
   :column status: An optional enum list to specify experiment status, default is ACTIVE,
-                  allowed values are ACTIVE, FAILED and WITHDRAWN
+                  allowed values are 
+                  
+                  * ACTIVE
+                  * FAILED
+                  * WITHDRAWN
+
   :column lane_number: A required enum list for specifying lane information,
                        allowed values 1, 2, 3, 4, 5, 6, 7 and 8
   :column date_created: An optional timestamp column to record entry creation time, default current timestamp
@@ -449,8 +557,14 @@ class Analysis(Base):
   :column analysis_id: An integer id for analysis table
   :column project_id: A required integer id from project table (foreign key)
   :column analysis_type: An optional enum list to specify analysis type, default is UNKNOWN,
-                         allowed values are RNA_DIFFERENTIAL_EXPRESSION, RNA_TIME_SERIES,
-                         CHIP_PEAK_CALL, SOMATIC_VARIANT_CALLING and UNKNOWN
+                         allowed values are 
+                         
+                         * RNA_DIFFERENTIAL_EXPRESSION
+                         * RNA_TIME_SERIES
+                         * CHIP_PEAK_CALL
+                         * SOMATIC_VARIANT_CALLING
+                         * UNKNOWN
+
   :column analysis_description: An optional json description for analysis
   '''
   __tablename__ = 'analysis'
@@ -509,9 +623,21 @@ class File(Base):
   :column file_id: An integer id for file table
   :column file_path: A required string to specify file path information, allowed length 500
   :column location: An optional enum list to specify storage location, default UNKNOWN,
-                    allowed values are ORWELL, HPC_PROJECT, ELIOT, IRODS and UNKNOWN
+                    allowed values are 
+                    
+                    * ORWELL
+                    * HPC_PROJECT
+                    * ELIOT
+                    * IRODS
+                    * UNKNOWN
+
   :column status: An optional enum list to specify experiment status, default is ACTIVE,
-                  allowed values are ACTIVE, FAILED and WITHDRAWN
+                  allowed values are 
+                  
+                  * ACTIVE
+                  * FAILED
+                  * WITHDRAWN
+
   :column md5: An optional string to specify file md5 value, allowed length 33
   :column size: An optional string to specify file size, allowed value 15
   :column date_created: An optional timestamp column to record file creation time, default current timestamp
@@ -577,7 +703,11 @@ class Pipeline(Base):
   :column pipeline_init_conf: An optional json field to specify initial pipeline configuration
   :column pipeline_run_conf: An optional json field to specify modified pipeline configuration
   :column pipeline_type: An optional enum list to specify pipeline type, default EHIVE,
-                         allowed values are EHIVE and UNKNOWN
+                         allowed values are 
+                         
+                         * EHIVE
+                         * UNKNOWN
+
   :column is_active: An optional enum list to specify the status of pipeline, default Y,
                      allowed values are Y and N
   :column date_stamp: An optional timestamp column to record file creation or modification time, default current timestamp
@@ -618,7 +748,14 @@ class Pipeline_seed(Base):
                       allowed values project, sample, experiment, run, file, seqrun, collection and unknown
   :column pipeline_id: An integer id from pipeline table (foreign key)
   :column status: An optional enum list to specify the status of pipeline, default UNKNOWN,
-                  allowed values are SEEDED, RUNNING, FINISHED, FAILED and UNKNOWN
+                  allowed values are 
+                  
+                  * SEEDED
+                  * RUNNING
+                  * FINISHED
+                  * FAILED
+                  * UNKNOWN
+
   :column date_stamp: An optional timestamp column to record file creation or modification time, default current timestamp
   '''
   __tablename__ = 'pipeline_seed'
@@ -647,11 +784,28 @@ class History(Base):
   
   :column log_id: An integer id for history table
   :column log_type: A required enum value to specify log type, allowed values are
-                    CREATED, MODIFIED and DELETED
+                    
+                    * CREATED
+                    * MODIFIED
+                    * DELETED
+
   :column table_name: A required enum value to specify table information, allowed values are
-                      PROJECT, USER, SAMPLE, EXPERIMENT, RUN, COLLECTION, FILE, PLATFORM,
-                      PROJECT_ATTRIBUTE, EXPERIMENT_ATTRIBUTE, COLLECTION_ATTRIBUTE,
-                      SAMPLE_ATTRIBUTE, RUN_ATTRIBUTE, FILE_ATTRIBUTE
+                      
+                      * PROJECT
+                      * USER
+                      * SAMPLE
+                      * EXPERIMENT
+                      * RUN
+                      * COLLECTION
+                      * FILE
+                      * PLATFORM
+                      * PROJECT_ATTRIBUTE
+                      * EXPERIMENT_ATTRIBUTE
+                      * COLLECTION_ATTRIBUTE
+                      * SAMPLE_ATTRIBUTE
+                      * RUN_ATTRIBUTE
+                      * FILE_ATTRIBUTE
+
   :column log_date: An optional timestamp column to record file creation or modification time, default current timestamp
   :column message: An optional text field to specify message
   '''

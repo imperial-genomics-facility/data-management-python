@@ -23,7 +23,7 @@ List of python classes and functions
 ************************************
 .. toctree::
    :glob:
-   
+
    modules/*
 
 Indices and tables
