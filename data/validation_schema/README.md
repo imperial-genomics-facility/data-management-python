@@ -17,3 +17,18 @@ Samplesheet validation json schema file [samplesheet_validation.json](sampleshee
 * Sample_Plate column is optional
 * Sample_Well column is optional
 * Description column is optional, only allowed value is "10X"
+
+
+## Metadata validation
+
+Metadata validation schema file [metadata_validation.json](metadata_validation.json) is for checking consistency of the input sample metadata
+
+### Validation checklist (v1.0.1)
+
+Required informations:
+
+  * project_igf_id: Unique project id
+  * name: User name
+  * email_id: User email id
+  * sample_igf_id: Unique sample id
+
