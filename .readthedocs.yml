@@ -8,3 +8,9 @@ formats:
 
 conda:
   environment: doc/environment.yml
+
+python:
+  version: 3.5.2
+  install:
+    - method: pip
+      path: .
