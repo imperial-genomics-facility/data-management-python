@@ -28,7 +28,7 @@ author = 'Avik Datta, IGF Team'
 # The short X.Y version
 version = ''
 # The full version, including alpha/beta/rc tags
-release = '1.4'
+release = '1.5'
 
 
 # -- General configuration ---------------------------------------------------
@@ -62,7 +62,7 @@ master_doc = 'index'
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = 'python'
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -78,7 +78,8 @@ pygments_style = 'sphinx'
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'classic'
+html_theme = 'nature'
+#html_theme = 'classic'
 html_theme_options = {
     "rightsidebar": "false",
     "stickysidebar": "true",
@@ -118,7 +119,7 @@ htmlhelp_basename = 'PythonlibraryforrunningIGFpipelinesdoc'
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
-     'papersize': 'letterpaper',
+     'papersize': 'a4paper',
 
     # The font size ('10pt', '11pt' or '12pt').
     #
