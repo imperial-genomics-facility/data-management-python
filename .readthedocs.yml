@@ -1,0 +1,9 @@
+version: 1.5
+
+sphinx:
+  configuration: docs/conf.py
+
+formats: all
+
+conda:
+  environment: doc/environment.yml
