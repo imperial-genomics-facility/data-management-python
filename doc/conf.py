@@ -91,8 +91,8 @@ html_theme_options = {
     "footertextcolor":"black",
     "headbgcolor":"#F0F8FF",
     "sidebarbtncolor":"#ddd",
-    "relbarbgcolor":"#ddd",
-    "relbarlinkcolor":"grey",
+    "relbarbgcolor":"#A9A9A9",
+    "relbarlinkcolor":"white",
 }
 
 # Theme options are theme-specific and customize the look and feel of a theme
