@@ -29,13 +29,15 @@ class RunAdaptor(BaseAdaptor):
       raise
 
 
-  def divide_data_to_table_and_attribute(self, data, required_column='run_igf_id',
+  def divide_data_to_table_and_attribute(self, data, table_columns=None,
+                                         required_column='run_igf_id',
                                          attribute_name_column='attribute_name',
                                          attribute_value_column='attribute_value'):
     '''
     A method for separating data for Run and Run_attribute tables
     
     :param data: A list of dictionaries or a Pandas DataFrame
+    :param table_columns: List of table column names, default None
     :param required_column: column name to add to the attribute data
     :param attribute_name_column: label for attribute name column
     :param attribute_value_column: label for attribute value column
@@ -50,15 +52,16 @@ class RunAdaptor(BaseAdaptor):
                                                            'seqrun_id',
                                                            'experiment_id'])    # get required columns for run table
       run_columns.extend(['seqrun_igf_id', 'experiment_igf_id'])
-      (run_df, run_attr_df)=BaseAdaptor.\
-                            divide_data_to_table_and_attribute(\
-                              self,
-                              data=data,
-                              required_column=required_column,
-                              table_columns=run_columns,
-                              attribute_name_column=attribute_name_column,
-                              attribute_value_column=attribute_value_column
-                            )                                                   # divide data to run and attribute table
+      (run_df, run_attr_df)=\
+        BaseAdaptor.\
+          divide_data_to_table_and_attribute(\
+            self,
+            data=data,
+            required_column=required_column,
+            table_columns=run_columns,
+            attribute_name_column=attribute_name_column,
+            attribute_value_column=attribute_value_column
+          )                                                                     # divide data to run and attribute table
       return (run_df, run_attr_df)
     except:
       raise

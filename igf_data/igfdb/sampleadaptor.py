@@ -28,12 +28,15 @@ class SampleAdaptor(BaseAdaptor):
       raise
 
 
-  def divide_data_to_table_and_attribute(self, data, required_column='sample_igf_id',
+  def divide_data_to_table_and_attribute(self, data, table_columns=None,
+                                         required_column='sample_igf_id',
                                          attribute_name_column='attribute_name',
                                          attribute_value_column='attribute_value'):
     '''
     A method for separating data for Sample and Sample_attribute tables
     
+    :param data: A list of dictionaries or a pandas dataframe
+    :param table_columns: List of table column names, default None
     :param required_column: column name to add to the attribute data
     :param attribute_name_column: label for attribute name column
     :param attribute_value_column: label for attribute value column
@@ -42,15 +45,20 @@ class SampleAdaptor(BaseAdaptor):
     if not isinstance(data, pd.DataFrame):
       data=pd.DataFrame(data)
 
-    sample_columns=self.get_table_columns(table_name=Sample, excluded_columns=['sample_id', 'project_id'])
+    sample_columns=self.get_table_columns(\
+                     table_name=Sample,
+                     excluded_columns=['sample_id', 'project_id'])
     sample_columns.extend(['project_igf_id'])
-    (sample_df, sample_attr_df)=BaseAdaptor.divide_data_to_table_and_attribute(self, \
-                                                               data=data, \
-    	                                                       required_column=required_column, \
-    	                                                       table_columns=sample_columns,  \
-                                                               attribute_name_column=attribute_name_column, \
-                                                               attribute_value_column=attribute_value_column
-                                                             )
+    (sample_df, sample_attr_df)=\
+      BaseAdaptor.\
+        divide_data_to_table_and_attribute(\
+          self,
+          data=data,
+          required_column=required_column,
+          table_columns=sample_columns,
+          attribute_name_column=attribute_name_column,
+          attribute_value_column=attribute_value_column
+        )
     return (sample_df, sample_attr_df)
 
 

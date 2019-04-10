@@ -29,13 +29,15 @@ class FileAdaptor(BaseAdaptor):
       raise
 
 
-  def divide_data_to_table_and_attribute(self, data, required_column='file_path',
+  def divide_data_to_table_and_attribute(self, data, table_columns=None,
+                                         required_column='file_path',
                                          attribute_name_column='attribute_name',
                                          attribute_value_column='attribute_value'):
     '''
     A method for separating data for File and File_attribute tables
     
     :param data: A list of dictionary or a Pandas DataFrame
+    :param table_columns: List of table column names, default None
     :param required_column: A column name to add to the attribute data
     :param attribute_name_column: A label for attribute name column
     :param attribute_value_column: A label for attribute value column
@@ -47,14 +49,16 @@ class FileAdaptor(BaseAdaptor):
  
       file_columns=self.get_table_columns(table_name=File,
                                           excluded_columns=['file_id'])         # get required columns for file table
-      (file_df, file_attr_df)=BaseAdaptor.divide_data_to_table_and_attribute(\
-                                            self,
-                                            data=data,
-    	                                      required_column=required_column,
-    	                                      table_columns=file_columns,
-                                            attribute_name_column=attribute_name_column,
-                                            attribute_value_column=attribute_value_column
-                                          )                                     # divide dataframe
+      (file_df, file_attr_df)=\
+        BaseAdaptor.\
+          divide_data_to_table_and_attribute(\
+            self,
+            data=data,
+            required_column=required_column,
+            table_columns=file_columns,
+            attribute_name_column=attribute_name_column,
+            attribute_value_column=attribute_value_column
+          )                                                                     # divide dataframe
       return (file_df, file_attr_df)
     except:
       raise

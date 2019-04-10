@@ -30,13 +30,15 @@ class ProjectAdaptor(BaseAdaptor):
      
 
 
-  def divide_data_to_table_and_attribute(self, data, required_column='project_igf_id', 
-                                         attribute_name_column='attribute_name', 
+  def divide_data_to_table_and_attribute(self, data, table_columns=None,
+                                         required_column='project_igf_id',
+                                         attribute_name_column='attribute_name',
                                          attribute_value_column='attribute_value'):
     '''
     A method for separating data for Project and Project_attribute tables
 
     :param data: A list of dictionaries or a pandas dataframe
+    :param table_columns: List of table column names, default None
     :param required_column: Name of the required column, default project_igf_id
     :param attribute_name_column: Value for attribute name column, default attribute_name
     :param attribute_value_column: Valye for attribute value column, default attribute_value
@@ -46,7 +48,7 @@ class ProjectAdaptor(BaseAdaptor):
       if not isinstance(data, pd.DataFrame):
         data=pd.DataFrame(data)
 
-      project_columns=self.get_table_columns(table_name=Project, 
+      project_columns=self.get_table_columns(table_name=Project,
                                              excluded_columns=['project_id'])   # get required columns for project table
       (project_df, project_attr_df)=\
         BaseAdaptor.\
@@ -124,7 +126,7 @@ class ProjectAdaptor(BaseAdaptor):
     Load data to ProjectUser table
     
     :param data: A list of dictionaries, each containing 'project_igf_id' and 'user_igf_id' as key
-                 with relevent igf ids as the values. An optional key 'data_authority' with 
+                 with relevent igf ids as the values. An optional key 'data_authority' with
                  boolean value can be provided to set the user as the data authority of the project
                  E.g.
                  [{'project_igf_id': val, 'email_id': val, 'data_authority':True},]

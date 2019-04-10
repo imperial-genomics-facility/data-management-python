@@ -27,27 +27,37 @@ class SeqrunAdaptor(BaseAdaptor):
       raise
 
 
-  def divide_data_to_table_and_attribute(self, data, required_column='seqrun_igf_id', attribute_name_column='attribute_name', attribute_value_column='attribute_value'):
+  def divide_data_to_table_and_attribute(self, data, table_columns=None,
+                                         required_column='seqrun_igf_id', 
+                                         attribute_name_column='attribute_name', 
+                                         attribute_value_column='attribute_value'):
     '''
     A method for separating data for Seqrun and Seqrun_attribute tables
-    required params:
-    required_column: column name to add to the attribute data
-    attribute_name_column: label for attribute name column
-    attribute_value_column: label for attribute value column
-    It returns two pandas dataframes, one for Seqrun and another for Run_attribute table
+    
+    :param data: A list of dictionaries or a pandas dataframe
+    :param table_columns: List of table column names, default None
+    :param required_column: column name to add to the attribute data
+    :param attribute_name_column: label for attribute name column
+    :param attribute_value_column: label for attribute value column
+    :returns: two pandas dataframes, one for Seqrun and another for Run_attribute table
     '''
     if not isinstance(data, pd.DataFrame):
       data=pd.DataFrame(data)
 
-    seqrun_columns=self.get_table_columns(table_name=Seqrun, excluded_columns=['seqrun_id', 'platform_id'])              # get required columns for run table
+    seqrun_columns=self.get_table_columns(\
+                     table_name=Seqrun,
+                     excluded_columns=['seqrun_id', 'platform_id'])             # get required columns for run table
     seqrun_columns.extend(['platform_igf_id'])
-    (seqrun_df, seqrun_attr_df)=BaseAdaptor.divide_data_to_table_and_attribute(self, \
-                                                      data=data, \
-    	                                              required_column=required_column, \
-    	                                              table_columns=seqrun_columns,  \
-                                                      attribute_name_column=attribute_name_column, \
-                                                      attribute_value_column=attribute_value_column \
-                                                    )                                                                    # divide data to run and attribute table
+    (seqrun_df, seqrun_attr_df)=\
+      BaseAdaptor.\
+        divide_data_to_table_and_attribute(\
+          self,
+          data=data,
+          required_column=required_column,
+          table_columns=seqrun_columns,
+          attribute_name_column=attribute_name_column,
+          attribute_value_column=attribute_value_column
+        )                                                                       # divide data to run and attribute table
     return (seqrun_df, seqrun_attr_df)
 
 

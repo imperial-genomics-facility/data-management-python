@@ -31,13 +31,15 @@ class ExperimentAdaptor(BaseAdaptor):
       raise
 
 
-  def divide_data_to_table_and_attribute(self, data, required_column='experiment_igf_id',
+  def divide_data_to_table_and_attribute(self, data, table_columns=None,
+                                         required_column='experiment_igf_id',
                                          attribute_name_column='attribute_name',
                                          attribute_value_column='attribute_value'):
     '''
     A method for separating data for Experiment and Experiment_attribute tables
     
     :param data: A list of dictionaries or a Pandas DataFrame
+    :param table_columns: List of table column names, default None
     :param required_column: column name to add to the attribute data
     :param attribute_name_column: label for attribute name column
     :param attribute_value_column: label for attribute value column
@@ -52,15 +54,16 @@ class ExperimentAdaptor(BaseAdaptor):
                                                                 'sample_id' ])  # get required columns for experiment table
     experiment_columns.extend(['project_igf_id',
                                'sample_igf_id'])                                # add required columns
-    (experiment_df, experiment_attr_df)=BaseAdaptor.\
-                                        divide_data_to_table_and_attribute(\
-                                          self,
-                                          data=data,
-    	                                    required_column=required_column,
-    	                                    table_columns=experiment_columns,
-                                          attribute_name_column=attribute_name_column,
-                                          attribute_value_column=attribute_value_column
-                                        )                                       # divide data to experiment and adatpor
+    (experiment_df, experiment_attr_df)=\
+      BaseAdaptor.\
+        divide_data_to_table_and_attribute(\
+          self,
+          data=data,
+          required_column=required_column,
+          table_columns=experiment_columns,
+          attribute_name_column=attribute_name_column,
+          attribute_value_column=attribute_value_column
+        )                                                                       # divide data to experiment and adatpor
     return (experiment_df, experiment_attr_df)
 
 

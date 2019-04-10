@@ -33,12 +33,15 @@ class CollectionAdaptor(BaseAdaptor):
       raise
 
 
-  def divide_data_to_table_and_attribute(self, data, required_column=['name', 'type'],
+  def divide_data_to_table_and_attribute(self, data, table_columns=None,
+                                         required_column=['name', 'type'],
                                          attribute_name_column='attribute_name',
                                          attribute_value_column='attribute_value'):
     '''
     A method for separating data for Collection and Collection_attribute tables
     
+    :param data: A list of dictionaries or a pandas dataframe
+    :param table_columns: List of table column names, default None
     :param required_column: column name to add to the attribute data, default 'name', 'type'
     :param attribute_name_column: label for attribute name column, default attribute_name
     :param attribute_value_column: label for attribute value column, default attribute_value
@@ -48,17 +51,19 @@ class CollectionAdaptor(BaseAdaptor):
       if not isinstance(data, pd.DataFrame):
         data=pd.DataFrame(data)
 
-      collection_columns=self.get_table_columns(table_name=Collection,
-                                                excluded_columns=['collection_id']) # get required columns for collection table    
-      (collection_df, collection_attr_df)=BaseAdaptor.\
-                                          divide_data_to_table_and_attribute(\
-                                            self,
-                                            data=data, \
-                                            required_column=required_column, \
-                                            table_columns=collection_columns,  \
-                                            attribute_name_column=attribute_name_column, \
-                                            attribute_value_column=attribute_value_column
-                                          )
+      collection_columns=self.get_table_columns(\
+                           table_name=Collection,
+                           excluded_columns=['collection_id'])                  # get required columns for collection table
+      (collection_df, collection_attr_df)=\
+        BaseAdaptor.\
+        divide_data_to_table_and_attribute(\
+          self,
+          data=data,
+          required_column=required_column,
+          table_columns=collection_columns,
+          attribute_name_column=attribute_name_column,
+          attribute_value_column=attribute_value_column
+        )
       return (collection_df, collection_attr_df)
     except:
       raise
