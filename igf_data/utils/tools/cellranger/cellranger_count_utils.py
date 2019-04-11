@@ -116,7 +116,7 @@ def extract_cellranger_count_metrics_summary(cellranger_tar,
                      reset_index()
     attribute_data.columns = [attribute_name,attribute_value]
     if collection_name is not None:
-      attribute_data['name'] = attribute_data
+      attribute_data['name'] = collection_name
     if collection_type is not None:
       attribute_data['type'] = collection_type
 
