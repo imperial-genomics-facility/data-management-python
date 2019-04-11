@@ -45,11 +45,11 @@ class RunScanpy(IGFBaseProcess):
       matrics_file_path=''
       genes_tsv_file_path=''
       barcodes_tsv_file_path=''
-      matrix_file_pattern=re.compile(r'filtered_gene_bc_matrices/\S+/{0}$'.\
+      matrix_file_pattern=re.compile(r'filtered_feature_bc_matrix/\S+/{0}$'.\
                                      format(matrics_file))
-      genes_file_pattern=re.compile(r'filtered_gene_bc_matrices/\S+/{0}$'.\
+      genes_file_pattern=re.compile(r'filtered_feature_bc_matrix/\S+/{0}$'.\
                                     format(genes_tsv_file))
-      barcodes_file_pattern=re.compile(r'filtered_gene_bc_matrices/\S+/{0}$'.\
+      barcodes_file_pattern=re.compile(r'filtered_feature_bc_matrix/\S+/{0}$'.\
                                        format(barcodes_tsv_file))
       if not os.path.exists(tar_file):
         raise IOError('File {0} not found'.format(tar_file))
