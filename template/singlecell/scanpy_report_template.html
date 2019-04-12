@@ -17,49 +17,163 @@
           <li><a href="https://scanpy-tutorials.readthedocs.io/en/latest/pbmc3k.html">Clustering 3K PBMCs</a></li>
         </ul>
 
-        <h2>List of genes that yield the highest fraction of counts in each single cells, across all cells.</h2>
+        <p>Now we have added the scanpy commands to the report page.</p>
+
+        <pre><code>
+            import numpy as np
+            import pandas as pd
+            import scanpy as sc
+
+            adata = sc.read_10x_mtx(
+                    'filtered_feature_bc_matrix/',  # the directory with the `.mtx` file
+                    var_names='gene_symbols',       # use gene symbols for the variable names (variables-axis index)
+                   cache=True)
+            adata.var_names_make_unique()           # make variables duplicates
+        </code></pre>
+
+        <h2>Plot genes with highest expressions</h2>
+        <p>List of genes that yield the highest fraction of counts in each single cells, across all cells.</p>
+        <pre><code>
+            sc.pl.highest_expr_genes(adata, n_top=20)
+        </code></pre>
         <img src="data:image/png;base64,{{ Highest_gene_expr }}">
 
-        <h2>Check for mitochondrial gene expression</h2>
+        <h2>Preprocessing: Check for mitochondrial gene expression</h2>
+        <pre><code>
+          # apply basic filtering
+          sc.pp.filter_cells(adata, min_genes=200)
+          sc.pp.filter_genes(adata, min_cells=3)
+      
+          mito_genes # fetch from ensembl
+          # for each cell compute fraction of counts in mito genes vs. all genes
+          # the `.A1` is only necessary as X is sparse (to transform to a dense array after summing)
+          adata.obs['percent_mito'] = np.sum(
+            adata[:, mito_genes].X, axis=1).A1 / np.sum(adata.X, axis=1).A1
+          # add the total counts per cell as observations-annotation to adata
+          adata.obs['n_counts'] = adata.X.sum(axis=1).A1
+        </code></pre>
+
           <h3>Violin plot for MT gene expression counts</h3>
+          <pre><code>
+              sc.pl.violin(adata, ['n_genes', 'n_counts', 'percent_mito'],
+              jitter=0.4, multi_panel=True)
+          </code></pre>
           <img src="data:image/png;base64,{{ MitoPlot }}">
         
           <h3>Scatter plots for MT gene expression counts</h3>
+          <pre><code>
+              sc.pl.scatter(adata, x='n_counts', y='percent_mito')
+              sc.pl.scatter(adata, x='n_counts', y='n_genes')
+          </code></pre>
           <img src="data:image/png;base64,{{ MitoScatter1 }}">
           <img src="data:image/png;base64,{{ MitoScatter2 }}">
         
+          <p>Then apply filtering on data</p>
+          <pre><code>
+              adata = adata[adata.obs['n_genes'] < 2500, :]
+              adata = adata[adata.obs['percent_mito'] < 0.05, :]
+          </code></pre>
+
         <h2>Genes dispersion plot</h2>
+        <p>Plotting highly-variable genes</p>
+        <pre><code>
+          # normalize data
+            sc.pp.normalize_per_cell(adata, counts_per_cell_after=1e4)
+          # logarithmize the data
+            sc.pp.log1p(adata)
+          # identify highly-variable genes
+            sc.pp.highly_variable_genes(adata, min_mean=0.0125, max_mean=3, min_disp=0.5)
+          #  plot data
+            sc.pl.highly_variable_genes(adata)
+        </code></pre>
         <img src="data:image/png;base64,{{ GenesDispersion }}">
         
-        <h2>PCA ranking plot</h2>
+        <h2>Running analysis</h2>
+        <pre><code>
+          # filter data
+            adata = adata[:, adata.var['highly_variable']]
+          # regress out effects of total counts per cell and the percentage of mitochondrial genes expressed. 
+            sc.pp.regress_out(adata, ['n_counts', 'percent_mito'])
+          # scale each gene to unit variance
+            sc.pp.scale(adata, max_value=10)
+        </code></pre>
+      
+        <h3>PCA ranking plot</h3>
+        <pre><code>
+          # run pca
+            sc.tl.pca(adata, svd_solver='arpack')
+          # plot pca loading data
+            sc.pl.pca_loadings(adata,show=True,save='.png')
+        </code></pre>
         <img src="data:image/png;base64,{{ Pca }}">
 
-        <h2>PCA variation ratio plot</h2>
+        <h3>PCA variation ratio plot</h3>
+        <pre><code>
+          # plot pca variation ratio
+            sc.pl.pca_variance_ratio(adata, log=True,save='.png')
+        </code></pre>
         <img src="data:image/png;base64,{{ Pca_var_data }}">
         
-        <h2>tSNE Plot of louvain clusters</h2>
+        <h3>tSNE Plot of louvain clusters</h3>
+        <pre><code>
+          # computing the neighborhood graph
+            sc.pp.neighbors(adata, n_neighbors=10, n_pcs=40)
+          # clustering the neighborhood graph
+            sc.tl.louvain(adata)
+          # run t-SNE
+             sc.tl.tsne(adata,random_state=2,n_pcs=10)
+          # plot t-SNE
+            sc.pl.tsne(adata,color='louvain',show=True,save='.png')
+        </code></pre>
         <img src="data:image/png;base64,{{ Tsne }}">
         
-        <h2>UMAP Plot of louvain clusters</h2>
+        <h3>UMAP Plot of louvain clusters</h3>
+        <pre><code>
+          # embedding the neighborhood graph using umap
+            sc.tl.umap(adata)
+          # plot umap
+            sc.pl.umap(adata, color=['louvain'],save='.png')
+        </code></pre>
         <img src="data:image/png;base64,{{ Umap_data }}">
 
         <h2>Rank Genes Groups</h2>
+        <pre><code>
+           # compute a ranking for the highly differential genes in each cluster, using t-test
+             sc.tl.rank_genes_groups(adata, 'louvain', method='t-test')
+             sc.pl.rank_genes_groups(adata, n_genes=25, sharey=False)
+        </code></pre>
         <img src="data:image/png;base64,{{ RankGenesGroups }}">
         
         <h2>Check for marker genes in cluster</h2>
-          <h3>Stacked Violin plot of ranked genes</h2>
+         
+          <h3>Stacked Violin plot of ranked genes</h3>
+            <pre><code>
+                sc.pl.rank_genes_groups_stacked_violin(adata, n_genes=10,save='.png')
+            </code></pre>
           <img src="data:image/png;base64,{{ Rank_genes_groups_stacked_violin }}">
 
-          <h3>Dotplot of ranked genes</h2>
+          <h3>Dotplot of ranked genes</h3>
+            <pre><code>
+                sc.pl.rank_genes_groups_dotplot(adata, n_genes=10,color_map='bwr',dendrogram='dendrogram_louvain',save='.png')
+            </code></pre>
           <img src="data:image/png;base64,{{ Rank_genes_groups_dotplot }}">
 
-          <h3>Matrix plot of ranked genes</h2>
+          <h3>Matrix plot of ranked genes</h3>
+          <pre><code>
+              sc.pl.rank_genes_groups_matrixplot(adata, n_genes=10,  cmap='bwr',save='.png')
+          </code></pre>
           <img src="data:image/png;base64,{{ Rank_genes_groups_matrixplot }}">
         
-          <h3>Heatmap plot of ranked genes</h2>
+          <h3>Heatmap plot of ranked genes</h3>
+          <pre><code>
+              sc.pl.rank_genes_groups_heatmap(adata, n_genes=10, cmap='bwr',save='.png')
+          </code></pre>
           <img src="data:image/png;base64,{{ Rank_genes_groups_heatmap }}">
 
-          <h3>Tracks plot of ranked genes</h2>
+          <h3>Tracks plot of ranked genes</h3>
+          <pre><code>
+              sc.pl.rank_genes_groups_tracksplot(adata, n_genes=10, cmap='bwr',save='.png')
+          </code></pre>
           <img src="data:image/png;base64,{{ Rank_genes_groups_tracksplot }}">
         
     </body>
