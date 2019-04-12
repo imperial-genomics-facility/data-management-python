@@ -14,9 +14,11 @@
         <p>Scanpy tool is used for checking an initial qc of the single cell data after cellranger count run.</p>
         <p>This analysis is based on the following Scanpy tutorials:</p>
         <ul>
-          <li><a href="https://nbviewer.jupyter.org/github/theislab/scanpy_usage/blob/master/170505_seurat/seurat.ipynb">Clustering 3k PBMCs following a Seurat Tutorial</a></li>
-          <li><a href="https://nbviewer.jupyter.org/github/theislab/scanpy_usage/blob/master/170503_zheng17/zheng17.ipynb">Profiling Scanpy for 68k PBMC cells of Zheng et al., Nat. Comm. (2017)</a></li>
+          <li><a href="https://scanpy-tutorials.readthedocs.io/en/latest/pbmc3k.html">Clustering 3K PBMCs</a></li>
         </ul>
+
+        <h2>List of genes that yield the highest fraction of counts in each single cells, across all cells.</h2>
+        <img src="data:image/png;base64,{{ Highest_gene_expr }}">
 
         <h2>Check for mitochondrial gene expression</h2>
           <h3>Violin plot for MT gene expression counts</h3>
@@ -31,18 +33,34 @@
         
         <h2>PCA ranking plot</h2>
         <img src="data:image/png;base64,{{ Pca }}">
+
+        <h2>PCA variation ratio plot</h2>
+        <img src="data:image/png;base64,{{ Pca_var_data }}">
         
         <h2>tSNE Plot of louvain clusters</h2>
         <img src="data:image/png;base64,{{ Tsne }}">
         
+        <h2>UMAP Plot of louvain clusters</h2>
+        <img src="data:image/png;base64,{{ Umap_data }}">
+
         <h2>Rank Genes Groups</h2>
         <img src="data:image/png;base64,{{ RankGenesGroups }}">
         
         <h2>Check for marker genes in cluster</h2>
-        {% for data in MarkerGeneViolin %}
-          <h3>Violin plot for cell cluster {{ data['cluster'] }}</h2>
-          <img src="data:image/png;base64,{{ data['violin_data'] }}">
+          <h3>Stacked Violin plot of ranked genes</h2>
+          <img src="data:image/png;base64,{{ Rank_genes_groups_stacked_violin }}">
+
+          <h3>Dotplot of ranked genes</h2>
+          <img src="data:image/png;base64,{{ Rank_genes_groups_dotplot }}">
+
+          <h3>Matrix plot of ranked genes</h2>
+          <img src="data:image/png;base64,{{ Rank_genes_groups_matrixplot }}">
         
-        {% endfor %}
+          <h3>Heatmap plot of ranked genes</h2>
+          <img src="data:image/png;base64,{{ Rank_genes_groups_heatmap }}">
+
+          <h3>Tracks plot of ranked genes</h2>
+          <img src="data:image/png;base64,{{ Rank_genes_groups_tracksplot }}">
+        
     </body>
 </html>

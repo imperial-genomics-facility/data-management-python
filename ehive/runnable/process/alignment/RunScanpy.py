@@ -28,29 +28,31 @@ class RunScanpy(IGFBaseProcess):
 
   @staticmethod
   def _extract_cellranger_filtered_metrics(tar_file,output_dir,
-                                           matrics_file='matrix.mtx',
-                                           genes_tsv_file='genes.tsv',
-                                           barcodes_tsv_file='barcodes.tsv'):
+                                           input_dir_prefix='filtered_feature_bc_matrix',
+                                           matrics_file='matrix.mtx.gz',
+                                           genes_tsv_file='features.tsv.gz',
+                                           barcodes_tsv_file='barcodes.tsv.gz'):
     '''
     A static internal method for extracting cellranger output files from tar
     
     :param tar_file: A tar.gz file containing cellranger count outputs
     :param output_dir: A output directory path
-    :param matrics_file: File name for matrics output, default matrix.mtx
-    :param genes_tsv_file: File name for genes list file, default genes.tsv
-    :param barcodes_tsv_file: File name for barcodes list file, default barcodes.tsv
+    :param input_dir_prefix: Input dir prefix, default filtered_feature_bc_matrix
+    :param matrics_file: File name for matrics output, default matrix.mtx.gz
+    :param genes_tsv_file: File name for features.tsv file, default features.tsv.gz
+    :param barcodes_tsv_file: File name for barcodes list file, default barcodes.tsv.gz
     :returns: matrics_file_path,genes_tsv_file_path,barcodes_tsv_file_path
     '''
     try:
       matrics_file_path=''
       genes_tsv_file_path=''
       barcodes_tsv_file_path=''
-      matrix_file_pattern=re.compile(r'filtered_feature_bc_matrix/\S+/{0}$'.\
-                                     format(matrics_file))
-      genes_file_pattern=re.compile(r'filtered_feature_bc_matrix/\S+/{0}$'.\
-                                    format(genes_tsv_file))
-      barcodes_file_pattern=re.compile(r'filtered_feature_bc_matrix/\S+/{0}$'.\
-                                       format(barcodes_tsv_file))
+      matrix_file_pattern=re.compile(r'{0}/\S+/{1}$'.\
+                                     format(input_dir_prefix,matrics_file))
+      genes_file_pattern=re.compile(r'{0}/\S+/{1}$'.\
+                                    format(input_dir_prefix,genes_tsv_file))
+      barcodes_file_pattern=re.compile(r'{0}/\S+/{1}$'.\
+                                       format(input_dir_prefix,barcodes_tsv_file))
       if not os.path.exists(tar_file):
         raise IOError('File {0} not found'.format(tar_file))
 
@@ -142,7 +144,7 @@ class RunScanpy(IGFBaseProcess):
              project_name=project_igf_id,
              sample_name=sample_igf_id,
              matrix_file=matrix_file,
-             gene_tsv=gene_file,
+             features_tsv=gene_file,
              barcode_tsv=barcode_file,
              html_template_file=report_template_file,
              species_name=ensembl_species_name,

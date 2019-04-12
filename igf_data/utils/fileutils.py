@@ -51,7 +51,7 @@ def copy_local_file(source_path,destinationa_path, force=False):
   A method for copy files to local disk
 
   :param source_path: A source file path
-  :param destination_path: A destination file path, including the file name
+  :param destinationa_path: A destination file path, including the file name  ##FIX TYPO
   :param force: Optional, set True to overwrite existing
                 destination file, default is False
   '''
