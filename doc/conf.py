@@ -79,20 +79,34 @@ pygments_style = 'sphinx'
 # a list of builtin themes.
 #
 #html_theme = 'nature'
-html_theme = 'classic'
+#html_theme = 'classic'
+#html_theme_options = {
+#    "rightsidebar": "false",
+#    "stickysidebar": "true",
+#    "collapsiblesidebar": "true",
+#    "sidebarbgcolor": "#ddd",
+#    "sidebartextcolor" : "black",
+#    "sidebarlinkcolor":  "black",
+#    "footerbgcolor":"#ddd",
+#    "footertextcolor":"black",
+#    "headbgcolor":"#F0F8FF",
+#    "sidebarbtncolor":"#ddd",
+#    "relbarbgcolor":"#A9A9A9",
+#    "relbarlinkcolor":"white",
+#}
+html_theme = "sphinx_rtd_theme"
 html_theme_options = {
-    "rightsidebar": "false",
-    "stickysidebar": "true",
-    "collapsiblesidebar": "true",
-    "sidebarbgcolor": "#ddd",
-    "sidebartextcolor" : "black",
-    "sidebarlinkcolor":  "black",
-    "footerbgcolor":"#ddd",
-    "footertextcolor":"black",
-    "headbgcolor":"#F0F8FF",
-    "sidebarbtncolor":"#ddd",
-    "relbarbgcolor":"#A9A9A9",
-    "relbarlinkcolor":"white",
+    'display_version': False,
+    'prev_next_buttons_location': 'bottom',
+    'style_external_links': False,
+    'vcs_pageview_mode': '',
+    'style_nav_header_background': 'white',
+    # Toc options
+    'collapse_navigation': False,
+    'sticky_navigation': True,
+    'navigation_depth': 4,
+    'includehidden': True,
+    'titles_only': False
 }
 
 # Theme options are theme-specific and customize the look and feel of a theme
@@ -104,7 +118,7 @@ html_theme_options = {
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+#html_static_path = ['_static']
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.

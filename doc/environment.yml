@@ -25,3 +25,4 @@ dependencies:
     - scanpy==1.2.2
     - slackclient==1.2.1
     - asana==0.8.0
+    - sphinx_rtd_theme
