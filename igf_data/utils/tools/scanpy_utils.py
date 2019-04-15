@@ -2,6 +2,7 @@ import os,base64
 import scanpy as sc
 import numpy as np
 import pandas as pd
+from datetime import datetime
 from igf_data.utils.fileutils import get_temp_dir,copy_local_file,remove_dir
 from jinja2 import Template,Environment, FileSystemLoader,select_autoescape
 
@@ -82,6 +83,7 @@ class Scanpy_tool:
       if os.path.exists(os.path.join(self.work_dir,'cache')):
         remove_dir(os.path.join(self.work_dir,'cache'))
 
+      date_stamp = datetime.now().strftime('%d-%b-%Y %H:%M:%S')
       # step 1: read input files
       temp_input_dir = get_temp_dir(use_ephemeral_space=True)                   # fix for hpc
       local_matrix_file = os.path.join(\
@@ -396,6 +398,7 @@ class Scanpy_tool:
       template_file.\
         stream(ProjectName=project_name,
                SampleName=self.sample_name,
+               Date_stamp=date_stamp,
                Highest_gene_expr=highest_gene_expr,
                MitoPlot=mito_plot_data,
                MitoScatter1=mito_plot_scatter1,

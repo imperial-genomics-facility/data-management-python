@@ -1,82 +1,134 @@
 <html>
     <head>
       <title>Scanpy Report {{ ProjectName }} {{ SampleName }}</title>
+      <style> 
+        .info {
+          box-sizing: content-box;
+          width: 1000px;
+          height: 250px;
+          padding: 5px;  
+          border: 1px dotted grey;
+          background-color: #E0E6F8;
+        }
+        .code_box {
+          box-sizing: content-box;
+          width: 1000px;
+          padding: 1px;  
+          border: 1px solid black;
+          background-color: #f2f3f4;
+          position:relative;
+          left:20px;
+        }
+        .body {
+          background-color: #f8f9f9;
+        }
+        .img_placement {
+          position:relative;
+          left:150px;
+        }
+        .img_border {
+           border:1px solid black;
+        }
+      </style>
     </head>
     <body>
+      <h1>Scanpy Report {{ ProjectName }} {{ SampleName }}</h1>
+      <div class="info">
         <h2>Project info</h2>
-        <dt>Project Name</dt>
-           <dd>{{ ProjectName }}</dd>
-        <p></p>
-        <dt>Sample Name</dt>
-           <dd>{{ SampleName }}</dd>
-        
-        <h2>Description</h2>
-        <p>Scanpy tool is used for checking an initial qc of the single cell data after cellranger count run.</p>
-        <p>This analysis is based on the following Scanpy tutorials:</p>
-        <ul>
-          <li><a href="https://scanpy-tutorials.readthedocs.io/en/latest/pbmc3k.html">Clustering 3K PBMCs</a></li>
-        </ul>
+        <table>
+          <tr>
+            <td align="right"><b>Project name:</b></td>
+            <td >{{ ProjectName }}</td>
+          </tr>
+          <tr>
+            <td align="right"><b>Sample name:</b></td>
+            <td>{{ SampleName }}</td>
+          </tr>
+          <tr>
+            <td align="right"><b>Report date:</b></td>
+            <td>{{ Date_stamp }}</td>
+          </tr>
+          <tr>
+            <td align="right"><b>Created by:</b></td>
+            <td>Imperial BRC Genomics Facility</td>
+          </tr>
+          <tr>
+            <td align="right"><b>Help page:</b></td>
+            <td><a href="https://imperial-genomics-facility.github.io/igf-pipeline-help">https://imperial-genomics-facility.github.io/igf-pipeline-help</a></td>
+          </tr>
+          <tr>
+            <td align="right"><b>Contact us:</b></td>
+            <td><a href="https://www.imperial.ac.uk/medicine/research-and-impact/facilities/genomics-facility/contact">https://www.imperial.ac.uk/medicine/research-and-impact/facilities/genomics-facility/contact</a></td>
+          </tr>
+        </table>
+      </div>
+      <h2>Description</h2>
+      <p>We use <a href="https://scanpy.readthedocs.io/en/latest/">Scanpy</a> for checking an initial QC of the single cell data after cellranger count run.</p>
+      <p>This analysis is based on the following tutorial:</p>
+      <ul>
+        <li><a href="https://scanpy-tutorials.readthedocs.io/en/latest/pbmc3k.html">Clustering 3K PBMCs</a></li>
+      </ul>
+      <pre class="code_box"><code>
+        import numpy as np
+        import pandas as pd
+        import scanpy as sc
 
-        <p>Now we have added the scanpy commands to the report page.</p>
+        adata = sc.read_10x_mtx(
+                'filtered_feature_bc_matrix/',  # the directory with the `.mtx` file
+                var_names='gene_symbols',       # use gene symbols for the variable names (variables-axis index)
+                cache=True)
+        adata.var_names_make_unique()           # make variables duplicates
+      </code></pre>
 
-        <pre><code>
-            import numpy as np
-            import pandas as pd
-            import scanpy as sc
-
-            adata = sc.read_10x_mtx(
-                    'filtered_feature_bc_matrix/',  # the directory with the `.mtx` file
-                    var_names='gene_symbols',       # use gene symbols for the variable names (variables-axis index)
-                   cache=True)
-            adata.var_names_make_unique()           # make variables duplicates
-        </code></pre>
-
-        <h2>Plot genes with highest expressions</h2>
-        <p>List of genes that yield the highest fraction of counts in each single cells, across all cells.</p>
-        <pre><code>
+      <h2>Plot genes with highest expressions</h2>
+      <p>List of genes that yield the highest fraction of counts in each single cells, across all cells.</p>
+      <pre class="code_box"><code>
             sc.pl.highest_expr_genes(adata, n_top=20)
-        </code></pre>
-        <img src="data:image/png;base64,{{ Highest_gene_expr }}">
-
-        <h2>Preprocessing: Check for mitochondrial gene expression</h2>
-        <pre><code>
-          # apply basic filtering
+      </code></pre>
+      <div class="img_placement">
+        <img src="data:image/png;base64,{{ Highest_gene_expr }}" class="img_border">
+      </div>
+      <h2>Preprocessing: Check for mitochondrial gene expression</h2>
+      <pre class="code_box"><code>
+        # apply basic filtering
           sc.pp.filter_cells(adata, min_genes=200)
           sc.pp.filter_genes(adata, min_cells=3)
       
           mito_genes # fetch from ensembl
-          # for each cell compute fraction of counts in mito genes vs. all genes
-          # the `.A1` is only necessary as X is sparse (to transform to a dense array after summing)
+        # for each cell compute fraction of counts in mito genes vs. all genes
+        # the `.A1` is only necessary as X is sparse (to transform to a dense array after summing)
           adata.obs['percent_mito'] = np.sum(
-            adata[:, mito_genes].X, axis=1).A1 / np.sum(adata.X, axis=1).A1
-          # add the total counts per cell as observations-annotation to adata
+          adata[:, mito_genes].X, axis=1).A1 / np.sum(adata.X, axis=1).A1
+        # add the total counts per cell as observations-annotation to adata
           adata.obs['n_counts'] = adata.X.sum(axis=1).A1
-        </code></pre>
+      </code></pre>
 
           <h3>Violin plot for MT gene expression counts</h3>
-          <pre><code>
-              sc.pl.violin(adata, ['n_genes', 'n_counts', 'percent_mito'],
-              jitter=0.4, multi_panel=True)
+          <pre class="code_box"><code>
+            sc.pl.violin(adata, ['n_genes', 'n_counts', 'percent_mito'],
+            jitter=0.4, multi_panel=True)
           </code></pre>
-          <img src="data:image/png;base64,{{ MitoPlot }}">
-        
+          <div class="img_placement">
+            <img src="data:image/png;base64,{{ MitoPlot }}" class="img_border">
+          </div>
           <h3>Scatter plots for MT gene expression counts</h3>
-          <pre><code>
-              sc.pl.scatter(adata, x='n_counts', y='percent_mito')
-              sc.pl.scatter(adata, x='n_counts', y='n_genes')
+          <pre class="code_box"><code>
+            sc.pl.scatter(adata, x='n_counts', y='percent_mito')
+            sc.pl.scatter(adata, x='n_counts', y='n_genes')
           </code></pre>
-          <img src="data:image/png;base64,{{ MitoScatter1 }}">
-          <img src="data:image/png;base64,{{ MitoScatter2 }}">
-        
+          <div class="img_placement">
+            <img src="data:image/png;base64,{{ MitoScatter1 }}" class="img_border">
+            <img src="data:image/png;base64,{{ MitoScatter2 }}" class="img_border">
+          </div>
           <p>Then apply filtering on data</p>
-          <pre><code>
-              adata = adata[adata.obs['n_genes'] < 2500, :]
-              adata = adata[adata.obs['percent_mito'] < 0.05, :]
+          <pre class="code_box"><code>
+            adata = adata[adata.obs['n_genes'] < 2500, :]
+            adata = adata[adata.obs['percent_mito'] < 0.05, :]
           </code></pre>
 
         <h2>Genes dispersion plot</h2>
         <p>Plotting highly-variable genes</p>
-        <pre><code>
+        <pre class="code_box"><code>
           # normalize data
             sc.pp.normalize_per_cell(adata, counts_per_cell_after=1e4)
           # logarithmize the data
@@ -86,36 +138,39 @@
           #  plot data
             sc.pl.highly_variable_genes(adata)
         </code></pre>
-        <img src="data:image/png;base64,{{ GenesDispersion }}">
-        
+        <div class="img_placement">
+          <img src="data:image/png;base64,{{ GenesDispersion }}" class="img_border">
+        </div>
         <h2>Running analysis</h2>
-        <pre><code>
+        <pre class="code_box"><code>
           # filter data
             adata = adata[:, adata.var['highly_variable']]
-          # regress out effects of total counts per cell and the percentage of mitochondrial genes expressed. 
+          # regress out effects of total counts per cell and the percentage of mitochondrial genes expressed.
             sc.pp.regress_out(adata, ['n_counts', 'percent_mito'])
           # scale each gene to unit variance
             sc.pp.scale(adata, max_value=10)
         </code></pre>
       
         <h3>PCA ranking plot</h3>
-        <pre><code>
+        <pre class="code_box"><code>
           # run pca
             sc.tl.pca(adata, svd_solver='arpack')
           # plot pca loading data
             sc.pl.pca_loadings(adata,show=True,save='.png')
         </code></pre>
-        <img src="data:image/png;base64,{{ Pca }}">
-
+        <div class="img_placement">
+          <img src="data:image/png;base64,{{ Pca }}" class="img_border">
+        </div>
         <h3>PCA variation ratio plot</h3>
-        <pre><code>
+        <pre class="code_box"><code>
           # plot pca variation ratio
             sc.pl.pca_variance_ratio(adata, log=True,save='.png')
         </code></pre>
-        <img src="data:image/png;base64,{{ Pca_var_data }}">
-        
+        <div class="img_placement">
+          <img src="data:image/png;base64,{{ Pca_var_data }}" class="img_border">
+        </div>
         <h3>tSNE Plot of louvain clusters</h3>
-        <pre><code>
+        <pre class="code_box"><code>
           # computing the neighborhood graph
             sc.pp.neighbors(adata, n_neighbors=10, n_pcs=40)
           # clustering the neighborhood graph
@@ -125,56 +180,63 @@
           # plot t-SNE
             sc.pl.tsne(adata,color='louvain',show=True,save='.png')
         </code></pre>
-        <img src="data:image/png;base64,{{ Tsne }}">
-        
+        <div class="img_placement">
+          <img src="data:image/png;base64,{{ Tsne }}" class="img_border">
+        </div>
         <h3>UMAP Plot of louvain clusters</h3>
-        <pre><code>
+        <pre class="code_box"><code>
           # embedding the neighborhood graph using umap
             sc.tl.umap(adata)
           # plot umap
             sc.pl.umap(adata, color=['louvain'],save='.png')
         </code></pre>
-        <img src="data:image/png;base64,{{ Umap_data }}">
-
-        <h2>Rank Genes Groups</h2>
-        <pre><code>
-           # compute a ranking for the highly differential genes in each cluster, using t-test
-             sc.tl.rank_genes_groups(adata, 'louvain', method='t-test')
-             sc.pl.rank_genes_groups(adata, n_genes=25, sharey=False)
+        <div class="img_placement">
+          <img src="data:image/png;base64,{{ Umap_data }}" class="img_border">
+        </div>
+      <h2>Rank Genes Groups</h2>
+      <pre class="code_box"><code>
+        # compute a ranking for the highly differential genes in each cluster, using t-test
+          sc.tl.rank_genes_groups(adata, 'louvain', method='t-test')
+          sc.pl.rank_genes_groups(adata, n_genes=25, sharey=False)
+      </code></pre>
+      <div class="img_placement">
+        <img src="data:image/png;base64,{{ RankGenesGroups }}" class="img_border">
+      </div>
+      <h2>Check for marker genes in cluster</h2>
+        <h3>Stacked Violin plot of ranked genes</h3>
+        <pre class="code_box"><code>
+          sc.pl.rank_genes_groups_stacked_violin(adata, n_genes=10,save='.png')
         </code></pre>
-        <img src="data:image/png;base64,{{ RankGenesGroups }}">
-        
-        <h2>Check for marker genes in cluster</h2>
-         
-          <h3>Stacked Violin plot of ranked genes</h3>
-            <pre><code>
-                sc.pl.rank_genes_groups_stacked_violin(adata, n_genes=10,save='.png')
-            </code></pre>
-          <img src="data:image/png;base64,{{ Rank_genes_groups_stacked_violin }}">
-
-          <h3>Dotplot of ranked genes</h3>
-            <pre><code>
-                sc.pl.rank_genes_groups_dotplot(adata, n_genes=10,color_map='bwr',dendrogram='dendrogram_louvain',save='.png')
-            </code></pre>
-          <img src="data:image/png;base64,{{ Rank_genes_groups_dotplot }}">
-
-          <h3>Matrix plot of ranked genes</h3>
-          <pre><code>
-              sc.pl.rank_genes_groups_matrixplot(adata, n_genes=10,  cmap='bwr',save='.png')
-          </code></pre>
-          <img src="data:image/png;base64,{{ Rank_genes_groups_matrixplot }}">
-        
-          <h3>Heatmap plot of ranked genes</h3>
-          <pre><code>
-              sc.pl.rank_genes_groups_heatmap(adata, n_genes=10, cmap='bwr',save='.png')
-          </code></pre>
-          <img src="data:image/png;base64,{{ Rank_genes_groups_heatmap }}">
-
-          <h3>Tracks plot of ranked genes</h3>
-          <pre><code>
-              sc.pl.rank_genes_groups_tracksplot(adata, n_genes=10, cmap='bwr',save='.png')
-          </code></pre>
-          <img src="data:image/png;base64,{{ Rank_genes_groups_tracksplot }}">
-        
+        <div class="img_placement">
+          <img src="data:image/png;base64,{{ Rank_genes_groups_stacked_violin }}" class="img_border">
+        </div>
+        <h3>Dotplot of ranked genes</h3>
+        <pre class="code_box"><code>
+          sc.pl.rank_genes_groups_dotplot(adata, n_genes=10,color_map='bwr',dendrogram='dendrogram_louvain',save='.png')
+        </code></pre>
+        <div class="img_placement">
+          <img src="data:image/png;base64,{{ Rank_genes_groups_dotplot }}" class="img_border">
+        </div>
+        <h3>Matrix plot of ranked genes</h3>
+        <pre class="code_box"><code>
+          sc.pl.rank_genes_groups_matrixplot(adata, n_genes=10,  cmap='bwr',save='.png')
+        </code></pre>
+        <div class="img_placement">
+          <img src="data:image/png;base64,{{ Rank_genes_groups_matrixplot }}" class="img_border">
+        </div>
+        <h3>Heatmap plot of ranked genes</h3>
+        <pre class="code_box"><code>
+          sc.pl.rank_genes_groups_heatmap(adata, n_genes=10, cmap='bwr',save='.png')
+        </code></pre>
+        <div class="img_placement">
+          <img src="data:image/png;base64,{{ Rank_genes_groups_heatmap }}" class="img_border">
+        </div>
+        <h3>Tracks plot of ranked genes</h3>
+        <pre class="code_box"><code>
+          sc.pl.rank_genes_groups_tracksplot(adata, n_genes=10, cmap='bwr',save='.png')
+        </code></pre>
+        <div class="img_placement">
+          <img src="data:image/png;base64,{{ Rank_genes_groups_tracksplot }}" class="img_border">
+        </div>
     </body>
 </html>
