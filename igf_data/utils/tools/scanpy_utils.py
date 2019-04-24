@@ -355,7 +355,6 @@ class Scanpy_tool:
       sc.pl.rank_genes_groups_matrixplot(\
         adata,
         n_genes=10,
-        cmap='bwr',
         save='.png')                                                            # ranked genes group matrix plot
       rank_genes_groups_matrixplot = \
         self._encode_png_image(\
@@ -366,7 +365,6 @@ class Scanpy_tool:
       sc.pl.rank_genes_groups_heatmap(\
         adata,
         n_genes=10,
-        cmap='bwr',
         save='.png')                                                            # ranked gene heatmap plot
       rank_genes_groups_heatmap = \
         self._encode_png_image(\
