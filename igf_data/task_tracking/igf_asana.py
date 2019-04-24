@@ -160,12 +160,15 @@ class IGF_asana:
       raise
 
 
-  def attach_file_to_asana_task(self,task_name, filepath, comment=None):
+  def attach_file_to_asana_task(self,task_name, filepath, remote_filename=None,
+                                comment=None):
     '''
     A method for uploading files to asana
     
     :params task_name: A task name
     :param filepath: A filepath to upload
+    :param remote_filename: Name of the uploaded file, default None for original name
+    :param comment: A text comment, default None
     '''
     try:
       if not os.path.exists(filepath):
@@ -182,11 +185,16 @@ class IGF_asana:
             create_on_task(asana_task_id,
                            {'text':comment})
       else:
+        if remote_filename is not None:
+          file_name = remote_filename
+        else:
+          file_name = os.path.basename(filepath)
+
         res=self.asanaclient.attachments.\
             create_on_task(\
               task_id=asana_task_id,
               file_content=open(os.path.join(filepath),'rb'),
-              file_name=os.path.basename(filepath))                             # upload file to task_id
+              file_name=file_name                                               # upload file to task_id
     except:
       raise 
 
