@@ -272,7 +272,7 @@ class Find_and_register_new_project_data:
     '''
     try:
       new_password=None                                                         # default value of the new password is None
-      symbols='^&%@!#'                                                          # allowed symbols in password
+      symbols='^!'                                                          # allowed symbols in password
       chars=string.ascii_lowercase+\
             string.ascii_uppercase+\
             string.digits+\
@@ -373,8 +373,8 @@ class Find_and_register_new_project_data:
                                     quote(password))                            # format irods command for shell
           subprocess.check_call(irods_passwd_cmd,shell=True)                    # set password for non-hpc user
           if self.log_slack:
-            message='created irods account for non-hpc user: {0}, password length: {1}'.\
-                    format(username,len(password))
+            message='created irods account for non-hpc user: {0}'.\
+                    format(username)
             self.igf_slack.post_message_to_channel(message,reaction='pass')
     except:
       raise
