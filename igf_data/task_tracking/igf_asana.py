@@ -194,7 +194,7 @@ class IGF_asana:
             create_on_task(\
               task_id=asana_task_id,
               file_content=open(os.path.join(filepath),'rb'),
-              file_name=file_name                                               # upload file to task_id
+              file_name=file_name)                                               # upload file to task_id
     except:
       raise 
 
