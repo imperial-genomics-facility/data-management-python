@@ -2,6 +2,7 @@
 import os
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from shutil import rmtree
+from datetime import datetime
 from igf_data.igfdb.projectadaptor import BaseAdaptor
 from igf_data.igfdb.igfTables import Project, Project_attribute
 
@@ -64,7 +65,6 @@ class ValidateAllLanesForProject(IGFBaseProcess):
       strict_check=self.param('strict_check')
       seqrun_igf_id=self.param_required('seqrun_igf_id')
       project_name=self.param_required('project_name')
-      igf_session_class=self.param_required('igf_session_class')
 
       project_status='PASS'                                                     # default status is PASS
       for fastq_dir,qc_stats in project_fastq.items():
@@ -77,6 +77,7 @@ class ValidateAllLanesForProject(IGFBaseProcess):
                                       'project_status':project_status})
       else:
         self.param('dataflow_params',{'project_status':project_status})
+        date_stamp = datetime.now().strftime('%d-%b-%Y_%H:%M')
         for fastq_dir in project_fastq.keys():
           report_dir=os.path.join(fastq_dir,'Reports','html')
           for flowcell in os.listdir(report_dir):
@@ -84,13 +85,22 @@ class ValidateAllLanesForProject(IGFBaseProcess):
             if os.path.isdir(flowcell_dir):
               all_barcodes_html=os.path.join(flowcell_dir,'all','all','all','laneBarcode.html')
               if os.path.exists(all_barcodes_html):
+                remote_filename = '{0}_{1}_{2}.html'.\
+                                  format(\
+                                    'laneBarcode',
+                                    os.path.basename(fastq_dir),
+                                    date_stamp
+                                  )
                 message='Failed barcode stats for seqrun: {0}, project: {1}'.\
                          format(seqrun_igf_id,project_name)
-                self.post_file_to_slack(filepath=all_barcodes_html,\
-                                        message=message)                        # post report file to slack
-                self.upload_file_to_asana_task(task_name=seqrun_igf_id, \
-                                               filepath=all_barcodes_html,\
-                                               comment=message)                 # attach html page to asana ticket
+                self.post_file_to_slack(\
+                  filepath=all_barcodes_html,
+                  message=message)                                              # post report file to slack
+                self.upload_file_to_asana_task(\
+                  task_name=seqrun_igf_id,
+                  filepath=all_barcodes_html,
+                  remote_filename=remote_filename,
+                  comment=message)                                              # attach html page to asana ticket
           if strict_check:
             self.post_message_to_slack(message='removing fastq dir {0}'.\
                                                format(fastq_dir), \
