@@ -85,12 +85,14 @@ class IGFBaseRunnable(eHive.BaseRunnable):
       raise
 
 
-  def upload_file_to_asana_task(self,task_name,filepath,comment=None):
+  def upload_file_to_asana_task(self,task_name,filepath,remote_filename=None,
+                                comment=None):
     '''
     A base method for uploading file to the asana task
     
     :param task_name: A asana task name
     :param filepath: A filepath
+    :param remote_filename: Name of the uploaded file, default None
     :param comment: An optional text comment
     '''
     try:
@@ -99,6 +101,7 @@ class IGFBaseRunnable(eHive.BaseRunnable):
         igf_asana.\
         attach_file_to_asana_task(task_name=task_name,
                                   filepath=filepath,
+                                  remote_filename=remote_filename,
                                   comment=comment)
     except:
       raise
