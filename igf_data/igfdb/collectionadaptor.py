@@ -439,8 +439,8 @@ class CollectionAdaptor(BaseAdaptor):
       collection_table=None
       session=self.session
       query=session.query(Collection, File).\
-                    join(Collection_group).\
-                    join(File).\
+                    join(Collection_group,Collection.collection_id==Collection_group.collection_id).\
+                    join(File,File.file_id==Collection_group.file_id).\
                     filter(File.file_path==file_path)
       results=self.fetch_records(query=query, output_mode='dataframe')          # get results
       results=results.to_dict(orient='records')
@@ -522,8 +522,8 @@ class CollectionAdaptor(BaseAdaptor):
 
       query=self.session.\
             query(Collection, File).\
-            join(Collection_group).\
-            join(File)                                                          # sql join Collection, Collection_group and File tables
+            join(Collection_group,Collection.collection_id==Collection_group.collection_id).\
+            join(File,File.file_id==Collection_group.file_id)                                                          # sql join Collection, Collection_group and File tables
       query=query.\
             filter(Collection.name.in_([collection_name]))                      # filter query based on collection_name
       if collection_type: 
