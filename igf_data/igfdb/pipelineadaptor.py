@@ -80,7 +80,7 @@ class PipelineAdaptor(BaseAdaptor):
                                    Platform.vendor_name,
                                    Platform.software_name,
                                    Platform.software_version). \
-                             join(Platform).\
+                             join(Platform,Seqrun.platform_id==Platform.platform_id).\
                              filter(Seqrun.platform_id==Platform.platform_id).\
                              filter(Seqrun.reject_run=='N').\
                              filter(Seqrun.seqrun_id==data.seed_id)
@@ -94,8 +94,8 @@ class PipelineAdaptor(BaseAdaptor):
                                  Sample.cell_line,
                                  Sample.donor_anonymized_id,
                                  Sample.sample_submitter_id).\
-                          join(Sample).\
-                          join(Project).\
+                          join(Sample,Sample.sample_id==Experiment.sample_id).\
+                          join(Project,Project.project_id==Sample.project_id).\
                           filter(Project.project_id==Sample.project_id).\
                           filter(Project.project_id==Experiment.project_id).\
                           filter(Sample.status=='ACTIVE').\
@@ -127,7 +127,7 @@ class PipelineAdaptor(BaseAdaptor):
       table_data=pd.DataFrame()                                                 # return empty dataframes if no data found
 
       pipeseed_query=self.session.query(Pipeline_seed).\
-                                  join(Pipeline).\
+                                  join(Pipeline,Pipeline.pipeline_id==Pipeline_seed.pipeline_id).\
                                   filter(Pipeline.pipeline_id==Pipeline_seed.pipeline_id).\
                                   filter(Pipeline_seed.status==status).\
                                   filter(Pipeline.pipeline_name==pipeline_name).\
@@ -285,7 +285,7 @@ class PipelineAdaptor(BaseAdaptor):
       seeded_experiments=self.session.\
                          query(Experiment.experiment_id).\
                          join(Pipeline_seed,Experiment.experiment_id==Pipeline_seed.seed_id).\
-                         join(Pipeline).\
+                         join(Pipeline,Pipeline.pipeline_id==Pipeline_seed.pipeline_id).\
                          filter(Pipeline.pipeline_name==pipeline_name).\
                          filter(Pipeline_seed.pipeline_id==Pipeline.pipeline_id).\
                          filter(Pipeline_seed.seed_table==seed_table).\
@@ -296,12 +296,12 @@ class PipelineAdaptor(BaseAdaptor):
       new_experiments_query=self.session.\
                       query(Experiment.experiment_id,
                             Project.project_igf_id).\
-                      join(Sample).\
-                      join(Project).\
-                      join(Run).\
+                      join(Sample,Sample.sample_id==Experiment.sample_id).\
+                      join(Project,Project.project_id==Sample.project_id).\
+                      join(Run,Experiment.experiment_id==Run.experiment_id).\
                       join(Collection, Run.run_igf_id==Collection.name).\
-                      join(Collection_group).\
-                      join(File).\
+                      join(Collection_group,Collection.collection_id==Collection_group.collection_id).\
+                      join(File,File.file_id==Collection_group.file_id).\
                       filter(Experiment.sample_id==Sample.sample_id).\
                       filter(Project.project_id==Sample.project_id).\
                       filter(Run.experiment_id==Experiment.experiment_id).\
