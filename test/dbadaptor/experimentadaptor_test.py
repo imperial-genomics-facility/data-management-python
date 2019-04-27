@@ -78,3 +78,6 @@ class ExperimentAdaptor_test1(unittest.TestCase):
     self.assertEqual(project_id,'ProjectA')
     self.assertEqual(sample_id,'SampleA')
     ea.close_session()
+
+if __name__=='__main__':
+  unittest.main()
