@@ -73,3 +73,6 @@ class Projectutils_test1(unittest.TestCase):
     for pr_attribute in pr_attributes.to_dict(orient='records'):
       self.assertEqual(pr_attribute['attribute_value'],'OFF')
     pr.close_session()
+
+if __name__ == '__main__':
+  unittest.main()

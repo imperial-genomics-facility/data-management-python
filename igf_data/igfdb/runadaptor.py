@@ -188,8 +188,8 @@ class RunAdaptor(BaseAdaptor):
     try:
       session=self.session
       query=session.query(Sample).\
-                    join(Experiment).\
-                    join(Run).\
+                    join(Experiment,Sample.sample_id==Experiment.sample_id).\
+                    join(Run,Experiment.experiment_id==Run.experiment_id).\
                     filter(Run.run_igf_id==run_igf_id)
       samples=self.fetch_records(query=query, output_mode='dataframe')          # get results
       samples=samples.to_dict(orient='records')
@@ -216,9 +216,9 @@ class RunAdaptor(BaseAdaptor):
             query(Project.project_igf_id,
                   Sample.sample_igf_id,
                   Experiment.experiment_igf_id).\
-            join(Sample).\
-            join(Experiment).\
-            join(Run).\
+            join(Sample,Project.project_id==Sample.project_id).\
+            join(Experiment,Sample.sample_id==Experiment.sample_id).\
+            join(Run,Experiment.experiment_id==Run.experiment_id).\
             filter(Project.project_id==Sample.project_id).\
             filter(Sample.sample_id==Experiment.sample_id).\
             filter(Experiment.experiment_id==Run.experiment_id).\
