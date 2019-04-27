@@ -237,8 +237,8 @@ class ProjectAdaptor(BaseAdaptor):
       session=self.session
       query=session.\
             query(Project, User, ProjectUser.data_authority).\
-            join(ProjectUser).\
-            join(User)
+            join(ProjectUser,Project.project_id==ProjectUser.project_id).\
+            join(User,User.user_id==ProjectUser.user_id)
       if project_igf_id:
         query=query.filter(Project.project_igf_id==project_igf_id)
 
@@ -261,8 +261,8 @@ class ProjectAdaptor(BaseAdaptor):
       session=self.session
       query=session.\
             query(Project, User, ProjectUser.data_authority).\
-            join(ProjectUser).\
-            join(User).\
+            join(ProjectUser,Project.project_id==ProjectUser.project_id).\
+            join(User,User.user_id==ProjectUser.user_id).\
             filter(Project.project_igf_id==project_igf_id).\
             filter(User.email_id==email_id)
       results=self.fetch_records(query=query, \
