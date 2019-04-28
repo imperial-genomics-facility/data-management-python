@@ -16,7 +16,8 @@ class ProjectAdaptor(BaseAdaptor):
     :param autosave: A toggle for autocommit, default True
     :returns: None
     '''
-    (project_data, project_attr_data)=self.divide_data_to_table_and_attribute(data=data)
+    (project_data, project_attr_data)=\
+      self.divide_data_to_table_and_attribute(data=data)
     try:
       self.store_project_data(data=project_data)                                # store project
       if len(project_attr_data.index) > 0:                                      # check if any attribute is present
@@ -48,8 +49,10 @@ class ProjectAdaptor(BaseAdaptor):
       if not isinstance(data, pd.DataFrame):
         data=pd.DataFrame(data)
 
-      project_columns=self.get_table_columns(table_name=Project,
-                                             excluded_columns=['project_id'])   # get required columns for project table
+      project_columns=\
+        self.get_table_columns(\
+          table_name=Project,
+          excluded_columns=['project_id'])                                      # get required columns for project table
       (project_df, project_attr_df)=\
         BaseAdaptor.\
         divide_data_to_table_and_attribute(\
@@ -213,10 +216,12 @@ class ProjectAdaptor(BaseAdaptor):
     try:
       column=[column for column in Project.__table__.columns \
                        if column.key == target_column_name][0]
-      project=self.fetch_records_by_column(table=Project, \
-      	                                   column_name=column, \
-      	                                   column_id=project_igf_id, \
-      	                                   output_mode='one')
+      project=\
+        self.fetch_records_by_column(\
+          table=Project,
+      	  column_name=column,
+          column_id=project_igf_id,
+      	  output_mode='one')
       return project  
     except:
       raise
@@ -236,13 +241,20 @@ class ProjectAdaptor(BaseAdaptor):
 
       session=self.session
       query=session.\
-            query(Project, User, ProjectUser.data_authority).\
-            join(ProjectUser,Project.project_id==ProjectUser.project_id).\
-            join(User,User.user_id==ProjectUser.user_id)
+            query(Project,
+                  User,
+                  ProjectUser.data_authority).\
+            join(ProjectUser,
+                 Project.project_id==ProjectUser.project_id).\
+            join(User,
+                 User.user_id==ProjectUser.user_id)
       if project_igf_id:
         query=query.filter(Project.project_igf_id==project_igf_id)
 
-      results=self.fetch_records(query=query, output_mode=output_mode)
+      results=\
+        self.fetch_records(\
+          query=query,
+          output_mode=output_mode)
       return results
     except:
       raise
@@ -260,13 +272,19 @@ class ProjectAdaptor(BaseAdaptor):
       project_user_check=False
       session=self.session
       query=session.\
-            query(Project, User, ProjectUser.data_authority).\
-            join(ProjectUser,Project.project_id==ProjectUser.project_id).\
-            join(User,User.user_id==ProjectUser.user_id).\
+            query(Project,
+                  User,
+                  ProjectUser.data_authority).\
+            join(ProjectUser,
+                 Project.project_id==ProjectUser.project_id).\
+            join(User,
+                 User.user_id==ProjectUser.user_id).\
             filter(Project.project_igf_id==project_igf_id).\
             filter(User.email_id==email_id)
-      results=self.fetch_records(query=query, \
-                                 output_mode='one_or_none')
+      results=\
+        self.fetch_records(\
+          query=query,
+          output_mode='one_or_none')
       if results is not None:
         project_user_check=True
       return project_user_check
@@ -286,11 +304,14 @@ class ProjectAdaptor(BaseAdaptor):
       session=self.session
       query=session.\
             query(Project).\
-            join(ProjectUser).\
+            join(ProjectUser,
+                 Project.project_id==ProjectUser.project_id).\
             filter(Project.project_igf_id==project_igf_id).\
             filter(ProjectUser.data_authority=='T')
-      results=self.fetch_records(query=query, \
-                                 output_mode='one_or_none')
+      results=\
+        self.fetch_records(\
+          query=query,
+          output_mode='one_or_none')
       if results is not None:
         project_user_check=True
       return project_user_check
@@ -310,14 +331,18 @@ class ProjectAdaptor(BaseAdaptor):
       session=self.session
       query=session.\
             query(User).\
-            join(ProjectUser).\
-            join(Project).\
+            join(ProjectUser,
+                 User.user_id==ProjectUser.user_id).\
+            join(Project,
+                 Project.project_id==ProjectUser.project_id).\
             filter(Project.project_id==ProjectUser.project_id).\
             filter(User.user_id==ProjectUser.user_id).\
             filter(Project.project_igf_id==project_igf_id).\
             filter(ProjectUser.data_authority=='T')
-      results=self.fetch_records(query=query, \
-                                 output_mode='one_or_none')
+      results=\
+        self.fetch_records(\
+          query=query, \
+          output_mode='one_or_none')
       return results
     except:
       raise
@@ -336,11 +361,14 @@ class ProjectAdaptor(BaseAdaptor):
       session=self.session
       query=session.\
             query(Project).\
-            join(Project_attribute).\
+            join(Project_attribute,
+                 Project.project_id==Project_attribute.project_id).\
             filter(Project.project_igf_id==project_igf_id).\
             filter(Project_attribute.attribute_name==attribute_name)
-      results=self.fetch_records(query=query, \
-                                 output_mode='one_or_none')
+      results=\
+        self.fetch_records(\
+          query=query,
+          output_mode='one_or_none')
       if results is not None:
         project_attribute_check=True
       return project_attribute_check
@@ -358,20 +386,24 @@ class ProjectAdaptor(BaseAdaptor):
     :returns dataframe of records
     '''
     try:
-      project=self.fetch_project_records_igf_id(project_igf_id=project_igf_id)
+      project=\
+        self.fetch_project_records_igf_id(project_igf_id=project_igf_id)
 
-      project_attributes=BaseAdaptor.\
-                         get_attributes_by_dbid(self, \
-                                        attribute_table=Project_attribute, \
-                                        linked_table=Project,\
-                                        linked_column_name=linked_column_name,\
-                                        db_id=project.project_id )
+      project_attributes=\
+        BaseAdaptor.\
+        get_attributes_by_dbid(\
+          self,
+          attribute_table=Project_attribute,
+          linked_table=Project,
+          linked_column_name=linked_column_name,
+          db_id=project.project_id )
       return project_attributes
     except:
       raise
 
 
-  def fetch_project_samples(self, project_igf_id,only_active=True,output_mode='object'):
+  def fetch_project_samples(self, project_igf_id,only_active=True,
+                            output_mode='object'):
     '''
     A method for fetching all the samples for a specific project
 
@@ -383,7 +415,8 @@ class ProjectAdaptor(BaseAdaptor):
     try:
       query=self.session.\
             query(Sample).\
-            join(Project).\
+            join(Project,
+                 Project.project_id==Sample.project_id).\
             filter(Project.project_id==Sample.project_id).\
             filter(Project.project_igf_id==project_igf_id)
       if only_active:
@@ -404,9 +437,11 @@ class ProjectAdaptor(BaseAdaptor):
     :returns: A int sample count
     '''
     try:
-      results_data=self.fetch_project_samples(project_igf_id=project_igf_id,
-                                              only_active=only_active,
-                                              output_mode='dataframe')          # fetch samples as dataframe
+      results_data=\
+        self.fetch_project_samples(\
+          project_igf_id=project_igf_id,
+          only_active=only_active,
+          output_mode='dataframe')                                              # fetch samples as dataframe
       count=len(results_data.index)                                             # count dataframe row
       return count
     except:
