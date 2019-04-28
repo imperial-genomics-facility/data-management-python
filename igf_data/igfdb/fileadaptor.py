@@ -15,7 +15,8 @@ class FileAdaptor(BaseAdaptor):
     :param data: A list of dictionary or a Pandas DataFrame
     :param autosave: A Toggle for automatically saving changes to db, default True
     '''
-    (file_data, file_attr_data)=self.divide_data_to_table_and_attribute(data=data)
+    (file_data, file_attr_data)=\
+      self.divide_data_to_table_and_attribute(data=data)
     try:
       self.store_file_data(data=file_data) 
       if len(file_attr_data.index)>0:                                           # check if any attribute exists
@@ -97,11 +98,12 @@ class FileAdaptor(BaseAdaptor):
         data=pd.DataFrame(data)
 
       if 'file_path' in data.columns:
-        map_function=lambda x: self.map_foreign_table_and_store_attribute(\
-                                      data=x,
-                                      lookup_table=File,
-                                      lookup_column_name='file_path',
-                                      target_column_name='file_id')             # prepare the map function for File id
+        map_function=\
+          lambda x: self.map_foreign_table_and_store_attribute(\
+                      data=x,
+                      lookup_table=File,
+                      lookup_column_name='file_path',
+                      target_column_name='file_id')                             # prepare the map function for File id
         new_data=data.apply(map_function, 1)                                    # map file id
         data=new_data                                                           # overwrite data
 
@@ -125,10 +127,12 @@ class FileAdaptor(BaseAdaptor):
     :returns: A file object
     '''
     try:
-      file_obj=self.fetch_records_by_column(table=File,
-                                            column_name=File.file_path,
-                                            column_id=file_path,
-                                            output_mode='one')
+      file_obj=\
+        self.fetch_records_by_column(\
+          table=File,
+          column_name=File.file_path,
+          column_id=file_path,
+          output_mode='one')
       return file_obj
     except:
       raise
@@ -143,10 +147,12 @@ class FileAdaptor(BaseAdaptor):
     '''
     try:
       file_check=False
-      file_obj=self.fetch_records_by_column(table=File,
-                                            column_name=File.file_path,
-                                            column_id=file_path,
-                                            output_mode='one_or_none')
+      file_obj=\
+        self.fetch_records_by_column(\
+          table=File,
+          column_name=File.file_path,
+          column_id=file_path,
+          output_mode='one_or_none')
       if file_obj:
         file_check=True
       return file_check
@@ -154,7 +160,8 @@ class FileAdaptor(BaseAdaptor):
       raise
 
 
-  def remove_file_data_for_file_path(self,file_path,remove_file=False,autosave=True):
+  def remove_file_data_for_file_path(self,file_path,remove_file=False,
+                                     autosave=True):
     '''
     A method for removing entry for a specific file.
     
@@ -163,7 +170,8 @@ class FileAdaptor(BaseAdaptor):
     :param autosave: A toggle for automatically saving changes to database, default True
     '''
     try:
-      file_exists=self.check_file_records_file_path(file_path=file_path)
+      file_exists=\
+        self.check_file_records_file_path(file_path=file_path)
       if not file_exists:
         raise ValueError('File {0} not found in database'.format(file_path))
 
@@ -205,4 +213,3 @@ class FileAdaptor(BaseAdaptor):
         self.commit_session()
     except:
       raise
-
