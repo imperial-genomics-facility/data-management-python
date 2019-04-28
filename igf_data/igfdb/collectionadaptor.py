@@ -86,7 +86,8 @@ class CollectionAdaptor(BaseAdaptor):
       raise
 
 
-  def check_collection_attribute(self,collection_name,collection_type,attribute_name):
+  def check_collection_attribute(self,collection_name,collection_type,
+                                 attribute_name):
     '''
     A method for checking collection attribute records for an attribute_name
     
@@ -99,13 +100,16 @@ class CollectionAdaptor(BaseAdaptor):
       record_exists=False
       query=self.session.\
             query(Collection).\
-            join(Collection_attribute).\
+            join(Collection_attribute,
+                 Collection.collection_id==Collection_attribute.collection_id).\
             filter(Collection.name==collection_name).\
             filter(Collection.type==collection_type).\
             filter(Collection.collection_id==Collection_attribute.collection_id).\
             filter(Collection_attribute.attribute_name==attribute_name)
-      records=self.fetch_records(query=query,
-                                 output_mode='dataframe')                       # attribute can present more than one time
+      records=\
+        self.fetch_records(\
+          query=query,
+          output_mode='dataframe')                                              # attribute can present more than one time
       if len(records.index)>0:
         record_exists=True
 
@@ -114,8 +118,8 @@ class CollectionAdaptor(BaseAdaptor):
       raise
 
 
-  def update_collection_attribute(self,collection_name,collection_type,attribute_name,
-                                  attribute_value,autosave=True):
+  def update_collection_attribute(self,collection_name,collection_type,
+                                  attribute_name,attribute_value,autosave=True):
     '''
     A method for updating collection attribute
     
@@ -164,10 +168,10 @@ class CollectionAdaptor(BaseAdaptor):
     
     :param data: A list of dictionaries, containing following entries
     
-                 name
-                 type
-                 attribute_name
-                 attribute_value
+                 * name
+                 * type
+                 * attribute_name
+                 * attribute_value
     :param autosave: A toggle for saving changes to database, default True
     '''
     try:
@@ -228,7 +232,8 @@ class CollectionAdaptor(BaseAdaptor):
 
 
   @staticmethod
-  def prepare_data_for_collection_attribute(collection_name,collection_type,data_list):
+  def prepare_data_for_collection_attribute(collection_name,collection_type,
+                                            data_list):
     '''
     A static method for building data structure for collection attribute table update
     
@@ -267,11 +272,12 @@ class CollectionAdaptor(BaseAdaptor):
         data=pd.DataFrame(data)                                                 # convert data to dataframe
 
       if 'name' in data.columns and 'type' in data.columns:
-        map_function=lambda x: self.map_foreign_table_and_store_attribute(\
-                                      data=x,
-                                      lookup_table=Collection,
-                                      lookup_column_name=['name', 'type'],
-                                      target_column_name='collection_id')       # prepare the function
+        map_function=\
+          lambda x: self.map_foreign_table_and_store_attribute(\
+                      data=x,
+                      lookup_table=Collection,
+                      lookup_column_name=['name', 'type'],
+                      target_column_name='collection_id')                       # prepare the function
         new_data=data.apply(map_function, axis=1)                               # map foreign key ids
         data=new_data                                                           # overwrite data
 
@@ -300,7 +306,10 @@ class CollectionAdaptor(BaseAdaptor):
             query(Collection).\
             filter(Collection.name==collection_name).\
             filter(Collection.type==collection_type)
-      collection_obj=self.fetch_records(query=query, output_mode='one_or_none')
+      collection_obj=\
+        self.fetch_records(\
+          query=query,
+          output_mode='one_or_none')
       if collection_obj is not None:
         collection_check=True
       return collection_check
@@ -308,7 +317,9 @@ class CollectionAdaptor(BaseAdaptor):
       raise
 
 
-  def fetch_collection_records_name_and_type(self, collection_name, collection_type, target_column_name=['name','type']):
+  def fetch_collection_records_name_and_type(self, collection_name, 
+                                             collection_type, 
+                                             target_column_name=['name','type']):
     '''
     A method for fetching data for Collection table
     
@@ -320,7 +331,11 @@ class CollectionAdaptor(BaseAdaptor):
       column_list=[column for column in Collection.__table__.columns \
                        if column.key in target_column_name]
       column_data=dict(zip(column_list,[collection_name, collection_type]))
-      collection=self.fetch_records_by_multiple_column(table=Collection, column_data=column_data, output_mode='one')
+      collection=\
+        self.fetch_records_by_multiple_column(\
+          table=Collection,
+          column_data=column_data,
+          output_mode='one')
       return collection  
     except:
       raise
@@ -372,12 +387,14 @@ class CollectionAdaptor(BaseAdaptor):
       fa=FileAdaptor(**{'session':self.session})
       fa.store_file_and_attribute_data(data=file_data,autosave=False)           # store file data
       self.session.flush()
-      collection_data=collection_data.apply(lambda x: \
-                                            self._tag_existing_collection_data(\
-                                              data=x,\
-                                              tag='EXISTS',\
-                                              tag_column='data_exists'),
-                                            axis=1)                             # tag existing collections
+      collection_data=\
+        collection_data.apply(\
+          lambda x: \
+          self._tag_existing_collection_data(\
+            data=x,
+            tag='EXISTS',
+            tag_column='data_exists'),
+          axis=1)                                                               # tag existing collections
       collection_data=collection_data[collection_data['data_exists']!='EXISTS'] # filter existing collections
       if len(collection_data.index) > 0:
         self.store_collection_and_attribute_data(data=collection_data,\
@@ -398,8 +415,8 @@ class CollectionAdaptor(BaseAdaptor):
     An internal method for checking a dataframe for existing collection record
     
     :param data: A Pandas data series or a dictionary with following keys
-                        name
-                        type
+                        * name
+                        * type
     :param tag: A text tag for marking existing collections, default EXISTS
     :param tag_column: A column name for adding the tag, default data_exists
     :returns: A pandas series
@@ -438,11 +455,17 @@ class CollectionAdaptor(BaseAdaptor):
       collection_name=None
       collection_table=None
       session=self.session
-      query=session.query(Collection, File).\
-                    join(Collection_group,Collection.collection_id==Collection_group.collection_id).\
-                    join(File,File.file_id==Collection_group.file_id).\
-                    filter(File.file_path==file_path)
-      results=self.fetch_records(query=query, output_mode='dataframe')          # get results
+      query=session.\
+            query(Collection, File).\
+            join(Collection_group,
+                 Collection.collection_id==Collection_group.collection_id).\
+            join(File,
+                 File.file_id==Collection_group.file_id).\
+            filter(File.file_path==file_path)
+      results=\
+        self.fetch_records(\
+          query=query,
+          output_mode='dataframe')                                              # get results
       results=results.to_dict(orient='records')
       if len(results)>0:
         collection_name=results[0]['name']
@@ -455,14 +478,16 @@ class CollectionAdaptor(BaseAdaptor):
       raise   
 
 
-  def create_collection_group(self, data, autosave=True, required_collection_column=['name','type'],required_file_column='file_path'):
+  def create_collection_group(self, data, autosave=True, 
+                              required_collection_column=['name','type'],
+                              required_file_column='file_path'):
     '''
     A function for creating collection group, a link between a file and a collection
     
     :param data: A list dictionary or a Pandas DataFrame with following columns
-                           name
-                           type
-                           file_path
+                           * name
+                           * type
+                           * file_path
                  E.g. [{'name':'a collection name', 'type':'a collection type', 'file_path': 'path'},]
     :param required_collection_column: List of required column for fetching collection,
                                        default 'name','type'
@@ -481,18 +506,20 @@ class CollectionAdaptor(BaseAdaptor):
         raise ValueError('Missing required value in input data {0}, required {1}'.\
                          format(tuple(data.columns), required_columns))    
 
-      collection_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
-                                               data=x,
-                                               lookup_table=Collection,
-                                               lookup_column_name=['name', 'type'],
-                                               target_column_name='collection_id') # prepare the function
+      collection_map_function=\
+        lambda x: self.map_foreign_table_and_store_attribute(\
+                    data=x,
+                    lookup_table=Collection,
+                    lookup_column_name=['name', 'type'],
+                    target_column_name='collection_id')                         # prepare the function
       new_data=data.apply(collection_map_function,
                           axis=1)                                               # map collection id
-      file_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
-                                         data=x,
-                                         lookup_table=File,
-                                         lookup_column_name=required_file_column,
-                                         target_column_name='file_id')          # prepare the function for file id
+      file_map_function=\
+        lambda x: self.map_foreign_table_and_store_attribute(\
+                    data=x,
+                    lookup_table=File,
+                    lookup_column_name=required_file_column,
+                    target_column_name='file_id')                               # prepare the function for file id
       new_data=new_data.apply(file_map_function,
                               axis=1)                                           # map collection id
       self.store_records(table=Collection_group,
@@ -506,8 +533,9 @@ class CollectionAdaptor(BaseAdaptor):
       raise
 
 
-  def get_collection_files(self, collection_name, collection_type='',collection_table='',
-                            output_mode='dataframe'):
+  def get_collection_files(self, collection_name, collection_type='',
+                           collection_table='',
+                           output_mode='dataframe'):
     '''
     A method for fetching information from Collection, File, Collection_group tables
     
@@ -522,8 +550,10 @@ class CollectionAdaptor(BaseAdaptor):
 
       query=self.session.\
             query(Collection, File).\
-            join(Collection_group,Collection.collection_id==Collection_group.collection_id).\
-            join(File,File.file_id==Collection_group.file_id)                                                          # sql join Collection, Collection_group and File tables
+            join(Collection_group,
+                 Collection.collection_id==Collection_group.collection_id).\
+            join(File,
+                 File.file_id==Collection_group.file_id)                                                          # sql join Collection, Collection_group and File tables
       query=query.\
             filter(Collection.name.in_([collection_name]))                      # filter query based on collection_name
       if collection_type: 
@@ -534,8 +564,10 @@ class CollectionAdaptor(BaseAdaptor):
         query=query.\
               filter(Collection.table==collection_table)
 
-      results=self.fetch_records(query=query,
-                                 output_mode=output_mode)                       # get results
+      results=\
+        self.fetch_records(\
+          query=query,
+          output_mode=output_mode)                                              # get results
       return results
     except:
        raise
@@ -565,12 +597,15 @@ class CollectionAdaptor(BaseAdaptor):
         raise ValueError('Missing required fields for checking existing collection group'.\
                          format(data.to_dict()))
 
-      collection_files=self.get_collection_files(collection_name=data[collection_name_col],
-                                                 collection_type=data[collection_type_col],
-                                                 output_mode='dataframe')       # fetch collection files info from db
+      collection_files=\
+        self.get_collection_files(\
+          collection_name=data[collection_name_col],
+          collection_type=data[collection_type_col],
+          output_mode='dataframe')                                              # fetch collection files info from db
 
       if data.file_path != '':
-        collection_files=collection_files[collection_files[file_path_col]==data[file_path_col]] # filter collection group files
+        collection_files=\
+          collection_files[collection_files[file_path_col]==data[file_path_col]] # filter collection group files
 
       if len(collection_files.index)>0:
         for row in collection_files.to_dict(orient='records'):
@@ -598,9 +633,9 @@ class CollectionAdaptor(BaseAdaptor):
     A method for removing collection group information from database
     
     :param data: A list dictionary or a Pandas DataFrame with following columns
-                           name
-                           type
-                           file_path
+                           * name
+                           * type
+                           * file_path
                  File_path information is not mandatory
     :param required_collection_column: List of required column for fetching collection,
                                        default 'name','type'
@@ -623,8 +658,9 @@ class CollectionAdaptor(BaseAdaptor):
                          format(tuple(data.columns), required_columns))    
 
       data.apply(lambda x: \
-                 self._check_and_remove_collection_group(data=x,
-                                                         autosave=autosave),
+                 self._check_and_remove_collection_group(\
+                   data=x,
+                   autosave=autosave),
                  axis=1)                                                        # check and remove collection group data
     except:
       raise
