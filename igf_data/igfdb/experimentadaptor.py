@@ -15,7 +15,8 @@ class ExperimentAdaptor(BaseAdaptor):
     :param data: A list of dictionaries or a Pandas DataFrame
     :param autosave: A toggle for automatically saving data to db, default True
     '''
-    (experiment_data, experiment_attr_data)=self.divide_data_to_table_and_attribute(data=data)
+    (experiment_data, experiment_attr_data)=\
+      self.divide_data_to_table_and_attribute(data=data)
     
     try:
       self.store_experiment_data(data=experiment_data)                          # store experiment data
@@ -48,10 +49,12 @@ class ExperimentAdaptor(BaseAdaptor):
     if not isinstance(data, pd.DataFrame):
       data=pd.DataFrame(data)
 
-    experiment_columns=self.get_table_columns(table_name=Experiment,
-                                              excluded_columns=['experiment_id',
-                                                                'project_id',
-                                                                'sample_id' ])  # get required columns for experiment table
+    experiment_columns=\
+      self.get_table_columns(\
+        table_name=Experiment,
+        excluded_columns=['experiment_id',
+                          'project_id',
+                          'sample_id' ])                                        # get required columns for experiment table
     experiment_columns.extend(['project_igf_id',
                                'sample_igf_id'])                                # add required columns
     (experiment_df, experiment_attr_df)=\
@@ -79,20 +82,22 @@ class ExperimentAdaptor(BaseAdaptor):
         data=pd.DataFrame(data)                                                 # convert data to dataframe
 
       if 'project_igf_id' in data.columns:
-        project_map_function=lambda x: self.map_foreign_table_and_store_attribute(\
-                                              data=x,
-                                              lookup_table=Project,
-                                              lookup_column_name='project_igf_id',
-                                              target_column_name='project_id')  # prepare the function for Project id
+        project_map_function=\
+          lambda x: self.map_foreign_table_and_store_attribute(\
+                      data=x,
+                      lookup_table=Project,
+                      lookup_column_name='project_igf_id',
+                      target_column_name='project_id')                          # prepare the function for Project id
         new_data=data.apply(project_map_function, axis=1)                       # map project id foreign key id
         data=new_data                                                           # overwrite data
 
       if 'sample_igf_id' in data.columns:
-        sample_map_function=lambda x: self.map_foreign_table_and_store_attribute( \
-                                             data=x,
-                                             lookup_table=Sample,
-                                             lookup_column_name='sample_igf_id',
-                                             target_column_name='sample_id')    # prepare the function for Sample id
+        sample_map_function=\
+          lambda x: self.map_foreign_table_and_store_attribute( \
+                      data=x,
+                      lookup_table=Sample,
+                      lookup_column_name='sample_igf_id',
+                      target_column_name='sample_id')                           # prepare the function for Sample id
         new_data=data.apply(sample_map_function, axis=1)                        # map sample id foreign key id
         data=new_data
 
@@ -118,11 +123,12 @@ class ExperimentAdaptor(BaseAdaptor):
         data=pd.DataFrame(data)                                                 # convert data to dataframe
 
       if 'experiment_igf_id' in data.columns:
-        exp_map_function=lambda x: self.map_foreign_table_and_store_attribute( \
-                                          data=x,
-                                          lookup_table=Experiment,
-                                          lookup_column_name='experiment_igf_id',
-                                          target_column_name='experiment_id')   # prepare the function
+        exp_map_function=\
+          lambda x: self.map_foreign_table_and_store_attribute( \
+                      data=x,
+                      lookup_table=Experiment,
+                      lookup_column_name='experiment_igf_id',
+                      target_column_name='experiment_id')                       # prepare the function
         new_data=data.apply(exp_map_function, axis=1)                           # map foreign key id
         data=new_data                                                           # overwrite data
 
@@ -150,10 +156,12 @@ class ExperimentAdaptor(BaseAdaptor):
     try:
       column=[column for column in Experiment.__table__.columns \
                        if column.key == target_column_name][0]
-      experiment=self.fetch_records_by_column(table=Experiment, \
-      	                                   column_name=column, \
-      	                                   column_id=experiment_igf_id, \
-      	                                   output_mode='one')
+      experiment=\
+        self.fetch_records_by_column(\
+          table=Experiment,
+      	  column_name=column,
+      	  column_id=experiment_igf_id,
+      	  output_mode='one')
       return experiment  
     except:
       raise
@@ -171,19 +179,20 @@ class ExperimentAdaptor(BaseAdaptor):
       experiment_check=False
       column=[column for column in Experiment.__table__.columns \
                        if column.key == target_column_name][0]
-      experiment_obj=self.fetch_records_by_column(table=Experiment, \
-                                           column_name=column, \
-                                           column_id=experiment_igf_id, \
-                                           output_mode='one_or_none')
+      experiment_obj=\
+        self.fetch_records_by_column(\
+          table=Experiment,
+          column_name=column,
+          column_id=experiment_igf_id,
+          output_mode='one_or_none')
       if experiment_obj is not None:
         experiment_check=True
       return experiment_check
     except:
       raise
 
-  def fetch_sample_attribute_records_for_experiment_igf_id(self,experiment_igf_id,
-                                                           output_mode='dataframe',
-                                                           attribute_list=None):
+  def fetch_sample_attribute_records_for_experiment_igf_id(\
+    self,experiment_igf_id,output_mode='dataframe',attribute_list=None):
     '''
     A method for fetching sample_attribute_records for a given experiment_igf_id
     
@@ -196,8 +205,8 @@ class ExperimentAdaptor(BaseAdaptor):
       query=self.session.\
             query(Sample_attribute.attribute_name,
                   Sample_attribute.attribute_value).\
-            join(Sample).\
-            join(Experiment).\
+            join(Sample,Sample.sample_id==Sample_attribute.sample_id).\
+            join(Experiment,Sample.sample_id==Experiment.sample_id).\
             filter(Sample.sample_id==Sample_attribute.sample_id).\
             filter(Sample.sample_id==Experiment.sample_id).\
             filter(Experiment.experiment_igf_id==experiment_igf_id)             # get basic query
@@ -205,13 +214,18 @@ class ExperimentAdaptor(BaseAdaptor):
       if attribute_list is not None and \
          isinstance(attribute_list,list) and \
          len(attribute_list)>0:
-        query=query.filter(Sample_attribute.attribute_name.in_(attribute_list))       # look for only specific attributes, if list provided
-      results=self.fetch_records(query=query, output_mode=output_mode)           # fetch results
+        query=\
+          query.filter(Sample_attribute.attribute_name.in_(attribute_list))       # look for only specific attributes, if list provided
+      results=\
+        self.fetch_records(\
+          query=query,
+          output_mode=output_mode)                                              # fetch results
       return results
     except:
       raise
 
-  def update_experiment_records_by_igf_id(self,experiment_igf_id,update_data,autosave=True):
+  def update_experiment_records_by_igf_id(self,experiment_igf_id,
+                                          update_data,autosave=True):
     '''
     A method for updating experiment records in database
     
@@ -223,8 +237,10 @@ class ExperimentAdaptor(BaseAdaptor):
       if not isinstance(update_data,dict):
         raise AttributeError('Expecting a dictionary with new data for experiment record update and got {0}'.\
                              format(type(update_data)))                         # check update data type before db update
-      allowed_experiment_columns=self.get_table_columns(table_name=Experiment,
-                                                        excluded_columns='experiment_id') # get list of allowed experiment columns
+      allowed_experiment_columns=\
+        self.get_table_columns(\
+          table_name=Experiment,
+          excluded_columns='experiment_id')                                     # get list of allowed experiment columns
       for update_key in update_data.keys():
         if update_key not in allowed_experiment_columns:
           raise ValueError('Check your data, column {0} is not part of Experiment table'.\
@@ -252,13 +268,15 @@ class ExperimentAdaptor(BaseAdaptor):
       sample_igf_id=None
       query=self.session.\
             query(Project.project_igf_id,Sample.sample_igf_id).\
-            join(Sample).\
-            join(Experiment).\
+            join(Sample,Project.project_id==Sample.project_id).\
+            join(Experiment,Sample.sample_id==Experiment.sample_id).\
             filter(Project.project_id==Sample.project_id).\
             filter(Sample.sample_id==Experiment.sample_id).\
             filter(Experiment.experiment_igf_id==experiment_igf_id)
-      data=self.fetch_records(query=query,
-                              output_mode='one_or_none')
+      data=\
+        self.fetch_records(\
+          query=query,
+          output_mode='one_or_none')
       if data is not None:
         project_igf_id=data.project_igf_id
         sample_igf_id=data.sample_igf_id
@@ -279,15 +297,17 @@ class ExperimentAdaptor(BaseAdaptor):
     try:
       query=self.session.\
             query(Run.run_igf_id).\
-            join(Experiment).\
+            join(Experiment,Experiment.experiment_id==Run.experiment_id).\
             filter(Experiment.experiment_id==Run.experiment_id).\
             filter(Experiment.experiment_igf_id==experiment_igf_id)
       if include_active_runs:
         query=query.\
               filter(Run.status=='ACTIVE')
 
-      data=self.fetch_records(query=query,
-                              output_mode=output_mode)
+      data=\
+        self.fetch_records(\
+          query=query,
+          output_mode=output_mode)
       return data
     except:
       raise
