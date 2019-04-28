@@ -311,7 +311,6 @@ class BaseAdaptor(DBConnect):
     An internal method for fetching database records as query object
     '''
     try:
-      result=list()
       for row in query:
         yield row                                                               # return a generator object
     except:
