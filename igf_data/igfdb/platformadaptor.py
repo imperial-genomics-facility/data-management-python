@@ -25,17 +25,19 @@ class PlatformAdaptor(BaseAdaptor):
                                    output_mode='one'):
     '''
     A method for fetching data for Platform table
-    required params:
-    platform_igf_id: an igf id
-    target_column_name: column name in the Platform table, default is platform_igf_id
+    
+    :param platform_igf_id: an igf id
+    :param target_column_name: column name in the Platform table, default is platform_igf_id
     '''
     try:
       column=[column for column in Platform.__table__.columns \
                        if column.key == target_column_name][0]
-      platform=self.fetch_records_by_column(table=Platform, \
-      	                                   column_name=column, \
-      	                                   column_id=platform_igf_id, \
-      	                                   output_mode=output_mode)
+      platform=\
+        self.fetch_records_by_column(\
+          table=Platform,
+      	  column_name=column,
+      	  column_id=platform_igf_id,
+      	  output_mode=output_mode)
       return platform  
     except:
       raise
@@ -45,21 +47,22 @@ class PlatformAdaptor(BaseAdaptor):
     Load data to flowcell_barcode_rule table
     required params:
     data: A dictionary or dataframe containing following columns
-          platform_igf_id / platform_id
-          flowcell_type
-          index_1 (NO_CHANGE/REVCOMP/UNKNOWN)
-          index_2 (NO_CHANGE/REVCOMP/UNKNOWN)
+          * platform_igf_id / platform_id
+          * flowcell_type
+          * index_1 (NO_CHANGE/REVCOMP/UNKNOWN)
+          * index_2 (NO_CHANGE/REVCOMP/UNKNOWN)
     '''
     try:
       if not isinstance(data, pd.DataFrame):
         data=pd.DataFrame(data)
  
       if 'platform_igf_id' in data.columns:
-        platform_map_function=lambda x: self.map_foreign_table_and_store_attribute( \
-                                                 data=x, \
-                                                 lookup_table=Platform, \
-                                                 lookup_column_name='platform_igf_id', \
-                                                 target_column_name='platform_id')    # prepare the function for Platform id
+        platform_map_function=\
+          lambda x: self.map_foreign_table_and_store_attribute(\
+                      data=x,
+                      lookup_table=Platform,
+                      lookup_column_name='platform_igf_id',
+                      target_column_name='platform_id')                         # prepare the function for Platform id
         new_data=data.apply(platform_map_function, axis=1)                                # map platform id foreign key id
         data=new_data
 
@@ -70,5 +73,3 @@ class PlatformAdaptor(BaseAdaptor):
       if autosave:
         self.rollback_session()
       raise
-
-
