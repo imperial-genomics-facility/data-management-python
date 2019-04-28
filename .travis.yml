@@ -9,7 +9,7 @@ install:
  - hash -r
  - conda config --set always_yes yes --set changeps1 no
  - conda update -q conda
- - conda create env -n test-environment -f environment.yaml
+ - conda env create -n test-environment -f environment.yaml
  - source activate test-environment
 script:
 - coverage run --source=igf_data setup.py test
