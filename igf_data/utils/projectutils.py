@@ -27,11 +27,11 @@ def get_project_read_count(project_igf_id,session_class,run_attribute_name='R1_R
                            Sample.sample_igf_id,
                            Seqrun.flowcell_id,
                            Run_attribute.attribute_value).\
-                     join(Sample).\
-                     join(Experiment).\
-                     join(Run).\
-                     join(Seqrun).\
-                     join(Run_attribute).\
+                     join(Sample,Project.project_id==Sample.project_id).\
+                     join(Experiment,Sample.sample_id==Experiment.sample_id).\
+                     join(Run,Experiment.experiment_id==Run.experiment_id).\
+                     join(Seqrun,Seqrun.seqrun_id==Run.seqrun_id).\
+                     join(Run_attribute,Run.run_id==Run_attribute.run_id).\
                      filter(Project.project_igf_id==project_igf_id).\
                      filter(Sample.project_id==Project.project_id).\
                      filter(Experiment.sample_id==Sample.sample_id).\
@@ -70,10 +70,10 @@ def get_seqrun_info_for_project(project_igf_id,session_class):
     query=pr.session.query(distinct(Seqrun.seqrun_igf_id).\
                            label('seqrun_igf_id'),
                            Seqrun.flowcell_id).\
-                     join(Run).\
-                     join(Experiment).\
-                     join(Sample).\
-                     join(Project).\
+                     join(Run,Seqrun.seqrun_id==Run.seqrun_id).\
+                     join(Experiment,Experiment.experiment_id==Run.experiment_id).\
+                     join(Sample,Sample.sample_id==Experiment.sample_id).\
+                     join(Project,Project.project_id==Sample.project_id).\
                      filter(Project.project_id==Sample.project_id).\
                      filter(Sample.sample_id==Experiment.sample_id).\
                      filter(Experiment.experiment_id==Run.experiment_id).\

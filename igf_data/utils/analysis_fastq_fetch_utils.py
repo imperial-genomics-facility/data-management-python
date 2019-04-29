@@ -26,14 +26,14 @@ def get_fastq_input_list(db_session_class,experiment_igf_id,combine_fastq_dir=Fa
     dbconnected=True
     subquery=base.session.\
              query(Run.run_igf_id).\
-             join(Experiment).\
+             join(Experiment, Experiment.experiment_id==Run.experiment_id).\
              filter(Run.experiment_id==Experiment.experiment_id).\
              filter(Experiment.experiment_igf_id==experiment_igf_id).\
              filter(Run.status==active_status)                                  # get subquery for run_igf_ids
     query=base.session.\
           query(File.file_path).\
-          join(Collection_group).\
-          join(Collection).\
+          join(Collection_group,File.file_id==Collection_group.file_id).\
+          join(Collection,Collection.collection_id==Collection_group.collection_id).\
           filter(Collection.collection_id==Collection_group.collection_id).\
           filter(Collection_group.file_id==File.file_id).\
           filter(Collection.type==fastq_collection_type).\

@@ -240,12 +240,12 @@ class Project_status:
                   Pipeline_seed.status,
                   Pipeline_seed.date_stamp,
                   Seqrun.flowcell_id).\
-            join(Run).\
-            join(Sample).\
-            join(Project).\
+            join(Run,Experiment.experiment_id==Run.experiment_id).\
+            join(Sample,Sample.sample_id==Experiment.sample_id).\
+            join(Project,Project.project_id==Sample.project_id).\
             join(Pipeline_seed,Experiment.experiment_id==Pipeline_seed.seed_id).\
-            join(Pipeline).\
-            join(Seqrun).\
+            join(Pipeline,Pipeline.pipeline_id==Pipeline_seed.pipeline_id).\
+            join(Seqrun,Seqrun.seqrun_id==Run.seqrun_id).\
             filter(Run.experiment_id==Experiment.experiment_id).\
             filter(Seqrun.seqrun_id==Run.seqrun_id).\
             filter(Experiment.sample_id==Sample.sample_id).\
@@ -319,10 +319,10 @@ class Project_status:
             query(Seqrun.seqrun_igf_id,
                   Seqrun.flowcell_id,
                   Seqrun.date_created).\
-            join(Run).\
-            join(Experiment).\
-            join(Sample).\
-            join(Project).\
+            join(Run,Seqrun.seqrun_id==Run.seqrun_id).\
+            join(Experiment,Experiment.experiment_id==Run.experiment_id).\
+            join(Sample,Sample.sample_id==Experiment.sample_id).\
+            join(Project,Project.project_id==Sample.project_id).\
             filter(Seqrun.seqrun_id==Run.seqrun_id).\
             filter(Seqrun.reject_run=='N').\
             filter(Experiment.experiment_id==Run.experiment_id).\
@@ -336,12 +336,12 @@ class Project_status:
                   Seqrun.date_created,
                   Pipeline_seed.status,
                   Pipeline_seed.date_stamp).\
-              join(Run).\
-              join(Experiment).\
-              join(Sample).\
-              join(Project).\
+              join(Run,Seqrun.seqrun_id==Run.seqrun_id).\
+              join(Experiment,Experiment.experiment_id==Run.experiment_id).\
+              join(Sample,Sample.sample_id==Experiment.sample_id).\
+              join(Project,Project.project_id==Sample.project_id).\
               join(Pipeline_seed,Seqrun.seqrun_id==Pipeline_seed.seed_id).\
-              join(Pipeline).\
+              join(Pipeline,Pipeline.pipeline_id==Pipeline_seed.pipeline_id).\
               filter(Seqrun.seqrun_id==Run.seqrun_id).\
               filter(Experiment.experiment_id==Run.experiment_id).\
               filter(Sample.sample_id==Experiment.sample_id).\

@@ -61,13 +61,13 @@ class Config_genome_browser:
                     Pipeline.pipeline_name,
                     Pipeline_seed.status
                    ).\
-              join(Sample).\
-              join(Experiment).\
+              join(Sample,Project.project_id==Sample.project_id).\
+              join(Experiment,Sample.sample_id==Experiment.sample_id).\
               join(Collection,Collection.name==Experiment.experiment_igf_id).\
-              join(Collection_group).\
-              join(File).\
+              join(Collection_group,Collection.collection_id==Collection_group.collection_id).\
+              join(File,File.file_id==Collection_group.file_id).\
               join(Pipeline_seed,Pipeline_seed.seed_id==Experiment.experiment_id).\
-              join(Pipeline).\
+              join(Pipeline,Pipeline.pipeline_id==Pipeline_seed.pipeline_id).\
               filter(Project.project_id==Sample.project_id).\
               filter(Sample.sample_id==Experiment.sample_id).\
               filter(Sample.status=='ACTIVE').\

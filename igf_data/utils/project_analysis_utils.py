@@ -78,11 +78,11 @@ class Project_analysis:
             query(Sample.sample_igf_id,
                   Collection.type,
                   File.file_path).\
-            join(Project).\
-            join(Experiment).\
+            join(Project,Project.project_id==Sample.project_id).\
+            join(Experiment,Sample.sample_id==Experiment.sample_id).\
             join(Collection, Experiment.experiment_igf_id==Collection.name).\
-            join(Collection_group).\
-            join(File).\
+            join(Collection_group,Collection.collection_id==Collection_group.collection_id).\
+            join(File,File.file_id==Collection_group.file_id).\
             filter(Project.project_igf_id==project_igf_id).\
             filter(Sample.project_id==Project.project_id).\
             filter(Sample.sample_id==Experiment.sample_id).\
