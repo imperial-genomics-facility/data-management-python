@@ -240,9 +240,14 @@ class Picard_tools:
                       file,
                       sep='\t',
                       skiprows=6)                                               # read alignment summary metrics, skip 6 lines
+          data.columns = \
+            list(map(lambda x: '{0}_{1}'.format(picard_cmd,x),
+                     data.columns))                                             # append picard command name
+          category_col = \
+            '{0}_{1}'.format(picard_cmd,'CATEGORY')                             # get key for modified category column
           data = \
-            data[(data['CATEGORY']=='PAIR') | \
-                 (data['CATEGORY']=='UNPAIRED')].\
+            data[(data.get(category_col)=='PAIR') | \
+                 (data.get(category_col)=='UNPAIRED')].\
             dropna(axis=1).\
             to_dict(orient='records')                                           # filter data and convert to list of dicts
           metrics_output_list.extend(data)                                      # append results
@@ -251,6 +256,9 @@ class Picard_tools:
                       file,
                       sep='\t',
                       skiprows=6)                                               # read GC bias metrics summary file
+          data.columns = \
+            list(map(lambda x: '{0}_{1}'.format(picard_cmd,x),
+                     data.columns))                                             # append picard command name
           data = \
             data.\
             dropna(axis=1).\
@@ -262,6 +270,9 @@ class Picard_tools:
                       sep='\t',
                       skiprows=6,
                       nrows=1)                                                  # read rnaseq metrics, skip 6 lines and read only one line
+          data.columns = \
+            list(map(lambda x: '{0}_{1}'.format(picard_cmd,x),
+                     data.columns))                                             # append picard command name
           data = \
             data.\
             dropna(axis=1).\
@@ -273,6 +284,9 @@ class Picard_tools:
                       sep='\t',
                       skiprows=6,
                       nrows=1)                                                  # read markdup metrics, skip 6 lines and read only one line
+          data.columns = \
+            list(map(lambda x: '{0}_{1}'.format(picard_cmd,x),
+                     data.columns))                                             # append picard command name
           data = \
             data.to_dict(orient='records')                                      # convert to list of dicts
           metrics_output_list.extend(data)                                      # append results
