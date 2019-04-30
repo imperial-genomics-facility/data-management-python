@@ -1,6 +1,7 @@
 import os
 from igf_data.utils.tools.picard_util import Picard_tools
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
+from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.utils.tools.reference_genome_utils import Reference_genome_utils
 from igf_data.utils.fileutils import get_temp_dir,remove_dir,move_file,get_datestamp_label
 
@@ -17,6 +18,8 @@ class RunPicard(IGFBaseProcess):
         'analysis_files':[],
         'picard_option':{},
         'output_prefix':None,
+        'load_picard_metrics_to_cram':False,
+        'cram_collection_type':'ANALYSIS_CRAM'
       })
     return params_dict
 
@@ -41,44 +44,50 @@ class RunPicard(IGFBaseProcess):
     :param patterned_flowcell_list: A list of paterned flowcells, default ['HISEQ4000','NEXTSEQ']
     '''
     try:
-      temp_output_dir=False
-      project_igf_id=self.param_required('project_igf_id')
-      experiment_igf_id=self.param_required('experiment_igf_id')
-      sample_igf_id=self.param_required('sample_igf_id')
-      java_exe=self.param_required('java_exe')
-      java_param=self.param_required('java_param')
-      picard_jar=self.param_required('picard_jar')
-      input_files=self.param_required('input_files')
-      picard_command=self.param_required('picard_command')
-      igf_session_class=self.param_required('igf_session_class')
-      species_name=self.param('species_name')
-      reference_type=self.param('reference_type')
-      reference_refFlat=self.param('reference_refFlat')
-      ribosomal_interval_type=self.param('ribosomal_interval_type')
-      base_work_dir=self.param_required('base_work_dir')
-      analysis_files=self.param_required('analysis_files')
-      picard_option=self.param('picard_option')
-      patterned_flowcell_list=self.param('patterned_flowcell_list')
-      platform_name=self.param_required('platform_name')
-      output_prefix=self.param('output_prefix')
-      seed_date_stamp=self.param_required('date_stamp')
-      seed_date_stamp=get_datestamp_label(seed_date_stamp)
+      temp_output_dir = False
+      project_igf_id = self.param_required('project_igf_id')
+      experiment_igf_id = self.param_required('experiment_igf_id')
+      sample_igf_id = self.param_required('sample_igf_id')
+      java_exe = self.param_required('java_exe')
+      java_param = self.param_required('java_param')
+      picard_jar = self.param_required('picard_jar')
+      input_files = self.param_required('input_files')
+      picard_command = self.param_required('picard_command')
+      igf_session_class = self.param_required('igf_session_class')
+      species_name = self.param('species_name')
+      reference_type = self.param('reference_type')
+      reference_refFlat = self.param('reference_refFlat')
+      ribosomal_interval_type = self.param('ribosomal_interval_type')
+      base_work_dir = self.param_required('base_work_dir')
+      analysis_files = self.param_required('analysis_files')
+      picard_option = self.param('picard_option')
+      patterned_flowcell_list = self.param('patterned_flowcell_list')
+      platform_name = self.param_required('platform_name')
+      output_prefix = self.param('output_prefix')
+      load_picard_metrics_to_cram = self.param('load_picard_metrics_to_cram')
+      cram_collection_type = self.param('cram_collection_type')
+      seed_date_stamp = self.param_required('date_stamp')
+      seed_date_stamp = get_datestamp_label(seed_date_stamp)
       if output_prefix is not None:
-        output_prefix='{0}_{1}'.format(output_prefix,
-                                       seed_date_stamp)                         # adding seed datestamp to output prefix
+        output_prefix = '{0}_{1}'.format(output_prefix,
+                                         seed_date_stamp)                       # adding seed datestamp to output prefix
 
-      work_dir_prefix=os.path.join(base_work_dir,
-                                   project_igf_id,
-                                   sample_igf_id,
-                                   experiment_igf_id)
-      work_dir=self.get_job_work_dir(work_dir=work_dir_prefix)                  # get a run work dir
-      temp_output_dir=get_temp_dir(use_ephemeral_space=True)                    # get temp work dir
-      ref_genome=Reference_genome_utils(\
-                   genome_tag=species_name,
-                   dbsession_class=igf_session_class,
-                   genome_fasta_type=reference_type,
-                   gene_reflat_type=reference_refFlat,
-                   ribosomal_interval_type=ribosomal_interval_type)             # setup ref genome utils
+      work_dir_prefix = os.path.join(\
+                          base_work_dir,
+                          project_igf_id,
+                          sample_igf_id,
+                          experiment_igf_id)
+      work_dir = \
+        self.get_job_work_dir(work_dir=work_dir_prefix)                         # get a run work dir
+      temp_output_dir=\
+        get_temp_dir(use_ephemeral_space=True)                                  # get temp work dir
+      ref_genome=\
+        Reference_genome_utils(\
+          genome_tag=species_name,
+          dbsession_class=igf_session_class,
+          genome_fasta_type=reference_type,
+          gene_reflat_type=reference_refFlat,
+          ribosomal_interval_type=ribosomal_interval_type)                      # setup ref genome utils
       genome_fasta=ref_genome.get_genome_fasta()                                # get genome fasta
       ref_flat_file=ref_genome.get_gene_reflat()                                # get refFlat file
       ribosomal_interval_file=ref_genome.get_ribosomal_interval()               # get ribosomal interval file
@@ -86,24 +95,30 @@ class RunPicard(IGFBaseProcess):
       if platform_name in patterned_flowcell_list:                              # check for patterned flowcell
         patterned_flowcell=True
 
-      picard=Picard_tools(\
-               java_exe=java_exe,
-               java_param=java_param,
-               picard_jar=picard_jar,
-               input_files=input_files,
-               output_dir=temp_output_dir,
-               ref_fasta=genome_fasta,
-               patterned_flowcell=patterned_flowcell,
-               ref_flat_file=ref_flat_file,
-               picard_option=picard_option,
-               output_prefix=output_prefix,
-               ribisomal_interval=ribosomal_interval_file)                      # get picard wrapper                               # setup picard tool
-      temp_output_files,picard_command_line=\
-           picard.run_picard_command(command_name=picard_command)               # run picard command
+      if load_picard_metrics_to_cram and not cram_collection_type:
+        raise ValueError('Cram file collection type is required for loading picard metrics to db')
+
+      picard=\
+        Picard_tools(\
+          java_exe=java_exe,
+          java_param=java_param,
+          picard_jar=picard_jar,
+          input_files=input_files,
+          output_dir=temp_output_dir,
+          ref_fasta=genome_fasta,
+          patterned_flowcell=patterned_flowcell,
+          ref_flat_file=ref_flat_file,
+          picard_option=picard_option,
+          output_prefix=output_prefix,
+          ribisomal_interval=ribosomal_interval_file)                           # setup picard tool
+      temp_output_files,picard_command_line,picard_metrics = \
+        picard.run_picard_command(command_name=picard_command)                  # run picard command
       output_file_list=list()
       for source_path in temp_output_files:
-        dest_path=os.path.join(work_dir,
-                               os.path.basename(source_path))                   # get destination filepath
+        dest_path=\
+          os.path.join(\
+            work_dir,
+            os.path.basename(source_path))                                      # get destination filepath
         move_file(source_path=source_path,
                   destinationa_path=dest_path,
                   force=True)                                                   # move files to work dir
@@ -114,6 +129,19 @@ class RunPicard(IGFBaseProcess):
       for file in output_file_list:
         if file.endswith('.bam'):
           bam_files.append(file)
+
+      if load_picard_metrics_to_cram and \
+         len(picard_metrics)>0:
+        ca = CollectionAdaptor(**{'session_class':igf_session_class})
+        attribute_data = \
+          ca.prepare_data_for_collection_attribute(\
+            collection_name=experiment_igf_id,
+            collection_type=cram_collection_type,
+            data_list=picard_metrics)                                           # fromat data for collection attribute table
+        ca.start_session()
+        ca.create_or_update_collection_attributes(\
+          data=attribute_data)                                                  # load data to collection attribute table
+        ca.close_session()
 
       self.param('dataflow_params',{'analysis_files':analysis_files,
                                     'bam_files':bam_files,
