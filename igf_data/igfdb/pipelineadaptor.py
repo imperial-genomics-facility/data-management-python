@@ -44,8 +44,8 @@ class PipelineAdaptor(BaseAdaptor):
 
 
   def fetch_pipeline_seed(self, pipeline_id, seed_id, seed_table, 
-                          target_column_name=['pipeline_id', 'seed_id', 
-                                              'seed_table']):
+                          target_column_name=('pipeline_id', 'seed_id', 
+                                              'seed_table'):
     '''
     A method for fetching unique pipeline seed using pipeline_id, seed_id and seed_table
     
@@ -55,6 +55,7 @@ class PipelineAdaptor(BaseAdaptor):
     :param target_column_name: Target set of columns
     '''
     try:
+      target_column_name = list(target_column_name)
       column_list=[column for column in Collection.__table__.columns \
                      if column.key in target_column_name]
       column_data=dict(zip(column_list,[pipeline_id, seed_id, seed_table]))
@@ -189,9 +190,9 @@ class PipelineAdaptor(BaseAdaptor):
 
   def create_pipeline_seed(self, data, autosave=True, status_column='status',
                            seeded_label='SEEDED',
-                           required_columns=['pipeline_id',
+                           required_columns=('pipeline_id',
                                              'seed_id',
-                                             'seed_table']):
+                                             'seed_table'):
     '''
     A method for creating new entry in th pipeline_seed table
     
@@ -201,6 +202,7 @@ class PipelineAdaptor(BaseAdaptor):
                    * seed_table
     '''
     try:
+      required_columns = list(required_columns)
       if not isinstance(data, pd.DataFrame):
         data=pd.DataFrame(data)
 
@@ -236,10 +238,10 @@ class PipelineAdaptor(BaseAdaptor):
 
 
   def update_pipeline_seed(self, data, autosave=True,
-                           required_columns=['pipeline_id',
+                           required_columns=('pipeline_id',
                                              'seed_id',
                                              'seed_table',
-                                             'status']):
+                                             'status'):
     '''
     A method for updating the seed status in pipeline_seed table
     
@@ -250,6 +252,7 @@ class PipelineAdaptor(BaseAdaptor):
                  * status 
     '''
     try:
+      required_columns = list(required_columns)
       if not isinstance(data, pd.DataFrame):
         data=pd.DataFrame(data)
 

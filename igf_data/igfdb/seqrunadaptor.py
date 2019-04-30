@@ -27,9 +27,9 @@ class SeqrunAdaptor(BaseAdaptor):
       raise
 
 
-  def divide_data_to_table_and_attribute(self, data, table_columns=None,
-                                         required_column='seqrun_igf_id', 
-                                         attribute_name_column='attribute_name', 
+  def divide_data_to_table_and_attribute(self, data, required_column='seqrun_igf_id',
+                                         table_columns=None,
+                                         attribute_name_column='attribute_name',
                                          attribute_value_column='attribute_value'):
     '''
     A method for separating data for Seqrun and Seqrun_attribute tables

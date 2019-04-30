@@ -28,8 +28,8 @@ class SampleAdaptor(BaseAdaptor):
       raise
 
 
-  def divide_data_to_table_and_attribute(self, data, table_columns=None,
-                                         required_column='sample_igf_id',
+  def divide_data_to_table_and_attribute(self, data,required_column='sample_igf_id',
+                                         table_columns=None,
                                          attribute_name_column='attribute_name',
                                          attribute_value_column='attribute_value'):
     '''

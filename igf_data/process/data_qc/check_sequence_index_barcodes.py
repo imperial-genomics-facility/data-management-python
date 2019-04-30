@@ -244,20 +244,21 @@ class CheckSequenceIndexBarcodes:
         raise
 
 
-  def _check_index_for_match(self,data_series,index_vals,index_tag='index', \
-                             mapping_ratio_th=0.0001, \
-                             platform_list=['NEXTSEQ','NOVASEQ6000']):
+  def _check_index_for_match(self,data_series,index_vals,index_tag='index',
+                             mapping_ratio_th=0.0001,
+                             platform_list=('NEXTSEQ','NOVASEQ6000')):
     '''
     An internal method for checking unknown indexes
-    required params:
-    data_series: A Pandas series containing the row of raw_df
-    index_vals: A list of indexes present in the reformatted samplesheet
-    index_tag: default is index
-    mapping_ratio: cut-off threshold for mapping ratio, default is 0.0001
-    platform_list: List of the platform with new two-color chemistry,
+    
+    :param data_series: A Pandas series containing the row of raw_df
+    :param index_vals: A list of indexes present in the reformatted samplesheet
+    :param index_tag: default is index
+    :param mapping_ratio: cut-off threshold for mapping ratio, default is 0.0001
+    :param platform_list: List of the platform with new two-color chemistry,
                    default NEXTSEQ and NOVASEQ6000
     '''
     try:
+      platform_list = list(platform_list)
       if not isinstance(data_series, pd.Series):
         data_series=pd.Series(data_series)
       

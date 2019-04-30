@@ -308,7 +308,7 @@ class SampleSheet:
       raise
 
 
-  def add_pseudo_lane_for_nextseq(self,lanes=['1','2','3','4']):
+  def add_pseudo_lane_for_nextseq(self,lanes=('1','2','3','4'):
     '''
     A method for adding pseudo lane information for the nextseq platform
     
@@ -316,6 +316,7 @@ class SampleSheet:
     :returns:None
     '''
     try:
+      lanes = list(lanes)
       data=self._data
       newdata=list()
       for row in data:

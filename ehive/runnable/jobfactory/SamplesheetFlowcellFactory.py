@@ -32,7 +32,7 @@ class SampleSheetFlowcellFactory(IGFBaseJobFactory):
       sub_tasks=[{'project_name':project_name,'flowcell_lane':lane} \
                  for lane in flowcell_lanes]                                    # create data structure for sub_tasks
       self.param('sub_tasks',sub_tasks)                                         # seed dataflow
-      message='seqrun: {0}, project {1}, lanes: {1}'.\
+      message='seqrun: {0}, project {1}, lanes: {2}'.\
               format(seqrun_igf_id,\
                      project_name,\
                      ','.join(flowcell_lanes))

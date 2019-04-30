@@ -12,7 +12,7 @@ class RunInfo_xml:
     self.xml_file=xml_file
     self._read_xml()
 
-  def get_reads_stats(self, root_tag='read', number_tag='number', tags=['isindexedread','numcycles']):
+  def get_reads_stats(self, root_tag='read', number_tag='number', tags=('isindexedread','numcycles'):
     '''
     A method for getting read and index stats from the RunInfo.xml file
     
@@ -21,13 +21,12 @@ class RunInfo_xml:
     :param tags: List of tags for xml lookup, default ['isindexedread','numcycles']
     :returns: A dictionary with the read number as the key
     '''
-    reads_stats=defaultdict(lambda: defaultdict(dict))
-    pattern=re.compile(number_tag, re.IGNORECASE)
-    soup=self._soup
-
-    match_count=0
-
     try:
+      tags = list(tags)
+      reads_stats=defaultdict(lambda: defaultdict(dict))
+      pattern=re.compile(number_tag, re.IGNORECASE)
+      soup=self._soup
+      match_count=0
       for r in soup.find_all(root_tag):
         for tag_name in tags:
           reads_stats[r[number_tag]][tag_name]=r[tag_name]
