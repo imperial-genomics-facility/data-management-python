@@ -3,7 +3,6 @@ import os, re, fnmatch, subprocess
 from collections import defaultdict
 from shlex import quote
 from igf_data.illumina.samplesheet import SampleSheet
-import pandas as pd
 from igf_data.igfdb.igfTables import Experiment, Run
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.experimentadaptor import ExperimentAdaptor
@@ -17,28 +16,26 @@ class Collect_seqrun_fastq_to_db:
   '''
   A class for collecting raw fastq files after demultiplexing and storing them in database.
   Additionally this will also create relevant entries for the experiment and run tables in database
+
+  :param fastq_dir: A directory path for file look up
+  :param model_name: Sequencing platform information
+  :param seqrun_igf_id: Sequencing run name
+  :param session_class: A database session class
+  :param flowcell_id: Flowcell information for the run
+  :param samplesheet_file: Samplesheet filepath
+  :param samplesheet_filename: Name of the samplesheet file, default SampleSheet.csv
+  :param collection_type: Collection type information for new fastq files, default demultiplexed_fastq
+  :param file_location: Fastq file location information, default HPC_PROJECT
+  :param collection_table: Collection table information for fastq files, default run
+  :param manifest_name: Name of the file manifest file, default file_manifest.csv
+  :param singlecell_tag: Samplesheet description for singlecell samples, default 10X
   '''
   def __init__(self,fastq_dir,model_name,seqrun_igf_id,session_class,flowcell_id,\
                samplesheet_file=None,samplesheet_filename='SampleSheet.csv',\
                collection_type='demultiplexed_fastq',file_location='HPC_PROJECT',\
                collection_table='run', manifest_name='file_manifest.csv',
                singlecell_tag='10X'):
-    '''
-    List of parameters
-    
-    :param fastq_dir: A directory path for file look up
-    :param model_name: Sequencing platform information
-    :param seqrun_igf_id: Sequencing run name
-    :param session_class: A database session class
-    :param flowcell_id: Flowcell information for the run
-    :param samplesheet_file: Samplesheet filepath
-    :param samplesheet_filename: Name of the samplesheet file, default SampleSheet.csv
-    :param collection_type: Collection type information for new fastq files, default demultiplexed_fastq
-    :param file_location: Fastq file location information, default HPC_PROJECT
-    :param collection_table: Collection table information for fastq files, default run
-    :param manifest_name: Name of the file manifest file, default file_manifest.csv
-    :param singlecell_tag: Samplesheet description for singlecell samples, default 10X
-    '''
+
     self.fastq_dir=fastq_dir
     self.samplesheet_file=samplesheet_file
     self.samplesheet_filename=samplesheet_filename
@@ -72,7 +69,7 @@ class Collect_seqrun_fastq_to_db:
     * collection type
         Default type for fastq file collections are 'demultiplexed_fastq'
     * file_location
-        Default value is 'HPC_PROJECT'  
+        Default value is 'HPC_PROJECT'
     '''
     try:
       fastq_files_list=self._collect_fastq_and_sample_info()
@@ -91,7 +88,7 @@ class Collect_seqrun_fastq_to_db:
     r1_fastq_list=list()
     r2_fastq_list=list()
     if os.path.isdir(fastq_dir):
-      for root, dirs, files in os.walk(top=fastq_dir):
+      for root, _, files in os.walk(top=fastq_dir):
         if samplesheet_filename in files:
           samplesheet_list.append(os.path.join(root,samplesheet_filename))
 
@@ -128,8 +125,8 @@ class Collect_seqrun_fastq_to_db:
 
     return r1_fastq_list, r2_fastq_list
 
-
-  def _link_fastq_file_to_sample(self,sample_name,r1_fastq_list, r2_fastq_list):
+  @staticmethod
+  def _link_fastq_file_to_sample(sample_name,r1_fastq_list, r2_fastq_list):
     sample_files=defaultdict(lambda: defaultdict(lambda: defaultdict()))
     r1_regex=re.compile(sample_name+'_S\d+_L(\d+)_R1_\d+\.fastq(\.gz)?',\
                         re.IGNORECASE)
@@ -161,11 +158,10 @@ class Collect_seqrun_fastq_to_db:
       (r1_fastq_list, r2_fastq_list)=\
           self._get_fastq_and_samplesheet()
       samplesheet_file=self.samplesheet_file
-      singlecell_status=False
       final_data=list()
       samplesheet_sc=SampleSheet(infile=samplesheet_file)                       # read samplesheet for single cell check
-      samplesheet_sc.filter_sample_data(condition_key='Description', 
-                                        condition_value=self.singlecell_tag, 
+      samplesheet_sc.filter_sample_data(condition_key='Description',
+                                        condition_value=self.singlecell_tag,
                                         method='include')                       # keep only single cell samples
       if len(samplesheet_sc._data) >0:
         sc_new_data=pd.DataFrame(samplesheet_sc._data).\
@@ -175,8 +171,8 @@ class Collect_seqrun_fastq_to_db:
         final_data.extend(sc_new_data)                                          # add single cell entries to the final dataset
 
       samplesheet_data=SampleSheet(infile=samplesheet_file)
-      samplesheet_data.filter_sample_data(condition_key='Description', 
-                                        condition_value=self.singlecell_tag, 
+      samplesheet_data.filter_sample_data(condition_key='Description',
+                                        condition_value=self.singlecell_tag,
                                         method='exclude')                       # keep non single cell samples
       if len(samplesheet_data._data) > 0:
         final_data.extend(samplesheet_data._data)                               # add normal samples to final data
@@ -285,7 +281,8 @@ class Collect_seqrun_fastq_to_db:
     return data
 
 
-  def _reformat_file_group_data(self,data):
+  @staticmethod
+  def _reformat_file_group_data(data):
     if isinstance(data, pd.DataFrame):
       data=data.to_dict(orient='records')
 
@@ -360,7 +357,8 @@ class Collect_seqrun_fastq_to_db:
     except:
       raise
 
-  def _check_existing_data(self,data,dbsession,table_name,check_column='EXISTS'):
+  @staticmethod
+  def _check_existing_data(data,dbsession,table_name,check_column='EXISTS'):
     try:
       if not isinstance(data, pd.Series):
         raise ValueError('Expecting a data series and got {0}'.format(type(data)))
@@ -414,13 +412,14 @@ class Collect_seqrun_fastq_to_db:
       raise
 
   def _build_and_store_exp_run_and_collection_in_db(self,fastq_files_list, \
-                                                    restricted_list=['10X']):
+                                                    restricted_list=('10X'):
     '''
     An internal method for building db collections for the raw fastq files
     '''
     session_class=self.session_class
     db_connected=False
     try:
+      restricted_list = list(restricted_list)
       dataframe=pd.DataFrame(fastq_files_list)
       # calculate additional detail
       dataframe=dataframe.apply(lambda data: \
@@ -443,7 +442,7 @@ class Collect_seqrun_fastq_to_db:
                                                 excluded_columns=['experiment_id',
                                                                   'project_id',
                                                                   'sample_id' ])
-      experiment_columns.extend(['project_igf_id', 
+      experiment_columns.extend(['project_igf_id',
                                  'sample_igf_id'])
       exp_data=dataframe.loc[:,experiment_columns]
       exp_data=exp_data.drop_duplicates()
