@@ -1,5 +1,4 @@
-import pandas as pd
-from datetime import datetime,date,timedelta
+from datetime import date,timedelta
 from dateutil.parser import parse
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.utils.seqrunutils import get_seqrun_date_from_igf_id
@@ -91,8 +90,8 @@ class Project_status:
     except:
       raise
 
-
-  def get_status_description(self):
+  @staticmethod
+  def get_status_description():
     '''
     A method for getting description for status json data
     
@@ -113,8 +112,8 @@ class Project_status:
     except:
       raise
 
-
-  def get_status_column_order(self):
+  @staticmethod
+  def get_status_column_order():
     '''
     A method for fetching column order for status json data
     
@@ -265,7 +264,7 @@ class Project_status:
       if len(results.index)>0:
         flowcell_ids=list(set(results['flowcell_id'].values))
         results=results.drop(['flowcell_id'],axis=1).drop_duplicates()
-        status_data=[ {grp:len(g_data.index),'total':len(results.index)} 
+        status_data=[ {grp:len(g_data.index),'total':len(results.index)}
                         for grp, g_data in results.groupby('status')]
         pct_complete=0
         incomplete_exp=0
@@ -362,7 +361,7 @@ class Project_status:
                                data,
                                active_seqrun_igf_id=active_seqrun_igf_id),
                   axis=1))
-        new_data=[entry for data in new_data 
+        new_data=[entry for data in new_data
                         for entry in data]
       return new_data
     except:
@@ -370,8 +369,7 @@ class Project_status:
 
 
 if __name__=='__main__':
-  import os, unittest, sqlalchemy
-  from sqlalchemy import create_engine
+  import os, sqlalchemy
   from igf_data.utils.dbutils import read_dbconf_json
   from igf_data.igfdb.projectadaptor import ProjectAdaptor
   from igf_data.igfdb.sampleadaptor import SampleAdaptor
@@ -405,16 +403,16 @@ if __name__=='__main__':
   project_data=[{'project_igf_id':'ProjectA'}]                                  # project data
   sample_data=[{'sample_igf_id':'SampleA',
                 'project_igf_id':'ProjectA'}]                                   # sample data
-  seqrun_data=[{'seqrun_igf_id':'180810_K00345_0063_AHWL7CBBXX', 
-                'flowcell_id':'000000000-D0YLK', 
+  seqrun_data=[{'seqrun_igf_id':'180810_K00345_0063_AHWL7CBBXX',
+                'flowcell_id':'000000000-D0YLK',
                 'platform_igf_id':'M001',
                 'flowcell':'MISEQ'},
-                {'seqrun_igf_id':'180610_K00345_0063_AHWL7CBBXX', 
-                'flowcell_id':'000000000-D0YLJ', 
+                {'seqrun_igf_id':'180610_K00345_0063_AHWL7CBBXX',
+                'flowcell_id':'000000000-D0YLJ',
                 'platform_igf_id':'M001',
                 'flowcell':'MISEQ'},
-                {'seqrun_igf_id':'180410_K00345_0063_AHWL7CBBXX', 
-                'flowcell_id':'000000000-D0YLI', 
+                {'seqrun_igf_id':'180410_K00345_0063_AHWL7CBBXX',
+                'flowcell_id':'000000000-D0YLI',
                 'platform_igf_id':'M001',
                 'flowcell':'MISEQ'}
               ]                                                                 # experiment data
@@ -451,7 +449,7 @@ if __name__=='__main__':
   ra=RunAdaptor(**{'session':base.session})
   ra.store_run_and_attribute_data(data=run_data)                                # load run data
   pipeline_data=[{ "pipeline_name" : "DemultiplexIlluminaFastq",
-                   "pipeline_db" : "sqlite:////bcl2fastq.db", 
+                   "pipeline_db" : "sqlite:////bcl2fastq.db",
                  }]
 
   pipeline_seed_data=[{'pipeline_name':'DemultiplexIlluminaFastq',
@@ -465,7 +463,7 @@ if __name__=='__main__':
   pla.store_pipeline_data(data=pipeline_data)
   pla.create_pipeline_seed(data=pipeline_seed_data)
   pipeline_data=[{ "pipeline_name" : "PrimaryAnalysis",
-                   "pipeline_db" : "sqlite:////analysis.db", 
+                   "pipeline_db" : "sqlite:////analysis.db",
                  }]
 
   pipeline_seed_data=[{'pipeline_name':'PrimaryAnalysis',
@@ -479,7 +477,6 @@ if __name__=='__main__':
   pla.create_pipeline_seed(data=pipeline_seed_data)
   base.commit_session()
   base.close_session()
-  
   ps=Project_status(igf_session_class=base.get_session_class(),
                     project_igf_id='ProjectA')
   #print(ps.get_seqrun_info(demultiplexing_pipeline='DemultiplexIlluminaFastq'))
@@ -495,4 +492,3 @@ if __name__=='__main__':
   #                           active_seqrun_igf_id='180410_K00345_0063_AHWL7CBBXX')
   Base.metadata.drop_all(engine)
   os.remove(dbname)
-  
