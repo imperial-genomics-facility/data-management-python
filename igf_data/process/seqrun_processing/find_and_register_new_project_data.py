@@ -8,7 +8,7 @@ from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.igfdb.sampleadaptor import SampleAdaptor
 from igf_data.task_tracking.igf_slack import IGF_slack
-from igf_data.igfdb.igfTables import Project, User, Sample
+from igf_data.igfdb.igfTables import Project, User
 from igf_data.igfdb.useradaptor import UserAdaptor
 from igf_data.utils.fileutils import get_temp_dir, remove_dir
 from jinja2 import Environment, FileSystemLoader,select_autoescape
@@ -16,8 +16,8 @@ from igf_data.utils.fileutils import calculate_file_checksum
 
 class Find_and_register_new_project_data:
   '''
-  A class for finding new data for project and registering them to the db. 
-  Account for new users will be created in irods server and password will be 
+  A class for finding new data for project and registering them to the db.
+  Account for new users will be created in irods server and password will be
   mailed to them.
   
   :param projet_info_path: A directory path for project info files
@@ -719,8 +719,8 @@ class Find_and_register_new_project_data:
               'sample_data':sample_data}
     except:
       raise
-    
-    
+
+
   def _find_new_project_info(self):
     '''
     An internal method for fetching new project info file
