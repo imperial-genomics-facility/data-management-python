@@ -1,4 +1,5 @@
 import os, unittest
+from igf_data.utils.analysis_fastq_fetch_utils import get_fastq_input_list
 from igf_data.igfdb.igfTables import Base, Pipeline
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.platformadaptor import PlatformAdaptor
@@ -11,46 +12,14 @@ from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.utils.dbutils import read_json_data, read_dbconf_json
-from igf_data.utils.pipelineutils import load_new_pipeline_data,find_new_analysis_seeds
-from igf_data.utils.fileutils import get_temp_dir,remove_dir
 
-class Pipelineutils_test1(unittest.TestCase):
+class Analysis_fastq_fetch_utils_test1(unittest.TestCase):
   def setUp(self):
-    self.data_file = 'data/pipeline_data.json'
     self.dbconfig = 'data/dbconfig.json'
-
     dbparam=read_dbconf_json(self.dbconfig)
     base = BaseAdaptor(**dbparam)
     self.engine = base.engine
     self.dbname = dbparam['dbname']
-    Base.metadata.create_all(self.engine)
-    self.session_class = base.get_session_class()
-
-
-  def tearDown(self):
-    Base.metadata.drop_all(self.engine)
-    os.remove(self.dbname)
-
-
-  def test_load_new_pipeline_data(self): 
-    load_new_pipeline_data(data_file=self.data_file,
-                           dbconfig=self.dbconfig)
-    pp = PipelineAdaptor(**{'session_class': self.session_class})
-    pp.start_session()
-    data = pp.fetch_pipeline_records_pipeline_name(pipeline_name='demultiplexing_fastq')
-    pp.close_session()
-    self.assertEqual(data.pipeline_name,'demultiplexing_fastq')
-
-class Pipelineutils_test2(unittest.TestCase):
-  def setUp(self):
-    self.data_file = 'data/pipeline_data.json'
-    self.dbconfig = 'data/dbconfig.json'
-
-    dbparam=read_dbconf_json(self.dbconfig)
-    base = BaseAdaptor(**dbparam)
-    self.engine = base.engine
-    self.dbname = dbparam['dbname']
-    self.temp_dir=get_temp_dir()
     Base.metadata.create_all(self.engine)
     self.session_class = base.get_session_class()
     base.start_session()
@@ -213,78 +182,27 @@ class Pipelineutils_test2(unittest.TestCase):
     ca = CollectionAdaptor(**{'session':base.session})
     ca.store_collection_and_attribute_data(data=collection_data)
     ca.create_collection_group(data=collection_files_data)
-    pipeline_data = [{"pipeline_name" : "PrimaryAnalysis",
-                      "pipeline_db" : "sqlite:////bcl2fastq.db",
-                     },
-                     {"pipeline_name" : "DemultiplexIlluminaFastq",
-                      "pipeline_db" : "sqlite:////bcl2fastq.db",
-                     },
-                    ]
-    pla = PipelineAdaptor(**{'session':base.session})
-    pla.store_pipeline_data(data=pipeline_data)
     base.close_session()
 
   def tearDown(self):
     Base.metadata.drop_all(self.engine)
     os.remove(self.dbname)
-    if os.path.exists(self.temp_dir):
-      remove_dir(dir_path=self.temp_dir)
 
-  def test_find_new_analysis_seeds1(self):
-    project_name_file=os.path.join(self.temp_dir,
-                                   'project_name_list.txt')
-    with open(project_name_file,'w') as fp:
-      fp.write('')
-
-    available_exps,seeded_exps = \
-      find_new_analysis_seeds(\
-        dbconfig_path=self.dbconfig,
-        pipeline_name='PrimaryAnalysis',
-        project_name_file=project_name_file,
-        species_name_list=['HG38'],
-        fastq_type='demultiplexed_fastq',
-        library_source_list=['TRANSCRIPTOMIC_SINGLE_CELL']
-      )
-    self.assertTrue('projectA' in available_exps)
-    self.assertTrue(seeded_exps is None)
-    pla = PipelineAdaptor(**{'session_class':self.session_class})
-    pla.start_session()
-    seeded_data, exp_data = pla.fetch_pipeline_seed_with_table_data(\
-                              pipeline_name='PrimaryAnalysis',
-                              table_name='experiment',
-                              status='SEEDED')
-    pla.close_session()
-    self.assertEqual(len(seeded_data.index),0)
-
-  def test_find_new_analysis_seeds2(self):
-    base = BaseAdaptor(**{'session_class':self.session_class})
-    project_name_file=os.path.join(self.temp_dir,
-                                   'project_name_list.txt')
-    with open(project_name_file,'w') as fp:
-      fp.write('projectA')
-
-    available_exps,seeded_exps = \
-      find_new_analysis_seeds(\
-        dbconfig_path=self.dbconfig,
-        pipeline_name='PrimaryAnalysis',
-        project_name_file=project_name_file,
-        species_name_list=['HG38'],
-        fastq_type='demultiplexed_fastq',
-        library_source_list=['TRANSCRIPTOMIC_SINGLE_CELL']
-      )
-    self.assertTrue(available_exps is None)
-    self.assertTrue('projectA' in seeded_exps)
-    
-    pla = PipelineAdaptor(**{'session_class':self.session_class})
-    pla.start_session()
-    seeded_data, exp_data = pla.fetch_pipeline_seed_with_table_data(\
-                              pipeline_name='PrimaryAnalysis',
-                              table_name='experiment',
-                              status='SEEDED')
-    pla.close_session()
-    exp_data = exp_data.to_dict(orient='records')
-    self.assertTrue(len(exp_data),1)
-    self.assertEqual(exp_data[0]['experiment_igf_id'],'sampleA_MISEQ')
+  def test_get_fastq_input_list(self):
+    fq_list=\
+        get_fastq_input_list(\
+          db_session_class=self.session_class,
+          experiment_igf_id='sampleA_NEXTSEQ',
+          combine_fastq_dir=False,
+        )
+    self.assertTrue('/path/sampleA_NEXTSEQ_000000001-BRN47_2_R1.fastq.gz' in fq_list)
+    fq_list=\
+        get_fastq_input_list(\
+          db_session_class=self.session_class,
+          experiment_igf_id='sampleA_NEXTSEQ',
+          combine_fastq_dir=True,
+        )
+    self.assertTrue('/path' in fq_list)
 
 if __name__ == '__main__':
   unittest.main()
