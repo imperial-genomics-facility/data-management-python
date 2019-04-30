@@ -44,8 +44,9 @@ class Check_batch_effect_for_lane(IGFBaseProcess):
       elif len(input_files)==1:
         pass                                                                    # can't run batch effect checking on single lane
       else:
-        [check_file_path(file)
-          for file in input_files]                                              # check input filepath
+        for file in input_files:
+          check_file_path(file)                                                 # check input filepath
+
         file_data = list()
         ra = RunAdaptor(**{'session_class':igf_session_class})
         ra.start_session()

@@ -37,8 +37,9 @@ class LoadCellrangerMetricsToCollection(IGFBaseProcess):
       analysis_output_list = self.param_required('analysis_output_list')
       collection_type = self.param('collection_type')
       metrics_filename = self.param('metrics_filename')
-      [check_file_path(infile)
-        for infile in analysis_output_list]                                     # check input file path
+      for infile in analysis_output_list:
+        check_file_path(infile)                                                 # check input file path
+
       cellranger_tar = analysis_output_list[0]
       cellranger_metrics = extract_cellranger_count_metrics_summary(\
                             cellranger_tar=cellranger_tar,
