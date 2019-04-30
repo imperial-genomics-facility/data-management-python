@@ -883,8 +883,8 @@ class Collection_attribute(Base):
   A table for loading collection attributes
   
   :param collection_attribute_id: An integer id for collection_attribute table
-  :param attribute_name: An optional string attribute name, allowed length 45
-  :param attribute_value: An optional string attribute value, allowed length 45
+  :param attribute_name: An optional string attribute name, allowed length 200
+  :param attribute_value: An optional string attribute value, allowed length 200
   :param collection_id: An integer id from collection table (foreign key)
   '''
   __tablename__ = 'collection_attribute'
