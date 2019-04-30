@@ -1,3 +1,4 @@
+import re
 import pandas as pd
 from shlex import quote
 from copy import deepcopy
@@ -272,14 +273,16 @@ class Find_and_register_new_project_data:
     '''
     try:
       new_password=None                                                         # default value of the new password is None
-      symbols='^!'                                                          # allowed symbols in password
+      symbols='^!'                                                              # allowed symbols in password
       chars=string.ascii_lowercase+\
             string.ascii_uppercase+\
             string.digits+\
             symbols                                                             # a string of lower case and upper case letters, digits and symbols
+      symbol_pattern = re.compile(r'^[{0}]'.format(string.punctuation))
+      digit_pattern = re.compile(r'^[0-9]+')
       while new_password is None or \
-            new_password[0] in string.digits or \
-            new_password[0] in symbols:                                         # password can't be None or starts with digit or a symbol
+            re.match(symbol_pattern,new_password) or \
+            re.match(digit_pattern,new_password):                               # password can't be None or starts with digit or a symbol
         new_password=''.join([chars[ord(os.urandom(1)) % len(chars)] \
                               for i in range(password_length)])                 # assign a new random password
       return new_password
@@ -730,7 +733,7 @@ class Find_and_register_new_project_data:
       new_project_info_list=list()
       fa=FileAdaptor(**{'session_class':self.session_class})
       fa.start_session()                                                        # connect to db
-      for root_path,dirs,files in os.walk(self.projet_info_path, topdown=True):
+      for root_path,_,files in os.walk(self.projet_info_path, topdown=True):
         for file_path in files:
           if fnmatch.fnmatch(file_path, '*.csv') or \
              fnmatch.fnmatch(file_path, '*xls'):                                # only consider csv or xls files
