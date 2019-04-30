@@ -1,6 +1,5 @@
 import os
 import pandas as pd
-from sqlalchemy.sql import column
 from igf_data.utils.fileutils import calculate_file_checksum
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
@@ -33,8 +32,8 @@ class CollectionAdaptor(BaseAdaptor):
       raise
 
 
-  def divide_data_to_table_and_attribute(self, data, table_columns=None,
-                                         required_column=['name', 'type'],
+  def divide_data_to_table_and_attribute(self, data, required_column=('name', 'type'),
+                                         table_columns=None,
                                          attribute_name_column='attribute_name',
                                          attribute_value_column='attribute_value'):
     '''
@@ -48,6 +47,7 @@ class CollectionAdaptor(BaseAdaptor):
     :returns: Two pandas dataframes, one for Collection and another for Collection_attribute table
     '''
     try:
+      required_column = list(required_column)
       if not isinstance(data, pd.DataFrame):
         data=pd.DataFrame(data)
 
@@ -317,9 +317,9 @@ class CollectionAdaptor(BaseAdaptor):
       raise
 
 
-  def fetch_collection_records_name_and_type(self, collection_name, 
-                                             collection_type, 
-                                             target_column_name=['name','type']):
+  def fetch_collection_records_name_and_type(self, collection_name,
+                                             collection_type,
+                                             target_column_name=('name','type')):
     '''
     A method for fetching data for Collection table
     
@@ -328,6 +328,7 @@ class CollectionAdaptor(BaseAdaptor):
     :param target_column_name: a list of columns, default is ['name','type']
     '''
     try:
+      target_column_name = list(target_column_name)
       column_list=[column for column in Collection.__table__.columns \
                        if column.key in target_column_name]
       column_data=dict(zip(column_list,[collection_name, collection_type]))
@@ -336,16 +337,16 @@ class CollectionAdaptor(BaseAdaptor):
           table=Collection,
           column_data=column_data,
           output_mode='one')
-      return collection  
+      return collection
     except:
       raise
 
 
   def load_file_and_create_collection(self,data,autosave=True, hasher='md5',
                                       calculate_file_size_and_md5=True,
-                                      required_coumns=['name','type','table',
+                                      required_coumns=('name','type','table',
                                                        'file_path','size','md5',
-                                                       'location']):
+                                                       'location')):
     '''
     A function for loading files to db and creating collections
     
@@ -356,6 +357,7 @@ class CollectionAdaptor(BaseAdaptor):
     :param calculate_file_size_and_md5: Enable file size and md5 check, default True
     '''
     try:
+      required_coumns = list(required_coumns)
       if not isinstance(data, pd.DataFrame):
         data=pd.DataFrame(data)
 
@@ -445,7 +447,7 @@ class CollectionAdaptor(BaseAdaptor):
   def fetch_collection_name_and_table_from_file_path(self,file_path):
     '''
     A method for fetching collection name and collection_table info using the
-    file_path information. It will return None if the file doesn't have any 
+    file_path information. It will return None if the file doesn't have any
     collection present in the database
     
     :param file_path: A filepath info
@@ -474,12 +476,12 @@ class CollectionAdaptor(BaseAdaptor):
       else:
         raise  ValueError('No collection found for file: {0}'.\
                           format(len(results)))
-    except:      
-      raise   
+    except:
+      raise
 
 
-  def create_collection_group(self, data, autosave=True, 
-                              required_collection_column=['name','type'],
+  def create_collection_group(self, data, autosave=True,
+                              required_collection_column=('name','type'),
                               required_file_column='file_path'):
     '''
     A function for creating collection group, a link between a file and a collection
@@ -496,6 +498,7 @@ class CollectionAdaptor(BaseAdaptor):
     :param autosave: A toggle for saving changes to database, default True
     '''
     try:
+      required_collection_column = list(required_collection_column)
       if not isinstance(data, pd.DataFrame):
         data=pd.DataFrame(data)
 
@@ -540,7 +543,7 @@ class CollectionAdaptor(BaseAdaptor):
     A method for fetching information from Collection, File, Collection_group tables
     
     :param collection_name: A collection name to fetch the linked files
-    :param collection_type: A collection type 
+    :param collection_type: A collection type
     :param collection_table: A collection table
     :param output_mode: dataframe / object
     '''
@@ -556,7 +559,7 @@ class CollectionAdaptor(BaseAdaptor):
                  File.file_id==Collection_group.file_id)                                                          # sql join Collection, Collection_group and File tables
       query=query.\
             filter(Collection.name.in_([collection_name]))                      # filter query based on collection_name
-      if collection_type: 
+      if collection_type:
         query=query.\
               filter(Collection.type.in_([collection_type]))                    # filter query on collection_type, if its present
 
@@ -594,8 +597,8 @@ class CollectionAdaptor(BaseAdaptor):
       if collection_name_col not in data or \
          collection_type_col not in data or \
          file_path_col not in data:
-        raise ValueError('Missing required fields for checking existing collection group'.\
-                         format(data.to_dict()))
+        raise ValueError('Missing required fields for checking existing collection group, {0}'.\
+                         format(data.to_dict(orient='records')))
 
       collection_files=\
         self.get_collection_files(\
@@ -627,7 +630,7 @@ class CollectionAdaptor(BaseAdaptor):
 
 
   def remove_collection_group_info(self,data,autosave=True,
-                                   required_collection_column=['name','type'],
+                                   required_collection_column=('name','type'),
                                    required_file_column='file_path'):
     '''
     A method for removing collection group information from database
@@ -644,6 +647,7 @@ class CollectionAdaptor(BaseAdaptor):
     :param autosave: A toggle for saving changes to database, default True
     '''
     try:
+      required_collection_column = list(required_collection_column)
       if not isinstance(data,pd.DataFrame):
         data=pd.DataFrame(data)
 
@@ -655,7 +659,7 @@ class CollectionAdaptor(BaseAdaptor):
 
       if not set((required_columns)).issubset(set(tuple(data.columns))):        # check for required parameters
         raise ValueError('Missing required value in input data {0}, required {1}'.\
-                         format(tuple(data.columns), required_columns))    
+                         format(tuple(data.columns), required_columns))
 
       data.apply(lambda x: \
                  self._check_and_remove_collection_group(\
@@ -666,7 +670,6 @@ class CollectionAdaptor(BaseAdaptor):
       raise
 
 if __name__=='__main__':
-  from sqlalchemy import create_engine
   from igf_data.igfdb.igfTables import Base
   from igf_data.utils.dbutils import read_dbconf_json
   from igf_data.utils.fileutils import get_temp_dir
