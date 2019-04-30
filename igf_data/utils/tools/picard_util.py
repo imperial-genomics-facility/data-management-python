@@ -1,5 +1,6 @@
 import os,subprocess
 from shlex import quote
+import pandas as pd
 from igf_data.utils.fileutils import check_file_path, get_temp_dir
 
 class Picard_tools:
@@ -59,14 +60,15 @@ class Picard_tools:
     An internal method for configuring run parameters for picard commands
     
     :param command_name: A picard command name
-    :returns: A dictionary of picard run parameter if command is supported or None
-    :returns: A list of output files or an empty list
+    :returns: List of items to return
+              * A dictionary of picard run parameter if command is supported or None
+              * A list of output files or an empty list
+              * A list of metrics file for parsing
     '''
     try:
       param_dict=None
       output_list=list()
       metrics_list=list()
-      summary_list=list()
       input_list=self.input_files
       if self.output_prefix is None:
         output_prefix=os.path.join(self.output_dir,
@@ -96,7 +98,7 @@ class Picard_tools:
                      'R':self.ref_fasta}
                    ]
         output_list=[output_file]
-        metrics_list.append(output_file)
+        metrics_list=[output_file]
 
       elif command_name=='CollectGcBiasMetrics':
         if len(input_list)>1:
@@ -115,7 +117,7 @@ class Picard_tools:
                      chart_file,
                      metrics_file
                     ]
-        summary_list.append(metrics_file)
+        metrics_list=[metrics_file]
 
       elif command_name=='QualityScoreDistribution':
         if len(input_list)>1:
@@ -158,7 +160,7 @@ class Picard_tools:
         output_list=[output_file,
                      chart_file,
                     ]
-        metrics_list.append(output_file)
+        metrics_list=[output_file]
 
       elif command_name=='CollectBaseDistributionByCycle':
         if len(input_list)>1:
@@ -190,7 +192,7 @@ class Picard_tools:
         output_list=[output_file,
                      metrics_file
                     ]
-        summary_list.append(metrics_file)
+        metrics_list=[metrics_file]
 
       elif command_name=='AddOrReplaceReadGroups':
         if len(input_list)>1:
@@ -215,9 +217,70 @@ class Picard_tools:
                    ]                                                           # not checking for other required inputs
         output_list=[output_file]
 
-      return param_dict,output_list,metrics_list,summary_list
+      return param_dict,output_list,metrics_list
     except:
       raise
+
+
+  @staticmethod
+  def _parse_picard_metrics(picard_cmd,metrics_list):
+    '''
+    An internal static method for parsing picard command specific metrics parsing
+
+    :param picard_cmd: Picard string command
+    :param metrics_list: List of picard metrics file
+    :returns: A list of dictionaries with the picard metrics
+    '''
+    try:
+      metrics_output_list=list()
+      for file in metrics_list:
+        check_file_path(file)                                                   # check input path
+        if picard_cmd=='CollectAlignmentSummaryMetrics':
+          data = pd.read_csv(\
+                      file,
+                      sep='\t',
+                      skiprows=6)                                               # read alignment summary metrics, skip 6 lines
+          data = \
+            data[(data['CATEGORY']=='PAIR') | \
+                 (data['CATEGORY']=='UNPAIRED')].\
+            dropna(axis=1).\
+            to_dict(orient='records')                                           # filter data and convert to list of dicts
+          metrics_output_list.extend(data)                                      # append results
+        elif picard_cmd=='CollectGcBiasMetrics':
+          data = pd.read_csv(\
+                      file,
+                      sep='\t',
+                      skiprows=6)                                               # read GC bias metrics summary file
+          data = \
+            data.\
+            dropna(axis=1).\
+            to_dict(orient='records')                                           # filter data and convert tolist of dicts
+          metrics_output_list.extend(data)                                      # append results
+        elif picard_cmd=='CollectRnaSeqMetrics':
+          data = pd.read_csv(\
+                      file,
+                      sep='\t',
+                      skiprows=6,
+                      nrows=1)                                                  # read rnaseq metrics, skip 6 lines and read only one line
+          data = \
+            data.\
+            dropna(axis=1).\
+            to_dict(orient='records')                                           # filter data and convert tolist of dicts
+          metrics_output_list.extend(data)                                      # append results
+        elif picard_cmd=='MarkDuplicates':
+          data = pd.read_csv(\
+                      file,
+                      sep='\t',
+                      skiprows=6,
+                      nrows=1)                                                  # read markdup metrics, skip 6 lines and read only one line
+          data = \
+            data.to_dict(orient='records')                                      # convert to list of dicts
+          metrics_output_list.extend(data)                                      # append results
+
+      return metrics_output_list
+    except:
+      raise
+
 
   def run_picard_command(self,command_name,dry_run=False):
     '''
@@ -225,7 +288,7 @@ class Picard_tools:
     
     :param command_name: Picard command name
     :param dry_run: A toggle for returning picard command without the actual run, default False
-    :returns: A list of output files from picard run and picard run command
+    :returns: A list of output files from picard run and picard run command and optional picard metrics
     '''
     try:
       check_file_path(file_path=self.java_exe)
@@ -254,8 +317,8 @@ class Picard_tools:
                        for param,val in self.picard_option.items()]
         command.extend(picard_option)                                           # additional picard params
 
-      picard_run_param,output_file_list,metrics_list,summary_list=\
-                  self._get_param_for_picard_command(command_name=command_name) # get picard params and output list
+      picard_run_param,output_file_list,metrics_list = \
+        self._get_param_for_picard_command(command_name=command_name)           # get picard params and output list
       if isinstance(picard_run_param,list) and \
           len(picard_run_param)>0:
         picard_option=['{0}={1}'.format(quote(param),
@@ -267,7 +330,11 @@ class Picard_tools:
           return command,output_file_list
 
         subprocess.check_call(command)                                          # run picard command
-        return output_file_list,command
+        picard_metrics = \
+        self._parse_picard_metrics(\
+          picard_cmd=command_name,
+          metrics_list=metrics_list)                                            # parse picard metrics, if available
+        return output_file_list,command,picard_metrics
       else:
         raise ValueError('Picard command {0} not supported yet'.\
                          format(command_name))
