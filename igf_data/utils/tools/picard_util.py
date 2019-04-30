@@ -65,6 +65,8 @@ class Picard_tools:
     try:
       param_dict=None
       output_list=list()
+      metrics_list=list()
+      summary_list=list()
       input_list=self.input_files
       if self.output_prefix is None:
         output_prefix=os.path.join(self.output_dir,
@@ -94,6 +96,7 @@ class Picard_tools:
                      'R':self.ref_fasta}
                    ]
         output_list=[output_file]
+        metrics_list.append(output_file)
 
       elif command_name=='CollectGcBiasMetrics':
         if len(input_list)>1:
@@ -112,6 +115,7 @@ class Picard_tools:
                      chart_file,
                      metrics_file
                     ]
+        summary_list.append(metrics_file)
 
       elif command_name=='QualityScoreDistribution':
         if len(input_list)>1:
@@ -154,6 +158,7 @@ class Picard_tools:
         output_list=[output_file,
                      chart_file,
                     ]
+        metrics_list.append(output_file)
 
       elif command_name=='CollectBaseDistributionByCycle':
         if len(input_list)>1:
@@ -185,6 +190,7 @@ class Picard_tools:
         output_list=[output_file,
                      metrics_file
                     ]
+        summary_list.append(metrics_file)
 
       elif command_name=='AddOrReplaceReadGroups':
         if len(input_list)>1:
@@ -209,7 +215,7 @@ class Picard_tools:
                    ]                                                           # not checking for other required inputs
         output_list=[output_file]
 
-      return param_dict, output_list
+      return param_dict,output_list,metrics_list,summary_list
     except:
       raise
 
@@ -248,7 +254,7 @@ class Picard_tools:
                        for param,val in self.picard_option.items()]
         command.extend(picard_option)                                           # additional picard params
 
-      picard_run_param,output_file_list=\
+      picard_run_param,output_file_list,metrics_list,summary_list=\
                   self._get_param_for_picard_command(command_name=command_name) # get picard params and output list
       if isinstance(picard_run_param,list) and \
           len(picard_run_param)>0:

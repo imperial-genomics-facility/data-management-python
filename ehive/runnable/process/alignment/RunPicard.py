@@ -56,7 +56,6 @@ class RunPicard(IGFBaseProcess):
       reference_refFlat=self.param('reference_refFlat')
       ribosomal_interval_type=self.param('ribosomal_interval_type')
       base_work_dir=self.param_required('base_work_dir')
-      copy_input=self.param('copy_input')
       analysis_files=self.param_required('analysis_files')
       picard_option=self.param('picard_option')
       patterned_flowcell_list=self.param('patterned_flowcell_list')
