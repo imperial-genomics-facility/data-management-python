@@ -108,4 +108,4 @@ class moveBclFilesForDemultiplexing:
                         'runParameters.xml']
       return bcl_files_list
     except:
-      raise  
+      raise

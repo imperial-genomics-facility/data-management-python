@@ -24,7 +24,7 @@ def find_new_seqrun_dir(path, dbconfig):
   :returns: A list of new sequencing run names for processing
   '''
   try:
-    all_seqrun_dir = [f for f in os.listdir(path) 
+    all_seqrun_dir = [f for f in os.listdir(path)
                         if os.path.isdir(os.path.join(path,f))]                 # list of all directories present under path
     new_seqrun_dir = check_seqrun_dir_in_db(all_seqrun_dir,dbconfig)                          
     valid_seqrun_dir = check_finished_seqrun_dir(\
