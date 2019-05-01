@@ -45,7 +45,7 @@ class PipelineAdaptor(BaseAdaptor):
 
   def fetch_pipeline_seed(self, pipeline_id, seed_id, seed_table, 
                           target_column_name=('pipeline_id', 'seed_id', 
-                                              'seed_table'):
+                                              'seed_table')):
     '''
     A method for fetching unique pipeline seed using pipeline_id, seed_id and seed_table
     
@@ -192,7 +192,7 @@ class PipelineAdaptor(BaseAdaptor):
                            seeded_label='SEEDED',
                            required_columns=('pipeline_id',
                                              'seed_id',
-                                             'seed_table'):
+                                             'seed_table')):
     '''
     A method for creating new entry in th pipeline_seed table
     

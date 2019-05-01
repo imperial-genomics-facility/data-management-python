@@ -412,7 +412,7 @@ class Collect_seqrun_fastq_to_db:
       raise
 
   def _build_and_store_exp_run_and_collection_in_db(self,fastq_files_list, \
-                                                    restricted_list=('10X'):
+                                                    restricted_list=('10X')):
     '''
     An internal method for building db collections for the raw fastq files
     '''
