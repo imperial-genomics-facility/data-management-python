@@ -31,13 +31,13 @@ class Batch_effect_report:
                            unstranded'
   '''
   def __init__(self,input_json_file,template_file,rscript_path,
-               allowed_strands=['reverse_strand','forward_strand','unstranded'],
+               allowed_strands=('reverse_strand','forward_strand','unstranded'),
                read_threshold=5,strand_info='reverse_strand'):
     self.input_json_file=input_json_file
     self.template_file=template_file
     self.rscript_path=rscript_path
     self.strand_info=strand_info
-    self.allowed_strands=allowed_strands
+    self.allowed_strands=list(allowed_strands)
     self.read_threshold=read_threshold
 
 

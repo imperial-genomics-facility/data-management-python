@@ -47,7 +47,7 @@ class BWA_util:
     except:
       raise
 
-  def run_mem(self,mem_cmd='mem',parameter_options={"-M":""},samtools_cmd='view',
+  def run_mem(self,mem_cmd='mem',parameter_options=("-M",""),samtools_cmd='view',
               dry_run=False):
     '''
     A method for running Bwa mem and generate output alignment
@@ -60,13 +60,22 @@ class BWA_util:
     '''
     try:
       self._run_checks()                                                        # check input params
-      read1_list,read2_list=identify_fastq_pair(input_list=self.input_fastq_list) # fetch input files
+      read1_list,read2_list = \
+        identify_fastq_pair(\
+          input_list=self.input_fastq_list)                                     # fetch input files
       temp_dir=get_temp_dir(use_ephemeral_space=True)
       bwa_cmd=[
         quote(self.bwa_exe),
         quote(mem_cmd),
         '-t',quote(str(self.thread)),
       ]
+      if isinstance(parameter_options,tuple and \
+         len(parameter_options)>0):
+        parameter_options = \
+          {item:parameter_options[index+1]
+             for index, item in enumerate(parameter_options)
+               if index %2==0}                                                  # convert default param tuple to a dict
+
       if isinstance(parameter_options,dict) and \
          len(parameter_options)>0:
         parameter_options=[quote(str(field))

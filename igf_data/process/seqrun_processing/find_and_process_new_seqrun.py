@@ -23,10 +23,16 @@ def find_new_seqrun_dir(path, dbconfig):
   :param dbconfig: A database configuration file
   :returns: A list of new sequencing run names for processing
   '''
-  all_seqrun_dir=[f for f in os.listdir(path) if os.path.isdir(os.path.join(path,f))]    # list of all directories present under path
-  new_seqrun_dir=check_seqrun_dir_in_db(all_seqrun_dir,dbconfig)                          
-  valid_seqrun_dir=check_finished_seqrun_dir(seqrun_dir=new_seqrun_dir, seqrun_path=path)
-  return valid_seqrun_dir
+  try:
+    all_seqrun_dir = [f for f in os.listdir(path) 
+                        if os.path.isdir(os.path.join(path,f))]                 # list of all directories present under path
+    new_seqrun_dir = check_seqrun_dir_in_db(all_seqrun_dir,dbconfig)                          
+    valid_seqrun_dir = check_finished_seqrun_dir(\
+                         seqrun_dir=new_seqrun_dir,
+                         seqrun_path=path)
+    return valid_seqrun_dir
+  except:
+    raise
 
 def validate_samplesheet_for_seqrun(seqrun_info,schema_json,output_dir,samplesheet_file='SampleSheet.csv'):
   '''
@@ -40,13 +46,13 @@ def validate_samplesheet_for_seqrun(seqrun_info,schema_json,output_dir,sampleshe
   :returns: new_seqrun_info, A new dictionary containing seqrun name and path as key and values
   :returns: error_file_list, A dictionary containing seqrun name and error file paths as key and values
   '''
-  new_seqrun_info=dict()
-  error_file_list=dict()
-  error_file_suffix='samplesheet_validation_failed.txt'
-  if not os.path.exists(output_dir):
-    raise IOError('Report output directory {0} not found'.format(output_dir))   # check for existing dir path
-
   try:
+    new_seqrun_info=dict()
+    error_file_list=dict()
+    error_file_suffix='samplesheet_validation_failed.txt'
+    if not os.path.exists(output_dir):
+      raise IOError('Report output directory {0} not found'.format(output_dir))   # check for existing dir path
+
     for seqrun_name, seqrun_path in seqrun_info.items():
       samplesheet=os.path.join(seqrun_path,samplesheet_file)                    # get samplesheet file
       samplesheet_data=SampleSheet(infile=samplesheet)                          # read samplesheet data
@@ -121,7 +127,10 @@ def check_for_registered_project_and_sample(seqrun_info,dbconfig,samplesheet_fil
     raise
 
 
-def check_finished_seqrun_dir(seqrun_dir, seqrun_path, required_files=['RTAComplete.txt','SampleSheet.csv','RunInfo.xml']):
+def check_finished_seqrun_dir(seqrun_dir, seqrun_path,
+                              required_files=('RTAComplete.txt',
+                                              'SampleSheet.csv',
+                                              'RunInfo.xml')):
   '''
   A method for checking complete sequencing run directory
   
@@ -131,18 +140,22 @@ def check_finished_seqrun_dir(seqrun_dir, seqrun_path, required_files=['RTACompl
                          default: 'RTAComplete.txt','SampleSheet.csv','RunInfo.xml'
   :returns: A dictionary containing valid sequencing run information
   '''
-  valid_seqruns=dict()
-  for seqrun in seqrun_dir:
-    skip=0
-    for serun_file in required_files:
-      required_path=os.path.join(seqrun_path,seqrun,serun_file)
-      if not os.path.exists(required_path):
-        skip=1
-      elif int(os.path.getsize(required_path))==0:
-        skip=1
-    if skip==0:
-      valid_seqruns[seqrun]=os.path.join(seqrun_path,seqrun)
-  return valid_seqruns
+  try:
+    required_files = list(required_files)
+    valid_seqruns=dict()
+    for seqrun in seqrun_dir:
+      skip=0
+      for serun_file in required_files:
+        required_path=os.path.join(seqrun_path,seqrun,serun_file)
+        if not os.path.exists(required_path):
+          skip=1
+        elif int(os.path.getsize(required_path))==0:
+          skip=1
+      if skip==0:
+        valid_seqruns[seqrun]=os.path.join(seqrun_path,seqrun)
+    return valid_seqruns
+  except:
+    raise
 
 
 def check_seqrun_dir_in_db(all_seqrun_dir,dbconfig):
@@ -153,18 +166,24 @@ def check_seqrun_dir_in_db(all_seqrun_dir,dbconfig):
   :param dbconfig: dbconfig
   :returns: A list containing new sequencing run information
   '''
-  dbparam=read_dbconf_json(dbconfig)
-  sra=SeqrunAdaptor(**dbparam)
-  sra.start_session()
-  sra_data=sra.fetch_records(sra.session.query(Seqrun.seqrun_igf_id),output_mode='object')
-  existing_runs=set(s[0] for s in sra_data)
-  sra.close_session() 
-  all_runs=set(all_seqrun_dir)
-  new_runs=list(all_runs.difference(existing_runs))
-  return new_runs
+  try:
+    dbparam = read_dbconf_json(dbconfig)
+    sra = SeqrunAdaptor(**dbparam)
+    sra.start_session()
+    sra_data = \
+      sra.fetch_records(\
+        sra.session.\
+        query(Seqrun.seqrun_igf_id),
+        output_mode='object')
+    existing_runs = set(s[0] for s in sra_data)
+    sra.close_session() 
+    all_runs = set(all_seqrun_dir)
+    new_runs = list(all_runs.difference(existing_runs))
+    return new_runs
+  except:
+    raise
 
-
-def calculate_file_md5(seqrun_info, md5_out, seqrun_path, file_suffix='md5.json', exclude_dir=[]):
+def calculate_file_md5(seqrun_info, md5_out, seqrun_path, file_suffix='md5.json', exclude_dir=()):
   '''
   A method for file md5 calculation for all the sequencing run files
   
@@ -178,27 +197,31 @@ def calculate_file_md5(seqrun_info, md5_out, seqrun_path, file_suffix='md5.json'
       Format of the json file
       [{"seqrun_file_name":"file_path","file_md5":"md5_value"}]
   '''
-  seqrun_and_md5=dict()
-  for seqrun_name, seqrun_path in seqrun_info.items():
-    file_list_with_md5=list()
-    output_json_file=os.path.join(md5_out,'{0}.{1}'.format(seqrun_name, file_suffix))
-    for root_path,dirs,files in os.walk(seqrun_path, topdown=True):
-      dirs[:]=[ d for d in dirs if d not in exclude_dir ]                                     # exclude listed dires from search
-      if len(files)>0:
-        for file_name in files:
-          if not fnmatch.fnmatch(file_name, '*.fastq.gz'):
-            file_path=os.path.join(root_path,file_name)
-            if os.path.exists(file_path):
-              file_md5=calculate_file_checksum(filepath=file_path)                              # calculate file checksum
-              file_rel_path=os.path.relpath(file_path, start=seqrun_path)                       # get relative filepath
-              file_list_with_md5.append({"seqrun_file_name":file_rel_path,"file_md5":file_md5})
+  try:
+    exclude_dir = list(exclude_dir)
+    seqrun_and_md5=dict()
+    for seqrun_name, seqrun_path in seqrun_info.items():
+      file_list_with_md5=list()
+      output_json_file=os.path.join(md5_out,'{0}.{1}'.\
+                                    format(seqrun_name, file_suffix))
+      for root_path,dirs,files in os.walk(seqrun_path, topdown=True):
+        dirs[:]=[ d for d in dirs if d not in exclude_dir ]                                     # exclude listed dires from search
+        if len(files)>0:
+          for file_name in files:
+            if not fnmatch.fnmatch(file_name, '*.fastq.gz'):
+              file_path=os.path.join(root_path,file_name)
+              if os.path.exists(file_path):
+                file_md5=calculate_file_checksum(filepath=file_path)                              # calculate file checksum
+                file_rel_path=os.path.relpath(file_path, start=seqrun_path)                       # get relative filepath
+                file_list_with_md5.append({"seqrun_file_name":file_rel_path,"file_md5":file_md5})
 
-    with open(output_json_file, 'w') as output_json:
-      json.dump(file_list_with_md5, output_json, indent=4)                                    # write json md5 list
+      with open(output_json_file, 'w') as output_json:
+        json.dump(file_list_with_md5, output_json, indent=4)                                    # write json md5 list
 
-    seqrun_and_md5[seqrun_name]=output_json_file
-  return seqrun_and_md5
-
+      seqrun_and_md5[seqrun_name]=output_json_file
+    return seqrun_and_md5
+  except:
+    raise
 
 def prepare_seqrun_for_db(seqrun_name, seqrun_path, session_class):
   '''
@@ -264,11 +287,11 @@ def seed_pipeline_table_for_new_seqrun(pipeline_name, dbconfig):
   :param dbconfig: A dbconfig file
   :returns: Nill
   '''
-  dbparam=None
-  with open(dbconfig, 'r') as json_data:
-    dbparam=json.load(json_data)
-
   try:
+    dbparam=None
+    with open(dbconfig, 'r') as json_data:
+      dbparam=json.load(json_data)
+
     pa=PipelineAdaptor(**dbparam)
     pa.start_session()
     pa.seed_new_seqruns(pipeline_name=pipeline_name)

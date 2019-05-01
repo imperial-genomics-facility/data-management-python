@@ -38,9 +38,9 @@ class Experiment_metadata_updator:
 
 
   def update_metadta_from_sample_attribute(self,experiment_igf_id=None,
-                                           sample_attribute_names=['library_source',
+                                           sample_attribute_names=('library_source',
                                                                    'library_strategy',
-                                                                   'experiment_type']):
+                                                                   'experiment_type')):
     '''
     A method for fetching experiment metadata from sample_attribute tables
     :param experiment_igf_id: An experiment igf id for updating only a selected experiment, default None for all experiments
@@ -48,6 +48,7 @@ class Experiment_metadata_updator:
                                    default: library_source, library_strategy, experiment_type
     '''
     try:
+      sample_attribute_names = list(sample_attribute_names)
       db_connected=False
       base=self.base_adaptor
       base.start_session()

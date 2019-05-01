@@ -77,8 +77,10 @@ def merge_storage_stats_json(config_file,label_file=None,
       data[storage_col]=data[server_name_col] + '_' + data[storage_col]         # add server name as the storage name prefix
       all_storage_info=pd.concat([all_storage_info,data])                       # merge disk usage info
 
-    all_storage_info[pd.isna(all_storage_info[server_name_col])==False]         # remove entries without server name col
-    all_storage_info[pd.isnull(all_storage_info[server_name_col])==False]       # remove entries with null server name col
+    all_storage_info = \
+      all_storage_info[pd.isna(all_storage_info[server_name_col])==False]         # remove entries without server name col
+    all_storage_info = \
+      all_storage_info[pd.isnull(all_storage_info[server_name_col])==False]       # remove entries with null server name col
     all_storage_info.drop(server_name_col,inplace=True,axis=1)                  # remove server name column from merged data
     all_storage_info=all_storage_info.\
                      set_index(storage_col).\

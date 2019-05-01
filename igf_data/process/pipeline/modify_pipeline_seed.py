@@ -95,7 +95,7 @@ class Modify_pipeline_seed:
       raise
 
   def reset_pipeline_seed_for_rerun(self,seeded_label='SEEDED',
-                                    restricted_status_list=['SEEDED','RUNNING']):
+                                    restricted_status_list=('SEEDED','RUNNING')):
     '''
     A method for setting the pipeline for re-run if the first run has failed or aborted
     This method will set the pipeline_seed.status as 'SEEDED' only if its not already
@@ -106,6 +106,7 @@ class Modify_pipeline_seed:
     '''
     try:
       db_connected=False
+      restricted_status_list = list(restricted_status_list)
       input_id_list=self._read_input_list(igf_id_list=self.igf_id_list)         # get input ids from file
       failed_ids=list()                                                         # define empty list of failed ids
       pass_list=list()                                                          # required for logging in asana

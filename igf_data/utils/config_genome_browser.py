@@ -25,7 +25,7 @@ class Config_genome_browser:
   def __init__(self,dbsession_class,project_igf_id,collection_type_list,
                pipeline_name,collection_table,species_name,ref_genome_type,
                track_file_type=None,analysis_path_prefix='analysis',
-               analysis_dir_structure_list=['sample_igf_id']):
+               analysis_dir_structure_list=('sample_igf_id')):
     self.dbsession_class=dbsession_class
     self.project_igf_id=project_igf_id
     self.collection_type_list=collection_type_list
@@ -35,7 +35,7 @@ class Config_genome_browser:
     self.ref_genome_type=ref_genome_type
     self.track_file_type=track_file_type
     self.analysis_path_prefix=analysis_path_prefix
-    self.analysis_dir_structure_list=analysis_dir_structure_list
+    self.analysis_dir_structure_list=list(analysis_dir_structure_list)
 
   def _fetch_track_files_with_metadata(self,level='experiment'):
     '''

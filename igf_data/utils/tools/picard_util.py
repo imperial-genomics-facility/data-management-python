@@ -21,25 +21,25 @@ class Picard_tools:
   :param patterned_flowcell: Toggle for marking the patterned flowcell, default False
   :param suported_commands: A list of supported picard commands
   
-                           CollectAlignmentSummaryMetrics
-                           CollectGcBiasMetrics
-                           QualityScoreDistribution
-                           CollectRnaSeqMetrics
-                           CollectBaseDistributionByCycle
-                           MarkDuplicates
-                           AddOrReplaceReadGroups
+                           * CollectAlignmentSummaryMetrics
+                           * CollectGcBiasMetrics
+                           * QualityScoreDistribution
+                           * CollectRnaSeqMetrics
+                           * CollectBaseDistributionByCycle
+                           * MarkDuplicates
+                           * AddOrReplaceReadGroups
   '''
   def __init__(self,java_exe,picard_jar,input_files,output_dir,ref_fasta,
                picard_option=None,java_param='-Xmx4g',
                strand_info='NONE',threads=1,output_prefix=None,
                ref_flat_file=None,ribisomal_interval=None,patterned_flowcell=False,
-               suported_commands=['CollectAlignmentSummaryMetrics',
+               suported_commands=('CollectAlignmentSummaryMetrics',
                                   'CollectGcBiasMetrics',
                                   'QualityScoreDistribution',
                                   'CollectRnaSeqMetrics',
                                   'CollectBaseDistributionByCycle',
                                   'MarkDuplicates',
-                                  'AddOrReplaceReadGroups']):
+                                  'AddOrReplaceReadGroups')):
     self.java_exe=java_exe
     self.picard_jar=picard_jar
     self.java_param=java_param
@@ -49,7 +49,7 @@ class Picard_tools:
     self.picard_option=picard_option
     self.strand_info=strand_info
     self.ref_flat_file=ref_flat_file
-    self.suported_commands=suported_commands
+    self.suported_commands=list(suported_commands)
     self.ribisomal_interval=ribisomal_interval
     self.output_prefix=output_prefix
     self.threads=threads

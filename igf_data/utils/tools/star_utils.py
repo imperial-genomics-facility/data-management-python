@@ -43,16 +43,16 @@ class Star_utils:
       raise
 
   def generate_aligned_bams(self,two_pass_mode=True,dry_run=False,
-                            star_patameters={
-                              "--outFilterMultimapNmax":20,
-                              "--alignSJoverhangMin":8,
-                              "--alignSJDBoverhangMin":1,
-                              "--outFilterMismatchNmax":999,
-                              "--outFilterMismatchNoverReadLmax":0.04,
-                              "--alignIntronMin":20,
-                              "--alignIntronMax":1000000,
-                              "--alignMatesGapMax":1000000,
-                              "--limitBAMsortRAM":12000000000}):
+                            star_patameters=(
+                              "--outFilterMultimapNmax",20,
+                              "--alignSJoverhangMin",8,
+                              "--alignSJDBoverhangMin",1,
+                              "--outFilterMismatchNmax",999,
+                              "--outFilterMismatchNoverReadLmax",0.04,
+                              "--alignIntronMin",20,
+                              "--alignIntronMax",1000000,
+                              "--alignMatesGapMax",1000000,
+                              "--limitBAMsortRAM",12000000000)):
     '''
     A method running star alignment
     
@@ -86,6 +86,13 @@ class Star_utils:
             star_cmd.extend(field)
           else:
             star_cmd.append(field)
+
+      if isinstance(star_patameters,tuple and \
+         len(star_patameters)>0):
+        star_patameters = \
+          {item:star_patameters[index+1]
+             for index, item in enumerate(star_patameters)
+               if index %2==0}                                                  # convert default star param tuple to dict
 
       if not isinstance(star_patameters, dict):
         raise TypeError('Expecting a dictionary for star run parameters and got {0}'.\

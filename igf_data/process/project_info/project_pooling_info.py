@@ -21,7 +21,7 @@ class Project_pooling_info:
   :param remote_prefix: URI refix for projects, default http://eliot.med.ic.ac.uk/report/project/
   '''
   def __init__(self,dbconfig_file,
-               platform_list=['HISEQ4000','NEXTSEQ'],
+               platform_list=('HISEQ4000','NEXTSEQ'),
                expected_read_tag='expected_read',
                r1_read_tag='R1_READ_COUNT',
                total_read_tag='total_read',
@@ -29,7 +29,7 @@ class Project_pooling_info:
                remote_prefix='http://eliot.med.ic.ac.uk/report/project/'
               ):
     self.dbconfig_file=dbconfig_file
-    self.platform_list=platform_list
+    self.platform_list=list(platform_list)
     self.expected_read_tag=expected_read_tag
     self.r1_read_tag=r1_read_tag
     self.total_read_tag=total_read_tag

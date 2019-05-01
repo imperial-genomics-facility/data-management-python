@@ -28,7 +28,7 @@ def get_cellranger_count_input_list(db_session_class,experiment_igf_id,
 
 
 def check_cellranger_count_output(output_path,
-                                  file_list=['web_summary.html',
+                                  file_list=('web_summary.html',
                                              'metrics_summary.csv',
                                              'possorted_genome_bam.bam',
                                              'possorted_genome_bam.bam.bai',
@@ -40,7 +40,7 @@ def check_cellranger_count_output(output_path,
                                              'analysis/clustering/graphclust/clusters.csv',
                                              'analysis/diffexp/kmeans_3_clusters/differential_expression.csv',
                                              'analysis/pca/10_components/variance.csv'
-                                            ]):
+                                            )):
   '''
   A function for checking cellranger count output
   
@@ -64,6 +64,7 @@ def check_cellranger_count_output(output_path,
   :raises IOError: when any file is missing from the output path
   '''
   try:
+    file_list = list(file_list)
     file_dict_value=[i for i in range(len(file_list))]                          # get file index values
     file_dict=dict(zip(file_list,file_dict_value))                              # convert file list to a dictionary
     for file_name in file_list:
