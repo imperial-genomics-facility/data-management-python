@@ -219,7 +219,8 @@ class SampleSheet:
     '''
     try:
       samplesheet_data=pd.DataFrame(self._data)
-      if 'Lane' in samplesheet_data.columns:
+      samplesheet_columns = list(samplesheet_data.columns)
+      if 'Lane' in samplesheet_columns:
         data_group=samplesheet_data.groupby(['Sample_Project','Lane'])          # for hiseq
       else:
         data_group=samplesheet_data.groupby(['Sample_Project'])                 # for nextseq and miseq
@@ -308,7 +309,7 @@ class SampleSheet:
       raise
 
 
-  def add_pseudo_lane_for_nextseq(self,lanes=('1','2','3','4'):
+  def add_pseudo_lane_for_nextseq(self,lanes=('1','2','3','4')):
     '''
     A method for adding pseudo lane information for the nextseq platform
     
@@ -397,7 +398,7 @@ class SampleSheet:
       for row in header_section_data:
         if re.search(pattern, row):
           match=1
-          (field_name, machine_name)=row.split(',')[0:2]
+          (_, machine_name)=row.split(',')[0:2]
           return machine_name
       if match == 0:
         raise ValueError('samplesheet {0} doesn\'t have the field {1}'.\
@@ -513,7 +514,6 @@ class SampleSheet:
     '''
     try:
       condition_value=str(condition_value).strip()
-      data_header=self._data_header
       raw_data=self._data
       filtered_data=list()
 
