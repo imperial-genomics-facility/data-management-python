@@ -241,7 +241,7 @@ class PipelineAdaptor(BaseAdaptor):
                            required_columns=('pipeline_id',
                                              'seed_id',
                                              'seed_table',
-                                             'status'):
+                                             'status')):
     '''
     A method for updating the seed status in pipeline_seed table
     
