@@ -35,3 +35,5 @@ dependencies:
     - scanpy==1.4
   - r-base==3.4.1
   - bioconductor-edger
+  - phantompeakqualtools==1.2.0
+  - deeptools==3.2.1
