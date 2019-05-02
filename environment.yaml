@@ -9,6 +9,11 @@ dependencies:
   - louvain==0.6.1
   - r-base==3.4.1
   - bioconductor-edger
+  - r-snow
+  - r-snowfall
+  - r-bitops
+  - r-catools
+  - bioconductor-rsamtools
   - phantompeakqualtools==1.2.0
   - pip
   - pip:
