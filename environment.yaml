@@ -43,3 +43,4 @@ dependencies:
     - pandas==0.24.0
     - numpy==1.16.3
     - bioservices==1.5.2
+    - cellbrowser==0.5.12
