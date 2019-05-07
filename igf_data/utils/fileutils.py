@@ -71,7 +71,9 @@ def copy_local_file(source_path,destinationa_path, force=False):
     raise
 
 
-def copy_remote_file(source_path,destinationa_path, source_address=None, destination_address=None, copy_method='rsync',check_file=True):
+def copy_remote_file(source_path,destinationa_path, source_address=None,
+                     destination_address=None, copy_method='rsync',
+                     check_file=True, force_update=False):
     '''
     A method for copy files from or to remote location
     
@@ -81,10 +83,12 @@ def copy_remote_file(source_path,destinationa_path, source_address=None, destina
     :param destination_address: Address of the destination server
     :param copy_method: A nethod for copy files, default is 'rsync'
     :param check_file: Check file after transfer using checksum, default True
+    :param force_update: Overwrite existing file or dir, default is False
     '''
     try:
-        if source_address is None and destination_address is None:
-            raise ValueError('required a remote source address or a destination address')
+        if source_address is None and \
+           destination_address is None:
+            raise ValueError('Required a remote source address or a destination address')
 
         if source_address is not None:
             source_path='{0}:{1}'.format(source_address,source_path)
@@ -107,7 +111,11 @@ def copy_remote_file(source_path,destinationa_path, source_address=None, destina
           cmd=['rsync']
           if check_file:
             cmd.append('-c')                                                    # file check now optional
-          cmd.extend(['-e','ssh',source_path,destinationa_path])
+
+          if force_update:
+            cmd.append('-I')
+
+          cmd.extend(['-r','-p','-e','ssh',source_path,destinationa_path])
         else:
             raise ValueError('copy method {0} is not supported'.\
                              format(copy_method))
@@ -115,11 +123,12 @@ def copy_remote_file(source_path,destinationa_path, source_address=None, destina
         proc=subprocess.Popen(cmd,stderr=subprocess.PIPE)
         proc.wait()
         if proc.returncode !=0:                                                 # fetching error message for non zero exits
-          outs,errs=proc.communicate()
+          _,errs=proc.communicate()
           if proc.returncode == 255:
-            raise ValueError('Error while copying file to remote server {0}:{1}'.\
-                             format('Error while copying file to remote server ssh_exchange_identification',
-                                    'Connection closed by remote host'))
+            raise ValueError(\
+              '{0}:{1}'.\
+              format('Error while copying file to remote server ssh_exchange_identification',
+                     'Connection closed by remote host'))
           else:
             raise ValueError('Error while copying file to remote server {0}'.\
                              format(errs.decode('utf8')))
@@ -300,7 +309,7 @@ def prepare_file_archive(results_dirpath,output_file,gzip_output=True,
                        format(type(exclude_list)))                              # check exclude list type if its not None
 
     with tarfile.open(output_file, "{0}".format(output_mode)) as tar:           # overwrite output file
-      for root,dir,files in os.walk(results_dirpath):                           # check for files under results_dirpath
+      for root,_,files in os.walk(results_dirpath):                           # check for files under results_dirpath
         for file in files:
           file_path=os.path.join(root,
                                  file)
@@ -388,7 +397,7 @@ def create_file_manifest_for_dir(results_dirpath,output_file,md5_label='md5',
 
     file_manifest_list=list()                                                   # empty list for file manifest
 
-    for root,dir,files in os.walk(results_dirpath):                             # check for files under results_dirpath
+    for root,_,files in os.walk(results_dirpath):                             # check for files under results_dirpath
       for file in files:
         file_path=os.path.join(root,
                                file)
