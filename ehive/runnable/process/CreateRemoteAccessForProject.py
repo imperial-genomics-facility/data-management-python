@@ -42,7 +42,6 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
     try:
       seqrun_igf_id=self.param_required('seqrun_igf_id')
       project_name=self.param_required('project_name')
-      flowcell_id=self.param_required('flowcell_id')
       remote_project_path=self.param_required('remote_project_path')
       remote_user=self.param_required('remote_user')
       remote_host=self.param_required('remote_host')
@@ -318,28 +317,30 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
         raise IOError('Source file {0} not found for copy'.\
                       format(source_file))
 
-      check_remote_cmd=['ssh',
-                        '{0}@{1}'.\
-                        format(remote_user,
-                               remote_host),
-                        'ls',
-                        '-a',
-                        remote_file]                                            # remote check cmd
-      response=subprocess.call(check_remote_cmd)                                # look for existing remote file
-      if response !=0:
-        rm_remote_cmd=['ssh',
-                       '{0}@{1}'.\
-                       format(remote_user,
-                              remote_host),
-                       'rm',
-                       '-f',
-                       remote_file]                                             # remote rm cmd
-        subprocess.check_call(rm_remote_cmd)                                    # remove existing file
+      #check_remote_cmd=['ssh',
+      #                  '{0}@{1}'.\
+      #                  format(remote_user,
+      #                         remote_host),
+      #                  'ls',
+      #                  '-a',
+      #                  remote_file]                                            # remote check cmd
+      #response=subprocess.call(check_remote_cmd)                                # look for existing remote file
+      #if response !=0:
+      #  rm_remote_cmd=['ssh',
+      #                 '{0}@{1}'.\
+      #                 format(remote_user,
+      #                        remote_host),
+      #                 'rm',
+      #                 '-f',
+      #                 remote_file]                                             # remote rm cmd
+      #  subprocess.check_call(rm_remote_cmd)                                    # remove existing file
 
-      copy_remote_file(source_path=source_file,
-                       destinationa_path=remote_file,
-                       destination_address='{0}@{1}'.\
-                                           format(remote_user,
-                                                  remote_host))                 # create dir and copy file to remote
+      copy_remote_file(\
+        source_path=source_file,
+        destinationa_path=remote_file,
+        destination_address='{0}@{1}'.\
+                            format(remote_user,
+                                   remote_host),
+        force_update=True)                                                      # create dir and copy file to remote
     except:
       raise
