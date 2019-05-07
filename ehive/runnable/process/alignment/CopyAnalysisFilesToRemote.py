@@ -1,7 +1,8 @@
 import os,subprocess
 from shlex import quote
-from shutil import copy2
+from shutil import copy2, copytree
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
+from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.utils.fileutils import copy_remote_file
 from igf_data.utils.fileutils import get_temp_dir,remove_dir
 
@@ -16,6 +17,11 @@ class CopyAnalysisFilesToRemote(IGFBaseProcess):
       'force_overwrite':True,
       'dir_labels':[],
       'sample_igf_id':None,
+      'collect_remote_file_to_db':False,
+      'collection_name':None,
+      'collection_type':None,
+      'collection_table':'file',
+      'file_location':'ELIOT'
       })
     return params_dict
 
@@ -28,16 +34,25 @@ class CopyAnalysisFilesToRemote(IGFBaseProcess):
       remote_host=self.param_required('remote_host')
       remote_project_path=self.param_required('remote_project_path')
       dir_labels=self.param_required('dir_labels')
+      igf_session_class = self.param_required('igf_session_class')
       force_overwrite=self.param('force_overwrite')
+      collect_remote_file_to_db=self.param('collect_remote_file_to_db')
+      collection_name=self.param('collection_name')
+      collection_type=self.param('collection_type')
+      collection_table=self.param('collection_table')
+      file_location=self.param('file_location')
       destination_output_path=os.path.join(remote_project_path,
                                            project_igf_id)                      # get base destination path
       if isinstance(dir_labels, list) and \
          len(dir_labels) > 0:
-        destination_output_path=os.path.join(destination_output_path,
-                                             *dir_labels)
-      #if sample_igf_id is not None:
-      #  destination_output_path=os.path.join(destination_output_path,
-      #                                       sample_igf_id)                     # add sample name to the destination path
+        destination_output_path=\
+          os.path.join(destination_output_path,
+                       *dir_labels)
+
+      if collect_remote_file_to_db:
+        if collection_name is None or \
+           collection_type is None:
+           raise ValueError('Name and type are required for db collection')
 
       output_file_list=list()
       temp_work_dir=get_temp_dir()                                              # get temp dir
@@ -46,8 +61,6 @@ class CopyAnalysisFilesToRemote(IGFBaseProcess):
           raise IOError('file {0} not found'.\
                         format(file))
 
-        dest_file_path=os.path.join(destination_output_path,
-                                    os.path.basename(file))                     # get destination file path
         #file_check_cmd=['ssh',
         #                '{0}@{1}'.\
         #                format(remote_user,
@@ -65,11 +78,33 @@ class CopyAnalysisFilesToRemote(IGFBaseProcess):
         #               quote(dest_file_path)]
         #  subprocess.check_call(file_rm_cmd)                                    # remove remote file if its already present
 
-        copy2(file,os.path.join(temp_work_dir,
-                                os.path.basename(file)))                        # copy file to a temp dir
-        os.chmod(os.path.join(temp_work_dir,
-                              os.path.basename(file)),
-                 mode=0o754)                                                    # set file permission
+        if os.path.isfile(file):
+          copy2(\
+            file,
+            os.path.join(temp_work_dir,
+                         os.path.basename(file))
+          )                                                                     # copy file to a temp dir
+          dest_file_path=\
+            os.path.join(destination_output_path,
+                         os.path.basename(file)
+          )                                                                     # get destination file path
+        elif os.path.isdir(file):
+          copytree(\
+            file,
+            os.path.join(temp_work_dir,
+                         os.path.basename(file))
+          )                                                                     # copy dir to a temp dir
+          dest_file_path=destination_output_path
+        else:
+          raise ValueError('Unknown source file type: {0}'.\
+                           format(file))
+
+        os.chmod(\
+          os.path.join(temp_work_dir,
+                       os.path.basename(file)),
+          mode=0o754
+        )                                                                       # set file permission
+
         #remote_mkdir_cmd=['ssh',
         #                  '{0}@{1}'.\
         #                  format(remote_user,
@@ -85,12 +120,46 @@ class CopyAnalysisFilesToRemote(IGFBaseProcess):
           destination_address='{0}@{1}'.format(remote_user,remote_host),
           force_update=force_overwrite
         )                                                                       # copy file to remote
+        if os.path.isdir(file):
+          dest_file_path=\
+            os.path.join(\
+              dest_file_path,
+              os.path.basename(file)
+          )                                                                     # fix for dir input
+
         output_file_list.append(dest_file_path)
 
       remove_dir(dir_path=temp_work_dir)                                        # remove temp dir
       self.param('dataflow_params',
                  {'status': 'done',
                   'output_list':output_file_list})                              # add dataflow params
+      if collect_remote_file_to_db:
+        data=list()
+        for file in output_file_list:
+          data.append(\
+            {'name':collection_name,
+             'type':collection_type,
+             'table':collection_table,
+             'file_path':file,
+             'location':file_location
+            }
+          )
+        ca = CollectionAdaptor(**{'session_class':igf_session_class})
+        ca.start_session()
+        try:
+          ca.load_file_and_create_collection(\
+            data=data,
+            autosave=False,
+            calculate_file_size_and_md5=False,
+          )                                                                     # load remote files to db
+          ca.commit_session()                                                   # commit changes
+          ca.close_session()
+          
+        except:
+          ca.rollback_session()                                                 # rollback changes
+          ca.close_session()
+          raise
+
     except Exception as e:
       message='project: {2}, sample:{3}, Error in {0}: {1}'.\
               format(self.__class__.__name__,
