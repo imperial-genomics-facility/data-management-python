@@ -17,7 +17,7 @@ class CopyAnalysisFilesToRemote(IGFBaseProcess):
       'force_overwrite':True,
       'dir_labels':[],
       'sample_igf_id':None,
-      'collect_remote_file_to_db':False,
+      'collect_remote_file':False,
       'collection_name':None,
       'collection_type':None,
       'collection_table':'file',
@@ -36,7 +36,7 @@ class CopyAnalysisFilesToRemote(IGFBaseProcess):
       dir_labels=self.param_required('dir_labels')
       igf_session_class = self.param_required('igf_session_class')
       force_overwrite=self.param('force_overwrite')
-      collect_remote_file_to_db=self.param('collect_remote_file_to_db')
+      collect_remote_file=self.param('collect_remote_file')
       collection_name=self.param('collection_name')
       collection_type=self.param('collection_type')
       collection_table=self.param('collection_table')
@@ -49,7 +49,7 @@ class CopyAnalysisFilesToRemote(IGFBaseProcess):
           os.path.join(destination_output_path,
                        *dir_labels)
 
-      if collect_remote_file_to_db:
+      if collect_remote_file:
         if collection_name is None or \
            collection_type is None:
            raise ValueError('Name and type are required for db collection')
@@ -133,7 +133,7 @@ class CopyAnalysisFilesToRemote(IGFBaseProcess):
       self.param('dataflow_params',
                  {'status': 'done',
                   'output_list':output_file_list})                              # add dataflow params
-      if collect_remote_file_to_db:
+      if collect_remote_file:
         data=list()
         remove_data_list=[{'name':collection_name,
                            'type':collection_type}]
