@@ -1,5 +1,6 @@
 import os
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
+from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.utils.fileutils import move_file,get_temp_dir,remove_dir,get_datestamp_label
 from igf_data.utils.tools.samtools_utils import run_bam_flagstat,run_bam_idxstat,merge_multiple_bam,run_bam_stats
 
@@ -16,6 +17,8 @@ class RunSamtools(IGFBaseProcess):
         'analysis_files':[],
         'sorted_by_name':False,
         'output_prefix':None,
+        'load_stat_metrics_to_cram':False,
+        'cram_collection_type':'ANALYSIS_CRAM'
       })
     return params_dict
 
@@ -47,9 +50,10 @@ class RunSamtools(IGFBaseProcess):
       threads=self.param('threads')
       base_work_dir=self.param_required('base_work_dir')
       samtools_command=self.param_required('samtools_command')
-      copy_input=self.param('copy_input')
       analysis_files=self.param_required('analysis_files')
       output_prefix=self.param_required('output_prefix')
+      load_stat_metrics_to_cram=self.param('load_stat_metrics_to_cram')
+      cram_collection_type=self.param('cram_collection_type')
       seed_date_stamp=self.param_required('date_stamp')
       seed_date_stamp=get_datestamp_label(seed_date_stamp)
       if output_prefix is not None:
@@ -73,41 +77,75 @@ class RunSamtools(IGFBaseProcess):
       work_dir=self.get_job_work_dir(work_dir=work_dir_prefix)                  # get a run work dir
       samtools_cmdline=''
       if samtools_command == 'idxstats':
-        temp_output,samtools_cmdline=run_bam_idxstat(\
-                                    samtools_exe=samtools_exe,
-                                    bam_file=input_file,
-                                    output_dir=temp_output_dir,
-                                    output_prefix=output_prefix,
-                                    force=True)                                 # run samtools idxstats
+        temp_output,samtools_cmdline = \
+          run_bam_idxstat(\
+            samtools_exe=samtools_exe,
+            bam_file=input_file,
+            output_dir=temp_output_dir,
+            output_prefix=output_prefix,
+            force=True
+          )                                                                     # run samtools idxstats
       elif samtools_command == 'flagstat':
-        temp_output,samtools_cmdline=run_bam_flagstat(\
-                                    samtools_exe=samtools_exe,
-                                    bam_file=input_file,
-                                    output_dir=temp_output_dir,
-                                    output_prefix=output_prefix,
-                                    threads=threads,
-                                    force=True)                                 # run samtools flagstat
+        temp_output,samtools_cmdline = \
+          run_bam_flagstat(\
+            samtools_exe=samtools_exe,
+            bam_file=input_file,
+            output_dir=temp_output_dir,
+            output_prefix=output_prefix,
+            threads=threads,
+            force=True
+          )                                                                     # run samtools flagstat
       elif samtools_command == 'stats':
-        temp_output,samtools_cmdline=run_bam_stats(\
-                                    samtools_exe=samtools_exe,
-                                    bam_file=input_file,
-                                    output_dir=temp_output_dir,
-                                    output_prefix=output_prefix,
-                                    threads=threads,
-                                    force=True)                                 # run samtools stats
+        temp_output,samtools_cmdline,stats_metrics = \
+          run_bam_stats(\
+            samtools_exe=samtools_exe,
+            bam_file=input_file,
+            output_dir=temp_output_dir,
+            output_prefix=output_prefix,
+            threads=threads,
+            force=True
+          )                                                                     # run samtools stats
+        if load_stat_metrics_to_cram and \
+           len(stats_metrics) > 0:
+          ca = CollectionAdaptor(**{'session_class':igf_session_class})
+          attribute_data = \
+          ca.prepare_data_for_collection_attribute(\
+            collection_name=experiment_igf_id,
+            collection_type=cram_collection_type,
+            data_list=stats_metrics
+          )
+          ca.start_session()
+          try:
+            ca.create_or_update_collection_attributes(\
+              data=attribute_data,
+              autosave=False
+            )
+            ca.commit_session()
+            ca.close_session()
+          except:
+            ca.rollback_session()
+            ca.close_session()
+            raise
+
       elif samtools_command == 'merge':
         if output_prefix is None:
           raise ValueError('Missing output filename prefix for merged bam')
 
         sorted_by_name=self.param('sorted_by_name')
-        temp_output=os.path.join(work_dir,'{0}_merged.bam'.format(output_prefix))
-        samtools_cmdline=merge_multiple_bam(\
-                          samtools_exe=samtools_exe,
-                          input_bam_list=input_file,
-                          output_bam_path=temp_output,
-                          sorted_by_name=sorted_by_name,
-                          threads=threads,
-                          force=True)
+        temp_output=\
+          os.path.join(\
+            work_dir,
+            '{0}_merged.bam'.format(output_prefix)
+          )
+        samtools_cmdline = \
+          merge_multiple_bam(\
+            samtools_exe=samtools_exe,
+            input_bam_list=input_file,
+            output_bam_path=temp_output,
+            sorted_by_name=sorted_by_name,
+            threads=threads,
+            force=True
+          )
       else:
         raise ValueError('Samtools command {0} not supported'.\
                          format(samtools_command))

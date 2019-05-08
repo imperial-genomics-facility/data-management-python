@@ -1,4 +1,5 @@
 import os,subprocess,fnmatch
+import pandas as pd
 from shlex import quote
 from igf_data.utils.fileutils import check_file_path,get_temp_dir,remove_dir,copy_local_file
 
@@ -149,7 +150,7 @@ def run_bam_stats(samtools_exe,bam_file,output_dir,threads=1,force=False,
   :param threads: Number of threads to use for conversion, default 1
   :param force: Output flagstat file will be overwritten if force is True, default False
   :param dry_run: A toggle for returning the samtools command without actually running it, default False
-  :returns: Output file path and a list containing samtools command
+  :returns: Output file path, list containing samtools command and a list containing the SN matrics of report
   '''
   try:
     check_file_path(samtools_exe)
@@ -184,7 +185,28 @@ def run_bam_stats(samtools_exe,bam_file,output_dir,threads=1,force=False,
       with subprocess.Popen(stats_cmd, stdout=subprocess.PIPE) as proc:
         fp.write(proc.stdout.read().decode('utf-8'))                            # write bam stats output
 
-    return output_path,stats_cmd
+    data = \
+      pd.read_csv(\
+        output_path,
+        sep='\n',
+        header=None,
+        engine='python',
+        comment='#'
+      )
+    sn_rows = \
+      data[data.get(0).map(lambda x: x.startswith('SN'))][0].\
+      map(lambda x: x.strip('SN\t')).values                                     # read SN fields from report
+    data_list = list()
+    for row in sn_rows:
+      data_list.\
+      append(\
+        {'SAMTOOLS_STATS_{0}'.format(item.replace(' ','_')):row.split(':')[index+1].strip()
+            for index, item in enumerate(row.split(':'))
+              if index % 2 == 0
+        }
+      )                                                                         # append sn fields with minor formatting
+
+    return output_path,stats_cmd,data_list
   except:
     raise
 

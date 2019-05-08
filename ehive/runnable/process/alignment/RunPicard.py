@@ -139,9 +139,17 @@ class RunPicard(IGFBaseProcess):
             collection_type=cram_collection_type,
             data_list=picard_metrics)                                           # fromat data for collection attribute table
         ca.start_session()
-        ca.create_or_update_collection_attributes(\
-          data=attribute_data)                                                  # load data to collection attribute table
-        ca.close_session()
+        try:
+          ca.create_or_update_collection_attributes(\
+            data=attribute_data,
+            autosave=False
+          )                                                                     # load data to collection attribute table
+          ca.commit_session()
+          ca.close_session()
+        except:
+          ca.rollback_session()
+          ca.close_session()
+          raise
 
       self.param('dataflow_params',{'analysis_files':analysis_files,
                                     'bam_files':bam_files,
