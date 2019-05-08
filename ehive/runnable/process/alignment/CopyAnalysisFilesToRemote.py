@@ -135,6 +135,8 @@ class CopyAnalysisFilesToRemote(IGFBaseProcess):
                   'output_list':output_file_list})                              # add dataflow params
       if collect_remote_file_to_db:
         data=list()
+        remove_data_list=[{'name':collection_name,
+                           'type':collection_type}]
         for file in output_file_list:
           data.append(\
             {'name':collection_name,
@@ -144,9 +146,14 @@ class CopyAnalysisFilesToRemote(IGFBaseProcess):
              'location':file_location
             }
           )
+
         ca = CollectionAdaptor(**{'session_class':igf_session_class})
         ca.start_session()
         try:
+          ca.remove_collection_group_info(\
+            data=remove_data_list,
+            autosave=False
+          )                                                                     # remove existing data before loading new collection
           ca.load_file_and_create_collection(\
             data=data,
             autosave=False,
