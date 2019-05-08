@@ -47,16 +47,43 @@ def _check_bam_index(samtools_exe,bam_file,dry_run=False):
     check_file_path(samtools_exe)
     bam_index='{0}.bai'.format(bam_file)
     if not os.path.exists(bam_index):
-      index_cmd=[quote(samtools_exe),
-                 'index',
-                 quote(bam_file)
-                ]                                                               # generate bam index, if its not present
-      if dry_run:
+      index_bam_or_cram(\
+        samtools_exe=samtools_exe,
+        input_path=bam_file,
+        dry_run=dry_run
+      )
+  except:
+    raise
+
+
+def index_bam_or_cram(samtools_exe,input_path,input_cram=False,
+                      dry_run=False):
+  '''
+  A method for running samtools index
+
+  :param samtools_exe: samtools executable path
+  :param input_path: Alignment filepath
+  :param input_cram: Input is a cram file, default False
+  :param dry_run: A toggle for returning the samtools command
+                  without actually running it, default False
+  :returns: None
+  '''
+  try:
+    index_cmd=[quote(samtools_exe),
+               'index',
+              ]
+    if input_cram:
+      index_cmd.append('-c')
+
+    index_cmd.append(quote(input_path))
+    if dry_run:
         return index_cmd
 
-      subprocess.check_call(index_cmd,
-                            shell=False)
-
+    subprocess.\
+      check_call(\
+        index_cmd,
+        shell=False
+      )
   except:
     raise
 
