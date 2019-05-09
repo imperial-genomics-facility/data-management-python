@@ -43,8 +43,6 @@ class Project_analysis:
          sample_igf_id_column in data_series:
         file_path=data_series.get(file_path_column)
         base_path=os.path.basename(file_path)
-        dir_name=os.path.basename(\
-                    os.path.dirname(file_path))
         sample_igf_id=data_series.get(sample_igf_id_column)
         remote_path=os.path.join(remote_prefix,
                                  sample_igf_id,
