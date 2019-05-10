@@ -3,6 +3,7 @@ import pandas as pd
 from shlex import quote
 from contextlib import redirect_stdout
 from deeptools.plotCoverage import main as plotCoverage_main
+from deeptools.bamCoverage import main as bamCoverage_main
 from igf_data.utils.fileutils import get_temp_dir,remove_dir,check_file_path,copy_local_file
 
 def run_plotCoverage(bam_files,output_raw_counts,plotcov_stdout,output_plot=None,
@@ -74,6 +75,55 @@ def run_plotCoverage(bam_files,output_raw_counts,plotcov_stdout,output_plot=None
         source_path=temp_output_plot,
         destinationa_path=output_plot)
 
+    remove_dir(temp_dir)                                                        # clean up temp dir
+  except:
+    raise
+
+
+def run_bamCoverage(bam_files,output_file,blacklist_file=None,thread=1,
+                    params_list=("--outFileFormat","bigwig")):
+  '''
+  A function for running Deeptools bamCoverage
+
+  :param bam_files: A list of bam files to run tool,expecting only one file
+  :param output_file: Ouput filepath for the coverage plot
+  :param blacklist_file: Input blacklist region filepath, default None
+  :param thread: Number of threads to use, default 1
+  :param params_list: Additional deeptools plotCoverage params as list, default ("--outFileFormat","bigwig")
+  :returns: None
+  '''
+  try:
+    if len(bam_files)==0:
+      raise ValueError('No bamfiles found to generate coverage data')
+
+    if len(bam_files)>1:
+      raise ValueError('Expecting only one bam for bamCoverage tools, found : {0}'.\
+                       format(len(bam_files)))
+
+    bamcov_args = ['--bam']                                                     # prepare to add input bams to args
+    for path in bam_files:
+      check_file_path(path)                                                     # check input bams
+      bamcov_args.append(quote(path))                                           # adding input bams
+
+    temp_dir = get_temp_dir(use_ephemeral_space=False)
+    temp_output = \
+      os.path.join(temp_dir,os.path.basename(output_file))
+    bamcov_args.extend(["--outFileName",quote(temp_output)])
+    if blacklist_file is not None:
+      check_file_path(blacklist_file)
+      bamcov_args.extend(["--blackListFileName",quote(blacklist_file)])
+
+    if params_list is not None and \
+       isinstance(params_list,list) and \
+       len(params_list) > 0:
+      params_list = [quote(param)
+                       for param in params_list]
+      bamcov_args.extend(params_list)                                           # add additional params to the list
+
+    bamCoverage_main(bamcov_args)                                               # generate bam coverage file
+    copy_local_file(\
+      source_path=temp_output,
+      destinationa_path=output_file)                                            # copy output file
     remove_dir(temp_dir)                                                        # clean up temp dir
   except:
     raise
