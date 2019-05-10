@@ -185,9 +185,26 @@ def run_bam_stats(samtools_exe,bam_file,output_dir,threads=1,force=False,
       with subprocess.Popen(stats_cmd, stdout=subprocess.PIPE) as proc:
         fp.write(proc.stdout.read().decode('utf-8'))                            # write bam stats output
 
+    stats_data_list = \
+      _parse_samtools_stats_output(stats_file=output_path)                      # parse stats output file
+
+    return output_path,stats_cmd,stats_data_list
+  except:
+    raise
+
+
+@staticmethod
+def _parse_samtools_stats_output(stats_file):
+  '''
+  An internal static method for parsing samtools stats output
+
+  :param stats_file: Samtools stats output file
+  :returns: A list of dictionaries
+  '''
+  try:
     data = \
       pd.read_csv(\
-        output_path,
+        stats_file,
         sep='\n',
         header=None,
         engine='python',
@@ -196,17 +213,16 @@ def run_bam_stats(samtools_exe,bam_file,output_dir,threads=1,force=False,
     sn_rows = \
       data[data.get(0).map(lambda x: x.startswith('SN'))][0].\
       map(lambda x: x.strip('SN\t')).values                                     # read SN fields from report
-    data_list = list()
+    stats_data_list = list()
     for row in sn_rows:
-      data_list.\
+      stats_data_list.\
       append(\
         {'SAMTOOLS_STATS_{0}'.format(item.replace(' ','_')):row.split(':')[index+1].strip()
             for index, item in enumerate(row.split(':'))
               if index % 2 == 0
         }
       )                                                                         # append sn fields with minor formatting
-
-    return output_path,stats_cmd,data_list
+    return stats_data_list
   except:
     raise
 
