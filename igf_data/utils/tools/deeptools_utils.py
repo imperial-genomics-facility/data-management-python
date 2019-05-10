@@ -18,7 +18,7 @@ def run_plotCoverage(bam_files,output_raw_counts,plotcov_stdout,output_plot=None
   :param blacklist_file: Input blacklist region filepath, default None
   :param thread: Number of threads to use, default 1
   :param params_list: Additional deeptools plotCoverage params as list, default None
-  :returns: None
+  :returns: Deeptools command list
   '''
   try:
     if len(bam_files)==0:
@@ -76,6 +76,8 @@ def run_plotCoverage(bam_files,output_raw_counts,plotcov_stdout,output_plot=None
         destinationa_path=output_plot)
 
     remove_dir(temp_dir)                                                        # clean up temp dir
+    plotcov_args.insert(0,'plotCoverage')                                       # fix for deeptools commandline
+    return plotcov_args
   except:
     raise
 
@@ -90,7 +92,7 @@ def run_bamCoverage(bam_files,output_file,blacklist_file=None,thread=1,
   :param blacklist_file: Input blacklist region filepath, default None
   :param thread: Number of threads to use, default 1
   :param params_list: Additional deeptools plotCoverage params as list, default ("--outFileFormat","bigwig")
-  :returns: None
+  :returns: Deeptools command as list
   '''
   try:
     if len(bam_files)==0:
@@ -125,5 +127,7 @@ def run_bamCoverage(bam_files,output_file,blacklist_file=None,thread=1,
       source_path=temp_output,
       destinationa_path=output_file)                                            # copy output file
     remove_dir(temp_dir)                                                        # clean up temp dir
+    bamcov_args.insert(0,'bamCoverage')                                        # fix for deeptools commandline
+    return bamcov_args
   except:
     raise
