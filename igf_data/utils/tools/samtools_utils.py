@@ -392,7 +392,9 @@ def merge_multiple_bam(samtools_exe,input_bam_list,output_bam_path,sorted_by_nam
   '''
   try:
     check_file_path(samtools_exe)
-    check_file_path(input_bam_list)
+    for bam in input_bam_list:
+      check_file_path(bam)
+
     temp_dir=get_temp_dir(use_ephemeral_space=True)
     temp_bam=os.path.join(temp_dir,
                           os.path.basename(output_bam_path))
@@ -419,3 +421,56 @@ def merge_multiple_bam(samtools_exe,input_bam_list,output_bam_path,sorted_by_nam
   except:
     raise
 
+def filter_bam_file(samtools_exe,input_bam,output_bam,samFlagInclude=None,
+                    samFlagExclude=None,thread=1,mapq_threshold=20,
+                    index_output=True):
+  '''
+  A function for filtering bam file using samtools view
+
+  :param samtools_exe: Samtools path
+  :param input_bam: Input bamfile path
+  :param output_bam: Output bamfile path
+  :param samFlagInclude: Sam flags to keep, default None
+  :param samFlagExclude: Sam flags to exclude, default None
+  :param thread: Number of threads to use, default 1
+  :param mapq_threshold: Skip alignments with MAPQ smaller than this value, default None
+  :param index_output: Index output bam, default True
+  :returns: Samtools command
+  '''
+  try:
+    check_file_path(samtools_exe)
+    check_file_path(input_bam)
+    temp_dir = get_temp_dir(use_ephemeral_space=False)
+    temp_output = \
+      os.path.join(temp_dir,os.path.basename(output_bam))
+    filter_cmd = \
+      [quote(samtools_exe),
+       "view",
+       "-b",
+       "-o",quote(temp_output)
+      ]
+    if mapq_threshold is not None:
+      filter_cmd.extend(["-q",quote(mapq_threshold)])
+
+    if samFlagInclude is not None:
+      filter_cmd.extend(["-f",quote(samFlagInclude)])
+
+    if samFlagExclude is not None:
+      filter_cmd.extend(["-F",quote(samFlagExclude)])
+
+    if thread is not None:
+      filter_cmd.extend(["-@",quote(thread)])
+
+    filter_cmd.append(quote(input_bam))
+    subprocess.check_call(filter_cmd,shell=False)
+    copy_local_file(\
+      source_path=temp_output,
+      destinationa_path=output_bam
+    )
+    remove_dir(temp_dir)
+    if index_output:
+      index_bam_or_cram(\
+        samtools_exe=samtools_exe,
+        input_path=output_bam)
+  except:
+    raise
