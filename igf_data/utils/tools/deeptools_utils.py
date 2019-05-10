@@ -137,7 +137,7 @@ def run_bamCoverage(bam_files,output_file,blacklist_file=None,thread=1,
     raise
 
 
-def run_plotFingerprint(bam_files,output_raw_counts,output_matrics,,output_plot=None,
+def run_plotFingerprint(bam_files,output_raw_counts,output_matrics,output_plot=None,
                         blacklist_file=None,thread=1,params_list=None):
   '''
   A function for running Deeptools plotFingerprint
