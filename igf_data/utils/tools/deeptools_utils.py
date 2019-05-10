@@ -137,13 +137,14 @@ def run_bamCoverage(bam_files,output_file,blacklist_file=None,thread=1,
     raise
 
 
-def run_plotFingerprint(bam_files,output_raw_counts,output_plot=None,
+def run_plotFingerprint(bam_files,output_raw_counts,output_matrics,,output_plot=None,
                         blacklist_file=None,thread=1,params_list=None):
   '''
   A function for running Deeptools plotFingerprint
 
   :param bam_files: A list of indexed bam files
   :param output_raw_counts: Output raw count filepath
+  :param output_matrics: Output matrics file
   :param output_plot: Output plots filepath, default None
   :param blacklist_file: Input blacklist region filepath, default None
   :param thread: Number of threads to use, default 1
@@ -162,11 +163,13 @@ def run_plotFingerprint(bam_files,output_raw_counts,output_plot=None,
     temp_dir = get_temp_dir(use_ephemeral_space=False)
     temp_output_raw_counts = \
       os.path.join(temp_dir,os.path.basename(output_raw_counts))                # path for temp raw counts
-    
+    temp_output_matrics =\
+      os.path.join(temp_dir,os.path.basename(output_matrics))                   # path for temp matrics counts
     plotFgCov_args.\
     extend(\
       ["--numberOfProcessors",quote(thread),
-       "--outRawCounts",quote(temp_output_raw_counts)
+       "--outRawCounts",quote(temp_output_raw_counts),
+       "--outQualityMetrics",quote(temp_output_matrics)
       ])
     if output_plot is not None:
       temp_output_plot = \
@@ -188,6 +191,9 @@ def run_plotFingerprint(bam_files,output_raw_counts,output_plot=None,
     copy_local_file(\
       source_path=temp_output_raw_counts,
       destinationa_path=output_raw_counts)
+    copy_local_file(\
+      source_path=temp_output_matrics,
+      destinationa_path=output_matrics)
     if output_plot is not None:
       copy_local_file(\
         source_path=temp_output_plot,
