@@ -12,7 +12,7 @@ class Ppqt_tools:
     self.ppqt_exe = ppqt_exe
     self.thread = thread
 
-  def run_ppqt(self,input_bam,output_dir,output_spp_name,output_pdf_name,ppqt_stdout_name):
+  def run_ppqt(self,input_bam,output_dir,output_spp_name,output_pdf_name):
     '''
     A method for running PPQT on input bam
 
@@ -20,7 +20,7 @@ class Ppqt_tools:
     :param output_spp_name: Output spp out file
     :param output_pdf_name: Output pdf plot
     :param output_dir: Destination output dir
-    :param ppqt_stdout_name: PPQT stdout filename
+    :returns: PPQT run command as list,spp and pdf output path and a list or dictionary for spp.out matrics
     '''
     try:
       temp_dir=get_temp_dir(use_ephemeral_space=False)
@@ -31,20 +31,18 @@ class Ppqt_tools:
           output_pdf_name=output_pdf_name,
           output_dir=temp_dir,
           temp_dir=temp_dir)                                                    # preprocess and fetch run cmd
-      tmp_stdout = os.path.join(temp_dir,ppqt_stdout_name)
 
-      with open(tmp_stdout,'w') as fp:
-        with subprocess.Popen(run_cmd, stdout=subprocess.PIPE) as proc:
-          fp.write(proc.stdout.read().decode('utf-8'))                          # run ppqt and capture stdout
+      subprocess.check_call(run_cmd,shell=False)                                # run ppqt and capture stdout
 
-      self._post_process(\
-        output_spp_name=output_spp_name,
-        output_pdf_name=output_pdf_name,
-        ppqt_stdout_name=ppqt_stdout_name,
-        output_dir=output_dir,
-        temp_dir=temp_dir)                                                      # copy files from temp dir
+      spp_output, pdf_output = \
+        self._post_process(\
+          output_spp_name=output_spp_name,
+          output_pdf_name=output_pdf_name,
+          output_dir=output_dir,
+          temp_dir=temp_dir)                                                    # copy files from temp dir
       remove_dir(temp_dir)                                                      # clean up temp dir
-
+      spp_data = self._parse_spp_output(spp_file=spp_output)
+      return run_cmd,spp_output, pdf_output,spp_data
     except:
       raise
 
@@ -79,28 +77,23 @@ class Ppqt_tools:
       raise
 
   @staticmethod
-  def _post_process(output_spp_name,output_pdf_name,ppqt_stdout_name,
-                    output_dir,temp_dir):
+  def _post_process(output_spp_name,output_pdf_name,output_dir,temp_dir):
     '''
     A static method for post processing ppqt analysis
 
     :param output_spp_name: Output spp filename
     :param output_pdf_name: Output pdf filename
-    :param ppqt_stdout_name: PPQT stdout filename
     :param output_dir: Destination output dir
     :param temp_dir: Source temp dir
-    :returns: None
+    :returns: spp output path and pdf output path
     '''
     try:
       tmp_spp_file = os.path.join(temp_dir,output_spp_name)
       dest_spp_file = os.path.join(output_dir,output_spp_name)
       tmp_pdf_file = os.path.join(temp_dir,output_pdf_name)
       dest_pdf_file = os.path.join(output_dir,output_pdf_name)
-      tmp_ppqt_stdout = os.path.join(temp_dir,ppqt_stdout_name)
-      dest_ppqt_stdout = os.path.join(output_dir,ppqt_stdout_name)
       check_file_path(tmp_spp_file)
       check_file_path(tmp_pdf_file)
-      check_file_path(tmp_ppqt_stdout)
       copy_local_file(\
         source_path=tmp_spp_file,
         destinationa_path=dest_spp_file,
@@ -109,9 +102,37 @@ class Ppqt_tools:
         source_path=tmp_pdf_file,
         destinationa_path=dest_pdf_file,
         force=True)
-      copy_local_file(\
-        source_path=tmp_ppqt_stdout,
-        destinationa_path=dest_ppqt_stdout,
-        force=True)
+      return dest_spp_file,dest_pdf_file
+    except:
+      raise
+
+  @staticmethod
+  def _parse_spp_output(spp_file):
+    '''
+    An internal static method for parsing PPQC spp out file
+
+    :param spp_file: A spp.out filepath
+    :returns: A list of dictionary
+    '''
+    try:
+      check_file_path(spp_file)
+      column_names = \
+        ["PPQT_Filename",
+         "PPQT_numReads",
+         "PPQT_estFragLen",
+         "PPQT_corr_estFragLen",
+         "PPQT_PhantomPeak",
+         "PPQT_corr_phantomPeak",
+         "PPQT_argmin_corr",
+         "PPQT_min_corr",
+         "PPQT_Normalized_SCC(NSC)",
+         "PPQT_Relative_SCC(RSC)",
+         "PPQT_QualityTag"]
+      data = \
+        pd.read_csv(\
+          spp_file,
+          sep='\t',
+          names=column_names)
+      return data.to_dict(orient='records')
     except:
       raise
