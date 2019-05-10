@@ -4,6 +4,7 @@ from shlex import quote
 from contextlib import redirect_stdout
 from deeptools.plotCoverage import main as plotCoverage_main
 from deeptools.bamCoverage import main as bamCoverage_main
+from deeptools.plotFingerprint import main as plotFingerprint_main
 from igf_data.utils.fileutils import get_temp_dir,remove_dir,check_file_path,copy_local_file
 
 def run_plotCoverage(bam_files,output_raw_counts,plotcov_stdout,output_plot=None,
@@ -110,7 +111,10 @@ def run_bamCoverage(bam_files,output_file,blacklist_file=None,thread=1,
     temp_dir = get_temp_dir(use_ephemeral_space=False)
     temp_output = \
       os.path.join(temp_dir,os.path.basename(output_file))
-    bamcov_args.extend(["--outFileName",quote(temp_output)])
+    bamcov_args.\
+    extend(\
+      ["--numberOfProcessors",quote(thread),
+       "--outFileName",quote(temp_output)])
     if blacklist_file is not None:
       check_file_path(blacklist_file)
       bamcov_args.extend(["--blackListFileName",quote(blacklist_file)])
@@ -129,5 +133,67 @@ def run_bamCoverage(bam_files,output_file,blacklist_file=None,thread=1,
     remove_dir(temp_dir)                                                        # clean up temp dir
     bamcov_args.insert(0,'bamCoverage')                                        # fix for deeptools commandline
     return bamcov_args
+  except:
+    raise
+
+
+def run_plotFingerprint(bam_files,output_raw_counts,output_plot=None,
+                        blacklist_file=None,thread=1,params_list=None):
+  '''
+  A function for running Deeptools plotFingerprint
+
+  :param bam_files: A list of indexed bam files
+  :param output_raw_counts: Output raw count filepath
+  :param output_plot: Output plots filepath, default None
+  :param blacklist_file: Input blacklist region filepath, default None
+  :param thread: Number of threads to use, default 1
+  :param params_list: Additional deeptools plotCoverage params as list, default None
+  :returns: Deeptools command list
+  '''
+  try:
+    if len(bam_files)==0:
+      raise ValueError('No bamfiles found to generate coverage plot data')
+
+    plotFgCov_args = ['--bamfiles']                                             # prepare to add input bams to args
+    for path in bam_files:
+      check_file_path(path)                                                     # check input bams
+      plotFgCov_args.append(quote(path))                                        # adding input bams
+
+    temp_dir = get_temp_dir(use_ephemeral_space=False)
+    temp_output_raw_counts = \
+      os.path.join(temp_dir,os.path.basename(output_raw_counts))                # path for temp raw counts
+    
+    plotFgCov_args.\
+    extend(\
+      ["--numberOfProcessors",quote(thread),
+       "--outRawCounts",quote(temp_output_raw_counts)
+      ])
+    if output_plot is not None:
+      temp_output_plot = \
+        os.path.join(temp_dir,os.path.basename(output_plot))                    # path for temp raw counts
+      plotFgCov_args.extend(["--plotFile",quote(temp_output_plot)])
+
+    if blacklist_file is not None:
+      check_file_path(blacklist_file)
+      plotFgCov_args.extend(["--blackListFileName",quote(blacklist_file)])
+
+    if params_list is not None and \
+       isinstance(params_list,list) and \
+       len(params_list) > 0:
+      params_list = [quote(param)
+                       for param in params_list]
+      plotFgCov_args.extend(params_list)                                        # add additional params to the list
+
+    plotFingerprint_main(plotFgCov_args)
+    copy_local_file(\
+      source_path=temp_output_raw_counts,
+      destinationa_path=output_raw_counts)
+    if output_plot is not None:
+      copy_local_file(\
+        source_path=temp_output_plot,
+        destinationa_path=output_plot)
+    remove_dir(temp_dir)
+    plotFgCov_args.insert(0,'plotFingerprint')                                  # fix for deeptools commandline
+    return plotFgCov_args
   except:
     raise
