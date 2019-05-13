@@ -208,6 +208,7 @@ def _parse_samtools_stats_output(stats_file):
         sep='\n',
         header=None,
         engine='python',
+        dtype=object,
         comment='#'
       )
     sn_rows = \
