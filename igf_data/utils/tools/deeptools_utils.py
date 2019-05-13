@@ -119,6 +119,7 @@ def run_bamCoverage(bam_files,output_file,blacklist_file=None,thread=1,
       check_file_path(blacklist_file)
       bamcov_args.extend(["--blackListFileName",quote(blacklist_file)])
 
+    params_list = list(params_list)
     if params_list is not None and \
        isinstance(params_list,list) and \
        len(params_list) > 0:

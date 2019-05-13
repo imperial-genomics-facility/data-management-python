@@ -20,6 +20,7 @@ class Reference_genome_utils:
                gatk_snp_ref_type='GATK_SNP_REF',
                gatk_indel_ref_type='GATK_INDEL_REF',
                ribosomal_interval_type='RIBOSOMAL_INTERVAL',
+               blacklist_interval_type='BLACKLIST_BED',
                genome_twobit_uri_type='GENOME_TWOBIT_URI',):
     '''
     :param genome_tag: Collection name of the reference genome file
@@ -39,6 +40,7 @@ class Reference_genome_utils:
     :param genome_dbsnp_type: Collection type for the dbSNP vcf file, default DBSNP_VCF
     :param ribosomal_interval_type: Collection type for ribosomal interval, default RIBOSOMAL_INTERVAL
     :param genome_twobit_uri_type: Collection type for twobit genome uri, for remote ftp
+    :param blacklist_interval_type: Collection type for blacklist_interval_type, default BLACKLIST_BED
     '''
     self.genome_tag=genome_tag
     self.dbsession_class=dbsession_class
@@ -56,6 +58,7 @@ class Reference_genome_utils:
     self.gatk_indel_ref_type=gatk_indel_ref_type
     self.genome_dbsnp_type=genome_dbsnp_type
     self.ribosomal_interval_type=ribosomal_interval_type
+    self.blacklist_interval_type=blacklist_interval_type
     self.gene_rsem_type=gene_rsem_type
     self.genome_twobit_uri_type=genome_twobit_uri_type
 
@@ -92,6 +95,23 @@ class Reference_genome_utils:
       return ref_file
     except:
       raise
+
+  def get_blacklist_region_bed(self,check_missing=False):
+    '''
+    A method for fetching blacklist interval filepath for a specific genome build
+    
+    :param check_missing: A toggle for checking errors for missing files, default True
+    :returns: A filepath string
+    '''
+    try:
+      blacklist_interval = \
+        self._fetch_collection_files(\
+          collection_type=self.blacklist_interval_type,
+          check_missing=check_missing)
+      return  blacklist_interval
+    except:
+      raise
+
 
   def get_ribosomal_interval(self,check_missing=True):
     '''
