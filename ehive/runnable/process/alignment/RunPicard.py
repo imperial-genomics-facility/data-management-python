@@ -162,16 +162,17 @@ class RunPicard(IGFBaseProcess):
       message='Picard {0} command: {1}'.\
               format(picard_command,
                      picard_command_line)
-      self.comment_asana_task(task_name=project_igf_id, comment=message)        # send commandline to Asana
+      #self.comment_asana_task(task_name=project_igf_id, comment=message)        # send commandline to Asana
     except Exception as e:
       if temp_output_dir and \
          os.path.exists(temp_output_dir):
         remove_dir(temp_output_dir)
 
-      message='project: {2}, sample:{3}, Error in {0}: {1}'.format(self.__class__.__name__, \
-                                                      e, \
-                                                      project_igf_id,
-                                                      sample_igf_id)
+      message='project: {2}, sample:{3}, Error in {0}: {1}'.\
+              format(self.__class__.__name__,
+                     e,
+                     project_igf_id,
+                     sample_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise
