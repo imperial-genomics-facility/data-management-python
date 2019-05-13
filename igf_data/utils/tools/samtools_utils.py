@@ -36,6 +36,7 @@ def _check_bam_file(bam_file):
   except:
     raise
 
+
 def _check_bam_index(samtools_exe,bam_file,dry_run=False):
   '''
   An internal method for checking bam index files. It will generate a new index if its not found.
@@ -89,6 +90,86 @@ def index_bam_or_cram(samtools_exe,input_path,input_cram=False,
     raise
 
 
+def run_samtools_view(samtools_exe,input_file,output_file,reference_file=None,
+                      force=True,cram_out=False,threads=1,samtools_params=None,
+                      index_output=True,dry_run=False):
+  '''
+  A function for running samtools view command
+
+  :param samtools_exe: samtools executable path
+  :param input_file: An input bam filepath with / without index. Index file will be created if its missing
+  :param output_file: An output file path
+  :param reference_file: Reference genome fasta filepath, default None
+  :param force: Output file will be overwritten if force is True, default True
+  :param threads: Number of threads to use for conversion, default 1
+  :param samtools_params: List of samtools param, default None
+  :param index_output: Index output file, default True
+  :param dry_run: A toggle for returning the samtools command without actually running it, default False
+  :returns: Samtools command as list
+  '''
+  try:
+    check_file_path(samtools_exe)
+    _check_bam_file(bam_file=input_file)                                        # check bam file
+    _check_bam_index(\
+      samtools_exe=samtools_exe,
+      bam_file=input_file)                                                      # check bam index
+
+    temp_dir = get_temp_dir(use_ephemeral_space=False)
+    temp_file = \
+      os.path.join(\
+        temp_dir,
+        os.path.basename(output_file))                                          # get temp output file path
+    view_cmd = \
+      [quote(samtools_exe),
+       'view',
+       '-o{0}'.format(quote(temp_file))
+      ]                                                                         # convert bam to cram using samtools
+    if reference_file is not None:
+      check_file_path(reference_file)
+      view_cmd.append('-T{0}'.format(quote(reference_file)))
+
+    if thread is not None:
+      view_cmd.append('-@{0}'.format(quote(str(threads))))
+
+    if cram_out:
+      view_cmd.append('-C')
+      if reference_file is None:
+        raise ValueError('Reference file is required for cram output')
+    else:
+      view_cmd.append('-b')
+
+    if samtools_params is not None and \
+       isinstance(samtools_params, list) and \
+       len(samtools_params) > 0:
+      view_cmd.extend(\
+        [quote(i) for i in samtools_params])                                    # add additional params
+
+    view_cmd.append(quote(input_file))
+    if dry_run:
+      return view_cmd
+
+    subprocess.check_call(\
+      view_cmd,
+      shell=False)
+    if cram_out:
+      _check_cram_file(cram_path=temp_file)                                     # check cram output
+
+    copy_local_file(\
+      source_path=temp_file,
+      destinationa_path=output_file,
+      force=force)                                                              # move cram file to original path
+    remove_dir(temp_dir)                                                        # remove temp directory
+    if index_output:
+      index_bam_or_cram(\
+        samtools_exe=samtools_exe,
+        input_path=output_file,
+        input_cram=cram_out)
+
+    return view_cmd
+  except:
+    raise
+
+
 def convert_bam_to_cram(samtools_exe,bam_file,reference_file,cram_path,threads=1,
                         force=False,dry_run=False):
   '''
@@ -108,35 +189,68 @@ def convert_bam_to_cram(samtools_exe,bam_file,reference_file,cram_path,threads=1
                       cram_path doesn't have .cram extension
   '''
   try:
-    check_file_path(samtools_exe)
-    check_file_path(reference_file)
-    _check_bam_file(bam_file=bam_file)                                          # check bam file
-    _check_bam_index(samtools_exe=samtools_exe,
-                     bam_file=bam_file)                                         # check bam index
-    temp_file=os.path.join(get_temp_dir(use_ephemeral_space=True),
-                           os.path.basename(cram_path))                         # get temp cram file path
-    view_cmd=[quote(samtools_exe),
-              'view',
-              '-C',
-              '-OCRAM',
-              '-@{0}'.format(quote(str(threads))),
-              '-T{0}'.format(quote(reference_file)),
-              '-o{0}'.format(quote(temp_file)),
-              quote(bam_file)
-             ]                                                                  # convert bam to cram using samtools
-    if dry_run:
-      return view_cmd
-
-    subprocess.check_call(view_cmd,
-                          shell=False)
-    _check_cram_file(cram_path=temp_file)                                       # check cram output
-    copy_local_file(\
-      source_path=temp_file,
-      destinationa_path=cram_path,
-      force=force)                                                              # move cram file to original path
-    remove_dir(dir_path=os.path.dirname(temp_file))                             # remove temp directory
+    view_cmd = \
+      run_samtools_view(
+        samtools_exe=samtools_exe,
+        input_file=bam_file,
+        output_file=cram_path,
+        reference_file=reference_file,
+        force=force,
+        cram_out=True,
+        threads=threads,
+        index_output=False,
+        dry_run=dry_run)
+    return view_cmd
   except:
     raise
+
+
+def filter_bam_file(samtools_exe,input_bam,output_bam,samFlagInclude=None,
+                    samFlagExclude=None,threads=1,mapq_threshold=20,cram_out=False,
+                    index_output=True,dry_run=False):
+  '''
+  A function for filtering bam file using samtools view
+
+  :param samtools_exe: Samtools path
+  :param input_bam: Input bamfile path
+  :param output_bam: Output bamfile path
+  :param samFlagInclude: Sam flags to keep, default None
+  :param samFlagExclude: Sam flags to exclude, default None
+  :param threads: Number of threads to use, default 1
+  :param mapq_threshold: Skip alignments with MAPQ smaller than this value, default None
+  :param index_output: Index output bam, default True
+  :param cram_out: Output cram file, default False
+  :param dry_run: A toggle for returning the samtools command without actually running it, default False
+  :returns: Samtools command
+  '''
+  try:
+    samtools_params = list()
+    if mapq_threshold is not None:
+      samtools_params.extend(\
+        ["-q",quote(mapq_threshold)])
+
+    if samFlagInclude is not None:
+      samtools_params.extend(\
+        ["-f",quote(samFlagInclude)])
+
+    if samFlagExclude is not None:
+      samtools_params.extend(\
+        ["-F",quote(samFlagExclude)])
+
+    view_cmd = \
+      run_samtools_view(\
+        samtools_exe=samtools_exe,
+        input_file=input_bam,
+        output_file=output_bam,
+        cram_out=cram_out,
+        index_output=index_output,
+        threads=threads,
+        dry_run=dry_run,
+        samtools_params=samtools_param)
+    return view_cmd
+  except:
+    raise
+
 
 def run_bam_stats(samtools_exe,bam_file,output_dir,threads=1,force=False,
                   output_prefix=None,dry_run=False):
@@ -193,7 +307,6 @@ def run_bam_stats(samtools_exe,bam_file,output_dir,threads=1,force=False,
     raise
 
 
-
 def _parse_samtools_stats_output(stats_file):
   '''
   An internal static method for parsing samtools stats output
@@ -209,8 +322,7 @@ def _parse_samtools_stats_output(stats_file):
         header=None,
         engine='python',
         dtype=object,
-        comment='#'
-      )
+        comment='#')
     sn_rows = \
       data[data.get(0).map(lambda x: x.startswith('SN'))][0].\
       map(lambda x: x.strip('SN\t')).values                                     # read SN fields from report
@@ -221,8 +333,7 @@ def _parse_samtools_stats_output(stats_file):
         {'SAMTOOLS_STATS_{0}'.format(item.replace(' ','_')):row.split(':')[index+1].strip()
             for index, item in enumerate(row.split(':'))
               if index % 2 == 0
-        }
-      )                                                                         # append sn fields with minor formatting
+        })                                                                         # append sn fields with minor formatting
     return stats_data_list
   except Exception as e:
     raise ValueError('Failed to parse file {0}, got error {1}'.\
@@ -420,59 +531,5 @@ def merge_multiple_bam(samtools_exe,input_bam_list,output_bam_path,sorted_by_nam
     remove_dir(temp_dir)                                                        # remove temp dir
     _check_bam_file(output_bam_path)
     return merge_cmd
-  except:
-    raise
-
-def filter_bam_file(samtools_exe,input_bam,output_bam,samFlagInclude=None,
-                    samFlagExclude=None,thread=1,mapq_threshold=20,
-                    index_output=True):
-  '''
-  A function for filtering bam file using samtools view
-
-  :param samtools_exe: Samtools path
-  :param input_bam: Input bamfile path
-  :param output_bam: Output bamfile path
-  :param samFlagInclude: Sam flags to keep, default None
-  :param samFlagExclude: Sam flags to exclude, default None
-  :param thread: Number of threads to use, default 1
-  :param mapq_threshold: Skip alignments with MAPQ smaller than this value, default None
-  :param index_output: Index output bam, default True
-  :returns: Samtools command
-  '''
-  try:
-    check_file_path(samtools_exe)
-    check_file_path(input_bam)
-    temp_dir = get_temp_dir(use_ephemeral_space=False)
-    temp_output = \
-      os.path.join(temp_dir,os.path.basename(output_bam))
-    filter_cmd = \
-      [quote(samtools_exe),
-       "view",
-       "-b",
-       "-o",quote(temp_output)
-      ]
-    if mapq_threshold is not None:
-      filter_cmd.extend(["-q",quote(mapq_threshold)])
-
-    if samFlagInclude is not None:
-      filter_cmd.extend(["-f",quote(samFlagInclude)])
-
-    if samFlagExclude is not None:
-      filter_cmd.extend(["-F",quote(samFlagExclude)])
-
-    if thread is not None:
-      filter_cmd.extend(["-@",quote(thread)])
-
-    filter_cmd.append(quote(input_bam))
-    subprocess.check_call(filter_cmd,shell=False)
-    copy_local_file(\
-      source_path=temp_output,
-      destinationa_path=output_bam
-    )
-    remove_dir(temp_dir)
-    if index_output:
-      index_bam_or_cram(\
-        samtools_exe=samtools_exe,
-        input_path=output_bam)
   except:
     raise
