@@ -193,7 +193,7 @@ def run_bam_stats(samtools_exe,bam_file,output_dir,threads=1,force=False,
     raise
 
 
-@staticmethod
+
 def _parse_samtools_stats_output(stats_file):
   '''
   An internal static method for parsing samtools stats output
@@ -223,8 +223,9 @@ def _parse_samtools_stats_output(stats_file):
         }
       )                                                                         # append sn fields with minor formatting
     return stats_data_list
-  except:
-    raise
+  except Exception as e:
+    raise ValueError('Failed to parse file {0}, got error {1}'.\
+          format(stats_file,e))
 
 
 def run_bam_flagstat(samtools_exe,bam_file,output_dir,threads=1,force=False,

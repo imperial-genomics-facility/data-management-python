@@ -125,14 +125,16 @@ class Ppqt_tools:
          "PPQT_corr_phantomPeak",
          "PPQT_argmin_corr",
          "PPQT_min_corr",
-         "PPQT_Normalized_SCC(NSC)",
-         "PPQT_Relative_SCC(RSC)",
+         "PPQT_Normalized_SCC_NSC",
+         "PPQT_Relative_SCC_RSC",
          "PPQT_QualityTag"]
       data = \
         pd.read_csv(\
           spp_file,
           sep='\t',
+          dtype=object,
           names=column_names)
       return data.to_dict(orient='records')
-    except:
-      raise
+    except Exception as e:
+      raise ValueError('Failed to parse file {0}, got error {1}'.\
+            format(spp_file,e))

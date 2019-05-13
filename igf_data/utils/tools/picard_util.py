@@ -240,6 +240,7 @@ class Picard_tools:
             data = pd.read_csv(\
                       file,
                       sep='\t',
+                      dtype=object,
                       skiprows=6)                                               # read alignment summary metrics, skip 6 lines
             data.columns = \
               list(map(lambda x: '{0}_{1}'.format(picard_cmd,x),
@@ -256,6 +257,7 @@ class Picard_tools:
             data = pd.read_csv(\
                       file,
                       sep='\t',
+                      dtype=object,
                       skiprows=6)                                               # read GC bias metrics summary file
             data.columns = \
               list(map(lambda x: '{0}_{1}'.format(picard_cmd,x),
@@ -270,6 +272,7 @@ class Picard_tools:
                       file,
                       sep='\t',
                       skiprows=6,
+                      dtype=object,
                       nrows=1)                                                  # read rnaseq metrics, skip 6 lines and read only one line
             data.columns = \
               list(map(lambda x: '{0}_{1}'.format(picard_cmd,x),
@@ -284,6 +287,7 @@ class Picard_tools:
                       file,
                       sep='\t',
                       skiprows=6,
+                      dtype=object,
                       nrows=1)                                                  # read markdup metrics, skip 6 lines and read only one line
             data.columns = \
               list(map(lambda x: '{0}_{1}'.format(picard_cmd,x),
