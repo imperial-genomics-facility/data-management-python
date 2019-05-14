@@ -185,7 +185,7 @@ class Samtools_util_test2(unittest.TestCase):
         dry_run=True)
     self.assertTrue(self.samtools_exe in samtools_cmd)
     self.assertTrue('index' in samtools_cmd)
-    self.assertFalse('-@1' in samtools_cmd)
+    self.assertTrue('-@1' in samtools_cmd)
     self.assertTrue(self.input_bam in samtools_cmd)
 
 if __name__=='__main__':
