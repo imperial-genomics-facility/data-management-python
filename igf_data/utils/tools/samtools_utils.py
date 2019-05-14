@@ -58,24 +58,24 @@ def _check_bam_index(samtools_exe,bam_file,dry_run=False):
     raise
 
 
-def index_bam_or_cram(samtools_exe,input_path,input_cram=False,
+def index_bam_or_cram(samtools_exe,input_path,threads=1,
                       dry_run=False):
   '''
   A method for running samtools index
 
   :param samtools_exe: samtools executable path
   :param input_path: Alignment filepath
-  :param input_cram: Input is a cram file, default False
+  :param threads: Number of threads to use for conversion, default 1
   :param dry_run: A toggle for returning the samtools command
                   without actually running it, default False
-  :returns: None
+  :returns: samtools cmd list
   '''
   try:
     index_cmd=[quote(samtools_exe),
                'index',
               ]
-    if input_cram:
-      index_cmd.append('-c')
+    if threads is not None:
+      index_cmd.append('-@{0}'.format(str(threads)))
 
     index_cmd.append(quote(input_path))
     if dry_run:
@@ -84,8 +84,8 @@ def index_bam_or_cram(samtools_exe,input_path,input_cram=False,
     subprocess.\
       check_call(\
         index_cmd,
-        shell=False
-      )
+        shell=False)
+    return index_cmd
   except:
     raise
 
@@ -164,7 +164,7 @@ def run_samtools_view(samtools_exe,input_file,output_file,reference_file=None,
       index_bam_or_cram(\
         samtools_exe=samtools_exe,
         input_path=output_file,
-        input_cram=cram_out)
+        threads=threads)
 
     return view_cmd
   except:
@@ -515,7 +515,7 @@ def run_sort_bam(samtools_exe,input_bam_path,output_bam_path,sort_by_name=False,
       index_bam_or_cram(\
         samtools_exe=samtools_exe,
         input_path=output_bam_path,
-        input_cram=cram_out)
+        threads=threads)
   except:
     raise
 
@@ -572,7 +572,7 @@ def merge_multiple_bam(samtools_exe,input_bam_list,output_bam_path,sorted_by_nam
       index_bam_or_cram(\
         samtools_exe=samtools_exe,
         input_path=output_bam_path,
-        input_cram=cram_out)
+        threads=threads)
     return merge_cmd
   except:
     raise

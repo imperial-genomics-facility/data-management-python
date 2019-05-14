@@ -61,7 +61,6 @@ class ConvertBamToCram(IGFBaseProcess):
       force_overwrite=self.param_required('force_overwrite')
       reference_type=self.param('reference_type')
       threads=self.param('threads')
-      copy_input=self.param('copy_input')
       bam_file=None
       if isinstance(bam_files, list) and \
          len(bam_files)>0:
@@ -80,7 +79,7 @@ class ConvertBamToCram(IGFBaseProcess):
       ref_genome=Reference_genome_utils(genome_tag=species_name,
                                         dbsession_class=igf_session_class,
                                         genome_fasta_type=reference_type)
-      genome_fasta=ref_genome.get_genome_fasta()                                # get genome fasta 
+      genome_fasta=ref_genome.get_genome_fasta()                                # get genome fasta
       temp_work_dir=get_temp_dir(use_ephemeral_space=True)                      # get temp dir
       cram_file=os.path.basename(bam_file).replace('.bam','.cram')              # get base cram file name
       cram_file=os.path.join(temp_work_dir,cram_file)                           # get cram file path in work dir

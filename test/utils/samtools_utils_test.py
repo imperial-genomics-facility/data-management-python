@@ -181,21 +181,11 @@ class Samtools_util_test2(unittest.TestCase):
       index_bam_or_cram(\
         samtools_exe=self.samtools_exe,
         input_path=self.input_bam,
-        input_cram=False,
+        threads=1,
         dry_run=True)
     self.assertTrue(self.samtools_exe in samtools_cmd)
     self.assertTrue('index' in samtools_cmd)
-    self.assertFalse('-c' in samtools_cmd)
-    self.assertTrue(self.input_bam in samtools_cmd)
-    samtools_cmd = \
-      index_bam_or_cram(\
-        samtools_exe=self.samtools_exe,
-        input_path=self.input_bam,
-        input_cram=True,
-        dry_run=True)
-    self.assertTrue(self.samtools_exe in samtools_cmd)
-    self.assertTrue('index' in samtools_cmd)
-    self.assertTrue('-c' in samtools_cmd)
+    self.assertFalse('-@1' in samtools_cmd)
     self.assertTrue(self.input_bam in samtools_cmd)
 
 if __name__=='__main__':
