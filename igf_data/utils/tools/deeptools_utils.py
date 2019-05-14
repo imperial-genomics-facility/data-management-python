@@ -8,7 +8,7 @@ from deeptools.plotFingerprint import main as plotFingerprint_main
 from igf_data.utils.fileutils import get_temp_dir,remove_dir,check_file_path,copy_local_file
 
 def run_plotCoverage(bam_files,output_raw_counts,plotcov_stdout,output_plot=None,
-                     blacklist_file=None,thread=1,params_list=None):
+                     blacklist_file=None,thread=1,params_list=None,dry_run=False):
   '''
   A function for running Deeptools plotCoverage
 
@@ -19,6 +19,7 @@ def run_plotCoverage(bam_files,output_raw_counts,plotcov_stdout,output_plot=None
   :param blacklist_file: Input blacklist region filepath, default None
   :param thread: Number of threads to use, default 1
   :param params_list: Additional deeptools plotCoverage params as list, default None
+  :param dry_run: Return Deeptools command list without running it
   :returns: Deeptools command list
   '''
   try:
@@ -38,7 +39,7 @@ def run_plotCoverage(bam_files,output_raw_counts,plotcov_stdout,output_plot=None
 
     plotcov_args.\
     extend(\
-      ["--numberOfProcessors",quote(thread),
+      ["--numberOfProcessors",quote(str(thread)),
        "--outRawCounts",quote(temp_output_raw_counts)
       ])
     if output_plot is not None:
@@ -56,6 +57,9 @@ def run_plotCoverage(bam_files,output_raw_counts,plotcov_stdout,output_plot=None
       params_list = [quote(param)
                        for param in params_list]
       plotcov_args.extend(params_list)                                          # add additional params to the list
+
+    if dry_run:
+      return plotcov_args
 
     f = io.StringIO()
     with redirect_stdout(f):
@@ -83,7 +87,7 @@ def run_plotCoverage(bam_files,output_raw_counts,plotcov_stdout,output_plot=None
     raise
 
 
-def run_bamCoverage(bam_files,output_file,blacklist_file=None,thread=1,
+def run_bamCoverage(bam_files,output_file,blacklist_file=None,thread=1,dry_run=False,
                     params_list=("--outFileFormat","bigwig")):
   '''
   A function for running Deeptools bamCoverage
@@ -92,6 +96,7 @@ def run_bamCoverage(bam_files,output_file,blacklist_file=None,thread=1,
   :param output_file: Ouput filepath for the coverage plot
   :param blacklist_file: Input blacklist region filepath, default None
   :param thread: Number of threads to use, default 1
+  :param dry_run: Return Deeptools command list without running it
   :param params_list: Additional deeptools plotCoverage params as list, default ("--outFileFormat","bigwig")
   :returns: Deeptools command as list
   '''
@@ -113,19 +118,23 @@ def run_bamCoverage(bam_files,output_file,blacklist_file=None,thread=1,
       os.path.join(temp_dir,os.path.basename(output_file))
     bamcov_args.\
     extend(\
-      ["--numberOfProcessors",quote(thread),
+      ["--numberOfProcessors",quote(str(thread)),
        "--outFileName",quote(temp_output)])
     if blacklist_file is not None:
       check_file_path(blacklist_file)
       bamcov_args.extend(["--blackListFileName",quote(blacklist_file)])
 
-    params_list = list(params_list)
-    if params_list is not None and \
-       isinstance(params_list,list) and \
-       len(params_list) > 0:
-      params_list = [quote(param)
-                       for param in params_list]
-      bamcov_args.extend(params_list)                                           # add additional params to the list
+    
+    if params_list is not None:
+      params_list = list(params_list)
+      if len(params_list) > 0:
+        params_list = \
+          [quote(param)
+             for param in params_list]
+        bamcov_args.extend(params_list)                                         # add additional params to the list
+
+    if dry_run:
+      return bamcov_args
 
     bamCoverage_main(bamcov_args)                                               # generate bam coverage file
     copy_local_file(\
@@ -138,7 +147,7 @@ def run_bamCoverage(bam_files,output_file,blacklist_file=None,thread=1,
     raise
 
 
-def run_plotFingerprint(bam_files,output_raw_counts,output_matrics,output_plot=None,
+def run_plotFingerprint(bam_files,output_raw_counts,output_matrics,output_plot=None,dry_run=False,
                         blacklist_file=None,thread=1,params_list=None):
   '''
   A function for running Deeptools plotFingerprint
@@ -149,6 +158,7 @@ def run_plotFingerprint(bam_files,output_raw_counts,output_matrics,output_plot=N
   :param output_plot: Output plots filepath, default None
   :param blacklist_file: Input blacklist region filepath, default None
   :param thread: Number of threads to use, default 1
+  :param dry_run: Return Deeptools command list without running it
   :param params_list: Additional deeptools plotCoverage params as list, default None
   :returns: Deeptools command list
   '''
@@ -168,7 +178,7 @@ def run_plotFingerprint(bam_files,output_raw_counts,output_matrics,output_plot=N
       os.path.join(temp_dir,os.path.basename(output_matrics))                   # path for temp matrics counts
     plotFgCov_args.\
     extend(\
-      ["--numberOfProcessors",quote(thread),
+      ["--numberOfProcessors",quote(str(thread)),
        "--outRawCounts",quote(temp_output_raw_counts),
        "--outQualityMetrics",quote(temp_output_matrics)
       ])
@@ -187,6 +197,9 @@ def run_plotFingerprint(bam_files,output_raw_counts,output_matrics,output_plot=N
       params_list = [quote(param)
                        for param in params_list]
       plotFgCov_args.extend(params_list)                                        # add additional params to the list
+
+    if dry_run:
+      return plotFgCov_args
 
     plotFingerprint_main(plotFgCov_args)
     copy_local_file(\
