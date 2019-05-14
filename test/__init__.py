@@ -40,7 +40,7 @@ def full_suite():
   from .utils.reference_genome_utils_test import Reference_genome_utils_test1
   from .dbadaptor.experimentadaptor_test import ExperimentAdaptor_test1
   from .utils.picard_util_test import Picard_util_test1,Picard_util_test2
-  from .utils.samtools_utils_test import Samtools_util_test1
+  from .utils.samtools_utils_test import Samtools_util_test1,Samtools_util_test2
   from .utils.ppqt_utils_test import Ppqt_util_test1
   from .dbadaptor.baseadaptor_test import Baseadaptor_test1
   from .dbadaptor.platformadaptor_test import Platformadaptor_test1
@@ -101,6 +101,8 @@ def full_suite():
       unittest.TestLoader().loadTestsFromTestCase(Picard_util_test1),
       unittest.TestLoader().loadTestsFromTestCase(Picard_util_test2),
       unittest.TestLoader().loadTestsFromTestCase(Ppqt_util_test1),
+      unittest.TestLoader().loadTestsFromTestCase(Samtools_util_test1),
+      unittest.TestLoader().loadTestsFromTestCase(Samtools_util_test2),
       unittest.TestLoader().loadTestsFromTestCase(Baseadaptor_test1),
       unittest.TestLoader().loadTestsFromTestCase(Platformadaptor_test1),
       unittest.TestLoader().loadTestsFromTestCase(Validate_project_and_samplesheet_metadata_test1),
