@@ -110,9 +110,10 @@ def run_samtools_view(samtools_exe,input_file,output_file,reference_file=None,
   try:
     check_file_path(samtools_exe)
     _check_bam_file(bam_file=input_file)                                        # check bam file
-    _check_bam_index(\
-      samtools_exe=samtools_exe,
-      bam_file=input_file)                                                      # check bam index
+    if not dry_run:
+      _check_bam_index(\
+        samtools_exe=samtools_exe,
+        bam_file=input_file)                                                    # check bam index
 
     temp_dir = get_temp_dir(use_ephemeral_space=False)
     temp_file = \
@@ -128,7 +129,7 @@ def run_samtools_view(samtools_exe,input_file,output_file,reference_file=None,
       check_file_path(reference_file)
       view_cmd.append('-T{0}'.format(quote(reference_file)))
 
-    if thread is not None:
+    if threads is not None:
       view_cmd.append('-@{0}'.format(quote(str(threads))))
 
     if cram_out:
@@ -205,7 +206,7 @@ def convert_bam_to_cram(samtools_exe,bam_file,reference_file,cram_path,threads=1
     raise
 
 
-def filter_bam_file(samtools_exe,input_bam,output_bam,samFlagInclude=None,
+def filter_bam_file(samtools_exe,input_bam,output_bam,samFlagInclude=None,reference_file=None,
                     samFlagExclude=None,threads=1,mapq_threshold=20,cram_out=False,
                     index_output=True,dry_run=False):
   '''
@@ -215,6 +216,7 @@ def filter_bam_file(samtools_exe,input_bam,output_bam,samFlagInclude=None,
   :param input_bam: Input bamfile path
   :param output_bam: Output bamfile path
   :param samFlagInclude: Sam flags to keep, default None
+  :param reference_file: Reference genome fasta filepath
   :param samFlagExclude: Sam flags to exclude, default None
   :param threads: Number of threads to use, default 1
   :param mapq_threshold: Skip alignments with MAPQ smaller than this value, default None
@@ -226,16 +228,16 @@ def filter_bam_file(samtools_exe,input_bam,output_bam,samFlagInclude=None,
   try:
     samtools_params = list()
     if mapq_threshold is not None:
-      samtools_params.extend(\
-        ["-q",quote(mapq_threshold)])
+      samtools_params.\
+        append("-q{0}".format(quote(str(mapq_threshold))))
 
     if samFlagInclude is not None:
-      samtools_params.extend(\
-        ["-f",quote(samFlagInclude)])
+      samtools_params.\
+        append("-f{0}".format(quote(str(samFlagInclude))))
 
     if samFlagExclude is not None:
-      samtools_params.extend(\
-        ["-F",quote(samFlagExclude)])
+      samtools_params.\
+        append("-F{0}".format(quote(str(samFlagExclude))))
 
     view_cmd = \
       run_samtools_view(\
@@ -246,7 +248,8 @@ def filter_bam_file(samtools_exe,input_bam,output_bam,samFlagInclude=None,
         index_output=index_output,
         threads=threads,
         dry_run=dry_run,
-        samtools_params=samtools_param)
+        reference_file=reference_file,
+        samtools_params=samtools_params)
     return view_cmd
   except:
     raise
@@ -269,17 +272,21 @@ def run_bam_stats(samtools_exe,bam_file,output_dir,threads=1,force=False,
   try:
     check_file_path(samtools_exe)
     _check_bam_file(bam_file=bam_file)
-    _check_bam_index(samtools_exe=samtools_exe,
-                     bam_file=bam_file)
-    if output_prefix is None:
-      output_prefix=os.path.basename(bam_file)
+    if not dry_run:
+      _check_bam_index(\
+        samtools_exe=samtools_exe,
+        bam_file=bam_file)
 
-    output_path='{0}.{1}.{2}'.\
-                format(output_prefix,
-                       'stats',
-                       'txt')
-    output_path=os.path.join(output_dir,
-                             output_path)
+    if output_prefix is None:
+      output_prefix = os.path.basename(bam_file)
+
+    output_path = \
+      '{0}.{1}.{2}'.\
+      format(output_prefix,'stats','txt')
+    output_path = \
+      os.path.join(\
+        output_dir,
+        output_path)
     if not os.path.exists(output_dir):
       raise IOError('Output path {0} not found'.format(output_dir))
 
@@ -287,11 +294,12 @@ def run_bam_stats(samtools_exe,bam_file,output_dir,threads=1,force=False,
       raise ValueError('Output file {0} already present, use force to overwrite'.\
                        format(output_path))
 
-    stats_cmd=[quote(samtools_exe),
-               'stats',
-               '-@{0}'.format(quote(str(threads))),
-                quote(bam_file)
-              ]
+    stats_cmd = \
+      [quote(samtools_exe),
+       'stats',
+       '-@{0}'.format(quote(str(threads))),
+       quote(bam_file)
+      ]
     if dry_run:
       return stats_cmd
 
@@ -357,17 +365,20 @@ def run_bam_flagstat(samtools_exe,bam_file,output_dir,threads=1,force=False,
   try:
     check_file_path(samtools_exe)
     _check_bam_file(bam_file=bam_file)                                          # check bam file
-    _check_bam_index(samtools_exe=samtools_exe,
-                     bam_file=bam_file)                                         # generate bam index
+    if not dry_run:
+      _check_bam_index(\
+        samtools_exe=samtools_exe,
+        bam_file=bam_file)                                                      # generate bam index
     if output_prefix is None:
       output_prefix=os.path.basename(bam_file)
 
-    output_path='{0}.{1}.{2}'.\
-                format(output_prefix,
-                       'flagstat',
-                       'txt')                                                   # get output filename
-    output_path=os.path.join(output_dir,
-                             output_path)                                       # get complete output path
+    output_path = \
+      '{0}.{1}.{2}'.\
+      format(output_prefix,'flagstat','txt')                                    # get output filename
+    output_path = \
+      os.path.join(\
+        output_dir,
+        output_path)                                                            # get complete output path
     if not os.path.exists(output_dir):
       raise IOError('Output path {0} not found'.format(output_dir))
 
@@ -375,11 +386,12 @@ def run_bam_flagstat(samtools_exe,bam_file,output_dir,threads=1,force=False,
       raise ValueError('Output file {0} already present, use force to overwrite'.\
                        format(output_path))
 
-    flagstat_cmd=[quote(samtools_exe),
-                  'flagstat',
-                  '-@{0}'.format(quote(str(threads))),
-                  quote(bam_file)
-                 ]
+    flagstat_cmd = \
+      [quote(samtools_exe),
+       'flagstat',
+       '-@{0}'.format(quote(str(threads))),
+       quote(bam_file)
+      ]
     if dry_run:
       return flagstat_cmd
 
@@ -408,17 +420,20 @@ def run_bam_idxstat(samtools_exe,bam_file,output_dir,output_prefix=None,
   try:
     check_file_path(samtools_exe)
     _check_bam_file(bam_file=bam_file)                                          # check bam file
-    _check_bam_index(samtools_exe=samtools_exe,
-                     bam_file=bam_file)                                         # generate bam index
+    if not dry_run:
+      _check_bam_index(\
+        samtools_exe=samtools_exe,
+        bam_file=bam_file)                                                      # generate bam index
     if output_prefix is None:
       output_prefix=os.path.basename(bam_file)
 
-    output_path='{0}.{1}.{2}'.\
-                format(output_prefix,
-                       'idxstats',
-                       'txt')                                                   # get output filename
-    output_path=os.path.join(output_dir,
-                             output_path)                                       # get complete output path
+    output_path = \
+      '{0}.{1}.{2}'.\
+      format(output_prefix,'idxstats','txt')                                    # get output filename
+    output_path = \
+      os.path.join(\
+        output_dir,
+        output_path)                                                            # get complete output path
     if not os.path.exists(output_dir):
       raise IOError('Output path {0} not found'.format(output_dir))
 
@@ -426,10 +441,11 @@ def run_bam_idxstat(samtools_exe,bam_file,output_dir,output_prefix=None,
       raise ValueError('Output file {0} already present, use force to overwrite'.\
                        format(output_path))
 
-    idxstat_cmd=[quote(samtools_exe),
-                  'idxstats',
-                  quote(bam_file)
-                ]
+    idxstat_cmd = \
+      [quote(samtools_exe),
+       'idxstats',
+       quote(bam_file)
+      ]
     if dry_run:
       return idxstat_cmd
 
@@ -443,7 +459,7 @@ def run_bam_idxstat(samtools_exe,bam_file,output_dir,output_prefix=None,
 
 
 def run_sort_bam(samtools_exe,input_bam_path,output_bam_path,sort_by_name=False,
-                 threads=1,force=False,dry_run=False):
+                 threads=1,force=False,dry_run=False,cram_out=False,index_output=True):
   '''
   A function for sorting input bam file and generate a output bam
   
@@ -453,44 +469,59 @@ def run_sort_bam(samtools_exe,input_bam_path,output_bam_path,sort_by_name=False,
   :param sort_by_name: Sort bam file by read_name, default False (for coordinate sorting)
   :param threads: Number of threads to use for sorting, default 1
   :param force: Output bam file will be overwritten if force is True, default False
+  :param cram_out: Output cram file, default False
+  :param index_output: Index output bam, default True
   :param dry_run: A toggle for returning the samtools command without actually running it, default False
   :return: None
   '''
   try:
     check_file_path(samtools_exe)
     _check_bam_file(bam_file=input_bam_path)
-    sort_cmd=[quote(samtools_exe),
-              'sort',
-              '--output-fmt','BAM',
-              '--threads',quote(str(threads))
-              ]
+    sort_cmd = \
+      [quote(samtools_exe),
+       'sort',
+       '-@{0}'.format(quote(str(threads)))
+      ]
     if sort_by_name:
       sort_cmd.append('-n')                                                     # sorting by read name
 
+    if cram_out:
+      sort_cmd.append('--output-fmt CRAM')
+    else:
+      sort_cmd.append('--output-fmt BAM')
+
+    temp_dir = get_temp_dir(use_ephemeral_space=False)
+    temp_bam = \
+      os.path.join(\
+        temp_dir,
+        os.path.basename(output_bam_path))
+
+    sort_cmd.extend(['-o',quote(temp_bam)])
     sort_cmd.append(quote(input_bam_path))
-
-    temp_dir=get_temp_dir(use_ephemeral_space=True)
-    temp_bam=os.path.join(temp_dir,
-                          os.path.basename(output_bam_path))
-
     if dry_run:
       return sort_cmd
 
-    with open(temp_bam,'wb') as bam:
-      with subprocess.Popen(sort_cmd, stdout=subprocess.PIPE) as proc:
-        bam.write(proc.stdout.read())                                           # write temp bam files
-
-    copy_local_file(source_path=temp_bam,
-                    destinationa_path=output_bam_path,
-                    force=force)                                                # copy output bam
+    copy_local_file(\
+      source_path=temp_bam,
+      destinationa_path=output_bam_path,
+      force=force)                                                              # copy output bam
     remove_dir(temp_dir)                                                        # remove temp dir
-    _check_bam_file(output_bam_path)
+    if cram_out:
+      _check_cram_file(output_bam_path)
+    else:
+      _check_bam_file(output_bam_path)
+
+    if index_output:
+      index_bam_or_cram(\
+        samtools_exe=samtools_exe,
+        input_path=output_bam_path,
+        input_cram=cram_out)
   except:
     raise
 
 
 def merge_multiple_bam(samtools_exe,input_bam_list,output_bam_path,sorted_by_name=False,
-                       threads=1,force=False,dry_run=False):
+                       threads=1,force=False,dry_run=False,index_output=True):
   '''
   A function for merging multiple input bams to a single output bam
   
@@ -500,23 +531,29 @@ def merge_multiple_bam(samtools_exe,input_bam_list,output_bam_path,sorted_by_nam
   :param sorted_by_name: Sort bam file by read_name, default False (for coordinate sorted bams)
   :param threads: Number of threads to use for merging, default 1
   :param force: Output bam file will be overwritten if force is True, default False
+  :param index_output: Index output bam, default True
   :param dry_run: A toggle for returning the samtools command without actually running it, default False
   :return: samtools command
   '''
   try:
     check_file_path(samtools_exe)
-    for bam in input_bam_list:
-      check_file_path(bam)
+    check_file_path(input_bam_list)
+    with open(input_bam_list,'r') as fp:
+      for bam in fp:
+        check_file_path(bam.strip())
 
-    temp_dir=get_temp_dir(use_ephemeral_space=True)
-    temp_bam=os.path.join(temp_dir,
-                          os.path.basename(output_bam_path))
-    merge_cmd=[quote(samtools_exe),
-               'merge',
-               '--output-fmt','BAM',
-               '--threads',quote(str(threads)),
-               '-b',quote(input_bam_list)
-              ]
+    temp_dir = get_temp_dir(use_ephemeral_space=False)
+    temp_bam = \
+      os.path.join(\
+        temp_dir,
+        os.path.basename(output_bam_path))
+    merge_cmd = \
+      [quote(samtools_exe),
+       'merge',
+       '--output-fmt','BAM',
+       '--threads',quote(str(threads)),
+       '-b',quote(input_bam_list)
+      ]
     if sorted_by_name:
       merge_cmd.append('-n')                                                    # Input files are sorted by read name
 
@@ -525,11 +562,17 @@ def merge_multiple_bam(samtools_exe,input_bam_list,output_bam_path,sorted_by_nam
       return merge_cmd
 
     subprocess.check_call(merge_cmd)                                            # run samtools merge
-    copy_local_file(source_path=temp_bam,
-                    destinationa_path=output_bam_path,
-                    force=force)                                                # copy bamfile
+    copy_local_file(\
+      source_path=temp_bam,
+      destinationa_path=output_bam_path,
+      force=force)                                                              # copy bamfile
     remove_dir(temp_dir)                                                        # remove temp dir
     _check_bam_file(output_bam_path)
+    if index_output:
+      index_bam_or_cram(\
+        samtools_exe=samtools_exe,
+        input_path=output_bam_path,
+        input_cram=cram_out)
     return merge_cmd
   except:
     raise
