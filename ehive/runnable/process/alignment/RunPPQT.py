@@ -3,6 +3,7 @@ from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.utils.tools.ppqt_utils import Ppqt_tools
 from igf_data.utils.fileutils import get_datestamp_label
+from igf_data.utils.analysis_collection_utils import Analysis_collection_utils
 
 class RunPPQT(IGFBaseProcess):
   '''
@@ -14,7 +15,11 @@ class RunPPQT(IGFBaseProcess):
         'analysis_files':[],
         'output_prefix':None,
         'load_metrics_to_cram':False,
-        'cram_collection_type':'ANALYSIS_CRAM'
+        'cram_collection_type':'ANALYSIS_CRAM',
+        'ppqt_collection_type':'PPQT_REPORT',
+        'collection_table':'experiment',
+        'analysis_name':None,
+        'force_overwrite':True,
       })
     return params_dict
 
@@ -31,11 +36,17 @@ class RunPPQT(IGFBaseProcess):
       rscript_path = self.param_required('rscript_path')
       ppqt_exe = self.param_required('ppqt_exe')
       base_work_dir = self.param_required('base_work_dir')
+      base_result_dir = self.param_required('base_result_dir')
       analysis_files = self.param_required('analysis_files')
       output_prefix = self.param_required('output_prefix')
-      load_metrics_to_cram = self.param('load_metrics_to_cram')
-      cram_collection_type = self.param('cram_collection_type')
+      species_name = self.param_required('species_name')
+      analysis_name = self.param_required('analysis_name')
       seed_date_stamp = self.param_required('date_stamp')
+      load_metrics_to_cram = self.param('load_metrics_to_cram')
+      ppqt_collection_type = self.param('ppqt_collection_type')
+      cram_collection_type = self.param('cram_collection_type')
+      collection_table = self.param('collection_table')
+      force_overwrite = self.param('force_overwrite')
       seed_date_stamp = get_datestamp_label(seed_date_stamp)
       if output_prefix is not None:
         output_prefix='{0}_{1}'.format(output_prefix,
@@ -67,7 +78,21 @@ class RunPPQT(IGFBaseProcess):
           output_dir=work_dir,
           output_spp_name='{0}_{1}.spp.out'.format(output_prefix,'PPQT'),
           output_pdf_name='{0}_{1}.spp.pdf'.format(output_prefix,'PPQT'))
-      analysis_files.append([spp_output, pdf_output])
+      analysis_files.append(spp_output)
+      au = \
+        Analysis_collection_utils(\
+          dbsession_class=igf_session_class,
+          analysis_name=analysis_name,
+          tag_name=species_name,
+          collection_name=experiment_igf_id,
+          collection_type=ppqt_collection_type,
+          collection_table=collection_table,
+          base_path=base_result_dir)
+      output_ppqt_list = \
+        au.load_file_to_disk_and_db(\
+          input_file_list=[pdf_output],
+          file_suffix='pdf',
+          withdraw_exisitng_collection=force_overwrite)                         # load file to db and disk
       if load_metrics_to_cram and \
          len(spp_data) > 0:
         ca = CollectionAdaptor(**{'session_class':igf_session_class})
@@ -89,7 +114,17 @@ class RunPPQT(IGFBaseProcess):
           raise ValueError('Failed to load data to db: {0}'.\
                            format(e))
 
-      self.param('dataflow_params',{'analysis_files':analysis_files})           # pass on samtools output list
+      self.param('dataflow_params',{'analysis_files':analysis_files,
+                                    'output_ppqt_list':output_ppqt_list})       # pass on samtools output list
+      message='finished PPQT for {0} {1}'.\
+              format(project_igf_id,
+                     sample_igf_id)
+      self.post_message_to_slack(message,reaction='pass')                       # send log to slack
+      message='finished PPQT for {0} {1}: {2}'.\
+              format(project_igf_id,
+                     sample_igf_id,
+                     ppqt_cmd)
+      self.comment_asana_task(task_name=project_igf_id, comment=message)        # send comment to Asana
     except Exception as e:
       message='project: {2}, sample:{3}, Error in {0}: {1}'.\
               format(self.__class__.__name__,

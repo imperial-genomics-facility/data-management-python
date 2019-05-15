@@ -29,6 +29,9 @@ class RunSamtools(IGFBaseProcess):
         'samFlagInclude':None,
         'samFlagExclude':None,
         'mapq_threshold':None,
+        'use_encode_filter':False,
+        'encodePeExcludeFlag':1804,
+        'encodeSeExcludeFlag':1796,
       })
     return params_dict
 
@@ -44,6 +47,12 @@ class RunSamtools(IGFBaseProcess):
     :param threads: Number of threads to use for Bam to Cram conversion, default 4
     :param base_work_dir: Base workd directory
     :param samtools_command: Samtools command
+    :param samFlagInclude: Sam flags to include in filtered bam, default None
+    :param samFlagExclude: Sam flags to exclude from the filtered bam, default None
+    :param mapq_threshold: Skip alignments with MAPQ smaller than this value, default None
+    :param use_encode_filter: For samtools filter, use Encode epigenome filter, i.e. samFlagExclude 1804(PE) / 1796(SE), default False
+    :param encodePeExcludeFlag: For samtools filter, Encode exclude flag for PE reads, default 1804
+    :param encodeSeExcludeFlag: For samtools filter, Encode exclude flag for PE reads, default 1796
     :param copy_input: A toggle for copying input file to temp, 1 for True default 0 for False
     '''
     try:
@@ -69,6 +78,8 @@ class RunSamtools(IGFBaseProcess):
       samFlagInclude = self.param('samFlagInclude')
       samFlagExclude = self.param('samFlagExclude')
       mapq_threshold = self.param('mapq_threshold')
+      library_layout = self.param_required('library_layout')
+      use_encode_filter = self.param('use_encode_filter')
       species_name = self.param_required('species_name')
       seed_date_stamp = self.param_required('date_stamp')
       seed_date_stamp = get_datestamp_label(seed_date_stamp)
@@ -76,6 +87,13 @@ class RunSamtools(IGFBaseProcess):
         output_prefix='{0}_{1}'.\
           format(output_prefix,
                  seed_date_stamp)                                               # adding datestamp to the output file prefix
+
+      if use_encode_filter:
+        samFlagInclude = None
+        if library_layout == 'PAIRED':
+          samFlagExclude = 1804
+        else:
+          samFlagExclude = 1796
 
       if not isinstance(input_files, list) or \
          len(input_files) == 0:
