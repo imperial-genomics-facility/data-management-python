@@ -17,7 +17,7 @@ class RunDeeptools(IGFBaseProcess):
         'output_prefix':None,
         'blacklist_reference_type':'BLACKLIST_BED',
         'load_metrics_to_cram':False,
-        'load_signal_to_cram':True,
+        'load_signal_bigwig':True,
         'cram_collection_type':'ANALYSIS_CRAM',
         'signal_collection_type':'DEEPTOOLS_BIGWIG',
         'deeptools_params':None,
@@ -63,7 +63,7 @@ class RunDeeptools(IGFBaseProcess):
          len(input_files) == 0:
         raise ValueError('No input file found')
 
-      signal_file = list()
+      signal_files = list()
       work_dir_prefix = \
         os.path.join(\
           base_work_dir,
@@ -138,7 +138,7 @@ class RunDeeptools(IGFBaseProcess):
               file_suffix='bw',
               withdraw_exisitng_collection=withdraw_exisitng_collection)        # load file to db and disk
           analysis_files.extend(output_file_list)
-          signal_file.extend(output_file_list)
+          signal_files.extend(output_file_list)
         else:
           analysis_files.append(output_file)
       elif deeptools_command == 'plotFingerprint':
@@ -176,7 +176,7 @@ class RunDeeptools(IGFBaseProcess):
                          format(deeptools_command))
 
       self.param('dataflow_params',{'analysis_files':analysis_files,
-                                    'signal_files':signal_file,
+                                    'signal_files':signal_files,
                                     'seed_date_stamp':seed_date_stamp})         # pass on picard output list
       message='finished deeptools {0} for {1} {2}'.\
               format(deeptools_command,
