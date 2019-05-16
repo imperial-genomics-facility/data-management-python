@@ -31,6 +31,7 @@ class Check_batch_effect_for_lane(IGFBaseProcess):
       igf_session_class = self.param_required('igf_session_class')
       template_report_file = self.param_required('template_report_file')
       rscript_path = self.param_required('rscript_path')
+      batch_effect_rscript_path = self.param_required('batch_effect_rscript_path')
       base_result_dir = self.param_required('base_result_dir')
       strand_info = self.param('strand_info')
       read_threshold = self.param('read_threshold')
@@ -72,6 +73,7 @@ class Check_batch_effect_for_lane(IGFBaseProcess):
                input_json_file=temp_json_file,
                template_file=template_report_file,
                rscript_path=rscript_path,
+               batch_effect_rscript_path=batch_effect_rscript_path,
                strand_info=strand_info,
                read_threshold=read_threshold
              )                                                                  # set up batch effect run

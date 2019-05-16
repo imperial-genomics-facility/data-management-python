@@ -21,7 +21,8 @@ class Batch_effect_report:
                            lane
                            
   :param template_file: A template file for writing the report
-  :param rscript_path: CPM conversion R-script file path
+  :param rscript_path: Rscript exe path
+  :param batch_effect_rscript_path: CPM conversion R-script file path
   :param strand_info: RNA-Seq strand information, default reverse_strand
   :param read_threshold: Threshold for low number of reads, default 5
   :param allowed_strands: A list of allowed strands,
@@ -30,11 +31,12 @@ class Batch_effect_report:
                            forward_strand
                            unstranded'
   '''
-  def __init__(self,input_json_file,template_file,rscript_path,
+  def __init__(self,input_json_file,template_file,rscript_path,batch_effect_rscript_path,
                allowed_strands=('reverse_strand','forward_strand','unstranded'),
                read_threshold=5,strand_info='reverse_strand'):
     self.input_json_file=input_json_file
     self.template_file=template_file
+    self.batch_effect_rscript_path=batch_effect_rscript_path
     self.rscript_path=rscript_path
     self.strand_info=strand_info
     self.allowed_strands=list(allowed_strands)
@@ -83,6 +85,7 @@ class Batch_effect_report:
                                     os.path.basename(self.template_file))
       check_file_path(self.input_json_file)
       check_file_path(self.rscript_path)
+      check_file_path(self.batch_effect_rscript_path)
       with open(self.input_json_file,'r') as json_data:
         input_list=json.load(json_data)
 
@@ -140,8 +143,8 @@ class Batch_effect_report:
       final_df.\
       applymap(lambda x: float(x)).\
       to_csv(temp_merged_output,index=True)                                     # dump raw counts as csv file
-      rscript_cmd=['Rscript',
-                   quote(self.rscript_path),
+      rscript_cmd=[quote(self.rscript_path),
+                   quote(self.batch_effect_rscript_path),
                    quote(temp_merged_output),
                    quote(temp_cpm_output),
                    quote(temp_png_output)
