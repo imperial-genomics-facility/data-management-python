@@ -102,70 +102,89 @@ class RunScanpy(IGFBaseProcess):
     :param collection_table: Collection table name for loading scanpy report, default experiment
     '''
     try:
-      project_igf_id=self.param_required('project_igf_id')
-      sample_igf_id=self.param_required('sample_igf_id')
-      experiment_igf_id=self.param_required('experiment_igf_id')
-      igf_session_class=self.param_required('igf_session_class')
-      species_name=self.param_required('species_name')
-      report_template_file=self.param_required('report_template_file')
-      analysis_name=self.param_required('analysis_name')
-      base_result_dir=self.param_required('base_result_dir')
-      species_name_lookup=self.param('species_name_lookup')
-      cellranger_collection_type=self.param('cellranger_collection_type')
-      scanpy_collection_type=self.param('scanpy_collection_type')
-      collection_table=self.param('collection_table')
-      cellranger_tarfile=''
-      output_report=''
+      project_igf_id = self.param_required('project_igf_id')
+      sample_igf_id = self.param_required('sample_igf_id')
+      experiment_igf_id = self.param_required('experiment_igf_id')
+      igf_session_class = self.param_required('igf_session_class')
+      species_name = self.param_required('species_name')
+      report_template_file = self.param_required('report_template_file')
+      analysis_name = self.param_required('analysis_name')
+      base_result_dir = self.param_required('base_result_dir')
+      base_work_dir = self.param_required('base_work_dir')
+      species_name_lookup = self.param('species_name_lookup')
+      cellranger_collection_type = self.param('cellranger_collection_type')
+      scanpy_collection_type = self.param('scanpy_collection_type')
+      collection_table = self.param('collection_table')
+      cellranger_tarfile = ''
+      output_report = ''
+      work_dir_prefix = \
+        os.path.join(\
+          base_work_dir,
+          project_igf_id,
+          sample_igf_id,
+          experiment_igf_id)
+      work_dir = self.get_job_work_dir(work_dir=work_dir_prefix)                # get a run work dir
       if species_name in species_name_lookup.keys():                            # check for human or mice
-        ensembl_species_name=species_name_lookup[species_name]                  # get ensembl species name
+        ensembl_species_name = species_name_lookup[species_name]                # get ensembl species name
         # fetch cellranger tar path from db
         if cellranger_tarfile=='':
-          ca=CollectionAdaptor(**{'session_class':igf_session_class})
+          ca = CollectionAdaptor(**{'session_class':igf_session_class})
           ca.start_session()                                                    # connect to database
-          cellranger_tarfiles=ca.get_collection_files(\
-                                collection_name=experiment_igf_id,
-                                collection_type=cellranger_collection_type,
-                                output_mode='dataframe')                        # fetch collection files
+          cellranger_tarfiles = \
+            ca.get_collection_files(\
+              collection_name=experiment_igf_id,
+              collection_type=cellranger_collection_type,
+              output_mode='dataframe')                                          # fetch collection files
           ca.close_session()
           if len(cellranger_tarfiles.index)==0:
             raise ValueError('No cellranger analysis output found for exp {0}'.\
                              format(experiment_igf_id))
 
-          cellranger_tarfile=cellranger_tarfiles['file_path'].values[0]         # select first file as analysis file
+          cellranger_tarfile = cellranger_tarfiles['file_path'].values[0]       # select first file as analysis file
 
         # extract filtered metrics files from tar
-        output_dir=get_temp_dir()                                               # get a temp dir
-        output_report=os.path.join(output_dir,
-                                   'report.html')                               # get temp report path
-        matrix_file,gene_file,barcode_file=self._extract_cellranger_filtered_metrics(\
-                                             tar_file=cellranger_tarfile,
-                                             output_dir=output_dir)             # get cellranger output files
-        sp=Scanpy_tool(
-             project_name=project_igf_id,
-             sample_name=sample_igf_id,
-             matrix_file=matrix_file,
-             features_tsv=gene_file,
-             barcode_tsv=barcode_file,
-             html_template_file=report_template_file,
-             species_name=ensembl_species_name,
-             output_file=output_report
-            )
+        output_dir = get_temp_dir()                                             # get a temp dir
+        cellbrowser_dir = \
+          os.path.join(work_dir,'cellbrowser')
+        output_report = \
+          os.path.join(\
+            output_dir,
+            'report.html')                                                      # get temp report path
+        matrix_file,gene_file,barcode_file = \
+          self._extract_cellranger_filtered_metrics(\
+            tar_file=cellranger_tarfile,
+            output_dir=output_dir)                                              # get cellranger output files
+        sp = \
+          Scanpy_tool(\
+            project_name=project_igf_id,
+            sample_name=sample_igf_id,
+            matrix_file=matrix_file,
+            features_tsv=gene_file,
+            barcode_tsv=barcode_file,
+            html_template_file=report_template_file,
+            species_name=ensembl_species_name,
+            output_file=output_report,
+            cellbrowser_dir=cellbrowser_dir)
         sp.generate_report()                                                    # generate scanpy report
         # load files to db and disk
-        au=Analysis_collection_utils(\
-             dbsession_class=igf_session_class,
-             analysis_name=analysis_name,
-             tag_name=species_name,
-             collection_name=experiment_igf_id,
-             collection_type=scanpy_collection_type,
-             collection_table=collection_table,
-             base_path=base_result_dir)                                         # initiate loading of report file
-        output_file_list=au.load_file_to_disk_and_db(\
-                            input_file_list=[output_report],
-                            withdraw_exisitng_collection=True)                  # load file to db and disk
+        au = \
+          Analysis_collection_utils(\
+            dbsession_class=igf_session_class,
+            analysis_name=analysis_name,
+            tag_name=species_name,
+            collection_name=experiment_igf_id,
+            collection_type=scanpy_collection_type,
+            collection_table=collection_table,
+            base_path=base_result_dir)                                          # initiate loading of report file
+        output_file_list = \
+          au.load_file_to_disk_and_db(\
+            input_file_list=[output_report],
+            withdraw_exisitng_collection=True)                                  # load file to db and disk
         output_report=output_file_list[0]
 
-      self.param('dataflow_params',{'output_report':output_report})             # pass on output report filepath
+      self.param('dataflow_params',
+                 {'output_report':output_report,
+                  'cellbrowser_dir':cellbrowser_dir})                           # pass on output report filepath
     except Exception as e:
       message='project: {2}, sample:{3}, Error in {0}: {1}'.format(self.__class__.__name__, \
                                                       e, \

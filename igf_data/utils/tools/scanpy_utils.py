@@ -2,6 +2,7 @@ import os,base64
 import scanpy as sc
 import numpy as np
 import pandas as pd
+from shutil import copytree
 from datetime import datetime
 from igf_data.utils.fileutils import get_temp_dir,copy_local_file,remove_dir
 from jinja2 import Template,Environment, FileSystemLoader,select_autoescape
@@ -29,11 +30,12 @@ class Scanpy_tool:
   :param min_gene_count: Minimum gene count for data filtering, default 200
   :param min_cell_count: Minimum cell count for data filtering, default 3
   :param force_overwrite: A toggle for replacing existing output file, default True
+  :param cellbrowser_dir: Path for cellbrowser output dir, default None
   '''
   def __init__(self,project_name,sample_name,matrix_file,features_tsv,barcode_tsv,
                output_file,html_template_file,species_name,min_gene_count=200,
-               min_cell_count=3,force_overwrite=True):
-    self.project_name=project_name,
+               min_cell_count=3,force_overwrite=True,cellbrowser_dir=None):
+    self.project_name=project_name
     self.sample_name=sample_name
     self.matrix_file=matrix_file
     self.features_tsv=features_tsv
@@ -44,6 +46,7 @@ class Scanpy_tool:
     self.min_gene_count=min_gene_count
     self.min_cell_count=min_cell_count
     self.force_overwrite=force_overwrite
+    self.cellbrowser_dir=cellbrowser_dir
 
   @staticmethod
   def _fetch_mitochondrial_genes(species_name,url='www.ensembl.org'):
@@ -68,12 +71,12 @@ class Scanpy_tool:
     try:
       if not os.path.exists(png_file):
         raise ValueError('File not present')
-    
+
       encoded=base64.b64encode(open(png_file, "rb").read()).decode()
       return encoded
     except:
         raise
-        
+
   def generate_report(self):
     '''
     A method for generating html report from scanpy analysis
@@ -84,17 +87,22 @@ class Scanpy_tool:
         remove_dir(os.path.join(self.work_dir,'cache'))
 
       date_stamp = datetime.now().strftime('%d-%b-%Y %H:%M:%S')
+
       # step 1: read input files
-      temp_input_dir = get_temp_dir(use_ephemeral_space=True)                   # fix for hpc
-      local_matrix_file = os.path.join(\
-                            temp_input_dir,
-                            os.path.basename(self.matrix_file))
-      local_barcode_tsv = os.path.join(\
-                            temp_input_dir,
-                            os.path.basename(self.barcode_tsv))
-      local_features_tsv = os.path.join(\
-                            temp_input_dir,
-                            os.path.basename(self.features_tsv))
+      temp_input_dir = \
+        get_temp_dir(use_ephemeral_space=True)                                  # fix for hpc
+      local_matrix_file = \
+        os.path.join(\
+          temp_input_dir,
+          os.path.basename(self.matrix_file))
+      local_barcode_tsv = \
+        os.path.join(\
+          temp_input_dir,
+          os.path.basename(self.barcode_tsv))
+      local_features_tsv = \
+        os.path.join(\
+          temp_input_dir,
+          os.path.basename(self.features_tsv))
       copy_local_file(\
         source_path=self.matrix_file,
         destinationa_path=local_matrix_file)
@@ -151,8 +159,6 @@ class Scanpy_tool:
             os.path.join(\
               self.work_dir,\
                 'figures/violin.png'))
-      #violin_plot=os.path.join(self.work_dir,'figures/violin.png')
-      #mito_plot_data=self._encode_png_image(png_file=violin_plot)
       sc.pl.scatter(\
         adata,
         x='n_counts',
@@ -164,9 +170,6 @@ class Scanpy_tool:
           png_file=os.path.join(\
             self.work_dir,
             'figures/scatter.png'))
-      #mt_scatter_plot1=os.path.join(self.work_dir,
-      #                              'figures/scatter.png')
-      #mito_plot_scatter1=self._encode_png_image(png_file=mt_scatter_plot1)
       sc.pl.scatter(\
         adata,
         x='n_counts',
@@ -178,9 +181,6 @@ class Scanpy_tool:
             os.path.join(\
               self.work_dir,
               'figures/scatter.png'))
-      #mt_scatter_plot2=os.path.join(self.work_dir,
-      #                              'figures/scatter.png')
-      #mito_plot_scatter2=self._encode_png_image(png_file=mt_scatter_plot2)
 
       # step 5: Filtering data bases on percent mito
       adata = adata[adata.obs['n_genes']<2000,:]
@@ -190,15 +190,6 @@ class Scanpy_tool:
       sc.pp.normalize_per_cell(adata)                                           # Total-count normalize (library-size correct) the data matrix to 10,000 reads per cell, so that counts become comparable among cells.
       sc.pp.log1p(adata)
       adata.raw = adata
-      #adata.raw = sc.pp.log1p(adata, copy=True)                                 # logarithmize data and copy raw data
-      #filter_result=sc.pp.filter_genes_dispersion(adata.X,
-      #                                            flavor='seurat')              # identify highly variable genes
-      #sc.pl.filter_genes_dispersion(filter_result,
-      #                              show=True,
-      #                              save='.png')                                # plot variable genes
-      #genes_dispersion_file=os.path.join(self.work_dir,
-      #                                   'figures/filter_genes_dispersion.png')
-      #genes_dispersion_data=self._encode_png_image(png_file=genes_dispersion_file)
       sc.pp.highly_variable_genes(\
         adata,
         min_mean=0.0125,
@@ -211,11 +202,9 @@ class Scanpy_tool:
             os.path.join(\
               self.work_dir,
               'figures/filter_genes_dispersion.png'))                           # plot highly-variable genes
-      #adata=adata[:, filter_result.gene_subset]                                # replace data with filtered data
       adata = adata[:, adata.var['highly_variable']]                            # filter highly-variable genes
 
       # step 7: Analyze data
-      #sc.pp.log1p(adata)                                                        # logarithmize the data
       sc.pp.regress_out(\
         adata,
         ['n_counts', 'percent_mito'])                                           # regress out effects of total counts per cell and the percentage of mitochondrial genes expressed
@@ -235,9 +224,6 @@ class Scanpy_tool:
             os.path.join(\
               self.work_dir,
               'figures/pca_loadings.png'))                                      # load pca loading graph
-      #pca_file=os.path.join(self.work_dir,
-      #                      'figures/pca_loadings.png')
-      #pca_data=self._encode_png_image(png_file=pca_file)
       sc.pl.pca_variance_ratio(\
         adata,
         log=True,save='.png')                                                   # save pca variation ratio
@@ -251,7 +237,6 @@ class Scanpy_tool:
         adata,
         random_state=2,
         n_pcs=10)                                                               # legacy tsne
-      #sc.pp.neighbors(adata, n_neighbors=10)                                    # neighborhood graph
       sc.pp.neighbors(\
         adata,
         n_neighbors=10,
@@ -269,9 +254,6 @@ class Scanpy_tool:
             os.path.join(\
               self.work_dir,
               'figures/tsne.png'))                                              # load t-SNE
-      #tsne_file=os.path.join(self.work_dir,
-      #                       'figures/tsne.png')
-      #tsne_data=self._encode_png_image(png_file=tsne_file)
 
       # step 8: Finding marker genes
       sc.pl.umap(\
@@ -300,36 +282,6 @@ class Scanpy_tool:
             os.path.join(\
               self.work_dir,
               'figures/rank_genes_groups_louvain.png'))                         # load ranking plot
-      #sc.pl.rank_genes_groups(adata,
-      #                        n_genes=20,
-      #                        show=True,
-      #                        save='.png')                                      # plot rank gene
-      #rank_genes_groups_file=os.path.join(self.work_dir,
-      #                                    'figures/rank_genes_groups_louvain.png')
-      #rank_genes_groups_data=self._encode_png_image(png_file=rank_genes_groups_file)
-      #result = adata.uns['rank_genes_groups']
-      #groups = result['names'].dtype.names
-      #gene_score = \
-      #  pd.DataFrame({group + '_' + key: result[key][group]
-      #                  for group in groups 
-      #                    for key in ['names', 'scores']})                      # table data
-      #marker_gene_violin_data = list()
-      #for group in result['names'].dtype.names:
-      #  key='{0}_names'.format(group)
-      #  genes=gene_score[key].head(5).to_dict().values()
-      #  sc.pl.violin(adata,
-      #               genes,
-      #               groupby='louvain',
-      #               show=True,
-      #               save='.png',
-      #               multi_panel=False,
-      #               scale='width',
-      #               multi_panel_figsize=[8.0,16.0])                            # violin plot for marker genes
-      #  violin_plot=os.path.join(self.work_dir,
-      #                           'figures/violin.png')
-      #  violin_plot_data=self._encode_png_image(png_file=violin_plot)
-      #  marker_gene_violin_data.append({'cluster':group,
-      #                                  'violin_data':violin_plot_data})
       sc.pl.rank_genes_groups_stacked_violin(\
         adata,
         n_genes=10,
@@ -384,38 +336,67 @@ class Scanpy_tool:
               self.work_dir,
               'figures/tracksplot.png'))                                        # load tracks plot
 
-      project_name=self.project_name
-      project_name=project_name[0] \
-                   if isinstance(project_name, tuple) \
-                   else project_name                                            # check for project_name object
-      template_env=Environment(\
-                     loader=FileSystemLoader(\
-                              searchpath=os.path.dirname(self.html_template_file)), \
-                     autoescape=select_autoescape(['xml']))
-      template_file=template_env.get_template(os.path.basename(self.html_template_file))
+      project_name = self.project_name
+      project_name = \
+        project_name[0] \
+          if isinstance(project_name, tuple) \
+            else project_name                                                   # check for project_name object
+      template_env = \
+        Environment(\
+          loader=FileSystemLoader(\
+            searchpath=os.path.dirname(self.html_template_file)),
+            autoescape=select_autoescape(['xml']))
+      template_file = \
+        template_env.\
+          get_template(\
+            os.path.basename(self.html_template_file))
       template_file.\
-        stream(ProjectName=project_name,
-               SampleName=self.sample_name,
-               Date_stamp=date_stamp,
-               Highest_gene_expr=highest_gene_expr,
-               MitoPlot=mito_plot_data,
-               MitoScatter1=mito_plot_scatter1,
-               MitoScatter2=mito_plot_scatter2,
-               GenesDispersion=genes_dispersion_data,
-               Pca=pca_data,
-               Pca_var_data=pca_var_data,
-               Tsne=tsne_data,
-               Umap_data=umap_data,
-               RankGenesGroups=rank_genes_groups_data,
-               Rank_genes_groups_stacked_violin=rank_genes_groups_stacked_violin,
-               Rank_genes_groups_dotplot=rank_genes_groups_dotplot,
-               Rank_genes_groups_matrixplot=rank_genes_groups_matrixplot,
-               Rank_genes_groups_heatmap=rank_genes_groups_heatmap,
-               Rank_genes_groups_tracksplot=rank_genes_groups_tracksplot
-              ).\
+        stream(\
+          ProjectName=project_name,
+          SampleName=self.sample_name,
+          Date_stamp=date_stamp,
+          Highest_gene_expr=highest_gene_expr,
+          MitoPlot=mito_plot_data,
+          MitoScatter1=mito_plot_scatter1,
+          MitoScatter2=mito_plot_scatter2,
+          GenesDispersion=genes_dispersion_data,
+          Pca=pca_data,
+          Pca_var_data=pca_var_data,
+          Tsne=tsne_data,
+          Umap_data=umap_data,
+          RankGenesGroups=rank_genes_groups_data,
+          Rank_genes_groups_stacked_violin=rank_genes_groups_stacked_violin,
+          Rank_genes_groups_dotplot=rank_genes_groups_dotplot,
+          Rank_genes_groups_matrixplot=rank_genes_groups_matrixplot,
+          Rank_genes_groups_heatmap=rank_genes_groups_heatmap,
+          Rank_genes_groups_tracksplot=rank_genes_groups_tracksplot).\
         dump(os.path.join(self.work_dir,'test.html'))
-      copy_local_file(os.path.join(self.work_dir,'test.html'),
-                      self.output_file,
-                      force=self.force_overwrite)
+      copy_local_file(\
+        os.path.join(\
+          self.work_dir,'test.html'),
+          self.output_file,
+          force=self.force_overwrite)
+      if self.cellbrowser_dir is not None:
+        if not os.path.exists(os.path.dirname(self.cellbrowser_dir)):
+          raise ValueError('Cellbrowser parent dir {0} does not exists'.\
+                           format(os.path.dirname(self.cellbrowser_dir)))
+
+        if os.path.exists(self.cellbrowser_dir):
+          raise ValueError('Cellbrowser output dir already exists: {0}'.\
+                           format(self.cellbrowser_dir))
+
+        temp_data_dir = os.path.join(self.work_dir,'cellbrowser_data')
+        temp_html_dir = os.path.join(self.work_dir,'cellbrowser_html')
+        os.makedirs(temp_data_dir)
+        os.makedirs(temp_html_dir)
+        sc.external.exporting.\
+          cellbrowser(\
+            adata,\
+            data_dir=temp_data_dir,\
+            data_name=self.sample_name,\
+            html_dir=temp_html_dir)
+        copytree(\
+          src=temp_html_dir,
+          dst=self.cellbrowser_dir)
     except:
       raise
