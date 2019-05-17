@@ -132,13 +132,14 @@ class RunBcl2Fastq(IGFBaseProcess):
         self.format_tool_options(bcl2fastq_options)                             # format bcl2fastq params
       bcl2fastq_cmd.extend(bcl2fastq_param)                                     # add additional parameters
       if reset_mask_short_adapter_reads and \
-        '--mask-short-adapter-reads' not in bcl2fastq_options:
+         '--mask-short-adapter-reads' not in bcl2fastq_options:
         read_pattern = re.compile(r'^y(\d+)n?\d?')
-        read_values = [re.match(pattern,i).group(1)
+        read_values = [int(re.match(read_pattern,i).group(1))
                          for i in bases_mask.split(',')
-                           if i.startswith('y') and re.match(pattern,i)
-                             if int(re.match(pattern,i).group(1)) < 22 ]        # hack for checking if reads are lower than the Illumina threasholds
-        if len(read_values) > 0:
+                           if i.startswith('y') and re.match(read_pattern,i)
+                             if int(re.match(read_pattern,i).group(1)) < 22 ]   # hack for checking if reads are lower than the Illumina threasholds
+        if len(read_values) > 0 and \
+            min(read_values) > 5:
           bcl2fastq_cmd.\
             append("--mask-short-adapter-reads={0}".\
                    format(quote(str(min(read_values)))))
@@ -146,11 +147,13 @@ class RunBcl2Fastq(IGFBaseProcess):
                     format(seqrun_igf_id,project_name,flowcell_lane,
                            index_length,min(read_values))
           self.post_message_to_slack(message,reaction='pass')                   # send log to slack
+          self.comment_asana_task(\
+            task_name=seqrun_igf_id,
+            comment=message)                                                    # send log to asana
 
       if project_type==singlecell_tag:
         sc_bcl2fastq_param = self.format_tool_options(singlecell_options)       # format singlecell bcl2fastq params
         bcl2fastq_cmd.extend(sc_bcl2fastq_param)                                # add additional parameters
-
 
       message = ' '.join(bcl2fastq_cmd)
       self.post_message_to_slack(message,reaction='pass')                       # send bcl2fastq command to Slack
