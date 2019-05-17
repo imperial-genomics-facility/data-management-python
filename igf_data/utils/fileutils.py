@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 import pandas as pd
-import os,subprocess,hashlib,string,re
+import os,subprocess,hashlib,string,re,paramiko
 import tarfile,fnmatch
+from shlex import quote
 from datetime import datetime
 from dateutil.parser import parse
 from tempfile import mkdtemp,gettempdir
@@ -45,6 +46,59 @@ def check_file_path(file_path):
   except:
     raise
 
+
+def list_remote_file_or_dirs(remote_server,remote_path,only_dirs=True,
+                             only_files=False,user_name=None,user_pass=None):
+  '''
+  A method for listing dirs or files on the remote dir paths
+
+  :param remote_server: Semote servet address
+  :param remote_path: Path on remote server
+  :param only_dirs: Toggle for listing only dirs, default True
+  :param only_files: Toggle for listing only files, default False
+  :param user_name: User name, default None
+  :param user_pass: User pass, default None
+  :returns: A list of dir or file paths
+  '''
+  try:
+    if only_dirs and only_files:
+      raise ValueError('Conflicting options, only_dirs and only_files')
+
+    client = paramiko.SSHClient()
+    client.load_system_host_keys()
+    client.set_missing_host_key_policy( paramiko.AutoAddPolicy() )
+    try:
+      client.connect(\
+        hostname=remote_server,
+        port=22,
+        username=user_name,
+        password=user_pass)
+      remote_cmd = \
+        [quote('find'),
+         quote('remote_path'),
+         quote('-maxdepth 1')]
+      if only_dirs:
+        remote_cmd.append('-type d')
+
+      if only_files:
+        remote_cmd.append('-type f')
+
+      _, stdout, stderr = \
+        client.exec_command(' '.join(remote_cmd))
+      output = stdout.read().decode('utf-8')
+      error = stderr.read().decode('utf-8')
+      client.close()
+    except:
+      client.close()
+      raise
+
+    if error != '':
+      raise ValueError('Remote command got following errors: {0}'.\
+                       format(e))
+
+    return output.strip().split('\n')
+  except:
+    raise
 
 def copy_local_file(source_path,destinationa_path, force=False):
   '''
