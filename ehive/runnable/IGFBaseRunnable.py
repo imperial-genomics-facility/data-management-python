@@ -44,6 +44,7 @@ class IGFBaseRunnable(eHive.BaseRunnable):
         asana_project_id = self.param_required('asana_project_id')
         igf_asana = IGF_asana(asana_config=asana_config, asana_project_id=asana_project_id)
         self.param('igf_asana', igf_asana)
+
     except:
       raise
 
@@ -104,7 +105,7 @@ class IGFBaseRunnable(eHive.BaseRunnable):
                                   remote_filename=remote_filename,
                                   comment=comment)
     except:
-      raise
+      pass
 
 
   def comment_asana_task(self,task_name, comment):
@@ -124,7 +125,7 @@ class IGFBaseRunnable(eHive.BaseRunnable):
 
       return res
     except:
-      raise
+      pass
 
 
   def add_asana_notes(self,task_name,notes):
