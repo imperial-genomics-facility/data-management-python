@@ -67,10 +67,9 @@ class BWA_util:
       bwa_cmd=[
         quote(self.bwa_exe),
         quote(mem_cmd),
-        '-t',quote(str(self.thread)),
-      ]
-      if isinstance(parameter_options,tuple and \
-         len(parameter_options)>0):
+        '-t',quote(str(self.thread))]
+      if isinstance(parameter_options,tuple) and \
+         len(parameter_options)>0 :
         parameter_options = \
           {item:parameter_options[index+1]
              for index, item in enumerate(parameter_options)
