@@ -18,7 +18,7 @@ class RunPicard(IGFBaseProcess):
         'analysis_files':[],
         'picard_option':{},
         'output_prefix':None,
-        'load_picard_metrics_to_cram':False,
+        'load_metrics_to_cram':False,
         'cram_collection_type':'ANALYSIS_CRAM'
       })
     return params_dict
@@ -64,7 +64,7 @@ class RunPicard(IGFBaseProcess):
       patterned_flowcell_list = self.param('patterned_flowcell_list')
       platform_name = self.param_required('platform_name')
       output_prefix = self.param('output_prefix')
-      load_picard_metrics_to_cram = self.param('load_picard_metrics_to_cram')
+      load_metrics_to_cram = self.param('load_metrics_to_cram')
       cram_collection_type = self.param('cram_collection_type')
       seed_date_stamp = self.param_required('date_stamp')
       seed_date_stamp = get_datestamp_label(seed_date_stamp)
@@ -95,7 +95,8 @@ class RunPicard(IGFBaseProcess):
       if platform_name in patterned_flowcell_list:                              # check for patterned flowcell
         patterned_flowcell=True
 
-      if load_picard_metrics_to_cram and not cram_collection_type:
+      if load_metrics_to_cram and 
+         not cram_collection_type:
         raise ValueError('Cram file collection type is required for loading picard metrics to db')
 
       picard=\
@@ -130,7 +131,7 @@ class RunPicard(IGFBaseProcess):
         if file.endswith('.bam'):
           bam_files.append(file)
 
-      if load_picard_metrics_to_cram and \
+      if load_metrics_to_cram and \
          len(picard_metrics)>0:
         ca = CollectionAdaptor(**{'session_class':igf_session_class})
         attribute_data = \
