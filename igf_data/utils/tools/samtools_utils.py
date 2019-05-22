@@ -123,11 +123,11 @@ def run_samtools_view(samtools_exe,input_file,output_file,reference_file=None,
     view_cmd = \
       [quote(samtools_exe),
        'view',
-       '-o{0}'.format(quote(temp_file))
+       '-o',quote(temp_file)
       ]                                                                         # convert bam to cram using samtools
     if reference_file is not None:
       check_file_path(reference_file)
-      view_cmd.append('-T{0}'.format(quote(reference_file)))
+      view_cmd.append('-T',quote(reference_file))
 
     if threads is not None:
       view_cmd.append('-@{0}'.format(quote(str(threads))))
