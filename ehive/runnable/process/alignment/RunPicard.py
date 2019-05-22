@@ -95,7 +95,7 @@ class RunPicard(IGFBaseProcess):
       if platform_name in patterned_flowcell_list:                              # check for patterned flowcell
         patterned_flowcell=True
 
-      if load_metrics_to_cram and 
+      if load_metrics_to_cram and \
          not cram_collection_type:
         raise ValueError('Cram file collection type is required for loading picard metrics to db')
 
