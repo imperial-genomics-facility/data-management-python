@@ -51,7 +51,7 @@ class Samtools_util_test2(unittest.TestCase):
         dry_run=True)
     self.assertTrue(self.samtools_exe in samtools_cmd)
     self.assertTrue('view' in samtools_cmd)
-    self.assertTrue('-T{0}'.format(self.reference_file) in samtools_cmd)
+    self.assertTrue('-T' in samtools_cmd and self.reference_file in samtools_cmd)
     self.assertTrue('-@1' in samtools_cmd)
     self.assertTrue('-C' in samtools_cmd)
     self.assertTrue(self.input_bam in samtools_cmd)
