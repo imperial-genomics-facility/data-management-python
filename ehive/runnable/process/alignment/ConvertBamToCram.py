@@ -118,7 +118,7 @@ class ConvertBamToCram(IGFBaseProcess):
         final_output_list.append(cram)
         cram_index = '{0}.crai'.format(cram)                                    # cram index has suffix .crai
         check_file_path(cram_index)
-        final_output_list.append()                                              # add cram index to final output
+        final_output_list.append(cram_index)                                    # add cram index to final output
 
       self.param('dataflow_params',
                  {'output_cram_list':final_output_list})                        # pass on bam output path
