@@ -32,7 +32,9 @@ class Ppqt_tools:
           output_dir=temp_dir,
           temp_dir=temp_dir)                                                    # preprocess and fetch run cmd
 
-      subprocess.check_call(run_cmd,shell=False)                                # run ppqt and capture stdout
+      subprocess.check_call(\
+        ' '.join(run_cmd),
+        shell=False)                                                            # run ppqt and capture stdout
 
       spp_output, pdf_output = \
         self._post_process(\
