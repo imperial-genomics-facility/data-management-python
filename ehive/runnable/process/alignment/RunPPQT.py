@@ -41,7 +41,7 @@ class RunPPQT(IGFBaseProcess):
       analysis_files = self.param_required('analysis_files')
       output_prefix = self.param_required('output_prefix')
       species_name = self.param_required('species_name')
-      analysis_name = self.param_required('analysis_name')
+      analysis_name = self.param('analysis_name')
       seed_date_stamp = self.param_required('date_stamp')
       load_metrics_to_cram = self.param('load_metrics_to_cram')
       ppqt_collection_type = self.param('ppqt_collection_type')
