@@ -34,7 +34,7 @@ class Ppqt_tools:
 
       subprocess.check_call(\
         ' '.join(run_cmd),
-        shell=False)                                                            # run ppqt and capture stdout
+        shell=True)                                                             # run ppqt and capture stdout
 
       spp_output, pdf_output = \
         self._post_process(\
