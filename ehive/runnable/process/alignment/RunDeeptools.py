@@ -40,7 +40,7 @@ class RunDeeptools(IGFBaseProcess):
       input_files = self.param_required('input_files')
       threads = self.param('threads')
       base_work_dir = self.param_required('base_work_dir')
-      base_result_dir = self.param_required('base_result_dir')
+      base_results_dir = self.param_required('base_results_dir')
       deeptools_command = self.param_required('deeptools_command')
       analysis_files = self.param_required('analysis_files')
       output_prefix = self.param_required('output_prefix')
@@ -126,7 +126,7 @@ class RunDeeptools(IGFBaseProcess):
             Analysis_collection_utils(\
               dbsession_class=igf_session_class,
               analysis_name=analysis_name,
-              base_path=base_result_dir,
+              base_path=base_results_dir,
               tag_name=species_name,
               collection_name=experiment_igf_id,
               collection_type=signal_collection_type,
