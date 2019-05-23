@@ -51,7 +51,8 @@ def run_plotCoverage(bam_files,output_raw_counts,plotcov_stdout,output_plot=None
       check_file_path(blacklist_file)
       plotcov_args.extend(["--blackListFileName",quote(blacklist_file)])
 
-    if params_list is not None and \
+    if (params_list is not None or \
+        params_list !='') and \
        isinstance(params_list,list) and \
        len(params_list) > 0:
       params_list = [quote(param)
@@ -125,7 +126,8 @@ def run_bamCoverage(bam_files,output_file,blacklist_file=None,thread=1,dry_run=F
       bamcov_args.extend(["--blackListFileName",quote(blacklist_file)])
 
     
-    if params_list is not None:
+    if (params_list is not None or \
+        params_list != ''):
       params_list = list(params_list)
       if len(params_list) > 0:
         params_list = \
@@ -191,7 +193,8 @@ def run_plotFingerprint(bam_files,output_raw_counts,output_matrics,output_plot=N
       check_file_path(blacklist_file)
       plotFgCov_args.extend(["--blackListFileName",quote(blacklist_file)])
 
-    if params_list is not None and \
+    if (params_list is not None or \
+        params_list != '') and \
        isinstance(params_list,list) and \
        len(params_list) > 0:
       params_list = [quote(param)
