@@ -114,6 +114,7 @@ class RunSamtools(IGFBaseProcess):
           experiment_igf_id)
       work_dir = self.get_job_work_dir(work_dir=work_dir_prefix)                # get a run work dir
       samtools_cmdline = ''
+      temp_output = None
       if samtools_command == 'idxstats':
         temp_output,samtools_cmdline = \
           run_bam_idxstat(\
@@ -166,7 +167,7 @@ class RunSamtools(IGFBaseProcess):
           raise ValueError('Missing output filename prefix for merged bam')
 
         sorted_by_name=self.param('sorted_by_name')
-        temp_output=\
+        temp_output = \
           os.path.join(\
             work_dir,
             '{0}_merged.bam'.format(output_prefix))
@@ -267,7 +268,7 @@ class RunSamtools(IGFBaseProcess):
         raise ValueError('Samtools command {0} not supported'.\
                          format(samtools_command))
 
-      if temp_output:
+      if temp_output is not None:
         dest_path = \
           os.path.join(\
             work_dir,
