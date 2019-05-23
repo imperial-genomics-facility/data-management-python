@@ -62,14 +62,16 @@ class Ppqt_tools:
       if not os.path.exists(output_dir):
         os.makedirs(output_dir,mode=0o770)
 
+      output_pdf = os.path.join(temp_dir,output_pdf_name)
+      output_spp = os.path.join(temp_dir,output_spp_name)
       run_cmd = \
         [quote(self.rscript_path),
          quote(self.ppqt_exe),
          quote('-c={0}'.format(input_bam)),
          quote('-rf'),
          quote('-p={0}'.format(self.thread)),
-         quote('-savp={0}'.format(output_pdf_name)),
-         quote('-out={0}'.format(output_spp_name)),
+         quote('-savp={0}'.format(output_pdf)),
+         quote('-out={0}'.format(output_spp)),
          quote('-tmpdir={0}'.format(temp_dir)),
          quote('-odir={0}'.format(output_dir))]
       return run_cmd
