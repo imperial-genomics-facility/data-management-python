@@ -68,8 +68,8 @@ class Ppqt_tools:
          quote('-c={0}'.format(input_bam)),
          quote('-rf'),
          quote('-p={0}'.format(self.thread)),
-         quote('-savep={0}'.format(output_pdf)),
-         quote('-out={0}'.format(output_spp)),
+         quote('-savep={0}'.format(output_pdf_name)),
+         quote('-out={0}'.format(output_spp_name)),
          quote('-tmpdir={0}'.format(temp_dir)),
          quote('-odir={0}'.format(output_dir))]
       return run_cmd
