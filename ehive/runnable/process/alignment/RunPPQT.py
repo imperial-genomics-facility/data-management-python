@@ -37,6 +37,7 @@ class RunPPQT(IGFBaseProcess):
       ppqt_exe = self.param_required('ppqt_exe')
       base_work_dir = self.param_required('base_work_dir')
       base_result_dir = self.param_required('base_result_dir')
+      library_strategy = self.param_required('library_strategy')
       analysis_files = self.param_required('analysis_files')
       output_prefix = self.param_required('output_prefix')
       species_name = self.param_required('species_name')
@@ -59,6 +60,9 @@ class RunPPQT(IGFBaseProcess):
       if len(input_files)>1:
         raise ValueError('More than one input file found: {0}'.\
                          format(input_files))
+
+      if analysis_name is None:
+        analysis_name = library_strategy                                        # use library_strategy as default analysis_name
 
       input_file = input_files[0]
       work_dir_prefix = \
