@@ -40,12 +40,12 @@ def run_plotCoverage(bam_files,output_raw_counts,plotcov_stdout,output_plot=None
     plotcov_args.\
     extend(\
       ["--numberOfProcessors",quote(str(thread)),
-       "--outRawCounts",quote(temp_output_raw_counts)
+       "--outRawCounts",temp_output_raw_counts
       ])
     if output_plot is not None:
       temp_output_plot = \
         os.path.join(temp_dir,os.path.basename(output_plot))                    # path for temp raw counts
-      plotcov_args.extend(["--plotFile",quote(temp_output_plot)])
+      plotcov_args.extend(["--plotFile",temp_output_plot])
 
     if blacklist_file is not None:
       check_file_path(blacklist_file)
@@ -120,7 +120,7 @@ def run_bamCoverage(bam_files,output_file,blacklist_file=None,thread=1,dry_run=F
     bamcov_args.\
     extend(\
       ["--numberOfProcessors",quote(str(thread)),
-       "--outFileName",quote(temp_output)])
+       "--outFileName",temp_output])
     if blacklist_file is not None:
       check_file_path(blacklist_file)
       bamcov_args.extend(["--blackListFileName",quote(blacklist_file)])
@@ -184,13 +184,13 @@ def run_plotFingerprint(bam_files,output_raw_counts,output_matrics,output_plot=N
     plotFgCov_args.\
     extend(\
       ["--numberOfProcessors",quote(str(thread)),
-       "--outRawCounts",quote(temp_output_raw_counts),
-       "--outQualityMetrics",quote(temp_output_matrics)
+       "--outRawCounts",temp_output_raw_counts,
+       "--outQualityMetrics",temp_output_matrics
       ])
     if output_plot is not None:
       temp_output_plot = \
         os.path.join(temp_dir,os.path.basename(output_plot))                    # path for temp raw counts
-      plotFgCov_args.extend(["--plotFile",quote(temp_output_plot)])
+      plotFgCov_args.extend(["--plotFile",temp_output_plot])
 
     if blacklist_file is not None:
       check_file_path(blacklist_file)
