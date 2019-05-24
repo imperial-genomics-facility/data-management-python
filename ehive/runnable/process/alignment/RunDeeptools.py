@@ -25,6 +25,7 @@ class RunDeeptools(IGFBaseProcess):
         'collection_table':'experiment',
         'remove_existing_file':True,
         'withdraw_exisitng_collection':True,
+        'threads':1,
       })
     return params_dict
 
