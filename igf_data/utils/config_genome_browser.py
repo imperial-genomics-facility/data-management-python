@@ -25,7 +25,7 @@ class Config_genome_browser:
   def __init__(self,dbsession_class,project_igf_id,collection_type_list,
                pipeline_name,collection_table,species_name,ref_genome_type,
                track_file_type=None,analysis_path_prefix='analysis',
-               analysis_dir_structure_list=('sample_igf_id')):
+               analysis_dir_structure_list=('sample_igf_id',)):
     self.dbsession_class=dbsession_class
     self.project_igf_id=project_igf_id
     self.collection_type_list=collection_type_list
@@ -230,8 +230,8 @@ class Config_genome_browser:
       track_path_list=[self.analysis_path_prefix]
       for item in self.analysis_dir_structure_list:
         if data.get(item) is None:
-          raise ValueError('path item {0} not found: {0}'.\
-                           format(data.to_dict()))
+          raise ValueError('path item {0} not found: {1}'.\
+                           format(item,data.to_dict()))
         track_path_list.append(data.get(item))
 
       track_path_list.append(file_path)
