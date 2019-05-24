@@ -127,7 +127,10 @@ def run_bamCoverage(bam_files,output_file,blacklist_file=None,thread=1,dry_run=F
 
     
     if (params_list is not None or \
-        params_list != ''):
+        params_list != '') and \
+        (isinstance(params_list,list) or \
+         isinstance(params_list,tuple)) and \
+        len(params_list)>0:
       params_list = list(params_list)
       if len(params_list) > 0:
         params_list = \

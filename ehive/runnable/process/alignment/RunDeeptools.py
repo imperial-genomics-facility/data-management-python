@@ -21,6 +21,7 @@ class RunDeeptools(IGFBaseProcess):
         'cram_collection_type':'ANALYSIS_CRAM',
         'signal_collection_type':'DEEPTOOLS_BIGWIG',
         'deeptools_params':None,
+        'deeptools_bamCov_params': ("--outFileFormat","bigwig"),
         'analysis_name':'Deeptools',
         'collection_table':'experiment',
         'remove_existing_file':True,
@@ -50,6 +51,7 @@ class RunDeeptools(IGFBaseProcess):
       blacklist_reference_type = self.param('blacklist_reference_type')
       species_name = self.param('species_name')
       deeptools_params = self.param('deeptools_params')
+      deeptools_bamCov_params = self.param('deeptools_bamCov_params')
       collection_table = self.param('collection_table')
       remove_existing_file = self.param('remove_existing_file')
       withdraw_exisitng_collection = self.param('withdraw_exisitng_collection')
@@ -115,6 +117,9 @@ class RunDeeptools(IGFBaseProcess):
           os.path.join(\
             work_dir,
             output_file)
+        if deeptools_params is None:
+          deeptools_params = deeptools_bamCov_params
+
         deeptools_args = \
           run_bamCoverage(\
             bam_files=input_files,
