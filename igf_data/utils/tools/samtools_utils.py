@@ -150,8 +150,8 @@ def run_samtools_view(samtools_exe,input_file,output_file,reference_file=None,
       return view_cmd
 
     subprocess.check_call(\
-      view_cmd,
-      shell=False)
+      ' '.join(view_cmd),
+      shell=True)
     if cram_out:
       _check_cram_file(cram_path=temp_file)                                     # check cram output
 
