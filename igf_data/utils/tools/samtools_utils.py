@@ -568,7 +568,8 @@ def merge_multiple_bam(samtools_exe,input_bam_list,output_bam_path,sorted_by_nam
       force=force)                                                              # copy bamfile
     remove_dir(temp_dir)                                                        # remove temp dir
     _check_bam_file(output_bam_path)
-    if index_output:
+    if index_output and \
+       not sorted_by_name:
       index_bam_or_cram(\
         samtools_exe=samtools_exe,
         input_path=output_bam_path,
