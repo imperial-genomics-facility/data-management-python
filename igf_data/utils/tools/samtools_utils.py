@@ -83,8 +83,8 @@ def index_bam_or_cram(samtools_exe,input_path,threads=1,
 
     subprocess.\
       check_call(\
-        index_cmd,
-        shell=False)
+        ' '.join(index_cmd),
+        shell=True)
     return index_cmd
   except:
     raise
