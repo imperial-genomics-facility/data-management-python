@@ -557,7 +557,7 @@ def merge_multiple_bam(samtools_exe,input_bam_list,output_bam_path,sorted_by_nam
     if sorted_by_name:
       merge_cmd.append('-n')                                                    # Input files are sorted by read name
 
-    merge_cmd.append(quote(temp_bam))
+    merge_cmd.append(temp_bam)
     if dry_run:
       return merge_cmd
 
