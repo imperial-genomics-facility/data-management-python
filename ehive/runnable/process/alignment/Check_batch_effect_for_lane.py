@@ -40,10 +40,11 @@ class Check_batch_effect_for_lane(IGFBaseProcess):
       analysis_name = self.param('analysis_name')
       tag_name = self.param('tag_name')
 
+      output_file_list = None
       if len(input_files)==0:
         raise ValueError('No input files found for bactch effect checking')
-      elif len(input_files)==1:
-        pass                                                                    # can't run batch effect checking on single lane
+      elif len(input_files) < 3:
+        output_file_list = ''                                                   # can't run batch effect checking on less than 3 lanes
       else:
         for file in input_files:
           check_file_path(file)                                                 # check input filepath
@@ -94,8 +95,9 @@ class Check_batch_effect_for_lane(IGFBaseProcess):
         output_file_list = \
           au.load_file_to_disk_and_db(\
                input_file_list=[temp_output_file])                              # load file to db and disk
-        self.param('dataflow_params',
-                   {'batch_effect_reports':output_file_list})                   # populating data flow only if report is present
+
+      self.param('dataflow_params',
+                 {'batch_effect_reports':output_file_list})                     # populating data flow only if report is present
     except Exception as e:
       message='project: {2}, sample:{3}, Error in {0}: {1}'.\
               format(self.__class__.__name__,
