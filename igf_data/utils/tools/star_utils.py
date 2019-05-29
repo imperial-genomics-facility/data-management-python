@@ -87,8 +87,8 @@ class Star_utils:
           else:
             star_cmd.append(field)
 
-      if isinstance(star_patameters,tuple and \
-         len(star_patameters)>0):
+      if isinstance(star_patameters,tuple) and \
+         len(star_patameters)>0:
         star_patameters = \
           {item:star_patameters[index+1]
              for index, item in enumerate(star_patameters)
