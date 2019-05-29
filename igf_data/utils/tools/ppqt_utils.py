@@ -7,12 +7,12 @@ class Ppqt_tools:
   '''
   A class for running Phantom quality control tools (PPQT)
   '''
-  def __init__(self,rscript_path,ppqt_exe,thread=1):
+  def __init__(self,rscript_path,ppqt_exe,threads=1):
     self.rscript_path = rscript_path
     self.ppqt_exe = ppqt_exe
-    self.thread = thread
+    self.threads = threads
 
-  def run_ppqt(self,input_bam,output_dir,output_spp_name,output_pdf_name,threads=0):
+  def run_ppqt(self,input_bam,output_dir,output_spp_name,output_pdf_name):
     '''
     A method for running PPQT on input bam
 
@@ -20,7 +20,6 @@ class Ppqt_tools:
     :param output_spp_name: Output spp out file
     :param output_pdf_name: Output pdf plot
     :param output_dir: Destination output dir
-    :param threads: Number of threads to use, default 0
     :returns: PPQT run command as list,spp and pdf output path and a list or dictionary for spp.out matrics
     '''
     try:
@@ -31,7 +30,6 @@ class Ppqt_tools:
           output_spp_name=output_spp_name,
           output_pdf_name=output_pdf_name,
           output_dir=temp_dir,
-          threads=threads,
           temp_dir=temp_dir)                                                    # preprocess and fetch run cmd
 
       subprocess.check_call(\
@@ -50,7 +48,7 @@ class Ppqt_tools:
     except:
       raise
 
-  def _pre_process(self,input_bam,output_spp_name,output_pdf_name,output_dir,temp_dir,threads=0):
+  def _pre_process(self,input_bam,output_spp_name,output_pdf_name,output_dir,temp_dir):
     '''
     An internal method for preprocessing before the exe run
 
@@ -58,7 +56,6 @@ class Ppqt_tools:
     :param output_spp_name: Output spp filename
     :param output_pdf_name: Output pdf filename
     :param output_dir: Destination output dir
-    :param threads: Number of threads, default 0
     :param temp_dir: Source temp dir
     '''
     try:
@@ -74,11 +71,10 @@ class Ppqt_tools:
          quote(self.ppqt_exe),
          quote('-c={0}'.format(input_bam)),
          quote('-rf'),
-         quote('-p={0}'.format(self.thread)),
+         quote('-p={0}'.format(str(self.thread))),
          quote('-savp={0}'.format(output_pdf)),
          quote('-out={0}'.format(output_spp)),
          quote('-tmpdir={0}'.format(temp_dir)),
-         quote('-p={0}'.format(str(threads))),
          quote('-odir={0}'.format(output_dir))]
       return run_cmd
     except:

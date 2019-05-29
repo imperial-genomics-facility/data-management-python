@@ -77,12 +77,12 @@ class RunPPQT(IGFBaseProcess):
       ppqt_obj = \
         Ppqt_tools(\
           rscript_path=rscript_path,
-          ppqt_exe=ppqt_exe)
+          ppqt_exe=ppqt_exe,
+          threads=threads)
       ppqt_cmd,spp_output, pdf_output,spp_data = \
         ppqt_obj.run_ppqt(\
           input_bam=input_file,
           output_dir=work_dir,
-          threads=threads,
           output_spp_name='{0}_{1}.spp.out'.format(output_prefix,'PPQT'),
           output_pdf_name='{0}_{1}.spp.pdf'.format(output_prefix,'PPQT'))
       analysis_files.append(spp_output)
