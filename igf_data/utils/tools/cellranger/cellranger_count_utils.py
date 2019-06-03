@@ -87,6 +87,7 @@ def extract_cellranger_count_metrics_summary(cellranger_tar,
                                              collection_type=None,
                                              attribute_name='attribute_name',
                                              attribute_value='attribute_value',
+                                             attribute_prefix='None',
                                              target_filename='metrics_summary.csv'):
   '''
   A function for extracting metrics summary file for cellranger ourput tar and parse the file.
@@ -96,11 +97,12 @@ def extract_cellranger_count_metrics_summary(cellranger_tar,
   :param target_filename: A filename for metrics summary file lookup, default metrics_summary.csv
   :param collection_name: Optional collection name, default None
   :param collection_type: Optional collection type, default None
+  :param attribute_tag: An optional string to add as prefix of the attribute names, default None
   :returns: A dictionary containing the metrics values
   '''
   try:
     check_file_path(cellranger_tar)
-    temp_work_dir = get_temp_dir(use_ephemeral_space=True)
+    temp_work_dir = get_temp_dir(use_ephemeral_space=False)
     metrics_file = None
     with tarfile.open(cellranger_tar,mode='r') as tar:
       for file_name in tar.getnames():
@@ -116,6 +118,18 @@ def extract_cellranger_count_metrics_summary(cellranger_tar,
     attribute_data = pd.read_csv(metrics_file).T.\
                      reset_index()
     attribute_data.columns = [attribute_name,attribute_value]
+    if attribute_prefix is None:
+      attribute_data[attribute_name] = \
+        attribute_data[attribute_name].\
+          map(lambda x: x.replace(' ','_'))
+    else:
+      attribute_data[attribute_name] = \
+        attribute_data[attribute_name].\
+          map(lambda x: \
+              '{0}_{1}'.format(\
+                attribute_prefix,
+                x.replace(' ','_')))
+
     if collection_name is not None:
       attribute_data['name'] = collection_name
     if collection_type is not None:

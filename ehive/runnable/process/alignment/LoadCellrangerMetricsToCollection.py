@@ -12,7 +12,8 @@ class LoadCellrangerMetricsToCollection(IGFBaseProcess):
     params_dict=super(LoadCellrangerMetricsToCollection,self).param_defaults()
     params_dict.update({
         'collection_type':'CELLRANGER_RESULTS',
-        'metrics_filename':'metrics_summary.csv'
+        'metrics_filename':'metrics_summary.csv',
+        'attribute_prefix':'CELLRANGER',
       })
     return params_dict
 
@@ -37,6 +38,7 @@ class LoadCellrangerMetricsToCollection(IGFBaseProcess):
       analysis_output_list = self.param_required('analysis_output_list')
       collection_type = self.param('collection_type')
       metrics_filename = self.param('metrics_filename')
+      attribute_prefix = self.param('attribute_prefix')
       for infile in analysis_output_list:
         check_file_path(infile)                                                 # check input file path
 
@@ -45,7 +47,8 @@ class LoadCellrangerMetricsToCollection(IGFBaseProcess):
                             cellranger_tar=cellranger_tar,
                             target_filename=metrics_filename,
                             collection_name=experiment_igf_id,
-                            collection_type=collection_type
+                            collection_type=collection_type,
+                            attribute_prefix=attribute_prefix
                             )                                                   # extract cellranger metrics stats as dictionary
       ca = CollectionAdaptor(**{'session_class':igf_session_class})
       ca.start_session()
