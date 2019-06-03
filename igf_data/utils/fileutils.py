@@ -127,7 +127,8 @@ def copy_local_file(source_path,destinationa_path, force=False):
 
 def copy_remote_file(source_path,destinationa_path, source_address=None,
                      destination_address=None, copy_method='rsync',
-                     check_file=True, force_update=False):
+                     check_file=True, force_update=False,
+                     exclude_pattern_list=None):
     '''
     A method for copy files from or to remote location
     
@@ -138,6 +139,7 @@ def copy_remote_file(source_path,destinationa_path, source_address=None,
     :param copy_method: A nethod for copy files, default is 'rsync'
     :param check_file: Check file after transfer using checksum, default True
     :param force_update: Overwrite existing file or dir, default is False
+    :param exclude_pattern_list: List of file pattern to exclude, Deefault None
     '''
     try:
         if source_address is None and \
@@ -168,6 +170,12 @@ def copy_remote_file(source_path,destinationa_path, source_address=None,
 
           if force_update:
             cmd.append('-I')
+
+          if exclude_pattern_list is not None and \
+             ( isinstance(exclude_pattern_list,list) and \
+               len(exclude_pattern_list)>0 ):
+            for exclude_path in exclude_pattern_list:
+              cmd.extend(['--exclude',quote(exclude_path)])                     # added support for exclude pattern
 
           cmd.extend(['-r','-p','-e','ssh',source_path,destinationa_path])
         else:
