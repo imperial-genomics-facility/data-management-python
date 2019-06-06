@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+from copy import deepcopy
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.utils.fileutils import get_temp_dir,move_file
 from igf_data.igfdb.igfTables import Base, Project,Sample,Experiment,Run,Seqrun,Collection,Collection_group,File,Collection_attribute,Pipeline,Pipeline_seed
@@ -13,62 +14,12 @@ class Project_analysis:
   :param igf_session_class: A database session class
   :param collection_type_list: A list of collection type for database lookup
   :param remote_analysis_dir: A remote path prefix for analysis file look up, default analysis
-  :param analysis_stats_columns: A list of alignment stats to show on report, default columns are following
-
-                                  * SAMPLE_ID
-                                  * SAMTOOLS_STATS_raw_total_sequences
-                                  * SAMTOOLS_STATS_reads_mapped
-                                  * SAMTOOLS_STATS_reads_duplicated
-                                  * SAMTOOLS_STATS_reads_mapped_and_paired
-                                  * SAMTOOLS_STATS_reads_unmapped
-
-  :param rnaseq_stats_columns: A list of RNA-Seq stats to show on report, default columns are following
-
-                                  * SAMPLE_ID
-                                  * CollectRnaSeqMetrics_CODING_BASES
-                                  * CollectRnaSeqMetrics_INTERGENIC_BASES
-                                  * CollectRnaSeqMetrics_INTRONIC_BASES
-                                  * CollectRnaSeqMetrics_PF_ALIGNED_BASES
-                                  * CollectRnaSeqMetrics_PF_BASES
-                                  * CollectRnaSeqMetrics_RIBOSOMAL_BASES
-                                  * CollectRnaSeqMetrics_UTR_BASES
-
-  :param chipseq_stats_columns: A list of ChIP-Seq stats to show on report, default columns are following
-
-                                  * SAMPLE_ID
-                                  * PPQT_Normalized_SCC_NSC
-                                  * PPQT_Relative_SCC_RSC
-                                  * PPQT_corr_estFragLen
-                                  * PPQT_corr_phantomPeak
-                                  * PPQT_min_corr
+  :param attribute_collection_file_type: A filetype for fetching collection attribute records, default ANALYSIS_CRAM
 
   '''
   def __init__(self,igf_session_class,collection_type_list,remote_analysis_dir='analysis',
-               analysis_stats_columns=(\
-                 'SAMPLE_ID',
-                 'SAMTOOLS_STATS_raw_total_sequences',
-                 'SAMTOOLS_STATS_reads_mapped',
-                 'SAMTOOLS_STATS_reads_duplicated',
-                 'SAMTOOLS_STATS_reads_mapped_and_paired',
-                 'SAMTOOLS_STATS_reads_unmapped',
-                 'SAMTOOLS_STATS_non-primary_alignments'),
-                rnaseq_stats_columns=(\
-                  'SAMPLE_ID',
-                  'CollectRnaSeqMetrics_CODING_BASES',
-                  'CollectRnaSeqMetrics_INTERGENIC_BASES',
-                  'CollectRnaSeqMetrics_INTRONIC_BASES',
-                  'CollectRnaSeqMetrics_PF_ALIGNED_BASES',
-                  'CollectRnaSeqMetrics_PF_BASES',
-                  'CollectRnaSeqMetrics_RIBOSOMAL_BASES',
-                  'CollectRnaSeqMetrics_UTR_BASES'),
-                chipseq_stats_columns=(\
-                  'SAMPLE_ID',
-                  'PPQT_Normalized_SCC_NSC',
-                  'PPQT_Relative_SCC_RSC',
-                  'PPQT_corr_estFragLen',
-                  'PPQT_corr_phantomPeak',
-                  'PPQT_min_corr')
-                ):
+               attribute_collection_file_type='ANALYSIS_CRAM',pipeline_name='PrimaryAnalysisCombined',
+               pipeline_seed_table='experiment',pipeline_finished_status='FINISHED',sample_id_label='SAMPLE_ID'):
     try:
       self.igf_session_class = igf_session_class
       if not isinstance(collection_type_list, list):
@@ -76,9 +27,11 @@ class Project_analysis:
 
       self.collection_type_list = collection_type_list
       self.remote_analysis_dir = remote_analysis_dir
-      self.analysis_stats_columns = analysis_stats_columns
-      self.rnaseq_stats_columns = rnaseq_stats_columns
-      self.chipseq_stats_columns = chipseq_stats_columns
+      self.sample_id_label = sample_id_label
+      self.attribute_collection_file_type = attribute_collection_file_type
+      self.pipeline_name = pipeline_name
+      self.pipeline_seed_table = pipeline_seed_table
+      self.pipeline_finished_status = pipeline_finished_status
     except:
       raise
 
@@ -112,7 +65,57 @@ class Project_analysis:
     except:
       raise
 
-  def get_analysis_data_for_project(self,project_igf_id,output_file,gviz_out=True,
+
+  def _fetch_collection_attributes(self,project_igf_id):
+    '''
+    An internal method for fetching collection attribute records
+    :param project_igf_id: A project igf id for database lookup
+    :returns: A Pandas dataframe
+    '''
+    try:
+      base=BaseAdaptor(**{'session_class':self.igf_session_class})
+      base.start_session()
+      subquery = \
+        base.session.\
+          query(Experiment.experiment_igf_id).\
+          join(Sample,Sample.sample_id==Experiment.sample_id).\
+          join(Project,Project.project_id==Sample.project_id).\
+          join(Pipeline_seed,Pipeline_seed.seed_id==Experiment.experiment_id).\
+          join(Pipeline,Pipeline.pipeline_id==Pipeline_seed.pipeline_id).\
+          filter(Pipeline_seed.seed_table==self.pipeline_seed_table).\
+          filter(Pipeline_seed.status==self.pipeline_finished_status).\
+          filter(Pipeline.pipeline_name==self.pipeline_name).\
+          filter(Project.project_igf_id==project_igf_id).\
+          subquery()
+      query = \
+        base.session.\
+          query(Collection.name,
+                Collection_attribute.attribute_name,
+                Collection_attribute.attribute_value).\
+          join(Collection,Collection.collection_id==Collection_attribute.collection_id).\
+          filter(Collection.type==self.attribute_collection_file_type).\
+          filter(Collection.name.in_(subquery))
+      records = base.fetch_records(query=query)
+      base.close_session()
+      final_df = pd.DataFrame()
+      if len(records.index)>0:
+        for sample,s_data in records.groupby('name'):
+          attribute = s_data[['attribute_name','attribute_value']]
+          attribute = attribute.set_index('attribute_name').T
+          attribute[self.sample_id_label] = sample
+          attribute.set_index(self.sample_id_label,inplace=True)
+          if len(final_df.index)==0:
+            final_df=deepcopy(attribute)
+          else:
+            final_df = pd.concat([final_df,attribute],sort=True)
+
+      return final_df
+    except:
+      raise
+
+
+  def get_analysis_data_for_project(self,project_igf_id,output_file,chart_json_output_file=None,
+                                    csv_output_file=None,gviz_out=True,
                                     file_path_column='file_path',
                                     type_column='type',
                                     sample_igf_id_column='sample_igf_id',):
@@ -127,50 +130,59 @@ class Project_analysis:
     :param type_column: A column name for collection type, default type
     '''
     try:
-      base=BaseAdaptor(**{'session_class':self.igf_session_class})
+      base = BaseAdaptor(**{'session_class':self.igf_session_class})
       base.start_session()                                                      # connect to database
-      query=base.session.\
-            query(Sample.sample_igf_id,
-                  Collection.type,
-                  File.file_path).\
-            join(Project,Project.project_id==Sample.project_id).\
-            join(Experiment,Sample.sample_id==Experiment.sample_id).\
-            join(Collection, Experiment.experiment_igf_id==Collection.name).\
-            join(Collection_group,Collection.collection_id==Collection_group.collection_id).\
-            join(File,File.file_id==Collection_group.file_id).\
-            filter(Project.project_igf_id==project_igf_id).\
-            filter(Sample.project_id==Project.project_id).\
-            filter(Sample.sample_id==Experiment.sample_id).\
-            filter(Collection.collection_id==Collection_group.collection_id).\
-            filter(Collection_group.file_id==File.file_id).\
-            filter(Collection.table=='experiment').\
-            filter(Collection.type.in_(self.collection_type_list))
-      results=base.fetch_records(query=query,
-                                 output_mode='dataframe')
+      query = \
+        base.session.\
+          query(Sample.sample_igf_id,
+                Collection.type,
+                File.file_path).\
+          join(Project,Project.project_id==Sample.project_id).\
+          join(Experiment,Sample.sample_id==Experiment.sample_id).\
+          join(Collection, Experiment.experiment_igf_id==Collection.name).\
+          join(Collection_group,Collection.collection_id==Collection_group.collection_id).\
+          join(File,File.file_id==Collection_group.file_id).\
+          filter(Project.project_igf_id==project_igf_id).\
+          filter(Sample.project_id==Project.project_id).\
+          filter(Sample.sample_id==Experiment.sample_id).\
+          filter(Collection.collection_id==Collection_group.collection_id).\
+          filter(Collection_group.file_id==File.file_id).\
+          filter(Collection.table=='experiment').\
+          filter(Collection.type.in_(self.collection_type_list))
+      results = base.fetch_records(\
+                  query=query,
+                  output_mode='dataframe')
       base.close_session()
-      temp_output=os.path.join(get_temp_dir(),
-                               os.path.basename(output_file))                   # get a temp output file
+      temp_dir = get_temp_dir(use_ephemeral_space=False)
+      temp_output = \
+        os.path.join(\
+          temp_dir,
+          os.path.basename(output_file))                                        # get a temp output file
       if gviz_out and len(results) >0:                                          # checking for empty results
-        results=pd.DataFrame(results).fillna('')                                # convert to dataframe
-        results=results.\
-                apply(lambda x: self._add_html_tag(\
-                                  data_series=x,
-                                  sample_igf_id_column=sample_igf_id_column,
-                                  file_path_column=file_path_column),
-                      axis=1,
-                      result_type='expand')                                                   # add html tags to filepath
-        analysis_data=list()
-        description={'Sample':('string','Sample')}
-        column_order=['Sample']
+        results = pd.DataFrame(results).fillna('')                              # convert to dataframe
+        results = \
+          results.\
+            apply(lambda x: \
+              self._add_html_tag(\
+                data_series=x,
+                sample_igf_id_column=sample_igf_id_column,
+                file_path_column=file_path_column),
+              axis=1,
+              result_type='expand')                                             # add html tags to filepath
+        analysis_data = list()
+        description = {'Sample':('string','Sample')}
+        column_order = ['Sample']
 
         for sample, sg_data in results.groupby(sample_igf_id_column):           # reformat analysis data
-          row_data=dict({'Sample':sample})
+          row_data = dict({'Sample':sample})
           for analysis_type, tg_data in sg_data.groupby(type_column):
-            row_data.update({analysis_type:' ;'.join(tg_data[file_path_column].values)})
+            row_data.\
+              update({analysis_type:' ;'.join(tg_data[file_path_column].values)})
           analysis_data.append(row_data)                                        # collect analysis data for a sample
 
         for analysis_type, tg_data in results.groupby(type_column):
-          description.update({analysis_type:('string',analysis_type)})
+          description.\
+            update({analysis_type:('string',analysis_type)})
           column_order.append(analysis_type)                                    # fetched description and column order
 
         convert_to_gviz_json_for_display(\
@@ -181,9 +193,37 @@ class Project_analysis:
       else:
         results.to_csv(temp_output,index=False)                                 # write temp csv file
 
-      move_file(source_path=temp_output,
-                destinationa_path=output_file,
-                force=True)                                                     # move temp file
+      move_file(\
+        source_path=temp_output,
+        destinationa_path=output_file,
+        force=True)                                                             # move temp file
+      if chart_json_output_file is not None:
+        chart_data = \
+          self._fetch_collection_attributes(project_igf_id=project_igf_id)      # fetch chart data
+        if len(chart_data.index)>0:
+          if csv_output_file is not None:
+            chart_data.to_csv(\
+              csv_output_file,
+              index=True)                                                       # dump csv output file
+
+          temp_chart_output = \
+            os.path.join(\
+              temp_dir,
+              os.path.basename(chart_json_output_file))                         # get a temp output file
+          column_order = list(chart_data.columns)
+          description = \
+            { column_name : ('string',column_name)
+              for column_name in column_list}                                   # prepare chart description
+          convert_to_gviz_json_for_display(\
+            description=description,
+            columns_order=column_list,
+            data=chart_data.to_dict(orient='records'),
+            output_file=temp_chart_output)
+          move_file(\
+            source_path=temp_chart_output,
+            destinationa_path=chart_json_output_file,
+            force=True)
+
     except:
       raise
 
