@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.utils.fileutils import get_temp_dir,move_file
-from igf_data.igfdb.igfTables import Base, Project,Sample,Experiment,Run,Seqrun,Collection,Collection_group,File
+from igf_data.igfdb.igfTables import Base, Project,Sample,Experiment,Run,Seqrun,Collection,Collection_group,File,Collection_attribute,Pipeline,Pipeline_seed
 from igf_data.utils.gviz_utils import convert_to_gviz_json_for_display
 
 
@@ -13,15 +13,72 @@ class Project_analysis:
   :param igf_session_class: A database session class
   :param collection_type_list: A list of collection type for database lookup
   :param remote_analysis_dir: A remote path prefix for analysis file look up, default analysis
+  :param analysis_stats_columns: A list of alignment stats to show on report, default columns are following
+
+                                  * SAMPLE_ID
+                                  * SAMTOOLS_STATS_raw_total_sequences
+                                  * SAMTOOLS_STATS_reads_mapped
+                                  * SAMTOOLS_STATS_reads_duplicated
+                                  * SAMTOOLS_STATS_reads_mapped_and_paired
+                                  * SAMTOOLS_STATS_reads_unmapped
+
+  :param rnaseq_stats_columns: A list of RNA-Seq stats to show on report, default columns are following
+
+                                  * SAMPLE_ID
+                                  * CollectRnaSeqMetrics_CODING_BASES
+                                  * CollectRnaSeqMetrics_INTERGENIC_BASES
+                                  * CollectRnaSeqMetrics_INTRONIC_BASES
+                                  * CollectRnaSeqMetrics_PF_ALIGNED_BASES
+                                  * CollectRnaSeqMetrics_PF_BASES
+                                  * CollectRnaSeqMetrics_RIBOSOMAL_BASES
+                                  * CollectRnaSeqMetrics_UTR_BASES
+
+  :param chipseq_stats_columns: A list of ChIP-Seq stats to show on report, default columns are following
+
+                                  * SAMPLE_ID
+                                  * PPQT_Normalized_SCC_NSC
+                                  * PPQT_Relative_SCC_RSC
+                                  * PPQT_corr_estFragLen
+                                  * PPQT_corr_phantomPeak
+                                  * PPQT_min_corr
+
   '''
-  def __init__(self,igf_session_class,collection_type_list,remote_analysis_dir='analysis'):
+  def __init__(self,igf_session_class,collection_type_list,remote_analysis_dir='analysis',
+               analysis_stats_columns=(\
+                 'SAMPLE_ID',
+                 'SAMTOOLS_STATS_raw_total_sequences',
+                 'SAMTOOLS_STATS_reads_mapped',
+                 'SAMTOOLS_STATS_reads_duplicated',
+                 'SAMTOOLS_STATS_reads_mapped_and_paired',
+                 'SAMTOOLS_STATS_reads_unmapped',
+                 'SAMTOOLS_STATS_non-primary_alignments'),
+                rnaseq_stats_columns=(\
+                  'SAMPLE_ID',
+                  'CollectRnaSeqMetrics_CODING_BASES',
+                  'CollectRnaSeqMetrics_INTERGENIC_BASES',
+                  'CollectRnaSeqMetrics_INTRONIC_BASES',
+                  'CollectRnaSeqMetrics_PF_ALIGNED_BASES',
+                  'CollectRnaSeqMetrics_PF_BASES',
+                  'CollectRnaSeqMetrics_RIBOSOMAL_BASES',
+                  'CollectRnaSeqMetrics_UTR_BASES'),
+                chipseq_stats_columns=(\
+                  'SAMPLE_ID',
+                  'PPQT_Normalized_SCC_NSC',
+                  'PPQT_Relative_SCC_RSC',
+                  'PPQT_corr_estFragLen',
+                  'PPQT_corr_phantomPeak',
+                  'PPQT_min_corr')
+                ):
     try:
-      self.igf_session_class=igf_session_class
+      self.igf_session_class = igf_session_class
       if not isinstance(collection_type_list, list):
         raise ValueError('Expecting a list of collection types for db look up')
 
-      self.collection_type_list=collection_type_list
-      self.remote_analysis_dir=remote_analysis_dir
+      self.collection_type_list = collection_type_list
+      self.remote_analysis_dir = remote_analysis_dir
+      self.analysis_stats_columns = analysis_stats_columns
+      self.rnaseq_stats_columns = rnaseq_stats_columns
+      self.chipseq_stats_columns = chipseq_stats_columns
     except:
       raise
 
