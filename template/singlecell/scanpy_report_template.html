@@ -183,6 +183,13 @@
         <div class="img_placement">
           <img src="data:image/png;base64,{{ Tsne }}" class="img_border">
         </div>
+        <h3>3D UMAP Plot of louvain clusters</h3>
+        <pre class="code_box"><code>
+          # embedding the neighborhood graph using umap
+            sc.tl.umap(adata,n_components=3)
+        </code></pre>
+        {{ Umap3DDiv }}
+        
         <h3>UMAP Plot of louvain clusters</h3>
         <pre class="code_box"><code>
           # embedding the neighborhood graph using umap

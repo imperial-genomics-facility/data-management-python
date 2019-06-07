@@ -3,7 +3,10 @@ import scanpy as sc
 import numpy as np
 import pandas as pd
 from shutil import copytree
+from copy import deepcopy
 from datetime import datetime
+import plotly.graph_objs as go
+from plotly.offline import download_plotlyjs, init_notebook_mode, plot, iplot
 from igf_data.utils.fileutils import get_temp_dir,copy_local_file,remove_dir
 from jinja2 import Template,Environment, FileSystemLoader,select_autoescape
 
@@ -90,7 +93,7 @@ class Scanpy_tool:
 
       # step 1: read input files
       temp_input_dir = \
-        get_temp_dir(use_ephemeral_space=True)                                  # fix for hpc
+        get_temp_dir(use_ephemeral_space=False)                                 # fix for hpc
       local_matrix_file = \
         os.path.join(\
           temp_input_dir,
@@ -241,8 +244,48 @@ class Scanpy_tool:
         adata,
         n_neighbors=10,
         n_pcs=40)                                                               # neighborhood graph
-      sc.tl.umap(adata)                                                         # umap
+      
+      # step 7.5 Plot 3D UMAP
+      sc.tl.umap(\
+        adata,
+        n_components=3)                                                         # generate UMAP with 3PCs
       sc.tl.louvain(adata)                                                      # louvain graph clustering
+      dict_map = { \
+        '0':'#4682B4',
+        '1':'#A233A2',
+        '2':'#FF7F50',
+        '3':'#6787E7',
+        '4':'#B75555',
+        '5':'#2E8B57',
+        '6':'#191970',
+        '7':'#DB7093',
+        '8':'#90EE90',
+        '9':'#00FFFF',
+        '10':'#FFD700',
+        '11':'#DC143C',
+        '12':'#B0C4DE',
+        '13':'#00FA9A',
+        '14':'#FA8072',
+        '15':'#FFF0F5',
+        '16':'#DB7093'
+      }
+      louvain_series = deepcopy(adata.obs['louvain'])
+      color_map = louvain_series.map(dict_map).values
+      labels = list(adata.obs.index)
+      threeDUmapDiv = \
+        plot([go.Scatter3d( \
+                x=adata.obsm['X_umap'][:, 0],
+                y=adata.obsm['X_umap'][:, 1],
+                z=adata.obsm['X_umap'][:, 2], 
+                mode = 'markers',
+                marker = dict(color = color_map),
+                opacity=0.6,
+                text=labels,
+             )],
+             output_type='div',
+             include_plotlyjs='cdn')                                            # capture 3d div for umap plot
+      sc.tl.umap(adata)                                                         # reset umap with 2PCs
+      
       sc.pl.tsne(\
         adata,
         color='louvain',
@@ -255,6 +298,8 @@ class Scanpy_tool:
               self.work_dir,
               'figures/tsne.png'))                                              # load t-SNE
 
+      sc.tl.umap(adata,n_components=3)
+      
       # step 8: Finding marker genes
       sc.pl.umap(\
         adata,
@@ -363,6 +408,7 @@ class Scanpy_tool:
           Pca=pca_data,
           Pca_var_data=pca_var_data,
           Tsne=tsne_data,
+          Umap3DDiv=threeDUmapDiv,
           Umap_data=umap_data,
           RankGenesGroups=rank_genes_groups_data,
           Rank_genes_groups_stacked_violin=rank_genes_groups_stacked_violin,
