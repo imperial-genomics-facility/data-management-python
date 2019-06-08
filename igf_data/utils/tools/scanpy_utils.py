@@ -363,6 +363,7 @@ class Scanpy_tool:
       sc.pl.rank_genes_groups_heatmap(\
         adata,
         n_genes=10,
+        show_gene_labels=True,
         save='.png')                                                            # ranked gene heatmap plot
       rank_genes_groups_heatmap = \
         self._encode_png_image(\
