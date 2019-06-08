@@ -226,14 +226,14 @@
         </div>
         <h3>Matrix plot of ranked genes</h3>
         <pre class="code_box"><code>
-          sc.pl.rank_genes_groups_matrixplot(adata, n_genes=10,  cmap='bwr',save='.png')
+          sc.pl.rank_genes_groups_matrixplot(adata, n_genes=10, save='.png')
         </code></pre>
         <div class="img_placement">
           <img src="data:image/png;base64,{{ Rank_genes_groups_matrixplot }}" class="img_border">
         </div>
         <h3>Heatmap plot of ranked genes</h3>
         <pre class="code_box"><code>
-          sc.pl.rank_genes_groups_heatmap(adata, n_genes=10, cmap='bwr',save='.png')
+          sc.pl.rank_genes_groups_heatmap(adata, n_genes=10, show_gene_labels=True, save='.png')
         </code></pre>
         <div class="img_placement">
           <img src="data:image/png;base64,{{ Rank_genes_groups_heatmap }}" class="img_border">
