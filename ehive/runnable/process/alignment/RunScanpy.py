@@ -2,6 +2,7 @@ import matplotlib
 matplotlib.use('Agg')
 import os,re,tarfile
 import matplotlib.pyplot as plt
+from igf_data.utils.fileutils import get_datestamp_label
 from igf_data.utils.tools.scanpy_utils import Scanpy_tool
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
@@ -19,6 +20,7 @@ class RunScanpy(IGFBaseProcess):
         'analysis_name':'scanpy',
         'collection_table':'experiment',
         'report_template_file':'',
+        'cellbrowser_dir_prefix':'cellbrowser',
         'cellranger_collection_type':'CELLRANGER_RESULTS',
         'scanpy_collection_type':'SCANPY_RESULTS',
         'species_name_lookup':{'HG38':'hsapiens',
@@ -47,12 +49,15 @@ class RunScanpy(IGFBaseProcess):
       matrics_file_path=''
       genes_tsv_file_path=''
       barcodes_tsv_file_path=''
-      matrix_file_pattern=re.compile(r'{0}/{1}$'.\
-                                     format(input_dir_prefix,matrics_file))
-      genes_file_pattern=re.compile(r'{0}/{1}$'.\
-                                    format(input_dir_prefix,genes_tsv_file))
-      barcodes_file_pattern=re.compile(r'{0}/{1}$'.\
-                                       format(input_dir_prefix,barcodes_tsv_file))
+      matrix_file_pattern = \
+        re.compile(r'{0}/{1}$'.\
+                    format(input_dir_prefix,matrics_file))
+      genes_file_pattern = \
+        re.compile(r'{0}/{1}$'.\
+                    format(input_dir_prefix,genes_tsv_file))
+      barcodes_file_pattern = \
+        re.compile(r'{0}/{1}$'.\
+                    format(input_dir_prefix,barcodes_tsv_file))
       if not os.path.exists(tar_file):
         raise IOError('File {0} not found'.format(tar_file))
 
@@ -65,7 +70,7 @@ class RunScanpy(IGFBaseProcess):
                       path=output_dir)                                          # extract target output files
 
       tar.close()                                                               # close tar file
-      for root,dir,files in os.walk(output_dir):                                # check output dir and find files
+      for root,_,files in os.walk(output_dir):                                  # check output dir and find files
         for file in files:
           if file==matrics_file:
             matrics_file_path=os.path.join(root,file)
@@ -115,6 +120,7 @@ class RunScanpy(IGFBaseProcess):
       cellranger_collection_type = self.param('cellranger_collection_type')
       scanpy_collection_type = self.param('scanpy_collection_type')
       collection_table = self.param('collection_table')
+      cellbrowser_dir_prefix = self.param('cellbrowser_dir_prefix')
       cellranger_tarfile = ''
       output_report = ''
       work_dir_prefix = \
@@ -144,8 +150,14 @@ class RunScanpy(IGFBaseProcess):
 
         # extract filtered metrics files from tar
         output_dir = get_temp_dir(use_ephemeral_space=False)                    # get a temp dir
+        datestamp = get_datestamp_label()
         cellbrowser_dir = \
-          os.path.join(work_dir,'cellbrowser')
+          os.path.join( \
+            work_dir,
+            '{0}_{1}'.\
+              format( \
+                cellbrowser_dir_prefix,
+                datestamp))
         output_report = \
           os.path.join(\
             output_dir,
@@ -180,7 +192,7 @@ class RunScanpy(IGFBaseProcess):
           au.load_file_to_disk_and_db(\
             input_file_list=[output_report],
             withdraw_exisitng_collection=True)                                  # load file to db and disk
-        output_report=output_file_list[0]
+        output_report = output_file_list[0]
 
       self.param('dataflow_params',
                  {'output_report':output_report,
