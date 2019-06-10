@@ -45,7 +45,7 @@ class Scanpy_tool:
     self.barcode_tsv=barcode_tsv
     self.output_file=output_file
     self.html_template_file=html_template_file
-    self.work_dir=get_temp_dir()
+    self.work_dir=get_temp_dir(use_ephemeral_space=False)
     self.min_gene_count=min_gene_count
     self.min_cell_count=min_cell_count
     self.force_overwrite=force_overwrite
@@ -83,6 +83,9 @@ class Scanpy_tool:
   def generate_report(self):
     '''
     A method for generating html report from scanpy analysis
+
+    :param generate_cb_data: A toggle for generating cellbrowser data, default False
+    :param cb_data_path: A output path for cellbrowser data, default None
     '''
     try:
       os.chdir(self.work_dir)
@@ -446,5 +449,8 @@ class Scanpy_tool:
         copytree(\
           src=temp_html_dir,
           dst=self.cellbrowser_dir)
+
+      remove_dir(temp_input_dir)
+      remove_dir(self.work_dir)
     except:
       raise

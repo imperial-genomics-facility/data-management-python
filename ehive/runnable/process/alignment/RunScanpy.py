@@ -143,7 +143,7 @@ class RunScanpy(IGFBaseProcess):
           cellranger_tarfile = cellranger_tarfiles['file_path'].values[0]       # select first file as analysis file
 
         # extract filtered metrics files from tar
-        output_dir = get_temp_dir()                                             # get a temp dir
+        output_dir = get_temp_dir(use_ephemeral_space=False)                    # get a temp dir
         cellbrowser_dir = \
           os.path.join(work_dir,'cellbrowser')
         output_report = \
@@ -186,10 +186,11 @@ class RunScanpy(IGFBaseProcess):
                  {'output_report':output_report,
                   'cellbrowser_dir':cellbrowser_dir})                           # pass on output report filepath
     except Exception as e:
-      message='project: {2}, sample:{3}, Error in {0}: {1}'.format(self.__class__.__name__, \
-                                                      e, \
-                                                      project_igf_id,
-                                                      sample_igf_id)
+      message = 'project: {2}, sample:{3}, Error in {0}: {1}'.\
+                format(self.__class__.__name__,
+                       e,
+                       project_igf_id,
+                       sample_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise
