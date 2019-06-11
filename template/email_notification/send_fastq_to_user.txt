@@ -11,7 +11,7 @@ We would like to update you that the fastq files from a recent sequencing run "{
 
 Data access:
   - Check the "Data Access" section from our help page for a list of available methods for data transfer
-      https://imperial-genomics-facility.github.io/igf-pipeline-help/ 
+      https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html
 
 Data path:
   - {{ projectName }}/fastq/{{ projectRunDate }}/{{ flowcellId }}
