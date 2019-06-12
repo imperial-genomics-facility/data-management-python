@@ -242,12 +242,12 @@ class Platform(Base):
   :param platform_igf_id: A required string as platform id specific to IGF team, allowed length 10
   :param model_name: A required enum list to specify platform model, allowed values are 
   
-                      * HISEQ2500
-                      * HISEQ4000
-                      * MISEQ
-                      * NEXTSEQ
-                      * NOVASEQ6000
-                      * NANOPORE_MINION
+                       * HISEQ2500
+                       * HISEQ4000
+                       * MISEQ
+                       * NEXTSEQ
+                       * NOVASEQ6000
+                       * NANOPORE_MINION
 
   :param vendor_name: A required enum list to specify vendor's name, allowed values are
                        
@@ -256,11 +256,10 @@ class Platform(Base):
 
   :param software_name: A required enum list for specifying platform software, allowed values are
                          
-                         * RTA
-                         * UNKNOWN
-                         
-  :param software_version: A required enum list for specifying the software version number,
-                            allowed values are RTA1.18.54, RTA1.18.64, RTA2 and UNKNOWN
+                       * RTA
+                       * UNKNOWN
+                       
+  :param software_version: A optional software version number, default is UNKNOWN
   :param date_created: An optional timestamp column to record entry creation time, default current timestamp
   '''
   __tablename__ = 'platform'
@@ -273,7 +272,7 @@ class Platform(Base):
   model_name       = Column(Enum('HISEQ2500','HISEQ4000','MISEQ','NEXTSEQ','NOVASEQ6000','NANOPORE_MINION'), nullable=False)
   vendor_name      = Column(Enum('ILLUMINA','NANOPORE'), nullable=False)
   software_name    = Column(Enum('RTA','UNKNOWN'), nullable=False)
-  software_version = Column(Enum('RTA1.18.54','RTA1.18.64','RTA2','UNKNOWN'), nullable=False)
+  software_version = Column(String(20), nullable=False, server_default='UNKNOWN')
   date_created     = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now )
   seqrun           = relationship('Seqrun', backref="platform")
   flowcell_rule    = relationship('Flowcell_barcode_rule', backref="platform")
@@ -435,7 +434,6 @@ class Experiment(Base):
                             * WGS
                             * EXOME
                             * TF
-                            * H3K4ME3
                             * H3K27ME3
                             * H3K27AC
                             * H3K9ME3
@@ -498,10 +496,10 @@ class Experiment(Base):
   library_name      = Column(String(50), nullable=False)
   library_source    = Column(Enum('GENOMIC', 'TRANSCRIPTOMIC' ,'GENOMIC_SINGLE_CELL', 'TRANSCRIPTOMIC_SINGLE_CELL', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   library_strategy  = Column(Enum('WGS', 'EXOME', 'RNA-SEQ', 'CHIP-SEQ', 'ATAC-SEQ', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
-  experiment_type   = Column(Enum('POLYA-RNA', 'TOTAL-RNA', 'SMALL-RNA', 'WGS', 'EXOME', 
-                                  'TF', 'H3K4ME3', 'H3K27ME3', 'H3K27AC', 'H3K9ME3', 'H3K36ME3', 'H3F3A',
-                                  'H3K4ME1', 'H3K79ME2', 'H3K79ME3', 'H3K9ME1', 'H3K9ME2', 'H4K20ME1',
-                                  'H2AFZ', 'H3AC', 'H3K4ME2', 'H3K4ME3', 'H3K9AC', 'HISTONE-NARROW', 'HISTONE-BROAD',
+  experiment_type   = Column(Enum('POLYA-RNA', 'TOTAL-RNA', 'SMALL-RNA', 'WGS', 'EXOME',
+                                  'TF', 'H3K27ME3', 'H3K27AC', 'H3K9ME3', 'H3K36ME3', 'H3F3A', 'H3K4ME1',
+                                  'H3K79ME2', 'H3K79ME3', 'H3K9ME1', 'H3K9ME2', 'H4K20ME1', 'H2AFZ',
+                                  'H3AC', 'H3K4ME2', 'H3K4ME3', 'H3K9AC', 'HISTONE-NARROW', 'HISTONE-BROAD',
                                   'CHIP-INPUT', 'ATAC-SEQ', 'TENX-TRANSCRIPTOME', 'DROP-SEQ-TRANSCRIPTOME', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   library_layout    = Column(Enum('SINGLE', 'PAIRED', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   status            = Column(Enum('ACTIVE', 'FAILED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
