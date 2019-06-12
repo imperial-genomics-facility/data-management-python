@@ -161,17 +161,17 @@ class Sample(Base):
   :param sex: An optional enum list to specify sample sex, default UNKNOWN
                allowed values are 
                
-               * FEMALE
-               * MALE
-               * MIXED
-               * UNKNOWN
+                            * FEMALE
+                            * MALE
+                            * MIXED
+                            * UNKNOWN
 
   :param status: An optional enum list to specify sample status, default ACTIVE,
                   allowed values are 
                   
-                  * ACTIVE
-                  * FAILED
-                  * WITHDRAWS
+                            * ACTIVE
+                            * FAILED
+                            * WITHDRAWS
 
   :param biomaterial_type: An optional enum list as sample biomaterial type, default UNKNOWN,
                             allowed values are 
@@ -180,6 +180,7 @@ class Sample(Base):
                             * PRIMARY_CELL
                             * PRIMARY_CELL_CULTURE
                             * CELL_LINE
+                            * SINGLE_NUCLEI
                             * UNKNOWN
 
   :param cell_type: An optional string to specify sample cell_type information, if biomaterial_type is PRIMARY_CELL or PRIMARY_CELL_CULTURE
@@ -204,7 +205,7 @@ class Sample(Base):
   phenotype           = Column(String(45))
   sex                 = Column(Enum('FEMALE', 'MALE', 'MIXED', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   status              = Column(Enum('ACTIVE', 'FAILED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
-  biomaterial_type    = Column(Enum('PRIMARY_TISSUE', 'PRIMARY_CELL', 'PRIMARY_CELL_CULTURE', 'CELL_LINE', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
+  biomaterial_type    = Column(Enum('PRIMARY_TISSUE', 'PRIMARY_CELL', 'PRIMARY_CELL_CULTURE', 'CELL_LINE', 'SINGLE_NUCLEI', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   cell_type           = Column(String(50))
   tissue_type         = Column(String(50))
   cell_line           = Column(String(50))
@@ -409,11 +410,11 @@ class Experiment(Base):
   :param library_source: An optional enum list to specify library source information, default is UNKNOWN,
                           allowed values are 
                           
-                          * GENOMIC
-                          * TRANSCRIPTOMIC
-                          * GENOMIC_SINGLE_CELL
-                          * TRANSCRIPTOMIC_SINGLE_CELL
-                          * UNKNOWN
+                            * GENOMIC
+                            * TRANSCRIPTOMIC
+                            * GENOMIC_SINGLE_CELL
+                            * TRANSCRIPTOMIC_SINGLE_CELL
+                            * UNKNOWN
 
   :param library_strategy: An optional enum list to specify library strategy information, default is UNKNOWN,
                             allowed values are 
@@ -426,25 +427,38 @@ class Experiment(Base):
                             * UNKNOWN
 
   :param experiment_type: An optional enum list as experiment type information, default is UNKNOWN,
-                           allowed values are 
+                           allowed values are
                            
-                           * POLYA-RNA
-                           * TOTAL-RNA
-                           * SMALL-RNA
-                           * H3K4ME3
-                           * WGS
-                           * EXOME
-                           * H3K27ME3
-                           * H3K27AC
-                           * H3K9ME3
-                           * H3K36ME3
-                           * HISTONE-NARROW
-                           * HISTONE-BROAD
-                           * ATAC-SEQ
-                           * TENX-TRANSCRIPTOME
-                           * DROP-SEQ-TRANSCRIPTOME
-                           * TF
-                           * UNKNOWN
+                            * POLYA-RNA
+                            * TOTAL-RNA
+                            * SMALL-RNA
+                            * WGS
+                            * EXOME
+                            * TF
+                            * H3K4ME3
+                            * H3K27ME3
+                            * H3K27AC
+                            * H3K9ME3
+                            * H3K36ME3
+                            * H3F3A
+                            * H3K4ME1
+                            * H3K79ME2
+                            * H3K79ME3
+                            * H3K9ME1
+                            * H3K9ME2
+                            * H4K20ME1
+                            * H2AFZ
+                            * H3AC
+                            * H3K4ME2
+                            * H3K4ME3
+                            * H3K9AC
+                            * HISTONE-NARROW
+                            * HISTONE-BROAD
+                            * CHIP-INPUT
+                            * ATAC-SEQ
+                            * TENX-TRANSCRIPTOME
+                            * DROP-SEQ-TRANSCRIPTOME
+                            * UNKNOWN
 
   :param library_layout: An optional enum list to specify library layout, default is UNONWN
                           allowed values are 
@@ -456,9 +470,9 @@ class Experiment(Base):
   :param status: An optional enum list to specify experiment status, default is ACTIVE,
                   allowed values are 
                   
-                  * ACTIVE
-                  * FAILED
-                  * WITHDRAWN
+                          * ACTIVE
+                          * FAILED
+                          * WITHDRAWN
 
   :param date_created: An optional timestamp column to record entry creation or modification time, default current timestamp
   :param platform_name: An optional enum list to specify platform model, default is UNKNOWN,
@@ -484,7 +498,11 @@ class Experiment(Base):
   library_name      = Column(String(50), nullable=False)
   library_source    = Column(Enum('GENOMIC', 'TRANSCRIPTOMIC' ,'GENOMIC_SINGLE_CELL', 'TRANSCRIPTOMIC_SINGLE_CELL', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   library_strategy  = Column(Enum('WGS', 'EXOME', 'RNA-SEQ', 'CHIP-SEQ', 'ATAC-SEQ', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
-  experiment_type   = Column(Enum('POLYA-RNA','TOTAL-RNA','SMALL-RNA','H3K4ME3','WGS','EXOME','H3K27ME3','H3K27AC','H3K9ME3','H3K36ME3','HISTONE-NARROW','HISTONE-BROAD','ATAC-SEQ','TENX-TRANSCRIPTOME','DROP-SEQ-TRANSCRIPTOME','TF','UNKNOWN'), nullable=False, server_default='UNKNOWN')
+  experiment_type   = Column(Enum('POLYA-RNA', 'TOTAL-RNA', 'SMALL-RNA', 'WGS', 'EXOME', 
+                                  'TF', 'H3K4ME3', 'H3K27ME3', 'H3K27AC', 'H3K9ME3', 'H3K36ME3', 'H3F3A',
+                                  'H3K4ME1', 'H3K79ME2', 'H3K79ME3', 'H3K9ME1', 'H3K9ME2', 'H4K20ME1',
+                                  'H2AFZ', 'H3AC', 'H3K4ME2', 'H3K4ME3', 'H3K9AC', 'HISTONE-NARROW', 'HISTONE-BROAD',
+                                  'CHIP-INPUT', 'ATAC-SEQ', 'TENX-TRANSCRIPTOME', 'DROP-SEQ-TRANSCRIPTOME', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   library_layout    = Column(Enum('SINGLE', 'PAIRED', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   status            = Column(Enum('ACTIVE', 'FAILED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
   date_created      = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
