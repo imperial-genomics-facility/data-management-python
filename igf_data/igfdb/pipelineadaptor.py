@@ -109,6 +109,7 @@ class PipelineAdaptor(BaseAdaptor):
                     Sample.species_name,
                     Sample.phenotype,
                     Sample.sex,
+                    Sample.biomaterial_type,
                     Sample.cell_line,
                     Sample.donor_anonymized_id,
                     Sample.sample_submitter_id).\
