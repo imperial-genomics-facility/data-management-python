@@ -24,7 +24,6 @@ class CollectAnalysisFiles(IGFBaseProcess):
     '''
     try:
       project_igf_id=self.param_required('project_igf_id')
-      experiment_igf_id=self.param_required('experiment_igf_id')
       sample_igf_id=self.param_required('sample_igf_id')
       igf_session_class=self.param_required('igf_session_class')
       tag_name=self.param('tag_name')

@@ -55,7 +55,7 @@ class CopyAnalysisFilesToRemote(IGFBaseProcess):
            raise ValueError('Name and type are required for db collection')
 
       output_file_list=list()
-      temp_work_dir=get_temp_dir()                                              # get temp dir
+      temp_work_dir=get_temp_dir(use_ephemeral_space=False)                     # get temp dir
       for file in file_list:
         if not os.path.exists(file):
           raise IOError('file {0} not found'.\

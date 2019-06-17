@@ -80,7 +80,7 @@ class RunPicard(IGFBaseProcess):
       work_dir = \
         self.get_job_work_dir(work_dir=work_dir_prefix)                         # get a run work dir
       temp_output_dir=\
-        get_temp_dir(use_ephemeral_space=True)                                  # get temp work dir
+        get_temp_dir(use_ephemeral_space=False)                                 # get temp work dir
       ref_genome=\
         Reference_genome_utils(\
           genome_tag=species_name,

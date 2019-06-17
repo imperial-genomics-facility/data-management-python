@@ -67,7 +67,6 @@ class RunCellrangerCount(IGFBaseProcess):
       cellranger_exe = self.param_required('cellranger_exe')
       cellranger_options = self.param_required('cellranger_options')
       base_work_dir = self.param_required('base_work_dir')
-      base_result_dir = self.param_required('base_results_dir')
       fastq_collection_type = self.param_required('fastq_collection_type')
       biomaterial_type = self.param_required('biomaterial_type')
       job_timeout = self.param_required('job_timeout')

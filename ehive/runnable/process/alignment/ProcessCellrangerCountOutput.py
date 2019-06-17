@@ -59,8 +59,10 @@ class ProcessCellrangerCountOutput(IGFBaseProcess):
                                    md5_label='md5',
                                    exclude_list=['*.bam','*.bai','*.cram'])     # create manifest for output dir
       # create archive for the results dir
-      temp_archive_name=os.path.join(get_temp_dir(),
-                                     '{0}.tar.gz'.format(experiment_igf_id))    # get the name of temp archive file
+      temp_archive_name = \
+        os.path.join(\
+          get_temp_dir(use_ephemeral_space=False),
+          '{0}.tar.gz'.format(experiment_igf_id))                               # get the name of temp archive file
       prepare_file_archive(results_dirpath=cellranger_output,
                            output_file=temp_archive_name,
                            exclude_list=['*.bam','*.bai','*.cram'])             # archive cellranget output

@@ -62,11 +62,12 @@ class Check_batch_effect_for_lane(IGFBaseProcess):
                             'lane':lane_id
                           })
         ra.close_session()
-        temp_dir = get_temp_dir(use_ephemeral_space=True)
+        temp_dir = get_temp_dir(use_ephemeral_space=False)
         temp_json_file = os.path.join(temp_dir,'star_gene_counts.json')         # temp json file path
-        temp_output_file = os.path.join(\
-                                temp_dir,
-                                os.path.basename(template_report_file))         # temp report file path
+        temp_output_file = \
+          os.path.join(\
+            temp_dir,
+            os.path.basename(template_report_file))                             # temp report file path
         with open(temp_json_file,'w') as jp:
           json.dump(file_data,jp,indent=2)                                      # dumping json output
 
@@ -99,11 +100,13 @@ class Check_batch_effect_for_lane(IGFBaseProcess):
       self.param('dataflow_params',
                  {'batch_effect_reports':output_file_list})                     # populating data flow only if report is present
     except Exception as e:
-      message='project: {2}, sample:{3}, Error in {0}: {1}'.\
-              format(self.__class__.__name__,
-                     e,
-                     project_igf_id,
-                     sample_igf_id)
+      message = \
+        'project: {2}, sample:{3}, Error in {0}: {1}'.\
+        format(\
+          self.__class__.__name__,
+          e,
+          project_igf_id,
+          sample_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise
