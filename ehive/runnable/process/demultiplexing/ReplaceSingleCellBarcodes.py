@@ -13,40 +13,51 @@ class ReplaceSingleCellBarcodes(IGFBaseProcess):
   '''
   def param_defaults(self):
     params_dict=super(ReplaceSingleCellBarcodes,self).param_defaults()
-    params_dict.update({
-                        'output_samplesheet_name':'SampleSheet_SC.csv',
-                        'singlecell_tag':'10X',
-                      })
+    params_dict.\
+      update({'output_samplesheet_name':'SampleSheet_SC.csv',
+              'singlecell_tag':'10X',
+             })
     return params_dict
 
 
   def run(self):
     try:
-      igf_session_class = self.param_required('igf_session_class')
-      seqrun_igf_id=self.param_required('seqrun_igf_id')
+      seqrun_igf_id = self.param_required('seqrun_igf_id')
       samplesheet_file = self.param_required('samplesheet')
       singlecell_barcode_json = self. param_required('single_cell_barcode_file')
-      base_work_dir=self.param_required('base_work_dir')
-      output_samplesheet_name=self.param('output_samplesheet_name')
-      singlecell_tag=self.param('singlecell_tag')
-      job_name=self.job_name()
-      work_dir=os.path.join(base_work_dir,seqrun_igf_id,job_name)               # get work directory name
+      base_work_dir = self.param_required('base_work_dir')
+      output_samplesheet_name = self.param('output_samplesheet_name')
+      singlecell_tag = self.param('singlecell_tag')
+      job_name = self.job_name()
+      work_dir = \
+        os.path.join(\
+          base_work_dir,
+          seqrun_igf_id,
+          job_name)                                                             # get work directory name
       if not os.path.exists(work_dir):
         os.makedirs(work_dir, 0o770)                                            # create work dir if its not present
 
-      sc_data=ProcessSingleCellSamplesheet(samplesheet_file,\
-                                           singlecell_barcode_json,\
-                                           singlecell_tag)
-      output_samplesheet=os.path.join(work_dir,output_samplesheet_name)         # set output file
+      sc_data = \
+        ProcessSingleCellSamplesheet(\
+          samplesheet_file,
+          singlecell_barcode_json,
+          singlecell_tag)
+      output_samplesheet = \
+        os.path.join(\
+          work_dir,
+          output_samplesheet_name)                                              # set output file
       if os.path.exists(output_samplesheet):
         os.remove(output_samplesheet)                                           # remove existing file
 
       sc_data.change_singlecell_barcodes(output_samplesheet)                    # print new samplesheet with sc indexes
       self.param('dataflow_params',{'samplesheet':output_samplesheet})          # set data flow
     except Exception as e:
-      message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
-                                                      e, \
-                                                      seqrun_igf_id)
+      message = \
+        'seqrun: {2}, Error in {0}: {1}'.\
+        format(\
+          self.__class__.__name__,
+          e,
+          seqrun_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise

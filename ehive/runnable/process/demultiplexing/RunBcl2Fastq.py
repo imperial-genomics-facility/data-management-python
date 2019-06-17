@@ -52,7 +52,7 @@ class RunBcl2Fastq(IGFBaseProcess):
       model_name = self.param('model_name')
       reset_mask_short_adapter_reads = self.param('reset_mask_short_adapter_reads')
 
-      project_type=''                                                           # default single cell status is empty
+      project_type = ''                                                         # default single cell status is empty
       seqrun_dir = os.path.join(seqrun_local_dir,seqrun_igf_id)                 # local seqrun dir
       runinfo_file = os.path.join(seqrun_dir,runinfo_filename)                  # seqrun runinfo file
       if not os.path.exists(samplesheet_file):
