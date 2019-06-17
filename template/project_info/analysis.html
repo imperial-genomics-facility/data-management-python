@@ -84,7 +84,7 @@
     <script type="text/javascript">
       google.charts.setOnLoadCallback(drawToolbar);
       function drawToolbar() {
-        var components = [{type: 'csv', datasource: "{{ AnalysisCsvDataFile }}" }];
+        var components = [{type: 'csv', datasource: "{{ analysisCsvDataFile }}" }];
         var container = document.getElementById('toolbar_div');
         google.visualization.drawToolbar(container, components);
       
