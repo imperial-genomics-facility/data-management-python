@@ -153,14 +153,10 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
         htpasswd_filename=htpasswd_filename,
         customerUsernameList=' '.join(user_list)).\
       dump(htaccess_output)                                                     # write new htacces file
-      os.chmod(htaccess_output,
-               mode=0o774)
 
       htpasswd.\
       stream(userDict=user_passwd_dict).\
       dump(htpasswd_output)                                                     # write new htpass file
-      os.chmod(htpasswd_output,
-               mode=0o774)
       template_prj = \
         Environment(\
           loader=FileSystemLoader(\
@@ -181,8 +177,6 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
         sampleReadCountCsvFile=samplereadcountcsvfile,
         ImageHeight=image_height).\
       dump(project_output)                                                      # write new project file
-      os.chmod(project_output,
-               mode=0o774)
 
       template_status = \
         Environment(\
@@ -201,8 +195,6 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
         ProjectName=project_name,
         status_data_json=status_data_json).\
       dump(status_output)                                                       # write new project status file
-      os.chmod(status_output,
-               mode=0o774)
 
       template_analysis = \
         Environment(\
@@ -224,8 +216,6 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
         analysisCsvDataFile=analysis_chart_data_csv,
         analysisPlotFile=analysis_chart_data_json).\
       dump(analysis_output)                                                     # write new project analysis file
-      os.chmod(analysis_output,
-               mode=0o774)
 
       template_analysis_viewer = \
         Environment(\
@@ -244,8 +234,6 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
         ProjectName=project_name,
         analysisJsFile=analysis_view_js).\
       dump(analysis_viewer_output)                                              # write new project analysis viewer file
-      os.chmod(analysis_viewer_output,
-               mode=0o774)
 
       remote_project_dir = \
         os.path.join(\
@@ -356,30 +344,15 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
         raise IOError('Source file {0} not found for copy'.\
                       format(source_file))
 
-      #check_remote_cmd=['ssh',
-      #                  '{0}@{1}'.\
-      #                  format(remote_user,
-      #                         remote_host),
-      #                  'ls',
-      #                  '-a',
-      #                  remote_file]                                            # remote check cmd
-      #response=subprocess.call(check_remote_cmd)                                # look for existing remote file
-      #if response !=0:
-      #  rm_remote_cmd=['ssh',
-      #                 '{0}@{1}'.\
-      #                 format(remote_user,
-      #                        remote_host),
-      #                 'rm',
-      #                 '-f',
-      #                 remote_file]                                             # remote rm cmd
-      #  subprocess.check_call(rm_remote_cmd)                                    # remove existing file
-
+      os.chmod(source_file,
+               mode=0o774)
+      remote_config = '{0}@{1}'.format(\
+                        remote_user,
+                        remote_host)
       copy_remote_file(\
         source_path=source_file,
         destinationa_path=remote_file,
-        destination_address='{0}@{1}'.\
-                            format(remote_user,
-                                   remote_host),
+        destination_address=remote_config,
         force_update=True)                                                      # create dir and copy file to remote
     except:
       raise
