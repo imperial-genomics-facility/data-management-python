@@ -213,10 +213,10 @@ class Project_analysis:
           column_order = list(chart_data.columns)
           description = \
             { column_name : ('string',column_name)
-              for column_name in column_list}                                   # prepare chart description
+              for column_name in column_order}                                   # prepare chart description
           convert_to_gviz_json_for_display(\
             description=description,
-            columns_order=column_list,
+            columns_order=column_order,
             data=chart_data.to_dict(orient='records'),
             output_file=temp_chart_output)
           move_file(\
