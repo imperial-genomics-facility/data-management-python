@@ -134,7 +134,7 @@ class RunMutiQC(IGFBaseProcess):
          '--config',quote(multiqc_conf_file)
         ]                                                                       # multiqc base parameters
       multiqc_cmd.extend(multiqc_param)                                         # add additional parameters
-      subprocess.check_call(multiqc_cmd)                                        # run multiqc
+      subprocess.check_call(' '.join(multiqc_cmd),shell=True)                   # run multiqc
       multiqc_html = None
       multiqc_data = None
       for root, _,files in os.walk(top=temp_work_dir):
