@@ -16,7 +16,7 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
     params_dict=super(CheckAndProcessSampleSheet,self).param_defaults()
     params_dict.update({
         'samplesheet_filename':'SampleSheet.csv',
-        'index2_label':'index_2',
+        'index2_label_in_db':'index_2',
         'revcomp_label':'REVCOMP',
         'singlecell_tag':'10X',
         'adapter_trim_check':True,
@@ -26,8 +26,8 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
         'project_type':None,
       })
     return params_dict
-  
-  
+
+
   def run(self):
     try:
       igf_session_class = self.param_required('igf_session_class')
@@ -35,7 +35,7 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
       seqrun_local_dir = self.param_required('seqrun_local_dir')
       base_work_dir = self.param_required('base_work_dir')
       samplesheet_filename = self.param('samplesheet_filename')
-      index2_label = self.param('index2_label')
+      index2_label = self.param('index2_label_in_db')
       revcomp_label = self.param('revcomp_label')
       singlecell_tag = self.param('singlecell_tag')
       adapter_trim_check = self.param('adapter_trim_check')
@@ -52,7 +52,7 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
           job_name)                                                             # get work directory name
       if not os.path.exists(work_dir):
         os.makedirs(work_dir,mode=0o770)                                        # create work directory
-      
+
       output_file = \
         os.path.join(\
           work_dir,
@@ -60,7 +60,7 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
       if os.path.exists(output_file):
         raise IOError('seqrun: {0}, reformatted samplesheet {1} already present'.\
                       format(seqrun_igf_id,output_file))
-      
+
       samplesheet_file = \
         os.path.join(\
           seqrun_local_dir,

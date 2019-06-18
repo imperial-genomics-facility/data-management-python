@@ -165,15 +165,20 @@ class SeqrunAdaptor(BaseAdaptor):
     seqrun_igf_id: A seqrun igf id
     '''
     try:
-      rules_query=self.session.query(Seqrun.seqrun_igf_id, Seqrun_attribute.attribute_value, 
-                                     Platform.platform_igf_id, Flowcell_barcode_rule.index_1,
-                                     Flowcell_barcode_rule.index_2).\
-                                     join(Seqrun_attribute).\
-                                     join(Platform).\
-                                     join(Flowcell_barcode_rule).\
-                                     filter(Seqrun_attribute.attribute_name==flowcell_label).\
-                                     filter(Seqrun_attribute.attribute_value==Flowcell_barcode_rule.flowcell_type).\
-                                     filter(Seqrun.seqrun_igf_id==seqrun_igf_id)
+      rules_query = \
+        self.session.\
+        query(\
+          Seqrun.seqrun_igf_id,
+          Seqrun_attribute.attribute_value,
+          Platform.platform_igf_id,
+          Flowcell_barcode_rule.index_1,
+          Flowcell_barcode_rule.index_2).\
+        join(Seqrun_attribute).\
+        join(Platform).\
+        join(Flowcell_barcode_rule).\
+        filter(Seqrun_attribute.attribute_name==flowcell_label).\
+        filter(Seqrun_attribute.attribute_value==Flowcell_barcode_rule.flowcell_type).\
+        filter(Seqrun.seqrun_igf_id==seqrun_igf_id)
       rules_data=self.fetch_records(query=rules_query)
       return rules_data
     except:
