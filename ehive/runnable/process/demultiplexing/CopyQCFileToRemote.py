@@ -72,6 +72,11 @@ class CopyQCFileToRemote(IGFBaseProcess):
           destination_outout_path,
           analysis_label,
           file_label)                                                           # adding file label to the destination path
+      if os.path.isfile(file):
+        destination_outout_path = \
+          os.path.join(\
+            destination_outout_path,
+            remote_file_name)                                                   # add destination file name
       #file_check_cmd=['ssh',\
       #                '{0}@{1}'.\
       #                format(remote_user,\
