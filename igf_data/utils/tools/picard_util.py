@@ -325,14 +325,15 @@ class Picard_tools:
         check_file_path(file_path=file)
 
       picard_temp_run_dir=get_temp_dir(use_ephemeral_space=False)
-      command=[self.java_exe,
-               '-XX:ParallelGCThreads={0}'.\
-               format(self.threads),
-               self.java_param,
-               '-Djava.io.tmpdir={0}'.format(picard_temp_run_dir),
-               '-jar',
-               self.picard_jar,
-               quote(command_name)]
+      command = \
+        [self.java_exe,
+         '-XX:ParallelGCThreads={0}'.\
+           format(self.threads),
+         self.java_param,
+         '-Djava.io.tmpdir={0}'.format(picard_temp_run_dir),
+         '-jar',
+         self.picard_jar,
+         quote(command_name)]
       if isinstance(self.picard_option,dict) and \
           len(self.picard_option)>0:
         picard_option=['{0}={1}'.format(quote(param),quote(val))
@@ -346,13 +347,12 @@ class Picard_tools:
         picard_option = \
           ['{0}={1}'.format(quote(param), quote(str(val)))
             for param_dicts in picard_run_param
-              for param,val in param_dicts.items()
-                if param not in ('O','CHART','M')]
+              for param,val in param_dicts.items()]
         command.extend(picard_option)                                           # main picard params
         if dry_run:
           return command,output_file_list
 
-        subprocess.check_call(command)                                          # run picard command
+        subprocess.check_call(' '.join(command),shell=True)                     # run picard command
         picard_metrics = \
         self._parse_picard_metrics(\
           picard_cmd=command_name,
