@@ -129,7 +129,7 @@ class RunMutiQC(IGFBaseProcess):
       multiqc_cmd = \
         [multiqc_exe,
          '--file-list',quote(multiqc_input_list),
-         '--outdir',quote(temp_work_dir),
+         '--outdir',temp_work_dir,
          '--title',quote(multiqc_report_title),
          '--config',quote(multiqc_conf_file)
         ]                                                                       # multiqc base parameters
