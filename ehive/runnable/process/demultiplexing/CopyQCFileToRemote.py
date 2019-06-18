@@ -77,49 +77,28 @@ class CopyQCFileToRemote(IGFBaseProcess):
           os.path.join(\
             destination_outout_path,
             remote_file_name)                                                   # add destination file name
-      #file_check_cmd=['ssh',\
-      #                '{0}@{1}'.\
-      #                format(remote_user,\
-      #                       remote_host),\
-      #                'ls',\
-      #                os.path.join(destination_outout_path,\
-      #                             remote_file_name)]
-      #response=subprocess.call(file_check_cmd)
-      #if force_overwrite and response==0:
-      #  file_rm_cmd=['ssh',\
-      #                '{0}@{1}'.\
-      #                format(remote_user,\
-      #                       remote_host),\
-      #                'rm', \
-      #                '-f',\
-      #                os.path.join(destination_outout_path,\
-      #                             remote_file_name)]
-      #  subprocess.check_call(file_rm_cmd)                                      # remove remote file if its already present
 
       temp_work_dir = \
         get_temp_dir(use_ephemeral_space=False)                                 # get a temp work dir
       copy2(file,os.path.join(temp_work_dir,remote_file_name))                  # copy file to a temp dir and rename it
       os.chmod(os.path.join(temp_work_dir,remote_file_name),
                mode=0o754)                                                      # set file permission
-      #remote_mkdir_cmd=['ssh',\
-      #                  '{0}@{1}'.\
-      #                  format(remote_user,\
-      #                         remote_host),\
-      #                  'mkdir',\
-      #                  '-p',\
-      #                  destination_outout_path]
-      #subprocess.check_call(remote_mkdir_cmd)                                   # create destination path
       copy_remote_file(\
         source_path=os.path.join(temp_work_dir,remote_file_name),
         destinationa_path=destination_outout_path,
         destination_address='{0}@{1}'.format(remote_user,remote_host),
         force_update=force_overwrite
       )                                                                         # copy file to remote
+      if os.path.isdir(file):
+        destination_outout_path = \
+          os.path.join(\
+            destination_outout_path,
+            remote_file_name)                                                   # add destination dir name
+
       self.param('dataflow_params',
                  {'file':file,
                   'status': 'done',
-                  'remote_file':os.path.join(destination_outout_path,
-                                             remote_file_name)})                # add dataflow params
+                  'remote_file':destination_outout_path})                       # add dataflow params
     except Exception as e:
       message='seqrun: {2}, Error in {0}: {1}'.\
               format(self.__class__.__name__,
