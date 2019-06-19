@@ -429,8 +429,7 @@ class Scanpy_tool:
       if self.cellbrowser_h5ad is not None:
         try:
           if not os.path.exists(os.path.dirname(self.cellbrowser_h5ad)):
-            raise ValueError('Cellbrowser parent dir {0} does not exists'.\
-                             format(os.path.dirname(self.cellbrowser_h5ad)))
+            os.makedirs(os.path.dirname(self.cellbrowser_h5ad))
 
           temp_h5ad = \
             os.path.join(\
