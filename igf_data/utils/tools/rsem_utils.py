@@ -39,7 +39,7 @@ class RSEM_utils:
                             'rsem-calculate-expression')
       check_file_path(rsem_exe)
       check_file_path(self.input_bam)
-      temp_dir=get_temp_dir(use_ephemeral_space=True)
+      temp_dir=get_temp_dir(use_ephemeral_space=False)
       temp_output=os.path.join(temp_dir,output_prefix)
       rsem_cmd=[quote(rsem_exe),
                 '--quiet',
@@ -64,7 +64,7 @@ class RSEM_utils:
 
       rsem_cmd.append(self.reference_rsem)
       rsem_cmd.append(temp_output)
-      subprocess.check_call(rsem_cmd)
+      subprocess.check_call(' '.join(rsem_cmd),shell=True)
       rsem_output_list=list()
       rsem_log_file=None
       for file in os.listdir(temp_dir):
@@ -74,7 +74,7 @@ class RSEM_utils:
                           destinationa_path=os.path.join(output_dir,file),
                           force=force)                                          # copy output files to work dir
 
-      for root, dirs, files in os.walk(temp_dir):
+      for root, _, files in os.walk(temp_dir):
         for file in files:
           if fnmatch.fnmatch(file,'*.cnt'):
             rsem_log_file=os.path.join(output_dir,file)
