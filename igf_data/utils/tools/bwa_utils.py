@@ -63,7 +63,7 @@ class BWA_util:
       read1_list,read2_list = \
         identify_fastq_pair(\
           input_list=self.input_fastq_list)                                     # fetch input files
-      temp_dir=get_temp_dir(use_ephemeral_space=True)
+      temp_dir=get_temp_dir(use_ephemeral_space=False)
       bwa_cmd=[
         quote(self.bwa_exe),
         quote(mem_cmd),
@@ -95,13 +95,13 @@ class BWA_util:
           quote(self.samtools_exe),
           quote(samtools_cmd),
           quote('--threads'),quote(str(self.thread)),
-          quote('-bo'),quote(temp_output_path)
+          quote('-bo'),temp_output_path
           ]
         if dry_run:
           return bwa_cmd,samtools_cmd                                           # return bwa and samtools cmd
 
         with subprocess.Popen(bwa_cmd, stdout=subprocess.PIPE) as proc:
-          proc2=subprocess.Popen(samtools_cmd, stdin=proc.stdout)
+          proc2=subprocess.Popen(' '.join(samtools_cmd), shell=True, stdin=proc.stdout)
 
       else:
         temp_output_path=os.path.join(temp_dir,
