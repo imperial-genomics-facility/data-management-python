@@ -2,7 +2,6 @@ import os,base64
 import scanpy as sc
 import numpy as np
 import pandas as pd
-from shutil import copytree
 from copy import deepcopy
 from datetime import datetime
 import plotly.graph_objs as go
@@ -33,23 +32,23 @@ class Scanpy_tool:
   :param min_gene_count: Minimum gene count for data filtering, default 200
   :param min_cell_count: Minimum cell count for data filtering, default 3
   :param force_overwrite: A toggle for replacing existing output file, default True
-  :param cellbrowser_dir: Path for cellbrowser output dir, default None
+  :param cellbrowser_h5ad: Path for h5ad output for cellbrowser, default None
   '''
   def __init__(self,project_name,sample_name,matrix_file,features_tsv,barcode_tsv,
                output_file,html_template_file,species_name,min_gene_count=200,
-               min_cell_count=3,force_overwrite=True,cellbrowser_dir=None):
-    self.project_name=project_name
-    self.sample_name=sample_name
-    self.matrix_file=matrix_file
-    self.features_tsv=features_tsv
-    self.barcode_tsv=barcode_tsv
-    self.output_file=output_file
-    self.html_template_file=html_template_file
-    self.work_dir=get_temp_dir(use_ephemeral_space=False)
-    self.min_gene_count=min_gene_count
-    self.min_cell_count=min_cell_count
-    self.force_overwrite=force_overwrite
-    self.cellbrowser_dir=cellbrowser_dir
+               min_cell_count=3,force_overwrite=True,cellbrowser_h5ad=None):
+    self.project_name = project_name
+    self.sample_name = sample_name
+    self.matrix_file = matrix_file
+    self.features_tsv = features_tsv
+    self.barcode_tsv = barcode_tsv
+    self.output_file = output_file
+    self.html_template_file = html_template_file
+    self.work_dir = get_temp_dir(use_ephemeral_space=False)
+    self.min_gene_count = min_gene_count
+    self.min_cell_count = min_cell_count
+    self.force_overwrite = force_overwrite
+    self.cellbrowser_h5ad = cellbrowser_h5ad
 
   @staticmethod
   def _fetch_mitochondrial_genes(species_name,url='www.ensembl.org'):
@@ -427,28 +426,25 @@ class Scanpy_tool:
           self.work_dir,'test.html'),
           self.output_file,
           force=self.force_overwrite)
-      if self.cellbrowser_dir is not None:
-        if not os.path.exists(os.path.dirname(self.cellbrowser_dir)):
-          raise ValueError('Cellbrowser parent dir {0} does not exists'.\
-                           format(os.path.dirname(self.cellbrowser_dir)))
+      if self.cellbrowser_h5ad is not None:
+        try:
+          if not os.path.exists(os.path.dirname(self.cellbrowser_h5ad)):
+            raise ValueError('Cellbrowser parent dir {0} does not exists'.\
+                             format(os.path.dirname(self.cellbrowser_h5ad)))
 
-        if os.path.exists(self.cellbrowser_dir):
-          raise ValueError('Cellbrowser output dir already exists: {0}'.\
-                           format(self.cellbrowser_dir))
+          temp_h5ad = \
+            os.path.join(\
+              self.work_dir,
+              os.path.basename(self.cellbrowser_h5ad))
+          adata.write_h5ad(filename=temp_h5ad)
+          copy_local_file(\
+            source_path=temp_h5ad,
+            destinationa_path=self.cellbrowser_h5ad,
+            force=True)
+        except Exception as e:
+          raise ValueError('Failed to export Scanpy h5ad, error: {0}'.\
+                           format(e))
 
-        temp_data_dir = os.path.join(self.work_dir,'cellbrowser_data')
-        temp_html_dir = os.path.join(self.work_dir,'cellbrowser_html')
-        os.makedirs(temp_data_dir)
-        os.makedirs(temp_html_dir)
-        sc.external.exporting.\
-          cellbrowser(\
-            adata,\
-            data_dir=temp_data_dir,\
-            data_name=self.sample_name,\
-            html_dir=temp_html_dir)
-        copytree(\
-          src=temp_html_dir,
-          dst=self.cellbrowser_dir)
 
       remove_dir(temp_input_dir)
       remove_dir(self.work_dir)

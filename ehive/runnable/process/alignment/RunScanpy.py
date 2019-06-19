@@ -158,6 +158,10 @@ class RunScanpy(IGFBaseProcess):
               format( \
                 cellbrowser_dir_prefix,
                 datestamp))
+        cellbrowser_h5ad = \
+          os.path.join(\
+            cellbrowser_dir,
+            'scanpy.h5ad')
         output_report = \
           os.path.join(\
             output_dir,
@@ -176,7 +180,7 @@ class RunScanpy(IGFBaseProcess):
             html_template_file=report_template_file,
             species_name=ensembl_species_name,
             output_file=output_report,
-            cellbrowser_dir=cellbrowser_dir)
+            cellbrowser_h5ad=cellbrowser_h5ad)
         sp.generate_report()                                                    # generate scanpy report
         # load files to db and disk
         au = \
@@ -196,7 +200,8 @@ class RunScanpy(IGFBaseProcess):
 
       self.param('dataflow_params',
                  {'output_report':output_report,
-                  'cellbrowser_dir':cellbrowser_dir})                           # pass on output report filepath
+                  'cellbrowser_dir':cellbrowser_dir,
+                  'cellbrowser_h5ad':cellbrowser_h5ad})                         # pass on output report filepath
     except Exception as e:
       message = 'project: {2}, sample:{3}, Error in {0}: {1}'.\
                 format(self.__class__.__name__,
