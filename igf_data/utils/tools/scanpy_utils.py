@@ -274,6 +274,10 @@ class Scanpy_tool:
       louvain_series = deepcopy(adata.obs['louvain'])
       color_map = louvain_series.map(dict_map).values
       labels = list(adata.obs.index)
+      hovertext = \
+        ['cluster: {0}, barcode: {1}'.\
+         format(grp,labels[index])
+           for index,grp in enumerate(louvain_series.values)]
       threeDUmapDiv = \
         plot([go.Scatter3d( \
                 x=adata.obsm['X_umap'][:, 0],
@@ -284,6 +288,7 @@ class Scanpy_tool:
                               size = 5),
                 opacity=0.6,
                 text=labels,
+                hovertext=hovertext,
              )],
              output_type='div',
              include_plotlyjs='cdn')                                            # capture 3d div for umap plot
