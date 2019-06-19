@@ -200,8 +200,7 @@ class RunScanpy(IGFBaseProcess):
 
       self.param('dataflow_params',
                  {'output_report':output_report,
-                  'cellbrowser_dir':cellbrowser_dir,
-                  'cellbrowser_h5ad':cellbrowser_h5ad})                         # pass on output report filepath
+                  'scanpy_h5ad_path':cellbrowser_h5ad})                         # pass on output report filepath
     except Exception as e:
       message = 'project: {2}, sample:{3}, Error in {0}: {1}'.\
                 format(self.__class__.__name__,
