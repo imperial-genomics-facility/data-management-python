@@ -71,7 +71,7 @@ class Ppqt_tools:
          quote(self.ppqt_exe),
          quote('-c={0}'.format(input_bam)),
          quote('-rf'),
-         quote('-p={0}'.format(str(self.thread))),
+         quote('-p={0}'.format(str(self.threads))),
          quote('-savp={0}'.format(output_pdf)),
          quote('-out={0}'.format(output_spp)),
          quote('-tmpdir={0}'.format(temp_dir)),
