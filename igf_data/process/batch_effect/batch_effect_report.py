@@ -73,7 +73,7 @@ class Batch_effect_report:
       if self.strand_info not in self.allowed_strands:
         raise ValueError('{0} is not a valid strand'.format(self.strand_info))
 
-      temp_dir=get_temp_dir(use_ephemeral_space=True)
+      temp_dir=get_temp_dir(use_ephemeral_space=False)
       temp_merged_output=os.path.join(temp_dir,'merged.csv')
       temp_cpm_output=os.path.join(temp_dir,'merged_cpm.csv')
       temp_png_output=os.path.join(temp_dir,'plot.png')
@@ -149,7 +149,7 @@ class Batch_effect_report:
                    quote(temp_cpm_output),
                    quote(temp_png_output)
                   ]
-      subprocess.check_call(rscript_cmd,shell=False)                            # run r script for cpm counts
+      subprocess.check_call(' '.join(rscript_cmd),shell=True)                   # run r script for cpm counts
       check_file_path(temp_cpm_output)                                          # check output file
       mod_data=pd.read_csv(temp_cpm_output).\
                rename(columns={'Unnamed: 0':gene_name_label}).\

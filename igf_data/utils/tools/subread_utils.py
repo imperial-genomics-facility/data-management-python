@@ -15,7 +15,7 @@ def run_featureCounts(featurecounts_exe,input_gtf,input_bams,output_file,thread=
   :returns: A summary file path and featureCounts command
   '''
   try:
-    temp_dir=get_temp_dir(use_ephemeral_space=True)
+    temp_dir=get_temp_dir(use_ephemeral_space=False)
     check_file_path(featurecounts_exe)
     check_file_path(input_gtf)
     if not isinstance(input_bams,list) or \
@@ -46,7 +46,7 @@ def run_featureCounts(featurecounts_exe,input_gtf,input_bams,output_file,thread=
     input_bams=[quote(bam)
                 for bam in input_bams]
     featureCount_cmd.extend(input_bams)
-    subprocess.check_call(featureCount_cmd,shell=False)
+    subprocess.check_call(' '.join(featureCount_cmd),shell=True)
     
     if not os.path.exists(temp_output) or \
        not os.path.exists(temp_summary):
