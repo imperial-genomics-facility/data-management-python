@@ -24,6 +24,7 @@ class UpdateProjectInfo(IGFBaseProcess):
       'status_data_json':'status_data.json',
       'pipeline_name':None,
       'analysis_pipeline_name':None,
+      'sample_column':'sample_igf_id',
     })
     return params_dict
 
@@ -41,6 +42,7 @@ class UpdateProjectInfo(IGFBaseProcess):
       status_data_json = self.param('status_data_json')
       pipeline_name = self.param_required('pipeline_name')
       analysis_pipeline_name = self.param_required('analysis_pipeline_name')
+      sample_column = self.param('sample_column')
 
       temp_work_dir = \
         get_temp_dir(use_ephemeral_space=False)                                 # get a temp dir
@@ -73,9 +75,10 @@ class UpdateProjectInfo(IGFBaseProcess):
                          format(type(read_count_data)))
 
       read_count_data.\
+        set_index(sample_column).\
         to_csv(\
           temp_read_count_csv_output,
-          index=False)                                                          # create csv output for project data
+          index=True)                                                           # create csv output for project data
       seqrun_data = \
         get_seqrun_info_for_project(\
           session_class=igf_session_class,
