@@ -206,6 +206,14 @@ class Project_analysis:
               csv_output_file,
               index=True)                                                       # dump csv output file
 
+          chart_data = chart_data.reset_index().fillna(0)                       # bugfix for missing sample names
+          chart_data.columns = \
+            [ col.\
+              replace('(','').\
+              replace(')','').\
+              replace('%','PCT').\
+              replace('-','_')
+                for col in chart_data.columns]                                  # bugfix for chart data column names
           temp_chart_output = \
             os.path.join(\
               temp_dir,
