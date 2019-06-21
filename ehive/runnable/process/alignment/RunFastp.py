@@ -7,7 +7,7 @@ class RunFastp(IGFBaseProcess):
   def param_defaults(self):
     params_dict=super(RunFastp,self).param_defaults()
     params_dict.update({
-        'fastp_options_list':['-a=auto',
+        'fastp_options_list':['-a','auto',
                               '--qualified_quality_phred=15',
                               '--length_required=15'],
         'split_by_lines_count':5000000,

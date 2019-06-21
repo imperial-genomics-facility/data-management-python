@@ -15,13 +15,13 @@ class Fastp_utils:
   :param enable_polyg_trim: Enable poly G trim for NextSeq and NovaSeq, default False
   :param log_output_prefix: Output prefix for log file, default None
   :param fastp_options_list: A list of options for running fastp, default
-                               -a=auto
+                               -a auto
                                --qualified_quality_phred 15
                                --length_required=15
   '''
   def __init__(self,fastp_exe,input_fastq_list,output_dir,run_thread=1,enable_polyg_trim=False,
                split_by_lines_count=5000000,log_output_prefix=None,
-               fastp_options_list=('-a=auto',
+               fastp_options_list=('-a','auto',
                                    '--qualified_quality_phred=15',
                                    '--length_required=15')):
     self.fastp_exe = fastp_exe
@@ -96,9 +96,9 @@ class Fastp_utils:
       if isinstance(self.fastp_options_list,list) and \
          len(self.fastp_options_list)>0:
         fastp_options_list = \
-          [quote(opt)
+          [quote(line)
             for line in self.fastp_options_list
-              for opt in split(line)]                                           # wrap options in quotes
+          ]                                                                     # wrap options in quotes
         cmd.extend(fastp_options_list)                                          # add fastp options
 
       if self.enable_polyg_trim:
