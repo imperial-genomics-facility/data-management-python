@@ -20,7 +20,7 @@
     <script type="text/javascript">
       google.charts.load("current", {packages:["corechart"]});
       google.charts.setOnLoadCallback(drawChart);
-      function drawChart(column_id=['SAMPLE_ID','SAMTOOLS_STATS_raw_total_sequences','SAMTOOLS_STATS_reads_mapped','SAMTOOLS_STATS_reads_duplicated','SAMTOOLS_STATS_reads_mapped_and_paired','SAMTOOLS_STATS_reads_unmapped','SAMTOOLS_STATS_non-primary_alignments'] ){
+      function drawChart(column_id=['SAMPLE_ID','SAMTOOLS_STATS_raw_total_sequences','SAMTOOLS_STATS_reads_mapped','SAMTOOLS_STATS_reads_duplicated','SAMTOOLS_STATS_reads_mapped_and_paired','SAMTOOLS_STATS_reads_unmapped','SAMTOOLS_STATS_non_primary_alignments'] ){
         $.getJSON("{{ analysisPlotFile }}", function(jsonData) {
           var data = new google.visualization.DataTable(jsonData);
           var options = {
@@ -151,8 +151,8 @@
               <div class="button" id="toolbar_div"></div>
               <div id="chart_div" style="width: 800px; height: 400px;"></div>
           </div>
-          <div>
-            <input class="button" type="button" value="Alignment stats" onclick=drawChart(['SAMPLE_ID','SAMTOOLS_STATS_raw_total_sequences','SAMTOOLS_STATS_reads_mapped','SAMTOOLS_STATS_reads_duplicated','SAMTOOLS_STATS_reads_mapped_and_paired','SAMTOOLS_STATS_reads_unmapped','SAMTOOLS_STATS_non-primary_alignments']) />
+          <!--div>
+            <input class="button" type="button" value="Alignment stats" onclick=drawChart(['SAMPLE_ID','SAMTOOLS_STATS_raw_total_sequences','SAMTOOLS_STATS_reads_mapped','SAMTOOLS_STATS_reads_duplicated','SAMTOOLS_STATS_reads_mapped_and_paired','SAMTOOLS_STATS_reads_unmapped','SAMTOOLS_STATS_non_primary_alignments']) />
             {% if PlotRnaData %}
             <input class="button" type="button" value="RNA-Seq stats" onclick=drawChart( {{ RnaColumnsList }} ) />
             {% endif %}
@@ -165,7 +165,7 @@
             {% if PlotAtacData %}
             <input class="button" type="button" value="ATAC-Seq stats" onclick=drawChart( {{ AtacColumnsList }} ) />
             {% endif %}
-          </div>
+          </div-->
           <h2>Analysis QC reports</h2>
            <p>List of samples and analysis reports</p>
            <div id="dashboard_div">
