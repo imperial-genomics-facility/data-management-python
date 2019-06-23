@@ -132,7 +132,6 @@ class Scanpy_tool:
             os.path.join(\
               self.work_dir,
               'figures/highest_expr_genes.png'))                                # encode highest gene expr data
-
       # step 2: filter data based on cell and genes
       sc.pp.filter_cells(\
         adata,
@@ -140,13 +139,11 @@ class Scanpy_tool:
       sc.pp.filter_genes(\
         adata,
         min_cells=self.min_cell_count)
-
       # step 3: fetch mitochondrial genes
       mt_genes = self._fetch_mitochondrial_genes(species_name='hsapiens')
       mt_genes = [name
                    for name in adata.var_names 
-                     if name in mt_genes]                                        # filter mito genes which are not present in data
-
+                     if name in mt_genes]                                       # filter mito genes which are not present in data
       # step 4: calculate mitochondrial read percentage
       adata.obs['percent_mito'] = \
         np.sum(adata[:, mt_genes].X, axis=1).A1 / np.sum(adata.X, axis=1).A1
@@ -186,11 +183,9 @@ class Scanpy_tool:
             os.path.join(\
               self.work_dir,
               'figures/scatter.png'))
-
       # step 5: Filtering data bases on percent mito
       adata = adata[adata.obs['n_genes']<2000,:]
       adata = adata[adata.obs['percent_mito'] < 0.05, :]
-
       # step 6: Normalise and filter data
       sc.pp.normalize_per_cell(adata)                                           # Total-count normalize (library-size correct) the data matrix to 10,000 reads per cell, so that counts become comparable among cells.
       sc.pp.log1p(adata)
@@ -208,7 +203,6 @@ class Scanpy_tool:
               self.work_dir,
               'figures/filter_genes_dispersion.png'))                           # plot highly-variable genes
       adata = adata[:, adata.var['highly_variable']]                            # filter highly-variable genes
-
       # step 7: Analyze data
       sc.pp.regress_out(\
         adata,
@@ -246,12 +240,12 @@ class Scanpy_tool:
         adata,
         n_neighbors=10,
         n_pcs=40)                                                               # neighborhood graph
-      
       # step 7.5 Plot 3D UMAP
+      adata2 = deepcopy(adata)
       sc.tl.umap(\
-        adata,
+        adata2,
         n_components=3)                                                         # generate UMAP with 3PCs
-      sc.tl.louvain(adata)                                                      # louvain graph clustering
+      sc.tl.louvain(adata2)                                                     # louvain graph clustering
       dict_map = { \
         '0':'#4682B4',
         '1':'#A233A2',
@@ -271,18 +265,18 @@ class Scanpy_tool:
         '15':'#FFF0F5',
         '16':'#DB7093'
       }
-      louvain_series = deepcopy(adata.obs['louvain'])
+      louvain_series = deepcopy(adata2.obs['louvain'])
       color_map = louvain_series.map(dict_map).values
-      labels = list(adata.obs.index)
+      labels = list(adata2.obs.index)
       hovertext = \
         ['cluster: {0}, barcode: {1}'.\
          format(grp,labels[index])
            for index,grp in enumerate(louvain_series.values)]
       threeDUmapDiv = \
         plot([go.Scatter3d( \
-                x=adata.obsm['X_umap'][:, 0],
-                y=adata.obsm['X_umap'][:, 1],
-                z=adata.obsm['X_umap'][:, 2], 
+                x=adata2.obsm['X_umap'][:, 0],
+                y=adata2.obsm['X_umap'][:, 1],
+                z=adata2.obsm['X_umap'][:, 2], 
                 mode = 'markers',
                 marker = dict(color = color_map,
                               size = 5),
@@ -292,8 +286,8 @@ class Scanpy_tool:
              )],
              output_type='div',
              include_plotlyjs='cdn')                                            # capture 3d div for umap plot
-      sc.tl.umap(adata)                                                         # reset umap with 2PCs
-      
+      sc.tl.umap(adata,n_components=2)                                          # umap with 2PCs or original adata
+      sc.tl.louvain(adata)                                                      # louvain graph clustering
       sc.pl.tsne(\
         adata,
         color='louvain',
@@ -305,9 +299,6 @@ class Scanpy_tool:
             os.path.join(\
               self.work_dir,
               'figures/tsne.png'))                                              # load t-SNE
-
-      sc.tl.umap(adata,n_components=3)
-      
       # step 8: Finding marker genes
       sc.pl.umap(\
         adata,
