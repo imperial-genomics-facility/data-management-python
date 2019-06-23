@@ -241,11 +241,10 @@ class Scanpy_tool:
         n_neighbors=10,
         n_pcs=40)                                                               # neighborhood graph
       # step 7.5 Plot 3D UMAP
-      adata2 = deepcopy(adata)
       sc.tl.umap(\
-        adata2,
+        adata,
         n_components=3)                                                         # generate UMAP with 3PCs
-      sc.tl.louvain(adata2)                                                     # louvain graph clustering
+      sc.tl.louvain(adata)                                                      # louvain graph clustering
       dict_map = { \
         '0':'#4682B4',
         '1':'#A233A2',
@@ -265,18 +264,18 @@ class Scanpy_tool:
         '15':'#FFF0F5',
         '16':'#DB7093'
       }
-      louvain_series = deepcopy(adata2.obs['louvain'])
+      louvain_series = deepcopy(adata.obs['louvain'])
       color_map = louvain_series.map(dict_map).values
-      labels = list(adata2.obs.index)
+      labels = list(adata.obs.index)
       hovertext = \
         ['cluster: {0}, barcode: {1}'.\
          format(grp,labels[index])
            for index,grp in enumerate(louvain_series.values)]
       threeDUmapDiv = \
         plot([go.Scatter3d( \
-                x=adata2.obsm['X_umap'][:, 0],
-                y=adata2.obsm['X_umap'][:, 1],
-                z=adata2.obsm['X_umap'][:, 2], 
+                x=adata.obsm['X_umap'][:, 0],
+                y=adata.obsm['X_umap'][:, 1],
+                z=adata.obsm['X_umap'][:, 2], 
                 mode = 'markers',
                 marker = dict(color = color_map,
                               size = 5),
@@ -287,7 +286,6 @@ class Scanpy_tool:
              output_type='div',
              include_plotlyjs='cdn')                                            # capture 3d div for umap plot
       sc.tl.umap(adata,n_components=2)                                          # umap with 2PCs or original adata
-      sc.tl.louvain(adata)                                                      # louvain graph clustering
       sc.pl.tsne(\
         adata,
         color='louvain',
