@@ -353,7 +353,7 @@ class SampleSheet:
         project=row[project_field].split(':')[0]
         row[project_field]=project
         description=row[description_field]
-        row[description_field]=description.replace(':','-')
+        row[description_field]=description.replace(':','-').upper()
       self._data=data
     except:
       raise
