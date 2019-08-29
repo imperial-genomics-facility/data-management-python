@@ -68,7 +68,7 @@ class IGF_asana:
       asana_task_id=self.get_asana_task_id(task_name=task_name)
       self.asanaclient.\
       tasks.\
-      update(asana_task_id,{'name':new_name})
+      update(str(asana_task_id),{'name':new_name})
     except:
       raise
 
@@ -154,7 +154,7 @@ class IGF_asana:
       asana_task_id=self.fetch_task_id_for_task_name(task_name)
       res=self.asanaclient.\
           tasks.\
-          update(task=asana_task_id,
+          update(task=str(asana_task_id),
                  params={'notes':notes})
       return res
     except:
