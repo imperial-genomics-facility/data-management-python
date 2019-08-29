@@ -31,7 +31,7 @@ class IGF_asana:
     
     :param task_name: A task name
     :param strict_check: Perform strict checking for task id count, default False
-    :returns: A asana task id
+    :returns: A asana task gid
     '''
     try:
       asana_task_id=None
@@ -43,7 +43,7 @@ class IGF_asana:
         matched_tasks=[p 
                        for p in all_asana_tasks
                          if p['name']==task_name]
-        asana_task_id=matched_tasks[0]['id']
+        asana_task_id=matched_tasks[0]['gid']
       except:
         pass
 
@@ -86,11 +86,12 @@ class IGF_asana:
                    create_in_workspace( \
                      self.asana_workspace_id,
                      {'name':task_name,
-                      'projects':self.asana_project_id,
+                      'projects':str(self.asana_project_id),
                       'notes':notes,
-                      'assignee':self.asana_user_id,
+                      'assignee':str(self.asana_user_id),
                      })
-      task_id=results['id']
+      print(results)
+      task_id=results['gid']                                    # fetching gid
       return task_id
     except:
       raise
@@ -192,9 +193,9 @@ class IGF_asana:
 
         res=self.asanaclient.attachments.\
             create_on_task(\
-              task_id=asana_task_id,
+              task_id=str(asana_task_id),
               file_content=open(os.path.join(filepath),'rb'),
-              file_name=file_name)                                               # upload file to task_id
+              file_name=file_name)                                              # upload file to task_id
     except:
       raise 
 
@@ -206,11 +207,11 @@ class IGF_asana:
     try:
       all_asana_projects=self.asanaclient.\
                          projects.\
-                         find_all({'workspace':self.asana_workspace_id})
+                         find_all({'workspace':str(self.asana_workspace_id)})
       matched_projects=\
-        [p 
+        [p
          for p in all_asana_projects
-           if p['id']==int(self.asana_project_id) ]
+           if p['gid']==str(self.asana_project_id) ]                            # checking gid
       if len(matched_projects)==0:
         raise ValueError('project id {0} not found in workspace {1}'.\
                          format(self.asana_project_id,
@@ -225,9 +226,9 @@ class IGF_asana:
     '''
     try:
       user_detail=self.asanaclient.users.me()
-      self.asana_workspace_id=user_detail['workspaces'][0]['id']
+      self.asana_workspace_id=user_detail['workspaces'][0]['gid']               # fetching gid
       self.asana_workspace_name=user_detail['workspaces'][0]['name']
-      self.asana_user_id=user_detail['id']
+      self.asana_user_id=user_detail['gid']                                     # fetching gid
       self.asana_user_name=user_detail['name']
     except:
       raise
