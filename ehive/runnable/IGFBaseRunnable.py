@@ -100,13 +100,17 @@ class IGFBaseRunnable(eHive.BaseRunnable):
       if self.param('log_asana'):
         asana_config = self.param_required('asana_config')
         asana_project_id = self.param_required('asana_project_id')
-        igf_asana = IGF_asana(asana_config=asana_config, asana_project_id=asana_project_id)
+        igf_asana = \
+          IGF_asana(\
+            asana_config=asana_config,
+            asana_project_id=str(asana_project_id))
         #igf_asana=self.param_required('igf_asana')
         igf_asana.\
-        attach_file_to_asana_task(task_name=task_name,
-                                  filepath=filepath,
-                                  remote_filename=remote_filename,
-                                  comment=comment)
+        attach_file_to_asana_task(\
+          task_name=task_name,
+          filepath=filepath,
+          remote_filename=remote_filename,
+          comment=comment)
     except:
       pass
 
@@ -124,10 +128,16 @@ class IGFBaseRunnable(eHive.BaseRunnable):
       if self.param('log_asana'):
         asana_config = self.param_required('asana_config')
         asana_project_id = self.param_required('asana_project_id')
-        igf_asana = IGF_asana(asana_config=asana_config, asana_project_id=asana_project_id)
+        igf_asana = \
+          IGF_asana(\
+            asana_config=asana_config,
+            asana_project_id=str(asana_project_id))
         #igf_asana=self.param_required('igf_asana')
-        res=igf_asana.comment_asana_task(task_name=task_name,
-                                         comment=comment)
+        res = \
+          igf_asana.\
+            comment_asana_task(\
+              task_name=task_name,
+              comment=comment)
 
       return res
     except:
@@ -148,7 +158,10 @@ class IGFBaseRunnable(eHive.BaseRunnable):
         try:
           asana_config = self.param_required('asana_config')
           asana_project_id = self.param_required('asana_project_id')
-          igf_asana = IGF_asana(asana_config=asana_config, asana_project_id=asana_project_id)
+          igf_asana = \
+            IGF_asana(\
+              asana_config=asana_config,
+              asana_project_id=str(asana_project_id))
           #igf_asana=self.param_required('igf_asana')
           res=igf_asana.add_notes_for_task(task_name, notes)
         except:
