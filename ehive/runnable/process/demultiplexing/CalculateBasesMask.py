@@ -16,6 +16,7 @@ class CalculateBasesMask(IGFBaseProcess):
         'runinfo_filename':'RunInfo.xml',
         'read_offset':1,
         'index_offset':0,
+        'custom_bases_mask':None
       })
     return params_dict
   
@@ -30,6 +31,7 @@ class CalculateBasesMask(IGFBaseProcess):
       runinfo_filename = self.param('runinfo_filename')
       read_offset = self.param('read_offset')
       index_offset = self.param('index_offset')
+      custom_bases_mask = self.param('custom_bases_mask')
 
       runinfo_file = \
         os.path.join(\
@@ -45,14 +47,19 @@ class CalculateBasesMask(IGFBaseProcess):
         raise IOError('RunInfo file {0} file not found'.\
                       format(runinfo_file))
 
-      bases_mask_object = \
-        BasesMask(\
-          samplesheet_file=samplesheet_file,
-          runinfo_file=runinfo_file,
-          read_offset=read_offset,
-          index_offset=index_offset)                                            # create bases mask object
-      bases_mask_value = \
-        bases_mask_object.calculate_bases_mask()                                # calculate bases mask
+      if custom_bases_mask is not None and \
+         custom_bases_mask != '':
+        bases_mask_value = custom_bases_mask                                    # using custom bases mask
+      else:
+        bases_mask_object = \
+          BasesMask(\
+            samplesheet_file=samplesheet_file,
+            runinfo_file=runinfo_file,
+            read_offset=read_offset,
+            index_offset=index_offset)                                          # create bases mask object
+        bases_mask_value = \
+          bases_mask_object.calculate_bases_mask()                              # calculate bases mask
+
       self.param('dataflow_params',{'basesmask':bases_mask_value})
       message = \
         'seqrun: {0}, project: {1}, lane: {2}, mask: {3}'.\
