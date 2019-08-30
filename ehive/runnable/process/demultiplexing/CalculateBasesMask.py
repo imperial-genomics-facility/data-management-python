@@ -47,7 +47,8 @@ class CalculateBasesMask(IGFBaseProcess):
         raise IOError('RunInfo file {0} file not found'.\
                       format(runinfo_file))
 
-      if custom_bases_mask is not None and \
+      if custom_bases_mask and \
+         custom_bases_mask is not None and \
          custom_bases_mask != '':
         bases_mask_value = custom_bases_mask                                    # using custom bases mask
       else:

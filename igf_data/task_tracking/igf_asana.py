@@ -20,6 +20,7 @@ class IGF_asana:
     self.asana_project_id=asana_project_id                                      # project name can change, project id is stable
     self._read_and_set_asana_config()                                           # read config file and set parameters
     self.asanaclient=asana.Client.access_token(self.asana_personal_token)       # create asana client instance
+    self.asanaclient.headers={'asana-enable': 'string_ids'}                     # fix for string ids
     self.asana_personal_token=None                                              # reset asana token value
     self._get_user_details()                                                    # load user information
     self._check_project_id()                                                    # check user given project id
