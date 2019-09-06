@@ -82,7 +82,8 @@ class Reformat_metadata_file:
   '''
   def __init__(self,infile,experiment_type_lookup,
                species_lookup,metadata_columns,
-               default_expected_reads=2000000,default_expected_lanes = 1,
+               default_expected_reads=2000000,
+               default_expected_lanes = 1,
                sample_igf_id='sample_igf_id',
                project_igf_id='project_igf_id',
                sample_submitter_id='sample_submitter_id',
@@ -121,9 +122,15 @@ class Reformat_metadata_file:
 
   @staticmethod
   def sample_name_reformat(sample_name):
+    '''
+    A ststic method for reformatting sample name
+
+    :param sample_name: A sample name string
+    :returns: A string
+    '''
     try:
       restricted_chars = string.punctuation
-      pattern0 = re.compile('\s+?')
+      pattern0 = re.compile(r'\s+?')
       pattern1 = re.compile('[{0}]'.format(restricted_chars))
       pattern2 = re.compile('-+')
       pattern3 = re.compile('-$')
@@ -141,10 +148,16 @@ class Reformat_metadata_file:
 
   @staticmethod
   def sample_and_project_reformat(tag_name):
+    '''
+    A static method for reformatting sample id and project name string
+
+    :param tag_name: A sample or project name string
+    :returns: A string
+    '''
     try:
       restricted_chars = \
         ''.join(list(filter(lambda x: x != '_',string.punctuation)))
-      pattern0 = re.compile('\s+?')
+      pattern0 = re.compile(r'\s+?')
       pattern1 = re.compile('[{0}]'.format(restricted_chars))
       pattern2 = re.compile('-+')
       pattern3 = re.compile('-$')
@@ -162,6 +175,12 @@ class Reformat_metadata_file:
 
 
   def get_assay_info(self,experiment_type):
+    '''
+    A method for populating library information for sample
+
+    :param experiment_type: A valid experiment_type tag from lookup table
+    :returns: Two strings containing library_source and library_strategy information
+    '''
     try:
       library_source = 'UNKNOWN'
       library_strategy = 'UNKNOWN'
@@ -171,10 +190,16 @@ class Reformat_metadata_file:
 
       return library_source,library_strategy
     except Exception as e:
-      raise ValueError('Failed to return assay information for exp type: {0}'.format(experiment_type))
+      raise ValueError('Failed to return assay information for exp type: {0}, error: {1}'.format(experiment_type,e))
 
   @staticmethod
   def calculate_insert_length_from_fragment(fragment_length,adapter_length=120):
+    '''
+    A static method for calculating insert length from fragment length information
+
+    :param fragment_length: A int value for average fragment size
+    :param adapter_length: Adapter length, default 120
+    '''
     try:
       insert_length = None
       fragment_length = float(str(fragment_length).strip().replace(',',''))
@@ -184,6 +209,12 @@ class Reformat_metadata_file:
       raise ValueError('Failed to calculate insert length: {0}'.format(e))
 
   def get_species_info(self,genome_build):
+    '''
+    A method for fetching species taxon infor and scientific name from a lookup dictionary
+
+    :param genome_build: Species genome build info string
+    :returns: Two strings, one for taxon_id andother for scientific name
+    '''
     try:
       taxon_id = 'UNKNOWN'
       scientific_name = 'UNKNOWN'
@@ -191,31 +222,45 @@ class Reformat_metadata_file:
         taxon_id = self.species_lookup.get(genome_build).get(self.taxon_id) or 'UNKNOWN'
         scientific_name = self.species_lookup.get(genome_build).get(self.scientific_name) or 'UNKNOWN'
 
-      return taxon_id,scientific_name
+      return str(taxon_id),scientific_name
     except Exception as e:
       raise ValueError('Failed to get species information: {0}'.format(e))
 
   def populate_metadata_values(self,row):
+    '''
+    A method for populating metadata row
+
+    :param row: A Pandas Series
+    :returns: A Pandas Series
+    '''
     try:
+      if not isinstance(row,pd.Series):
+        raise TypeError('Expecting a pandas series and got {0}'.format(type(row)))
+
       if self.sample_igf_id in row.keys():
         row[self.sample_igf_id] = \
-        self.sample_and_project_reformat(tag_name=row[self.sample_igf_id])
+        self.sample_and_project_reformat(\
+          tag_name=row[self.sample_igf_id])
 
       if self.project_igf_id in row.keys():
         row[self.project_igf_id] = \
-          self.sample_and_project_reformat(tag_name=row[self.project_igf_id])
+          self.sample_and_project_reformat(\
+            tag_name=row[self.project_igf_id])
 
       if self.sample_submitter_id in row.keys():
         row[self.sample_submitter_id] = \
-          self.sample_name_reformat(sample_name=row[self.sample_submitter_id])
+          self.sample_name_reformat(\
+            sample_name=row[self.sample_submitter_id])
 
       if self.experiment_type in row.keys():
         row[self.library_source],row[self.library_strategy] = \
-          self.get_assay_info(experiment_type=row[self.experiment_type])
+          self.get_assay_info(\
+            experiment_type=row[self.experiment_type])
 
       if self.species_name in row.keys():
         row[self.taxon_id],row[self.scientific_name] = \
-          self.get_species_info(genome_build=row[self.species_name])
+          self.get_species_info(\
+            genome_build=row[self.species_name])
 
       if self.fragment_length_distribution_mean in row.keys():
         if (row[self.insert_length] == 0 or row[self.insert_length] == '' ) and \
@@ -227,7 +272,8 @@ class Reformat_metadata_file:
 
       if self.species_name in row.keys():
         row[self.taxon_id],row[self.scientific_name] = \
-          self.get_species_info(genome_build=row[self.species_name])
+          self.get_species_info(\
+            genome_build=row[self.species_name])
 
       if self.expected_reads in row.keys() and \
         (row[self.expected_reads] == '' or row[self.expected_reads] == 0):
@@ -239,13 +285,20 @@ class Reformat_metadata_file:
 
       if self.experiment_type in row.keys():
         row[self.library_source],row[self.library_strategy] = \
-          self.get_assay_info(experiment_type=row[self.experiment_type])
+          self.get_assay_info(\
+            experiment_type=row[self.experiment_type])
 
       return row
     except Exception as e:
       raise ValueError('Failed to remormat row: {0}, error: {1}'.format(row,e))
 
   def reformat_raw_metadata_file(self,output_file):
+    '''
+    A method for reformatting raw metadata file and print a corrected output
+
+    :param output_file: An output filepath
+    :returns: None
+    '''
     try:
       try:
         data = pd.read_csv(self.infile)
@@ -262,7 +315,7 @@ class Reformat_metadata_file:
         apply(lambda x: \
           self.populate_metadata_values(row=x),
           axis=1,
-          result_type='reduce')
+          result_type='reduce')                                                 # update metadata info
 
       for field in self.metadata_columns:
         total_row_count = data[field].count()
@@ -273,8 +326,8 @@ class Reformat_metadata_file:
             empty_keys += val
 
         if total_row_count == empty_keys:
-          data.drop(field,axis=1,inplace=True)
+          data.drop(field,axis=1,inplace=True)                                  # clean up empty columns
 
-      data.to_csv(output_file,index=False)
+      data.to_csv(output_file,index=False)                                      # print new metadata file
     except Exception as e:
       raise ValueError('Failed to remormat file {0}, error {1}'.format(self.infile,e))

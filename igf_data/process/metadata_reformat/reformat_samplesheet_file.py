@@ -75,7 +75,7 @@ class Reformat_samplesheet_file:
     :returns: A Pandas Series
     '''
     try:
-      if isinstance(row,pd.Series):
+      if not isinstance(row,pd.Series):
         raise TypeError('Expecting A pandas series and got {0}'.format(type(row)))
 
       if self.sample_id in row.keys():
