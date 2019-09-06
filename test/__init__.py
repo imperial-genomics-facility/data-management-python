@@ -26,6 +26,7 @@ def full_suite():
   from .dbadaptor.useradaptor_test import Useradaptor_test1
   from .dbadaptor.sampleadaptor_test import Sampleadaptor_test1
   from .process.processsinglecellsamplesheet_test import ProcessSingleCellSamplesheet_testA
+  from .process.processsinglecellsamplesheet_test import ProcessSingleCellSamplesheet_testB
   from .process.mergesinglecellfastq_test import MergeSingleCellFastq_testA
   from .utils.project_data_display_utils_test import Convert_project_data_gviz_data1,Add_seqrun_path_info1
   from .utils.projectutils_test import Projectutils_test1
@@ -50,6 +51,8 @@ def full_suite():
   from .utils.project_analysis_utils_test import Project_analysis_test1,Project_analysis_test2
   from .process.project_pooling_info_test import Project_pooling_info_test1
   from .utils.analysis_fastq_fetch_utils_test import Analysis_fastq_fetch_utils_test1
+  from .process.reformat_metadata_file_test import Reformat_metadata_file_testA
+  from .process.reformat_samplesheet_file_test import Reformat_samplesheet_file_testA
 
   return unittest.TestSuite([ \
       unittest.TestLoader().loadTestsFromTestCase(BasesMask_testA), 
@@ -84,6 +87,7 @@ def full_suite():
       unittest.TestLoader().loadTestsFromTestCase(Useradaptor_test1),
       unittest.TestLoader().loadTestsFromTestCase(Sampleadaptor_test1),
       unittest.TestLoader().loadTestsFromTestCase(ProcessSingleCellSamplesheet_testA),
+      unittest.TestLoader().loadTestsFromTestCase(ProcessSingleCellSamplesheet_testB),
       unittest.TestLoader().loadTestsFromTestCase(MergeSingleCellFastq_testA),
       unittest.TestLoader().loadTestsFromTestCase(Convert_project_data_gviz_data1),
       unittest.TestLoader().loadTestsFromTestCase(Add_seqrun_path_info1),
@@ -114,4 +118,6 @@ def full_suite():
       unittest.TestLoader().loadTestsFromTestCase(Project_pooling_info_test1),
       unittest.TestLoader().loadTestsFromTestCase(Analysis_fastq_fetch_utils_test1),
       unittest.TestLoader().loadTestsFromTestCase(Analysis_fastq_fetch_utils_test1),
+      unittest.TestLoader().loadTestsFromTestCase(Reformat_metadata_file_testA),
+      unittest.TestLoader().loadTestsFromTestCase(Reformat_samplesheet_file_testA),
     ])

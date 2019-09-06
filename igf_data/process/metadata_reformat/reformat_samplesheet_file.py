@@ -132,6 +132,7 @@ class Reformat_samplesheet_file:
     try:
       samplesheet = SampleSheet(infile=self.infile)
       samplesheet_data = pd.DataFrame(samplesheet._data)
+      samplesheet_data.fillna('',inplace=True)
       samplesheet_data = \
         samplesheet_data.\
         apply(\
