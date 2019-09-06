@@ -48,8 +48,8 @@ class CalculateBasesMask(IGFBaseProcess):
                       format(runinfo_file))
 
       if custom_bases_mask and \
-         custom_bases_mask is not None and \
-         custom_bases_mask != '':
+         (custom_bases_mask is not None or \
+          custom_bases_mask != ''):
         bases_mask_value = custom_bases_mask                                    # using custom bases mask
       else:
         bases_mask_object = \
