@@ -200,6 +200,10 @@
             "expected_read" : {
               "type" : "string",
               "pattern" : "^\\d+$|^$"
+            },
+            "expected_lanes" : {
+              "type" : "string",
+              "pattern" : "^\\d+$|^$"
             }
         },
         "required": ["project_igf_id",
