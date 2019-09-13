@@ -60,7 +60,7 @@ class Reformat_samplesheet_file:
     '''
     try:
       description = ''
-      pattern = re.compile(r'SI-[GN]A-[A-H][1-12]',re.IGNORECASE)
+      pattern = re.compile(r'SI-[GN]A-[A-H]\d+',re.IGNORECASE)
       if re.match(pattern,index):
         description = tenx_label
       return description

@@ -55,6 +55,7 @@ METADATA_COLUMNS = [
   'species_name'
   ]
 
+
 class Reformat_metadata_file:
   '''
   A class for reformatting metadata csv files
@@ -202,8 +203,11 @@ class Reformat_metadata_file:
     '''
     try:
       insert_length = None
-      fragment_length = float(str(fragment_length).strip().replace(',',''))
-      insert_length = int(fragment_length - adapter_length)
+      if fragment_length == '':
+        insert_length = 0
+      else:
+        fragment_length = float(str(fragment_length).strip().replace(',',''))
+        insert_length = int(fragment_length - adapter_length)
       return insert_length
     except Exception as e:
       raise ValueError('Failed to calculate insert length: {0}'.format(e))
@@ -290,7 +294,7 @@ class Reformat_metadata_file:
 
       return row
     except Exception as e:
-      raise ValueError('Failed to remormat row: {0}, error: {1}'.format(row,e))
+      raise ValueError('Failed to reformat row: {0}, error: {1}'.format(row,e))
 
   def reformat_raw_metadata_file(self,output_file):
     '''
@@ -307,7 +311,10 @@ class Reformat_metadata_file:
 
       for field in self.metadata_columns:
         if field not in data.columns:
-          data[field] = ''
+          if field in ('expected_reads','expected_lanes','insert_length','fragment_length_distribution_mean','fragment_length_distribution_sd'):
+            data[field] = 0
+          else:
+            data[field] = ''
 
       data = \
         data.\
