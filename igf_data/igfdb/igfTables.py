@@ -500,7 +500,8 @@ class Experiment(Base):
                                   'TF', 'H3K27ME3', 'H3K27AC', 'H3K9ME3', 'H3K36ME3', 'H3F3A', 'H3K4ME1',
                                   'H3K79ME2', 'H3K79ME3', 'H3K9ME1', 'H3K9ME2', 'H4K20ME1', 'H2AFZ',
                                   'H3AC', 'H3K4ME2', 'H3K4ME3', 'H3K9AC', 'HISTONE-NARROW', 'HISTONE-BROAD',
-                                  'CHIP-INPUT', 'ATAC-SEQ', 'TENX-TRANSCRIPTOME', 'DROP-SEQ-TRANSCRIPTOME', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
+                                  'CHIP-INPUT', 'ATAC-SEQ', 'TENX-TRANSCRIPTOME', 'TENX-TRANSCRIPTOME_5P',
+                                  'DROP-SEQ-TRANSCRIPTOME', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   library_layout    = Column(Enum('SINGLE', 'PAIRED', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   status            = Column(Enum('ACTIVE', 'FAILED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
   date_created      = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
