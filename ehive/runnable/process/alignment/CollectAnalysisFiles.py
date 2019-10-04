@@ -14,7 +14,7 @@ class CollectAnalysisFiles(IGFBaseProcess):
         'collection_type':None,
         'collection_table':None,
         'withdraw_exisitng_collection':False,
-        'remove_existing_file':False,
+        'remove_existing_file':True,
         'file_suffix':None
       })
     return params_dict
