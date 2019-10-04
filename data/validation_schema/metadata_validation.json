@@ -107,6 +107,7 @@
                         "CHIP-INPUT",
                         "ATAC-SEQ",
                         "TENX-TRANSCRIPTOME",
+                        "TENX-TRANSCRIPTOME_5P",
                         "DROP-SEQ-TRANSCRIPTOME",
                         "UNKNOWN",
                         ""]

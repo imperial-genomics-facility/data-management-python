@@ -6,6 +6,7 @@ EXPERIMENT_TYPE_LOOKUP = \
    'TOTAL-RNA':{'library_source':'TRANSCRIPTOMIC','library_strategy':'RNA-SEQ'},
    'SMALL-RNA':{'library_source':'TRANSCRIPTOMIC','library_strategy':'RNA-SEQ'},
    'TENX-TRANSCRIPTOME':{'library_source':'TRANSCRIPTOMIC_SINGLE_CELL','library_strategy':'RNA-SEQ'},
+   'TENX-TRANSCRIPTOME_5P':{'library_source':'TRANSCRIPTOMIC_SINGLE_CELL','library_strategy':'RNA-SEQ'},
    'DROP-SEQ-TRANSCRIPTOME':{'library_source':'TRANSCRIPTOMIC_SINGLE_CELL','library_strategy':'RNA-SEQ'},
    'WGS':{'library_source':'GENOMIC','library_strategy':'WGS'},
    'EXOME':{'library_source':'GENOMIC','library_strategy':'EXOME'},
