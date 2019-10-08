@@ -85,7 +85,8 @@ def calculate_igf_disk_usage_costs(list_of_dir_paths,dbconf_file,costs_unit=2.8)
     formatted_df = \
       user_groupped_data.\
       apply(\
-        lambda x: __calculate_storage_costs(series=x),
+        lambda x: \
+          __calculate_storage_costs(series=x,costs_unit=costs_unit),
         axis=1).\
       sort_values(\
         'costs_pm',
@@ -100,11 +101,10 @@ def calculate_igf_disk_usage_costs(list_of_dir_paths,dbconf_file,costs_unit=2.8)
   except Exception as e:
     raise ValueError('Error: {0}'.format(e))
 
-def __calculate_storage_costs(series):
+def __calculate_storage_costs(series,costs_unit):
   try:
     raw_data = series.get('raw_data')
     results_data = series.get('results_data')
-    costs_unit = 2.8
     if (raw_data + results_data) > 0:
       costs_pm = (raw_data + results_data) * 2.8
     else:
