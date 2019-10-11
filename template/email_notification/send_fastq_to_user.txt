@@ -21,7 +21,7 @@ Login information:
 {% if hpcUser %}
     Password: Your account password for Imperial College
     Authentication Type: PAM {% else %}
-    Password: Your account password
+    Password: Your IGF account password (it was set to you in a separate email)
     Authentication Type: Standard {% endif %}
 
 QC Report pages:
@@ -45,6 +45,8 @@ The data will be available for one month from the date of this e-mail. You can r
 
 Please have look and send us your feedback.
 
+Subscribe to IGF mailing list for updates and announcements
+https://mailman.ic.ac.uk/mailman/listinfo/igf-users
 
 Kind regards
 

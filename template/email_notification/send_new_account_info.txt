@@ -19,6 +19,9 @@ https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html
 
 You have received this email because of your requested for a new sequencing project. If you did not intend to, please let us know as soon as possible.
 
+Subscribe to IGF mailing list for updates and announcements
+https://mailman.ic.ac.uk/mailman/listinfo/igf-users
+
 Kind regards
 
 Imperial BRC Genomics Facility
