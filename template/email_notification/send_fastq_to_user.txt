@@ -21,7 +21,7 @@ Login information:
 {% if hpcUser %}
     Password: Your account password for Imperial College
     Authentication Type: PAM {% else %}
-    Password: Your IGF account password (it was set to you in a separate email)
+    Password: Your IGF account password (sent to you via a separate email)
     Authentication Type: Standard {% endif %}
 
 QC Report pages:
