@@ -6,7 +6,7 @@ tests_require = ["unittest2"]
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
 
-version = "0.0.1"
+version = "0.0.2"
 
 setup(
     name = "data-management-python",
@@ -22,7 +22,7 @@ setup(
     maintainer_email = "reach4avik@yahoo.com",
     classifiers=[
         'Programming Language :: Python',
-        'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Software Development :: Testing',
     ],
