@@ -43,7 +43,10 @@ Quick data transfer tips for CX1/AX4 (Imperial College's HPC cluster) users usin
 
 The data will be available for one month from the date of this e-mail. You can refer to the samplesheets in the fastq tarfiles for mapping facility sample ids to the original sample names.
 
-Please have look and send us your feedback.
+
+Alignment QC:
+  Now we have started providing QC reports for selected library types after alignment and primary analysis of the raw data. Please have a look at the supported library types and species information from our help page
+  https://imperial-genomics-facility.github.io/igf-pipeline-help/alignment_qc.html#list-of-supported-library-type-and-species
 
 Subscribe to IGF mailing list for updates and announcements
 https://mailman.ic.ac.uk/mailman/listinfo/igf-users
