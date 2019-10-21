@@ -3,6 +3,7 @@ from igf_data.utils.fileutils import get_datestamp_label
 from igf_data.utils.fileutils import preprocess_path_name
 from igf_data.utils.fileutils import get_file_extension
 from igf_data.utils.fileutils import move_file
+from igf_data.utils.fileutils import calculate_file_checksum
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.igfdb.sampleadaptor import SampleAdaptor
@@ -42,8 +43,8 @@ class Analysis_collection_utils:
       self.collection_name=collection_name
       self.collection_type=collection_type
       if collection_table not in allowed_collection:
-        raise ValueError('Collection table {0} not supported').\
-                         format(collection_table)                               # check collection table information
+        raise ValueError('Collection table {0} not supported'.\
+                         format(collection_table))                               # check collection table information
 
       self.collection_table=collection_table
       self.base_path=base_path
@@ -73,29 +74,36 @@ class Analysis_collection_utils:
     try:
       ca=CollectionAdaptor(**{'session':dbsession})
       
-      collection_exists=ca.get_collection_files(collection_name=self.collection_name,
-                                                collection_type=self.collection_type)
+      collection_exists = \
+        ca.get_collection_files(\
+          collection_name=self.collection_name,
+          collection_type=self.collection_type)
       if len(collection_exists.index) >0 and \
           withdraw_exisitng_collection:
-        remove_data=[{'name':self.collection_name,
-                      'type':self.collection_type,
-                    }]
-        ca.remove_collection_group_info(data=remove_data,
-                                        autosave=autosave_db)                   # removing all existing collection groups for the collection name and type
+        remove_data = \
+          [{'name':self.collection_name,
+            'type':self.collection_type }]
+        ca.remove_collection_group_info(\
+          data=remove_data,
+          autosave=autosave_db)                                                 # removing all existing collection groups for the collection name and type
 
-      fa=FileAdaptor(**{'session':dbsession})
-      file_exists=fa.check_file_records_file_path(file_path=file_path)          # check if file already present in db
+      fa = FileAdaptor(**{'session':dbsession})
+      file_exists = fa.check_file_records_file_path(file_path=file_path)          # check if file already present in db
       if file_exists and force:
-        fa.remove_file_data_for_file_path(file_path=file_path,
-                                          remove_file=remove_file,
-                                          autosave=autosave_db)                 # remove entry from file table and disk
+        fa.remove_file_data_for_file_path(\
+          file_path=file_path,
+          remove_file=remove_file,
+          autosave=autosave_db)                                                 # remove entry from file table and disk
 
-      collection_data=[{'name':self.collection_name,
-                        'type':self.collection_type,
-                        'table':self.collection_table,
-                        'file_path':file_path}]
-      ca.load_file_and_create_collection(data=collection_data,
-                                         autosave=autosave_db)                  # load file, collection and create collection group
+      collection_data = \
+        [{'name':self.collection_name,
+          'type':self.collection_type,
+          'table':self.collection_table,
+          'file_path':file_path}]
+      ca.load_file_and_create_collection(\
+        data=collection_data,
+        calculate_file_size_and_md5=False,
+        autosave=autosave_db)                                                   # load file, collection and create collection group
     except:
       raise
 
@@ -124,51 +132,51 @@ class Analysis_collection_utils:
     :returns: A list of final filepath
     '''
     try:
-      project_igf_id=None
-      sample_igf_id=None
-      experiment_igf_id=None
-      experiment_igf_id=None
-      run_igf_id=None
-      output_path_list=list()                                                   # define empty output list
-      dbconnected=False
+      project_igf_id = None
+      sample_igf_id = None
+      experiment_igf_id = None
+      experiment_igf_id = None
+      run_igf_id = None
+      output_path_list = list()                                                   # define empty output list
+      dbconnected = False
       if self.collection_name is None or \
          self.collection_type is None or \
          self.collection_table is None:
         raise ValueError('File collection information is incomplete')           # check for collection information
 
-      base=BaseAdaptor(**{'session_class':self.dbsession_class})
+      base = BaseAdaptor(**{'session_class':self.dbsession_class})
       base.start_session()                                                      # connect to db
-      dbconnected=True
-      if self.base_path is not None:                                            
+      dbconnected = True
+      if self.base_path is not None:
         if self.collection_table == 'sample':
-          sa=SampleAdaptor(**{'session':base.session})
-          sample_igf_id=self.collection_name
-          sample_exists=sa.check_sample_records_igf_id(sample_igf_id=sample_igf_id)
+          sa = SampleAdaptor(**{'session':base.session})
+          sample_igf_id = self.collection_name
+          sample_exists = sa.check_sample_records_igf_id(sample_igf_id=sample_igf_id)
           if not sample_exists:
             raise ValueError('Sample {0} not found in db'.\
                              format(sample_igf_id))
 
-          project_igf_id=sa.fetch_sample_project(sample_igf_id=sample_igf_id)     # fetch project id for sample
+          project_igf_id = sa.fetch_sample_project(sample_igf_id=sample_igf_id) # fetch project id for sample
         elif self.collection_table == 'experiment':
-          ea=ExperimentAdaptor(**{'session':base.session})
-          experiment_igf_id=self.collection_name
-          experiment_exists=\
+          ea = ExperimentAdaptor(**{'session':base.session})
+          experiment_igf_id = self.collection_name
+          experiment_exists = \
             ea.check_experiment_records_id(experiment_igf_id=experiment_igf_id)
           if not experiment_exists:
             raise ValueError('Experiment {0} not present in database'.\
                              format(experiment_igf_id))
 
-          (project_igf_id,sample_igf_id)=\
+          (project_igf_id,sample_igf_id) = \
               ea.fetch_project_and_sample_for_experiment(experiment_igf_id=experiment_igf_id) # fetch project and sample id for experiment
         elif self.collection_table == 'run':
-          ra=RunAdaptor(**{'session':base.session})
-          run_igf_id=self.collection_name
-          run_exists=ra.check_run_records_igf_id(run_igf_id=run_igf_id)
+          ra = RunAdaptor(**{'session':base.session})
+          run_igf_id = self.collection_name
+          run_exists = ra.check_run_records_igf_id(run_igf_id=run_igf_id)
           if not run_exists:
             raise ValueError('Run {0} not found in database'.\
                              format(run_igf_id))
 
-          (project_igf_id,sample_igf_id,experiment_igf_id)=\
+          (project_igf_id,sample_igf_id,experiment_igf_id) = \
             ra.fetch_project_sample_and_experiment_for_run(run_igf_id=run_igf_id) # fetch project, sample and experiment id for run
         elif self.collection_table == 'project':
           pa=ProjectAdaptor(**{'session':base.session})
@@ -183,28 +191,32 @@ class Analysis_collection_utils:
         raise ValueError('Analysis name is required for renaming file')         # check analysis name
 
       for input_file in input_file_list:
-        final_path=''
+        final_path = ''
         if self.base_path is None:                                              # do not move file if base_path is absent
-          final_path=os.path.dirname(input_file)
+          final_path = os.path.dirname(input_file)
         else:                                                                   # move file path
           if self.collection_table == 'project':
             if project_igf_id is None:
               raise ValueError('Missing project id for collection {0}'.\
                                format(self.collection_name))
 
-            final_path=os.path.join(self.base_path,
-                                    project_igf_id,
-                                    self.analysis_name)                         # final path for project
+            final_path = \
+              os.path.join(\
+                self.base_path,
+                project_igf_id,
+                self.analysis_name)                                             # final path for project
           elif self.collection_table == 'sample':
             if project_igf_id is None or \
                sample_igf_id is None:
               raise ValueError('Missing project and sample id for collection {0}'.\
                                format(self.collection_name))
 
-            final_path=os.path.join(self.base_path,
-                                    project_igf_id,
-                                    sample_igf_id,
-                                    self.analysis_name)                         # final path for sample
+            final_path = \
+              os.path.join(\
+                self.base_path,
+                project_igf_id,
+                sample_igf_id,
+                self.analysis_name)                                             # final path for sample
           elif self.collection_table == 'experiment':
             if project_igf_id is None or \
                sample_igf_id is None or \
