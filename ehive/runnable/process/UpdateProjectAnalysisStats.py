@@ -19,7 +19,7 @@ class UpdateProjectAnalysisStats(IGFBaseProcess):
       'chart_data_json':'analysis_chart_data.json',
       'chart_data_csv':'analysis_chart_data.csv',
       'sample_igf_id':None,
-      'attribute_collection_file_type':'ANALYSIS_CRAM',
+      'attribute_collection_file_type':('ANALYSIS_CRAM','CELLRANGER_RESULTS'),
       'pipeline_seed_table':'experiment',
       'pipeline_finished_status':'FINISHED',
       'sample_id_label':'SAMPLE_ID',

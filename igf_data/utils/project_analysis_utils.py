@@ -14,11 +14,11 @@ class Project_analysis:
   :param igf_session_class: A database session class
   :param collection_type_list: A list of collection type for database lookup
   :param remote_analysis_dir: A remote path prefix for analysis file look up, default analysis
-  :param attribute_collection_file_type: A filetype for fetching collection attribute records, default ANALYSIS_CRAM
+  :param attribute_collection_file_type: A filetype list for fetching collection attribute records, default ('ANALYSIS_CRAM')
 
   '''
   def __init__(self,igf_session_class,collection_type_list,remote_analysis_dir='analysis',
-               attribute_collection_file_type='ANALYSIS_CRAM',pipeline_name='PrimaryAnalysisCombined',
+               attribute_collection_file_type=('ANALYSIS_CRAM'),pipeline_name='PrimaryAnalysisCombined',
                pipeline_seed_table='experiment',pipeline_finished_status='FINISHED',sample_id_label='SAMPLE_ID'):
     try:
       self.igf_session_class = igf_session_class
@@ -93,7 +93,7 @@ class Project_analysis:
                 Collection_attribute.attribute_name,
                 Collection_attribute.attribute_value).\
           join(Collection,Collection.collection_id==Collection_attribute.collection_id).\
-          filter(Collection.type==self.attribute_collection_file_type).\
+          filter(Collection.type.in_(self.attribute_collection_file_type)).\
           filter(Collection.name.in_(subquery))
       records = base.fetch_records(query=query)
       base.close_session()
