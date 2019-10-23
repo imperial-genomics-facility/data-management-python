@@ -102,7 +102,7 @@ class Analysis_collection_utils:
           'file_path':file_path}]
       ca.load_file_and_create_collection(\
         data=collection_data,
-        calculate_file_size_and_md5=False,
+        calculate_file_size_and_md5=True,
         autosave=autosave_db)                                                   # load file, collection and create collection group
     except:
       raise
