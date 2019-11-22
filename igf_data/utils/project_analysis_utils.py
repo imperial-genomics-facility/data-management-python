@@ -201,6 +201,9 @@ class Project_analysis:
         chart_data = \
           self._fetch_collection_attributes(project_igf_id=project_igf_id)      # fetch chart data
         if len(chart_data.index)>0:
+          chart_data = \
+            chart_data.\
+              applymap(lambda x: str(x).replace(',','').replace('%',''))
           if csv_output_file is not None:
             chart_data.to_csv(\
               csv_output_file,
