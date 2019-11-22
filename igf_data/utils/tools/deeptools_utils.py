@@ -2,9 +2,9 @@ import os,io
 import pandas as pd
 from shlex import quote
 from contextlib import redirect_stdout
-from deeptools.plotCoverage import main as plotCoverage_main
-from deeptools.bamCoverage import main as bamCoverage_main
-from deeptools.plotFingerprint import main as plotFingerprint_main
+
+
+
 from igf_data.utils.fileutils import get_temp_dir,remove_dir,check_file_path,copy_local_file
 
 def run_plotCoverage(bam_files,output_raw_counts,plotcov_stdout,output_plot=None,
@@ -62,6 +62,7 @@ def run_plotCoverage(bam_files,output_raw_counts,plotcov_stdout,output_plot=None
     if dry_run:
       return plotcov_args
 
+    from deeptools.plotCoverage import main as plotCoverage_main
     f = io.StringIO()
     with redirect_stdout(f):
       plotCoverage_main(plotcov_args)
@@ -141,6 +142,7 @@ def run_bamCoverage(bam_files,output_file,blacklist_file=None,thread=1,dry_run=F
     if dry_run:
       return bamcov_args
 
+    from deeptools.bamCoverage import main as bamCoverage_main
     bamCoverage_main(bamcov_args)                                               # generate bam coverage file
     copy_local_file(\
       source_path=temp_output,
@@ -207,6 +209,7 @@ def run_plotFingerprint(bam_files,output_raw_counts,output_matrics,output_plot=N
     if dry_run:
       return plotFgCov_args
 
+    from deeptools.plotFingerprint import main as plotFingerprint_main
     plotFingerprint_main(plotFgCov_args)
     copy_local_file(\
       source_path=temp_output_raw_counts,
