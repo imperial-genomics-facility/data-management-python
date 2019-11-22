@@ -283,8 +283,7 @@ class Platform(Base):
 
   platform_id      = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   platform_igf_id  = Column(String(10), nullable=False)
-  model_name       = Column(Enum('HISEQ2500','HISEQ4000','MISEQ','NEXTSEQ','NOVASEQ6000','NANOPORE_MINION',
-                                 'DNBSEQ-G400', 'DNBSEQ-G50', 'DNBSEQ-T7'), nullable=False)
+  model_name       = Column(Enum('HISEQ2500','HISEQ4000','MISEQ','NEXTSEQ','NOVASEQ6000','NANOPORE_MINION','DNBSEQ-G400', 'DNBSEQ-G50', 'DNBSEQ-T7'), nullable=False)
   vendor_name      = Column(Enum('ILLUMINA','NANOPORE', 'MGI'), nullable=False)
   software_name    = Column(Enum('RTA','UNKNOWN'), nullable=False)
   software_version = Column(String(20), nullable=False, server_default='UNKNOWN')
