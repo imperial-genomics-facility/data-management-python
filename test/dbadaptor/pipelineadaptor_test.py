@@ -83,7 +83,7 @@ class Pipelineadaptor_test1(unittest.TestCase):
     self.assertEqual(len(table_data1.to_dict(orient='records')), len(pipe_seed1.to_dict(orient='records')))
     pipeline_seed_data3=[{'pipeline_name':'demultiplexing_fastq','seed_id':'1', 'seed_table':'seqrun','status':'RUNNING'},]
     pl.update_pipeline_seed(data=pipeline_seed_data3)
-    (pipe_seed2,table_data2)=pl.fetch_pipeline_seed_with_table_data(pipeline_name='demultiplexing_fastq',status='RUNNING')
+    (pipe_seed2,_)=pl.fetch_pipeline_seed_with_table_data(pipeline_name='demultiplexing_fastq',status='RUNNING')
     pl.close_session()
     self.assertEqual(pipe_seed2.loc[pipe_seed2.seed_id==1]['status'].values[0],'RUNNING')
 
@@ -250,7 +250,7 @@ class Pipelineadaptor_test3(unittest.TestCase):
                       'library_name':'IGF103923',
                       'library_source':'TRANSCRIPTOMIC_SINGLE_CELL',
                       'library_strategy':'RNA-SEQ',
-                      'experiment_type':'TENX-TRANSCRIPTOME',
+                      'experiment_type':'TENX-TRANSCRIPTOME-3P',
                       'library_layout':'PAIRED',
                       'platform_name':'MISEQ'},
                       {'project_igf_id':'IGFQ000123_avik_10-4-2018_Miseq',
@@ -287,7 +287,7 @@ class Pipelineadaptor_test3(unittest.TestCase):
   def test_seed_new_experiments(self):
     pl=PipelineAdaptor(**{'session_class': self.session_class})
     pl.start_session()
-    new_exps,seeded_exps=\
+    new_exps,_=\
       pl.seed_new_experiments(\
         pipeline_name='PrimaryAnalysis',
         species_name_list=['HG38'],
@@ -299,7 +299,7 @@ class Pipelineadaptor_test3(unittest.TestCase):
   def test_seed_new_experiments1(self):
     pl=PipelineAdaptor(**{'session_class': self.session_class})
     pl.start_session()
-    new_exps,seeded_exps=\
+    new_exps,_=\
       pl.seed_new_experiments(\
         pipeline_name='PrimaryAnalysis',
         species_name_list=['HG38'],
@@ -311,7 +311,7 @@ class Pipelineadaptor_test3(unittest.TestCase):
     pl.close_session()
     pl=PipelineAdaptor(**{'session_class': self.session_class})
     pl.start_session()
-    (seed_data,exp_data)=pl.fetch_pipeline_seed_with_table_data(\
+    (_,exp_data)=pl.fetch_pipeline_seed_with_table_data(\
                               pipeline_name='PrimaryAnalysis',
                               table_name='experiment',
                               status='SEEDED')

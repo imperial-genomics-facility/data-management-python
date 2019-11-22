@@ -11,6 +11,7 @@ class DBConnect:
     data.setdefault('dbuser', '')
     data.setdefault('dbpass', '')
     data.setdefault('dbname', '')
+    data.setdefault('url', '')
     data.setdefault('driver', 'sqlite')
     data.setdefault('connector', '')
     data.setdefault('supported_drivers', ('mysql', 'sqlite'))
@@ -26,9 +27,12 @@ class DBConnect:
     self.supported_drivers = data['supported_drivers']
     self.engine_config     = data['engine_config']
     # create engine and configure session at start up
-    self.dburl         = self._prepare_db_url()        # get dburl for connection
-    self.engine        = self._create_session_engine() # get engine connection
-    self.session_class = self._configure_session()     # get session class
+    if data['url'] == '':
+      self.dburl = self._prepare_db_url()                                       # get dburl for connection
+    else:
+      self.dburl = data['url']
+    self.engine        = self._create_session_engine()                          # get engine connection
+    self.session_class = self._configure_session()                              # get session class
 
 
   def _prepare_db_url(self):
