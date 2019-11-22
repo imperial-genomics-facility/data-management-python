@@ -54,9 +54,10 @@ class Project(Base):
                     "project_igf_id = '{self.project_igf_id}'," \
                     "project_name = '{self.project_name}'," \
                     "start_timestamp = '{self.start_timestamp}'," \
+                    "status = '{self.status}',"\
                     "description = '{self.description}'," \
                     "deliverable = '{self.deliverable}')".format(self=self)
-                   
+
 
 class User(Base):
   '''
@@ -102,6 +103,7 @@ class User(Base):
   username        = Column(String(20))
   hpc_username    = Column(String(20))
   twitter_user    = Column(String(20))
+  orcid_id        = Column(String(50))
   category        = Column(Enum('HPC_USER','NON_HPC_USER','EXTERNAL'), nullable=False, server_default='NON_HPC_USER')
   status          = Column(Enum('ACTIVE', 'BLOCKED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
   date_created    = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
@@ -117,6 +119,7 @@ class User(Base):
                 "username = '{self.username}'," \
                 "hpc_username = '{self.hpc_username}'," \
                 "twitter_user = '{self.twitter_user}, " \
+                "orcid_id = '{self.orcid_id}, " \
                 "category = '{self.category}'," \
                 "status = '{self.status}'," \
                 "email_id = '{self.email_id}'," \
@@ -552,30 +555,30 @@ class Experiment(Base):
   :param library_layout: An optional enum list to specify library layout, default is UNONWN
                           allowed values are 
                           
-                          * SINGLE
-                          * PAIRED
-                          * UNKNOWN
+                            * SINGLE
+                            * PAIRED
+                            * UNKNOWN
 
   :param status: An optional enum list to specify experiment status, default is ACTIVE,
                   allowed values are 
                   
-                          * ACTIVE
-                          * FAILED
-                          * WITHDRAWN
+                            * ACTIVE
+                            * FAILED
+                            * WITHDRAWN
 
   :param date_created: An optional timestamp column to record entry creation or modification time, default current timestamp
   :param platform_name: An optional enum list to specify platform model, default is UNKNOWN,
                          allowed values are 
                          
-                         * HISEQ250
-                         * HISEQ4000
-                         * MISEQ
-                         * NEXTSEQ
-                         * NANOPORE_MINION
-                         * DNBSEQ-G400
-                         * DNBSEQ-G50
-                         * DNBSEQ-T7
-                         * UNKNOWN
+                            * HISEQ250
+                            * HISEQ4000
+                            * MISEQ
+                            * NEXTSEQ
+                            * NANOPORE_MINION
+                            * DNBSEQ-G400
+                            * DNBSEQ-G50
+                            * DNBSEQ-T7
+                            * UNKNOWN
   '''
   __tablename__ = 'experiment'
   __table_args__ = (
@@ -588,24 +591,19 @@ class Experiment(Base):
   project_id        = Column(INTEGER(unsigned=True), ForeignKey('project.project_id', onupdate="CASCADE", ondelete="SET NULL"))
   sample_id         = Column(INTEGER(unsigned=True), ForeignKey('sample.sample_id', onupdate="CASCADE", ondelete="SET NULL"))
   library_name      = Column(String(50), nullable=False)
-  library_source    = Column(Enum('GENOMIC', 'TRANSCRIPTOMIC' ,'GENOMIC_SINGLE_CELL',
-                                  'TRANSCRIPTOMIC_SINGLE_CELL', 'METAGENOMIC', 'METATRANSCRIPTOMIC',
-                                  'SYNTHETIC', 'VIRAL_RNA', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
-  library_strategy  = Column(Enum('WGS', 'WXS', 'WGA', 'RNA-SEQ', 'CHIP-SEQ', 'ATAC-SEQ',
-                                  'MIRNA-SEQ', 'NCRNA-SEQ', 'FL-CDNA', 'EST', 'HI-C',
-                                  'DNASE-SEQ', 'WCS', 'RAD-SEQ', 'CLONE', 'POOLCLONE',
-                                  'AMPLICON', 'CLONEEND', 'FINISHING', 'MNASE-SEQ',
-                                  'DNASE-HYPERSENSITIVITY', 'BISULFITE-SEQ', 'CTS',
-                                  'MRE-SEQ', 'MEDIP-SEQ', 'MBD-SEQ', 'TN-SEQ', 'VALIDATION',
-                                  'FAIRE-SEQ', 'SELEX', 'RIP-SEQ', 'CHIA-PET', 'SYNTHETIC-LONG-READ',
-                                  'TARGETED-CAPTURE', 'TETHERED', 'NOME-SEQ', 'CHIRP SEQ',
-                                  '4-C-SEQ', '5-C-SEQ', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
-  experiment_type   = Column(Enum('POLYA-RNA', 'POLYA-RNA-3P', 'TOTAL-RNA', 'SMALL-RNA', 'WGS', 'WGA',
-                                  'WXS', 'WXS-UTR', 'RIBOSOME-PROFILING', 'RIBODEPLETION', '16S',
-                                  'NCRNA-SEQ', 'FL-CDNA', 'EST', 'HI-C', 'DNASE-SEQ', 'WCS', 'RAD-SEQ',
-                                  'CLONE', 'POOLCLONE', 'AMPLICON', 'CLONEEND', 'FINISHING', 'DNASE-HYPERSENSITIVITY',
-                                  'RRBS-SEQ', 'WGBS', 'CTS', 'MRE-SEQ', 'MEDIP-SEQ', 'MBD-SEQ', 'TN-SEQ',
-                                  'VALIDATION', 'FAIRE-SEQ', 'SELEX', 'RIP-SEQ', 'CHIA-PET', 'SYNTHETIC-LONG-READ',
+  library_source    = Column(Enum('GENOMIC', 'TRANSCRIPTOMIC' ,'GENOMIC_SINGLE_CELL', 'METAGENOMIC', 'METATRANSCRIPTOMIC',
+                                  'TRANSCRIPTOMIC_SINGLE_CELL', 'SYNTHETIC', 'VIRAL_RNA', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
+  library_strategy  = Column(Enum('WGS', 'WXS', 'WGA', 'RNA-SEQ', 'CHIP-SEQ', 'ATAC-SEQ', 'MIRNA-SEQ', 'NCRNA-SEQ', 
+                                  'FL-CDNA', 'EST', 'HI-C', 'DNASE-SEQ', 'WCS', 'RAD-SEQ', 'CLONE', 'POOLCLONE',
+                                  'AMPLICON', 'CLONEEND', 'FINISHING', 'MNASE-SEQ', 'DNASE-HYPERSENSITIVITY', 'BISULFITE-SEQ', 
+                                  'CTS', 'MRE-SEQ', 'MEDIP-SEQ', 'MBD-SEQ', 'TN-SEQ', 'VALIDATION', 'FAIRE-SEQ', 'SELEX',
+                                  'RIP-SEQ', 'CHIA-PET', 'SYNTHETIC-LONG-READ', 'TARGETED-CAPTURE', 'TETHERED', 'NOME-SEQ',
+                                  'CHIRP SEQ', '4-C-SEQ', '5-C-SEQ', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
+  experiment_type   = Column(Enum('POLYA-RNA', 'POLYA-RNA-3P', 'TOTAL-RNA', 'SMALL-RNA', 'WGS', 'WGA', 'WXS', 'WXS-UTR',
+                                  'RIBOSOME-PROFILING', 'RIBODEPLETION', '16S', 'NCRNA-SEQ', 'FL-CDNA', 'EST', 'HI-C',
+                                  'DNASE-SEQ', 'WCS', 'RAD-SEQ', 'CLONE', 'POOLCLONE', 'AMPLICON', 'CLONEEND', 'FINISHING',
+                                  'DNASE-HYPERSENSITIVITY', 'RRBS-SEQ', 'WGBS', 'CTS', 'MRE-SEQ', 'MEDIP-SEQ', 'MBD-SEQ',
+                                  'TN-SEQ', 'VALIDATION', 'FAIRE-SEQ', 'SELEX', 'RIP-SEQ', 'CHIA-PET', 'SYNTHETIC-LONG-READ',
                                   'TARGETED-CAPTURE', 'TETHERED', 'NOME-SEQ', 'CHIRP-SEQ', '4-C-SEQ', '5-C-SEQ',
                                   'METAGENOMIC', 'METATRANSCRIPTOMIC', 'TF', 'H3K27ME3', 'H3K27AC', 'H3K9ME3',
                                   'H3K36ME3', 'H3F3A', 'H3K4ME1', 'H3K79ME2', 'H3K79ME3', 'H3K9ME1', 'H3K9ME2',
