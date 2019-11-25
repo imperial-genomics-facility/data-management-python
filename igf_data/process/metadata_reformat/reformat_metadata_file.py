@@ -201,10 +201,10 @@ EXPERIMENT_TYPE_LOOKUP = \
 #  }
 
 SPECIES_LOOKUP = \
- [{'species':'HUMAN','species_name':'HG38','taxon_id':9606,'scientific_name':'Homo sapiens'},
-  {'species':'HUMAN_HG37','species_name':'HG37','taxon_id':9606,'scientific_name':'Homo sapiens'},
-  {'species':'MOUSE','species_name':'MM10','taxon_id':10090,'scientific_name':'Mus musculus'},
-  {'species':'MOUSE_MM9','species_name':'MM9','taxon_id':10090,'scientific_name':'Mus musculus'},
+ [{'species_text':'HUMAN','species_name':'HG38','taxon_id':9606,'scientific_name':'Homo sapiens'},
+  {'species_text':'HUMAN_HG37','species_name':'HG37','taxon_id':9606,'scientific_name':'Homo sapiens'},
+  {'species_text':'MOUSE','species_name':'MM10','taxon_id':10090,'scientific_name':'Mus musculus'},
+  {'species_text':'MOUSE_MM9','species_name':'MM9','taxon_id':10090,'scientific_name':'Mus musculus'},
 ]
 
 METADATA_COLUMNS = [
@@ -257,7 +257,7 @@ class Reformat_metadata_file:
   :param library_type: Library type information column from access db, default 'library_type'
   :param sample_type: Sample type information column from access db, default 'sample_type'
   :param sample_description: Sample description column from access db, default 'sample_description'
-
+  :param species_text: A species text information column from access db, default 'species_text'
   '''
   def __init__(self,infile,experiment_type_lookup=EXPERIMENT_TYPE_LOOKUP,
                species_lookup=SPECIES_LOOKUP,
@@ -278,6 +278,7 @@ class Reformat_metadata_file:
                taxon_id='taxon_id',
                scientific_name='scientific_name',
                species_name='species_name',
+               species_text='species_text',
                name='name',
                email_id='email_id',
                library_preparation='library_preparation',
@@ -286,8 +287,8 @@ class Reformat_metadata_file:
                sample_description='sample_description'
               ):
     self.infile = infile
-    self.experiment_type_lookup = experiment_type_lookup
-    self.species_lookup = species_lookup
+    self.experiment_type_lookup = pd.DataFrame(experiment_type_lookup)
+    self.species_lookup = pd.DataFrame(species_lookup)
     self.metadata_columns = metadata_columns
     self.default_expected_reads = default_expected_reads
     self.default_expected_lanes = default_expected_lanes
@@ -311,6 +312,7 @@ class Reformat_metadata_file:
     self.library_type = library_type
     self.sample_type = sample_type
     self.sample_description = sample_description
+    self.species_text = species_text
 
 
   @staticmethod
@@ -428,21 +430,26 @@ class Reformat_metadata_file:
     except Exception as e:
       raise ValueError('Failed to calculate insert length: {0}'.format(e))
 
-  def get_species_info(self,genome_build):
+  def get_species_info(self,species_text_val):
     '''
     A method for fetching species taxon infor and scientific name from a lookup dictionary
 
-    :param genome_build: Species genome build info string
-    :returns: Two strings, one for taxon_id andother for scientific name
+    :param species_text_val: Species information as string
+    :returns: Two strings, one for taxon_id, scientific name and for species_name
     '''
     try:
       taxon_id = 'UNKNOWN'
       scientific_name = 'UNKNOWN'
-      if genome_build in self.species_lookup:
-        taxon_id = self.species_lookup.get(genome_build).get(self.taxon_id) or 'UNKNOWN'
-        scientific_name = self.species_lookup.get(genome_build).get(self.scientific_name) or 'UNKNOWN'
+      species_name = 'UNKNOWN'
 
-      return str(taxon_id),scientific_name
+      records = self.species_lookup[self.species_lookup[self.species_text]==species_text_val.upper()]
+      records = records.to_dict(orient='records')
+      if len(records) > 0:
+        taxon_id = records.get(self.taxon_id) or 'UNKNOWN'
+        scientific_name = records.get(self.scientific_name) or 'UNKNOWN'
+        species_name = records.get(self.species_name) or 'UNKNOWN'
+
+      return str(taxon_id),scientific_name,species_name
     except Exception as e:
       raise ValueError('Failed to get species information: {0}'.format(e))
 
@@ -484,7 +491,7 @@ class Reformat_metadata_file:
       if self.species_name in row.keys():
         row[self.taxon_id],row[self.scientific_name] = \
           self.get_species_info(\
-            genome_build=row[self.species_name])
+            species_text_val=row[self.species_name])
 
       if self.fragment_length_distribution_mean in row.keys():
         if (row[self.insert_length] == 0 or row[self.insert_length] == '' ) and \
@@ -494,10 +501,10 @@ class Reformat_metadata_file:
             self.calculate_insert_length_from_fragment(\
               fragment_length=row[self.fragment_length_distribution_mean])
 
-      if self.species_name in row.keys():
-        row[self.taxon_id],row[self.scientific_name] = \
+      if self.species_text in row.keys():
+        row[self.taxon_id],row[self.scientific_name],row[self.species_name] = \
           self.get_species_info(\
-            genome_build=row[self.species_name])
+            species_text=row[self.species_text])
 
       if self.expected_reads in row.keys() and \
         (row[self.expected_reads] == '' or row[self.expected_reads] == 0):
