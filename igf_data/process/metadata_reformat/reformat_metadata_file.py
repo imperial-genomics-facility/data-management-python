@@ -2,214 +2,216 @@ import re,string
 import pandas as pd
 
 EXPERIMENT_TYPE_LOOKUP = \
-  [{'LIBRARY_PREPARATION': 'WHOLE GENOME SEQUENCING – SAMPLE', 'LIBRARY_TYPE': 'WHOLE GENOME',
-  'LIBRARYSTRATEGY': 'WGS', 'EXP TYPE': 'WGS', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'WHOLE GENOME SEQUENCING HUMAN – SAMPLE', 'LIBRARY_TYPE': 'WHOLE GENOME',
-  'LIBRARYSTRATEGY': 'WGS', 'EXP TYPE': 'WGS', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'WHOLE GENOME SEQUENCING – BACTERIA', 'LIBRARY_TYPE': 'WHOLE GENOME',
-  'LIBRARYSTRATEGY': 'WGS', 'EXP TYPE': 'WGS', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'WGA', 'LIBRARY_TYPE': 'WGA',
-  'LIBRARYSTRATEGY': 'WGA', 'EXP TYPE': 'WGA', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'WHOLE EXOME CAPTURE - EXONS – SAMPLE', 'LIBRARY_TYPE': 'HYBRID CAPTURE – EXOME',
-  'LIBRARYSTRATEGY': 'WXS', 'EXP TYPE': 'WXS', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'WHOLE EXOME CAPTURE - EXONS + UTR – SAMPLE', 'LIBRARY_TYPE': 'HYBRID CAPTURE – EXOME',
-  'LIBRARYSTRATEGY': 'WXS', 'EXP TYPE': 'WXS-UTR', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'RNA SEQUENCING - RIBOSOME PROFILING – SAMPLE', 'LIBRARY_TYPE': 'TOTAL RNA',
-  'LIBRARYSTRATEGY': 'RNA-SEQ', 'EXP TYPE': 'RIBOSOME-PROFILING', 'LIB SOURCE': 'TRANSCRIPTOMIC'},
- {'LIBRARY_PREPARATION': 'RNA SEQUENCING – TOTAL RNA', 'LIBRARY_TYPE': 'TOTAL RNA',
-  'LIBRARYSTRATEGY': 'RNA-SEQ','EXP TYPE': 'TOTAL-RNA', 'LIB SOURCE': 'TRANSCRIPTOMIC'},
- {'LIBRARY_PREPARATION': 'RNA SEQUENCING – MRNA', 'LIBRARY_TYPE': 'MRNA',
-  'LIBRARYSTRATEGY': 'RNA-SEQ', 'EXP TYPE': 'POLYA-RNA', 'LIB SOURCE': 'TRANSCRIPTOMIC'},
- {'LIBRARY_PREPARATION': 'RNA SEQUENCING - LOW INPUT WITH RIBODEPLETION', 'LIBRARY_TYPE': 'MRNA',
-  'LIBRARYSTRATEGY': 'RNA-SEQ', 'EXP TYPE': 'RIBODEPLETION', 'LIB SOURCE': 'TRANSCRIPTOMIC'},
- {'LIBRARY_PREPARATION': 'RNA SEQUENCING - TOTAL RNA WITH GLOBIN DEPLETION', 'LIBRARY_TYPE': 'TOTAL RNA',
-  'LIBRARYSTRATEGY': 'RNA-SEQ', 'EXP TYPE': 'TOTAL-RNA', 'LIB SOURCE': 'TRANSCRIPTOMIC'},
- {'LIBRARY_PREPARATION': 'RNA SEQUENCING - MRNA RNA WITH GLOBIN DEPLETION', 'LIBRARY_TYPE': 'MRNA',
-  'LIBRARYSTRATEGY': 'RNA-SEQ', 'EXP TYPE': 'POLYA-RNA', 'LIB SOURCE': 'TRANSCRIPTOMIC'},
- {'LIBRARY_PREPARATION': "RNA SEQUENCING - 3' END RNA-SEQ", 'LIBRARY_TYPE': 'MRNA',
-  'LIBRARYSTRATEGY': 'RNA-SEQ', 'EXP TYPE': 'POLYA-RNA-3P', 'LIB SOURCE': 'TRANSCRIPTOMIC'},
- {'LIBRARY_PREPARATION': "SINGLE CELL -3' RNASEQ- SAMPLE", 'LIBRARY_TYPE': 'SINGLE CELL 3’ GENE EXPRESSION LIBRARIES',
-  'LIBRARYSTRATEGY': 'RNA-SEQ', 'EXP TYPE': 'TENX-TRANSCRIPTOME_3P', 'LIB SOURCE': 'TRANSCRIPTOMIC SINGLE CELL'},
- {'LIBRARY_PREPARATION': "SINGLE CELL -3' RNASEQ- SAMPLE NUCLEI", 'LIBRARY_TYPE': 'SINGLE CELL 3’ GENE EXPRESSION LIBRARIES NUCLEI',
-  'LIBRARYSTRATEGY': 'RNA-SEQ', 'EXP TYPE': 'TENX-TRANSCRIPTOME_3P', 'LIB SOURCE': 'TRANSCRIPTOMIC SINGLE CELL'},
- {'LIBRARY_PREPARATION': "SINGLE CELL -5' RNASEQ- SAMPLE", 'LIBRARY_TYPE': 'SINGLE CELL 5’ GENE EXPRESSION LIBRARIES',
-  'LIBRARYSTRATEGY': 'RNA-SEQ', 'EXP TYPE': 'TENX-TRANSCRIPTOME_5P', 'LIB SOURCE': 'TRANSCRIPTOMIC SINGLE CELL'},
- {'LIBRARY_PREPARATION': "SINGLE CELL -5' RNASEQ- SAMPLE NUCLEI", 'LIBRARY_TYPE': 'SINGLE CELL 5’ GENE EXPRESSION LIBRARIES NUCLEI',
-  'LIBRARYSTRATEGY': 'RNA-SEQ', 'EXP TYPE': 'TENX-TRANSCRIPTOME_5P', 'LIB SOURCE': 'TRANSCRIPTOMIC SINGLE CELL'},
- {'LIBRARY_PREPARATION': 'METAGENOMIC PROFILING - 16S RRNA SEQUENCING – SAMPLE', 'LIBRARY_TYPE': '16S',
-  'LIBRARYSTRATEGY': 'RNA-SEQ', 'EXP TYPE': '16S', 'LIB SOURCE': 'METAGENOMIC'},
- {'LIBRARY_PREPARATION': 'RNA SEQUENCING - SMALL RNA – SAMPLE', 'LIBRARY_TYPE': 'SMALL RNA',
-  'LIBRARYSTRATEGY': 'MIRNA-SEQ', 'EXP TYPE': 'SMALL-RNA', 'LIB SOURCE': 'TRANSCRIPTOMIC'},
- {'LIBRARY_PREPARATION': 'NCRNA-SEQ', 'LIBRARY_TYPE': 'NCRNA-SEQ',
-  'LIBRARYSTRATEGY': 'NCRNA-SEQ', 'EXP TYPE': 'NCRNA-SEQ', 'LIB SOURCE': 'TRANSCRIPTOMIC'},
- {'LIBRARY_PREPARATION': 'FL-CDNA', 'LIBRARY_TYPE': 'FL-CDNA',
-  'LIBRARYSTRATEGY': 'FL-CDNA', 'EXP TYPE': 'FL-CDNA', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'EST', 'LIBRARY_TYPE': 'EST',
-  'LIBRARYSTRATEGY': 'EST', 'EXP TYPE': 'EST', 'LIB SOURCE': 'TRANSCRIPTOMIC'},
- {'LIBRARY_PREPARATION': 'HI-C SEQ', 'LIBRARY_TYPE': 'HI-C SEQ',
-  'LIBRARYSTRATEGY': 'HI-C', 'EXP TYPE': 'HI-C', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'ATAC SEQ', 'LIBRARY_TYPE': 'ATAC SEQ',
-  'LIBRARYSTRATEGY': 'ATAC-SEQ', 'EXP TYPE': 'ATAC-SEQ', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'DNASE-SEQ', 'LIBRARY_TYPE': 'DNASE-SEQ',
-  'LIBRARYSTRATEGY': 'DNASE-SEQ', 'EXP TYPE': 'DNASE-SEQ', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'WCS', 'LIBRARY_TYPE': 'WCS',
-  'LIBRARYSTRATEGY': 'WCS', 'EXP TYPE': 'WCS', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'RAD-SEQ', 'LIBRARY_TYPE': 'RAD-SEQ',
-  'LIBRARYSTRATEGY': 'RAD-SEQ', 'EXP TYPE': 'RAD-SEQ', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CLONE', 'LIBRARY_TYPE': 'CLONE',
-  'LIBRARYSTRATEGY': 'CLONE', 'EXP TYPE': 'CLONE', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'POOLCLONE', 'LIBRARY_TYPE': 'POOLCLONE',
-  'LIBRARYSTRATEGY': 'POOLCLONE', 'EXP TYPE': 'POOLCLONE', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'AMPLICON SEQUENCING - ILLUMINA TRUSEQ CUSTOM AMPLICON', 'LIBRARY_TYPE': 'AMPLICON SEQ',
-  'LIBRARYSTRATEGY': 'AMPLICON', 'EXP TYPE': 'AMPLICON', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CLONEEND', 'LIBRARY_TYPE': 'CLONEEND',
-  'LIBRARYSTRATEGY': 'CLONEEND', 'EXP TYPE': 'CLONEEND', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'FINISHING', 'LIBRARY_TYPE': 'FINISHING',
-  'LIBRARYSTRATEGY': 'FINISHING', 'EXP TYPE': 'FINISHING', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CHIP SEQUENCING – SAMPLE', 'LIBRARY_TYPE': 'CHIP SEQ',
-  'LIBRARYSTRATEGY': 'CHIP-SEQ', 'EXP TYPE': 'CHIP-SEQ', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CHIP SEQUENCING – INPUT', 'LIBRARY_TYPE': 'CHIP SEQ – INPUT',
-  'LIBRARYSTRATEGY': 'CHIP-SEQ', 'EXP TYPE': 'CHIP-INPUT', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CHIP SEQUENCING – TF', 'LIBRARY_TYPE': 'CHIP SEQ – TF',
-  'LIBRARYSTRATEGY': 'CHIP-SEQ', 'EXP TYPE': 'TF', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CHIP SEQUENCING – BROAD PEAK', 'LIBRARY_TYPE': 'CHIP SEQ - BROAD PEAK',
-  'LIBRARYSTRATEGY': 'CHIP-SEQ', 'EXP TYPE': 'HISTONE-BROAD', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CHIP SEQUENCING – NARROW PEAK', 'LIBRARY_TYPE': 'CHIP SEQ - NARROW PEAK',
-  'LIBRARYSTRATEGY': 'CHIP-SEQ', 'EXP TYPE': 'HISTONE-NARROW', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'MNASE-SEQ', 'LIBRARY_TYPE': 'MNASE-SEQ',
-  'LIBRARYSTRATEGY': 'MNASE-SEQ', 'EXP TYPE': 'MNASE-SEQ', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'DNASE-HYPERSENSITIVITY', 'LIBRARY_TYPE': 'DNASE-HYPERSENSITIVITY',
-  'LIBRARYSTRATEGY': 'DNASE-HYPERSENSITIVITY', 'EXP TYPE': 'DNASE-HYPERSENSITIVITY', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'METHYLATION PROFILING - RRBS-SEQ – SAMPLE', 'LIBRARY_TYPE': 'RRBS-SEQ',
-  'LIBRARYSTRATEGY': 'BISULFITE-SEQ', 'EXP TYPE': 'RRBS-SEQ', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'METHYLATION PROFILING - WHOLE GENOME BISULFITE SEQUENCING – SAMPLE', 'LIBRARY_TYPE': 'BISULFITE SEQ',
-  'LIBRARYSTRATEGY': 'BISULFITE-SEQ', 'EXP TYPE': 'WGBS', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CTS', 'LIBRARY_TYPE': 'CTS',
-  'LIBRARYSTRATEGY': 'CTS', 'EXP TYPE': 'CTS', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'MRE-SEQ', 'LIBRARY_TYPE': 'MRE-SEQ',
-  'LIBRARYSTRATEGY': 'MRE-SEQ', 'EXP TYPE': 'MRE-SEQ', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'METHYLATION PROFILING - MEDIP-SEQ – SAMPLE', 'LIBRARY_TYPE': 'MEDIP-SEQ',
-  'LIBRARYSTRATEGY': 'MEDIP-SEQ', 'EXP TYPE': 'MEDIP-SEQ', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'METHYLATION PROFILING - MBD-SEQ – SAMPLE', 'LIBRARY_TYPE': 'MBD-SEQ',
-  'LIBRARYSTRATEGY': 'MBD-SEQ', 'EXP TYPE': 'MBD-SEQ', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'TN-SEQ', 'LIBRARY_TYPE': 'TN-SEQ',
-  'LIBRARYSTRATEGY': 'TN-SEQ', 'EXP TYPE': 'TN-SEQ', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'VALIDATION', 'LIBRARY_TYPE': 'VALIDATION',
-  'LIBRARYSTRATEGY': 'VALIDATION', 'EXP TYPE': 'VALIDATION', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'FAIRE-SEQ', 'LIBRARY_TYPE': 'FAIRE-SEQ',
-  'LIBRARYSTRATEGY': 'FAIRE-SEQ', 'EXP TYPE': 'FAIRE-SEQ', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'SELEX', 'LIBRARY_TYPE': 'SELEX',
-  'LIBRARYSTRATEGY': 'SELEX', 'EXP TYPE': 'SELEX', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'RIP-SEQ', 'LIBRARY_TYPE': 'RIP-SEQ',
-  'LIBRARYSTRATEGY': 'RIP-SEQ', 'EXP TYPE': 'RIP-SEQ', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CHIA-PET', 'LIBRARY_TYPE': 'CHIA-PET',
-  'LIBRARYSTRATEGY': 'CHIA-PET', 'EXP TYPE': 'CHIA-PET', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'SYNTHETIC-LONG-READ', 'LIBRARY_TYPE': 'SYNTHETIC-LONG-READ',
-  'LIBRARYSTRATEGY': 'SYNTHETIC-LONG-READ', 'EXP TYPE': 'SYNTHETIC-LONG-READ', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'TARGETED CAPTURE AGILENT (PROBES PROVIDED BY COLL.) - SAMPLE', 'LIBRARY_TYPE': 'HYBRID CAPTURE – PANEL',
-  'LIBRARYSTRATEGY': 'TARGETED-CAPTURE', 'EXP TYPE': 'TARGETED-CAPTURE', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CUSTOM TARGET CAPTURE: 1 TO 499KB – SAMPLE', 'LIBRARY_TYPE': 'HYBRID CAPTURE – CUSTOM',
-  'LIBRARYSTRATEGY': 'TARGETED-CAPTURE', 'EXP TYPE': 'TARGETED-CAPTURE', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CUSTOM TARGET CAPTURE: 0.5 TO 2.9MB – SAMPLE', 'LIBRARY_TYPE': 'HYBRID CAPTURE – CUSTOM',
-  'LIBRARYSTRATEGY': 'TARGETED-CAPTURE', 'EXP TYPE': 'TARGETED-CAPTURE', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CUSTOM TARGET CAPTURE: 3 TO 5.9MB – SAMPLE', 'LIBRARY_TYPE': 'HYBRID CAPTURE – CUSTOM',
-  'LIBRARYSTRATEGY': 'TARGETED-CAPTURE', 'EXP TYPE': 'TARGETED-CAPTURE', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CUSTOM TARGET CAPTURE: 6 TO 11.9MB – SAMPLE', 'LIBRARY_TYPE': 'HYBRID CAPTURE – CUSTOM',
-  'LIBRARYSTRATEGY': 'TARGETED-CAPTURE', 'EXP TYPE': 'TARGETED-CAPTURE', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CUSTOM TARGET CAPTURE: 12 TO 24MB – SAMPLE', 'LIBRARY_TYPE': 'HYBRID CAPTURE – CUSTOM',
-  'LIBRARYSTRATEGY': 'TARGETED-CAPTURE', 'EXP TYPE': 'TARGETED-CAPTURE', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CUSTOM TARGET CAPTURE - TRUSIGHT CARDIO – SAMPLE', 'LIBRARY_TYPE': 'HYBRID CAPTURE – PANEL',
-  'LIBRARYSTRATEGY': 'TARGETED-CAPTURE', 'EXP TYPE': 'TARGETED-CAPTURE', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'TETHERED', 'LIBRARY_TYPE': 'TETHERED',
-  'LIBRARYSTRATEGY': 'TETHERED', 'EXP TYPE': 'TETHERED', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'NOME-SEQ', 'LIBRARY_TYPE': 'NOME-SEQ',
-  'LIBRARYSTRATEGY': 'NOME-SEQ', 'EXP TYPE': 'NOME-SEQ', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'OTHER-SPECIFY IN COMMENT BOX', 'LIBRARY_TYPE': 'OTHER',
-  'LIBRARYSTRATEGY': 'UNKNOWN', 'EXP TYPE': 'UNKNOWN', 'LIB SOURCE': 'UNKNOWN'},
- {'LIBRARY_PREPARATION': 'CHIRP SEQ', 'LIBRARY_TYPE': 'CHIRP SEQ',
-  'LIBRARYSTRATEGY': 'CHIRP SEQ', 'EXP TYPE': 'CHIRP SEQ', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': '4-C SEQ', 'LIBRARY_TYPE': '4-C SEQ',
-  'LIBRARYSTRATEGY': '4-C-SEQ', 'EXP TYPE': '4-C-SEQ', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': '5-C SEQ', 'LIBRARY_TYPE': '5-C SEQ',
-  'LIBRARYSTRATEGY': '5-C-SEQ', 'EXP TYPE': '5-C-SEQ', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'METAGENOMICS – OTHER', 'LIBRARY_TYPE': 'METAGENOMICS – OTHER',
-  'LIBRARYSTRATEGY': 'WGS', 'EXP TYPE': 'METAGENOMIC', 'LIB SOURCE': 'METAGENOMIC'},
- {'LIBRARY_PREPARATION': 'DROP-SEQ-TRANSCRIPTOME', 'LIBRARY_TYPE': 'DROP-SEQ-TRANSCRIPTOME',
-  'LIBRARYSTRATEGY': 'RNA-SEQ', 'EXP TYPE': 'DROP-SEQ-TRANSCRIPTOME', 'LIB SOURCE': 'TRANSCRIPTOMIC SINGLE CELL'},
- {'LIBRARY_PREPARATION': 'CHIP SEQUENCING – H3K27ME3', 'LIBRARY_TYPE': 'CHIP SEQ - H3K27ME3',
-  'LIBRARYSTRATEGY': 'CHIP-SEQ', 'EXP TYPE': 'H3K27ME3', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CHIP SEQUENCING – H3K27AC', 'LIBRARY_TYPE': 'CHIP SEQ - H3K27AC',
-  'LIBRARYSTRATEGY': 'CHIP-SEQ', 'EXP TYPE': 'H3K27AC', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CHIP SEQUENCING – H3K9ME3', 'LIBRARY_TYPE': 'CHIP SEQ - H3K9ME3',
-  'LIBRARYSTRATEGY': 'CHIP-SEQ', 'EXP TYPE': 'H3K9ME3', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CHIP SEQUENCING – H3K36ME3', 'LIBRARY_TYPE': 'CHIP SEQ - H3K36ME3',
-  'LIBRARYSTRATEGY': 'CHIP-SEQ', 'EXP TYPE': 'H3K36ME3', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CHIP SEQUENCING – H3F3A', 'LIBRARY_TYPE': 'CHIP SEQ - H3F3A',
-  'LIBRARYSTRATEGY': 'CHIP-SEQ', 'EXP TYPE': 'H3F3A', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CHIP SEQUENCING – H3K4ME1', 'LIBRARY_TYPE': 'CHIP SEQ - H3K4ME1',
-  'LIBRARYSTRATEGY': 'CHIP-SEQ', 'EXP TYPE': 'H3K4ME1', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CHIP SEQUENCING – H3K79ME2', 'LIBRARY_TYPE': 'CHIP SEQ - H3K79ME2',
-  'LIBRARYSTRATEGY': 'CHIP-SEQ', 'EXP TYPE': 'H3K79ME2', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CHIP SEQUENCING – H3K79ME3', 'LIBRARY_TYPE': 'CHIP SEQ - H3K79ME3',
-  'LIBRARYSTRATEGY': 'CHIP-SEQ', 'EXP TYPE': 'H3K79ME3', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CHIP SEQUENCING – H3K9ME1', 'LIBRARY_TYPE': 'CHIP SEQ - H3K9ME1',
-  'LIBRARYSTRATEGY': 'CHIP-SEQ', 'EXP TYPE': 'H3K9ME1', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CHIP SEQUENCING – H3K9ME2', 'LIBRARY_TYPE': 'CHIP SEQ - H3K9ME2',
-  'LIBRARYSTRATEGY': 'CHIP-SEQ', 'EXP TYPE': 'H3K9ME2', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CHIP SEQUENCING – H4K20ME1', 'LIBRARY_TYPE': 'CHIP SEQ - H4K20ME1',
-  'LIBRARYSTRATEGY': 'CHIP-SEQ', 'EXP TYPE': 'H4K20ME1', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CHIP SEQUENCING – H2AFZ', 'LIBRARY_TYPE': 'CHIP SEQ - H2AFZ',
-  'LIBRARYSTRATEGY': 'CHIP-SEQ', 'EXP TYPE': 'H2AFZ', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CHIP SEQUENCING – H3AC', 'LIBRARY_TYPE': 'CHIP SEQ - H3AC',
-  'LIBRARYSTRATEGY': 'CHIP-SEQ', 'EXP TYPE': 'H3AC', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CHIP SEQUENCING – H3K4ME2', 'LIBRARY_TYPE': 'CHIP SEQ - H3K4ME2',
-  'LIBRARYSTRATEGY': 'CHIP-SEQ', 'EXP TYPE': 'H3K4ME2', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CHIP SEQUENCING – H3K4ME3', 'LIBRARY_TYPE': 'CHIP SEQ - H3K4ME3',
-  'LIBRARYSTRATEGY': 'CHIP-SEQ', 'EXP TYPE': 'H3K4ME3', 'LIB SOURCE': 'GENOMIC'},
- {'LIBRARY_PREPARATION': 'CHIP SEQUENCING – H3K9AC', 'LIBRARY_TYPE': 'CHIP SEQ - H3K9AC',
-  'LIBRARYSTRATEGY': 'CHIP-SEQ', 'EXP TYPE': 'H3K9AC', 'LIB SOURCE': 'GENOMIC'}]
+[{'library_preparation': 'WHOLE GENOME SEQUENCING - SAMPLE', 'library_type': 'WHOLE GENOME',
+  'library_strategy': 'WGS', 'experiment_type': 'WGS', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'WHOLE GENOME SEQUENCING HUMAN - SAMPLE', 'library_type': 'WHOLE GENOME',
+  'library_strategy': 'WGS', 'experiment_type': 'WGS', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'WHOLE GENOME SEQUENCING - BACTERIA', 'library_type': 'WHOLE GENOME',
+  'library_strategy': 'WGS', 'experiment_type': 'WGS', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'WGA', 'library_type': 'WGA',
+  'library_strategy': 'WGA', 'experiment_type': 'WGA', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'WHOLE EXOME CAPTURE - EXONS - SAMPLE', 'library_type': 'HYBRID CAPTURE - EXOME',
+  'library_strategy': 'WXS', 'experiment_type': 'WXS', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'WHOLE EXOME CAPTURE - EXONS + UTR - SAMPLE', 'library_type': 'HYBRID CAPTURE - EXOME',
+  'library_strategy': 'WXS', 'experiment_type': 'WXS-UTR', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'RNA SEQUENCING - RIBOSOME PROFILING - SAMPLE', 'library_type': 'TOTAL RNA',
+  'library_strategy': 'RNA-SEQ', 'experiment_type': 'RIBOSOME-PROFILING', 'library_source': 'TRANSCRIPTOMIC'},
+ {'library_preparation': 'RNA SEQUENCING - TOTAL RNA', 'library_type': 'TOTAL RNA',
+  'library_strategy': 'RNA-SEQ','experiment_type': 'TOTAL-RNA', 'library_source': 'TRANSCRIPTOMIC'},
+ {'library_preparation': 'RNA SEQUENCING - MRNA', 'library_type': 'MRNA',
+  'library_strategy': 'RNA-SEQ', 'experiment_type': 'POLYA-RNA', 'library_source': 'TRANSCRIPTOMIC'},
+ {'library_preparation': 'RNA SEQUENCING - LOW INPUT WITH RIBODEPLETION', 'library_type': 'MRNA',
+  'library_strategy': 'RNA-SEQ', 'experiment_type': 'RIBODEPLETION', 'library_source': 'TRANSCRIPTOMIC'},
+ {'library_preparation': 'RNA SEQUENCING - TOTAL RNA WITH GLOBIN DEPLETION', 'library_type': 'TOTAL RNA',
+  'library_strategy': 'RNA-SEQ', 'experiment_type': 'TOTAL-RNA', 'library_source': 'TRANSCRIPTOMIC'},
+ {'library_preparation': 'RNA SEQUENCING - MRNA RNA WITH GLOBIN DEPLETION', 'library_type': 'MRNA',
+  'library_strategy': 'RNA-SEQ', 'experiment_type': 'POLYA-RNA', 'library_source': 'TRANSCRIPTOMIC'},
+ {'library_preparation': "RNA SEQUENCING - 3' END RNA-SEQ", 'library_type': 'MRNA',
+  'library_strategy': 'RNA-SEQ', 'experiment_type': 'POLYA-RNA-3P', 'library_source': 'TRANSCRIPTOMIC'},
+ {'library_preparation': "SINGLE CELL -3' RNASEQ- SAMPLE", 'library_type': 'SINGLE CELL 3’ GENE EXPRESSION LIBRARIES',
+  'library_strategy': 'RNA-SEQ', 'experiment_type': 'TENX-TRANSCRIPTOME-3P', 'library_source': 'TRANSCRIPTOMIC SINGLE CELL'},
+ {'library_preparation': "SINGLE CELL -3' RNASEQ- SAMPLE NUCLEI", 'library_type': 'SINGLE CELL 3’ GENE EXPRESSION LIBRARIES NUCLEI',
+  'library_strategy': 'RNA-SEQ', 'experiment_type': 'TENX-TRANSCRIPTOME-3P', 'library_source': 'TRANSCRIPTOMIC SINGLE CELL'},
+ {'library_preparation': "SINGLE CELL -5' RNASEQ- SAMPLE", 'library_type': 'SINGLE CELL 5’ GENE EXPRESSION LIBRARIES',
+  'library_strategy': 'RNA-SEQ', 'experiment_type': 'TENX-TRANSCRIPTOME-5P', 'library_source': 'TRANSCRIPTOMIC SINGLE CELL'},
+ {'library_preparation': "SINGLE CELL -5' RNASEQ- SAMPLE NUCLEI", 'library_type': 'SINGLE CELL 5’ GENE EXPRESSION LIBRARIES NUCLEI',
+  'library_strategy': 'RNA-SEQ', 'experiment_type': 'TENX-TRANSCRIPTOME-5P', 'library_source': 'TRANSCRIPTOMIC SINGLE CELL'},
+ {'library_preparation': 'METAGENOMIC PROFILING - 16S RRNA SEQUENCING - SAMPLE', 'library_type': '16S',
+  'library_strategy': 'RNA-SEQ', 'experiment_type': '16S', 'library_source': 'METAGENOMIC'},
+ {'library_preparation': 'RNA SEQUENCING - SMALL RNA - SAMPLE', 'library_type': 'SMALL RNA',
+  'library_strategy': 'MIRNA-SEQ', 'experiment_type': 'SMALL-RNA', 'library_source': 'TRANSCRIPTOMIC'},
+ {'library_preparation': 'NCRNA-SEQ', 'library_type': 'NCRNA-SEQ',
+  'library_strategy': 'NCRNA-SEQ', 'experiment_type': 'NCRNA-SEQ', 'library_source': 'TRANSCRIPTOMIC'},
+ {'library_preparation': 'FL-CDNA', 'library_type': 'FL-CDNA',
+  'library_strategy': 'FL-CDNA', 'experiment_type': 'FL-CDNA', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'EST', 'library_type': 'EST',
+  'library_strategy': 'EST', 'experiment_type': 'EST', 'library_source': 'TRANSCRIPTOMIC'},
+ {'library_preparation': 'HI-C SEQ', 'library_type': 'HI-C SEQ',
+  'library_strategy': 'HI-C', 'experiment_type': 'HI-C', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'ATAC SEQ', 'library_type': 'ATAC SEQ',
+  'library_strategy': 'ATAC-SEQ', 'experiment_type': 'ATAC-SEQ', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'DNASE-SEQ', 'library_type': 'DNASE-SEQ',
+  'library_strategy': 'DNASE-SEQ', 'experiment_type': 'DNASE-SEQ', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'WCS', 'library_type': 'WCS',
+  'library_strategy': 'WCS', 'experiment_type': 'WCS', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'RAD-SEQ', 'library_type': 'RAD-SEQ',
+  'library_strategy': 'RAD-SEQ', 'experiment_type': 'RAD-SEQ', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CLONE', 'library_type': 'CLONE',
+  'library_strategy': 'CLONE', 'experiment_type': 'CLONE', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'POOLCLONE', 'library_type': 'POOLCLONE',
+  'library_strategy': 'POOLCLONE', 'experiment_type': 'POOLCLONE', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'AMPLICON SEQUENCING - ILLUMINA TRUSEQ CUSTOM AMPLICON', 'library_type': 'AMPLICON SEQ',
+  'library_strategy': 'AMPLICON', 'experiment_type': 'AMPLICON', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CLONEEND', 'library_type': 'CLONEEND',
+  'library_strategy': 'CLONEEND', 'experiment_type': 'CLONEEND', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'FINISHING', 'library_type': 'FINISHING',
+  'library_strategy': 'FINISHING', 'experiment_type': 'FINISHING', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CHIP SEQUENCING - SAMPLE', 'library_type': 'CHIP SEQ',
+  'library_strategy': 'CHIP-SEQ', 'experiment_type': 'CHIP-SEQ', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CHIP SEQUENCING - INPUT', 'library_type': 'CHIP SEQ - INPUT',
+  'library_strategy': 'CHIP-SEQ', 'experiment_type': 'CHIP-INPUT', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CHIP SEQUENCING - TF', 'library_type': 'CHIP SEQ - TF',
+  'library_strategy': 'CHIP-SEQ', 'experiment_type': 'TF', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CHIP SEQUENCING - BROAD PEAK', 'library_type': 'CHIP SEQ - BROAD PEAK',
+  'library_strategy': 'CHIP-SEQ', 'experiment_type': 'HISTONE-BROAD', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CHIP SEQUENCING - NARROW PEAK', 'library_type': 'CHIP SEQ - NARROW PEAK',
+  'library_strategy': 'CHIP-SEQ', 'experiment_type': 'HISTONE-NARROW', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'MNASE-SEQ', 'library_type': 'MNASE-SEQ',
+  'library_strategy': 'MNASE-SEQ', 'experiment_type': 'MNASE-SEQ', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'DNASE-HYPERSENSITIVITY', 'library_type': 'DNASE-HYPERSENSITIVITY',
+  'library_strategy': 'DNASE-HYPERSENSITIVITY', 'experiment_type': 'DNASE-HYPERSENSITIVITY', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'METHYLATION PROFILING - RRBS-SEQ - SAMPLE', 'library_type': 'RRBS-SEQ',
+  'library_strategy': 'BISULFITE-SEQ', 'experiment_type': 'RRBS-SEQ', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'METHYLATION PROFILING - WHOLE GENOME BISULFITE SEQUENCING - SAMPLE', 'library_type': 'BISULFITE SEQ',
+  'library_strategy': 'BISULFITE-SEQ', 'experiment_type': 'WGBS', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CTS', 'library_type': 'CTS',
+  'library_strategy': 'CTS', 'experiment_type': 'CTS', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'MRE-SEQ', 'library_type': 'MRE-SEQ',
+  'library_strategy': 'MRE-SEQ', 'experiment_type': 'MRE-SEQ', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'METHYLATION PROFILING - MEDIP-SEQ - SAMPLE', 'library_type': 'MEDIP-SEQ',
+  'library_strategy': 'MEDIP-SEQ', 'experiment_type': 'MEDIP-SEQ', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'METHYLATION PROFILING - MBD-SEQ - SAMPLE', 'library_type': 'MBD-SEQ',
+  'library_strategy': 'MBD-SEQ', 'experiment_type': 'MBD-SEQ', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'TN-SEQ', 'library_type': 'TN-SEQ',
+  'library_strategy': 'TN-SEQ', 'experiment_type': 'TN-SEQ', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'VALIDATION', 'library_type': 'VALIDATION',
+  'library_strategy': 'VALIDATION', 'experiment_type': 'VALIDATION', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'FAIRE-SEQ', 'library_type': 'FAIRE-SEQ',
+  'library_strategy': 'FAIRE-SEQ', 'experiment_type': 'FAIRE-SEQ', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'SELEX', 'library_type': 'SELEX',
+  'library_strategy': 'SELEX', 'experiment_type': 'SELEX', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'RIP-SEQ', 'library_type': 'RIP-SEQ',
+  'library_strategy': 'RIP-SEQ', 'experiment_type': 'RIP-SEQ', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CHIA-PET', 'library_type': 'CHIA-PET',
+  'library_strategy': 'CHIA-PET', 'experiment_type': 'CHIA-PET', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'SYNTHETIC-LONG-READ', 'library_type': 'SYNTHETIC-LONG-READ',
+  'library_strategy': 'SYNTHETIC-LONG-READ', 'experiment_type': 'SYNTHETIC-LONG-READ', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'TARGETED CAPTURE AGILENT (PROBES PROVIDED BY COLL.) - SAMPLE', 'library_type': 'HYBRID CAPTURE - PANEL',
+  'library_strategy': 'TARGETED-CAPTURE', 'experiment_type': 'TARGETED-CAPTURE', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CUSTOM TARGET CAPTURE: 1 TO 499KB - SAMPLE', 'library_type': 'HYBRID CAPTURE - CUSTOM',
+  'library_strategy': 'TARGETED-CAPTURE', 'experiment_type': 'TARGETED-CAPTURE', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CUSTOM TARGET CAPTURE: 0.5 TO 2.9MB - SAMPLE', 'library_type': 'HYBRID CAPTURE - CUSTOM',
+  'library_strategy': 'TARGETED-CAPTURE', 'experiment_type': 'TARGETED-CAPTURE', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CUSTOM TARGET CAPTURE: 3 TO 5.9MB - SAMPLE', 'library_type': 'HYBRID CAPTURE - CUSTOM',
+  'library_strategy': 'TARGETED-CAPTURE', 'experiment_type': 'TARGETED-CAPTURE', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CUSTOM TARGET CAPTURE: 6 TO 11.9MB - SAMPLE', 'library_type': 'HYBRID CAPTURE - CUSTOM',
+  'library_strategy': 'TARGETED-CAPTURE', 'experiment_type': 'TARGETED-CAPTURE', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CUSTOM TARGET CAPTURE: 12 TO 24MB - SAMPLE', 'library_type': 'HYBRID CAPTURE - CUSTOM',
+  'library_strategy': 'TARGETED-CAPTURE', 'experiment_type': 'TARGETED-CAPTURE', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CUSTOM TARGET CAPTURE - TRUSIGHT CARDIO - SAMPLE', 'library_type': 'HYBRID CAPTURE - PANEL',
+  'library_strategy': 'TARGETED-CAPTURE', 'experiment_type': 'TARGETED-CAPTURE', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'TETHERED', 'library_type': 'TETHERED',
+  'library_strategy': 'TETHERED', 'experiment_type': 'TETHERED', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'NOME-SEQ', 'library_type': 'NOME-SEQ',
+  'library_strategy': 'NOME-SEQ', 'experiment_type': 'NOME-SEQ', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'OTHER-SPECIFY IN COMMENT BOX', 'library_type': 'OTHER',
+  'library_strategy': 'UNKNOWN', 'experiment_type': 'UNKNOWN', 'library_source': 'UNKNOWN'},
+ {'library_preparation': 'CHIRP SEQ', 'library_type': 'CHIRP SEQ',
+  'library_strategy': 'CHIRP SEQ', 'experiment_type': 'CHIRP SEQ', 'library_source': 'GENOMIC'},
+ {'library_preparation': '4-C SEQ', 'library_type': '4-C SEQ',
+  'library_strategy': '4-C-SEQ', 'experiment_type': '4-C-SEQ', 'library_source': 'GENOMIC'},
+ {'library_preparation': '5-C SEQ', 'library_type': '5-C SEQ',
+  'library_strategy': '5-C-SEQ', 'experiment_type': '5-C-SEQ', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'METAGENOMICS - OTHER', 'library_type': 'METAGENOMICS - OTHER',
+  'library_strategy': 'WGS', 'experiment_type': 'METAGENOMIC', 'library_source': 'METAGENOMIC'},
+ {'library_preparation': 'DROP-SEQ-TRANSCRIPTOME', 'library_type': 'DROP-SEQ-TRANSCRIPTOME',
+  'library_strategy': 'RNA-SEQ', 'experiment_type': 'DROP-SEQ-TRANSCRIPTOME', 'library_source': 'TRANSCRIPTOMIC SINGLE CELL'},
+ {'library_preparation': 'CHIP SEQUENCING - H3K27ME3', 'library_type': 'CHIP SEQ - H3K27ME3',
+  'library_strategy': 'CHIP-SEQ', 'experiment_type': 'H3K27ME3', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CHIP SEQUENCING - H3K27AC', 'library_type': 'CHIP SEQ - H3K27AC',
+  'library_strategy': 'CHIP-SEQ', 'experiment_type': 'H3K27AC', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CHIP SEQUENCING - H3K9ME3', 'library_type': 'CHIP SEQ - H3K9ME3',
+  'library_strategy': 'CHIP-SEQ', 'experiment_type': 'H3K9ME3', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CHIP SEQUENCING - H3K36ME3', 'library_type': 'CHIP SEQ - H3K36ME3',
+  'library_strategy': 'CHIP-SEQ', 'experiment_type': 'H3K36ME3', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CHIP SEQUENCING - H3F3A', 'library_type': 'CHIP SEQ - H3F3A',
+  'library_strategy': 'CHIP-SEQ', 'experiment_type': 'H3F3A', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CHIP SEQUENCING - H3K4ME1', 'library_type': 'CHIP SEQ - H3K4ME1',
+  'library_strategy': 'CHIP-SEQ', 'experiment_type': 'H3K4ME1', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CHIP SEQUENCING - H3K79ME2', 'library_type': 'CHIP SEQ - H3K79ME2',
+  'library_strategy': 'CHIP-SEQ', 'experiment_type': 'H3K79ME2', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CHIP SEQUENCING - H3K79ME3', 'library_type': 'CHIP SEQ - H3K79ME3',
+  'library_strategy': 'CHIP-SEQ', 'experiment_type': 'H3K79ME3', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CHIP SEQUENCING - H3K9ME1', 'library_type': 'CHIP SEQ - H3K9ME1',
+  'library_strategy': 'CHIP-SEQ', 'experiment_type': 'H3K9ME1', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CHIP SEQUENCING - H3K9ME2', 'library_type': 'CHIP SEQ - H3K9ME2',
+  'library_strategy': 'CHIP-SEQ', 'experiment_type': 'H3K9ME2', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CHIP SEQUENCING - H4K20ME1', 'library_type': 'CHIP SEQ - H4K20ME1',
+  'library_strategy': 'CHIP-SEQ', 'experiment_type': 'H4K20ME1', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CHIP SEQUENCING - H2AFZ', 'library_type': 'CHIP SEQ - H2AFZ',
+  'library_strategy': 'CHIP-SEQ', 'experiment_type': 'H2AFZ', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CHIP SEQUENCING - H3AC', 'library_type': 'CHIP SEQ - H3AC',
+  'library_strategy': 'CHIP-SEQ', 'experiment_type': 'H3AC', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CHIP SEQUENCING - H3K4ME2', 'library_type': 'CHIP SEQ - H3K4ME2',
+  'library_strategy': 'CHIP-SEQ', 'experiment_type': 'H3K4ME2', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CHIP SEQUENCING - H3K4ME3', 'library_type': 'CHIP SEQ - H3K4ME3',
+  'library_strategy': 'CHIP-SEQ', 'experiment_type': 'H3K4ME3', 'library_source': 'GENOMIC'},
+ {'library_preparation': 'CHIP SEQUENCING - H3K9AC', 'library_type': 'CHIP SEQ - H3K9AC',
+  'library_strategy': 'CHIP-SEQ', 'experiment_type': 'H3K9AC', 'library_source': 'GENOMIC'}]
 
-EXPERIMENT_TYPE_LOOKUP = \
-  {'POLYA-RNA':{'library_source':'TRANSCRIPTOMIC','library_strategy':'RNA-SEQ'},
-   'TOTAL-RNA':{'library_source':'TRANSCRIPTOMIC','library_strategy':'RNA-SEQ'},
-   'SMALL-RNA':{'library_source':'TRANSCRIPTOMIC','library_strategy':'RNA-SEQ'},
-   'TENX-TRANSCRIPTOME':{'library_source':'TRANSCRIPTOMIC_SINGLE_CELL','library_strategy':'RNA-SEQ'},
-   'TENX-TRANSCRIPTOME_5P':{'library_source':'TRANSCRIPTOMIC_SINGLE_CELL','library_strategy':'RNA-SEQ'},
-   'DROP-SEQ-TRANSCRIPTOME':{'library_source':'TRANSCRIPTOMIC_SINGLE_CELL','library_strategy':'RNA-SEQ'},
-   'WGS':{'library_source':'GENOMIC','library_strategy':'WGS'},
-   'EXOME':{'library_source':'GENOMIC','library_strategy':'EXOME'},
-   'ATAC-SEQ':{'library_source':'GENOMIC','library_strategy':'ATAC-SEQ'},
-   'TF':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
-   'HISTONE-NARROW':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
-   'HISTONE-BROAD':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
-   'H3K27ME3':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
-   'H3K27AC':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
-   'H3K9ME3':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
-   'H3K36ME3':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
-   'H3F3A':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
-   'H3K4ME1':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
-   'H3K79ME2':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
-   'H3K79ME3':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
-   'H3K9ME1':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
-   'H3K9ME2':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
-   'H4K20ME1':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
-   'H2AFZ':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
-   'H3AC':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
-   'H3K4ME2':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
-   'H3K4ME3':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
-   'H3K9AC':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'}
-  }
+#EXPERIMENT_TYPE_LOOKUP = \
+#  {'POLYA-RNA':{'library_source':'TRANSCRIPTOMIC','library_strategy':'RNA-SEQ'},
+#   'TOTAL-RNA':{'library_source':'TRANSCRIPTOMIC','library_strategy':'RNA-SEQ'},
+#   'SMALL-RNA':{'library_source':'TRANSCRIPTOMIC','library_strategy':'RNA-SEQ'},
+#   'TENX-TRANSCRIPTOME':{'library_source':'TRANSCRIPTOMIC_SINGLE_CELL','library_strategy':'RNA-SEQ'},
+#   'TENX-TRANSCRIPTOME_5P':{'library_source':'TRANSCRIPTOMIC_SINGLE_CELL','library_strategy':'RNA-SEQ'},
+#   'DROP-SEQ-TRANSCRIPTOME':{'library_source':'TRANSCRIPTOMIC_SINGLE_CELL','library_strategy':'RNA-SEQ'},
+#   'WGS':{'library_source':'GENOMIC','library_strategy':'WGS'},
+#   'EXOME':{'library_source':'GENOMIC','library_strategy':'EXOME'},
+#   'ATAC-SEQ':{'library_source':'GENOMIC','library_strategy':'ATAC-SEQ'},
+#   'TF':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
+#   'HISTONE-NARROW':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
+#   'HISTONE-BROAD':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
+#   'H3K27ME3':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
+#   'H3K27AC':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
+#   'H3K9ME3':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
+#   'H3K36ME3':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
+#   'H3F3A':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
+#   'H3K4ME1':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
+#   'H3K79ME2':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
+#   'H3K79ME3':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
+#   'H3K9ME1':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
+#   'H3K9ME2':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
+#   'H4K20ME1':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
+#   'H2AFZ':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
+#   'H3AC':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
+#   'H3K4ME2':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
+#   'H3K4ME3':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'},
+#   'H3K9AC':{'library_source':'GENOMIC','library_strategy':'CHIP-SEQ'}
+#  }
 
 SPECIES_LOOKUP = \
- {'HG38':{'taxon_id':9606,'scientific_name':'Homo sapiens'},
-  'HG37':{'taxon_id':9606,'scientific_name':'Homo sapiens'},
-  'MM10':{'taxon_id':10090,'scientific_name':'Mus musculus'},
-  'MM9':{'taxon_id':10090,'scientific_name':'Mus musculus'},
-  }
+ [{'species':'HUMAN','species_name':'HG38','taxon_id':9606,'scientific_name':'Homo sapiens'},
+  {'species':'HUMAN_HG37','species_name':'HG37','taxon_id':9606,'scientific_name':'Homo sapiens'},
+  {'species':'MOUSE','species_name':'MM10','taxon_id':10090,'scientific_name':'Mus musculus'},
+  {'species':'MOUSE_MM9','species_name':'MM9','taxon_id':10090,'scientific_name':'Mus musculus'},
+]
 
 METADATA_COLUMNS = [
   'sample_igf_id',
   'project_igf_id',
+  'name',
+  'email_id',
   'sample_submitter_id',
   'experiment_type',
   'library_source',
@@ -232,7 +234,7 @@ class Reformat_metadata_file:
   :param infile: Input filepath
   :param experiment_type_lookup: An experiment type lookup dictionary
   :param species_lookup: A species name lookup dictionary
-  :param metadata_columns: A list of metadata columns
+  :param metadata_columns: A list of metadata columns for the reformatted files
   :param default_expected_reads: Default value for the expected read column, default 2,000,000
   :param default_expected_lanes: Default value for the expected lane columns, default 1
   :param sample_igf_id: Sample igf id column name, default 'sample_igf_id'
@@ -249,9 +251,17 @@ class Reformat_metadata_file:
   :param taxon_id: Species taxon id column name, default 'taxon_id'
   :param scientific_name: Species scientific name column name, default 'scientific_name'
   :param species_name: Species genome build information column name, default 'species_name'
+  :param name: Main contact information column name, default 'name'
+  :param email_id: Main contact email_id information column name' default 'email_id'
+  :param library_preparation: Library preparation information column from access db, default 'library_preparation'
+  :param library_type: Library type information column from access db, default 'library_type'
+  :param sample_type: Sample type information column from access db, default 'sample_type'
+  :param sample_description: Sample description column from access db, default 'sample_description'
+
   '''
-  def __init__(self,infile,experiment_type_lookup,
-               species_lookup,metadata_columns,
+  def __init__(self,infile,experiment_type_lookup=EXPERIMENT_TYPE_LOOKUP,
+               species_lookup=SPECIES_LOOKUP,
+               metadata_columns=METADATA_COLUMNS,
                default_expected_reads=2000000,
                default_expected_lanes = 1,
                sample_igf_id='sample_igf_id',
@@ -267,7 +277,13 @@ class Reformat_metadata_file:
                fragment_length_distribution_sd='fragment_length_distribution_sd',
                taxon_id='taxon_id',
                scientific_name='scientific_name',
-               species_name='species_name'
+               species_name='species_name',
+               name='name',
+               email_id='email_id',
+               library_preparation='library_preparation',
+               library_type='library_type',
+               sample_type='sample_type',
+               sample_description='sample_description'
               ):
     self.infile = infile
     self.experiment_type_lookup = experiment_type_lookup
@@ -289,6 +305,13 @@ class Reformat_metadata_file:
     self.taxon_id = taxon_id
     self.scientific_name = scientific_name
     self.species_name = species_name
+    self.name = name
+    self.email_id = email_id
+    self.library_preparation = library_preparation
+    self.library_type = library_type
+    self.sample_type = sample_type
+    self.sample_description = sample_description
+
 
   @staticmethod
   def sample_name_reformat(sample_name):
@@ -344,23 +367,45 @@ class Reformat_metadata_file:
       raise ValueError('Failed to reformat tag name {0}'.format(tag_name))
 
 
-  def get_assay_info(self,experiment_type):
+  def get_assay_info(self,library_preparation_val,sample_description_val,library_type_val):
     '''
     A method for populating library information for sample
 
-    :param experiment_type: A valid experiment_type tag from lookup table
-    :returns: Two strings containing library_source and library_strategy information
+    :param library_preparation_val: A library_preparation tag from row data
+    :param sample_description_val: A sample_description tag from row data
+    :param library_type_val:  A library_type tag from row data
+    :returns: Three strings containing library_source,library_strategy and experiment_type information
     '''
     try:
+
       library_source = 'UNKNOWN'
       library_strategy = 'UNKNOWN'
-      if experiment_type in self.experiment_type_lookup:
-        library_source = self.experiment_type_lookup.get(experiment_type).get(self.library_source) or 'UNKNOWN'
-        library_strategy = self.experiment_type_lookup.get(experiment_type).get(self.library_strategy) or 'UNKNOWN'
+      experiment_type = 'UNKNOWN'
+      key = self.experiment_type
+      val = 'UNKNOWN'
+      if library_preparation_val.upper() == 'NOT APPLICABLE' and \
+         sample_description_val.upper() == 'PRE MADE LIBRARY':
+        key=self.library_type
+        val=library_type_val.strip().upper()
+      elif library_preparation_val.upper() != 'NOT APPLICABLE' and \
+           library_preparation_val != '':
+        key=self.library_preparation
+        val=library_preparation_val.strip().upper()
 
-      return library_source,library_strategy
+      filtered_data = self.experiment_type_lookup[self.experiment_type_lookup[key]==val]
+      if len(filtered_data.index) > 1:
+        filtered_data = pd.DataFrame([filtered_data.iloc[0]])
+
+      records = filtered_data.to_dict(orient='records')
+      if len(records) > 0:
+        library_source = records.get(self.library_source) or 'UNKNOWN'
+        library_strategy = records.get(self.library_strategy) or 'UNKNOWN'
+        experiment_type = records.get(self.experiment_type) or 'UNKNOWN'
+
+      return library_source,library_strategy,experiment_type
     except Exception as e:
-      raise ValueError('Failed to return assay information for exp type: {0}, error: {1}'.format(experiment_type,e))
+      raise ValueError('Failed to return assay information for type: {0},{1},{2} error: {3}'.\
+              format(library_preparation_val,sample_description_val,library_type_val,e))
 
   @staticmethod
   def calculate_insert_length_from_fragment(fragment_length,adapter_length=120):
@@ -376,7 +421,9 @@ class Reformat_metadata_file:
         insert_length = 0
       else:
         fragment_length = float(str(fragment_length).strip().replace(',',''))
-        insert_length = int(fragment_length - adapter_length)
+        if fragment_length != '' or \
+           fragment_length != 0:
+          insert_length = int(fragment_length - adapter_length)
       return insert_length
     except Exception as e:
       raise ValueError('Failed to calculate insert length: {0}'.format(e))
@@ -425,10 +472,14 @@ class Reformat_metadata_file:
           self.sample_name_reformat(\
             sample_name=row[self.sample_submitter_id])
 
-      if self.experiment_type in row.keys():
-        row[self.library_source],row[self.library_strategy] = \
+      if self.library_preparation in row.keys() and \
+         self.library_type in row.keys() and \
+         self.sample_description in row.keys():
+        row[self.library_source],row[self.library_strategy],row[self.experiment_type] = \
           self.get_assay_info(\
-            experiment_type=row[self.experiment_type])
+            library_preparation_val=row.get(self.library_preparation),
+            sample_description_val=row.get(self.sample_description),
+            library_type_val=row.get(self.library_type))
 
       if self.species_name in row.keys():
         row[self.taxon_id],row[self.scientific_name] = \
@@ -480,7 +531,11 @@ class Reformat_metadata_file:
 
       for field in self.metadata_columns:
         if field not in data.columns:
-          if field in ('expected_reads','expected_lanes','insert_length','fragment_length_distribution_mean','fragment_length_distribution_sd'):
+          if field in ('expected_reads',
+                       'expected_lanes',
+                       'insert_length',
+                       'fragment_length_distribution_mean',
+                       'fragment_length_distribution_sd'):
             data[field] = 0
           else:
             data[field] = ''
