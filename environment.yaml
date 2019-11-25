@@ -22,4 +22,3 @@ dependencies:
     - xlrd==1.1.0
     - jsonschema==2.6.0
     - sphinx_rtd_theme==0.4.3
-    - deeptools==3.2.1
