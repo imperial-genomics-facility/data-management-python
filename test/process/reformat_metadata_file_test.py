@@ -1,7 +1,7 @@
 import unittest,os
 import pandas as pd
 from igf_data.utils.fileutils import get_temp_dir,remove_dir
-from igf_data.process.metadata_reformat.reformat_metadata_file import Reformat_metadata_file,EXPERIMENT_TYPE_LOOKUP,SPECIES_LOOKUP,METADATA_COLUMNS
+from igf_data.process.metadata_reformat.reformat_metadata_file import Reformat_metadata_file
 
 class Reformat_metadata_file_testA(unittest.TestCase):
   def setUp(self):
@@ -21,17 +21,17 @@ class Reformat_metadata_file_testA(unittest.TestCase):
     self.assertEqual(Reformat_metadata_file.sample_and_project_reformat(tag_name=project_name),'IGF-scRNA')
 
   def test_get_assay_info(self):
-    exp_type = 'TENX-TRANSCRIPTOME'
+    library_preparation_val = 'Whole Genome Sequencing Human - Sample'
+    sample_description_val = 'NA'
+    library_type_val = 'NA'
     re_metadata = \
       Reformat_metadata_file(\
-        infile='data/metadata_validation/metadata_reformatting/incorrect_metadata.csv',
-        experiment_type_lookup=EXPERIMENT_TYPE_LOOKUP,
-        species_lookup=SPECIES_LOOKUP,
-        metadata_columns=METADATA_COLUMNS)
-    library_source,library_strategy = \
-      re_metadata.get_assay_info(experiment_type=exp_type)
-    self.assertEqual(library_source,'TRANSCRIPTOMIC_SINGLE_CELL')
-    self.assertEqual(library_strategy,'RNA-SEQ')
+        infile='data/metadata_validation/metadata_reformatting/incorrect_metadata.csv')
+    library_source,library_strategy,exp_type = \
+      re_metadata.get_assay_info(library_preparation_val,sample_description_val,library_type_val)
+    self.assertEqual(library_source,'GENOMIC')
+    self.assertEqual(library_strategy,'WGS')
+    self.assertEqual(exp_type,'WGS')
 
   def test_calculate_insert_length_from_fragment(self):
     self.assertEqual(Reformat_metadata_file.calculate_insert_length_from_fragment(fragment_length=400),280)
@@ -39,27 +39,24 @@ class Reformat_metadata_file_testA(unittest.TestCase):
   def test_get_species_info(self):
     re_metadata = \
       Reformat_metadata_file(\
-        infile='data/metadata_validation/metadata_reformatting/incorrect_metadata.csv',
-        experiment_type_lookup=EXPERIMENT_TYPE_LOOKUP,
-        species_lookup=SPECIES_LOOKUP,
-        metadata_columns=METADATA_COLUMNS)
-    taxon_id, scientific_name = \
-      re_metadata.get_species_info(genome_build='HG38')
+        infile='data/metadata_validation/metadata_reformatting/incorrect_metadata.csv')
+    taxon_id, scientific_name, species_name = \
+      re_metadata.get_species_info(species_text_val='human')
     self.assertEqual(taxon_id,'9606')
     self.assertEqual(scientific_name,'Homo sapiens')
+    self.assertEqual(species_name,'HG38')
 
   def test_populate_metadata_values(self):
     data = pd.Series(\
       {'project_igf_id':'IGFQ1 scRNA-seq5primeFB',
        'sample_igf_id':'IGF3[',
-       'experiment_type':'TOTAL-RNA',
-       'species_name':'MM10'})
+       'library_preparation':'RNA Sequencing - Total RNA',
+       'sample_description':'NA',
+       'library_type':'NA',
+       'species_text':'mouse'})
     re_metadata = \
       Reformat_metadata_file(\
-        infile='data/metadata_validation/metadata_reformatting/incorrect_metadata.csv',
-        experiment_type_lookup=EXPERIMENT_TYPE_LOOKUP,
-        species_lookup=SPECIES_LOOKUP,
-        metadata_columns=METADATA_COLUMNS)
+        infile='data/metadata_validation/metadata_reformatting/incorrect_metadata.csv')
     data = re_metadata.populate_metadata_values(row=data)
     self.assertEqual(data.project_igf_id,'IGFQ1-scRNA-seq5primeFB')
     self.assertTrue('library_source' in data.keys())
@@ -69,10 +66,7 @@ class Reformat_metadata_file_testA(unittest.TestCase):
     output_file = os.path.join(self.tmp_dir,'samplesheet.csv')
     re_metadata = \
       Reformat_metadata_file(\
-        infile='data/metadata_validation/metadata_reformatting/incorrect_metadata.csv',
-        experiment_type_lookup=EXPERIMENT_TYPE_LOOKUP,
-        species_lookup=SPECIES_LOOKUP,
-        metadata_columns=METADATA_COLUMNS)
+        infile='data/metadata_validation/metadata_reformatting/incorrect_metadata.csv')
     re_metadata.\
       reformat_raw_metadata_file(output_file=output_file)
     data = \

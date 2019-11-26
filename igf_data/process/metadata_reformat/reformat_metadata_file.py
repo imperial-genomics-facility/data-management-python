@@ -400,9 +400,9 @@ class Reformat_metadata_file:
 
       records = filtered_data.to_dict(orient='records')
       if len(records) > 0:
-        library_source = records.get(self.library_source) or 'UNKNOWN'
-        library_strategy = records.get(self.library_strategy) or 'UNKNOWN'
-        experiment_type = records.get(self.experiment_type) or 'UNKNOWN'
+        library_source = records[0].get(self.library_source) or 'UNKNOWN'
+        library_strategy = records[0].get(self.library_strategy) or 'UNKNOWN'
+        experiment_type = records[0].get(self.experiment_type) or 'UNKNOWN'
 
       return library_source,library_strategy,experiment_type
     except Exception as e:
@@ -445,9 +445,9 @@ class Reformat_metadata_file:
       records = self.species_lookup[self.species_lookup[self.species_text]==species_text_val.upper()]
       records = records.to_dict(orient='records')
       if len(records) > 0:
-        taxon_id = records.get(self.taxon_id) or 'UNKNOWN'
-        scientific_name = records.get(self.scientific_name) or 'UNKNOWN'
-        species_name = records.get(self.species_name) or 'UNKNOWN'
+        taxon_id = records[0].get(self.taxon_id) or 'UNKNOWN'
+        scientific_name = records[0].get(self.scientific_name) or 'UNKNOWN'
+        species_name = records[0].get(self.species_name) or 'UNKNOWN'
 
       return str(taxon_id),scientific_name,species_name
     except Exception as e:
@@ -489,9 +489,9 @@ class Reformat_metadata_file:
             library_type_val=row.get(self.library_type))
 
       if self.species_name in row.keys():
-        row[self.taxon_id],row[self.scientific_name] = \
+        row[self.taxon_id],row[self.scientific_name],row[self.species_name] = \
           self.get_species_info(\
-            species_text_val=row[self.species_name])
+            species_text_val=row[self.species_text])
 
       if self.fragment_length_distribution_mean in row.keys():
         if (row[self.insert_length] == 0 or row[self.insert_length] == '' ) and \
@@ -504,7 +504,7 @@ class Reformat_metadata_file:
       if self.species_text in row.keys():
         row[self.taxon_id],row[self.scientific_name],row[self.species_name] = \
           self.get_species_info(\
-            species_text=row[self.species_text])
+            species_text_val=row[self.species_text])
 
       if self.expected_reads in row.keys() and \
         (row[self.expected_reads] == '' or row[self.expected_reads] == 0):
@@ -513,11 +513,6 @@ class Reformat_metadata_file:
       if self.expected_lanes in row.keys() and \
         (row[self.expected_lanes] == '' or row[self.expected_lanes] == 0):
         row[self.expected_lanes] = self.default_expected_lanes
-
-      if self.experiment_type in row.keys():
-        row[self.library_source],row[self.library_strategy] = \
-          self.get_assay_info(\
-            experiment_type=row[self.experiment_type])
 
       return row
     except Exception as e:
