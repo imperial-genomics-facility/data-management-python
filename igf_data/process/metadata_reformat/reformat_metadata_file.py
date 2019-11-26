@@ -185,6 +185,7 @@ METADATA_COLUMNS = [
   'experiment_type',
   'library_source',
   'library_strategy',
+  'biomaterial_type',
   'expected_reads',
   'expected_lanes',
   'insert_length',
@@ -227,6 +228,7 @@ class Reformat_metadata_file:
   :param sample_type: Sample type information column from access db, default 'sample_type'
   :param sample_description: Sample description column from access db, default 'sample_description'
   :param species_text: A species text information column from access db, default 'species_text'
+  :param biomaterial_type: A column name for biomaterial type, default 'biomaterial_type'
   '''
   def __init__(self,infile,experiment_type_lookup=EXPERIMENT_TYPE_LOOKUP,
                species_lookup=SPECIES_LOOKUP,
@@ -253,7 +255,8 @@ class Reformat_metadata_file:
                library_preparation='library_preparation',
                library_type='library_type',
                sample_type='sample_type',
-               sample_description='sample_description'
+               sample_description='sample_description',
+               biomaterial_type='biomaterial_type'
               ):
     self.infile = infile
     self.experiment_type_lookup = pd.DataFrame(experiment_type_lookup)
@@ -282,6 +285,7 @@ class Reformat_metadata_file:
     self.sample_type = sample_type
     self.sample_description = sample_description
     self.species_text = species_text
+    self.biomaterial_type = biomaterial_type
 
 
   @staticmethod
@@ -345,13 +349,13 @@ class Reformat_metadata_file:
     :param library_preparation_val: A library_preparation tag from row data
     :param sample_description_val: A sample_description tag from row data
     :param library_type_val:  A library_type tag from row data
-    :returns: Three strings containing library_source,library_strategy and experiment_type information
+    :returns: Three strings containing library_source,library_strategy, experiment_type and biomaterial_type information
     '''
     try:
-
       library_source = 'UNKNOWN'
       library_strategy = 'UNKNOWN'
       experiment_type = 'UNKNOWN'
+      biomaterial_type = 'UNKNOWN'
       key = self.experiment_type
       val = 'UNKNOWN'
       if library_preparation_val.upper() == 'NOT APPLICABLE' and \
@@ -372,8 +376,9 @@ class Reformat_metadata_file:
         library_source = records[0].get(self.library_source) or 'UNKNOWN'
         library_strategy = records[0].get(self.library_strategy) or 'UNKNOWN'
         experiment_type = records[0].get(self.experiment_type) or 'UNKNOWN'
+        biomaterial_type = records[0].get(self.biomaterial_type) or 'UNKNOWN'
 
-      return library_source,library_strategy,experiment_type
+      return library_source,library_strategy,experiment_type,biomaterial_type
     except Exception as e:
       raise ValueError('Failed to return assay information for type: {0},{1},{2} error: {3}'.\
               format(library_preparation_val,sample_description_val,library_type_val,e))
@@ -451,11 +456,16 @@ class Reformat_metadata_file:
       if self.library_preparation in row.keys() and \
          self.library_type in row.keys() and \
          self.sample_description in row.keys():
-        row[self.library_source],row[self.library_strategy],row[self.experiment_type] = \
+        row[self.library_source],row[self.library_strategy],row[self.experiment_type],biomaterial_type = \
           self.get_assay_info(\
             library_preparation_val=row.get(self.library_preparation),
             sample_description_val=row.get(self.sample_description),
             library_type_val=row.get(self.library_type))
+        if self.biomaterial_type in row.keys() and \
+           (row[self.biomaterial_type] == '' or \
+            row[self.biomaterial_type].upper() == 'UNKNOWN') and \
+           biomaterial_type != 'UNKNOWN':
+          row[self.biomaterial_type] = biomaterial_type
 
       if self.species_name in row.keys():
         row[self.taxon_id],row[self.scientific_name],row[self.species_name] = \

@@ -27,11 +27,12 @@ class Reformat_metadata_file_testA(unittest.TestCase):
     re_metadata = \
       Reformat_metadata_file(\
         infile='data/metadata_validation/metadata_reformatting/incorrect_metadata.csv')
-    library_source,library_strategy,exp_type = \
+    library_source,library_strategy,exp_type,biomaterial_type = \
       re_metadata.get_assay_info(library_preparation_val,sample_description_val,library_type_val)
     self.assertEqual(library_source,'GENOMIC')
     self.assertEqual(library_strategy,'WGS')
     self.assertEqual(exp_type,'WGS')
+    self.assertEqual(biomaterial_type,'UNKNOWN')
 
   def test_calculate_insert_length_from_fragment(self):
     self.assertEqual(Reformat_metadata_file.calculate_insert_length_from_fragment(fragment_length=400),280)
@@ -73,7 +74,7 @@ class Reformat_metadata_file_testA(unittest.TestCase):
       pd.read_csv(output_file)
     self.assertTrue('library_source' in data.columns)
     sample_igf1_library_strategy = data[data['sample_igf_id']=='IGF1']['library_strategy'].values[0]
-    self.assertEqual(sample_igf1_library_strategy,'RNA-SEQ')
+    self.assertEqual(sample_igf1_library_strategy,'TARGETED-CAPTURE')
 
 if __name__ == '__main__':
   unittest.main()

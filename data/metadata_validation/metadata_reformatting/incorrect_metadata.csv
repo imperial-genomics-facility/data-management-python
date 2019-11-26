@@ -1,7 +1,6 @@
-
-project_igf_id,name,email_id,sample_igf_id,experiment_type,species_name,fragment_length_distribution_mean,fragment_length_distribution_sd,biomaterial_type,expected_reads
-IGFQ1 scRNA-seq5primeFB,XXX YYY,x.y@ic.ac.uk,IGF1 ,TENX-TRANSCRIPTOME,HG38,500,50,SINGLE_NUCLEI,4000000
-IGFQ1 scRNA-seq5primeFB,XXX YYY,x.y@ic.ac.uk,IGF2 ,ATAC-SEQ,HG38,450,50,UNKNOWN,4000000
-IGFQ1 scRNA-seq5primeFB,XXX YYY,x.y@ic.ac.uk,IGF3[,TOTAL-RNA,HG38,450,50,UNKNOWN,4000000
-IGFQ1 scRNA-seq5primeFB,XXX YYY,x.y@ic.ac.uk,IGF4/,WGS,HG38,450,50,UNKNOWN,4000000
-IGFQ1 scRNA-seq5primeFB,XXX YYY,x.y@ic.ac.uk,IGF5*,TF,HG38,475,50,CELL_LINE,
+project_igf_id,name,email_id,sample_igf_id,species_text,fragment_length_distribution_mean,fragment_length_distribution_sd,library_preparation,sample_type,sample_description,library_type,expected_lanes,sequencing_type
+IGFQ1 scRNA-seq5primeFB,XXX YYY,x.y@ic.ac.uk,IGF1 ,human,500,50,Not Applicable,NA,Pre made library,Hybrid Capture - Custom,1,HiSeq 4000 75 PE
+IGFQ1 scRNA-seq5primeFB,XXX YYY,x.y@ic.ac.uk,IGF2 ,HUMAN,450,50,Not Applicable,NA,Pre made library,Single Cell - 3' RNAseq- Sample,1,HiSeq 4000 75 PE
+IGFQ1 scRNA-seq5primeFB,XXX YYY,x.y@ic.ac.uk,IGF3[,Human,450,50,Not Applicable,NA,Pre made library,Hybrid Capture - Custom,1,HiSeq 4000 75 PE
+IGFQ1 scRNA-seq5primeFB,XXX YYY,x.y@ic.ac.uk,IGF4/,human,450,50,Not Applicable,NA,Pre made library,Hybrid Capture - Custom,1,HiSeq 4000 75 PE
+IGFQ1 scRNA-seq5primeFB,XXX YYY,x.y@ic.ac.uk,IGF5*,human ,475,50,Not Applicable,NA,Pre made library,Hybrid Capture - Custom,1,HiSeq 4000 75 PE
