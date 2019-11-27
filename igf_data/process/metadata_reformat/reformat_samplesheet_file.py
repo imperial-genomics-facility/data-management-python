@@ -9,6 +9,12 @@ class Reformat_samplesheet_file:
   A class for reformatting samplesheet file
 
   :param infile: Input samplesheet file
+  :param file_format: Input file format, default samplesheet
+                      List of allowed formats
+
+                        * samplesheet
+                        * csv
+
   :param remove_adapters: A toggle for removing adapters from header section ,default False
   :param revcomp_index1: A toggle for reverse complementing index1 column, default False
   :param revcomp_index2: A toggle for reverse complementing index2 column, default False
@@ -23,6 +29,7 @@ class Reformat_samplesheet_file:
   :param adapter_keys: A list of adapter keys to be removed from samplesheet header, default ('Adapter','AdapterRead2')
   '''
   def __init__(self,infile,
+               file_format='samplesheet',
                remove_adapters=False,
                revcomp_index1=False,
                revcomp_index2=False,
@@ -35,20 +42,28 @@ class Reformat_samplesheet_file:
                description='Description',
                adapter_section='Settings',
                adapter_keys=('Adapter','AdapterRead2')):
-    self.infile = infile
-    self.tenx_label = tenx_label
-    self.remove_adapters = remove_adapters
-    self.revcomp_index1 = revcomp_index1
-    self.revcomp_index2 = revcomp_index2
-    self.sample_id = sample_id
-    self.sample_name = sample_name
-    self.index = index
-    self.index2 = index2
-    self.sample_project = sample_project
-    self.description = description
-    self.adapter_section = adapter_section
-    self.adapter_keys = adapter_keys
-        
+    try:
+      self.infile = infile
+      if file_format not in ['samplesheet','csv']:
+        raise ValueError('File format {0} not supported'.format(file_format))
+
+      self.file_format = file_format
+      self.tenx_label = tenx_label
+      self.remove_adapters = remove_adapters
+      self.revcomp_index1 = revcomp_index1
+      self.revcomp_index2 = revcomp_index2
+      self.sample_id = sample_id
+      self.sample_name = sample_name
+      self.index = index
+      self.index2 = index2
+      self.sample_project = sample_project
+      self.description = description
+      self.adapter_section = adapter_section
+      self.adapter_keys = adapter_keys
+    except Exception as e:
+      raise ValueError('Error in initializing samplesheet reformatting, error: {0}'.\
+                       format(e))
+
   @staticmethod
   def detect_tenx_barcodes(index,tenx_label='10X'):
     '''
@@ -65,7 +80,8 @@ class Reformat_samplesheet_file:
         description = tenx_label
       return description
     except Exception as e:
-      raise ValueError('Failed to detect Tenx single cell barcode for index {0}, error: {1}'.format(index,e))
+      raise ValueError('Failed to detect Tenx single cell barcode for index {0}, error: {1}'.\
+                       format(index,e))
 
   def correct_samplesheet_data_row(self,row):
     '''
@@ -76,7 +92,8 @@ class Reformat_samplesheet_file:
     '''
     try:
       if not isinstance(row,pd.Series):
-        raise TypeError('Expecting A pandas series and got {0}'.format(type(row)))
+        raise TypeError('Expecting A pandas series and got {0}'.\
+                        format(type(row)))
 
       if self.sample_id in row.keys():
         row[self.sample_id] = \
@@ -120,7 +137,8 @@ class Reformat_samplesheet_file:
         row[self.description] = row[self.description].upper()                   # change description to upper case letters
       return row
     except Exception as e:
-      raise ValueError('Failed to correct samplesheet data row {0},error {1}'.format(row,e))
+      raise ValueError('Failed to correct samplesheet data row {0},error {1}'.\
+                       format(row,e))
 
   def reformat_raw_samplesheet_file(self,output_file):
     '''
@@ -130,8 +148,12 @@ class Reformat_samplesheet_file:
     :returns: None
     '''
     try:
-      samplesheet = SampleSheet(infile=self.infile)
-      samplesheet_data = pd.DataFrame(samplesheet._data)
+      samplesheet_data = list()
+      if self.file_format == 'samplesheet':
+        samplesheet = SampleSheet(infile=self.infile)
+        samplesheet_data = pd.DataFrame(samplesheet._data)
+      elif self.file_format == 'csv':
+        samplesheet_data = pd.read_csv(self.infile,header=0)
       samplesheet_data.fillna('',inplace=True)
       samplesheet_data = \
         samplesheet_data.\
@@ -139,16 +161,20 @@ class Reformat_samplesheet_file:
           lambda row: self.correct_samplesheet_data_row(row=row),
           axis=1,
           result_type='reduce')                                                 # refoemat samplesheet data
-      samplesheet._data = \
-        samplesheet_data.\
-        to_dict(orient='records')                                               # update samplesheet object with new data
-      if self.remove_adapters:
-        for adapter_key in self.adapter_keys:
-          samplesheet.\
-          modify_sample_header(\
-            section=self.adapter_section,
-            type='remove',
-            condition_key=adapter_key)                                          # remove adapters from samplesheet
-      samplesheet.print_sampleSheet(outfile=output_file)                        # print corrected samplesheet
+      if self.file_format == 'samplesheet':
+        samplesheet._data = \
+          samplesheet_data.\
+          to_dict(orient='records')                                             # update samplesheet object with new data
+        if self.remove_adapters:
+          for adapter_key in self.adapter_keys:
+            samplesheet.\
+            modify_sample_header(\
+              section=self.adapter_section,
+              type='remove',
+              condition_key=adapter_key)                                        # remove adapters from samplesheet
+        samplesheet.print_sampleSheet(outfile=output_file)                      # print corrected samplesheet
+      elif self.file_format == 'csv':
+        samplesheet_data.to_csv(output_file,index=False)                        # dump samplesheet dat as csv file
     except Exception as e:
-      raise ValueError('Failed to reformat samplesheet file {0}, error {1}'.format(self.infile,e))
+      raise ValueError('Failed to reformat samplesheet file {0}, error {1}'.\
+                       format(self.infile,e))

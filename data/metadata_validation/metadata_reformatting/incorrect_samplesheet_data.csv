@@ -1,0 +1,6 @@
+Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+1,IGF1 ,samp_(1),,,SI-GA-E1,SI-GA-E1,,,IGFQ1 scRNA-seq5primeFB,10x
+1,IGF2 ,GEX+1,,,SI-GA-G1,SI-GA-G1,,,IGFQ scRNA-seq5primeFB,
+1,IGF3[,FB1-1,,,SI-NA-C1,SI-NA-C1,,,IGFQ scRNA-seq5primeFB,
+2,IGF4/,VDJ2#1,,,SI-GA-F1,SI-GA-F1,,,IGF scRNA-seq5primeFB,
+2,IGF5*,GEX2*,,,index-aaa,ATATTATAT,,,IGFQ scRNA-seq5primeFB,

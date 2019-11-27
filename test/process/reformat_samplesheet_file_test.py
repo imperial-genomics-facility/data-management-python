@@ -52,5 +52,21 @@ class Reformat_samplesheet_file_testA(unittest.TestCase):
     self.assertEqual(sample1['Sample_Project'].values[0],'IGFQ1-scRNA-seq5primeFB')
     self.assertEqual(sample1['Description'].values[0],'10X')
 
+  def test_reformat_samplesheet_data_file(self):
+    re_samplesheet = \
+      Reformat_samplesheet_file(\
+        infile='data/metadata_validation/metadata_reformatting/incorrect_samplesheet_data.csv',
+        file_format='csv',
+        remove_adapters=True)
+    output_file = os.path.join(self.tmp_dir,'samplesheet.csv')
+    re_samplesheet.\
+      reformat_raw_samplesheet_file(\
+        output_file=output_file)
+    data = pd.read_csv(output_file)
+    sample1 = data[data['Sample_ID']=='IGF1']
+    self.assertEqual(sample1['Sample_Name'].values[0],'samp-1')
+    self.assertEqual(sample1['Sample_Project'].values[0],'IGFQ1-scRNA-seq5primeFB')
+    self.assertEqual(sample1['Description'].values[0],'10X')
+
 if __name__ == '__main__':
   unittest.main()
