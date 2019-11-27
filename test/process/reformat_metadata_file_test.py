@@ -21,6 +21,7 @@ class Reformat_metadata_file_testA(unittest.TestCase):
     self.assertEqual(Reformat_metadata_file.sample_and_project_reformat(tag_name=project_name),'IGF-scRNA')
 
   def test_get_assay_info(self):
+    # test 1
     library_preparation_val = 'Whole Genome Sequencing Human - Sample'
     sample_description_val = 'NA'
     library_type_val = 'NA'
@@ -33,6 +34,36 @@ class Reformat_metadata_file_testA(unittest.TestCase):
     self.assertEqual(library_strategy,'WGS')
     self.assertEqual(exp_type,'WGS')
     self.assertEqual(biomaterial_type,'UNKNOWN')
+    ## test 2
+    library_preparation_val = "Single Cell -3' RNAseq- Sample"
+    sample_description_val = 'NA'
+    library_type_val = 'NA'
+    library_source,library_strategy,exp_type,biomaterial_type = \
+      re_metadata.get_assay_info(library_preparation_val,sample_description_val,library_type_val)
+    self.assertEqual(library_source,'TRANSCRIPTOMIC_SINGLE_CELL')
+    self.assertEqual(library_strategy,'RNA-SEQ')
+    self.assertEqual(exp_type,'TENX-TRANSCRIPTOME-3P')
+    self.assertEqual(biomaterial_type,'UNKNOWN')
+    ## test 3
+    library_preparation_val = "Single Cell -3' RNAseq- Sample Nuclei"
+    sample_description_val = 'NA'
+    library_type_val = 'NA'
+    library_source,library_strategy,exp_type,biomaterial_type = \
+      re_metadata.get_assay_info(library_preparation_val,sample_description_val,library_type_val)
+    self.assertEqual(library_source,'TRANSCRIPTOMIC_SINGLE_CELL')
+    self.assertEqual(library_strategy,'RNA-SEQ')
+    self.assertEqual(exp_type,'TENX-TRANSCRIPTOME-3P')
+    self.assertEqual(biomaterial_type,'SINGLE_NUCLEI')
+    ## test 4
+    library_preparation_val = "Not Applicable"
+    sample_description_val = "Pre Made Library"
+    library_type_val = "SINGLE CELL 3’ GENE EXPRESSION LIBRARIES NUCLEI"
+    library_source,library_strategy,exp_type,biomaterial_type = \
+      re_metadata.get_assay_info(library_preparation_val,sample_description_val,library_type_val)
+    self.assertEqual(library_source,'TRANSCRIPTOMIC_SINGLE_CELL')
+    self.assertEqual(library_strategy,'RNA-SEQ')
+    self.assertEqual(exp_type,'TENX-TRANSCRIPTOME-3P')
+    self.assertEqual(biomaterial_type,'SINGLE_NUCLEI')
 
   def test_calculate_insert_length_from_fragment(self):
     self.assertEqual(Reformat_metadata_file.calculate_insert_length_from_fragment(fragment_length=400),280)
