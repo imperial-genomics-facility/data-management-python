@@ -106,6 +106,10 @@ class Reformat_metadata_file_testA(unittest.TestCase):
     self.assertTrue('library_source' in data.columns)
     sample_igf1_library_strategy = data[data['sample_igf_id']=='IGF1']['library_strategy'].values[0]
     self.assertEqual(sample_igf1_library_strategy,'TARGETED-CAPTURE')
+    sample_igf2_experiment_type = data[data['sample_igf_id']=='IGF2']['experiment_type'].values[0]
+    self.assertEqual(sample_igf2_experiment_type,'TENX-TRANSCRIPTOME-3P')
+    sample_igf2_biomaterial_type = data[data['sample_igf_id']=='IGF2']['biomaterial_type'].values[0]
+    self.assertEqual(sample_igf2_biomaterial_type,'SINGLE_NUCLEI')
 
 if __name__ == '__main__':
   unittest.main()
