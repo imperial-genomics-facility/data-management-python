@@ -4,6 +4,21 @@ from igf_data.illumina.samplesheet import SampleSheet
 from igf_data.utils.sequtils import rev_comp
 from igf_data.process.metadata_reformat.reformat_metadata_file import Reformat_metadata_file
 
+SAMPLESHEET_COLUMNS = [
+  'Lane',
+  'Sample_ID',
+  'Sample_Name',
+  'Sample_Plate',
+  'Sample_Well',
+  'I7_Index_ID',
+  'index',
+  'I5_Index_ID',
+  'index2',
+  'Sample_Project',
+  'Description',
+  'Pool_number'
+]
+
 class Reformat_samplesheet_file:
   '''
   A class for reformatting samplesheet file
@@ -14,6 +29,19 @@ class Reformat_samplesheet_file:
 
                         * samplesheet
                         * csv
+
+  :param samplesheet_columns: A list of expected columns in the samplesheet file
+                              A list of default columns
+
+                              * Lane
+                              * Sample_ID
+                              * Sample_Name
+                              * Sample_Plate
+                              * Sample_Well
+                              * I7_Index_ID
+                              * index
+                              * Sample_Project
+                              * Description
 
   :param remove_adapters: A toggle for removing adapters from header section ,default False
   :param revcomp_index1: A toggle for reverse complementing index1 column, default False
@@ -30,6 +58,7 @@ class Reformat_samplesheet_file:
   '''
   def __init__(self,infile,
                file_format='samplesheet',
+               samplesheet_columns=SAMPLESHEET_COLUMNS,
                remove_adapters=False,
                revcomp_index1=False,
                revcomp_index2=False,
@@ -48,6 +77,7 @@ class Reformat_samplesheet_file:
         raise ValueError('File format {0} not supported'.format(file_format))
 
       self.file_format = file_format
+      self.samplesheet_columns = samplesheet_columns
       self.tenx_label = tenx_label
       self.remove_adapters = remove_adapters
       self.revcomp_index1 = revcomp_index1
@@ -161,6 +191,13 @@ class Reformat_samplesheet_file:
           lambda row: self.correct_samplesheet_data_row(row=row),
           axis=1,
           result_type='reduce')                                                 # refoemat samplesheet data
+      column_names = \
+        [column_name \
+           for column_name in samplesheet_data.columns \
+             if column_name in self.samplesheet_columns ]                       # filter expected column names
+      if len(column_names) == 0:
+        raise ValueError('No expected columns found on the samplesheet data')
+      samplesheet_data = samplesheet_data[column_names]                        # filter samplesheet data
       if self.file_format == 'samplesheet':
         samplesheet._data = \
           samplesheet_data.\

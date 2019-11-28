@@ -392,14 +392,16 @@ class Reformat_metadata_file:
     :param adapter_length: Adapter length, default 120
     '''
     try:
-      insert_length = None
+      insert_length = 0
       if fragment_length == '':
         insert_length = 0
       else:
         fragment_length = float(str(fragment_length).strip().replace(',',''))
         if fragment_length != '' or \
-           fragment_length != 0:
+           fragment_length >= 0:
           insert_length = int(fragment_length - adapter_length)
+        if insert_length < 0:
+          insert_length = 0
       return insert_length
     except Exception as e:
       raise ValueError('Failed to calculate insert length: {0}'.format(e))
@@ -534,12 +536,19 @@ class Reformat_metadata_file:
         empty_keys = 0
         counts = data[field].value_counts().to_dict()
         for key,val in counts.items():
-          if key in ('UNKNOWN',''):
+          if key in ('unknown','UNKNOWN',''):
             empty_keys += val
 
         if total_row_count == empty_keys:
           data.drop(field,axis=1,inplace=True)                                  # clean up empty columns
 
-      data.to_csv(output_file,index=False)                                      # print new metadata file
+      column_names = \
+        [column_name \
+          for column_name in data.columns \
+            if column_name in self.metadata_columns]                            # filter output columns
+      if len(column_names) == 0:
+        raise ValueError('No target metadata column found on the reformatted data')
+
+      data[column_names].to_csv(output_file,index=False)                        # filter columns and print new metadata file
     except Exception as e:
       raise ValueError('Failed to remormat file {0}, error {1}'.format(self.infile,e))
