@@ -54,8 +54,8 @@
                         "HG19_MM10",
                         "UNKNOWN",
                         "MM10",
-                        "MM9"
-                       ]
+                        "MM9",
+                        ""]
             },
             "library_name" : {
               "type" : "string",
