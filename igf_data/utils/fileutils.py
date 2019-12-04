@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import pandas as pd
-import os,subprocess,hashlib,string,re,paramiko
+import os,subprocess,hashlib,string,re
 import tarfile,fnmatch
 from shlex import quote
 from datetime import datetime
@@ -61,6 +61,7 @@ def list_remote_file_or_dirs(remote_server,remote_path,only_dirs=True,
   :returns: A list of dir or file paths
   '''
   try:
+    import paramiko
     if only_dirs and only_files:
       raise ValueError('Conflicting options, only_dirs and only_files')
 
