@@ -16,7 +16,7 @@ SAMPLESHEET_COLUMNS = [
   'index2',
   'Sample_Project',
   'Description',
-  'Pool_number'
+  'Pool_Number'
 ]
 
 class Reformat_samplesheet_file:
@@ -42,6 +42,7 @@ class Reformat_samplesheet_file:
                               * index
                               * Sample_Project
                               * Description
+                              * Pool_number
 
   :param remove_adapters: A toggle for removing adapters from header section ,default False
   :param revcomp_index1: A toggle for reverse complementing index1 column, default False
