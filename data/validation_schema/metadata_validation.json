@@ -279,7 +279,7 @@
             "cell_line" : {
               "type" : "string"
             },
-            "expected_read" : {
+            "expected_reads" : {
               "type" : "string",
               "pattern" : "^\\d+$|^$"
             },
