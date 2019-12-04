@@ -5,6 +5,7 @@ from igf_data.illumina.samplesheet import SampleSheet
 from igf_data.utils.gviz_utils import convert_to_gviz_json_for_display
 from collections import defaultdict
 from igf_data.utils.fileutils import check_file_path
+from igf_data.process.metadata_reformat.reformat_metadata_file import EXPERIMENT_TYPE_LOOKUP
 
 class Validate_project_and_samplesheet_metadata:
   '''
@@ -425,23 +426,16 @@ class Validate_project_and_samplesheet_metadata:
     '''
     try:
       error_msg = None
+      exp_lookup_data = pd.DataFrame(EXPERIMENT_TYPE_LOOKUP)
       if library_source == 'GENOMIC':
-        if library_strategy not in ['WGS',
-                                    'EXOME',
-                                    'CHIP-SEQ',
-                                    'ATAC-SEQ',
-                                    'UNKNOWN'] or \
-            experiment_type not in ['WGS',
-                                    'EXOME',
-                                    'ATAC-SEQ',
-                                    'H3K4ME3',
-                                    'H3K27ME3',
-                                    'H3K27AC',
-                                    'H3K36ME3',
-                                    'HISTONE-NARROW',
-                                    'HISTONE-BROAD',
-                                    'TF',
-                                    'UNKNOWN']:
+        library_strategy_list = \
+          list(exp_lookup_data[exp_lookup_data['library_source']=='GENOMIC']['library_strategy'].values)
+        library_strategy_list.append('UNKNOWN')
+        experiment_type_list = \
+          list(exp_lookup_data[exp_lookup_data['library_source']=='GENOMIC']['experiment_type'].values)
+        experiment_type_list.append('UNKNOWN')
+        if library_strategy not in library_strategy_list or \
+            experiment_type not in experiment_type_list:
           error_msg = \
             '{0}: library_strategy {1} or experiment_type {2} is not compatible with library_source {3}'.\
             format(sample_id,
@@ -449,10 +443,14 @@ class Validate_project_and_samplesheet_metadata:
                    experiment_type,
                    library_source)
       elif library_source == 'TRANSCRIPTOMIC':
-        if library_strategy not in ['RNA-SEQ'] or \
-           experiment_type not in ['POLYA-RNA',
-                                   'TOTAL-RNA',
-                                   'SMALL-RNA']:
+        library_strategy_list = \
+          list(exp_lookup_data[exp_lookup_data['library_source']=='TRANSCRIPTOMIC']['library_strategy'].values)
+        library_strategy_list.append('UNKNOWN')
+        experiment_type_list = \
+          list(exp_lookup_data[exp_lookup_data['library_source']=='TRANSCRIPTOMIC']['experiment_type'].values)
+        experiment_type_list.append('UNKNOWN')
+        if library_strategy not in library_strategy_list or \
+           experiment_type not in experiment_type_list:
           error_msg = \
             '{0}: library_strategy {1} or experiment_type {2} is not compatible with library_source {3}'.\
             format(sample_id,
@@ -460,8 +458,14 @@ class Validate_project_and_samplesheet_metadata:
                    experiment_type,
                    library_source)
       elif library_source == 'GENOMIC_SINGLE_CELL':
-        if library_strategy not in ['UNKNOWN'] or \
-           experiment_type not in ['UNKNOWN']:
+        library_strategy_list = \
+          list(exp_lookup_data[exp_lookup_data['library_source']=='GENOMIC_SINGLE_CELL']['library_strategy'].values)
+        library_strategy_list.append('UNKNOWN')
+        experiment_type_list = \
+          list(exp_lookup_data[exp_lookup_data['library_source']=='GENOMIC_SINGLE_CELL']['experiment_type'].values)
+        experiment_type_list.append('UNKNOWN')
+        if library_strategy not in library_strategy_list or \
+           experiment_type not in experiment_type_list:
           error_msg = \
             '{0}: library_strategy {1} or experiment_type {2} is not compatible with library_source {3}'.\
             format(sample_id,
@@ -469,9 +473,14 @@ class Validate_project_and_samplesheet_metadata:
                    experiment_type,
                    library_source)
       elif library_source == 'TRANSCRIPTOMIC_SINGLE_CELL':
-        if library_strategy not in ['RNA-SEQ'] or \
-           experiment_type not in ['TENX-TRANSCRIPTOME',
-                                   'DROP-SEQ-TRANSCRIPTOME']:
+        library_strategy_list = \
+          list(exp_lookup_data[exp_lookup_data['library_source']=='TRANSCRIPTOMIC_SINGLE_CELL']['library_strategy'].values)
+        library_strategy_list.append('UNKNOWN')
+        experiment_type_list = \
+          list(exp_lookup_data[exp_lookup_data['library_source']=='TRANSCRIPTOMIC_SINGLE_CELL']['experiment_type'].values)
+        experiment_type_list.append('UNKNOWN')
+        if library_strategy not in library_strategy_list or \
+           experiment_type not in experiment_type_list:
           error_msg = \
             '{0}: library_strategy {1} or experiment_type {2} is not compatible with library_source {3}'.\
             format(sample_id,

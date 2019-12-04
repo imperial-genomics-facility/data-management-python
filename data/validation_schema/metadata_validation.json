@@ -202,15 +202,15 @@
             },
             "fragment_length_distribution_mean" : {
               "type" : "string",
-              "pattern" : "^\\d+?\\.?\\d+$|^$"
+              "pattern" : "^(\\d+)?\\.?(\\d+)?$|^$"
             },
             "fragment_length_distribution_sd" : {
               "type" : "string",
-              "pattern" : "^\\d+?\\.?\\d+$|^$"
+              "pattern" : "^(\\d+)?\\.?(\\d+)?$|^$"
             },
             "insert_length" : {
               "type" : "string",
-              "pattern" : "^\\d+?\\.?\\d+$|^$"
+              "pattern" : "^(\\d+)?\\.?(\\d+)?$|^$"
             },
             "adapter_seq1" : {
               "type" : "string",
@@ -258,7 +258,7 @@
             },
             "donor_age" : {
               "type" : "string",
-              "pattern" : "^\\d+\\-\\d+\\w+$|^$"
+              "pattern" : "^(\\d+)?\\-?(\\d+)?\\w+$|^$"
             },
             "biomaterial_type" : {
               "type" : "string",
@@ -281,11 +281,11 @@
             },
             "expected_reads" : {
               "type" : "string",
-              "pattern" : "^\\d+$|^$"
+              "pattern" : "^(\\d+)?$|^$"
             },
             "expected_lanes" : {
               "type" : "string",
-              "pattern" : "^\\d+$|^$"
+              "pattern" : "^(\\d+)?$|^$"
             }
         },
         "required": ["project_igf_id",
