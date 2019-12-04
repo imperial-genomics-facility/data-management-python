@@ -37,6 +37,7 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       'analysis_view_js':'viewer.js',
       'image_height':700,
       'sample_count_threshold':75,
+      'use_ephemeral_space':0,
     })
     return params_dict
 
@@ -69,6 +70,7 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
       analysis_view_js = self.param('analysis_view_js')
       image_height = self.param('image_height')
       sample_count_threshold = self.param('sample_count_threshold')
+      use_ephemeral_space = self.param('use_ephemeral_space')
 
       htaccess_template_path = \
         os.path.join(\
@@ -126,9 +128,8 @@ class CreateRemoteAccessForProject(IGFBaseProcess):
            user['category'] == 'NON_HPC_USER' and \
            user['data_authority']=='T':
           hpc_user = False                                                      # switch to non-hpc settings if primary user is non-hpc
-
       temp_work_dir = \
-        get_temp_dir(use_ephemeral_space=False)                                 # get a temp dir
+        get_temp_dir(use_ephemeral_space=use_ephemeral_space)                   # get a temp dir
       template_env = \
         Environment(\
           loader=FileSystemLoader(\

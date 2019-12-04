@@ -24,6 +24,7 @@ class UpdateProjectAnalysisStats(IGFBaseProcess):
       'pipeline_finished_status':'FINISHED',
       'sample_id_label':'SAMPLE_ID',
       'remote_analysis_dir':'analysis',
+      'use_ephemeral_space':0,
     })
     return params_dict
 
@@ -45,8 +46,9 @@ class UpdateProjectAnalysisStats(IGFBaseProcess):
       chart_data_json = self.param('chart_data_json')
       chart_data_csv = self.param('chart_data_csv')
       sample_id_label = self.param('sample_id_label')
+      use_ephemeral_space = self.param('use_ephemeral_space')
 
-      temp_dir = get_temp_dir(use_ephemeral_space=False)
+      temp_dir = get_temp_dir(use_ephemeral_space=use_ephemeral_space)
       output_file = os.path.join(temp_dir,analysis_data_json)
       chart_json_output_file = os.path.join(temp_dir,chart_data_json)
       csv_output_file = os.path.join(temp_dir,chart_data_csv)

@@ -19,6 +19,7 @@ class UpdateProjectStatus(IGFBaseProcess):
       'demultiplexing_pipeline_name':None,
       'analysis_pipeline_name':None,
       'sample_igf_id':None,
+      'use_ephemeral_space':0,
     })
     return params_dict
 
@@ -33,8 +34,9 @@ class UpdateProjectStatus(IGFBaseProcess):
       status_data_json = self.param('status_data_json')
       demultiplexing_pipeline_name = self.param_required('demultiplexing_pipeline_name')
       analysis_pipeline_name = self.param_required('analysis_pipeline_name')
+      use_ephemeral_space = self.param('use_ephemeral_space')
 
-      temp_work_dir = get_temp_dir(use_ephemeral_space=False)                   # get a temp dir
+      temp_work_dir = get_temp_dir(use_ephemeral_space=use_ephemeral_space)     # get a temp dir
       ps = \
         Project_status(\
           igf_session_class=igf_session_class,

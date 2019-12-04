@@ -25,6 +25,7 @@ class UpdateProjectInfo(IGFBaseProcess):
       'pipeline_name':None,
       'analysis_pipeline_name':None,
       'sample_column':'sample_igf_id',
+      'use_ephemeral_space':0,
     })
     return params_dict
 
@@ -43,9 +44,10 @@ class UpdateProjectInfo(IGFBaseProcess):
       pipeline_name = self.param_required('pipeline_name')
       analysis_pipeline_name = self.param_required('analysis_pipeline_name')
       sample_column = self.param('sample_column')
+      use_ephemeral_space = self.param('use_ephemeral_space')
 
       temp_work_dir = \
-        get_temp_dir(use_ephemeral_space=False)                                 # get a temp dir
+        get_temp_dir(use_ephemeral_space=use_ephemeral_space)                   # get a temp dir
       temp_read_count_output = \
         os.path.join(\
           temp_work_dir,

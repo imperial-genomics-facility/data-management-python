@@ -23,6 +23,7 @@ class ConvertBamToCram(IGFBaseProcess):
         'collection_table':'experiment',
         'threads':4,
         'copy_input':0,
+        'use_ephemeral_space':0,
       })
     return params_dict
 
@@ -64,6 +65,7 @@ class ConvertBamToCram(IGFBaseProcess):
       force_overwrite = self.param_required('force_overwrite')
       reference_type = self.param('reference_type')
       threads = self.param('threads')
+      use_ephemeral_space = self.param('use_ephemeral_space')
       bam_file = None
       if isinstance(bam_files, list) and \
          len(bam_files)>0:
@@ -85,7 +87,7 @@ class ConvertBamToCram(IGFBaseProcess):
           dbsession_class=igf_session_class,
           genome_fasta_type=reference_type)
       genome_fasta = ref_genome.get_genome_fasta()                              # get genome fasta
-      temp_work_dir = get_temp_dir(use_ephemeral_space=False)                   # get temp dir
+      temp_work_dir = get_temp_dir(use_ephemeral_space=use_ephemeral_space)     # get temp dir
       cram_file = os.path.basename(bam_file).replace('.bam','.cram')            # get base cram file name
       cram_file = os.path.join(temp_work_dir,cram_file)                         # get cram file path in work dir
       convert_bam_to_cram(\
@@ -122,19 +124,22 @@ class ConvertBamToCram(IGFBaseProcess):
 
       self.param('dataflow_params',
                  {'output_cram_list':final_output_list})                        # pass on bam output path
-      message = 'finished bam to cram conversion for {0}, {1} {2}'.\
-                format(\
-                  project_igf_id,
-                  sample_igf_id,
-                  experiment_igf_id)
+      message = \
+        'finished bam to cram conversion for {0}, {1} {2}'.\
+        format(
+          project_igf_id,
+          sample_igf_id,
+          experiment_igf_id)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
       self.comment_asana_task(task_name=project_igf_id, comment=message)        # send comment to Asana
     except Exception as e:
-      message='project: {2}, sample:{3}, Error in {0}: {1}'.\
-              format(self.__class__.__name__,
-                     e,
-                     project_igf_id,
-                     sample_igf_id)
+      message = \
+        'project: {2}, sample:{3}, Error in {0}: {1}'.\
+        format(
+          self.__class__.__name__,
+          e,
+          project_igf_id,
+          sample_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise

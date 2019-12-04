@@ -245,6 +245,12 @@ def get_temp_dir(work_dir=None, prefix='temp',use_ephemeral_space=False):
     if work_dir is not None and not os.path.isdir(work_dir):                    # check if work directory is present
       raise IOError('work directory {0} is not present'.format(work_dir))
 
+    if isinstance(use_ephemeral_space, int) and \
+       use_ephemeral_space == 0:
+      use_ephemeral_space = False
+    elif isinstance(use_ephemeral_space, int) and \
+         use_ephemeral_space > 0:
+      use_ephemeral_space = True
     if work_dir is None:
       if use_ephemeral_space:
         work_dir=os.environ.get('EPHEMERAL')

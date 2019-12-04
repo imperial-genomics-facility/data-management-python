@@ -9,6 +9,8 @@ from igf_data.utils.analysis_collection_utils import Analysis_collection_utils
 class Check_batch_effect_for_lane(IGFBaseProcess):
   '''
   A ehive runnable for calculating lane level batch effect for each sample, from star gene count file
+
+  FIXME: Replace with a notebook
   '''
   def param_defaults(self):
     params_dict=super(Check_batch_effect_for_lane,self).param_defaults()
@@ -18,7 +20,8 @@ class Check_batch_effect_for_lane(IGFBaseProcess):
         'collection_type':'RNA_BATCH_EFFECT_HTML',
         'collection_table':'experiment',
         'analysis_name':'batch_effect',
-        'tag_name':'star_gene_count'
+        'tag_name':'star_gene_count',
+        'use_ephemeral_space':0,
       })
     return params_dict
 
@@ -39,6 +42,7 @@ class Check_batch_effect_for_lane(IGFBaseProcess):
       collection_table = self.param('collection_table')
       analysis_name = self.param('analysis_name')
       tag_name = self.param('tag_name')
+      use_ephemeral_space = self.param('use_ephemeral_space')
 
       output_file_list = None
       if len(input_files)==0:
@@ -62,8 +66,10 @@ class Check_batch_effect_for_lane(IGFBaseProcess):
                             'lane':lane_id
                           })
         ra.close_session()
-        temp_dir = get_temp_dir(use_ephemeral_space=False)
-        temp_json_file = os.path.join(temp_dir,'star_gene_counts.json')         # temp json file path
+        temp_dir = \
+          get_temp_dir(use_ephemeral_space=use_ephemeral_space)
+        temp_json_file = \
+          os.path.join(temp_dir,'star_gene_counts.json')                        # temp json file path
         temp_output_file = \
           os.path.join(\
             temp_dir,
