@@ -32,6 +32,7 @@ class RunSamtools(IGFBaseProcess):
         'use_encode_filter':False,
         'encodePeExcludeFlag':1804,
         'encodeSeExcludeFlag':1796,
+        'use_ephemeral_space':0,
       })
     return params_dict
 
@@ -53,6 +54,7 @@ class RunSamtools(IGFBaseProcess):
     :param use_encode_filter: For samtools filter, use Encode epigenome filter, i.e. samFlagExclude 1804(PE) / 1796(SE), default False
     :param encodePeExcludeFlag: For samtools filter, Encode exclude flag for PE reads, default 1804
     :param encodeSeExcludeFlag: For samtools filter, Encode exclude flag for PE reads, default 1796
+    :param use_ephemeral_space: A toggle for temp dir settings, default 0
     :param copy_input: A toggle for copying input file to temp, 1 for True default 0 for False
     '''
     try:
@@ -82,11 +84,14 @@ class RunSamtools(IGFBaseProcess):
       use_encode_filter = self.param('use_encode_filter')
       species_name = self.param_required('species_name')
       seed_date_stamp = self.param_required('date_stamp')
+      use_ephemeral_space = self.param('use_ephemeral_space')
       seed_date_stamp = get_datestamp_label(seed_date_stamp)
       if output_prefix is not None:
-        output_prefix='{0}_{1}'.\
-          format(output_prefix,
-                 seed_date_stamp)                                               # adding datestamp to the output file prefix
+        output_prefix = \
+          '{0}_{1}'.\
+            format(
+              output_prefix,
+              seed_date_stamp)                                               # adding datestamp to the output file prefix
 
       if use_encode_filter:
         samFlagInclude = None
@@ -105,19 +110,22 @@ class RunSamtools(IGFBaseProcess):
 
       output_bam_cram_list = list()
       input_file = input_files[0]
-      temp_output_dir = get_temp_dir(use_ephemeral_space=False)                 # get temp work dir
+      temp_output_dir = \
+        get_temp_dir(
+          use_ephemeral_space=use_ephemeral_space)                              # get temp work dir
       work_dir_prefix = \
-        os.path.join(\
+        os.path.join(
           base_work_dir,
           project_igf_id,
           sample_igf_id,
           experiment_igf_id)
-      work_dir = self.get_job_work_dir(work_dir=work_dir_prefix)                # get a run work dir
+      work_dir = \
+        self.get_job_work_dir(work_dir=work_dir_prefix)                         # get a run work dir
       samtools_cmdline = ''
       temp_output = None
       if samtools_command == 'idxstats':
         temp_output,samtools_cmdline = \
-          run_bam_idxstat(\
+          run_bam_idxstat(
             samtools_exe=samtools_exe,
             bam_file=input_file,
             output_dir=temp_output_dir,
@@ -283,23 +291,29 @@ class RunSamtools(IGFBaseProcess):
       self.param('dataflow_params',
                  {'analysis_files':analysis_files,
                   'output_bam_cram_list':output_bam_cram_list})                 # pass on samtools output list
-      message='finished samtools {0} for {1} {2}'.\
-              format(samtools_command,
-                     project_igf_id,
-                     sample_igf_id)
+      message = \
+        'finished samtools {0} for {1} {2}'.\
+          format(
+            samtools_command,
+            project_igf_id,
+            sample_igf_id)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
-      message='finished samtools {0} for {1} {2}: {3}'.\
-              format(samtools_command,
-                     project_igf_id,
-                     sample_igf_id,
-                     samtools_cmdline)
+      message = \
+        'finished samtools {0} for {1} {2}: {3}'.\
+          format(
+            samtools_command,
+            project_igf_id,
+            sample_igf_id,
+            samtools_cmdline)
       #self.comment_asana_task(task_name=project_igf_id, comment=message)        # send comment to Asana
     except Exception as e:
-      message='project: {2}, sample:{3}, Error in {0}: {1}'.\
-              format(self.__class__.__name__,
-                     e,
-                     project_igf_id,
-                     sample_igf_id)
+      message = \
+        'project: {2}, sample:{3}, Error in {0}: {1}'.\
+          format(
+            self.__class__.__name__,
+            e,
+            project_igf_id,
+            sample_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise

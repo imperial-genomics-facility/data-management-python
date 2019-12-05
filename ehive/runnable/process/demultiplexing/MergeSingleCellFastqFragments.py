@@ -8,8 +8,9 @@ class MergeSingleCellFastqFragments(IGFBaseProcess):
   def param_defaults(self):
     params_dict=super(MergeSingleCellFastqFragments,self).param_defaults()
     params_dict.\
-      update({'singlecell_tag':'10X'
-             })
+      update({
+        'singlecell_tag':'10X'
+        'use_ephemeral_space':0})
     return params_dict
 
   def run(self):
@@ -19,11 +20,13 @@ class MergeSingleCellFastqFragments(IGFBaseProcess):
       seqrun_igf_id = self.param_required('seqrun_igf_id')
       model_name = self.param_required('model_name')
       singlecell_tag = self.param_required('singlecell_tag')
+      use_ephemeral_space = self.param('use_ephemeral_space')
       merge_fastq = \
-        MergeSingleCellFastq(\
+        MergeSingleCellFastq(
           fastq_dir=fastq_dir,
           samplesheet=samplesheet_file,
           platform_name=model_name,
+          use_ephemeral_space=use_ephemeral_space,
           singlecell_tag=singlecell_tag)                                        # merge fastq instance
       merge_fastq.\
         merge_fastq_per_lane_per_sample()                                       # merge fastq fragments for singlecell samples

@@ -16,7 +16,8 @@ class RunMutiQC(IGFBaseProcess):
       'multiqc_options':{'--zip-data-dir':''},
       'demultiplexing_stats_file':'Stats/Stats.json',
       'tool_order_list':['bcl2fastq','fastqc','fastq_screen'],
-      'model_name':False
+      'model_name':False,
+      'use_ephemeral_space':0,
       })
     return params_dict
   
@@ -39,6 +40,7 @@ class RunMutiQC(IGFBaseProcess):
       multiqc_template_file = self.param_required('multiqc_template_file')
       tool_order_list = self.param('tool_order_list')
       model_name = self.param('model_name')
+      use_ephemeral_space = self.param('use_ephemeral_space')
       if tag not in ['known','undetermined']:
         raise ValueError('unknown status tag {0}'.format(tag))                  # check valid status tags
 
@@ -68,7 +70,7 @@ class RunMutiQC(IGFBaseProcess):
         os.makedirs(multiqc_result_dir,mode=0o775)                              # create output dir if its not present
 
       temp_work_dir = \
-        get_temp_dir(use_ephemeral_space=False)                                 # get a temp work dir
+        get_temp_dir(use_ephemeral_space=use_ephemeral_space)                   # get a temp work dir
       multiqc_input_list = \
         os.path.join(\
           temp_work_dir,
@@ -99,33 +101,36 @@ class RunMutiQC(IGFBaseProcess):
 
       multiqc_report_title = \
         'Project:{0},Sequencing_date:{1},Flowcell_lane:{2},status:{3}'.\
-        format(project_name,
-               seqrun_date,
-               lane_index_info,
-               tag)                                                             # get multiqc report title and filename
+        format(
+          project_name,
+          seqrun_date,
+          lane_index_info,
+          tag)                                                                  # get multiqc report title and filename
       multiqc_param = self.format_tool_options(multiqc_options)                 # format multiqc params
       date_stamp = datetime.now().strftime('%d-%b-%Y %H:%M:%S')
       check_file_path(multiqc_template_file)
       multiqc_conf_file = \
-        os.path.join(temp_work_dir,
-                     os.path.basename(multiqc_template_file))
+        os.path.join(
+          temp_work_dir,
+          os.path.basename(multiqc_template_file))
       template_env = \
         Environment(\
-          loader=FileSystemLoader(\
-                   searchpath=os.path.dirname(multiqc_template_file)),
+          loader=\
+            FileSystemLoader(
+              searchpath=os.path.dirname(multiqc_template_file)),
           autoescape=select_autoescape(['html', 'xml']))
       multiqc_conf = \
         template_env.\
           get_template(os.path.basename(multiqc_template_file))
       multiqc_conf.\
-      stream(\
-        project_igf_id=project_name,
-        flowcell_id=flowcell_id,
-        platform_name=model_name,
-        tag_name='{0} {1}'.format(lane_index_info,tag),
-        date_stamp=date_stamp,
-        tool_order_list=tool_order_list).\
-      dump(multiqc_conf_file)
+        stream(\
+          project_igf_id=project_name,
+          flowcell_id=flowcell_id,
+          platform_name=model_name,
+          tag_name='{0} {1}'.format(lane_index_info,tag),
+          date_stamp=date_stamp,
+          tool_order_list=tool_order_list).\
+        dump(multiqc_conf_file)
       multiqc_cmd = \
         [multiqc_exe,
          '--file-list',quote(multiqc_input_list),
@@ -151,10 +156,12 @@ class RunMutiQC(IGFBaseProcess):
                   'multiqc_data':multiqc_data,
                   'lane_index_info':lane_index_info})
     except Exception as e:
-      message='seqrun: {2}, Error in {0}: {1}'.\
-               format(self.__class__.__name__,
-                      e,
-                      seqrun_igf_id)
+      message = \
+        'seqrun: {2}, Error in {0}: {1}'.\
+          format(
+            self.__class__.__name__,
+            e,
+            seqrun_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise

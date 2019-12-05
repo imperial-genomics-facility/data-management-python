@@ -9,10 +9,11 @@ class CheckIndexStats(IGFBaseProcess):
   A ehive process class for checking barcode stats and report to slack and asana
   '''
   def param_defaults(self):
-    params_dict=super(CheckIndexStats,self).param_defaults()
+    params_dict = super(CheckIndexStats,self).param_defaults()
     params_dict.update({
       'stats_filename':'Stats/Stats.json',
       'strict_check':True,
+      'use_ephemeral_space':0,
       })
     return params_dict
 
@@ -25,20 +26,21 @@ class CheckIndexStats(IGFBaseProcess):
       project_name = self.param_required('project_name')
       stats_filename = self.param('stats_filename')
       strict_check = self.param('strict_check')
+      use_ephemeral_space = self.param('use_ephemeral_space')
 
       work_dir = \
-        get_temp_dir(use_ephemeral_space=False)                                 # get work directory name
+        get_temp_dir(use_ephemeral_space=use_ephemeral_space)                   # get work directory name
       stats_json_file = \
-        os.path.join(\
+        os.path.join(
           fastq_dir,
           stats_filename)                                                       # get stats file path
       barcode_stat = \
-        CheckSequenceIndexBarcodes(\
+        CheckSequenceIndexBarcodes(
           stats_json_file=stats_json_file,
           samplesheet_file=samplesheet_file,
           platform_name=model_name)                                             # create check instance
       barcode_stat.\
-        validate_barcode_stats(\
+        validate_barcode_stats(
           work_dir=work_dir, \
           strict_check=strict_check)                                            # validate seqrun stats
       self.param('dataflow_params',
@@ -48,7 +50,9 @@ class CheckIndexStats(IGFBaseProcess):
                  {'barcode_qc_stats':'FAIL'})                                   # seed dataflow for failed lanes
       message = \
         'project: {0}, message:{1}'.\
-        format(project_name,e.message)
+          format(
+            project_name,
+            e.message)
       if len(e.plots)==0:
         self.post_message_to_slack(\
           message=e.message,
@@ -66,7 +70,7 @@ class CheckIndexStats(IGFBaseProcess):
     except Exception as e:
       message = \
         'seqrun: {2}, Error in {0}: {1}'.\
-          format(\
+          format(
             self.__class__.__name__,
             e,
             seqrun_igf_id)

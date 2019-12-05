@@ -15,6 +15,7 @@ class CopyQCFileToRemote(IGFBaseProcess):
       'force_overwrite':True,
       'dir_label':None,
       'sample_label':None,
+      'use_ephemeral_space':0,
       })
     return params_dict
   
@@ -31,6 +32,7 @@ class CopyQCFileToRemote(IGFBaseProcess):
       dir_label = self.param_required('dir_label')
       sample_label = self.param('sample_label')
       tag = self.param_required('tag')
+      use_ephemeral_space = self.param('use_ephemeral_space')
       analysis_label = self.param_required('analysis_label')
       force_overwrite = self.param('force_overwrite')
 
@@ -54,7 +56,7 @@ class CopyQCFileToRemote(IGFBaseProcess):
         '{0}.{1}'.format(analysis_label,file_suffix)                            # simplify remote filename for report page
 
       destination_outout_path = \
-        os.path.join(\
+        os.path.join(
           remote_project_path,
           project_name,
           seqrun_date,
@@ -63,12 +65,12 @@ class CopyQCFileToRemote(IGFBaseProcess):
           tag)                                                                  # result dir path is generic
       if sample_label is not None:
         destination_outout_path = \
-          os.path.join(\
+          os.path.join(
             destination_outout_path,
             sample_label)                                                       # adding sample label only if its present
 
       destination_outout_path = \
-        os.path.join(\
+        os.path.join(
           destination_outout_path,
           analysis_label,
           file_label)                                                           # adding file label to the destination path
@@ -79,19 +81,25 @@ class CopyQCFileToRemote(IGFBaseProcess):
             remote_file_name)                                                   # add destination file name
 
       temp_work_dir = \
-        get_temp_dir(use_ephemeral_space=False)                                 # get a temp work dir
-      copy2(file,os.path.join(temp_work_dir,remote_file_name))                  # copy file to a temp dir and rename it
-      os.chmod(os.path.join(temp_work_dir,remote_file_name),
-               mode=0o754)                                                      # set file permission
-      copy_remote_file(\
+        get_temp_dir(use_ephemeral_space=use_ephemeral_space)                   # get a temp work dir
+      copy2(
+        file,
+        os.path.join(
+          temp_work_dir,
+          remote_file_name))                                                    # copy file to a temp dir and rename it
+      os.chmod(
+        os.path.join(
+          temp_work_dir,
+          remote_file_name),
+        mode=0o754)                                                             # set file permission
+      copy_remote_file(
         source_path=os.path.join(temp_work_dir,remote_file_name),
         destinationa_path=destination_outout_path,
         destination_address='{0}@{1}'.format(remote_user,remote_host),
-        force_update=force_overwrite
-      )                                                                         # copy file to remote
+        force_update=force_overwrite)                                           # copy file to remote
       if os.path.isdir(file):
         destination_outout_path = \
-          os.path.join(\
+          os.path.join(
             destination_outout_path,
             remote_file_name)                                                   # add destination dir name
 
@@ -100,10 +108,12 @@ class CopyQCFileToRemote(IGFBaseProcess):
                   'status': 'done',
                   'remote_file':destination_outout_path})                       # add dataflow params
     except Exception as e:
-      message='seqrun: {2}, Error in {0}: {1}'.\
-              format(self.__class__.__name__,
-                     e,
-                     seqrun_igf_id)
+      message = \
+        'seqrun: {2}, Error in {0}: {1}'.\
+          format(
+            self.__class__.__name__,
+            e,
+            seqrun_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise

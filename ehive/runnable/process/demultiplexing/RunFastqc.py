@@ -21,6 +21,7 @@ class RunFastqc(IGFBaseProcess):
       'hpc_location':'HPC_PROJECT',
       'fastqc_collection_type':'FASTQC',
       'store_file':False,
+      'use_ephemeral_space':0,
       })
     return params_dict
   
@@ -43,6 +44,7 @@ class RunFastqc(IGFBaseProcess):
       sample_name = self.param('sample_name')
       hpc_location = self.param('hpc_location')
       fastqc_collection_type = self.param('fastqc_collection_type')
+      use_ephemeral_space = self.param('use_ephemeral_space')
       store_file = self.param('store_file')
 
       lane_index_info = os.path.basename(fastq_dir)                             # get the lane and index length info
@@ -59,8 +61,12 @@ class RunFastqc(IGFBaseProcess):
             file_path=fastq_file)                                               # fetch collection name and table info
 
         if collection_table != required_collection_table:
-          raise ValueError('Expected collection table {0} and got {1}, {2}'.\
-                           format(required_collection_table,collection_table,fastq_file))
+          raise ValueError(
+        'Expected collection table {0} and got {1}, {2}'.\
+          format(
+            required_collection_table,
+            collection_table,
+            fastq_file))
 
         ra = RunAdaptor(**{'session':base.session})
         sample = ra.fetch_sample_info_for_run(run_igf_id=collection_name)
@@ -93,7 +99,8 @@ class RunFastqc(IGFBaseProcess):
       if not os.path.exists(fastqc_result_dir):
         os.makedirs(fastqc_result_dir,mode=0o775)                               # create output dir if its not present
 
-      temp_work_dir=get_temp_dir(use_ephemeral_space=False)                     # get a temp work dir
+      temp_work_dir = \
+        get_temp_dir(use_ephemeral_space=use_ephemeral_space)                   # get a temp work dir
       if not os.path.exists(fastq_file):
         raise IOError('fastq file {0} not readable'.format(fastq_file))         # raise if fastq file path is not readable
 
@@ -108,7 +115,7 @@ class RunFastqc(IGFBaseProcess):
         [fastqc_exe, '-o',fastqc_output, '-d',temp_work_dir ]                   # fastqc base parameters
       fastqc_cmd.extend(fastqc_param)                                           # add additional parameters
       fastqc_cmd.append(fastq_file)                                             # fastqc input file
-      subprocess.check_call(fastqc_cmd)                                         # run fastqc
+      subprocess.check_call(' '.join(fastqc_cmd),shell=True)                    # run fastqc
 
       fastqc_zip = None
       fastqc_html = None

@@ -51,9 +51,13 @@ class CalculateBasesMask(IGFBaseProcess):
          (custom_bases_mask is not None or \
           custom_bases_mask != ''):
         bases_mask_value = custom_bases_mask                                    # using custom bases mask
+        message = \
+          'using custom bases mask: {0}'.\
+            format(custom_bases_mask)
+        self.post_message_to_slack(message=message,reaction='pass')
       else:
         bases_mask_object = \
-          BasesMask(\
+          BasesMask(
             samplesheet_file=samplesheet_file,
             runinfo_file=runinfo_file,
             read_offset=read_offset,
@@ -64,13 +68,17 @@ class CalculateBasesMask(IGFBaseProcess):
       self.param('dataflow_params',{'basesmask':bases_mask_value})
       message = \
         'seqrun: {0}, project: {1}, lane: {2}, mask: {3}'.\
-        format(seqrun_igf_id, project_name, flowcell_lane, bases_mask_value)
+          format(
+            seqrun_igf_id,
+            project_name,
+            flowcell_lane,
+            bases_mask_value)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
       self.comment_asana_task(task_name=seqrun_igf_id, comment=message)         # send log to asana
     except Exception as e:
       message = \
         'seqrun: {2}, Error in {0}: {1}'.\
-          format(\
+          format(
             self.__class__.__name__,
             e,
             seqrun_igf_id)

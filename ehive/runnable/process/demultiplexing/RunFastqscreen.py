@@ -20,6 +20,7 @@ class RunFastqscreen(IGFBaseProcess):
       'hpc_location':'HPC_PROJECT',
       'store_file':False,
       'fastqscreen_conf':None,
+      'use_ephemeral_space':0,
       'required_collection_table':'run',
       'fastqscreen_options':{'--aligner':'bowtie2', \
                              '--force':'', \
@@ -51,6 +52,7 @@ class RunFastqscreen(IGFBaseProcess):
       hpc_location = self.param('hpc_location')
       store_file = self.param('store_file')
       required_collection_table = self.param('required_collection_table')
+      use_ephemeral_space = self.param('use_ephemeral_space')
 
       if lane_index_info is None:
         lane_index_info=os.path.basename(fastq_dir)                             # get the lane and index length info
@@ -68,8 +70,12 @@ class RunFastqscreen(IGFBaseProcess):
             file_path=fastq_file)                                               # fetch collection name and table info
 
         if collection_table != required_collection_table:
-          raise ValueError('Expected collection table {0} and got {1}, {2}'.\
-                           format(required_collection_table,collection_table,fastq_file))
+          raise ValueError(
+            'Expected collection table {0} and got {1}, {2}'.\
+              format(
+                required_collection_table,
+                collection_table,
+                fastq_file))
 
         ra = RunAdaptor(**{'session':base.session})
         sample = ra.fetch_sample_info_for_run(run_igf_id=collection_name)
@@ -104,7 +110,7 @@ class RunFastqscreen(IGFBaseProcess):
         os.makedirs(fastqscreen_result_dir,mode=0o775)                          # create output dir if its not present
 
       temp_work_dir = \
-        get_temp_dir(use_ephemeral_space=False)                                 # get a temp work dir
+        get_temp_dir(use_ephemeral_space=use_ephemeral_space)                   # get a temp work dir
       if not os.path.exists(fastq_file):
         raise IOError('fastq file {0} not readable'.format(fastq_file))         # raise if fastq file path is not readable
 

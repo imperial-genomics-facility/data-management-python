@@ -13,6 +13,7 @@ class UploadFastqToIrods(IGFBaseProcess):
         'samplesheet_filename':'SampleSheet.csv',
         'report_html':'*all/all/all/laneBarcode.html',
         'irods_exe_dir':None,
+        'use_ephemeral_space':0,
       })
     return params_dict
 
@@ -27,6 +28,7 @@ class UploadFastqToIrods(IGFBaseProcess):
       samplesheet_filename = self.param('samplesheet_filename')
       manifest_name = self.param_required('manifest_name')
       report_html = self.param('report_html')
+      use_ephemeral_space = self.param('use_ephemeral_space')
 
       pa = ProjectAdaptor(**{'session_class':igf_session_class})
       pa.start_session()
@@ -53,7 +55,8 @@ class UploadFastqToIrods(IGFBaseProcess):
             project_name,
             base_seq_dir,
             seqrun_date)                                                        # construct name of the tarfile
-      temp_work_dir = get_temp_dir(use_ephemeral_space=False)                   # get a temp dir
+      temp_work_dir = \
+        get_temp_dir(use_ephemeral_space=use_ephemeral_space)                   # get a temp dir
       tarfile_name = \
         os.path.join(
           temp_work_dir,
@@ -66,17 +69,23 @@ class UploadFastqToIrods(IGFBaseProcess):
               os.path.join(os.path.abspath(root),
                            samplesheet_filename)                                # get samplesheet filepath
             tmp_samplesheet_file = \
-              os.path.join(temp_work_dir,
-                           '{0}_{1}_{2}_{3}'.\
-                           format(\
-                             project_name,
-                             base_seq_dir,
-                             seqrun_date,
-                             samplesheet_filename))
-            copy2(samplesheet_file, tmp_samplesheet_file)                       # change samplesheet filename
-            tar.add(tmp_samplesheet_file,
-                    arcname=os.path.relpath(tmp_samplesheet_file,
-                                            start=temp_work_dir))               # add samplesheet file to tar
+              os.path.join(
+                temp_work_dir,
+                '{0}_{1}_{2}_{3}'.\
+                  format(
+                    project_name,
+                    base_seq_dir,
+                    seqrun_date,
+                    samplesheet_filename))
+            copy2(
+              samplesheet_file,
+              tmp_samplesheet_file)                                             # change samplesheet filename
+            tar.add(
+              tmp_samplesheet_file,
+              arcname=\
+                os.path.relpath(
+                  tmp_samplesheet_file,
+                  start=temp_work_dir))                                         # add samplesheet file to tar
 
           if report_htmlname in files:
             for file in files:

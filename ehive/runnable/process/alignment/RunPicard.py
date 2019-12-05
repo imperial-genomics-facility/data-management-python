@@ -7,7 +7,7 @@ from igf_data.utils.fileutils import get_temp_dir,remove_dir,move_file,get_dates
 
 class RunPicard(IGFBaseProcess):
   def param_defaults(self):
-    params_dict=super(RunPicard,self).param_defaults()
+    params_dict = super(RunPicard,self).param_defaults()
     params_dict.update({
         'reference_type':'GENOME_FASTA',
         'reference_refFlat':'GENE_REFFLAT',
@@ -19,7 +19,8 @@ class RunPicard(IGFBaseProcess):
         'picard_option':{},
         'output_prefix':None,
         'load_metrics_to_cram':False,
-        'cram_collection_type':'ANALYSIS_CRAM'
+        'cram_collection_type':'ANALYSIS_CRAM',
+        'use_ephemeral_space':0,
       })
     return params_dict
 
@@ -41,6 +42,7 @@ class RunPicard(IGFBaseProcess):
     :param picard_command: Picard command
     :param base_work_dir: Base workd directory
     :param copy_input: A toggle for copying input file to temp, 1 for True default 0 for False
+    :param use_ephemeral_space: A toggle for temp dir setting, default 0
     :param patterned_flowcell_list: A list of paterned flowcells, default ['HISEQ4000','NEXTSEQ']
     '''
     try:
@@ -67,33 +69,38 @@ class RunPicard(IGFBaseProcess):
       load_metrics_to_cram = self.param('load_metrics_to_cram')
       cram_collection_type = self.param('cram_collection_type')
       seed_date_stamp = self.param_required('date_stamp')
+      use_ephemeral_space = self.param('use_ephemeral_space')
       seed_date_stamp = get_datestamp_label(seed_date_stamp)
       if output_prefix is not None:
-        output_prefix = '{0}_{1}'.format(output_prefix,
-                                         seed_date_stamp)                       # adding seed datestamp to output prefix
+        output_prefix = \
+          '{0}_{1}'.\
+            format(
+              output_prefix,
+              seed_date_stamp)                                                  # adding seed datestamp to output prefix
 
-      work_dir_prefix = os.path.join(\
-                          base_work_dir,
-                          project_igf_id,
-                          sample_igf_id,
-                          experiment_igf_id)
+      work_dir_prefix = \
+        os.path.join(
+          base_work_dir,
+          project_igf_id,
+          sample_igf_id,
+          experiment_igf_id)
       work_dir = \
         self.get_job_work_dir(work_dir=work_dir_prefix)                         # get a run work dir
-      temp_output_dir=\
-        get_temp_dir(use_ephemeral_space=False)                                 # get temp work dir
-      ref_genome=\
-        Reference_genome_utils(\
+      temp_output_dir = \
+        get_temp_dir(use_ephemeral_space=use_ephemeral_space)                   # get temp work dir
+      ref_genome = \
+        Reference_genome_utils(
           genome_tag=species_name,
           dbsession_class=igf_session_class,
           genome_fasta_type=reference_type,
           gene_reflat_type=reference_refFlat,
           ribosomal_interval_type=ribosomal_interval_type)                      # setup ref genome utils
-      genome_fasta=ref_genome.get_genome_fasta()                                # get genome fasta
-      ref_flat_file=ref_genome.get_gene_reflat()                                # get refFlat file
-      ribosomal_interval_file=ref_genome.get_ribosomal_interval()               # get ribosomal interval file
-      patterned_flowcell=False
+      genome_fasta = ref_genome.get_genome_fasta()                              # get genome fasta
+      ref_flat_file = ref_genome.get_gene_reflat()                              # get refFlat file
+      ribosomal_interval_file = ref_genome.get_ribosomal_interval()             # get ribosomal interval file
+      patterned_flowcell = False
       if platform_name in patterned_flowcell_list:                              # check for patterned flowcell
-        patterned_flowcell=True
+        patterned_flowcell = True
 
       if load_metrics_to_cram and \
          not cram_collection_type:
@@ -114,19 +121,20 @@ class RunPicard(IGFBaseProcess):
           ribisomal_interval=ribosomal_interval_file)                           # setup picard tool
       temp_output_files,picard_command_line,picard_metrics = \
         picard.run_picard_command(command_name=picard_command)                  # run picard command
-      output_file_list=list()
+      output_file_list = list()
       for source_path in temp_output_files:
         dest_path=\
-          os.path.join(\
+          os.path.join(
             work_dir,
             os.path.basename(source_path))                                      # get destination filepath
-        move_file(source_path=source_path,
-                  destinationa_path=dest_path,
-                  force=True)                                                   # move files to work dir
+        move_file(
+          source_path=source_path,
+          destinationa_path=dest_path,
+          force=True)                                                           # move files to work dir
         output_file_list.append(dest_path)
       remove_dir(temp_output_dir)
       analysis_files.extend(output_file_list)
-      bam_files=list()
+      bam_files = list()
       for file in output_file_list:
         if file.endswith('.bam'):
           bam_files.append(file)
@@ -135,7 +143,7 @@ class RunPicard(IGFBaseProcess):
          len(picard_metrics)>0:
         ca = CollectionAdaptor(**{'session_class':igf_session_class})
         attribute_data = \
-          ca.prepare_data_for_collection_attribute(\
+          ca.prepare_data_for_collection_attribute(
             collection_name=experiment_igf_id,
             collection_type=cram_collection_type,
             data_list=picard_metrics)                                           # fromat data for collection attribute table
@@ -152,28 +160,35 @@ class RunPicard(IGFBaseProcess):
           ca.close_session()
           raise
 
-      self.param('dataflow_params',{'analysis_files':analysis_files,
-                                    'bam_files':bam_files,
-                                    'seed_date_stamp':seed_date_stamp})         # pass on picard output list
-      message='finished picard {0} for {1} {2}'.\
-              format(picard_command,
-                     project_igf_id,
-                     sample_igf_id)
+      self.param('dataflow_params',
+                 {'analysis_files':analysis_files,
+                  'bam_files':bam_files,
+                  'seed_date_stamp':seed_date_stamp})                           # pass on picard output list
+      message = \
+        'finished picard {0} for {1} {2}'.\
+          format(
+            picard_command,
+            project_igf_id,
+            sample_igf_id)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
-      message='Picard {0} command: {1}'.\
-              format(picard_command,
-                     picard_command_line)
+      message = \
+        'Picard {0} command: {1}'.\
+          format(
+            picard_command,
+            picard_command_line)
       #self.comment_asana_task(task_name=project_igf_id, comment=message)        # send commandline to Asana
     except Exception as e:
       if temp_output_dir and \
          os.path.exists(temp_output_dir):
         remove_dir(temp_output_dir)
 
-      message='project: {2}, sample:{3}, Error in {0}: {1}'.\
-              format(self.__class__.__name__,
-                     e,
-                     project_igf_id,
-                     sample_igf_id)
+      message = \
+        'project: {2}, sample:{3}, Error in {0}: {1}'.\
+          format(
+            self.__class__.__name__,
+            e,
+            project_igf_id,
+            sample_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise

@@ -14,6 +14,7 @@ class SendEmailToUser(IGFBaseProcess):
         'email_template_path':'email_notification',
         'email_template':'send_fastq_to_user.txt',
         'sendmail_exe':'/usr/sbin/sendmail',
+        'use_ephemeral_space':0,
       })
     return params_dict
   
@@ -28,6 +29,7 @@ class SendEmailToUser(IGFBaseProcess):
       email_template_path = self.param('email_template_path')
       email_template = self.param('email_template')
       sendmail_exe = self.param('sendmail_exe')
+      use_ephemeral_space = self.param('use_ephemeral_space')
       hpcUser = False                                                           # default value for hpc users
 
       pa = ProjectAdaptor(**{'session_class':igf_session_class})
@@ -61,7 +63,8 @@ class SendEmailToUser(IGFBaseProcess):
                    searchpath=email_template_path),
           autoescape=select_autoescape(['html','xml']))                         # set template env
       template_file = template_env.get_template(email_template)
-      temp_work_dir = get_temp_dir(use_ephemeral_space=False)                   # get a temp dir
+      temp_work_dir = \
+        get_temp_dir(use_ephemeral_space=use_ephemeral_space)                   # get a temp dir
       report_output_file = \
         os.path.join(\
           temp_work_dir,

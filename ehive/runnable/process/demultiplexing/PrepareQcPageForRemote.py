@@ -36,6 +36,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       'report_html':'*all/all/all/laneBarcode.html',
       'remote_ftp_base':'/www/html',
       'singlecell_tag':'10X',
+      'use_ephemeral_space':0,
     })
     return params_dict
 
@@ -63,6 +64,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       undetermined_filename = self.param('undetermined_filename')
       report_html = self.param('report_html')
       remote_ftp_base = self.param('remote_ftp_base')
+      use_ephemeral_space = self.param('use_ephemeral_space')
 
       if page_type not in ['project','sample','undetermined']:
         raise ValueError('Project type {0} is not defined yet'.format(page_type))
@@ -82,7 +84,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
             lane_index_info)                                                    # generic remote path, lane info is none for project
 
       template_env = \
-        Environment(\
+        Environment(
           loader=FileSystemLoader(searchpath=qc_template_path),
           autoescape=select_autoescape(['xml']))                                # set template env
 
@@ -100,7 +102,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       #                '-f']
 
       temp_work_dir = \
-        get_temp_dir(use_ephemeral_space=False)                                 # get a temp dir
+        get_temp_dir(use_ephemeral_space=use_ephemeral_space)                   # get a temp dir
       report_output_file = None
       qc_file_info = dict()
       qc_file_info.\
@@ -140,7 +142,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
             temp_work_dir,
             undetermined_filename)
         template_file.\
-        stream(\
+        stream(
           ProjectName=project_name,
           SeqrunDate=seqrun_date,
           FlowcellId=flowcell_id,
@@ -169,15 +171,15 @@ class PrepareQcPageForRemote(IGFBaseProcess):
             temp_work_dir,
             sample_filename)
         template_file.\
-        stream(\
-          ProjectName=project_name,
-          SeqrunDate=seqrun_date,
-          FlowcellId=flowcell_id,
-          Lane=lane_id,
-          IndexBarcodeLength=index_length,
-          headerdata=headerdata,
-          qcmain=qcmain).\
-        dump(report_output_file)                                                # dump data to template file
+          stream(
+            ProjectName=project_name,
+            SeqrunDate=seqrun_date,
+            FlowcellId=flowcell_id,
+            Lane=lane_id,
+            IndexBarcodeLength=index_length,
+            headerdata=headerdata,
+            qcmain=qcmain).\
+          dump(report_output_file)                                                # dump data to template file
         os.chmod(report_output_file, mode=0o754)
 
         #remote_chk_cmd.append(os.path.join(remote_file_path,sample_filename))
@@ -219,7 +221,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
                            format(fastq_dir))
 
         os.chmod(reports[0], mode=0o774)                                        # added read permission for report html
-        copy_remote_file(\
+        copy_remote_file(
           source_path=reports[0],
           destinationa_path=remote_file_path,
           destination_address='{0}@{1}'.format(remote_user,remote_host))       # copy file to remote
@@ -270,11 +272,11 @@ class PrepareQcPageForRemote(IGFBaseProcess):
                  start=remote_ftp_base))
       message = \
         'QC page {0}, {1},{2}: {3}'.\
-        format(\
-          seqrun_igf_id,
-          project_name,
-          page_type,
-          remote_url_path)
+          format(
+            seqrun_igf_id,
+            project_name,
+            page_type,
+            remote_url_path)
       self.post_message_to_slack(message,reaction='pass')                       # send msg to slack
       self.comment_asana_task(\
         task_name=seqrun_igf_id,

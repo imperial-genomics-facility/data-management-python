@@ -25,6 +25,7 @@ class RunBcl2Fastq(IGFBaseProcess):
         'singlecell_options':'{"--minimum-trimmed-read-length=8":"","--mask-short-adapter-reads=8":""}',
         'singlecell_tag':'10X',
         'reset_mask_short_adapter_reads':False,
+        'use_ephemeral_space':0,
       })
     return params_dict
 
@@ -49,6 +50,7 @@ class RunBcl2Fastq(IGFBaseProcess):
       force_overwrite = self.param('force_overwrite')
       fastq_dir_label = self.param('fastq_dir_label')
       samplesheet_filename = self.param('samplesheet_filename')
+      use_ephemeral_space = self.param('use_ephemeral_space')
       model_name = self.param('model_name')
       reset_mask_short_adapter_reads = self.param('reset_mask_short_adapter_reads')
 
@@ -87,10 +89,16 @@ class RunBcl2Fastq(IGFBaseProcess):
       if os.path.exists(output_fastq_dir) and force_overwrite:
         remove_dir(output_fastq_dir)                                            # remove fastq directory if its already present
 
-      message = 'started fastq conversion for {0}, {1} : {2}_{3}'.\
-                format(seqrun_igf_id,project_name,flowcell_lane,index_length)
+      message = \
+        'started fastq conversion for {0}, {1} : {2}_{3}'.\
+          format(
+            seqrun_igf_id,
+            project_name,
+            flowcell_lane,
+            index_length)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
-      seqrun_temp_dir = get_temp_dir(use_ephemeral_space=False)                 # create a new input directory in TMPDIR
+      seqrun_temp_dir = \
+        get_temp_dir(use_ephemeral_space=use_ephemeral_space)                   # create a new input directory in TMPDIR
       move_file = \
         moveBclFilesForDemultiplexing(\
           input_dir=seqrun_dir,
@@ -100,7 +108,8 @@ class RunBcl2Fastq(IGFBaseProcess):
           platform_model=model_name)                                            # get lists of files to move to TMPDIR
       move_file.copy_bcl_files()                                                # move files to TMPDIR
       job_name = self.job_name()
-      output_temp_dir = get_temp_dir(use_ephemeral_space=False)                 # create tmp directory in TMPDIR for cluster
+      output_temp_dir = \
+        get_temp_dir(use_ephemeral_space=use_ephemeral_space)                   # create tmp directory in TMPDIR for cluster
       report_dir = \
         os.path.join(\
           base_work_dir,
@@ -143,9 +152,14 @@ class RunBcl2Fastq(IGFBaseProcess):
           bcl2fastq_cmd.\
             append("--mask-short-adapter-reads={0}".\
                    format(quote(str(min(read_values)))))
-          message = 'Setting masked bases length for {0},{1}:{2}_{3}, value: {4}'.\
-                    format(seqrun_igf_id,project_name,flowcell_lane,
-                           index_length,min(read_values))
+          message = \
+            'Setting masked bases length for {0},{1}:{2}_{3}, value: {4}'.\
+              format(
+                seqrun_igf_id,
+                project_name,
+                flowcell_lane,
+                index_length,
+                min(read_values))
           self.post_message_to_slack(message,reaction='pass')                   # send log to slack
           self.comment_asana_task(\
             task_name=seqrun_igf_id,
@@ -159,7 +173,7 @@ class RunBcl2Fastq(IGFBaseProcess):
       self.post_message_to_slack(message,reaction='pass')                       # send bcl2fastq command to Slack
       self.comment_asana_task(task_name=seqrun_igf_id, comment=message)         # send bcl2fastq command to Asana
 
-      subprocess.check_call(bcl2fastq_cmd,shell=False)                          # run bcl2fastq
+      subprocess.check_call(' '.join(bcl2fastq_cmd),shell=True)                 # run bcl2fastq
 
       copytree(output_temp_dir,output_fastq_dir)                                # copy output from TMPDIR
       copy2(\
@@ -172,9 +186,14 @@ class RunBcl2Fastq(IGFBaseProcess):
       self.param('dataflow_params',
                  {'fastq_dir':output_fastq_dir,
                   'bcl2fq_project_type':project_type})                          # set dataflow params
-      message = 'Fastq conversion done for {0},{1}:{2}_{3}, fastq: {4}'.\
-                format(seqrun_igf_id,project_name,flowcell_lane,
-                     index_length,output_fastq_dir)
+      message = \
+        'Fastq conversion done for {0},{1}:{2}_{3}, fastq: {4}'.\
+          format(
+            seqrun_igf_id,
+            project_name,
+            flowcell_lane,
+            index_length,
+            output_fastq_dir)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
       self.comment_asana_task(\
         task_name=seqrun_igf_id,
@@ -182,10 +201,12 @@ class RunBcl2Fastq(IGFBaseProcess):
       remove_dir(seqrun_temp_dir)
       remove_dir(output_temp_dir)                                               # remove temp dirs
     except Exception as e:
-      message = 'seqrun: {2}, Error in {0}: {1}'.\
-                format(self.__class__.__name__,
-                       e,
-                       seqrun_igf_id)
+      message = \
+        'seqrun: {2}, Error in {0}: {1}'.\
+          format(
+            self.__class__.__name__,
+            e,
+            seqrun_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise

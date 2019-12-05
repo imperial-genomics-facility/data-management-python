@@ -14,7 +14,7 @@ class RunScanpy(IGFBaseProcess):
   A ehive process class for running scanpy analysis
   '''
   def param_defaults(self):
-    params_dict=super(RunScanpy,self).param_defaults()
+    params_dict = super(RunScanpy,self).param_defaults()
     params_dict.update({
         'cellranger_tarfile':'',
         'analysis_name':'scanpy',
@@ -23,17 +23,17 @@ class RunScanpy(IGFBaseProcess):
         'cellbrowser_dir_prefix':'cellbrowser',
         'cellranger_collection_type':'CELLRANGER_RESULTS',
         'scanpy_collection_type':'SCANPY_RESULTS',
+        'use_ephemeral_space':0,
         'species_name_lookup':{'HG38':'hsapiens',
                                'MM10':'mmusculus'},
       })
     return params_dict
 
   @staticmethod
-  def _extract_cellranger_filtered_metrics(tar_file,output_dir,
-                                           input_dir_prefix='filtered_feature_bc_matrix',
-                                           matrics_file='matrix.mtx.gz',
-                                           genes_tsv_file='features.tsv.gz',
-                                           barcodes_tsv_file='barcodes.tsv.gz'):
+  def _extract_cellranger_filtered_metrics(\
+        tar_file,output_dir,input_dir_prefix='filtered_feature_bc_matrix',
+        matrics_file='matrix.mtx.gz',genes_tsv_file='features.tsv.gz',
+        barcodes_tsv_file='barcodes.tsv.gz'):
     '''
     A static internal method for extracting cellranger output files from tar
     
@@ -46,9 +46,9 @@ class RunScanpy(IGFBaseProcess):
     :returns: matrics_file_path,genes_tsv_file_path,barcodes_tsv_file_path
     '''
     try:
-      matrics_file_path=''
-      genes_tsv_file_path=''
-      barcodes_tsv_file_path=''
+      matrics_file_path = ''
+      genes_tsv_file_path = ''
+      barcodes_tsv_file_path = ''
       matrix_file_pattern = \
         re.compile(r'{0}/{1}$'.\
                     format(input_dir_prefix,matrics_file))
@@ -121,10 +121,11 @@ class RunScanpy(IGFBaseProcess):
       scanpy_collection_type = self.param('scanpy_collection_type')
       collection_table = self.param('collection_table')
       cellbrowser_dir_prefix = self.param('cellbrowser_dir_prefix')
+      use_ephemeral_space = self.param('use_ephemeral_space')
       cellranger_tarfile = ''
       output_report = ''
       work_dir_prefix = \
-        os.path.join(\
+        os.path.join(
           base_work_dir,
           project_igf_id,
           sample_igf_id,
@@ -149,7 +150,8 @@ class RunScanpy(IGFBaseProcess):
           cellranger_tarfile = cellranger_tarfiles['file_path'].values[0]       # select first file as analysis file
 
         # extract filtered metrics files from tar
-        output_dir = get_temp_dir(use_ephemeral_space=False)                    # get a temp dir
+        output_dir = \
+          get_temp_dir(use_ephemeral_space=use_ephemeral_space)                 # get a temp dir
         datestamp = get_datestamp_label()
         cellbrowser_dir = \
           os.path.join( \
