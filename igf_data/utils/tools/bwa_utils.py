@@ -15,17 +15,19 @@ class BWA_util:
   :param output_prefix: Output prefix for alignment
   :param bam_output: A toggle for writing bam output, default True
   :param thread: No. of threads for BWA run, default 1
+  :param use_ephemeral_space: A toggle for temp dir settings, default 0
   '''
   def __init__(self,bwa_exe,samtools_exe,ref_genome,input_fastq_list,output_dir,
-               output_prefix,bam_output=True,thread=1):
-    self.bwa_exe=bwa_exe
-    self.samtools_exe=samtools_exe
-    self.ref_genome=ref_genome
-    self.input_fastq_list=input_fastq_list
-    self.output_dir=output_dir
-    self.output_prefix=output_prefix
-    self.bam_output=bam_output
-    self.thread=thread
+               output_prefix,bam_output=True,thread=1,use_ephemeral_space=0):
+    self.bwa_exe = bwa_exe
+    self.samtools_exe = samtools_exe
+    self.ref_genome = ref_genome
+    self.input_fastq_list = input_fastq_list
+    self.output_dir = output_dir
+    self.output_prefix = output_prefix
+    self.bam_output = bam_output
+    self.thread = thread
+    self.use_ephemeral_space = use_ephemeral_space
 
   def _run_checks(self):
     '''
@@ -63,8 +65,10 @@ class BWA_util:
       read1_list,read2_list = \
         identify_fastq_pair(\
           input_list=self.input_fastq_list)                                     # fetch input files
-      temp_dir=get_temp_dir(use_ephemeral_space=False)
-      bwa_cmd=[
+      temp_dir = \
+        get_temp_dir(
+          use_ephemeral_space=self.use_ephemeral_space)
+      bwa_cmd = [
         quote(self.bwa_exe),
         quote(mem_cmd),
         '-t',quote(str(self.thread))]
@@ -77,10 +81,11 @@ class BWA_util:
 
       if isinstance(parameter_options,dict) and \
          len(parameter_options)>0:
-        parameter_options=[quote(str(field))
-                           for key,val in parameter_options.items()
-                             for field in [key,val]
-                               if field != '']                                  # flatten param list
+        parameter_options = [
+          quote(str(field))
+            for key,val in parameter_options.items()
+              for field in [key,val]
+                if field != '']                                                 # flatten param list
         bwa_cmd.extend(parameter_options)                                       # add mem specific options
 
       bwa_cmd.append(quote(self.ref_genome))
@@ -89,23 +94,31 @@ class BWA_util:
         bwa_cmd.append(quote(read2_list[0]))                                    # add read 2
 
       if self.bam_output:
-        temp_output_path=os.path.join(temp_dir,
-                                      '{0}.bam'.format(self.output_prefix))     # bam output
-        samtools_cmd=[
+        temp_output_path = \
+          os.path.join(
+            temp_dir,
+            '{0}.bam'.format(self.output_prefix))                               # bam output
+        samtools_cmd = [
           quote(self.samtools_exe),
           quote(samtools_cmd),
           quote('--threads'),quote(str(self.thread)),
-          quote('-bo'),temp_output_path
-          ]
+          quote('-bo'),temp_output_path]
         if dry_run:
           return bwa_cmd,samtools_cmd                                           # return bwa and samtools cmd
 
         with subprocess.Popen(bwa_cmd, stdout=subprocess.PIPE) as proc:
-          proc2=subprocess.Popen(' '.join(samtools_cmd), shell=True, stdin=proc.stdout)
+          _ = \
+            subprocess.\
+              Popen(
+                ' '.join(samtools_cmd),
+                shell=True,
+                stdin=proc.stdout)
 
       else:
-        temp_output_path=os.path.join(temp_dir,
-                                      '{0}.sam'.format(self.output_prefix))     # sam output
+        temp_output_path = \
+          os.path.join(
+            temp_dir,
+            '{0}.sam'.format(self.output_prefix))                               # sam output
         if dry_run:
           return bwa_cmd
 
@@ -114,10 +127,13 @@ class BWA_util:
             sam.write(proc.stdout.read().decode('utf-8'))                       # writing sam output
 
       if os.path.exists(temp_output_path):
-          final_output_file=os.path.join(self.output_dir,
-                                         os.path.basename(temp_output_path))
-          copy_local_file(source_path=temp_output_path,
-                          destinationa_path=final_output_file)
+          final_output_file = \
+            os.path.join(
+              self.output_dir,
+              os.path.basename(temp_output_path))
+          copy_local_file(
+            source_path=temp_output_path,
+            destinationa_path=final_output_file)
       else:
         raise IOError('Alignment temp output missing')
 

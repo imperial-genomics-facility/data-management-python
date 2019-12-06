@@ -17,7 +17,7 @@ class Project_analysis:
   :param attribute_collection_file_type: A filetype list for fetching collection attribute records, default ('ANALYSIS_CRAM')
 
   '''
-  def __init__(self,igf_session_class,collection_type_list,remote_analysis_dir='analysis',
+  def __init__(self,igf_session_class,collection_type_list,remote_analysis_dir='analysis',use_ephemeral_space=0,
                attribute_collection_file_type=('ANALYSIS_CRAM'),pipeline_name='PrimaryAnalysisCombined',
                pipeline_seed_table='experiment',pipeline_finished_status='FINISHED',sample_id_label='SAMPLE_ID'):
     try:
@@ -32,6 +32,7 @@ class Project_analysis:
       self.pipeline_name = pipeline_name
       self.pipeline_seed_table = pipeline_seed_table
       self.pipeline_finished_status = pipeline_finished_status
+      self.use_ephemeral_space = use_ephemeral_space
     except:
       raise
 
@@ -51,16 +52,20 @@ class Project_analysis:
     try:
       if file_path_column in data_series and \
          sample_igf_id_column in data_series:
-        file_path=data_series.get(file_path_column)
-        base_path=os.path.basename(file_path)
-        sample_igf_id=data_series.get(sample_igf_id_column)
-        remote_path=os.path.join(remote_prefix,
-                                 sample_igf_id,
-                                 base_path)
-        file_path='<a href=\"{0}\">{1}</a>'.\
-                  format(remote_path,
-                         base_path)
-        data_series[file_path_column]=file_path
+        file_path = data_series.get(file_path_column)
+        base_path = os.path.basename(file_path)
+        sample_igf_id = data_series.get(sample_igf_id_column)
+        remote_path = \
+          os.path.join(
+            remote_prefix,
+            sample_igf_id,
+            base_path)
+        file_path = \
+          '<a href=\"{0}\">{1}</a>'.\
+            format(
+              remote_path,
+              base_path)
+        data_series[file_path_column] = file_path
       return data_series
     except:
       raise
@@ -73,7 +78,7 @@ class Project_analysis:
     :returns: A Pandas dataframe
     '''
     try:
-      base=BaseAdaptor(**{'session_class':self.igf_session_class})
+      base = BaseAdaptor(**{'session_class':self.igf_session_class})
       base.start_session()
       subquery = \
         base.session.\
@@ -89,9 +94,10 @@ class Project_analysis:
           subquery()
       query = \
         base.session.\
-          query(Collection.name,
-                Collection_attribute.attribute_name,
-                Collection_attribute.attribute_value).\
+          query(
+            Collection.name,
+            Collection_attribute.attribute_name,
+            Collection_attribute.attribute_value).\
           join(Collection,Collection.collection_id==Collection_attribute.collection_id).\
           filter(Collection.type.in_(self.attribute_collection_file_type)).\
           filter(Collection.name.in_(subquery))
@@ -134,9 +140,10 @@ class Project_analysis:
       base.start_session()                                                      # connect to database
       query = \
         base.session.\
-          query(Sample.sample_igf_id,
-                Collection.type,
-                File.file_path).\
+          query(
+            Sample.sample_igf_id,
+            Collection.type,
+            File.file_path).\
           join(Project,Project.project_id==Sample.project_id).\
           join(Experiment,Sample.sample_id==Experiment.sample_id).\
           join(Collection, Experiment.experiment_igf_id==Collection.name).\
@@ -149,11 +156,12 @@ class Project_analysis:
           filter(Collection_group.file_id==File.file_id).\
           filter(Collection.table=='experiment').\
           filter(Collection.type.in_(self.collection_type_list))
-      results = base.fetch_records(\
-                  query=query,
-                  output_mode='dataframe')
+      results = \
+        base.fetch_records(
+          query=query,
+          output_mode='dataframe')
       base.close_session()
-      temp_dir = get_temp_dir(use_ephemeral_space=False)
+      temp_dir = get_temp_dir(use_ephemeral_space=self.use_ephemeral_space)
       temp_output = \
         os.path.join(\
           temp_dir,
@@ -185,7 +193,7 @@ class Project_analysis:
             update({analysis_type:('string',analysis_type)})
           column_order.append(analysis_type)                                    # fetched description and column order
 
-        convert_to_gviz_json_for_display(\
+        convert_to_gviz_json_for_display(
           description=description,
           data=analysis_data,
           columns_order=column_order,
@@ -193,7 +201,7 @@ class Project_analysis:
       else:
         results.to_csv(temp_output,index=False)                                 # write temp csv file
 
-      move_file(\
+      move_file(
         source_path=temp_output,
         destinationa_path=output_file,
         force=True)                                                             # move temp file

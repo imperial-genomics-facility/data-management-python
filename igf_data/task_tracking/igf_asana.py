@@ -15,13 +15,13 @@ class IGF_asana:
     asana_label.setdefault('asana_personal_token_label','asana_personal_token')
     self.asana_personal_token_label=asana_label['asana_personal_token_label']
 
-    self.asana_personal_token=None
-    self.asana_config=asana_config
-    self.asana_project_id=asana_project_id                                      # project name can change, project id is stable
+    self.asana_personal_token = None
+    self.asana_config = asana_config
+    self.asana_project_id = asana_project_id                                    # project name can change, project id is stable
     self._read_and_set_asana_config()                                           # read config file and set parameters
-    self.asanaclient=asana.Client.access_token(self.asana_personal_token)       # create asana client instance
-    self.asanaclient.headers={'asana-enable': 'string_ids'}                     # fix for string ids
-    self.asana_personal_token=None                                              # reset asana token value
+    self.asanaclient = asana.Client.access_token(self.asana_personal_token)     # create asana client instance
+    self.asanaclient.headers = {'asana-enable': 'string_ids'}                   # fix for string ids
+    self.asana_personal_token = None                                            # reset asana token value
     self._get_user_details()                                                    # load user information
     self._check_project_id()                                                    # check user given project id
 
@@ -35,16 +35,17 @@ class IGF_asana:
     :returns: A asana task gid
     '''
     try:
-      asana_task_id=None
-      matched_tasks=list()
+      asana_task_id = None
+      matched_tasks = list()
       try:
-        all_asana_tasks=self.asanaclient.\
-                        tasks.\
-                        find_all({'project':self.asana_project_id})
-        matched_tasks=[p 
-                       for p in all_asana_tasks
-                         if p['name']==task_name]
-        asana_task_id=matched_tasks[0]['gid']
+        all_asana_tasks = \
+          self.asanaclient.\
+            tasks.\
+            find_all({'project':self.asana_project_id})
+        matched_tasks = [
+          p for p in all_asana_tasks
+            if p['name']==task_name ]
+        asana_task_id = matched_tasks[0]['gid']
       except:
         pass
 
@@ -66,10 +67,10 @@ class IGF_asana:
     :params new_name: A new task name
     '''
     try:
-      asana_task_id=self.get_asana_task_id(task_name=task_name)
+      asana_task_id = self.get_asana_task_id(task_name=task_name)
       self.asanaclient.\
-      tasks.\
-      update(str(asana_task_id),{'name':new_name})
+        tasks.\
+        update(str(asana_task_id),{'name':new_name})
     except:
       raise
 
@@ -82,17 +83,18 @@ class IGF_asana:
     :param notes: A task description
     '''
     try:
-      task_id=None
-      results=self.asanaclient.tasks.\
-                   create_in_workspace( \
-                     self.asana_workspace_id,
-                     {'name':task_name,
-                      'projects':str(self.asana_project_id),
-                      'notes':notes,
-                      'assignee':str(self.asana_user_id),
-                     })
+      task_id = None
+      results = \
+        self.asanaclient.tasks.\
+          create_in_workspace(
+            self.asana_workspace_id,
+            {'name':task_name,
+             'projects':str(self.asana_project_id),
+             'notes':notes,
+             'assignee':str(self.asana_user_id),
+            })
       print(results)
-      task_id=results['gid']                                    # fetching gid
+      task_id = results['gid']                                                  # fetching gid
       return task_id
     except:
       raise
@@ -126,19 +128,21 @@ class IGF_asana:
     :returns: A output story as dictionary
     '''
     try:
-      asana_task_id=self.fetch_task_id_for_task_name(task_name)
-      res=self.asanaclient.\
+      asana_task_id = self.fetch_task_id_for_task_name(task_name)
+      res = \
+        self.asanaclient.\
           stories.\
-          create_on_task(asana_task_id,
-                         {'text':comment})
+          create_on_task(
+            asana_task_id,
+            {'text':comment})
       return res
     except ForbiddenError:
       if rename_task:
-        time_stamp=datetime.strftime(datetime.now(),'%Y-%M-%d-%H-%M-%S')
-        new_task_name='{0}_{1}'.format(task_name,time_stamp)
-        self.rename_asana_task(\
-              task_name=task_name,
-              new_name=new_task_name)                                           # rename task if can't comment on it, likely due to 1k limit
+        time_stamp = datetime.strftime(datetime.now(),'%Y-%M-%d-%H-%M-%S')
+        new_task_name = '{0}_{1}'.format(task_name,time_stamp)
+        self.rename_asana_task(
+          task_name=task_name,
+          new_name=new_task_name)                                               # rename task if can't comment on it, likely due to 1k limit
       raise
     except:
       raise
@@ -152,11 +156,13 @@ class IGF_asana:
     :param notes: A text note
     '''
     try:
-      asana_task_id=self.fetch_task_id_for_task_name(task_name)
-      res=self.asanaclient.\
+      asana_task_id = self.fetch_task_id_for_task_name(task_name)
+      res = \
+        self.asanaclient.\
           tasks.\
-          update(task=str(asana_task_id),
-                 params={'notes':notes})
+          update(
+            task=str(asana_task_id),
+            params={'notes':notes})
       return res
     except:
       raise
@@ -176,24 +182,30 @@ class IGF_asana:
       if not os.path.exists(filepath):
         raise IOError('file {0} not found'.format(filepath))
       if comment:
-        res=self.comment_asana_task(task_name,comment)                          # adding comment to asana)
-      asana_task_id=self.fetch_task_id_for_task_name(task_name)                 # get task_id from asana
+        _ = self.comment_asana_task(task_name,comment)                        # adding comment to asana)
+      asana_task_id = self.fetch_task_id_for_task_name(task_name)               # get task_id from asana
 
       if os.stat(filepath).st_size > 5000000:
-        comment='skipped uploading file {0}, size {1}'.\
-                format(os.path.basename(filepath),os.stat(filepath).st_size)    # skip uploading files more than 5Mb in size
-        res=self.asanaclient.\
+        comment = \
+          'skipped uploading file {0}, size {1}'.\
+            format(
+              os.path.basename(filepath),
+              os.stat(filepath).st_size)                                        # skip uploading files more than 5Mb in size
+        _ = \
+          self.asanaclient.\
             stories.\
-            create_on_task(asana_task_id,
-                           {'text':comment})
+            create_on_task(
+              asana_task_id,
+              {'text':comment})
       else:
         if remote_filename is not None:
           file_name = remote_filename
         else:
           file_name = os.path.basename(filepath)
 
-        res=self.asanaclient.attachments.\
-            create_on_task(\
+        _ = \
+          self.asanaclient.attachments.\
+            create_on_task(
               task_id=str(asana_task_id),
               file_content=open(os.path.join(filepath),'rb'),
               file_name=file_name)                                              # upload file to task_id
@@ -206,17 +218,19 @@ class IGF_asana:
     An internal method for checking user given project id
     '''
     try:
-      all_asana_projects=self.asanaclient.\
-                         projects.\
-                         find_all({'workspace':str(self.asana_workspace_id)})
-      matched_projects=\
-        [p
-         for p in all_asana_projects
+      all_asana_projects = \
+        self.asanaclient.\
+          projects.\
+          find_all({'workspace':str(self.asana_workspace_id)})
+      matched_projects = [
+        p for p in all_asana_projects
            if p['gid']==str(self.asana_project_id) ]                            # checking gid
       if len(matched_projects)==0:
-        raise ValueError('project id {0} not found in workspace {1}'.\
-                         format(self.asana_project_id,
-                                self.asana_workspace_name))
+        raise ValueError(
+          'project id {0} not found in workspace {1}'.\
+            format(
+              self.asana_project_id,
+              self.asana_workspace_name))
     except:
       raise
 
@@ -226,11 +240,11 @@ class IGF_asana:
     An internal method for loading user and workspace information
     '''
     try:
-      user_detail=self.asanaclient.users.me()
-      self.asana_workspace_id=user_detail['workspaces'][0]['gid']               # fetching gid
-      self.asana_workspace_name=user_detail['workspaces'][0]['name']
-      self.asana_user_id=user_detail['gid']                                     # fetching gid
-      self.asana_user_name=user_detail['name']
+      user_detail = self.asanaclient.users.me()
+      self.asana_workspace_id = user_detail['workspaces'][0]['gid']             # fetching gid
+      self.asana_workspace_name = user_detail['workspaces'][0]['name']
+      self.asana_user_id = user_detail['gid']                                   # fetching gid
+      self.asana_user_name = user_detail['name']
     except:
       raise
 
@@ -240,12 +254,12 @@ class IGF_asana:
     An internal method for reading asana config json file
     '''
     try:
-      asana_params=dict()
+      asana_params = dict()
       with open(self.asana_config,'r') as json_data:
-        asana_params=json.load(json_data)
+        asana_params = json.load(json_data)
 
       if self.asana_personal_token_label in asana_params:
-        self.asana_personal_token=asana_params[self.asana_personal_token_label]
+        self.asana_personal_token = asana_params[self.asana_personal_token_label]
 
     except:
       raise

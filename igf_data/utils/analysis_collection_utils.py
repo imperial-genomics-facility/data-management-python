@@ -39,19 +39,19 @@ class Analysis_collection_utils:
                add_datestamp=True,tag_name=None,analysis_name=None,
                allowed_collection=('sample','experiment','run','project')):
     try:
-      self.dbsession_class=dbsession_class
-      self.collection_name=collection_name
-      self.collection_type=collection_type
+      self.dbsession_class = dbsession_class
+      self.collection_name = collection_name
+      self.collection_type = collection_type
       if collection_table not in allowed_collection:
         raise ValueError('Collection table {0} not supported'.\
                          format(collection_table))                               # check collection table information
 
-      self.collection_table=collection_table
-      self.base_path=base_path
-      self.rename_file=rename_file
-      self.add_datestamp=add_datestamp
-      self.analysis_name=analysis_name
-      self.tag_name=tag_name
+      self.collection_table = collection_table
+      self.base_path = base_path
+      self.rename_file = rename_file
+      self.add_datestamp = add_datestamp
+      self.analysis_name = analysis_name
+      self.tag_name = tag_name
     except:
       raise
 
@@ -72,35 +72,35 @@ class Analysis_collection_utils:
     :param force: Toggle for removing existing file collection, default True
     '''
     try:
-      ca=CollectionAdaptor(**{'session':dbsession})
+      ca = CollectionAdaptor(**{'session':dbsession})
       
       collection_exists = \
-        ca.get_collection_files(\
+        ca.get_collection_files(
           collection_name=self.collection_name,
           collection_type=self.collection_type)
       if len(collection_exists.index) >0 and \
           withdraw_exisitng_collection:
-        remove_data = \
-          [{'name':self.collection_name,
-            'type':self.collection_type }]
-        ca.remove_collection_group_info(\
+        remove_data = [{
+          'name':self.collection_name,
+          'type':self.collection_type }]
+        ca.remove_collection_group_info(
           data=remove_data,
           autosave=autosave_db)                                                 # removing all existing collection groups for the collection name and type
 
       fa = FileAdaptor(**{'session':dbsession})
-      file_exists = fa.check_file_records_file_path(file_path=file_path)          # check if file already present in db
+      file_exists = fa.check_file_records_file_path(file_path=file_path)        # check if file already present in db
       if file_exists and force:
-        fa.remove_file_data_for_file_path(\
+        fa.remove_file_data_for_file_path(
           file_path=file_path,
           remove_file=remove_file,
           autosave=autosave_db)                                                 # remove entry from file table and disk
 
-      collection_data = \
-        [{'name':self.collection_name,
-          'type':self.collection_type,
-          'table':self.collection_table,
-          'file_path':file_path}]
-      ca.load_file_and_create_collection(\
+      collection_data = [{
+        'name':self.collection_name,
+        'type':self.collection_type,
+        'table':self.collection_table,
+        'file_path':file_path}]
+      ca.load_file_and_create_collection(
         data=collection_data,
         calculate_file_size_and_md5=True,
         autosave=autosave_db)                                                   # load file, collection and create collection group
@@ -137,7 +137,7 @@ class Analysis_collection_utils:
       experiment_igf_id = None
       experiment_igf_id = None
       run_igf_id = None
-      output_path_list = list()                                                   # define empty output list
+      output_path_list = list()                                                 # define empty output list
       dbconnected = False
       if self.collection_name is None or \
          self.collection_type is None or \
@@ -156,18 +156,21 @@ class Analysis_collection_utils:
             raise ValueError('Sample {0} not found in db'.\
                              format(sample_igf_id))
 
-          project_igf_id = sa.fetch_sample_project(sample_igf_id=sample_igf_id) # fetch project id for sample
+          project_igf_id = \
+            sa.fetch_sample_project(sample_igf_id=sample_igf_id)                # fetch project id for sample
         elif self.collection_table == 'experiment':
           ea = ExperimentAdaptor(**{'session':base.session})
           experiment_igf_id = self.collection_name
           experiment_exists = \
-            ea.check_experiment_records_id(experiment_igf_id=experiment_igf_id)
+            ea.check_experiment_records_id(
+              experiment_igf_id=experiment_igf_id)
           if not experiment_exists:
             raise ValueError('Experiment {0} not present in database'.\
                              format(experiment_igf_id))
 
           (project_igf_id,sample_igf_id) = \
-              ea.fetch_project_and_sample_for_experiment(experiment_igf_id=experiment_igf_id) # fetch project and sample id for experiment
+              ea.fetch_project_and_sample_for_experiment(
+                experiment_igf_id=experiment_igf_id)                            # fetch project and sample id for experiment
         elif self.collection_table == 'run':
           ra = RunAdaptor(**{'session':base.session})
           run_igf_id = self.collection_name
@@ -177,12 +180,14 @@ class Analysis_collection_utils:
                              format(run_igf_id))
 
           (project_igf_id,sample_igf_id,experiment_igf_id) = \
-            ra.fetch_project_sample_and_experiment_for_run(run_igf_id=run_igf_id) # fetch project, sample and experiment id for run
+            ra.fetch_project_sample_and_experiment_for_run(
+              run_igf_id=run_igf_id)                                            # fetch project, sample and experiment id for run
         elif self.collection_table == 'project':
-          pa=ProjectAdaptor(**{'session':base.session})
-          project_igf_id=self.collection_name
-          project_exists=\
-            pa.check_project_records_igf_id(project_igf_id=project_igf_id)
+          pa = ProjectAdaptor(**{'session':base.session})
+          project_igf_id = self.collection_name
+          project_exists = \
+            pa.check_project_records_igf_id(
+              project_igf_id=project_igf_id)
           if not project_exists:
             raise ValueError('Project {0} not found in database'.\
                              format(project_igf_id))
@@ -201,7 +206,7 @@ class Analysis_collection_utils:
                                format(self.collection_name))
 
             final_path = \
-              os.path.join(\
+              os.path.join(
                 self.base_path,
                 project_igf_id,
                 self.analysis_name)                                             # final path for project
@@ -212,7 +217,7 @@ class Analysis_collection_utils:
                                format(self.collection_name))
 
             final_path = \
-              os.path.join(\
+              os.path.join(
                 self.base_path,
                 project_igf_id,
                 sample_igf_id,
@@ -224,11 +229,13 @@ class Analysis_collection_utils:
               raise ValueError('Missing project,sample and experiment id for collection {0}'.\
                                format(self.collection_name))
 
-            final_path=os.path.join(self.base_path,
-                                    project_igf_id,
-                                    sample_igf_id,
-                                    experiment_igf_id,
-                                    self.analysis_name)                         # final path for experiment
+            final_path = \
+              os.path.join(
+                self.base_path,
+                project_igf_id,
+                sample_igf_id,
+                experiment_igf_id,
+                self.analysis_name)                                             # final path for experiment
           elif self.collection_table == 'run':
             if project_igf_id is None or \
                sample_igf_id is None or \
@@ -237,35 +244,44 @@ class Analysis_collection_utils:
               raise ValueError('Missing project,sample,experiment and run id for collection {0}'.\
                                format(self.collection_name))
 
-            final_path=os.path.join(self.base_path,
-                                    project_igf_id,
-                                    sample_igf_id,
-                                    experiment_igf_id,
-                                    run_igf_id,
-                                    self.analysis_name)                         # final path for run
+            final_path = \
+              os.path.join(\
+                self.base_path,
+                project_igf_id,
+                sample_igf_id,
+                experiment_igf_id,
+                run_igf_id,
+                self.analysis_name)                                             # final path for run
 
         if self.rename_file:
-          new_filename=self.get_new_file_name(input_file=input_file,
-                                              file_suffix=file_suffix)
-          final_path=os.path.join(final_path,
-                                  new_filename)                                 # get new filepath
+          new_filename = \
+            self.get_new_file_name(
+              input_file=input_file,
+              file_suffix=file_suffix)
+          final_path = \
+            os.path.join(
+              final_path,
+              new_filename)                                                     # get new filepath
         else:
-          final_path=os.path.join(final_path,
-                                  os.path.basename(input_file))
+          final_path = \
+            os.path.join(
+              final_path,
+              os.path.basename(input_file))
 
         if final_path !=input_file:                                             # move file if its required
-          final_path=preprocess_path_name(input_path=final_path)                # remove unexpected characters from file path
-          move_file(source_path=input_file,
-                    destinationa_path=final_path,
-                    force=force)                                                # move or overwrite file to destination dir
+          final_path = preprocess_path_name(input_path=final_path)              # remove unexpected characters from file path
+          move_file(
+            source_path=input_file,
+            destinationa_path=final_path,
+            force=force)                                                        # move or overwrite file to destination dir
 
         output_path_list.append(final_path)                                     # add final path to the output list
-        self.create_or_update_analysis_collection(\
-                 file_path=final_path,
-                 dbsession=base.session,
-                 withdraw_exisitng_collection=withdraw_exisitng_collection,
-                 remove_file=remove_file,
-                 autosave_db=autosave_db)                                       # load new file collection in db
+        self.create_or_update_analysis_collection(
+          file_path=final_path,
+          dbsession=base.session,
+          withdraw_exisitng_collection=withdraw_exisitng_collection,
+          remove_file=remove_file,
+          autosave_db=autosave_db)                                              # load new file collection in db
         if autosave_db:
           base.commit_session()                                                 # save changes to db for each file
 
@@ -287,30 +303,39 @@ class Analysis_collection_utils:
     :param file_suffix: A file suffix
     '''
     try:
-      new_filename=self.collection_name                                         # use collection name to rename file
+      new_filename = self.collection_name                                       # use collection name to rename file
       if new_filename =='':
         raise ValueError('New filename not found for input file {0}'.\
                          format(input_file))
 
-      new_filename='{0}_{1}'.format(new_filename,
-                                    self.analysis_name)
+      new_filename = \
+        '{0}_{1}'.format(
+          new_filename,
+          self.analysis_name)
       if self.tag_name is not None:
-         new_filename='{0}_{1}'.format(new_filename,
-                                       self.tag_name)                           # add tagname to filepath
+         new_filename = \
+           '{0}_{1}'.format(
+             new_filename,
+             self.tag_name)                                                     # add tagname to filepath
 
       if self.add_datestamp:
-        datestamp=get_datestamp_label()                                         # collect datestamp
-        new_filename='{0}_{1}'.format(new_filename,
-                                      datestamp)                                # add datestamp to filepath
+        datestamp = get_datestamp_label()                                       # collect datestamp
+        new_filename = \
+          '{0}_{1}'.format(
+            new_filename,
+            datestamp)                                                          # add datestamp to filepath
 
       if file_suffix is None:
-        file_suffix=get_file_extension(input_file=input_file)                   # collect file suffix
+        file_suffix = get_file_extension(input_file=input_file)                 # collect file suffix
 
       if file_suffix =='':
         raise ValueError('Missing file extension for new file name of {0}'.\
                          format(input_file))                                    # raise error if not file suffix found
 
-      new_filename='{0}.{1}'.format(new_filename,file_suffix)                   # add file suffix to the new name
+      new_filename = \
+        '{0}.{1}'.format(\
+          new_filename,
+          file_suffix)                                                          # add file suffix to the new name
       return new_filename
     except:
       raise
