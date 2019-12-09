@@ -92,7 +92,7 @@ def index_bam_or_cram(samtools_exe,input_path,threads=1,
 
 def run_samtools_view(samtools_exe,input_file,output_file,reference_file=None,
                       force=True,cram_out=False,threads=1,samtools_params=None,
-                      index_output=True,dry_run=False):
+                      index_output=True,dry_run=False,use_ephemeral_space=0):
   '''
   A function for running samtools view command
 
@@ -105,6 +105,7 @@ def run_samtools_view(samtools_exe,input_file,output_file,reference_file=None,
   :param samtools_params: List of samtools param, default None
   :param index_output: Index output file, default True
   :param dry_run: A toggle for returning the samtools command without actually running it, default False
+  :param use_ephemeral_space: A toggle for temp dir settings, default 0
   :returns: Samtools command as list
   '''
   try:
@@ -115,7 +116,7 @@ def run_samtools_view(samtools_exe,input_file,output_file,reference_file=None,
         samtools_exe=samtools_exe,
         bam_file=input_file)                                                    # check bam index
 
-    temp_dir = get_temp_dir(use_ephemeral_space=False)
+    temp_dir = get_temp_dir(use_ephemeral_space=use_ephemeral_space)
     temp_file = \
       os.path.join(\
         temp_dir,
@@ -458,7 +459,7 @@ def run_bam_idxstat(samtools_exe,bam_file,output_dir,output_prefix=None,
     raise
 
 
-def run_sort_bam(samtools_exe,input_bam_path,output_bam_path,sort_by_name=False,
+def run_sort_bam(samtools_exe,input_bam_path,output_bam_path,sort_by_name=False,use_ephemeral_space=0,
                  threads=1,force=False,dry_run=False,cram_out=False,index_output=True):
   '''
   A function for sorting input bam file and generate a output bam
@@ -471,6 +472,7 @@ def run_sort_bam(samtools_exe,input_bam_path,output_bam_path,sort_by_name=False,
   :param force: Output bam file will be overwritten if force is True, default False
   :param cram_out: Output cram file, default False
   :param index_output: Index output bam, default True
+  :param use_ephemeral_space: A toggle for temp dir settings, default 0
   :param dry_run: A toggle for returning the samtools command without actually running it, default False
   :return: None
   '''
@@ -490,7 +492,7 @@ def run_sort_bam(samtools_exe,input_bam_path,output_bam_path,sort_by_name=False,
     else:
       sort_cmd.append('--output-fmt BAM')
 
-    temp_dir = get_temp_dir(use_ephemeral_space=False)
+    temp_dir = get_temp_dir(use_ephemeral_space=use_ephemeral_space)
     temp_bam = \
       os.path.join(\
         temp_dir,
@@ -521,7 +523,7 @@ def run_sort_bam(samtools_exe,input_bam_path,output_bam_path,sort_by_name=False,
 
 
 def merge_multiple_bam(samtools_exe,input_bam_list,output_bam_path,sorted_by_name=False,
-                       threads=1,force=False,dry_run=False,index_output=True):
+                       use_ephemeral_space=0,threads=1,force=False,dry_run=False,index_output=True):
   '''
   A function for merging multiple input bams to a single output bam
   
@@ -532,6 +534,7 @@ def merge_multiple_bam(samtools_exe,input_bam_list,output_bam_path,sorted_by_nam
   :param threads: Number of threads to use for merging, default 1
   :param force: Output bam file will be overwritten if force is True, default False
   :param index_output: Index output bam, default True
+  :param use_ephemeral_space: A toggle for temp dir settings, default 0
   :param dry_run: A toggle for returning the samtools command without actually running it, default False
   :return: samtools command
   '''
@@ -542,7 +545,8 @@ def merge_multiple_bam(samtools_exe,input_bam_list,output_bam_path,sorted_by_nam
       for bam in fp:
         check_file_path(bam.strip())
 
-    temp_dir = get_temp_dir(use_ephemeral_space=False)
+    temp_dir = \
+      get_temp_dir(use_ephemeral_space=use_ephemeral_space)
     temp_bam = \
       os.path.join(\
         temp_dir,

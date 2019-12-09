@@ -14,13 +14,14 @@ class Fastp_utils:
   :param run_thread: Number of threads to use, default 1
   :param enable_polyg_trim: Enable poly G trim for NextSeq and NovaSeq, default False
   :param log_output_prefix: Output prefix for log file, default None
+  :param use_ephemeral_space: A toggle for temp dir, default 0
   :param fastp_options_list: A list of options for running fastp, default
                                -a auto
                                --qualified_quality_phred 15
                                --length_required=15
   '''
   def __init__(self,fastp_exe,input_fastq_list,output_dir,run_thread=1,enable_polyg_trim=False,
-               split_by_lines_count=5000000,log_output_prefix=None,
+               split_by_lines_count=5000000,log_output_prefix=None,use_ephemeral_space=0,
                fastp_options_list=('-a','auto',
                                    '--qualified_quality_phred=15',
                                    '--length_required=15')):
@@ -31,6 +32,7 @@ class Fastp_utils:
     self.enable_polyg_trim = enable_polyg_trim
     self.split_by_lines_count = split_by_lines_count
     self.log_output_prefix = log_output_prefix
+    self.use_ephemeral_space = use_ephemeral_space
     self.fastp_options_list = fastp_options_list
 
   def _run_checks(self):
@@ -67,7 +69,7 @@ class Fastp_utils:
     '''
     try:
       temp_dir = \
-        get_temp_dir(use_ephemeral_space=False)                                 # create temp dir in ephemeral space
+        get_temp_dir(use_ephemeral_space=self.use_ephemeral_space)              # create temp dir in ephemeral space
       self._run_checks()
       read1_list, read2_list = \
         identify_fastq_pair(input_list=self.input_fastq_list)                   # fetch input files

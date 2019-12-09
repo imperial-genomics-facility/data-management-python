@@ -14,16 +14,18 @@ class Star_utils:
   :param output_dir: Path for output alignment and results
   :param output_prefix: File output prefix
   :param threads: No. of threads for STAR run, default 1
+  :param use_ephemeral_space: A toggle for temp dir settings, default 0
   '''
   def __init__(self,star_exe,input_files,genome_dir,reference_gtf,
-               output_dir,output_prefix,threads=1):
-    self.star_exe=star_exe
-    self.input_files=input_files
-    self.genome_dir=genome_dir
-    self.reference_gtf=reference_gtf
-    self.output_dir=output_dir
-    self.output_prefix=output_prefix
-    self.threads=threads
+               output_dir,output_prefix,threads=1,use_ephemeral_space=0):
+    self.star_exe = star_exe
+    self.input_files = input_files
+    self.genome_dir = genome_dir
+    self.reference_gtf = reference_gtf
+    self.output_dir = output_dir
+    self.output_prefix = output_prefix
+    self.threads = threads
+    self.use_ephemeral_space = use_ephemeral_space
 
   def _run_checks(self):
     '''
@@ -62,24 +64,26 @@ class Star_utils:
     :returns: A genomic_bam and a transcriptomic bam,log file, gene count file and star commandline
     '''
     try:
-      temp_dir=get_temp_dir(use_ephemeral_space=True)                           # get a temp dir
+      temp_dir = \
+        get_temp_dir(use_ephemeral_space=self.use_ephemeral_space)              # get a temp dir
       self._run_checks()
-      temp_path_prefix='{0}/{1}'.format(temp_dir,
-                                        self.output_prefix)
-      default_star_align_params=\
-            {"--runThreadN":quote(str(self.threads)),
-             "--genomeDir":quote(self.genome_dir),
-             "--genomeLoad":"NoSharedMemory",
-             "--runMode":"alignReads",
-             "--quantMode":["TranscriptomeSAM","GeneCounts"],
-             "--outSAMtype":["BAM","SortedByCoordinate"],
-             "--outFilterType":"BySJout",
-             "--outSAMunmapped":"Within",
-             "--sjdbGTFfile":quote(self.reference_gtf),
-             "--outFileNamePrefix":quote(temp_path_prefix),
-             "--outSAMattributes":["NH","HI","AS","NM","MD"],
-            }
-      star_cmd=[self.star_exe]
+      temp_path_prefix = \
+        '{0}/{1}'.format(
+          temp_dir,
+          self.output_prefix)
+      default_star_align_params = {
+        "--runThreadN":quote(str(self.threads)),
+        "--genomeDir":quote(self.genome_dir),
+        "--genomeLoad":"NoSharedMemory",
+        "--runMode":"alignReads",
+        "--quantMode":["TranscriptomeSAM","GeneCounts"],
+        "--outSAMtype":["BAM","SortedByCoordinate"],
+        "--outFilterType":"BySJout",
+        "--outSAMunmapped":"Within",
+        "--sjdbGTFfile":quote(self.reference_gtf),
+        "--outFileNamePrefix":quote(temp_path_prefix),
+        "--outSAMattributes":["NH","HI","AS","NM","MD"]}
+      star_cmd = [self.star_exe]
       for key,val in default_star_align_params.items():
         for field in [key,val]:
           if isinstance(field,list):
@@ -99,14 +103,15 @@ class Star_utils:
                         format(type(star_patameters)))
 
       if len(star_patameters)>0:
-        unique_keys=set(star_patameters.keys()).\
-                    difference(set(default_star_align_params.keys()))           # filter default params from star cmdline
-        param_list=[quote(str(field))
-                      for key,val in star_patameters.items()
-                        if key in unique_keys
-                          for field in [key,val]
-                            if field is not None and field != ''
-                   ]                                                            # flatten param dictionary
+        unique_keys = \
+          set(star_patameters.keys()).\
+            difference(set(default_star_align_params.keys()))                   # filter default params from star cmdline
+        param_list = [
+          quote(str(field))
+            for key,val in star_patameters.items()
+              if key in unique_keys
+                for field in [key,val]
+                  if field is not None and field != '']                         # flatten param dictionary
         star_cmd.extend(param_list)                                             # add params to command line
 
       if two_pass_mode:
@@ -115,8 +120,9 @@ class Star_utils:
       if detect_non_fastq_in_file_list(self.input_files):
         raise ValueError('Expecting only fastq files as input')
 
-      zipped_pattern=re.compile(r'\S+\.gz')
-      read1_list,read2_list=identify_fastq_pair(input_list=self.input_files)    # fetch input fastq files
+      zipped_pattern = re.compile(r'\S+\.gz')
+      read1_list,read2_list = \
+        identify_fastq_pair(input_list=self.input_files)                        # fetch input fastq files
       if re.match(zipped_pattern,os.path.basename(read1_list[0])):
         star_cmd.extend(["--readFilesCommand","zcat"])                          # command for gzipped reads
 
@@ -128,35 +134,38 @@ class Star_utils:
         return star_cmd                                                         # return star cmd
 
       subprocess.check_call(star_cmd,shell=False)
-      genomic_bam=''
-      transcriptomic_bam=''
-      star_log_file=''
-      star_gene_count_file=''
-      genomic_bam_pattern=re.compile(r'\S+sortedByCoord\.out\.bam$')            # pattern for genomic bam
-      transcriptomic_bam_pattern=re.compile(r'\S+toTranscriptome\.out\.bam$')   # pattern for transcriptomic bam
-      star_log_pattern=re.compile(r'\S+Log\.final\.out$')                       # pattern for star final log
-      star_count_pattern=re.compile(r'\S+ReadsPerGene.out\.tab$')               # pattern for star gene count file
+      genomic_bam = ''
+      transcriptomic_bam = ''
+      star_log_file = ''
+      star_gene_count_file = ''
+      genomic_bam_pattern = re.compile(r'\S+sortedByCoord\.out\.bam$')          # pattern for genomic bam
+      transcriptomic_bam_pattern = re.compile(r'\S+toTranscriptome\.out\.bam$') # pattern for transcriptomic bam
+      star_log_pattern = re.compile(r'\S+Log\.final\.out$')                     # pattern for star final log
+      star_count_pattern = re.compile(r'\S+ReadsPerGene.out\.tab$')             # pattern for star gene count file
       for file in os.listdir(temp_dir):
         if fnmatch.fnmatch(file, '*.bam'):
-          source_path=os.path.join(temp_dir,file)
-          destinationa_path=os.path.join(self.output_dir,file)
-          copy_local_file(source_path=source_path,
-                          destinationa_path=destinationa_path)                  # copying bams to output dir
+          source_path = os.path.join(temp_dir,file)
+          destinationa_path = os.path.join(self.output_dir,file)
+          copy_local_file(
+            source_path=source_path,
+            destinationa_path=destinationa_path)                                # copying bams to output dir
           if re.match(genomic_bam_pattern,file):
             genomic_bam=destinationa_path
 
           if re.match(transcriptomic_bam_pattern,file):
-            transcriptomic_bam=destinationa_path
+            transcriptomic_bam = destinationa_path
 
         if re.match(star_log_pattern,file):
-          star_log_file=os.path.join(self.output_dir,file)
-          copy_local_file(source_path=os.path.join(temp_dir,file),
-                          destinationa_path=star_log_file)                      # copy star log file
+          star_log_file = os.path.join(self.output_dir,file)
+          copy_local_file(
+            source_path=os.path.join(temp_dir,file),
+            destinationa_path=star_log_file)                                    # copy star log file
 
         if re.match(star_count_pattern,file):
-          star_gene_count_file=os.path.join(self.output_dir,file)
-          copy_local_file(source_path=os.path.join(temp_dir,file),
-                          destinationa_path=star_gene_count_file)               # copy star gene count file
+          star_gene_count_file = os.path.join(self.output_dir,file)
+          copy_local_file(
+            source_path=os.path.join(temp_dir,file),
+            destinationa_path=star_gene_count_file)                             # copy star gene count file
 
       if genomic_bam == '' or \
          transcriptomic_bam == '' or \
@@ -183,20 +192,22 @@ class Star_utils:
     :returns: A list of bigWig files and star commandline
     '''
     try:
-      temp_dir=get_temp_dir(use_ephemeral_space=True)                           # get a temp dir
+      temp_dir = \
+        get_temp_dir(use_ephemeral_space=self.use_ephemeral_space)              # get a temp dir
       self._run_checks()
       check_file_path(bedGraphToBigWig_path)
       check_file_path(chrom_length_file)
-      temp_path_prefix='{0}/{1}'.format(temp_dir,
-                                        self.output_prefix)
-      default_star_signal_params=\
-            {"--runThreadN":quote(str(self.threads)),
-             "--genomeLoad":"NoSharedMemory",
-             "--runMode":"inputAlignmentsFromBAM",
-             "--outWigType":"bedGraph",
-             "--outFileNamePrefix":quote(temp_path_prefix),
-            }
-      star_cmd=[self.star_exe]
+      temp_path_prefix = \
+        '{0}/{1}'.format(
+          temp_dir,
+          self.output_prefix)
+      default_star_signal_params = {
+        "--runThreadN":quote(str(self.threads)),
+        "--genomeLoad":"NoSharedMemory",
+        "--runMode":"inputAlignmentsFromBAM",
+        "--outWigType":"bedGraph",
+        "--outFileNamePrefix":quote(temp_path_prefix),}
+      star_cmd = [self.star_exe]
       for key,val in default_star_signal_params.items():
         for field in [key,val]:
           if isinstance(field,list):
@@ -207,8 +218,8 @@ class Star_utils:
       if stranded:
         star_cmd.extend(["--outWigStrand","Stranded"])                          # stranded rnaseq
 
-      bam_pattern=re.compile(r'\S+\.bam$')
-      input_files=self.input_files
+      bam_pattern = re.compile(r'\S+\.bam$')
+      input_files = self.input_files
       if not re.match(bam_pattern,input_files[0]):
         raise ValueError('Input bam file not found in input file list star run: {0}'.\
                          format(input_files))
@@ -218,17 +229,19 @@ class Star_utils:
         return star_cmd                                                         # return star cmd
 
       subprocess.check_call(star_cmd)
-      output_list=list()
+      output_list = list()
       for file in os.listdir(temp_dir):
         if not fnmatch.fnmatch(file,'*.UniqueMultiple.*') and \
            file.endswith('.bg'):
-          output_path=os.path.join(temp_dir,
-                                   file.replace('.bg','.bw'))
-          bw_cmd=[bedGraphToBigWig_path,
-                  os.path.join(temp_dir,file),
-                  chrom_length_file,
-                  output_path,
-                 ]
+          output_path = \
+            os.path.join(
+              temp_dir,
+              file.replace('.bg','.bw'))
+          bw_cmd = [
+            bedGraphToBigWig_path,
+            os.path.join(temp_dir,file),
+            chrom_length_file,
+            output_path,]
           subprocess.check_call(bw_cmd)
           output_list.append(output_path)
 

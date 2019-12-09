@@ -13,6 +13,8 @@ class Scanpy_tool:
   '''
   A class for running scanpy tool and generating a html report for the input data
   
+  FIX ME: Replace with a notebook
+  
   Reference notebooks
   v3
   https://scanpy-tutorials.readthedocs.io/en/latest/pbmc3k.html
@@ -33,10 +35,12 @@ class Scanpy_tool:
   :param min_cell_count: Minimum cell count for data filtering, default 3
   :param force_overwrite: A toggle for replacing existing output file, default True
   :param cellbrowser_h5ad: Path for h5ad output for cellbrowser, default None
+  :param use_ephemeral_space: A toggle for temp dir settings, default 0
   '''
   def __init__(self,project_name,sample_name,matrix_file,features_tsv,barcode_tsv,
                output_file,html_template_file,species_name,min_gene_count=200,
-               min_cell_count=3,force_overwrite=True,cellbrowser_h5ad=None):
+               min_cell_count=3,force_overwrite=True,cellbrowser_h5ad=None,
+               use_ephemeral_space=0):
     self.project_name = project_name
     self.sample_name = sample_name
     self.matrix_file = matrix_file
@@ -44,7 +48,8 @@ class Scanpy_tool:
     self.barcode_tsv = barcode_tsv
     self.output_file = output_file
     self.html_template_file = html_template_file
-    self.work_dir = get_temp_dir(use_ephemeral_space=False)
+    self.use_ephemeral_space = use_ephemeral_space
+    self.work_dir = get_temp_dir(use_ephemeral_space=self.use_ephemeral_space)
     self.min_gene_count = min_gene_count
     self.min_cell_count = min_cell_count
     self.force_overwrite = force_overwrite
@@ -95,7 +100,7 @@ class Scanpy_tool:
 
       # step 1: read input files
       temp_input_dir = \
-        get_temp_dir(use_ephemeral_space=False)                                 # fix for hpc
+        get_temp_dir(use_ephemeral_space=self.use_ephemeral_space)              # fix for hpc
       local_matrix_file = \
         os.path.join(\
           temp_input_dir,
@@ -184,7 +189,7 @@ class Scanpy_tool:
               self.work_dir,
               'figures/scatter.png'))
       # step 5: Filtering data bases on percent mito
-      adata = adata[adata.obs['n_genes']<2000,:]
+      adata = adata[adata.obs['n_genes']<2500,:]
       adata = adata[adata.obs['percent_mito'] < 0.05, :]
       # step 6: Normalise and filter data
       sc.pp.normalize_per_cell(adata)                                           # Total-count normalize (library-size correct) the data matrix to 10,000 reads per cell, so that counts become comparable among cells.
