@@ -188,7 +188,6 @@ METADATA_COLUMNS = [
   'biomaterial_type',
   'expected_reads',
   'expected_lanes',
-  'insert_length',
   'fragment_length_distribution_mean',
   'fragment_length_distribution_sd',
   'taxon_id',
