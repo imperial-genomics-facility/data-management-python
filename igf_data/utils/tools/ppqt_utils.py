@@ -7,10 +7,11 @@ class Ppqt_tools:
   '''
   A class for running Phantom quality control tools (PPQT)
   '''
-  def __init__(self,rscript_path,ppqt_exe,threads=1):
+  def __init__(self,rscript_path,ppqt_exe,threads=1,use_ephemeral_space=0):
     self.rscript_path = rscript_path
     self.ppqt_exe = ppqt_exe
     self.threads = threads
+    self.use_ephemeral_space = use_ephemeral_space
 
   def run_ppqt(self,input_bam,output_dir,output_spp_name,output_pdf_name):
     '''
@@ -23,7 +24,8 @@ class Ppqt_tools:
     :returns: PPQT run command as list,spp and pdf output path and a list or dictionary for spp.out matrics
     '''
     try:
-      temp_dir=get_temp_dir(use_ephemeral_space=False)
+      temp_dir = \
+        get_temp_dir(use_ephemeral_space=self.use_ephemeral_space)
       run_cmd = \
         self._pre_process(\
           input_bam=input_bam,

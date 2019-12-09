@@ -90,14 +90,15 @@ class ConvertBamToCram(IGFBaseProcess):
       temp_work_dir = get_temp_dir(use_ephemeral_space=use_ephemeral_space)     # get temp dir
       cram_file = os.path.basename(bam_file).replace('.bam','.cram')            # get base cram file name
       cram_file = os.path.join(temp_work_dir,cram_file)                         # get cram file path in work dir
-      convert_bam_to_cram(\
+      convert_bam_to_cram(
         samtools_exe=samtools_exe,
         bam_file=bam_file,
         reference_file=genome_fasta,
         cram_path=cram_file,
+        use_ephemeral_space=use_ephemeral_space,
         threads=threads)                                                        # create new cramfile
       au = \
-        Analysis_collection_utils(\
+        Analysis_collection_utils(
           dbsession_class=igf_session_class,
           analysis_name=analysis_name,
           tag_name=tag_name,

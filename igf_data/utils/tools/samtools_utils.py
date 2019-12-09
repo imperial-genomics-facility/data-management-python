@@ -173,7 +173,7 @@ def run_samtools_view(samtools_exe,input_file,output_file,reference_file=None,
 
 
 def convert_bam_to_cram(samtools_exe,bam_file,reference_file,cram_path,threads=1,
-                        force=False,dry_run=False):
+                        force=False,dry_run=False,use_ephemeral_space=0):
   '''
   A function for converting bam files to cram using pysam utility
   
@@ -184,6 +184,7 @@ def convert_bam_to_cram(samtools_exe,bam_file,reference_file,cram_path,threads=1
   :param threads: Number of threads to use for conversion, default 1
   :param force: Output cram will be overwritten if force is True, default False
   :param dry_run: A toggle for returning the samtools command without actually running it, default False
+  :param use_ephemeral_space: A toggle for temp dir settings, default 0
   :returns: Nill
   :raises IOError: It raises IOError if no input or reference fasta file found or
                    output file already present and force is not True
@@ -201,6 +202,7 @@ def convert_bam_to_cram(samtools_exe,bam_file,reference_file,cram_path,threads=1
         cram_out=True,
         threads=threads,
         index_output=False,
+        use_ephemeral_space=use_ephemeral_space,
         dry_run=dry_run)
     return view_cmd
   except:

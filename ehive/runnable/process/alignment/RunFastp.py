@@ -14,7 +14,8 @@ class RunFastp(IGFBaseProcess):
         'run_thread':1,
         'split_fastq':None,
         'polyg_platform_list':['NextSeq','NOVASEQ6000'],
-        'enable_polyg_trim':False
+        'enable_polyg_trim':False,
+        'use_ephemeral_space':0,
       })
     return params_dict
 
@@ -33,6 +34,7 @@ class RunFastp(IGFBaseProcess):
     :param split_by_lines_count: Number of fastq lines to be used if split_fastq is True, default 5000000
     :param fastp_options_list: A list of fasrp tool options, default ['-a=auto','--qualified_quality_phred=15','--length_required=15']
     :param platform_name: Sequencing platform name from dataflow
+    :param use_ephemeral_space: A toggle for temp dir setting, default 0
     :param polyg_platform_list: A list of Illumin platforms which emit poly Gs for empty cycles, default ['NextSeq','NOVASEQ6000']
     :param enable_polyg_trim: Enable Fastp poly G trim, default False
     '''
@@ -51,6 +53,7 @@ class RunFastp(IGFBaseProcess):
       platform_name = self.param_required('platform_name')
       polyg_platform_list = self.param('polyg_platform_list')
       enable_polyg_trim = self.param('enable_polyg_trim')
+      use_ephemeral_space = self.param('use_ephemeral_space')
       seed_date_stamp = self.param_required('date_stamp')
       seed_date_stamp = get_datestamp_label(seed_date_stamp)
       work_dir_prefix = \
@@ -72,6 +75,7 @@ class RunFastp(IGFBaseProcess):
           log_output_prefix=run_igf_id,
           output_dir=work_dir,
           run_thread=run_thread,
+          use_ephemeral_space=use_ephemeral_space,
           enable_polyg_trim=enable_polyg_trim,
           split_by_lines_count=split_by_lines_count,
           fastp_options_list=fastp_options_list)                                # setup fastp tool for run

@@ -11,7 +11,8 @@ class RunBWA(IGFBaseProcess):
         'reference_type':'GENOME_BWA',
         'run_thread':1,
         'r2_read_file':None,
-        'parameter_options':'{"-M":""}'
+        'parameter_options':'{"-M":""}',
+        'use_ephemeral_space':0,
       })
     return params_dict
 
@@ -37,6 +38,7 @@ class RunBWA(IGFBaseProcess):
       base_work_dir = self.param_required('base_work_dir')
       parameter_options = self.param('parameter_options')
       seed_date_stamp = self.param_required('date_stamp')
+      use_ephemeral_space = self.param('use_ephemeral_space')
       seed_date_stamp = get_datestamp_label(seed_date_stamp)
       input_fastq_list = list()
       input_fastq_list.append(r1_read_file[0])
@@ -68,6 +70,7 @@ class RunBWA(IGFBaseProcess):
           output_dir=work_dir,
           output_prefix=output_prefix,
           bam_output=True,
+          use_ephemeral_space=use_ephemeral_space,
           thread=run_thread)                                                    # set up bwa for run
       if isinstance(parameter_options, str):
           parameter_options=json.loads(parameter_options)                       # convert string param to dict

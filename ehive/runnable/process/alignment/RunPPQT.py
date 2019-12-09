@@ -20,7 +20,8 @@ class RunPPQT(IGFBaseProcess):
         'collection_table':'experiment',
         'analysis_name':None,
         'force_overwrite':True,
-        'threads':0,
+        'threads':0,,
+        'use_ephemeral_space':0,
       })
     return params_dict
 
@@ -49,6 +50,7 @@ class RunPPQT(IGFBaseProcess):
       cram_collection_type = self.param('cram_collection_type')
       collection_table = self.param('collection_table')
       force_overwrite = self.param('force_overwrite')
+      use_ephemeral_space = self.param('use_ephemeral_space')
       threads = self.param('threads')
       seed_date_stamp = get_datestamp_label(seed_date_stamp)
       if output_prefix is not None:
@@ -78,6 +80,7 @@ class RunPPQT(IGFBaseProcess):
         Ppqt_tools(\
           rscript_path=rscript_path,
           ppqt_exe=ppqt_exe,
+          use_ephemeral_space=use_ephemeral_space,
           threads=threads)
       ppqt_cmd,spp_output, pdf_output,spp_data = \
         ppqt_obj.run_ppqt(\

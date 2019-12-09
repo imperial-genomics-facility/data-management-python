@@ -27,6 +27,7 @@ class RunDeeptools(IGFBaseProcess):
         'remove_existing_file':True,
         'withdraw_exisitng_collection':True,
         'threads':1,
+        'use_ephemeral_space':0,
       })
     return params_dict
 
@@ -56,11 +57,14 @@ class RunDeeptools(IGFBaseProcess):
       remove_existing_file = self.param('remove_existing_file')
       withdraw_exisitng_collection = self.param('withdraw_exisitng_collection')
       analysis_name = self.param('analysis_name')
+      use_ephemeral_space = self.param('use_ephemeral_space')
       seed_date_stamp = self.param_required('date_stamp')
       seed_date_stamp = get_datestamp_label(seed_date_stamp)
       if output_prefix is not None:
-        output_prefix='{0}_{1}'.format(output_prefix,
-                                       seed_date_stamp)                         # adding datestamp to the output file prefix
+        output_prefix = \
+          '{0}_{1}'.format(
+            output_prefix,
+            seed_date_stamp)                                                    # adding datestamp to the output file prefix
 
       if not isinstance(input_files, list) or \
          len(input_files) == 0:
@@ -107,6 +111,7 @@ class RunDeeptools(IGFBaseProcess):
             output_plot=output_plot,
             blacklist_file=blacklist_bed,
             thread=threads,
+            use_ephemeral_space=use_ephemeral_space,
             params_list=deeptools_params)
         analysis_files.extend(\
           [output_raw_counts,plotcov_stdout,output_plot])
@@ -126,6 +131,7 @@ class RunDeeptools(IGFBaseProcess):
             output_file=output_file,
             blacklist_file=blacklist_bed,
             thread=threads,
+            use_ephemeral_space=use_ephemeral_space,
             params_list=deeptools_params)
         if load_signal_bigwig:
           au = \
@@ -174,6 +180,7 @@ class RunDeeptools(IGFBaseProcess):
             output_plot=output_plot,
             blacklist_file=blacklist_bed,
             thread=threads,
+            use_ephemeral_space=use_ephemeral_space,
             params_list=deeptools_params)
         analysis_files.extend(\
           [output_raw_counts,output_matrics,output_plot])
@@ -184,21 +191,25 @@ class RunDeeptools(IGFBaseProcess):
       self.param('dataflow_params',{'analysis_files':analysis_files,
                                     'signal_files':signal_files,
                                     'seed_date_stamp':seed_date_stamp})         # pass on picard output list
-      message='finished deeptools {0} for {1} {2}'.\
-              format(deeptools_command,
-                     project_igf_id,
-                     sample_igf_id)
+      message = \
+        'finished deeptools {0} for {1} {2}'.format(
+          deeptools_command,
+          project_igf_id,
+          sample_igf_id)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
-      message='Deeptools {0} command: {1}'.\
-              format(deeptools_command,
-                     deeptools_args)
-      #self.comment_asana_task(task_name=project_igf_id, comment=message)        # send commandline to Asana
+      message = \
+        'Deeptools {0} command: {1}'.format(
+          deeptools_command,
+          deeptools_args)
+      #self.comment_asana_task(task_name=project_igf_id, comment=message)       # send commandline to Asana
     except Exception as e:
-      message='project: {2}, sample:{3}, Error in {0}: {1}'.\
-              format(self.__class__.__name__,
-                     e,
-                     project_igf_id,
-                     sample_igf_id)
+      message = \
+        'project: {2}, sample:{3}, Error in {0}: {1}'.\
+          format(
+            self.__class__.__name__,
+            e,
+            project_igf_id,
+            sample_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise

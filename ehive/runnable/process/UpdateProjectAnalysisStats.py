@@ -61,6 +61,7 @@ class UpdateProjectAnalysisStats(IGFBaseProcess):
           pipeline_name=pipeline_name,
           pipeline_seed_table=pipeline_seed_table,
           pipeline_finished_status=pipeline_finished_status,
+          use_ephemeral_space=use_ephemeral_space,
           sample_id_label=sample_id_label)
       prj_data.\
         get_analysis_data_for_project(\

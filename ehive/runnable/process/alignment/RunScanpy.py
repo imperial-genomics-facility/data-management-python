@@ -182,6 +182,7 @@ class RunScanpy(IGFBaseProcess):
             html_template_file=report_template_file,
             species_name=ensembl_species_name,
             output_file=output_report,
+            use_ephemeral_space=use_ephemeral_space,
             cellbrowser_h5ad=cellbrowser_h5ad)
         sp.generate_report()                                                    # generate scanpy report
         # load files to db and disk

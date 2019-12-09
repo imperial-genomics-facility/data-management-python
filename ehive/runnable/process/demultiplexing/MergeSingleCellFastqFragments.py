@@ -9,7 +9,7 @@ class MergeSingleCellFastqFragments(IGFBaseProcess):
     params_dict=super(MergeSingleCellFastqFragments,self).param_defaults()
     params_dict.\
       update({
-        'singlecell_tag':'10X'
+        'singlecell_tag':'10X',
         'use_ephemeral_space':0})
     return params_dict
 

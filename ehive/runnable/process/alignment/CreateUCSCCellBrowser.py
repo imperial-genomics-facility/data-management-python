@@ -8,6 +8,7 @@ class CreateUCSCCellBrowser(IGFBaseProcess):
     params_dict=super(CreateUCSCCellBrowser,self).param_defaults()
     params_dict.update({
         'cellbrowser_dir_prefix':'cellbrowser',
+        'use_ephemeral_space':0,
     })
     return params_dict
 
@@ -20,6 +21,7 @@ class CreateUCSCCellBrowser(IGFBaseProcess):
       cbImportScanpy_path = self.param_required('cbImportScanpy_path')
       scanpy_h5ad_path = self.param_required('scanpy_h5ad_path')
       cellbrowser_dir_prefix = self.param('cellbrowser_dir_prefix')
+      use_ephemeral_space = self.param('use_ephemeral_space')
       work_dir_prefix = \
         os.path.join(\
           base_work_dir,
@@ -41,15 +43,18 @@ class CreateUCSCCellBrowser(IGFBaseProcess):
         cbImportScanpy_path=cbImportScanpy_path,
         h5ad_path=scanpy_h5ad_path,
         project_name=experiment_igf_id,
+        use_ephemeral_space=use_ephemeral_space,
         cellbrowser_htmldir=cellbrowser_dir)
       self.param('dataflow_params',
                  {'cellbrowser_dir':cellbrowser_dir})
     except Exception as e:
-      message = 'project: {2}, sample:{3}, Error in {0}: {1}'.\
-                format(self.__class__.__name__,
-                       e,
-                       project_igf_id,
-                       sample_igf_id)
+      message = \
+        'project: {2}, sample:{3}, Error in {0}: {1}'.\
+          format(
+            self.__class__.__name__,
+            e,
+            project_igf_id,
+            sample_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
       raise

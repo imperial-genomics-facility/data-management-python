@@ -186,6 +186,7 @@ class RunSamtools(IGFBaseProcess):
             output_bam_path=temp_output,
             sorted_by_name=sorted_by_name,
             threads=threads,
+            use_ephemeral_space=use_ephemeral_space,
             force=True)
       elif samtools_command == 'view_bamToCram':
         if base_result_dir is None:
@@ -210,6 +211,7 @@ class RunSamtools(IGFBaseProcess):
             bam_file=input_file,
             reference_file=genome_fasta,
             cram_path=cram_file,
+            use_ephemeral_space=use_ephemeral_space,
             threads=threads,
             force=True,
             dry_run=False)

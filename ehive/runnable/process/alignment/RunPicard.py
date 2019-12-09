@@ -118,6 +118,7 @@ class RunPicard(IGFBaseProcess):
           ref_flat_file=ref_flat_file,
           picard_option=picard_option,
           output_prefix=output_prefix,
+          use_ephemeral_space=use_ephemeral_space,
           ribisomal_interval=ribosomal_interval_file)                           # setup picard tool
       temp_output_files,picard_command_line,picard_metrics = \
         picard.run_picard_command(command_name=picard_command)                  # run picard command
