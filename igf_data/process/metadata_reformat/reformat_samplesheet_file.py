@@ -184,7 +184,7 @@ class Reformat_samplesheet_file:
         samplesheet = SampleSheet(infile=self.infile)
         samplesheet_data = pd.DataFrame(samplesheet._data)
       elif self.file_format == 'csv':
-        samplesheet_data = pd.read_csv(self.infile,header=0)
+        samplesheet_data = pd.read_csv(self.infile,header=0,dtype=object)
       samplesheet_data.fillna('',inplace=True)
       samplesheet_data = \
         samplesheet_data.\

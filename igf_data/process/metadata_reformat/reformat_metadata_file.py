@@ -508,7 +508,7 @@ class Reformat_metadata_file:
     '''
     try:
       try:
-        data = pd.read_csv(self.infile)
+        data = pd.read_csv(self.infile,dtype=object,header=0)
       except Exception as e:
         raise ValueError('Failed to parse input file {0}, error {1}'.format(self.infile,e))
 
