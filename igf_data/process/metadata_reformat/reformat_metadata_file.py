@@ -473,13 +473,13 @@ class Reformat_metadata_file:
           self.get_species_info(\
             species_text_val=row[self.species_text])
 
-      if self.fragment_length_distribution_mean in row.keys():
-        if (row[self.insert_length] == 0 or row[self.insert_length] == '' ) and \
-           (row[self.fragment_length_distribution_mean] != '' or \
-            row[self.fragment_length_distribution_mean] != 0):
-          row[self.insert_length] = \
-            self.calculate_insert_length_from_fragment(\
-              fragment_length=row[self.fragment_length_distribution_mean])
+      #if self.fragment_length_distribution_mean in row.keys():
+      #  if (row[self.insert_length] == 0 or row[self.insert_length] == '' ) and \
+      #     (row[self.fragment_length_distribution_mean] != '' or \
+      #      row[self.fragment_length_distribution_mean] != 0):
+      #    row[self.insert_length] = \
+      #      self.calculate_insert_length_from_fragment(\
+      #        fragment_length=row[self.fragment_length_distribution_mean])
 
       if self.species_text in row.keys():
         row[self.taxon_id],row[self.scientific_name],row[self.species_name] = \
