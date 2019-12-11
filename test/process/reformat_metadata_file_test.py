@@ -57,7 +57,7 @@ class Reformat_metadata_file_testA(unittest.TestCase):
     ## test 4
     library_preparation_val = "Not Applicable"
     sample_description_val = "Pre Made Library"
-    library_type_val = "SINGLE CELL-3’ RNA (NUCLEI)"
+    library_type_val = "SINGLE CELL-3' RNA (NUCLEI)"
     library_source,library_strategy,exp_type,biomaterial_type = \
       re_metadata.get_assay_info(library_preparation_val,sample_description_val,library_type_val)
     self.assertEqual(library_source,'TRANSCRIPTOMIC_SINGLE_CELL')
