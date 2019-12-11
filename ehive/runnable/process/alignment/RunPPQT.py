@@ -20,7 +20,7 @@ class RunPPQT(IGFBaseProcess):
         'collection_table':'experiment',
         'analysis_name':None,
         'force_overwrite':True,
-        'threads':0,,
+        'threads':0,
         'use_ephemeral_space':0,
       })
     return params_dict
