@@ -28,13 +28,13 @@ EXPERIMENT_TYPE_LOOKUP = \
   'library_strategy': 'RNA-SEQ', 'experiment_type': 'POLYA-RNA', 'library_source': 'TRANSCRIPTOMIC','biomaterial_type':'UNKNOWN'},
  {'library_preparation': "RNA SEQUENCING - 3' END RNA-SEQ", 'library_type': 'MRNA',
   'library_strategy': 'RNA-SEQ', 'experiment_type': 'POLYA-RNA-3P', 'library_source': 'TRANSCRIPTOMIC','biomaterial_type':'UNKNOWN'},
- {'library_preparation': "SINGLE CELL -3' RNASEQ- SAMPLE", 'library_type': 'SINGLE CELL-3’ RNA',
+ {'library_preparation': "SINGLE CELL -3' RNASEQ- SAMPLE", 'library_type': "SINGLE CELL-3' RNA",
   'library_strategy': 'RNA-SEQ', 'experiment_type': 'TENX-TRANSCRIPTOME-3P', 'library_source': 'TRANSCRIPTOMIC_SINGLE_CELL','biomaterial_type':'UNKNOWN'},
- {'library_preparation': "SINGLE CELL -3' RNASEQ- SAMPLE NUCLEI", 'library_type': 'SINGLE CELL-3’ RNA (NUCLEI)',
+ {'library_preparation': "SINGLE CELL -3' RNASEQ- SAMPLE NUCLEI", 'library_type': "SINGLE CELL-3' RNA (NUCLEI)",
   'library_strategy': 'RNA-SEQ', 'experiment_type': 'TENX-TRANSCRIPTOME-3P', 'library_source': 'TRANSCRIPTOMIC_SINGLE_CELL','biomaterial_type':'SINGLE_NUCLEI'},
- {'library_preparation': "SINGLE CELL -5' RNASEQ- SAMPLE", 'library_type': 'SINGLE CELL-5’ RNA',
+ {'library_preparation': "SINGLE CELL -5' RNASEQ- SAMPLE", 'library_type': "SINGLE CELL-5' RNA",
   'library_strategy': 'RNA-SEQ', 'experiment_type': 'TENX-TRANSCRIPTOME-5P', 'library_source': 'TRANSCRIPTOMIC_SINGLE_CELL','biomaterial_type':'UNKNOWN'},
- {'library_preparation': "SINGLE CELL -5' RNASEQ- SAMPLE NUCLEI", 'library_type': 'SINGLE CELL-5’ RNA (NUCLEI)',
+ {'library_preparation': "SINGLE CELL -5' RNASEQ- SAMPLE NUCLEI", 'library_type': "SINGLE CELL-5' RNA (NUCLEI)",
   'library_strategy': 'RNA-SEQ', 'experiment_type': 'TENX-TRANSCRIPTOME-5P', 'library_source': 'TRANSCRIPTOMIC_SINGLE_CELL','biomaterial_type':'SINGLE_NUCLEI'},
  {'library_preparation': 'METAGENOMIC PROFILING - 16S RRNA SEQUENCING - SAMPLE', 'library_type': '16S',
   'library_strategy': 'RNA-SEQ', 'experiment_type': '16S', 'library_source': 'METAGENOMIC','biomaterial_type':'UNKNOWN'},
@@ -357,14 +357,20 @@ class Reformat_metadata_file:
       biomaterial_type = 'UNKNOWN'
       key = self.experiment_type
       val = 'UNKNOWN'
-      if library_preparation_val.upper() == 'NOT APPLICABLE' and \
-         sample_description_val.upper() == 'PRE MADE LIBRARY':
+      if isinstance(library_preparation_val,str):
+        library_preparation_val = library_preparation_val.strip().upper()
+      if isinstance(sample_description_val,str):
+        sample_description_val = sample_description_val.strip().upper()
+      if isinstance(library_type_val,str):
+        library_type_val = library_type_val.strip().upper()
+      if library_preparation_val == 'NOT APPLICABLE' and \
+         sample_description_val == 'PRE MADE LIBRARY':
         key=self.library_type
-        val=library_type_val.strip().upper()
-      elif library_preparation_val.upper() != 'NOT APPLICABLE' and \
+        val=library_type_val
+      elif library_preparation_val != 'NOT APPLICABLE' and \
            library_preparation_val != '':
         key=self.library_preparation
-        val=library_preparation_val.strip().upper()
+        val=library_preparation_val
 
       filtered_data = self.experiment_type_lookup[self.experiment_type_lookup[key]==val]
       if len(filtered_data.index) > 1:
