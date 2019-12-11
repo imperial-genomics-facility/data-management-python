@@ -76,6 +76,11 @@ class CopyAnalysisFilesToRemote(IGFBaseProcess):
             os.path.join(
               destination_output_path,
               os.path.basename(file))                                           # get destination file path
+          os.chmod(
+            os.path.join(
+              temp_work_dir,
+              os.path.basename(file)),
+            mode=0o754)                                                         # set file permission
         elif os.path.isdir(file):
           copytree(\
             file,
@@ -83,16 +88,23 @@ class CopyAnalysisFilesToRemote(IGFBaseProcess):
               temp_work_dir,
               os.path.basename(file)))                                          # copy dir to a temp dir
           dest_file_path=destination_output_path
+          for root,dir,files in os.walk(temp_work_dir):
+            os.chmod(
+              os.path.join(root,dir),
+              mode=0o664)
+            for file_name in files:
+              os.chmod(
+                os.path.join(root,file_name),
+                mode=0o754)                                                     # changing file and dir permissions for remote files
         else:
           raise ValueError('Unknown source file type: {0}'.\
                            format(file))
 
-        os.chmod(
-          os.path.join(
-            temp_work_dir,
-            os.path.basename(file)),
-          mode=0o754
-        )                                                                       # set file permission
+        #os.chmod(
+        #  os.path.join(
+        #    temp_work_dir,
+        #    os.path.basename(file)),
+        #  mode=0o754)                                                                       # set file permission
         copy_remote_file(\
           source_path=os.path.join(temp_work_dir,
                                    os.path.basename(file)),
