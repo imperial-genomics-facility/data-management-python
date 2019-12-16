@@ -44,38 +44,40 @@ class Validate_project_and_samplesheet_metadata:
       for header_name in samplesheet._data_header:
         if header_name not in samplesheet_json_fields:
           errors.\
-          append(\
-            {'column':'',
-             'line':'',
-             'filename':os.path.basename(self.samplesheet_file),
-             'error':'Header {0} is not supported. Validation incomplete.'.\
-                     format(header_name)}
-          )
+            append({
+              'column':'',
+              'line':'',
+              'filename':os.path.basename(self.samplesheet_file),
+              'error':'Header {0} is not supported. Validation incomplete.'.\
+                      format(header_name)
+            })
       if len(errors)>0:
           return errors                                                         # stop checking samplesheet
 
       if os.path.basename(self.samplesheet_file) != self.samplesheet_name:
         errors.\
-        append(\
-          {'column':'',
-           'line':'',
-           'filename':os.path.basename(self.samplesheet_file),
-           'error':'samplesheet file should be {1}, name {0} is not supported.'.\
-                   format(os.path.basename(self.samplesheet_file),
-                          self.samplesheet_name)}
-        )
+          append({
+            'column':'',
+            'line':'',
+            'filename':os.path.basename(self.samplesheet_file),
+            'error':'samplesheet file should be {1}, name {0} is not supported.'.\
+                    format(
+                      os.path.basename(self.samplesheet_file),
+                      self.samplesheet_name)
+          })
       samplesheet_data = pd.DataFrame(samplesheet._data)
       for line,l_data in samplesheet_data.groupby(samplesheet_data.columns.tolist(),as_index=False):
         if len(l_data.index) > 1:
           errors.\
-          append(\
-            {'column':'',
-             'line':'',
-             'filename':os.path.basename(self.samplesheet_file),
-             'error':'Duplicate entry:{0}, {1}'.\
-                     format(len(l_data.index),
-                            line)}
-          )
+            append({
+              'column':'',
+              'line':'',
+              'filename':os.path.basename(self.samplesheet_file),
+              'error':'Duplicate entry:{0}, {1}'.\
+                      format(
+                        len(l_data.index),
+                        line)
+            })
       samplesheet._data = \
         samplesheet_data.\
         drop_duplicates().\
@@ -86,18 +88,18 @@ class Validate_project_and_samplesheet_metadata:
           schema_json=self.samplesheet_schema)
       if len(samplesheet_errors)>0:
         errors.\
-        extend(\
-          [{'column':'',
-            'line':'',
-            'filename':os.path.basename(self.samplesheet_file),
-            'error':err} 
-           if isinstance(err,str) else
-           {'column':err.schema_path[2],
-            'line':err.path[0]+1+samplesheet_header_count,
-            'filename':os.path.basename(self.samplesheet_file),
-            'error':err.message}
-          for err in samplesheet_errors]\
-        )
+          extend([
+            {'column':'',
+              'line':'',
+              'filename':os.path.basename(self.samplesheet_file),
+              'error':err} 
+             if isinstance(err,str) else
+            {'column':err.schema_path[2],
+             'line':err.path[0]+1+samplesheet_header_count,
+             'filename':os.path.basename(self.samplesheet_file),
+             'error':err.message}
+            for err in samplesheet_errors
+          ])
       index_lookup_list = ['index']
       if 'index2' in samplesheet._data_header:
         index_lookup_list.append('index2')
@@ -151,7 +153,7 @@ class Validate_project_and_samplesheet_metadata:
         data_igf_grp = \
           data.groupby(['Lane',
                         'Sample_ID'])
-        for key,grp in data_igf_grp:
+        for _,grp in data_igf_grp:
           dup_sample = \
             grp[grp['Sample_ID'].duplicated()]['Sample_ID']
           if len(dup_sample.index)>0:
@@ -164,7 +166,7 @@ class Validate_project_and_samplesheet_metadata:
               append(dup_data.to_dict(orient='records'))
       else:
         data_grp = data.groupby(['Sample_Name'])
-        for key,grp in data_grp:
+        for _,grp in data_grp:
           dup_sample = \
             grp[grp['Sample_Name'].duplicated()]['Sample_Name']
           if len(dup_sample.index)>0:
@@ -334,7 +336,7 @@ class Validate_project_and_samplesheet_metadata:
           raise IOError('Output file {0} already present'.format(output_csv))
 
         all_errors.\
-        to_csv(output_csv,index=False)
+          to_csv(output_csv,index=False)
         return output_csv
     except:
       raise
@@ -354,7 +356,7 @@ class Validate_project_and_samplesheet_metadata:
         columns_order = ['error']
         data = [{'error':'No error found'}]
         json_data = \
-          convert_to_gviz_json_for_display(\
+          convert_to_gviz_json_for_display(
             description=description,
             data=data,
             columns_order=columns_order)
@@ -371,7 +373,7 @@ class Validate_project_and_samplesheet_metadata:
            'line',
            'error']
         json_data = \
-          convert_to_gviz_json_for_display(\
+          convert_to_gviz_json_for_display(
             description=description,
             data=all_errors,
             columns_order=columns_order)
@@ -402,11 +404,11 @@ class Validate_project_and_samplesheet_metadata:
            'experiment_type' in data:
           err = \
             Validate_project_and_samplesheet_metadata.\
-            validate_metadata_library_type(\
-              sample_id=data['sample_igf_id'],
-              library_source=data['library_source'],
-              library_strategy=data['library_strategy'],
-              experiment_type=data['experiment_type'])
+              validate_metadata_library_type(
+                sample_id=data.get('sample_igf_id'),
+                library_source=data.get('library_source'),
+                library_strategy=data.get('library_strategy'),
+                experiment_type=data.get('experiment_type'))
 
       return err
     except:
@@ -526,27 +528,28 @@ class Validate_project_and_samplesheet_metadata:
       # count project and check difference
       if len(metadata_data.keys()) != len(samplesheet_data.keys()):
         errors.\
-        append(\
-          {'column':'Sample_Project',
-           'line':'',
-           'filename':os.path.basename(self.samplesheet_file),
-           'error':'Metadata files have {0} projects, samplesheet has {1} projects'.\
-                   format(len(metadata_data.keys()),
-                          len(samplesheet_data.keys()))}
-        )                                                                       # project counts are not matching between samplesheet and metadata
+          append({
+            'column':'Sample_Project',
+            'line':'',
+            'filename':os.path.basename(self.samplesheet_file),
+            'error':'Metadata files have {0} projects, samplesheet has {1} projects'.\
+                    format(
+                      len(metadata_data.keys()),
+                      len(samplesheet_data.keys()))
+          })                                                                    # project counts are not matching between samplesheet and metadata
 
       non_matching_projects = \
         list(set(samplesheet_data.keys()).\
              difference(set(metadata_data.keys())))                             # look for missing project metadata
       if len(non_matching_projects)>0:
         errors.\
-        append(\
-          {'column':'Sample_Project',
-           'line':'',
-           'filename':os.path.basename(self.samplesheet_file),
-           'error':'Metadata missing for following projects: {0}'.\
-                   format(non_matching_projects)}
-        )                                                                       # project names are not matching
+          append({
+            'column':'Sample_Project',
+            'line':'',
+            'filename':os.path.basename(self.samplesheet_file),
+            'error':'Metadata missing for following projects: {0}'.\
+                    format(non_matching_projects)
+          })                                                                    # project names are not matching
 
       # count sample and check difference
       for project in samplesheet_data.keys():
@@ -558,31 +561,33 @@ class Validate_project_and_samplesheet_metadata:
 
         if len(metadata_samples) != len(samplesheet_samples):
           errors.\
-          append(\
-            {'column':'Sample_ID',
-             'line':'',
-             'filename':os.path.basename(self.samplesheet_file),
-             'error':'Metadata files have {0} samples, samplesheet has {1} samples, for project {2}'.\
-                     format(len(metadata_samples),
-                            len(samplesheet_samples),
-                                project)}
-          )                                                                     # check for sample count mismatch
+            append({
+              'column':'Sample_ID',
+              'line':'',
+              'filename':os.path.basename(self.samplesheet_file),
+              'error':'Metadata files have {0} samples, samplesheet has {1} samples, for project {2}'.\
+                      format(
+                        len(metadata_samples),
+                        len(samplesheet_samples),
+                        project)
+            })                                                                  # check for sample count mismatch
         non_matching_samples = \
           list(samplesheet_samples.\
                difference(metadata_samples))
         if len(non_matching_samples)>0:
           errors.\
-          append(\
-            {'column':'Sample_ID',
-             'line':'',
-             'filename':os.path.basename(self.samplesheet_file),
-             'error':'Metadata missing for {0} samples for project {1}. Small list {2}'.\
-                     format(len(non_matching_samples),
-                            project,
-                            non_matching_samples \
-                            if len(non_matching_samples)<5 \
-                            else non_matching_samples[0:5])}
-          )                                                                     # printing top 5 non matching samples
+            append({
+              'column':'Sample_ID',
+              'line':'',
+              'filename':os.path.basename(self.samplesheet_file),
+              'error':'Metadata missing for {0} samples for project {1}. Small list {2}'.\
+                      format(
+                        len(non_matching_samples),
+                        project,
+                        non_matching_samples \
+                          if len(non_matching_samples)<5 \
+                            else non_matching_samples[0:5])
+            })                                                                  # printing top 5 non matching samples
 
       # count project user and email
       for project in metadata_data.keys():
@@ -590,16 +595,17 @@ class Validate_project_and_samplesheet_metadata:
         email = metadata_data.get(project).get('email')
         if len(users)>1 or len(email)>1:
           errors.\
-          append(\
-            {'column':'name / email_id',
-             'line':'',
-             'filename':' ,'.join([os.path.basename(metadata_file)
-                                    for metadata_file in self.metadata_files]),
-             'error':'Metadata files have {0} users and {1} email_ids, for project {2}'.\
-                     format(len(users),
-                            len(email),
-                            project)}
-          )                                                                     # check for project user info
+            append({
+              'column':'name / email_id',
+              'line':'',
+              'filename':' ,'.join([os.path.basename(metadata_file)
+                                     for metadata_file in self.metadata_files]),
+              'error':'Metadata files have {0} users and {1} email_ids, for project {2}'.\
+                      format(
+                        len(users),
+                        len(email),
+                        project)
+            })                                                                  # check for project user info
 
       return errors
     except:
