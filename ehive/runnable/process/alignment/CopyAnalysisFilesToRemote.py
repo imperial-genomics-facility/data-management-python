@@ -88,10 +88,11 @@ class CopyAnalysisFilesToRemote(IGFBaseProcess):
               temp_work_dir,
               os.path.basename(file)))                                          # copy dir to a temp dir
           dest_file_path=destination_output_path
-          for root,dir,files in os.walk(temp_work_dir):
-            os.chmod(
-              os.path.join(root,dir),
-              mode=0o775)
+          for root,dirs,files in os.walk(temp_work_dir):
+            for dir_name in dirs:
+              os.chmod(
+                os.path.join(root,dir_name),
+                mode=0o775)
             for file_name in files:
               os.chmod(
                 os.path.join(root,file_name),
