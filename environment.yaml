@@ -2,7 +2,7 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - python=3.6.0
+  - python=3.6.9
   - pip
   - pandas==0.24.2
   - pip:
