@@ -4,7 +4,7 @@ channels:
   - r
   - bioconda
 dependencies:
-  - python=3.6.0
+  - python=3.6.9
   - python-igraph==0.7.1.post6
   - louvain==0.6.1
   - r-base==3.4.1
