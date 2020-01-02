@@ -16,7 +16,7 @@ class ProjectAdaptor(BaseAdaptor):
     :param autosave: A toggle for autocommit, default True
     :returns: None
     '''
-    (project_data, project_attr_data)=\
+    (project_data, project_attr_data) = \
       self.divide_data_to_table_and_attribute(data=data)
     try:
       self.store_project_data(data=project_data)                                # store project
@@ -24,17 +24,18 @@ class ProjectAdaptor(BaseAdaptor):
         self.store_project_attributes(data=project_attr_data)                   # store project attributes
       if autosave:
         self.commit_session()                                                   # save changes to database
-    except:
+    except Exception as e:
       if autosave:
         self.rollback_session()
-      raise
-     
+      raise ValueError(
+              "Failed to store project and attribute records, error: {0}".\
+                format(e))
 
 
-  def divide_data_to_table_and_attribute(self, data, required_column='project_igf_id',
-                                         table_columns=None,
-                                         attribute_name_column='attribute_name',
-                                         attribute_value_column='attribute_value'):
+
+  def divide_data_to_table_and_attribute(
+        self, data, required_column='project_igf_id',table_columns=None,
+        attribute_name_column='attribute_name',attribute_value_column='attribute_value'):
     '''
     A method for separating data for Project and Project_attribute tables
 
@@ -47,15 +48,15 @@ class ProjectAdaptor(BaseAdaptor):
     '''
     try:
       if not isinstance(data, pd.DataFrame):
-        data=pd.DataFrame(data)
+        data = pd.DataFrame(data)
 
-      project_columns=\
-        self.get_table_columns(\
+      project_columns = \
+        self.get_table_columns(
           table_name=Project,
           excluded_columns=['project_id'])                                      # get required columns for project table
-      (project_df, project_attr_df)=\
+      (project_df, project_attr_df) = \
         BaseAdaptor.\
-        divide_data_to_table_and_attribute(\
+        divide_data_to_table_and_attribute(
           self,
           data=data,
           required_column=required_column,
@@ -64,8 +65,10 @@ class ProjectAdaptor(BaseAdaptor):
           attribute_value_column=attribute_value_column
         )
       return (project_df, project_attr_df)
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              "Failed to divide data to project table and attribute record, error: {0}".\
+                format(e))
 
 
   def store_project_data(self, data, autosave=False):
@@ -80,10 +83,11 @@ class ProjectAdaptor(BaseAdaptor):
       self.store_records(table=Project, data=data)
       if autosave:
         self.commit_session()                                                   # save changes to database
-    except:
+    except Exception as e:
       if autosave:
         self.rollback_session()
-      raise
+      raise ValueError(
+              "failed to store project data, error: {0}".format(e))
 
 
   def store_project_attributes(self, data, project_id='', autosave=False):
@@ -97,34 +101,35 @@ class ProjectAdaptor(BaseAdaptor):
     '''
     try:
       if not isinstance(data, pd.DataFrame):
-        data=pd.DataFrame(data)                                                 # convert data to dataframe
+        data = pd.DataFrame(data)                                               # convert data to dataframe
 
       if 'project_igf_id' in data.columns:                                      # map foreign key if project_igf_id is found
-        map_function=\
+        map_function = \
           lambda x: self.map_foreign_table_and_store_attribute(
-                      data=x,
-                      lookup_table=Project,
-                      lookup_column_name='project_igf_id',
-                      target_column_name='project_id'
-                    )                                                           # prepare the function
-        new_data=data.apply(map_function, axis=1)                               # map foreign key id
-        data=new_data                                                           # overwrite data   
+            data=x,
+            lookup_table=Project,
+            lookup_column_name='project_igf_id',
+            target_column_name='project_id' )                                   # prepare the function
+        new_data = data.apply(map_function, axis=1)                             # map foreign key id
+        data = new_data                                                         # overwrite data   
        
-      self.store_attributes(\
+      self.store_attributes(
         attribute_table=Project_attribute,
         linked_column='project_id',
         db_id=project_id, data=data)                                            # store attributes without auto commit
       if autosave:
         self.commit_session()                                                   # save changes to database
-    except:
+    except Exception as e:
       if autosave:
         self.rollback_session()
-      raise
+      raise ValueError(
+              "Failed to store project attribute data, error: {0}".\
+                format(e))
 
 
-  def assign_user_to_project(self, data, required_project_column='project_igf_id',
-                             required_user_column='email_id', 
-                             data_authority_column='data_authority', autosave=True):
+  def assign_user_to_project(
+        self, data, required_project_column='project_igf_id',required_user_column='email_id', 
+        data_authority_column='data_authority', autosave=True):
     '''
     Load data to ProjectUser table
     
@@ -141,8 +146,8 @@ class ProjectAdaptor(BaseAdaptor):
     '''
     try:
       if not isinstance(data, pd.DataFrame):
-        data=pd.DataFrame(data)
- 
+        data = pd.DataFrame(data)
+
       if not set((required_project_column,
                   required_user_column,
                   data_authority_column)).\
@@ -150,33 +155,33 @@ class ProjectAdaptor(BaseAdaptor):
         raise ValueError('Missing required value in input data {0}'.\
                          format(data.columns))
 
-      project_map_function=\
+      project_map_function = \
+        lambda x: self.map_foreign_table_and_store_attribute(
+          data=x,
+          lookup_table=Project,
+          lookup_column_name=required_project_column,
+          target_column_name='project_id' )                                     # prepare the function for Project id
+      new_data = data.apply(project_map_function, 1)                            # map project id
+      user_map_function = \
         lambda x: self.map_foreign_table_and_store_attribute(\
-                    data=x,
-                    lookup_table=Project,
-                    lookup_column_name=required_project_column,
-                    target_column_name='project_id'
-                  )                                                             # prepare the function for Project id
-      new_data=data.apply(project_map_function, 1)                              # map project id
-      user_map_function=\
-        lambda x: self.map_foreign_table_and_store_attribute(\
-                    data=x,
-                    lookup_table=User,
-                    lookup_column_name=required_user_column,
-                    target_column_name='user_id'
-                  )                                                             # prepare the function for User id
-      new_data=new_data.apply(user_map_function, 1)                             # map user id
-      data_authotiry_dict={True:'T'}                                            # create a mapping dictionary for data authority value
-      new_data[data_authority_column]=\
+          data=x,
+          lookup_table=User,
+          lookup_column_name=required_user_column,
+          target_column_name='user_id' )                                        # prepare the function for User id
+      new_data = new_data.apply(user_map_function, 1)                           # map user id
+      data_authotiry_dict = {True:'T'}                                          # create a mapping dictionary for data authority value
+      new_data[data_authority_column] = \
         new_data[data_authority_column].\
         map(data_authotiry_dict)                                                # add value for data authority
       self.store_records(table=ProjectUser, data=new_data)                      # store the project_user data
       if autosave:
         self.commit_session()                                                   # save changes to database
-    except:
+    except Exception as e:
       if autosave:
         self.rollback_session()
-      raise
+      raise ValueError(
+              "Failed to assign users to project, error: {0}".\
+                format(e))
 
 
   def check_project_records_igf_id(self, project_igf_id, target_column_name='project_igf_id'):
@@ -188,10 +193,11 @@ class ProjectAdaptor(BaseAdaptor):
     :returns: True if the file is present in db or False if its not
     '''
     try:
-      project_check=False
-      column=[column for column in Project.__table__.columns \
-                       if column.key == target_column_name][0]
-      project_obj=\
+      project_check = False
+      column = \
+        [column for column in Project.__table__.columns \
+          if column.key == target_column_name][0]
+      project_obj = \
         self.fetch_records_by_column(\
           table=Project,
           column_name=column,
@@ -201,8 +207,9 @@ class ProjectAdaptor(BaseAdaptor):
       if project_obj is not None:
         project_check=True
       return project_check
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              "Failed to check project records, error: {0}".format(e))
 
 
   def fetch_project_records_igf_id(self, project_igf_id, target_column_name='project_igf_id'):
@@ -214,17 +221,19 @@ class ProjectAdaptor(BaseAdaptor):
     :returns: Records from project table
     '''
     try:
-      column=[column for column in Project.__table__.columns \
-                       if column.key == target_column_name][0]
-      project=\
+      column = \
+        [column for column in Project.__table__.columns \
+           if column.key == target_column_name][0]
+      project = \
         self.fetch_records_by_column(\
           table=Project,
       	  column_name=column,
           column_id=project_igf_id,
       	  output_mode='one')
       return project  
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              "Failed to fetch project record, error: {0}".format(e))
 
 
   def get_project_user_info(self, output_mode='dataframe', project_igf_id=''):
@@ -239,15 +248,19 @@ class ProjectAdaptor(BaseAdaptor):
       if not hasattr(self, 'session'):
         raise AttributeError('Attribute session not found')
 
-      session=self.session
-      query=session.\
-            query(Project,
-                  User,
-                  ProjectUser.data_authority).\
-            join(ProjectUser,
-                 Project.project_id==ProjectUser.project_id).\
-            join(User,
-                 User.user_id==ProjectUser.user_id)
+      session = self.session
+      query = \
+        session.\
+          query(
+            Project,
+            User,
+            ProjectUser.data_authority).\
+          join(
+            ProjectUser,
+            Project.project_id==ProjectUser.project_id).\
+          join(
+            User,
+            User.user_id==ProjectUser.user_id)
       if project_igf_id:
         query=query.filter(Project.project_igf_id==project_igf_id)
 
@@ -256,8 +269,9 @@ class ProjectAdaptor(BaseAdaptor):
           query=query,
           output_mode=output_mode)
       return results
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              "Failed to get project user info, error: {0}".format(e))
 
 
   def check_existing_project_user(self,project_igf_id,email_id):
@@ -269,27 +283,32 @@ class ProjectAdaptor(BaseAdaptor):
     :returns: True if the file is present in db or False if its not
     '''
     try:
-      project_user_check=False
-      session=self.session
-      query=session.\
-            query(Project,
-                  User,
-                  ProjectUser.data_authority).\
-            join(ProjectUser,
-                 Project.project_id==ProjectUser.project_id).\
-            join(User,
-                 User.user_id==ProjectUser.user_id).\
-            filter(Project.project_igf_id==project_igf_id).\
-            filter(User.email_id==email_id)
-      results=\
-        self.fetch_records(\
+      project_user_check = False
+      session = self.session
+      query = \
+        session.\
+          query(
+            Project,
+            User,
+            ProjectUser.data_authority).\
+          join(
+            ProjectUser,
+            Project.project_id==ProjectUser.project_id).\
+          join(
+            User,
+            User.user_id==ProjectUser.user_id).\
+          filter(Project.project_igf_id==project_igf_id).\
+          filter(User.email_id==email_id)
+      results = \
+        self.fetch_records(
           query=query,
           output_mode='one_or_none')
       if results is not None:
         project_user_check=True
       return project_user_check
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              "Failed to check existing project user, error: {0}".format(e))
 
 
   def check_data_authority_for_project(self,project_igf_id):
@@ -300,23 +319,26 @@ class ProjectAdaptor(BaseAdaptor):
     :returns: True if data authority exists for project or false
     '''
     try:
-      project_user_check=False
-      session=self.session
-      query=session.\
-            query(Project).\
-            join(ProjectUser,
-                 Project.project_id==ProjectUser.project_id).\
-            filter(Project.project_igf_id==project_igf_id).\
-            filter(ProjectUser.data_authority=='T')
-      results=\
-        self.fetch_records(\
+      project_user_check = False
+      session = self.session
+      query = \
+        session.\
+          query(Project).\
+          join(
+            ProjectUser,
+            Project.project_id==ProjectUser.project_id).\
+          filter(Project.project_igf_id==project_igf_id).\
+          filter(ProjectUser.data_authority=='T')
+      results = \
+        self.fetch_records(
           query=query,
           output_mode='one_or_none')
       if results is not None:
         project_user_check=True
       return project_user_check
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              "Failed to check data authority record, error: {0}".format(e))
 
 
   def fetch_data_authority_for_project(self,project_igf_id):
@@ -327,25 +349,29 @@ class ProjectAdaptor(BaseAdaptor):
     :returns: A user object or None, if no entry found
     '''
     try:
-      project_user_check=False
-      session=self.session
-      query=session.\
-            query(User).\
-            join(ProjectUser,
-                 User.user_id==ProjectUser.user_id).\
-            join(Project,
-                 Project.project_id==ProjectUser.project_id).\
-            filter(Project.project_id==ProjectUser.project_id).\
-            filter(User.user_id==ProjectUser.user_id).\
-            filter(Project.project_igf_id==project_igf_id).\
-            filter(ProjectUser.data_authority=='T')
-      results=\
-        self.fetch_records(\
+      project_user_check = False
+      session = self.session
+      query = \
+        session.\
+          query(User).\
+          join(
+            ProjectUser,
+            User.user_id==ProjectUser.user_id).\
+          join(
+            Project,
+            Project.project_id==ProjectUser.project_id).\
+          filter(Project.project_id==ProjectUser.project_id).\
+          filter(User.user_id==ProjectUser.user_id).\
+          filter(Project.project_igf_id==project_igf_id).\
+          filter(ProjectUser.data_authority=='T')
+      results = \
+        self.fetch_records(
           query=query, \
           output_mode='one_or_none')
       return results
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+             "Failed to fetch data authority for project,error: {0}".format(e))
 
 
   def check_project_attributes(self, project_igf_id, attribute_name): 
@@ -357,23 +383,26 @@ class ProjectAdaptor(BaseAdaptor):
     :return A boolean value
     '''
     try:
-      project_attribute_check=False
-      session=self.session
-      query=session.\
-            query(Project).\
-            join(Project_attribute,
-                 Project.project_id==Project_attribute.project_id).\
-            filter(Project.project_igf_id==project_igf_id).\
-            filter(Project_attribute.attribute_name==attribute_name)
+      project_attribute_check = False
+      session = self.session
+      query = \
+        session.\
+          query(Project).\
+          join(
+            Project_attribute,
+            Project.project_id==Project_attribute.project_id).\
+          filter(Project.project_igf_id==project_igf_id).\
+          filter(Project_attribute.attribute_name==attribute_name)
       results=\
-        self.fetch_records(\
+        self.fetch_records(
           query=query,
           output_mode='one_or_none')
       if results is not None:
         project_attribute_check=True
       return project_attribute_check
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              "Failed to check project attribute records, error: {0}".format(e))
 
   def get_project_attributes(self, project_igf_id,linked_column_name='project_id',
                              attribute_name=''):
@@ -386,20 +415,22 @@ class ProjectAdaptor(BaseAdaptor):
     :returns dataframe of records
     '''
     try:
-      project=\
-        self.fetch_project_records_igf_id(project_igf_id=project_igf_id)
+      project = \
+        self.fetch_project_records_igf_id(
+          project_igf_id=project_igf_id)
 
-      project_attributes=\
+      project_attributes = \
         BaseAdaptor.\
-        get_attributes_by_dbid(\
-          self,
-          attribute_table=Project_attribute,
-          linked_table=Project,
-          linked_column_name=linked_column_name,
-          db_id=project.project_id )
+          get_attributes_by_dbid(
+            self,
+            attribute_table=Project_attribute,
+            linked_table=Project,
+            linked_column_name=linked_column_name,
+            db_id=project.project_id )
       return project_attributes
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              "Failed to get project attributes, error: {0}".format(e))
 
 
   def fetch_project_samples(self, project_igf_id,only_active=True,
@@ -413,19 +444,25 @@ class ProjectAdaptor(BaseAdaptor):
     :returns: Depends on the output_mode, a generator expression, dataframe or an object
     '''
     try:
-      query=self.session.\
-            query(Sample).\
-            join(Project,
-                 Project.project_id==Sample.project_id).\
-            filter(Project.project_id==Sample.project_id).\
-            filter(Project.project_igf_id==project_igf_id)
+      query = \
+        self.session.\
+          query(Sample).\
+          join(
+            Project,
+            Project.project_id==Sample.project_id).\
+          filter(Project.project_id==Sample.project_id).\
+          filter(Project.project_igf_id==project_igf_id)
       if only_active:
         query=query.filter(Sample.status=='ACTIVE')                                   # checking only active projects
 
-      results=self.fetch_records(query=query, output_mode=output_mode)
+      results = \
+        self.fetch_records(
+          query=query,
+          output_mode=output_mode)
       return results
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              "Failed to fetch project sample records, error: {0}".format(e))
 
 
   def count_project_samples(self,project_igf_id, only_active=True):
@@ -437,15 +474,16 @@ class ProjectAdaptor(BaseAdaptor):
     :returns: A int sample count
     '''
     try:
-      results_data=\
-        self.fetch_project_samples(\
+      results_data = \
+        self.fetch_project_samples(
           project_igf_id=project_igf_id,
           only_active=only_active,
           output_mode='dataframe')                                              # fetch samples as dataframe
       count=len(results_data.index)                                             # count dataframe row
       return count
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              "Failed to count project samples, error: {0}".format(e))
 
   def fetch_all_project_igf_ids(self,output_mode='dataframe'):
     '''
