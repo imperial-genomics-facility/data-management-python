@@ -45,3 +45,4 @@ dependencies:
     - multiqc==1.7
     - bioservices==1.5.2
     - cellbrowser==0.5.12
+    - spython
