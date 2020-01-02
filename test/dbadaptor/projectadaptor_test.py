@@ -127,6 +127,17 @@ class Projectadaptor_test2(unittest.TestCase):
     pa_results2=pa.fetch_data_authority_for_project(project_igf_id='IGFP0002_test_22-8-2017_rna')
     self.assertEqual(pa_results2, None)
     pa.close_session()
+  
+  def test_fetch_all_project_igf_ids(self):
+    pa = ProjectAdaptor(**{'session_class':self.session_class})
+    pa.start_session()
+    project_list = pa.fetch_all_project_igf_ids()
+    pa.close_session()
+    self.assertTrue('IGFP0002_test_22-8-2017_rna' in project_list['project_igf_id'].values)
+    self.assertTrue('IGFP0001_test_22-8-2017_rna' in project_list['project_igf_id'].values)
+    self.assertEqual(len(project_list['project_igf_id'].values), 2)
+
+
 
 if __name__ == '__main__':
   unittest.main()
