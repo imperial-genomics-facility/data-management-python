@@ -447,6 +447,26 @@ class ProjectAdaptor(BaseAdaptor):
     except:
       raise
 
+  def fetch_all_project_igf_ids(self,output_mode='dataframe'):
+    '''
+    A method for fetching a list of all project igf ids
+
+    :param output_mode: Output mode, default dataframe
+    '''
+    try:
+      query = \
+        self.session.\
+          query(Project.project_igf_id)
+      results = \
+        self.fetch_records(
+          query=query,
+          output_mode=output_mode)
+      return results
+    except Exception as e:
+      raise ValueError(
+              "Failed to fetch the list of all project igf ids, error: {0}".\
+              format(e))
+
 
   def project_experiments(self, format='dataframe', project_igf_id=''):
     pass
