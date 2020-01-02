@@ -29,8 +29,8 @@ def move_file(source_path,destinationa_path, force=False):
       os.makedirs(dir_path, mode=0o770)
 
     move(source_path, destinationa_path, copy_function=copy2)
-  except:
-    raise
+  except Exception as e:
+    raise ValueError("Failed to move file, error: {0}".format(e))
 
 
 def check_file_path(file_path):
@@ -43,8 +43,8 @@ def check_file_path(file_path):
   try:
     if not os.path.exists(file_path):
       raise IOError('Missing file path {0}'.format(file_path))
-  except:
-    raise
+  except Exception as e:
+    raise ValueError("Failed to check filepath, error: {0}".format(e))
 
 
 def list_remote_file_or_dirs(remote_server,remote_path,only_dirs=True,
@@ -89,17 +89,17 @@ def list_remote_file_or_dirs(remote_server,remote_path,only_dirs=True,
       output = stdout.read().decode('utf-8')
       error = stderr.read().decode('utf-8')
       client.close()
-    except:
+    except Exception as e:
       client.close()
-      raise
+      raise ValueError("Failed to connect to remote server, error: {0}".format(e))
 
     if error != '':
       raise ValueError('Remote command got following errors: {0}'.\
                        format(e))
 
     return output.strip().split('\n')
-  except:
-    raise
+  except Exception as e:
+    raise ValueError("Failed to list files from remote server, error: {0}".format(e))
 
 def copy_local_file(source_path,destinationa_path,cd_to_dest=True,force=False):
   '''
@@ -132,8 +132,8 @@ def copy_local_file(source_path,destinationa_path,cd_to_dest=True,force=False):
     copy2(source_path, destinationa_path, follow_symlinks=True)
     if cd_to_dest:
       os.chdir(current_dir)                                                     # change to original path after copy
-  except:
-    raise
+  except Exception as e:
+    raise ValueError("Failed to copy local file, error: {0}".format(e))
 
 
 def copy_remote_file(source_path,destinationa_path, source_address=None,
@@ -157,17 +157,28 @@ def copy_remote_file(source_path,destinationa_path, source_address=None,
            destination_address is None:
             raise ValueError('Required a remote source address or a destination address')
 
+        path_with_space_pattern = re.compile(r'\S+\s\S+')
+        if re.match(path_with_space_pattern,source_path):
+          source_path = source_path.replace(' ',r'\ ')                          # fix for space in source file path
+
         if source_address is not None:
-            source_path='{0}:{1}'.format(source_address,source_path)
+            source_path = \
+              '{0}:{1}'.format(
+                source_address,
+                source_path)
 
         if destination_address is not None:
-          dir_cmd=['ssh',
-                   destination_address,
-                   'mkdir',
-                   '-p',
-                   os.path.dirname(destinationa_path)]
+          dir_cmd = [
+            'ssh',
+            destination_address,
+            'mkdir',
+            '-p',
+            os.path.dirname(destinationa_path)]
           subprocess.check_call(dir_cmd)
-          destinationa_path='{0}:{1}'.format(destination_address,destinationa_path)
+          destinationa_path = \
+            '{0}:{1}'.format(
+              destination_address,
+              destinationa_path)
         else:
           dir_cmd=['mkdir',
                    '-p',
@@ -175,7 +186,7 @@ def copy_remote_file(source_path,destinationa_path, source_address=None,
           subprocess.check_call(dir_cmd)
 
         if copy_method == 'rsync':
-          cmd=['rsync']
+          cmd = ['rsync']
           if check_file:
             cmd.append('-c')                                                    # file check now optional
 
@@ -193,10 +204,10 @@ def copy_remote_file(source_path,destinationa_path, source_address=None,
             raise ValueError('copy method {0} is not supported'.\
                              format(copy_method))
 
-        proc=subprocess.Popen(cmd,stderr=subprocess.PIPE)
+        proc = subprocess.Popen(cmd,stderr=subprocess.PIPE)
         proc.wait()
         if proc.returncode !=0:                                                 # fetching error message for non zero exits
-          _,errs=proc.communicate()
+          _,errs = proc.communicate()
           if proc.returncode == 255:
             raise ValueError(\
               '{0}:{1}'.\
@@ -206,8 +217,8 @@ def copy_remote_file(source_path,destinationa_path, source_address=None,
             raise ValueError('Error while copying file to remote server {0}'.\
                              format(errs.decode('utf8')))
 
-    except:
-        raise
+    except Exception as e:
+        raise ValueError("Failed to copy remote file, error: {0}".format(e))
 
 
 def calculate_file_checksum(filepath, hasher='md5'):
@@ -228,8 +239,8 @@ def calculate_file_checksum(filepath, hasher='md5'):
         return file_checksum
       else:
         raise ValueError('hasher {0} is not supported'.format(hasher))
-  except:
-    raise
+  except Exception as e:
+    raise ValueError("Failed to check file checksum, error: {0}".format(e))
 
 
 def get_temp_dir(work_dir=None, prefix='temp',use_ephemeral_space=False):
@@ -263,8 +274,8 @@ def get_temp_dir(work_dir=None, prefix='temp',use_ephemeral_space=False):
     temp_dir=mkdtemp(prefix=prefix,
                      dir=work_dir)                                              # create a temp dir
     return temp_dir
-  except:
-    raise
+  except Exception as e:
+    raise ValueError("Failed to get temp dir, error: {0}".format(e))
 
 
 def remove_dir(dir_path,ignore_errors=True):
@@ -278,8 +289,8 @@ def remove_dir(dir_path,ignore_errors=True):
     if not os.path.isdir(dir_path):
       raise IOError('directory path {0} is not present'.format(dir_path))
     rmtree(dir_path,ignore_errors=ignore_errors)
-  except:
-    raise
+  except Exception as e:
+    raise ValueError("Failed to remove dir, error: {0}".format(e))
 
 def get_datestamp_label(datetime_str=None):
   '''
@@ -305,8 +316,8 @@ def get_datestamp_label(datetime_str=None):
                                          time_tuple.tm_mon,
                                          time_tuple.tm_mday)
     return datestamp
-  except:
-    raise
+  except Exception as e:
+    raise ValueError("Failed to get datestamp label, error: {0}".format(e))
 
 def preprocess_path_name(input_path):
   '''
@@ -333,8 +344,8 @@ def preprocess_path_name(input_path):
       output.append(path)                                                       # substitute from list of patterns
     output_path='/'.join(output)                                                # create output path
     return output_path
-  except:
-    raise
+  except Exception as e:
+    raise ValueError("Failed to preprocess path name, error: {0}".format(e))
 
 def get_file_extension(input_file):
   '''
@@ -347,8 +358,8 @@ def get_file_extension(input_file):
     output_suffix='.'.join(os.path.basename(input_file).\
                            split('.')[1:])                                      # get complete suffix for input file path
     return output_suffix
-  except:
-    raise
+  except Exception as e:
+    raise ValueError("Failed to get file extension, error: {0}".format(e))
 
 
 def prepare_file_archive(results_dirpath,output_file,gzip_output=True,
@@ -404,8 +415,8 @@ def prepare_file_archive(results_dirpath,output_file,gzip_output=True,
               tar.add(file_path,
                       arcname=os.path.relpath(file_path,
                                               start=results_dirpath))           # add files to archive if its not in the list
-  except:
-    raise
+  except Exception as e:
+    raise ValueError("Failed to prepare file archive, error: {0}".format(e))
 
 def _get_file_manifest_info(file_path,start_dir=None,md5_label='md5',
                             size_lavel='size',path_label='file_path'):
@@ -435,8 +446,8 @@ def _get_file_manifest_info(file_path,start_dir=None,md5_label='md5',
                       size_lavel:file_size
                      })                                                         # update file data
     return file_data
-  except:
-    raise
+  except Exception as e:
+    raise ValueError("Failed to get manifest info, error: {0}".format(e))
 
 
 def create_file_manifest_for_dir(results_dirpath,output_file,md5_label='md5',
@@ -506,5 +517,5 @@ def create_file_manifest_for_dir(results_dirpath,output_file,md5_label='md5',
                               sep=',',
                               encoding='utf-8',
                               index=False)                                      # write manifest csv file
-  except:
-    raise
+  except Exception as e:
+    raise ValueError("Failed to create manifest file, error: {0}".format(e))
