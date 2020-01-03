@@ -1,4 +1,13 @@
 #!/usr/bin/env python
+#
+########################################################################
+#
+# A script for reformatting metadata and samplesheet files
+# and copy them to the archive dir with additional year and month tags
+# For checking the usgae, run the script with -h flag
+#
+########################################################################
+#
 import argparse,os,re
 from datetime import datetime
 from igf_data.task_tracking.igf_slack import IGF_slack
