@@ -504,6 +504,7 @@ class Reformat_metadata_file:
         (row[self.expected_lanes] == '' or row[self.expected_lanes] == 0):
         row[self.expected_lanes] = self.default_expected_lanes
 
+
       return row
     except Exception as e:
       raise ValueError('Failed to reformat row: {0}, error: {1}'.format(row,e))
@@ -539,6 +540,9 @@ class Reformat_metadata_file:
           self.populate_metadata_values(row=x),
           axis=1,
           result_type='reduce')                                                 # update metadata info
+
+      if self.expected_lanes in data.columns:
+        data[self.expected_lanes] = data[self.expected_lanes].astype(int)       # expected_lanes should be int
 
       for field in self.metadata_columns:
         total_row_count = data[field].count()
