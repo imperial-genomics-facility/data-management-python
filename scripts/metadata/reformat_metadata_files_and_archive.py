@@ -35,7 +35,7 @@ if __name__=='__main__':
     reformatted_pattern = re.compile(r'\S+_reformatted.csv')
     year_tag = datetime.now().strftime('%Y')
     month_tag = datetime.now().strftime('%m_%Y')
-    for entry in os.listdir():
+    for entry in os.listdir(path=input_path):
       if os.path.isfile(entry) and \
          entry.endswith('.csv') and \
          not re.match(reformatted_pattern,entry):                               # looking at csv files and skipping reformatted files
