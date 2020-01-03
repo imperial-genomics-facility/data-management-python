@@ -542,7 +542,10 @@ class Reformat_metadata_file:
           result_type='reduce')                                                 # update metadata info
 
       if self.expected_lanes in data.columns:
-        data[self.expected_lanes] = data[self.expected_lanes].astype(int)       # expected_lanes should be int
+        data[self.expected_lanes] = \
+          data[self.expected_lanes].\
+            astype(float).\
+              astype(int)                                                       # expected_lanes should be int
 
       for field in self.metadata_columns:
         total_row_count = data[field].count()
