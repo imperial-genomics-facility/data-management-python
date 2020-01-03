@@ -71,7 +71,7 @@ if __name__=='__main__':
                 formatted_dest_path,
                 os.path.basename(output_file)),
               force=True)                                                       # archive formatted samplesheet file
-              samplesheet_counter += 1
+            samplesheet_counter += 1
           except Exception as e:
             message = \
               "Failed to reformat samplesheet file {0}, error: {1}".\
@@ -97,7 +97,7 @@ if __name__=='__main__':
                 formatted_dest_path,
                 os.path.basename(output_file)),
               force=True)                                                       # archive formatted metadata file
-              metadata_counter += 1
+            metadata_counter += 1
           except Exception as e:
             message = \
               "Failed to reformat metadata file {0}, error: {1}".\
