@@ -35,6 +35,8 @@ if __name__=='__main__':
     reformatted_pattern = re.compile(r'\S+_reformatted.csv')
     year_tag = datetime.now().strftime('%Y')
     month_tag = datetime.now().strftime('%m_%Y')
+    metadata_counter = 0
+    samplesheet_counter = 0
     for entry in os.listdir(path=input_path):
       if os.path.isfile(entry) and \
          entry.endswith('.csv') and \
@@ -69,6 +71,7 @@ if __name__=='__main__':
                 formatted_dest_path,
                 os.path.basename(output_file)),
               force=True)                                                       # archive formatted samplesheet file
+              samplesheet_counter += 1
           except Exception as e:
             message = \
               "Failed to reformat samplesheet file {0}, error: {1}".\
@@ -94,6 +97,7 @@ if __name__=='__main__':
                 formatted_dest_path,
                 os.path.basename(output_file)),
               force=True)                                                       # archive formatted metadata file
+              metadata_counter += 1
           except Exception as e:
             message = \
               "Failed to reformat metadata file {0}, error: {1}".\
@@ -101,6 +105,12 @@ if __name__=='__main__':
             slack_obj.post_message_to_channel(
               message=message,
               reaction='fail')
+    message = \
+      "Reformat {0} metadata file and {1} samplesheet".\
+        format(metadata_counter,samplesheet_counter)
+    slack_obj.post_message_to_channel(
+      message=message,
+      reaction='pass')
     remove_dir(temp_dir)
 
   except Exception as e:
