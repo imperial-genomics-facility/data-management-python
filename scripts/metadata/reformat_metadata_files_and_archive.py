@@ -38,6 +38,7 @@ if __name__=='__main__':
     metadata_counter = 0
     samplesheet_counter = 0
     for entry in os.listdir(path=input_path):
+      entry = os.path.basename(entry)
       if os.path.isfile(entry) and \
          entry.endswith('.csv') and \
          not re.match(reformatted_pattern,entry):                               # looking at csv files and skipping reformatted files
