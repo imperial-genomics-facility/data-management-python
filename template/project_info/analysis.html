@@ -24,7 +24,7 @@
         $.getJSON("{{ analysisPlotFile }}", function(jsonData) {
           var data = new google.visualization.DataTable(jsonData);
           var options = {
-            title: 'Charges of subatomic particles',
+            title: 'Alignment stats',
             legend: { position: 'top', maxLines: 2 },
             colors:['#4575b4','#74add1','#abd9e9','#d73027','#f46d43','#fdae61','#e0f3f8','#fee090','#ffffbf'],
             legend: {position: 'right',
@@ -151,21 +151,33 @@
               <div class="button" id="toolbar_div"></div>
               <div id="chart_div" style="width: 800px; height: 400px;"></div>
           </div>
-          <!--div>
+          <div>
+            <h5>Alignment summary</h5>
             <input class="button" type="button" value="Alignment stats" onclick=drawChart(['SAMPLE_ID','SAMTOOLS_STATS_raw_total_sequences','SAMTOOLS_STATS_reads_mapped','SAMTOOLS_STATS_reads_duplicated','SAMTOOLS_STATS_reads_mapped_and_paired','SAMTOOLS_STATS_reads_unmapped','SAMTOOLS_STATS_non_primary_alignments']) />
-            {% if PlotRnaData %}
-            <input class="button" type="button" value="RNA-Seq stats" onclick=drawChart( {{ RnaColumnsList }} ) />
-            {% endif %}
-            {% if PlotCellrangerData %}
-            <input class="button" type="button" value="Singlecell stats" onclick=drawChart( {{ CellrangerColumnsList }} ) />
-            {% endif %}
-            {% if PlotChipData %}
-            <input class="button" type="button" value="ChIP-Seq stats" onclick=drawChart( {{ ChipColumnsList }} ) />
-            {% endif %}
-            {% if PlotAtacData %}
-            <input class="button" type="button" value="ATAC-Seq stats" onclick=drawChart( {{ AtacColumnsList }} ) />
-            {% endif %}
-          </div-->
+          </div>
+          <p />
+          <div>
+            <h5>RNA-Seq summary</h5>
+             <input class="button" type="button" value="Gene cov bias" onclick=drawChart(['SAMPLE_ID','CollectRnaSeqMetrics_MEDIAN_5PRIME_BIAS','CollectRnaSeqMetrics_MEDIAN_3PRIME_BIAS','CollectRnaSeqMetrics_MEDIAN_5PRIME_TO_3PRIME_BIAS']) />
+             <input class="button" type="button" value="RNA-Seq assigned bases" onclick=drawChart(['SAMPLE_ID','CollectRnaSeqMetrics_CODING_BASES','CollectRnaSeqMetrics_INTERGENIC_BASES','CollectRnaSeqMetrics_INTRONIC_BASES','CollectRnaSeqMetrics_RIBOSOMAL_BASES','CollectRnaSeqMetrics_UTR_BASES']) />
+          </div>
+          <p />
+          <div>
+            <h5>CHIP-Seq summary</h5>
+            <input class="button" type="button" value="Cross-correlation" onclick=drawChart(['SAMPLE_ID','PPQT_Normalized_SCC_NSC','PPQT_Relative_SCC_RSC']) />
+          </div>
+          <p />
+          <div>
+           <h5>Single cell summary</h5>
+           <input class="button" type="button" value="Estimated number of cells" onclick=drawChart(['SAMPLE_ID','CELLRANGER_Estimated_Number_of_Cells']) />
+           <input class="button" type="button" value="Fraction reads in cells (%)" onclick=drawChart(['SAMPLE_ID','CELLRANGER_Fraction_Reads_in_Cells']) />
+           <input class="button" type="button" value="Mean reads per cell" onclick=drawChart(['SAMPLE_ID','CELLRANGER_Mean_Reads_per_Cell']) />
+           <input class="button" type="button" value="Median genes per cell" onclick=drawChart(['SAMPLE_ID','CELLRANGER_Median_Genes_per_Cell']) />
+           <input class="button" type="button" value="Median UMI counts per cell" onclick=drawChart(['SAMPLE_ID','CELLRANGER_Median_UMI_Counts_per_Cell']) />
+           <input class="button" type="button" value="Read assignments (%)" onclick=drawChart(['SAMPLE_ID','CELLRANGER_Reads_Mapped_Antisense_to_Gene','CELLRANGER_Reads_Mapped_Confidently_to_Exonic_Regions','CELLRANGER_Reads_Mapped_Confidently_to_Genome','CELLRANGER_Reads_Mapped_Confidently_to_Intergenic_Regions','CELLRANGER_Reads_Mapped_Confidently_to_Intronic_Regions','CELLRANGER_Reads_Mapped_Confidently_to_Transcriptome','CELLRANGER_Reads_Mapped_to_Genome']) />
+          </div>
+          <p />
+
           <h2>Analysis QC reports</h2>
            <p>List of samples and analysis reports</p>
            <div id="dashboard_div">
