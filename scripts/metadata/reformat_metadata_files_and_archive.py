@@ -38,11 +38,13 @@ if __name__=='__main__':
     metadata_counter = 0
     samplesheet_counter = 0
     for entry in os.listdir(path=input_path):
-      entry = os.path.basename(entry)
+      entry = os.path.join(input_path,entry)                                    # full path for file entry
       if os.path.isfile(entry) and \
          entry.endswith('.csv') and \
-         not re.match(reformatted_pattern,entry):                               # looking at csv files and skipping reformatted files
-        output_file = entry.replace('.csv','_reformatted.csv')                  # name for reformatted files
+         not re.match(reformatted_pattern,os.path.basename(entry)):             # looking at csv files and skipping reformatted files
+        output_file = \
+          os.path.basename(entry).\
+            replace('.csv','_reformatted.csv')                                  # name for reformatted files
         dest_path = \
           os.path.join(
             archive_dir,
@@ -63,8 +65,10 @@ if __name__=='__main__':
               reformat_raw_samplesheet_file(
                 output_file=output_file)                                        # reformat samplesheet data
             copy_local_file(
-              os.path.join(input_path,entry),
-              os.path.join(raw_dest_path,entry),
+              entry,
+              os.path.join(
+                raw_dest_path,
+                os.path.basename(entry)),
               force=True)                                                       # archive raw samplesheet file
             copy_local_file(
               output_file,
@@ -89,8 +93,10 @@ if __name__=='__main__':
               reformat_raw_metadata_file(
                 output_file=output_file)                                        # reformat metadata file
             copy_local_file(
-              os.path.join(input_path,entry),
-              os.path.join(raw_dest_path,entry),
+              entry,
+              os.path.join(
+                raw_dest_path,
+                os.path.basename(entry)),
               force=True)                                                       # archive raw metadata file
             copy_local_file(
               output_file,
