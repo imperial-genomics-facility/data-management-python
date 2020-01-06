@@ -1,6 +1,6 @@
 import os
 from spython.main import Client
-from igf_data.utils.fileutils import check_file_path,copy_local_file,get_temp_dir
+from igf_data.utils.fileutils import check_file_path,copy_local_file,get_temp_dir,remove_dir
 
 def singularity_run(image_path,path_bind,args_list,return_results=True):
   '''
@@ -31,6 +31,8 @@ def singularity_run(image_path,path_bind,args_list,return_results=True):
       bind='{0}:/tmp'.format(path_bind),
       args=args,
       return_result=return_results)
+    remove_dir(temp_dir)                                                        # remove copied image after run
   except Exception as e:
-    raise ValueError('Failed to run image {0}, error: {1}'.\
-                     format(image_path,e))
+    raise ValueError(
+            'Failed to run image {0}, error: {1}'.\
+              format(image_path,e))

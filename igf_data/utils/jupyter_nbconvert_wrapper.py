@@ -79,6 +79,7 @@ def nbconvert_execute_in_singularity(image_path,ipynb_path,input_list,output_pat
       raise ValueError(
               "Failed to copy file {0}, error: {1}".\
                 format(output,e))
+    remove_dir(tmp_dir)
   except Exception as e:
     raise ValueError(
             "Failed to run nbconvert in singularity, error: {0}".\
