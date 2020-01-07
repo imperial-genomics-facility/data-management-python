@@ -4,7 +4,8 @@ from igf_data.utils.singularity_run_wrapper import singularity_run
 from igf_data.utils.fileutils import get_temp_dir,remove_dir,check_file_path,copy_local_file
 
 def nbconvert_execute_in_singularity(image_path,ipynb_path,input_list,output_path,output_format='html',
-                                     output_file_list=None,timeout=600,kernel='python3',allow_errors=False):
+                                     output_file_list=None,timeout=600,kernel='python3',
+                                     use_ephemeral_space=False,allow_errors=False):
   '''
   A function for running jupyter nbconvert within singularity containers
 
@@ -17,6 +18,7 @@ def nbconvert_execute_in_singularity(image_path,ipynb_path,input_list,output_pat
   :param timeout: Timeout setting for notebook execution, default 600s
   :param kernel: Kernel name for notebook execution, default python3
   :param allow_errors: A toggle for running notebook with errors, default False
+  :param use_ephemeral_space: Toggle for using ephemeral space for temp dir, default False
   '''
   try:
     check_file_path(image_path)
@@ -24,7 +26,7 @@ def nbconvert_execute_in_singularity(image_path,ipynb_path,input_list,output_pat
     if not isinstance(input_list,list) and \
        len(input_list)==0:
        raise ValueError("Missing input files for notebook run")
-    tmp_dir = get_temp_dir()                                                    # this will be mounted on container on /tmp
+    tmp_dir = get_temp_dir(use_ephemeral_space=use_ephemeral_space)             # this will be mounted on container on /tmp
     tmp_input_list = list()
     for f in input_list:
       check_file_path(f)

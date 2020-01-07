@@ -2,7 +2,7 @@ import os
 from spython.main import Client
 from igf_data.utils.fileutils import check_file_path,copy_local_file,get_temp_dir,remove_dir
 
-def singularity_run(image_path,path_bind,args_list,return_results=True):
+def singularity_run(image_path,path_bind,args_list,return_results=True,use_ephemeral_space=False):
   '''
   A wrapper module for running singularity based containers
 
@@ -10,11 +10,12 @@ def singularity_run(image_path,path_bind,args_list,return_results=True):
   :param path_bind: Path to bind to singularity /tmp dir
   :param args_list: List of args for singulatiy run
   :param return_results: Return singulatiy run results, default True
+  :param use_ephemeral_space: Toggle for using ephemeral space for temp dir, default False
   '''
   try:
     check_file_path(image_path)
     check_file_path(path_bind)
-    temp_dir = get_temp_dir()
+    temp_dir = get_temp_dir(use_ephemeral_space=use_ephemeral_space)
     temp_image_path = \
       os.path.join(
         temp_dir,
