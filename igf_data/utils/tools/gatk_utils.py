@@ -121,6 +121,8 @@ class GATK_tools:
         quote(self.gatk_exe),
         "ApplyBQSR",
         "--bqsr-recal-file",quote(bqsr_recal_file),
+        "--create-output-bam-index",
+        "--emit-original-quals",
         "-I",quote(input_bam),
         "-O",quote(temp_output),
         "--reference",quote(self.ref_fasta),
