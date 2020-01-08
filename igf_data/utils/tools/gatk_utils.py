@@ -9,11 +9,14 @@ class GATK_tools:
   :param gatk_exe: Gatk exe path
   :param java_param: Java parameter, default '-XX:ParallelGCThreads=1 -Xmx4g'
   :param ref_fasta: Input reference fasta filepath
+  :param use_ephemeral_space: A toggle for temp dir settings, default False
   '''
-  def __init__(self,gatk_exe,ref_fasta,java_param='-XX:ParallelGCThreads=1 -Xmx4g'):
+  def __init__(self,gatk_exe,ref_fasta,use_ephemeral_space=False,
+               java_param='-XX:ParallelGCThreads=1 -Xmx4g'):
     self.gatk_exe = gatk_exe
     self.java_param = java_param
     self.ref_fasta = ref_fasta
+    self.use_ephemeral_space = use_ephemeral_space
 
   def _run_gatk_checks(self):
     '''
@@ -41,7 +44,8 @@ class GATK_tools:
     try:
       self._run_gatk_checks()                                                   # run initial checks
       check_file_path(input_bam)
-      temp_dir = get_temp_dir()                                                 # get temp dir
+      temp_dir = \
+        get_temp_dir(use_ephemeral_space=self.use_ephemeral_space)              # get temp dir
       temp_output = \
         os.path.join(
           temp_dir,
@@ -96,7 +100,8 @@ class GATK_tools:
       self._run_gatk_checks()                                                   # run initial checks
       check_file_path(input_bam)
       check_file_path(bqsr_recal_file)
-      temp_dir = get_temp_dir()                                                 # get temp dir
+      temp_dir = \
+        get_temp_dir(use_ephemeral_space=self.use_ephemeral_space)              # get temp dir
       temp_output = \
         os.path.join(
           temp_dir,
@@ -138,7 +143,8 @@ class GATK_tools:
       self._run_gatk_checks()                                                   # run initial checks
       check_file_path(before_report_file)
       check_file_path(after_report_file)
-      temp_dir = get_temp_dir()                                                 # get temp dir
+      temp_dir = \
+        get_temp_dir(use_ephemeral_space=self.use_ephemeral_space)              # get temp dir
       temp_output = \
         os.path.join(
           temp_dir,
@@ -179,9 +185,12 @@ class GATK_tools:
       self._run_gatk_checks()                                                   # run initial checks
       check_file_path(input_bam)
       check_file_path(dbsnp_vcf)
-      temp_dir = get_temp_dir()                                                 # get temp dir
-      temp_output = os.path.join(temp_dir,
-                               os.path.basename(output_vcf_path))
+      temp_dir = \
+        get_temp_dir(use_ephemeral_space=self.use_ephemeral_space)              # get temp dir
+      temp_output = \
+        os.path.join(
+          temp_dir,
+          os.path.basename(output_vcf_path))
       gatk_cmd = [
         quotes(self.gatk_exe),
         "HaplotypeCaller",
