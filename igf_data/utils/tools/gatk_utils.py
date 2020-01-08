@@ -62,16 +62,16 @@ class GATK_tools:
       if known_snp_sites is not None:
         check_file_path(known_snp_sites)
         gatk_cmd.\
-          append(
+          extend([
             "--known-sites",
-            quote(known_snp_sites))
+            quote(known_snp_sites)])
 
       if known_indel_sites:
         check_file_path(known_indel_sites)
         gatk_cmd.\
-          append(
+          extend([
             "--known-sites",
-            quote(known_indel_sites))
+            quote(known_indel_sites)])
 
       if dry_run:
         return gatk_cmd
@@ -209,7 +209,7 @@ class GATK_tools:
         "--dbsnp",quote(dbsnp_vcf),
         "--java-options",quote(self.java_param)]
       if emit_gvcf:
-        gatk_cmd.append("--emit-ref-confidence","GVCF")
+        gatk_cmd.extend(["--emit-ref-confidence","GVCF"])
 
       if dry_run:
         return gatk_cmd
