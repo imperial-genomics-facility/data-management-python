@@ -10,7 +10,7 @@ class GATK_tools:
   :param java_param: Java parameter, default '-XX:ParallelGCThreads=1 -Xmx4g'
   :param ref_fasta: Input reference fasta filepath
   '''
-  def __init(self,gatk_exe,ref_fasta,java_param='-XX:ParallelGCThreads=1 -Xmx4g'):
+  def __init__(self,gatk_exe,ref_fasta,java_param='-XX:ParallelGCThreads=1 -Xmx4g'):
     self.gatk_exe = gatk_exe
     self.java_param = java_param
     self.ref_fasta = ref_fasta
