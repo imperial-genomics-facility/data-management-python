@@ -31,7 +31,7 @@ class GATK_tools:
                 format(e))
 
   def run_BaseRecalibrator(self,input_bam,output_table,known_snp_sites=None,
-                           known_indel_sites=None,force=False,dry_run=False
+                           known_indel_sites=None,force=False,dry_run=False,
                            gatk_param_list=None:
     '''
     A method for running GATK BaseRecalibrator
@@ -104,6 +104,7 @@ class GATK_tools:
     :param output_bam_path: A bam output file
     :param force: Overwrite output file, if force is True
     :param dry_run: Return GATK command, if its true, default False
+    :param gatk_param_list: List of additional params for BQSR, default None
     :returns: GATK commandline
     '''
     try:
@@ -145,7 +146,7 @@ class GATK_tools:
                 format(e))
 
   def run_AnalyzeCovariates(self,before_report_file,after_report_file,output_pdf_path,
-                            force=False,dry_run=False,gatk_param_list):
+                            force=False,dry_run=False,gatk_param_list=None):
     '''
     A method for running GATK AnalyzeCovariates tool
     
@@ -154,6 +155,7 @@ class GATK_tools:
     :param output_pdf_path: An output pdf filepath
     :param force: Overwrite output file, if force is True
     :param dry_run: Return GATK command, if its true, default False
+    :param gatk_param_list: List of additional params for BQSR, default None
     :returns: GATK commandline
     '''
     try:
@@ -204,6 +206,7 @@ class GATK_tools:
     :param emit_gvcf: A toggle for GVCF generation, default True
     :param force: Overwrite output file, if force is True
     :param dry_run: Return GATK command, if its true, default False
+    :param gatk_param_list: List of additional params for BQSR, default None
     :returns: GATK commandline
     '''
     try:
