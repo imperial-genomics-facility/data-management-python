@@ -123,6 +123,7 @@ class GATK_tools:
         "--bqsr-recal-file",quote(bqsr_recal_file),
         "-I",quote(input_bam),
         "-O",quote(temp_output),
+        "--reference",quote(self.ref_fasta),
         "--java-options",quote(self.java_param)]
       if gatk_param_list is not None and \
          isinstance(gatk_param_list,list) and \
