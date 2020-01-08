@@ -25,8 +25,10 @@ class GATK_tools:
     try:
       check_file_path(self.gatk_exe)
       check_file_path(self.ref_fasta)
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              "Failed to run GATK checks, error: {0}".\
+                format(e))
 
   def run_BaseRecalibrator(self,input_bam,output_table,known_snp_sites=None,
                            known_indel_sites=None,force=False,dry_run=False):
@@ -81,8 +83,10 @@ class GATK_tools:
         force=force)                                                            # copy output file
       remove_dir(temp_dir)                                                      # remove temp dir
       return gatk_cmd
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              "Failed to run GATK BaseRecalibrator, error: {0}".\
+                format(e))
 
   def run_ApplyBQSR(self,bqsr_recal_file,input_bam,output_bam_path,force=False,
                     dry_run=False):
@@ -124,8 +128,10 @@ class GATK_tools:
         force=force)
       remove_dir(temp_dir)
       return gatk_cmd
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              "Failed to run GATK ApplyBQSR, error: {0}".\
+                format(e))
 
   def run_AnalyzeCovariates(self,before_report_file,after_report_file,output_pdf_path,
                             force=False,dry_run=False):
@@ -166,8 +172,10 @@ class GATK_tools:
         force=force)
       remove_dir(temp_dir)
       return gatk_cmd
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              "Failed to run GATK AnalyzeCovariates, error: {0}".\
+                format(e))
 
   def run_HaplotypeCaller(self,input_bam,output_vcf_path,dbsnp_vcf,emit_gvcf=True,
                           force=False,dry_run=False):
@@ -213,8 +221,10 @@ class GATK_tools:
         force=force)
       remove_dir(temp_dir)
       return gatk_cmd
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              "Failed to run GATK HaplotypeCaller, error: {0}".\
+                format(e))
 
 
 
