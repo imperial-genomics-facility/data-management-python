@@ -32,7 +32,7 @@ class GATK_tools:
 
   def run_BaseRecalibrator(self,input_bam,output_table,known_snp_sites=None,
                            known_indel_sites=None,force=False,dry_run=False,
-                           gatk_param_list=None:
+                           gatk_param_list=None):
     '''
     A method for running GATK BaseRecalibrator
     
