@@ -31,7 +31,8 @@ class GATK_tools:
                 format(e))
 
   def run_BaseRecalibrator(self,input_bam,output_table,known_snp_sites=None,
-                           known_indel_sites=None,force=False,dry_run=False):
+                           known_indel_sites=None,force=False,dry_run=False
+                           gatk_param_list=None:
     '''
     A method for running GATK BaseRecalibrator
     
@@ -41,6 +42,7 @@ class GATK_tools:
     :param known_indel_sites: Known indel sites (e.g.Mills_and_1000G_gold_standard indels vcf), default None
     :param force: Overwrite output file, if force is True
     :param dry_run: Return GATK command, if its true, default False
+    :param gatk_param_list: List of additional params for BQSR, default None
     :returns: GATK commandline
     '''
     try:
@@ -72,7 +74,10 @@ class GATK_tools:
           extend([
             "--known-sites",
             quote(known_indel_sites)])
-
+      if gatk_param_list is not None and \
+         isinstance(gatk_param_list,list) and \
+         len(gatk_param_list) > 0:
+        gatk_cmd.extend(gatk_param_list)                                        # additional params
       gatk_cmd = ' '.join(gatk_cmd)
       if dry_run:
         return gatk_cmd
@@ -90,7 +95,7 @@ class GATK_tools:
                 format(e))
 
   def run_ApplyBQSR(self,bqsr_recal_file,input_bam,output_bam_path,force=False,
-                    dry_run=False):
+                    dry_run=False,gatk_param_list=None):
     '''
     A method for running GATK ApplyBQSR
     
@@ -114,11 +119,15 @@ class GATK_tools:
       gatk_cmd = [
         quote(self.gatk_exe),
         "ApplyBQSR",
-        "--emit_original_quals",
         "--bqsr-recal-file",quote(bqsr_recal_file),
         "-I",quote(input_bam),
         "-O",quote(temp_output),
         "--java-options",quote(self.java_param)]
+      if gatk_param_list is not None and \
+         isinstance(gatk_param_list,list) and \
+         len(gatk_param_list) > 0:
+        gatk_cmd.extend(gatk_param_list)                                        # additional params
+
       gatk_cmd = ' '.join(gatk_cmd)
       if dry_run:
         return gatk_cmd
@@ -136,7 +145,7 @@ class GATK_tools:
                 format(e))
 
   def run_AnalyzeCovariates(self,before_report_file,after_report_file,output_pdf_path,
-                            force=False,dry_run=False):
+                            force=False,dry_run=False,gatk_param_list):
     '''
     A method for running GATK AnalyzeCovariates tool
     
@@ -164,6 +173,10 @@ class GATK_tools:
         "--after-report-file",quote(after_report_file),
         "--plots-report-file",quote(temp_output),
         "--java-options",quote(self.java_param)]
+      if gatk_param_list is not None and \
+         isinstance(gatk_param_list,list) and \
+         len(gatk_param_list) > 0:
+        gatk_cmd.extend(gatk_param_list)                                        # additional params
       gatk_cmd = ' '.join(gatk_cmd)
       if dry_run:
         return gatk_cmd
@@ -181,7 +194,7 @@ class GATK_tools:
                 format(e))
 
   def run_HaplotypeCaller(self,input_bam,output_vcf_path,dbsnp_vcf,emit_gvcf=True,
-                          force=False,dry_run=False):
+                          force=False,dry_run=False,gatk_param_list=None):
     '''
     A method for running GATK HaplotypeCaller
     
@@ -213,6 +226,10 @@ class GATK_tools:
         "--java-options",quote(self.java_param)]
       if emit_gvcf:
         gatk_cmd.extend(["--emit-ref-confidence","GVCF"])
+      if gatk_param_list is not None and \
+         isinstance(gatk_param_list,list) and \
+         len(gatk_param_list) > 0:
+        gatk_cmd.extend(gatk_param_list)                                        # additional params
       gatk_cmd = ' '.join(gatk_cmd)
       if dry_run:
         return gatk_cmd
