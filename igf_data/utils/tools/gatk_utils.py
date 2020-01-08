@@ -73,10 +73,11 @@ class GATK_tools:
             "--known-sites",
             quote(known_indel_sites)])
 
+      gatk_cmd = ' '.join(gatk_cmd)
       if dry_run:
         return gatk_cmd
 
-      subprocess.check_call(gatk_cmd)                                           # run gatk cmd
+      subprocess.check_call(gatk_cmd,shell=True)                                # run gatk cmd
       copy_local_file(
         source_path=temp_output,
         destinationa_path=output_table,
@@ -118,10 +119,11 @@ class GATK_tools:
         "-I",quote(input_bam),
         "-O",quote(temp_output),
         "--java-options",quote(self.java_param)]
+      gatk_cmd = ' '.join(gatk_cmd)
       if dry_run:
         return gatk_cmd
 
-      subprocess.check_call(gatk_cmd)
+      subprocess.check_call(gatk_cmd,shell=True)
       copy_local_file(
         source_path=temp_output,
         destinationa_path=output_bam_path,
@@ -162,10 +164,11 @@ class GATK_tools:
         "--after-report-file",quote(after_report_file),
         "--plots-report-file",quote(temp_output),
         "--java-options",quote(self.java_param)]
+      gatk_cmd = ' '.join(gatk_cmd)
       if dry_run:
         return gatk_cmd
 
-      subprocess.check_call(gatk_cmd)
+      subprocess.check_call(gatk_cmd,shell=True)
       copy_local_file(
         source_path=temp_output,
         destinationa_path=output_pdf_path,
@@ -210,11 +213,11 @@ class GATK_tools:
         "--java-options",quote(self.java_param)]
       if emit_gvcf:
         gatk_cmd.extend(["--emit-ref-confidence","GVCF"])
-
+      gatk_cmd = ' '.join(gatk_cmd)
       if dry_run:
         return gatk_cmd
 
-      subprocess.check_call(gatk_cmd)
+      subprocess.check_call(gatk_cmd,shell=True)
       copy_local_file(
         source_path=temp_output,
         destinationa_path=output_vcf_path,
