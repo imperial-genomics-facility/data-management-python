@@ -14,6 +14,7 @@ class RunGATK(IGFBaseProcess):
         'options':None,
         'force_overwrite':True,
         'hc_gvcf':1,
+        'analysis_files':[],
         'gatk_allowed_commands':['BaseRecalibrator',
                                  'ApplyBQSR',
                                  'AnalyzeCovariates',
@@ -38,6 +39,7 @@ class RunGATK(IGFBaseProcess):
       reference_dbsnp_type = self.param_required('reference_dbsnp_type')
       reference_indel_type = self.param_required('reference_indel_type')
       reference_fasta_type = self.param_required('reference_fasta_type')
+      analysis_files = self.param_required('analysis_files')
       base_work_dir = self.param_requiredd('base_work_dir')
       java_param = self.param_required('java_param')
       force_overwrite = self.param('force_overwrite')
@@ -88,9 +90,13 @@ class RunGATK(IGFBaseProcess):
               known_snp_sites=dbsnp_vcf,
               known_indel_sites=indel_vcf,
               force=force_overwrite)
+        if analysis_files and \
+           isinstance(analysis_files,list):
+          analysis_files.append(output_table)                                   # adding to analysis output for multiqc
         self.param(
           'dataflow_params',
-          {'baseRecalibrator_table':output_table})                              # pass on bqsr output list
+          {'baseRecalibrator_table':output_table,
+           'analysis_files':analysis_files})                                    # pass on bqsr output list
 
       elif gatk_command == 'ApplyBQSR':
         bqsr_recal_file = self.param_required('bqsr_recal_file')
