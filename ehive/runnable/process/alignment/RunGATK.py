@@ -13,12 +13,12 @@ class RunGATK(IGFBaseProcess):
         'java_param':'-XX:ParallelGCThreads=1 -Xmx4g',
         'options':None,
         'force_overwrite':True,
-        'hc_gvcf':True,
+        'hc_gvcf':1,
         'gatk_allowed_commands':['BaseRecalibrator',
                                  'ApplyBQSR',
                                  'AnalyzeCovariates',
                                  'HaplotypeCaller'
-                                ]
+                                ],
       })
     return params_dict
 
@@ -139,10 +139,13 @@ class RunGATK(IGFBaseProcess):
       elif gatk_command == 'HaplotypeCaller':
         input_bam = self.param_required('input_bam')
         emit_gvcf = self.param('hc_gvcf')
+        if emit_gvcf and \
+           emit_gvcf == 0:
+           emit_gvcf = False
         output_vcf_path = \
           os.path.join(
             work_dir,
-            '{0}_{1}.g.vcf'.\
+            '{0}_{1}.g.vcf.gz'.\
               format(
                 os.path.basename(before_report_file).\
                   replace('.bam',''),
