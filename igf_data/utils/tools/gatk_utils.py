@@ -14,9 +14,12 @@ class GATK_tools:
   def __init__(self,gatk_exe,ref_fasta,use_ephemeral_space=False,
                java_param='-XX:ParallelGCThreads=1 -Xmx4g'):
     self.gatk_exe = gatk_exe
-    self.java_param = java_param
     self.ref_fasta = ref_fasta
     self.use_ephemeral_space = use_ephemeral_space
+    temp_dir = \
+      get_temp_dir(use_ephemeral_space=self.use_ephemeral_space)
+    self.java_param = java_param + ' -Djava.io.tmpdir={0}'.format(temp_dir)
+
 
   def _run_gatk_checks(self):
     '''
