@@ -291,7 +291,7 @@ class Reference_genome_utils:
     '''
     try:
       ref_file=self._fetch_collection_files(collection_type=self.gatk_snp_ref_type,
-                                            unique_file=False,
+                                            unique_file=True,
                                             check_missing=check_missing)
       return  ref_file
     except:
@@ -306,7 +306,7 @@ class Reference_genome_utils:
     '''
     try:
       ref_file=self._fetch_collection_files(collection_type=self.gatk_indel_ref_type,
-                                            unique_file=False,
+                                            unique_file=True,
                                             check_missing=check_missing)
       return  ref_file
     except:
