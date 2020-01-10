@@ -74,7 +74,8 @@ class RunGATK(IGFBaseProcess):
           java_param=java_param)                                                # setup gatk tool for run
       gatk_cmdline = None
       if gatk_command == 'BaseRecalibrator':
-        input_bam = self.param_required('input_bam')
+        input_bam_list = self.param_required('input_bam_list')
+        input_bam = input_bam_list[0]
         output_table = \
           os.path.join(
             work_dir,
@@ -100,7 +101,8 @@ class RunGATK(IGFBaseProcess):
 
       elif gatk_command == 'ApplyBQSR':
         bqsr_recal_file = self.param_required('bqsr_recal_file')
-        input_bam = self.param_required('input_bam')
+        input_bam_list = self.param_required('input_bam_list')
+        input_bam = input_bam_list[0]
         output_bam_path = \
           os.path.join(
             work_dir,
@@ -143,7 +145,8 @@ class RunGATK(IGFBaseProcess):
           {'analyzeCovariates_pdf':output_pdf_path})                            # pass on apply bqsr bam
 
       elif gatk_command == 'HaplotypeCaller':
-        input_bam = self.param_required('input_bam')
+        input_bam_list = self.param_required('input_bam_list')
+        input_bam = input_bam_list[0]
         emit_gvcf = self.param('hc_gvcf')
         if emit_gvcf and \
            emit_gvcf == 0:
