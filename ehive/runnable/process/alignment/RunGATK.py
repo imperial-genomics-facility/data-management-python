@@ -40,7 +40,7 @@ class RunGATK(IGFBaseProcess):
       reference_indel_type = self.param_required('reference_indel_type')
       reference_fasta_type = self.param_required('reference_fasta_type')
       analysis_files = self.param_required('analysis_files')
-      base_work_dir = self.param_requiredd('base_work_dir')
+      base_work_dir = self.param_required('base_work_dir')
       java_param = self.param_required('java_param')
       force_overwrite = self.param('force_overwrite')
       if gatk_command not in gatk_allowed_commands:
