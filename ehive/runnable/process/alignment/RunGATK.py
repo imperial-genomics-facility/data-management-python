@@ -90,7 +90,7 @@ class RunGATK(IGFBaseProcess):
               force=force_overwrite)
         self.param(
           'dataflow_params',
-          {'BaseRecalibrator_table':output_table})                              # pass on bqsr output list
+          {'baseRecalibrator_table':output_table})                              # pass on bqsr output list
 
       elif gatk_command == 'ApplyBQSR':
         bqsr_recal_file = self.param_required('bqsr_recal_file')
@@ -112,7 +112,7 @@ class RunGATK(IGFBaseProcess):
               force=force_overwrite)
         self.param(
           'dataflow_params',
-          {'ApplyBQSR_bam':output_bam_path})                                    # pass on apply bqsr bam
+          {'applyBQSR_bam':output_bam_path})                                    # pass on apply bqsr bam
 
       elif gatk_command == 'AnalyzeCovariates':
         before_report_file = self.param_required('before_report_file')
@@ -134,7 +134,7 @@ class RunGATK(IGFBaseProcess):
                force=force_overwrite)
         self.param(
           'dataflow_params',
-          {'AnalyzeCovariates_pdf':output_pdf_path})                            # pass on apply bqsr bam
+          {'analyzeCovariates_pdf':output_pdf_path})                            # pass on apply bqsr bam
 
       elif gatk_command == 'HaplotypeCaller':
         input_bam = self.param_required('input_bam')
@@ -161,11 +161,11 @@ class RunGATK(IGFBaseProcess):
         if emit_gvcf:
           self.param(
             'dataflow_params',
-            {'HaplotypeCaller_gvcf':output_vcf_path})                           # pass on hc gvcf
+            {'haplotypeCaller_gvcf':output_vcf_path})                           # pass on hc gvcf
         else:
           self.param(
             'dataflow_params',
-            {'HaplotypeCaller_vcf':output_vcf_path})                            # pass on hc vcf
+            {'haplotypeCaller_vcf':output_vcf_path})                            # pass on hc vcf
 
       else:
         raise ValueError('Gatk command {0} not supported'.format(gatk_command))
