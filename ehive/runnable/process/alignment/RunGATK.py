@@ -156,7 +156,7 @@ class RunGATK(IGFBaseProcess):
             work_dir,
             '{0}_{1}.g.vcf.gz'.\
               format(
-                os.path.basename(before_report_file).\
+                os.path.basename(input_bam).\
                   replace('.bam',''),
                 gatk_command))
         gatk_cmdline = \
