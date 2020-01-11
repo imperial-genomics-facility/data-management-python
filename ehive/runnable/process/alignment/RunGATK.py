@@ -178,23 +178,13 @@ class RunGATK(IGFBaseProcess):
 
       else:
         raise ValueError('Gatk command {0} not supported'.format(gatk_command))
-
       message = \
-        'Finished GATK {0} for {1}: {2}'.\
-          format(
-            project_igf_id,
-            sample_igf_id,
-            gatk_cmdline)
-      self.post_message_to_slack(message,reaction='pass')                       # send log to slack
-      self.comment_asana_task(
-        task_name=project_igf_id,
-        comment=message)                                                        # send comment to Asana
-      message = \
-        'GATK {0}, {1} command: {2}'.\
+        'Finished GATK {0}, {1} command: {2}'.\
           format(
             experiment_igf_id,
             gatk_command,
             gatk_cmdline)
+      self.post_message_to_slack(message,reaction='pass')                       # send log to slack
       self.comment_asana_task(
         task_name=project_igf_id,
         comment=message)                                                        # send commandline to Asana
