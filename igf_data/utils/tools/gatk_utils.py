@@ -145,8 +145,10 @@ class GATK_tools:
         destinationa_path=output_bam_path,
         force=force)
       copy_local_file(
-        source_path='{0}.bai'.format(temp_output),
-        destinationa_path='{0}.bai'.format(output_bam_path),
+        source_path=temp_output.\
+                      replace('ApplyBQSR.bam','ApplyBQSR.bai'),
+        destinationa_path=output_bam_path.\
+                            replace('ApplyBQSR.bam','ApplyBQSR.bai'),
         force=force)
       remove_dir(temp_dir)
       return gatk_cmd
