@@ -15,6 +15,7 @@ class RunGATK(IGFBaseProcess):
         'force_overwrite':True,
         'hc_gvcf':1,
         'analysis_files':[],
+        'use_ephemeral_space':0,
         'gatk_allowed_commands':['BaseRecalibrator',
                                  'ApplyBQSR',
                                  'AnalyzeCovariates',
@@ -43,6 +44,7 @@ class RunGATK(IGFBaseProcess):
       base_work_dir = self.param_required('base_work_dir')
       java_param = self.param_required('java_param')
       force_overwrite = self.param('force_overwrite')
+      use_ephemeral_space = self.param('use_ephemeral_space')
       if gatk_command not in gatk_allowed_commands:
         raise ValueError(
                 'Gatk command {0} not supported'.\
@@ -71,6 +73,7 @@ class RunGATK(IGFBaseProcess):
         GATK_tools(
           gatk_exe=gatk_exe,
           ref_fasta=genome_fasta,
+          use_ephemeral_space=use_ephemeral_space,
           java_param=java_param)                                                # setup gatk tool for run
       gatk_cmdline = None
       if gatk_command == 'BaseRecalibrator':

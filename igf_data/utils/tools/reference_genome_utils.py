@@ -357,7 +357,7 @@ class Reference_genome_utils:
           collection_type=self.genome_dbsnp_type,
           unique_file=True,
           check_missing=check_missing)
-      return  ref_file
+      return ref_file
     except:
       raise
 
