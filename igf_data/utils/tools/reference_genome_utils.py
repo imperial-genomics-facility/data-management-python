@@ -18,10 +18,10 @@ class Reference_genome_utils:
                star_ref_type='TRANSCRIPTOME_STAR',
                genome_dbsnp_type='DBSNP_VCF',
                gatk_snp_ref_type='GATK_SNP_REF',
-               gatk_indel_ref_type='GATK_INDEL_REF',
+               gatk_indel_ref_type='INDEL_LIST_VCF',
                ribosomal_interval_type='RIBOSOMAL_INTERVAL',
                blacklist_interval_type='BLACKLIST_BED',
-               genome_twobit_uri_type='GENOME_TWOBIT_URI',):
+               genome_twobit_uri_type='GENOME_TWOBIT_URI'):
     '''
     :param genome_tag: Collection name of the reference genome file
     :param dbsession_class: A sqlalchemy session class for database connection
@@ -36,31 +36,31 @@ class Reference_genome_utils:
     :param tenx_ref_type: Collection type for the 10X Cellranger reference genome, default TRANSCRIPTOME_TENX
     :param star_ref_type: Collection type for the STAR reference genome, default TRANSCRIPTOME_STAR
     :param gatk_snp_ref_type: Collection type for the GATK SNP reference bundle files, default GATK_SNP_REF
-    :param gatk_indel_ref_type: Collection type for the GATK INDEL reference bundle files, default gatk_indel_ref_type
+    :param gatk_indel_ref_type: Collection type for the GATK INDEL reference bundle files, default INDEL_LIST_VCF
     :param genome_dbsnp_type: Collection type for the dbSNP vcf file, default DBSNP_VCF
     :param ribosomal_interval_type: Collection type for ribosomal interval, default RIBOSOMAL_INTERVAL
     :param genome_twobit_uri_type: Collection type for twobit genome uri, for remote ftp
     :param blacklist_interval_type: Collection type for blacklist_interval_type, default BLACKLIST_BED
     '''
-    self.genome_tag=genome_tag
-    self.dbsession_class=dbsession_class
-    self.genome_fasta_type=genome_fasta_type
-    self.fasta_fai_type=fasta_fai_type
-    self.genome_dict_type=genome_dict_type
-    self.gene_gtf_type=gene_gtf_type
-    self.gene_reflat_type=gene_reflat_type
-    self.bwa_ref_type=bwa_ref_type
-    self.minimap2_ref_type=minimap2_ref_type
-    self.bowtie2_ref_type=bowtie2_ref_type
-    self.tenx_ref_type=tenx_ref_type
-    self.star_ref_type=star_ref_type
-    self.gatk_snp_ref_type=gatk_snp_ref_type
-    self.gatk_indel_ref_type=gatk_indel_ref_type
-    self.genome_dbsnp_type=genome_dbsnp_type
-    self.ribosomal_interval_type=ribosomal_interval_type
-    self.blacklist_interval_type=blacklist_interval_type
-    self.gene_rsem_type=gene_rsem_type
-    self.genome_twobit_uri_type=genome_twobit_uri_type
+    self.genome_tag = genome_tag
+    self.dbsession_class = dbsession_class
+    self.genome_fasta_type = genome_fasta_type
+    self.fasta_fai_type = fasta_fai_type
+    self.genome_dict_type = genome_dict_type
+    self.gene_gtf_type = gene_gtf_type
+    self.gene_reflat_type = gene_reflat_type
+    self.bwa_ref_type = bwa_ref_type
+    self.minimap2_ref_type = minimap2_ref_type
+    self.bowtie2_ref_type = bowtie2_ref_type
+    self.tenx_ref_type = tenx_ref_type
+    self.star_ref_type = star_ref_type
+    self.gatk_snp_ref_type = gatk_snp_ref_type
+    self.gatk_indel_ref_type = gatk_indel_ref_type
+    self.genome_dbsnp_type = genome_dbsnp_type
+    self.ribosomal_interval_type = ribosomal_interval_type
+    self.blacklist_interval_type = blacklist_interval_type
+    self.gene_rsem_type = gene_rsem_type
+    self.genome_twobit_uri_type = genome_twobit_uri_type
 
 
   def _fetch_collection_files(self,collection_type,check_missing=False,
@@ -75,23 +75,28 @@ class Reference_genome_utils:
     :returns: A single file if unique_file is true, else a list of files
     '''
     try:
-      ref_file=None
-      ca=CollectionAdaptor(**{'session_class':self.dbsession_class})
+      ref_file = None
+      ca = \
+        CollectionAdaptor(**{'session_class':self.dbsession_class})
       ca.start_session()
-      collection_files=ca.get_collection_files(collection_name=self.genome_tag,
-                                               collection_type=collection_type,
-                                               output_mode='dataframe')         # fetch collection files from db
+      collection_files = \
+        ca.\
+          get_collection_files(
+            collection_name=self.genome_tag,
+            collection_type=collection_type,
+            output_mode='dataframe')                                            # fetch collection files from db
       ca.close_session()
       if len(collection_files.index) >0:
-        files=list(collection_files[file_path_label].values)
+        files = list(collection_files[file_path_label].values)
         if unique_file:
-          ref_file=files[0]                                                     # select the first file from db results
+          ref_file = files[0]                                                   # select the first file from db results
         else:
-          ref_file=files
+          ref_file = files
 
       if ref_file is None and check_missing:
-        raise ValueError('No file collection found for reference genome {0}:{1}'.\
-                         format(self.genome_tag,collection_type))
+        raise ValueError(
+                'No file collection found for reference genome {0}:{1}'.\
+                  format(self.genome_tag,collection_type))
       return ref_file
     except:
       raise
@@ -121,9 +126,10 @@ class Reference_genome_utils:
     :returns: A filepath string
     '''
     try:
-      ribosomal_interval=self._fetch_collection_files(\
-                           collection_type=self.ribosomal_interval_type,
-                           check_missing=check_missing)
+      ribosomal_interval = \
+        self._fetch_collection_files(
+          collection_type=self.ribosomal_interval_type,
+          check_missing=check_missing)
       return  ribosomal_interval
     except:
       raise
@@ -136,8 +142,10 @@ class Reference_genome_utils:
     :returns: A filepath string
     '''
     try:
-      ref_file=self._fetch_collection_files(collection_type=self.genome_fasta_type,
-                                            check_missing=check_missing)
+      ref_file = \
+        self._fetch_collection_files(
+          collection_type=self.genome_fasta_type,
+          check_missing=check_missing)
       return  ref_file
     except:
       raise
@@ -150,8 +158,10 @@ class Reference_genome_utils:
     :returns: A filepath string
     '''
     try:
-      ref_file=self._fetch_collection_files(collection_type=self.fasta_fai_type,
-                                            check_missing=check_missing)
+      ref_file = \
+        self._fetch_collection_files(
+          collection_type=self.fasta_fai_type,
+          check_missing=check_missing)
       return  ref_file
     except:
       raise
@@ -164,8 +174,10 @@ class Reference_genome_utils:
     :returns: A filepath string
     '''
     try:
-      ref_file=self._fetch_collection_files(collection_type=self.genome_dict_type,
-                                            check_missing=check_missing)
+      ref_file = \
+        self._fetch_collection_files(
+          collection_type=self.genome_dict_type,
+          check_missing=check_missing)
       return  ref_file
     except:
       raise
@@ -178,8 +190,10 @@ class Reference_genome_utils:
     :returns: A filepath string
     '''
     try:
-      ref_file=self._fetch_collection_files(collection_type=self.gene_gtf_type,
-                                            check_missing=check_missing)
+      ref_file = \
+        self._fetch_collection_files(
+          collection_type=self.gene_gtf_type,
+          check_missing=check_missing)
       return  ref_file
     except:
       raise
@@ -192,8 +206,10 @@ class Reference_genome_utils:
     :returns: A filepath string
     '''
     try:
-      ref_file=self._fetch_collection_files(collection_type=self.gene_reflat_type,
-                                            check_missing=check_missing)
+      ref_file = \
+        self._fetch_collection_files(
+          collection_type=self.gene_reflat_type,
+          check_missing=check_missing)
       return  ref_file
     except:
       raise
@@ -206,8 +222,10 @@ class Reference_genome_utils:
     :returns: A filepath string
     '''
     try:
-      ref_file=self._fetch_collection_files(collection_type=self.bwa_ref_type,
-                                            check_missing=check_missing)
+      ref_file = \
+        self._fetch_collection_files(
+          collection_type=self.bwa_ref_type,
+          check_missing=check_missing)
       return  ref_file
     except:
       raise
@@ -220,8 +238,10 @@ class Reference_genome_utils:
     :returns: A filepath string
     '''
     try:
-      ref_file=self._fetch_collection_files(collection_type=self.minimap2_ref_type,
-                                            check_missing=check_missing)
+      ref_file = \
+        self._fetch_collection_files(
+          collection_type=self.minimap2_ref_type,
+          check_missing=check_missing)
       return  ref_file
     except:
       raise
@@ -234,8 +254,10 @@ class Reference_genome_utils:
     :returns: A filepath string
     '''
     try:
-      ref_file=self._fetch_collection_files(collection_type=self.bowtie2_ref_type,
-                                            check_missing=check_missing)
+      ref_file = \
+        self._fetch_collection_files(
+          collection_type=self.bowtie2_ref_type,
+          check_missing=check_missing)
       return  ref_file
     except:
       raise
@@ -248,8 +270,10 @@ class Reference_genome_utils:
     :returns: A filepath string
     '''
     try:
-      ref_file=self._fetch_collection_files(collection_type=self.tenx_ref_type,
-                                            check_missing=check_missing)
+      ref_file = \
+        self._fetch_collection_files(
+          collection_type=self.tenx_ref_type,
+          check_missing=check_missing)
       return  ref_file
     except:
       raise
@@ -262,8 +286,10 @@ class Reference_genome_utils:
     :returns: A filepath string
     '''
     try:
-      ref_file=self._fetch_collection_files(collection_type=self.gene_rsem_type,
-                                            check_missing=check_missing)
+      ref_file = \
+        self._fetch_collection_files(
+          collection_type=self.gene_rsem_type,
+          check_missing=check_missing)
       return  ref_file
     except:
       raise
@@ -276,8 +302,10 @@ class Reference_genome_utils:
     :returns: A filepath string
     '''
     try:
-      ref_file=self._fetch_collection_files(collection_type=self.star_ref_type,
-                                            check_missing=check_missing)
+      ref_file = \
+        self._fetch_collection_files(
+          collection_type=self.star_ref_type,
+          check_missing=check_missing)
       return  ref_file
     except:
       raise
@@ -290,9 +318,11 @@ class Reference_genome_utils:
     :returns: A list of filepaths
     '''
     try:
-      ref_file=self._fetch_collection_files(collection_type=self.gatk_snp_ref_type,
-                                            unique_file=True,
-                                            check_missing=check_missing)
+      ref_file = \
+        self._fetch_collection_files(
+          collection_type=self.gatk_snp_ref_type,
+          unique_file=False,
+          check_missing=check_missing)
       return  ref_file
     except:
       raise
@@ -305,9 +335,11 @@ class Reference_genome_utils:
     :returns: A list of filepaths
     '''
     try:
-      ref_file=self._fetch_collection_files(collection_type=self.gatk_indel_ref_type,
-                                            unique_file=True,
-                                            check_missing=check_missing)
+      ref_file = \
+        self._fetch_collection_files(
+          collection_type=self.gatk_indel_ref_type,
+          unique_file=True,
+          check_missing=check_missing)
       return  ref_file
     except:
       raise
@@ -320,8 +352,11 @@ class Reference_genome_utils:
     :returns: A filepath string
     '''
     try:
-      ref_file=self._fetch_collection_files(collection_type=self.genome_dbsnp_type,
-                                            check_missing=check_missing)
+      ref_file = \
+        self._fetch_collection_files(
+          collection_type=self.genome_dbsnp_type,
+          unique_file=True,
+          check_missing=check_missing)
       return  ref_file
     except:
       raise
@@ -334,8 +369,10 @@ class Reference_genome_utils:
     :returns: A url string
     '''
     try:
-      ref_file=self._fetch_collection_files(collection_type=self.genome_twobit_uri_type,
-                                            check_missing=check_missing)
+      ref_file = \
+        self._fetch_collection_files(
+          collection_type=self.genome_twobit_uri_type,
+          check_missing=check_missing)
       return  ref_file
     except:
       raise
@@ -348,8 +385,10 @@ class Reference_genome_utils:
     :returns: A filepath string or list (if more than one found)
     '''
     try:
-      ref_file=self._fetch_collection_files(collection_type=collection_type,
-                                            check_missing=check_missing)
+      ref_file = \
+        self._fetch_collection_files(
+          collection_type=collection_type,
+          check_missing=check_missing)
       return  ref_file
     except:
       raise

@@ -25,6 +25,8 @@ class Reference_genome_utils_test1(unittest.TestCase):
                      {'name':self.species_name,'type':'GENOME_DICT'},
                      {'name':self.species_name,'type':'GENOME_BWA'},
                      {'name':self.species_name,'type':'GATK_SNP_REF'},
+                     {'name':self.species_name,'type':'INDEL_LIST_VCF'},
+                     {'name':self.species_name,'type':'DBSNP_VCF'},
                     ]
     file_data=[{'file_path':'/path/HG38/TenX'},
                {'file_path':'/path/HG38/fasta'},
@@ -32,17 +34,21 @@ class Reference_genome_utils_test1(unittest.TestCase):
                {'file_path':'/path/HG38/bwa'},
                {'file_path':'/path/HG38/gatk_snp_1'},
                {'file_path':'/path/HG38/gatk_snp_2'},
+               {'file_path':'/path/HG38/gatk_dbsnp_vcf'},
+               {'file_path':'/path/HG38/gatk_indel_list_vcf'},
                ]
     collection_group_data=[{'name':self.species_name,'type':'TRANSCRIPTOME_TENX','file_path':'/path/HG38/TenX'},
                            {'name':self.species_name,'type':'GENOME_FASTA','file_path':'/path/HG38/fasta'},
                            {'name':self.species_name,'type':'GENOME_DICT','file_path':'/path/HG38/dict'},
                            {'name':self.species_name,'type':'GENOME_BWA','file_path':'/path/HG38/bwa'},
                            {'name':self.species_name,'type':'GATK_SNP_REF','file_path':'/path/HG38/gatk_snp_1'},
-                           {'name':self.species_name,'type':'GATK_SNP_REF','file_path':'/path/HG38/gatk_snp_2'}
+                           {'name':self.species_name,'type':'GATK_SNP_REF','file_path':'/path/HG38/gatk_snp_2'},
+                           {'name':self.species_name,'type':'INDEL_LIST_VCF','file_path':'/path/HG38/gatk_indel_list_vcf'},
+                           {'name':self.species_name,'type':'DBSNP_VCF','file_path':'/path/HG38/gatk_dbsnp_vcf'},
                           ]
     base.start_session()
-    ca=CollectionAdaptor(**{'session':base.session})
-    fa=FileAdaptor(**{'session':base.session})
+    ca = CollectionAdaptor(**{'session':base.session})
+    fa = FileAdaptor(**{'session':base.session})
     ca.store_collection_and_attribute_data(data=collection_data)
     fa.store_file_and_attribute_data(data=file_data)
     ca.create_collection_group(data=collection_group_data)
@@ -53,35 +59,53 @@ class Reference_genome_utils_test1(unittest.TestCase):
     os.remove(self.dbname)
 
   def test_tenx_ref(self):
-    rf=Reference_genome_utils(\
+    rf = \
+      Reference_genome_utils(
         genome_tag=self.species_name,
         dbsession_class=self.session_class)
-    file=rf.get_transcriptome_tenx()
+    file = rf.get_transcriptome_tenx()
     self.assertEqual(file,'/path/HG38/TenX')
 
-  def test_gatk_snp(self):
-    rf=Reference_genome_utils(\
+  def test_get_dbsnp_vcf(self):
+    rf = \
+      Reference_genome_utils(
         genome_tag=self.species_name,
         dbsession_class=self.session_class)
-    files=rf.get_gatk_snp_ref()
-    self.assertEqual(len(files),2)
+    file = rf.get_dbsnp_vcf()
+    self.assertEqual(file,'/path/HG38/gatk_dbsnp_vcf')
+
+  def test_get_gatk_indel_ref(self):
+    rf = \
+      Reference_genome_utils(
+        genome_tag=self.species_name,
+        dbsession_class=self.session_class)
+    file = rf.get_gatk_indel_ref()
+    self.assertEqual(file,'/path/HG38/gatk_indel_list_vcf')
+
+  def test_gatk_snp(self):
+    rf = \
+      Reference_genome_utils(
+        genome_tag=self.species_name,
+        dbsession_class=self.session_class)
+    files = rf.get_gatk_snp_ref()
     self.assertTrue('/path/HG38/gatk_snp_1' in files)
     self.assertTrue('/path/HG38/gatk_snp_2' in files)
 
   def test_fef_fasta1(self):
-    rf=Reference_genome_utils(\
+    rf = \
+      Reference_genome_utils(
         genome_tag=self.species_name,
         dbsession_class=self.session_class)
-    file=rf.get_genome_fasta()
+    file = rf.get_genome_fasta()
     self.assertEqual(file,'/path/HG38/fasta')
 
   def test_fef_fasta2(self):
-    rf=Reference_genome_utils(\
+    rf = \
+      Reference_genome_utils(
         genome_tag=self.species_name,
         dbsession_class=self.session_class,
-        genome_fasta_type='GENOME_FASTA1'
-        )
-    
+        genome_fasta_type='GENOME_FASTA1')
+
     with self.assertRaises(ValueError):
       file=rf.get_genome_fasta()
 
