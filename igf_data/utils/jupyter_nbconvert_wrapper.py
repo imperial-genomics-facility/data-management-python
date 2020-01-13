@@ -1,7 +1,69 @@
 import os
 from shutil import copytree
+from datetime import datetime
 from igf_data.utils.singularity_run_wrapper import singularity_run
 from igf_data.utils.fileutils import get_temp_dir,remove_dir,check_file_path,copy_local_file
+from jinja2 import Template,Environment, FileSystemLoader, select_autoescape
+
+def generate_ipynb_from_template(template_ipynb_path,output_dir,param_dictionary,date_tag='date_tag',
+                                 use_ephemeral_space=False):
+  '''
+  A class for generating notebook IPYNB file from a template files with param substitution
+
+  :param template_ipynb_path: A template IPYNB file path
+  :param output_dir: Output path
+  :param param_dictionary: A dictionary containing the params for final notebook
+  :param date_tag: A text for date tag name, default date_tag
+  :param use_ephemeral_space: Toggle for using ephemeral space for temp dir, default False
+  :returns: None
+  '''
+  try:
+    check_file_path(template_ipynb_path)
+    check_file_path(output_dir)
+    if not isinstance(param_dictionary,dict):
+      raise TypeError(
+              "Expecting a dictionary, got {0}".\
+                format(type(param_dictionary)))
+    date_tag_value = \
+      datetime.\
+        strftime(
+          datetime.now(),
+          '%Y-%b-%d %H:%M')                                                     # date tag values
+    param_dictionary.\
+      update(dict(date_tag=date_tag_value))                                     # adding date tag values to params
+    temp_dir = \
+      get_temp_dir(
+        use_ephemeral_space=use_ephemeral_space)
+    temp_output = \
+      os.path.join(
+        temp_dir,
+        os.path.basename(template_ipynb_path))
+    final_output = \
+      os.path.join(
+        output_dir,
+        os.path.basename(template_ipynb_path))
+    template_env = \
+      Environment(
+        loader=\
+          FileSystemLoader(
+            searchpath=os.path.dirname(template_ipynb_path)),
+        autoescape=select_autoescape(['html', 'xml']))
+    notebook = \
+      template_env.\
+        get_template(
+          os.path.basename(template_ipynb_path))
+    notebook.\
+      stream(**param_dictionary).\
+      dump(temp_output)                                                         # write temp ipynb file with param substitution
+    copy_local_file(
+      temp_output,
+      final_output)
+    remove_dir(temp_dir)
+  except Exception as e:
+    raise ValueError(
+            "Failed to generate ipynb file from template {1}, error: {0}".\
+              format(e,template_ipynb_path))
+
 
 def nbconvert_execute_in_singularity(image_path,ipynb_path,input_list,output_path,output_format='html',
                                      output_file_list=None,timeout=600,kernel='python3',
@@ -19,6 +81,7 @@ def nbconvert_execute_in_singularity(image_path,ipynb_path,input_list,output_pat
   :param kernel: Kernel name for notebook execution, default python3
   :param allow_errors: A toggle for running notebook with errors, default False
   :param use_ephemeral_space: Toggle for using ephemeral space for temp dir, default False
+  :returns: None
   '''
   try:
     check_file_path(image_path)
