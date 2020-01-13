@@ -153,15 +153,24 @@ class RunGATK(IGFBaseProcess):
         emit_gvcf = self.param('hc_gvcf')
         if emit_gvcf and \
            emit_gvcf == 0:
-           emit_gvcf = False
-        output_vcf_path = \
-          os.path.join(
-            work_dir,
-            '{0}_{1}.g.vcf.gz'.\
-              format(
-                os.path.basename(input_bam).\
-                  replace('.bam',''),
-                gatk_command))
+          emit_gvcf = False
+          output_vcf_path = \
+            os.path.join(
+              work_dir,
+              '{0}_{1}.vcf.gz'.\
+                format(
+                  os.path.basename(input_bam).\
+                    replace('.bam',''),
+                  gatk_command))
+        else:
+          output_vcf_path = \
+            os.path.join(
+              work_dir,
+              '{0}_{1}.g.vcf.gz'.\
+                format(
+                  os.path.basename(input_bam).\
+                    replace('.bam',''),
+                  gatk_command))
         gatk_cmdline = \
           gatk_obj.\
             run_HaplotypeCaller(
