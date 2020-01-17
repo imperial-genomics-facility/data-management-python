@@ -18,21 +18,36 @@ class NotebookRunner(IGFBaseProcess):
       'use_ephemeral_space':0,
       'kernel':'python3',
       'timeout':600,
-      'output_format':'html,'
+      'output_format':'html',
       'allow_errors':0,
     })
     return params_dict
 
   def run(self):
     '''
-    A method for running the analysis
+    A method for running the notebook based analysis in ehive
+
+    :param project_igf_id: A project tag
+    :param sample_igf_id: A sample tag, default None
+    :param experiment_igf_id: An experiment tag, default None
+    :param singularity_image_path: Singularity image path
+    :param input_param_map: A dictionary containing input param substitution for the notebook template
+    :param output_param_map: A dictionary containing the expected output file list
+    :param notebook_template: Notebook template path
+    :param base_work_dir: Base work dir path
+    :param use_ephemeral_space: A toggle for temp dir settings
+    :param input_list: A list of input files to copy to the temp dir for the notebook run. File names can also be added to input_param_map
+    :param date_tag: A text tag for date_tag, default 'date_tag'
+    :param kernel: Notebook kernel name, default is 'python3'
+    :param timeout: Timeout setting for notebook run, default 600
+    :param output_format: Notebook output format, default 'html'
+    :param allow_errors: Allow notebook run with errors, default 0
     '''
   try:
     project_igf_id = self.param_required('project_igf_id')
     sample_igf_id = self.param('sample_igf_id')
     experiment_igf_id = self.param('experiment_igf_id')
     singularity_image_path = self.param_required('singularity_image_path')
-    command_list = self.param_required(command_list)
     input_param_map = self.param_required('input_param_map')
     output_param_map = self.param_required('output_param_map')
     notebook_template = self.param_required('notebook_template')
@@ -44,6 +59,16 @@ class NotebookRunner(IGFBaseProcess):
     timeout = self.param('timeout')
     output_format = self.param('output_format')
     allow_errors = self.param('allow_errors')
+    if input_param_map is not None and \
+       not isinstance(input_param_map,dict):
+       raise ValueError(
+              "Expecting a dictionary as input_param_map, got {0}".\
+                format(type(input_param_map)))                                  # checking input param dictionary
+    if output_param_map is not None and \
+       not isinstance(output_param_map,dict):
+       raise ValueError(
+              "Expecting a dictionary as output_param_map, got {0}".\
+                format(type(output_param_map)))                                 # checking output param dictionary
     work_dir_prefix_list = [
       base_work_dir,
       project_igf_id]
@@ -53,8 +78,7 @@ class NotebookRunner(IGFBaseProcess):
     if experiment_igf_id is not None:
       work_dir_prefix_list.\
         append(experiment_igf_id)
-
-    output_file_list = output_param_map.values()
+    output_file_list = output_param_map.values()                                # get list of expected output names
     work_dir_prefix = \
       os.path.join(work_dir_prefix_list)
     work_dir = \
@@ -86,10 +110,13 @@ class NotebookRunner(IGFBaseProcess):
       kernel=kernel,
       use_ephemeral_space=use_ephemeral_space,
       allow_errors=allow_errors)
-    data_flow_param_dict = {}                                                   # FIXME
+    data_flow_param_dict = dict()
+    for key,val in output_param_map.items():
+      data_flow_param_dict.\
+        update(dict(key=os.path.join(work_dir,val)))                            # all output files are now copied to work-dir
     self.param(
       'dataflow_params',
-      data_flow_param_dict)
+      data_flow_param_dict)                                                     # update dataflow
   except Exception as e:
     message = \
         'project: {2}, sample:{3}, Error in {0}: {1}'.\
