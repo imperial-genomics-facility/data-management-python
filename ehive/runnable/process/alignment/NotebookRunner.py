@@ -99,21 +99,19 @@ class NotebookRunner(IGFBaseProcess):
     check_file_path(temp_notebook)                                              # check the notebook for run
     if allow_errors == 0:
       allow_errors=False
-    nbconvert_execute_in_singularity(
-      image_path=singularity_image_path,
-      ipynb_path=temp_notebook,
-      input_list=input_list,
-      output_path=work_dir,
-      output_format=output_format,
-      output_file_list=output_file_list,
-      timeout=timeout,
-      kernel=kernel,
-      use_ephemeral_space=use_ephemeral_space,
-      allow_errors=allow_errors)
-    data_flow_param_dict = dict()
-    for key,val in output_param_map.items():
-      data_flow_param_dict.\
-        update(dict(key=os.path.join(work_dir,os.path.basename(val))))          # all output files are now copied to work-dir
+    data_flow_param_dict = dict()                                               # default data flow param is empty dictionary
+    data_flow_param_dict = \
+      nbconvert_execute_in_singularity(
+        image_path=singularity_image_path,
+        ipynb_path=temp_notebook,
+        input_list=input_list,
+        output_dir=work_dir,
+        output_format=output_format,
+        output_file_map=output_param_map,
+        timeout=timeout,
+        kernel=kernel,
+        use_ephemeral_space=use_ephemeral_space,
+        allow_errors=allow_errors)
     self.param(
       'dataflow_params',
       data_flow_param_dict)                                                     # update dataflow
@@ -125,7 +123,7 @@ class NotebookRunner(IGFBaseProcess):
             e,
             project_igf_id,
             sample_igf_id)
-      self.warning(message)
-      self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
-      raise
+    self.warning(message)
+    self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
+    raise
 

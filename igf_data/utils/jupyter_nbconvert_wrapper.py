@@ -1,6 +1,7 @@
 import os
 from shutil import copytree
 from datetime import datetime
+from shlex import quote
 from igf_data.utils.singularity_run_wrapper import singularity_run
 from igf_data.utils.fileutils import get_temp_dir,remove_dir,check_file_path,copy_local_file
 from jinja2 import Template,Environment, FileSystemLoader, select_autoescape
@@ -65,8 +66,8 @@ def generate_ipynb_from_template(template_ipynb_path,output_dir,param_dictionary
               format(e,template_ipynb_path))
 
 
-def nbconvert_execute_in_singularity(image_path,ipynb_path,input_list,output_path,output_format='html',
-                                     output_file_list=None,timeout=600,kernel='python3',
+def nbconvert_execute_in_singularity(image_path,ipynb_path,input_list,output_dir,output_format='html',
+                                     output_file_map=None,timeout=600,kernel='python3',
                                      use_ephemeral_space=False,allow_errors=False):
   '''
   A function for running jupyter nbconvert within singularity containers
@@ -74,9 +75,9 @@ def nbconvert_execute_in_singularity(image_path,ipynb_path,input_list,output_pat
   :param image_path: A singularity image path
   :param ipynb_path: A notebook file path to run in the singularity container
   :param input_list: A list of input file for notebook run
-  :param output_path: Path to copy output files
+  :param output_dir: Path to copy output files
   :param output_format: Notebook output format, default html
-  :param output_file_list: A list of output files to copy to output_path from tmp dir, default None
+  :param output_file_map: A a dictionary of output file tag abd name as key and value, to copy to output_path from tmp dir, default None
   :param timeout: Timeout setting for notebook execution, default 600s
   :param kernel: Kernel name for notebook execution, default python3
   :param allow_errors: A toggle for running notebook with errors, default False
@@ -86,6 +87,8 @@ def nbconvert_execute_in_singularity(image_path,ipynb_path,input_list,output_pat
   try:
     check_file_path(image_path)
     check_file_path(ipynb_path)
+    if output_file_map is None:
+      output_file_map = dict()                                                  # default output map is an empty dictionary
     if not isinstance(input_list,list) and \
        len(input_list)==0:
        raise ValueError("Missing input files for notebook run")
@@ -109,42 +112,73 @@ def nbconvert_execute_in_singularity(image_path,ipynb_path,input_list,output_pat
     args_list = [
       'jupyter',
       'nbconvert',
-      '-to={0}'.format(output_format),
+      '{0}'.format(quote(temp_ipynb_path)),
+      '-to={0}'.format(quote(output_format)),
       '--execute',
       '--ExecutePreprocessor.enabled=True',
-      '--ExecutePreprocessor.timeout={0}'.format(timeout),
-      '--ExecutePreprocessor.kernel_name={0}'.format(kernel),
-      '/tmp/{0}'.format(os.path.basename(temp_path))]
+      '--ExecutePreprocessor.timeout={0}'.format(quote(str(timeout))),
+      '--ExecutePreprocessor.kernel_name={0}'.format(quote(kernel)),
+      '/tmp/{0}'.format(os.path.basename(temp_path))]                          # prepare notebook cmd for run
     if allow_errors:
       args_list.append('--allow-errors')                                        # run notebooks with errors
     singularity_run(
       image_path=image_path,
       path_bind=tmp_dir,
-      args_list=args_list)
-    try:
-      for output in output_file_list:
+      use_ephemeral_space=use_ephemeral_space,
+      args_list=args_list)                                                      # run notebook in singularity container
+    if output_file_map is not None and \
+       isinstance(output_file_map,dict):
+      for tag,output in output_file_map.items():
+        output_path = output_dir
         temp_output = \
           os.path.join(
             tmp_dir,
-            output)
+            os.path.basename(output))                                           # just get base name
         check_file_path(temp_output)
         if os.path.isfile(temp_output):
-          final_output = \
+          output_path = \
             os.path.join(
               output_path,
-              output)
-          copy_local_file(
-            temp_output,
-            final_output)
-        elif os.path.isdir(temp_output):
-          copytree(
-            temp_output,
-            output_path)
-    except Exception as e:
-      raise ValueError(
-              "Failed to copy file {0}, error: {1}".\
-                format(output,e))
+              output)                                                           # need file name when copying files
+        copy_local_file(
+          temp_output,
+          output_path)                                                          # copy file or dir to output path
+        if os.path.isdir(temp_output):
+          output_path = \
+            os.path.join(
+              output_path,
+              output)                                                           # adding dir name to output path, once copy is over
+        output_file_map.\
+          update({tag:output_path})
+    if output_format=='html':
+      temp_ipynb_path = \
+        temp_ipynb_path.replace('.ipynb','.html')
+    elif output_format=='markdown':
+      temp_ipynb_path = \
+        temp_ipynb_path.replace('.ipynb','.md')
+    elif output_format=='notebook':
+      temp_ipynb_path = temp_ipynb_path
+    elif output_format=='pdf':
+      temp_ipynb_path = \
+        temp_ipynb_path.replace('.ipynb','.pdf')
+    elif output_format=='python':
+      temp_ipynb_path = \
+        temp_ipynb_path.replace('.ipynb','.py')
+    elif output_format=='slide':
+      temp_ipynb_path = \
+        temp_ipynb_path.replace('.ipynb','.html')
+    check_file_path(temp_ipynb_path)                                            # check output file path
+    output_ipynb_path = \
+      os.path.join(
+        output_dir,
+        os.path.basename(temp_ipynb_path))
+    copy_local_file(
+      temp_ipynb_path,
+      output_ipynb_path)                                                        # copy output notebook
+    output_file_map.\
+      update({'notebook':output_ipynb_path})                                    # add notebook output to dataflow
     remove_dir(tmp_dir)
+    return output_file_map
   except Exception as e:
     raise ValueError(
             "Failed to run nbconvert in singularity, error: {0}".\
