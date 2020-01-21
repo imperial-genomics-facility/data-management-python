@@ -113,7 +113,7 @@ class NotebookRunner(IGFBaseProcess):
     data_flow_param_dict = dict()
     for key,val in output_param_map.items():
       data_flow_param_dict.\
-        update(dict(key=os.path.join(work_dir,val)))                            # all output files are now copied to work-dir
+        update(dict(key=os.path.join(work_dir,os.path.basename(val))))          # all output files are now copied to work-dir
     self.param(
       'dataflow_params',
       data_flow_param_dict)                                                     # update dataflow
