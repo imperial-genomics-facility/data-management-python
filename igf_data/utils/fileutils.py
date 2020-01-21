@@ -6,7 +6,7 @@ from shlex import quote
 from datetime import datetime
 from dateutil.parser import parse
 from tempfile import mkdtemp,gettempdir
-from shutil import rmtree, move, copy2
+from shutil import rmtree, move, copy2,copytree
 
 def move_file(source_path,destinationa_path, force=False):
   '''
@@ -112,16 +112,17 @@ def copy_local_file(source_path,destinationa_path,cd_to_dest=True,force=False):
                 destination file, default is False
   '''
   try:
-    
+    destination_path = destinationa_path                                        # NEED TO FIX TYPO
     if not os.path.exists(source_path):
       raise IOError('source file {0} not found'.\
                     format(source_path))
 
-    if os.path.exists(destinationa_path) and not force:
-      raise IOError('destination file {0} already present. set option "force" as True to overwrite it'.\
-                    format(destinationa_path))
+    if os.path.exists(destination_path) and not force:
+      raise IOError(
+              'destination file {0} already present. set option "force" as True to overwrite it'.\
+                format(destination_path))
 
-    dir_path=os.path.dirname(destinationa_path)
+    dir_path = os.path.dirname(destination_path)
     if not os.path.exists(dir_path):
       os.makedirs(dir_path, mode=0o770)
 
@@ -129,7 +130,10 @@ def copy_local_file(source_path,destinationa_path,cd_to_dest=True,force=False):
     if cd_to_dest:
       os.chdir(dir_path)                                                        # change to dest dir before copy
 
-    copy2(source_path, destinationa_path, follow_symlinks=True)
+    if os.path.isfile(source_path):
+      copy2(source_path, destination_path, follow_symlinks=True)                # copy file
+    elif os.path.isdir(source_path):
+      copytree(source_path,destination_path)                                    # copy dir
     if cd_to_dest:
       os.chdir(current_dir)                                                     # change to original path after copy
   except Exception as e:
