@@ -43,87 +43,86 @@ class NotebookRunner(IGFBaseProcess):
     :param output_format: Notebook output format, default 'html'
     :param allow_errors: Allow notebook run with errors, default 0
     '''
-  try:
-    project_igf_id = self.param_required('project_igf_id')
-    sample_igf_id = self.param('sample_igf_id')
-    experiment_igf_id = self.param('experiment_igf_id')
-    singularity_image_path = self.param_required('singularity_image_path')
-    input_param_map = self.param_required('input_param_map')
-    output_param_map = self.param_required('output_param_map')
-    notebook_template = self.param_required('notebook_template')
-    base_work_dir = self.param_required('base_work_dir')
-    use_ephemeral_space = self.param('use_ephemeral_space')
-    input_list = self.param_required('input_list')
-    date_tag = self.param('date_tag')
-    kernel = self.param('kernel')
-    timeout = self.param('timeout')
-    output_format = self.param('output_format')
-    allow_errors = self.param('allow_errors')
-    if input_param_map is not None and \
-       not isinstance(input_param_map,dict):
-       raise ValueError(
-              "Expecting a dictionary as input_param_map, got {0}".\
-                format(type(input_param_map)))                                  # checking input param dictionary
-    if output_param_map is not None and \
-       not isinstance(output_param_map,dict):
-       raise ValueError(
-              "Expecting a dictionary as output_param_map, got {0}".\
-                format(type(output_param_map)))                                 # checking output param dictionary
-    work_dir_prefix_list = [
-      base_work_dir,
-      project_igf_id]
-    if sample_igf_id is not None:
-      work_dir_prefix_list.\
-        append(sample_igf_id)
-    if experiment_igf_id is not None:
-      work_dir_prefix_list.\
-        append(experiment_igf_id)
-    output_file_list = output_param_map.values()                                # get list of expected output names
-    work_dir_prefix = \
-      os.path.join(work_dir_prefix_list)
-    work_dir = \
-      self.get_job_work_dir(
-        work_dir=work_dir_prefix)                                               # get a run work dir
-    temp_work_dir = \
-      get_temp_dir(use_ephemeral_space=use_ephemeral_space)
-    temp_notebook = \
-      os.path.join(
-        temp_work_dir,
-        os.path.basename(temp_work_dir))
-    generate_ipynb_from_template(
-      template_ipynb_path=notebook_template,
-      output_dir=temp_work_dir,
-      param_dictionary=input_param_map,
-      date_tag=date_tag,
-      use_ephemeral_space=use_ephemeral_space)                                  # generate notebook from template
-    check_file_path(temp_notebook)                                              # check the notebook for run
-    if allow_errors == 0:
-      allow_errors=False
-    data_flow_param_dict = dict()                                               # default data flow param is empty dictionary
-    data_flow_param_dict = \
-      nbconvert_execute_in_singularity(
-        image_path=singularity_image_path,
-        ipynb_path=temp_notebook,
-        input_list=input_list,
-        output_dir=work_dir,
-        output_format=output_format,
-        output_file_map=output_param_map,
-        timeout=timeout,
-        kernel=kernel,
-        use_ephemeral_space=use_ephemeral_space,
-        allow_errors=allow_errors)
-    self.param(
-      'dataflow_params',
-      data_flow_param_dict)                                                     # update dataflow
-  except Exception as e:
-    message = \
+    try:
+      project_igf_id = self.param_required('project_igf_id')
+      sample_igf_id = self.param('sample_igf_id')
+      experiment_igf_id = self.param('experiment_igf_id')
+      singularity_image_path = self.param_required('singularity_image_path')
+      input_param_map = self.param_required('input_param_map')
+      output_param_map = self.param_required('output_param_map')
+      notebook_template = self.param_required('notebook_template')
+      base_work_dir = self.param_required('base_work_dir')
+      use_ephemeral_space = self.param('use_ephemeral_space')
+      input_list = self.param_required('input_list')
+      date_tag = self.param('date_tag')
+      kernel = self.param('kernel')
+      timeout = self.param('timeout')
+      output_format = self.param('output_format')
+      allow_errors = self.param('allow_errors')
+      if input_param_map is not None and \
+         not isinstance(input_param_map,dict):
+        raise ValueError(
+                "Expecting a dictionary as input_param_map, got {0}".\
+                  format(type(input_param_map)))                                  # checking input param dictionary
+      if output_param_map is not None and \
+         not isinstance(output_param_map,dict):
+        raise ValueError(
+                "Expecting a dictionary as output_param_map, got {0}".\
+                  format(type(output_param_map)))                                 # checking output param dictionary
+      work_dir_prefix_list = [
+        base_work_dir,
+        project_igf_id]
+      if sample_igf_id is not None:
+        work_dir_prefix_list.\
+          append(sample_igf_id)
+      if experiment_igf_id is not None:
+        work_dir_prefix_list.\
+          append(experiment_igf_id)
+      work_dir_prefix = \
+        os.path.join(work_dir_prefix_list)
+      work_dir = \
+        self.get_job_work_dir(
+          work_dir=work_dir_prefix)                                               # get a run work dir
+      temp_work_dir = \
+        get_temp_dir(use_ephemeral_space=use_ephemeral_space)
+      temp_notebook = \
+        os.path.join(
+          temp_work_dir,
+          os.path.basename(temp_work_dir))
+      generate_ipynb_from_template(
+        template_ipynb_path=notebook_template,
+        output_dir=temp_work_dir,
+        param_dictionary=input_param_map,
+        date_tag=date_tag,
+        use_ephemeral_space=use_ephemeral_space)                                  # generate notebook from template
+      check_file_path(temp_notebook)                                              # check the notebook for run
+      if allow_errors == 0:
+        allow_errors=False
+      data_flow_param_dict = dict()                                               # default data flow param is empty dictionary
+      data_flow_param_dict = \
+        nbconvert_execute_in_singularity(
+          image_path=singularity_image_path,
+          ipynb_path=temp_notebook,
+          input_list=input_list,
+          output_dir=work_dir,
+          output_format=output_format,
+          output_file_map=output_param_map,
+          timeout=timeout,
+          kernel=kernel,
+          use_ephemeral_space=use_ephemeral_space,
+          allow_errors=allow_errors)
+      self.param(
+        'dataflow_params',
+        data_flow_param_dict)                                                     # update dataflow
+    except Exception as e:
+      message = \
         'project: {2}, sample:{3}, Error in {0}: {1}'.\
           format(
             self.__class__.__name__,
             e,
             project_igf_id,
             sample_igf_id)
-    self.warning(message)
-    self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
-    raise
+      self.warning(message)
+      self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
+      raise
 
