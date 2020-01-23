@@ -13,7 +13,7 @@ class Singularity_run_test1(unittest.TestCase):
     remove_dir(self.temp_dir)
 
   def test_singularity_run(self):
-    singularity_cmd = \
+    _,singularity_cmd = \
       singularity_run(
         image_path=self.image_path,
         path_bind=self.temp_dir,
