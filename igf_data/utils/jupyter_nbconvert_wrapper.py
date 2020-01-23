@@ -68,7 +68,7 @@ def generate_ipynb_from_template(template_ipynb_path,output_dir,param_dictionary
 
 def nbconvert_execute_in_singularity(image_path,ipynb_path,input_list,output_dir,output_format='html',
                                      output_file_map=None,timeout=600,kernel='python3',
-                                     use_ephemeral_space=False,allow_errors=False):
+                                     use_ephemeral_space=False,allow_errors=False,dry_run=False):
   '''
   A function for running jupyter nbconvert within singularity containers
 
@@ -82,7 +82,8 @@ def nbconvert_execute_in_singularity(image_path,ipynb_path,input_list,output_dir
   :param kernel: Kernel name for notebook execution, default python3
   :param allow_errors: A toggle for running notebook with errors, default False
   :param use_ephemeral_space: Toggle for using ephemeral space for temp dir, default False
-  :returns: None
+  :param dry_run: Return the notebook command without run, default False
+  :returns: notebook cmd
   '''
   try:
     check_file_path(image_path)
@@ -118,14 +119,16 @@ def nbconvert_execute_in_singularity(image_path,ipynb_path,input_list,output_dir
       '--ExecutePreprocessor.enabled=True',
       '--ExecutePreprocessor.timeout={0}'.format(quote(str(timeout))),
       '--ExecutePreprocessor.kernel_name={0}'.format(quote(kernel)),
-      '/tmp/{0}'.format(os.path.basename(temp_path))]                          # prepare notebook cmd for run
+      '/tmp/{0}'.format(os.path.basename(temp_path))]                           # prepare notebook cmd for run
     if allow_errors:
       args_list.append('--allow-errors')                                        # run notebooks with errors
-    singularity_run(
-      image_path=image_path,
-      path_bind=tmp_dir,
-      use_ephemeral_space=use_ephemeral_space,
-      args_list=args_list)                                                      # run notebook in singularity container
+    run_cmd = \
+      singularity_run(
+        image_path=image_path,
+        path_bind=tmp_dir,
+        use_ephemeral_space=use_ephemeral_space,
+        args_list=args_list,
+        dry_run=dry_run)                                                        # run notebook in singularity container
     if output_file_map is not None and \
        isinstance(output_file_map,dict):
       for tag,output in output_file_map.items():
@@ -134,15 +137,17 @@ def nbconvert_execute_in_singularity(image_path,ipynb_path,input_list,output_dir
           os.path.join(
             tmp_dir,
             os.path.basename(output))                                           # just get base name
-        check_file_path(temp_output)
+        if not dry_run:
+          check_file_path(temp_output)                                          # skip output file check for dry run
         if os.path.isfile(temp_output):
           output_path = \
             os.path.join(
               output_path,
               output)                                                           # need file name when copying files
-        copy_local_file(
-          temp_output,
-          output_path)                                                          # copy file or dir to output path
+        if not dry_run:
+          copy_local_file(
+            temp_output,
+            output_path)                                                        # copy file or dir to output path
         if os.path.isdir(temp_output):
           output_path = \
             os.path.join(
@@ -167,18 +172,20 @@ def nbconvert_execute_in_singularity(image_path,ipynb_path,input_list,output_dir
     elif output_format=='slide':
       temp_ipynb_path = \
         temp_ipynb_path.replace('.ipynb','.html')
-    check_file_path(temp_ipynb_path)                                            # check output file path
+    if not dry_run:
+      check_file_path(temp_ipynb_path)                                          # check output file path
     output_ipynb_path = \
       os.path.join(
         output_dir,
         os.path.basename(temp_ipynb_path))
-    copy_local_file(
-      temp_ipynb_path,
-      output_ipynb_path)                                                        # copy output notebook
+    if not dry_run:
+      copy_local_file(
+        temp_ipynb_path,
+        output_ipynb_path)                                                      # copy output notebook
     output_file_map.\
       update({'notebook':output_ipynb_path})                                    # add notebook output to dataflow
     remove_dir(tmp_dir)
-    return output_file_map
+    return output_file_map,run_cmd
   except Exception as e:
     raise ValueError(
             "Failed to run nbconvert in singularity, error: {0}".\
