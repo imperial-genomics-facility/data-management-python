@@ -12,7 +12,7 @@ def singularity_run(image_path,path_bind,args_list,return_results=True,use_ephem
   :param return_results: Return singulatiy run results, default True
   :param use_ephemeral_space: Toggle for using ephemeral space for temp dir, default False
   :param dry_run: Return the singularity command without run, default False
-  :returns: A string containing singularity command line
+  :returns: A response from container run and a string containing singularity command line
   '''
   try:
     check_file_path(image_path)
@@ -38,13 +38,15 @@ def singularity_run(image_path,path_bind,args_list,return_results=True,use_ephem
     if dry_run:
       return singularity_run_cmd
     else:
-      Client.run(
-        image=temp_image_path,
-        bind='{0}:/tmp'.format(path_bind),
-        args=args,
-        return_result=return_results)
+      res = None
+      res = \
+        Client.run(
+          image=temp_image_path,
+          bind='{0}:/tmp'.format(path_bind),
+          args=args,
+          return_result=return_results)
       remove_dir(temp_dir)                                                      # remove copied image after run
-      return singularity_run_cmd
+      return res,singularity_run_cmd
   except Exception as e:
     raise ValueError(
             'Failed to run image {0}, error: {1}'.\

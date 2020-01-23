@@ -15,7 +15,7 @@ run_args = args.run_args
 
 if __name__=='__main__':
   try:
-    res = \
+    res,singularity_run_cmd = \
       singularity_run(
         image_path=image_path,
         path_bind=path_bind,

@@ -53,6 +53,7 @@ def full_suite():
   from .utils.analysis_fastq_fetch_utils_test import Analysis_fastq_fetch_utils_test1
   from .process.reformat_metadata_file_test import Reformat_metadata_file_testA
   from .process.reformat_samplesheet_file_test import Reformat_samplesheet_file_testA
+  from .utils.singularity_run_wrapper_test import Singularity_run_test1
 
   return unittest.TestSuite([ \
       unittest.TestLoader().loadTestsFromTestCase(BasesMask_testA), 
@@ -120,4 +121,5 @@ def full_suite():
       unittest.TestLoader().loadTestsFromTestCase(Analysis_fastq_fetch_utils_test1),
       unittest.TestLoader().loadTestsFromTestCase(Reformat_metadata_file_testA),
       unittest.TestLoader().loadTestsFromTestCase(Reformat_samplesheet_file_testA),
+      unittest.TestLoader().loadTestsFromTestCase(Singularity_run_test1),
     ])
