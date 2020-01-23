@@ -118,17 +118,21 @@ def nbconvert_execute_in_singularity(image_path,ipynb_path,input_list,output_dir
       '--execute',
       '--ExecutePreprocessor.enabled=True',
       '--ExecutePreprocessor.timeout={0}'.format(quote(str(timeout))),
-      '--ExecutePreprocessor.kernel_name={0}'.format(quote(kernel)),
-      '/tmp/{0}'.format(os.path.basename(temp_path))]                           # prepare notebook cmd for run
+      '--ExecutePreprocessor.kernel_name={0}'.format(quote(kernel))]            # prepare notebook cmd for run
     if allow_errors:
       args_list.append('--allow-errors')                                        # run notebooks with errors
-    run_cmd = \
-      singularity_run(
-        image_path=image_path,
-        path_bind=tmp_dir,
-        use_ephemeral_space=use_ephemeral_space,
-        args_list=args_list,
-        dry_run=dry_run)                                                        # run notebook in singularity container
+    try:
+      res = None
+      res, run_cmd = \
+        singularity_run(
+          image_path=image_path,
+          path_bind=tmp_dir,
+          use_ephemeral_space=use_ephemeral_space,
+          args_list=args_list,
+          dry_run=dry_run)                                                      # run notebook in singularity container
+    except Exception as e:
+      raise ValueError("Failed to run jupyter command in singularity, error {0}, response: {1}".\
+                         format(e,res))
     if output_file_map is not None and \
        isinstance(output_file_map,dict):
       for tag,output in output_file_map.items():
@@ -143,7 +147,7 @@ def nbconvert_execute_in_singularity(image_path,ipynb_path,input_list,output_dir
           output_path = \
             os.path.join(
               output_path,
-              output)                                                           # need file name when copying files
+              os.path.basename(output))                                         # need file name when copying files
         if not dry_run:
           copy_local_file(
             temp_output,
@@ -152,7 +156,7 @@ def nbconvert_execute_in_singularity(image_path,ipynb_path,input_list,output_dir
           output_path = \
             os.path.join(
               output_path,
-              output)                                                           # adding dir name to output path, once copy is over
+              os.path.basename(output))                                         # adding dir name to output path, once copy is over
         output_file_map.\
           update({tag:output_path})
     if output_format=='html':

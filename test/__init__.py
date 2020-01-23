@@ -54,8 +54,9 @@ def full_suite():
   from .process.reformat_metadata_file_test import Reformat_metadata_file_testA
   from .process.reformat_samplesheet_file_test import Reformat_samplesheet_file_testA
   from .utils.singularity_run_wrapper_test import Singularity_run_test1
+  from .utils.jupyter_nbconvert_wrapper_test import Nbconvert_execute_test1
 
-  return unittest.TestSuite([ \
+  return unittest.TestSuite([
       unittest.TestLoader().loadTestsFromTestCase(BasesMask_testA), 
       unittest.TestLoader().loadTestsFromTestCase(BasesMask_testB),
       unittest.TestLoader().loadTestsFromTestCase(BasesMask_testC),
@@ -122,4 +123,5 @@ def full_suite():
       unittest.TestLoader().loadTestsFromTestCase(Reformat_metadata_file_testA),
       unittest.TestLoader().loadTestsFromTestCase(Reformat_samplesheet_file_testA),
       unittest.TestLoader().loadTestsFromTestCase(Singularity_run_test1),
+      unittest.TestLoader().loadTestsFromTestCase(Nbconvert_execute_test1),
     ])

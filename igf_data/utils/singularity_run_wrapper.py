@@ -18,6 +18,7 @@ def singularity_run(image_path,path_bind,args_list,return_results=True,use_ephem
     check_file_path(image_path)
     check_file_path(path_bind)
     temp_dir = get_temp_dir(use_ephemeral_space=use_ephemeral_space)
+    res = None
     temp_image_path = \
       os.path.join(
         temp_dir,
@@ -36,9 +37,9 @@ def singularity_run(image_path,path_bind,args_list,return_results=True,use_ephem
           path_bind,
           args)
     if dry_run:
-      return singularity_run_cmd
+      return res,singularity_run_cmd
     else:
-      res = None
+      
       res = \
         Client.run(
           image=temp_image_path,
