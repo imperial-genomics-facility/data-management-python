@@ -237,10 +237,15 @@ class Notebook_runner:
         raise ValueError(
                 "Failed to run jupyter command in singularity, error {0}, response: {1}".\
                   format(e,res))
-      output_params = \
-        self.__copy_container_output_and_update_map(
-          temp_notebook_path=mount_notebook_path)
-      return res, run_cmd, output_params
+      if dry_run:
+        return res, run_cmd, output_params                                      # test singularity cmd
+      else:
+        output_params = \
+          self.__copy_container_output_and_update_map(
+            temp_notebook_path=mount_notebook_path)                             # move files to output dir
+        remove_dir(self.temp_dir)                                               # clean up temp dir
+        return res, run_cmd, output_params
+      
     except Exception as e:
       raise ValueError("Failed to execute notebook in singularity container, error: {0}".\
                          format(e))
