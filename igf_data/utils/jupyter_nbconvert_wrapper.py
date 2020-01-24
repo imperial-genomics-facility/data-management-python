@@ -244,7 +244,7 @@ class Notebook_runner:
       else:
         output_params = \
           self._copy_container_output_and_update_map(
-            temp_notebook_path=mount_notebook_path)                             # move files to output dir
+            temp_notebook_path=temp_notebook)                                   # move files to output dir
         remove_dir(self.temp_dir)                                               # clean up temp dir
         return res, run_cmd, output_params
       
