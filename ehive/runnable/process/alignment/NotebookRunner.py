@@ -1,7 +1,7 @@
 import os
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.utils.fileutils import get_temp_dir,remove_dir,check_file_path
-from igf_data.utils.jupyter_nbconvert_wrapper import generate_ipynb_from_template,nbconvert_execute_in_singularity
+from igf_data.utils.jupyter_nbconvert_wrapper import Notebook_runner
 
 class NotebookRunner(IGFBaseProcess):
   '''
@@ -20,6 +20,8 @@ class NotebookRunner(IGFBaseProcess):
       'timeout':600,
       'output_format':'html',
       'allow_errors':0,
+      'container_dir_prefix':'/tmp',
+      'notebook_tag':'notebook',
     })
     return params_dict
 
@@ -42,6 +44,8 @@ class NotebookRunner(IGFBaseProcess):
     :param timeout: Timeout setting for notebook run, default 600
     :param output_format: Notebook output format, default 'html'
     :param allow_errors: Allow notebook run with errors, default 0
+    :param container_dir_prefix: target dir in container, default /tmp
+    :param notebook_tag: Notebook output tag for dataflow param, default notebook
     '''
     try:
       project_igf_id = self.param_required('project_igf_id')
@@ -53,12 +57,13 @@ class NotebookRunner(IGFBaseProcess):
       notebook_template = self.param_required('notebook_template')
       base_work_dir = self.param_required('base_work_dir')
       use_ephemeral_space = self.param('use_ephemeral_space')
-      input_list = self.param_required('input_list')
       date_tag = self.param('date_tag')
       kernel = self.param('kernel')
       timeout = self.param('timeout')
       output_format = self.param('output_format')
       allow_errors = self.param('allow_errors')
+      notebook_tag = self.param('notebook_tag')
+      container_dir_prefix = self.param('container_dir_prefix')
       if input_param_map is not None and \
          not isinstance(input_param_map,dict):
         raise ValueError(
@@ -83,34 +88,22 @@ class NotebookRunner(IGFBaseProcess):
       work_dir = \
         self.get_job_work_dir(
           work_dir=work_dir_prefix)                                               # get a run work dir
-      temp_work_dir = \
-        get_temp_dir(use_ephemeral_space=use_ephemeral_space)
-      temp_notebook = \
-        os.path.join(
-          temp_work_dir,
-          os.path.basename(notebook_template))
-      generate_ipynb_from_template(
-        template_ipynb_path=notebook_template,
-        output_dir=temp_work_dir,
-        param_dictionary=input_param_map,
-        date_tag=date_tag,
-        use_ephemeral_space=use_ephemeral_space)                                  # generate notebook from template
-      check_file_path(temp_notebook)                                              # check the notebook for run
-      if allow_errors == 0:
-        allow_errors=False
-      data_flow_param_dict = dict()                                               # default data flow param is empty dictionary
-      data_flow_param_dict = \
-        nbconvert_execute_in_singularity(
-          image_path=singularity_image_path,
-          ipynb_path=temp_notebook,
-          input_list=input_list,
+      nr = \
+        Notebook_runner(
+          template_ipynb_path=notebook_template,
           output_dir=work_dir,
-          output_format=output_format,
+          input_param_map=input_param_map,
+          container_dir_prefix=container_dir_prefix,
           output_file_map=output_param_map,
+          date_tag=date_tag,
+          use_ephemeral_space=use_ephemeral_space,
+          output_format=output_format,
           timeout=timeout,
           kernel=kernel,
-          use_ephemeral_space=use_ephemeral_space,
-          allow_errors=allow_errors)
+          allow_errors=allow_errors,
+          notebook_tag=notebook_tag)
+      data_flow_param_dict = \
+        nr.nbconvert_singularity(singularity_image_path=singularity_image_path)
       self.param(
         'dataflow_params',
         data_flow_param_dict)                                                     # update dataflow
