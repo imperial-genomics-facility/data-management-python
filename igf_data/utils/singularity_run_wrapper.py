@@ -2,7 +2,7 @@ import os
 from spython.main import Client
 from igf_data.utils.fileutils import check_file_path,copy_local_file,get_temp_dir,remove_dir
 
-def singularity_run(image_path,path_bind,args_list,return_results=True,use_ephemeral_space=False,dry_run=False):
+def singularity_run(image_path,path_bind,args_list,container_dir='/tmp',return_results=True,use_ephemeral_space=False,dry_run=False):
   '''
   A wrapper module for running singularity based containers
 
@@ -31,10 +31,11 @@ def singularity_run(image_path,path_bind,args_list,return_results=True,use_ephem
        raise ValueError('No args provided for singularity run')                 # safemode
     args = ' '.join(args_list)                                                  # flatten args
     singularity_run_cmd = \
-      'singularity run {0} --bind {1}:/tmp {2}'.\
+      'singularity run {0} --bind {1}:{2} {3}'.\
         format(
           temp_image_path,
           path_bind,
+          container_dir,
           args)
     if dry_run:
       return res,singularity_run_cmd
@@ -43,7 +44,7 @@ def singularity_run(image_path,path_bind,args_list,return_results=True,use_ephem
       res = \
         Client.run(
           image=temp_image_path,
-          bind='{0}:/tmp'.format(path_bind),
+          bind='{0}:{1}'.format(path_bind,container_dir),
           args=args,
           return_result=return_results)
       remove_dir(temp_dir)                                                      # remove copied image after run
