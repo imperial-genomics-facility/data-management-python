@@ -114,7 +114,7 @@ def nbconvert_execute_in_singularity(image_path,ipynb_path,input_list,output_dir
       'jupyter',
       'nbconvert',
       '{0}'.format(quote(temp_ipynb_path)),
-      '-to={0}'.format(quote(output_format)),
+      '--to={0}'.format(quote(output_format)),
       '--execute',
       '--ExecutePreprocessor.enabled=True',
       '--ExecutePreprocessor.timeout={0}'.format(quote(str(timeout))),
