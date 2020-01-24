@@ -88,7 +88,7 @@ class NotebookRunner(IGFBaseProcess):
       temp_notebook = \
         os.path.join(
           temp_work_dir,
-          os.path.basename(temp_work_dir))
+          os.path.basename(notebook_template))
       generate_ipynb_from_template(
         template_ipynb_path=notebook_template,
         output_dir=temp_work_dir,
