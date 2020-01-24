@@ -79,7 +79,7 @@ class NotebookRunner(IGFBaseProcess):
         work_dir_prefix_list.\
           append(experiment_igf_id)
       work_dir_prefix = \
-        os.path.join(work_dir_prefix_list)
+        os.path.join(*work_dir_prefix_list)
       work_dir = \
         self.get_job_work_dir(
           work_dir=work_dir_prefix)                                               # get a run work dir
