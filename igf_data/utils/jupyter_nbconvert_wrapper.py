@@ -43,7 +43,7 @@ class Notebook_runner:
 
 
   @staticmethod
-  def __copy_to_container_temp(mount_dir,container_path_prefix,filepath):
+  def _copy_to_container_temp(mount_dir,container_path_prefix,filepath):
     '''
     An internal static method for copying files to container temp dir
 
@@ -72,7 +72,7 @@ class Notebook_runner:
                         format(filepath,mount_dir,e))
 
 
-  def __substitute_input_path_and_copy_files_to_tempdir(self):
+  def _substitute_input_path_and_copy_files_to_tempdir(self):
     '''
     An internal method for substituting input filepaths and copying them to temp dir
 
@@ -82,13 +82,15 @@ class Notebook_runner:
       check_file_path(self.temp_dir)
       if self.input_param_map is None or \
          not isinstance(self.input_param_map,dict):
-        raise TypeError("Expecting a input param dictionary and got {0}".\
-                        format(type(self.input_param_map)))
+        raise TypeError(
+                "Expecting a input param dictionary and got {0}".\
+                  format(type(self.input_param_map)))
       modified_input_map = dict()
       for key,entry in self.input_param_map.items():
-        if os.path.exists(entry):
+        if isinstance(entry,str) and \
+           os.path.exists(entry):
           _,new_entry = \
-            self.__copy_to_container_temp(
+            self._copy_to_container_temp(
               mount_dir=self.temp_dir,
               container_path_prefix=self.container_dir_prefix,
               filepath=entry)
@@ -99,7 +101,7 @@ class Notebook_runner:
           for e in entry:
             if os.path.exists(e):
               _,new_entry = \
-                self.__copy_to_container_temp(
+                self._copy_to_container_temp(
                   mount_dir=self.temp_dir,
                   container_path_prefix=self.container_dir_prefix,
                   filepath=e)
@@ -113,7 +115,7 @@ class Notebook_runner:
           for e_key,e_val in entry.items():
             if os.path.exists(e_val):
               _,new_entry = \
-                self.__copy_to_container_temp(
+                self._copy_to_container_temp(
                   mount_dir=self.temp_dir,
                   container_path_prefix=self.container_dir_prefix,
                   filepath=e_val)
@@ -134,13 +136,14 @@ class Notebook_runner:
 
 
   @staticmethod
-  def __get_date_stamp():
+  def _get_date_stamp():
     '''
     An internal static method for generating datestamp
     
     :returns: A string of datestampe in 'YYYY-MM-DD HH:MM' format
     '''
     try:
+      date_stamp = None
       date_stamp = \
         datetime.\
           strftime(
@@ -151,7 +154,7 @@ class Notebook_runner:
       raise ValueError("Failed to get datestamp, error: {0}".format(e))
 
 
-  def __generate_ipynb_from_template(self,param_map):
+  def _generate_ipynb_from_template(self,param_map):
     '''
     An internal method to generate notebook from template
 
@@ -199,20 +202,19 @@ class Notebook_runner:
     try:
       output_params = dict()
       new_input_map = \
-        self.__substitute_input_path_and_copy_files_to_tempdir()                # get modified input map and copy files to ount dir
+        self._substitute_input_path_and_copy_files_to_tempdir()                 # get modified input map and copy files to ount dir
       if not isinstance(new_input_map,dict):
         raise TypeError("Expecting a dictionary and got {0}".\
                           format(type(new_input_map)))
-      date_stamp = self.__get_date_stamp()                                      # get date stamp
+      date_stamp = self._get_date_stamp()                                       # get date stamp
       new_input_map.\
         update({self.date_tag:date_stamp})                                      # update input map with datestamp
       temp_notebook = \
-        self.__generate_ipynb_from_template(param_map=new_input_map)            # generate new notebook after param substitution
-      mount_notebook_path, container_notebook_path = \
-        self.__copy_to_container_temp(
-          mount_dir=self.temp_dir,
-          container_path_prefix=self.container_dir_prefix,
-          filepath=temp_notebook)                                               # copy notebook to container mounter dir for run
+        self._generate_ipynb_from_template(param_map=new_input_map)             # generate new notebook after param substitution
+      container_notebook_path = \
+        os.path.join(
+          self.container_dir_prefix,
+          os.path.basename(temp_notebook))
       args_list = [
         'jupyter',
         'nbconvert',
@@ -241,7 +243,7 @@ class Notebook_runner:
         return res, run_cmd, output_params                                      # test singularity cmd
       else:
         output_params = \
-          self.__copy_container_output_and_update_map(
+          self._copy_container_output_and_update_map(
             temp_notebook_path=mount_notebook_path)                             # move files to output dir
         remove_dir(self.temp_dir)                                               # clean up temp dir
         return res, run_cmd, output_params
@@ -251,7 +253,7 @@ class Notebook_runner:
                          format(e))
 
 
-  def __copy_container_output_and_update_map(self,temp_notebook_path):
+  def _copy_container_output_and_update_map(self,temp_notebook_path):
     '''
     An internal method to copy output files from container output dir and update the output map dictionary
 
