@@ -88,22 +88,27 @@ class NotebookRunner(IGFBaseProcess):
       work_dir = \
         self.get_job_work_dir(
           work_dir=work_dir_prefix)                                               # get a run work dir
-      nr = \
-        Notebook_runner(
-          template_ipynb_path=notebook_template,
-          output_dir=work_dir,
-          input_param_map=input_param_map,
-          container_dir_prefix=container_dir_prefix,
-          output_file_map=output_param_map,
-          date_tag=date_tag,
-          use_ephemeral_space=use_ephemeral_space,
-          output_format=output_format,
-          timeout=timeout,
-          kernel=kernel,
-          allow_errors=allow_errors,
-          notebook_tag=notebook_tag)
-      data_flow_param_dict = \
-        nr.nbconvert_singularity(singularity_image_path=singularity_image_path)
+      try:
+        nr = \
+          Notebook_runner(
+            template_ipynb_path=notebook_template,
+            output_dir=work_dir,
+            input_param_map=input_param_map,
+            container_dir_prefix=container_dir_prefix,
+            output_file_map=output_param_map,
+            date_tag=date_tag,
+            use_ephemeral_space=use_ephemeral_space,
+            output_format=output_format,
+            timeout=timeout,
+            kernel=kernel,
+            allow_errors=allow_errors,
+            notebook_tag=notebook_tag)
+        res, run_cmd, data_flow_param_dict = \
+          nr.nbconvert_singularity(singularity_image_path=singularity_image_path)
+      except Exception as e:
+        raise ValueError(
+                "Failed to run notebook, response: {0}, command: {1}, error: {2}".\
+                   format(res,run_cmd,e))
       self.param(
         'dataflow_params',
         data_flow_param_dict)                                                     # update dataflow
