@@ -44,5 +44,5 @@ dependencies:
     - seaborn==0.9.0
     - multiqc==1.7
     - bioservices==1.5.2
-    - cellbrowser==0.5.12
+    - cellbrowser==0.7.7
     - spython
