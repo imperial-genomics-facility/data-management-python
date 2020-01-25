@@ -90,6 +90,8 @@ class NotebookRunner(IGFBaseProcess):
           work_dir=work_dir_prefix)                                               # get a run work dir
       try:
         res = None
+        run_cmd = None
+        data_flow_param_dict = dict()
         nr = \
           Notebook_runner(
             template_ipynb_path=notebook_template,
