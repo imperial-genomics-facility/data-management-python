@@ -89,6 +89,7 @@ class NotebookRunner(IGFBaseProcess):
         self.get_job_work_dir(
           work_dir=work_dir_prefix)                                               # get a run work dir
       try:
+        res = None
         nr = \
           Notebook_runner(
             template_ipynb_path=notebook_template,
@@ -104,7 +105,8 @@ class NotebookRunner(IGFBaseProcess):
             allow_errors=allow_errors,
             notebook_tag=notebook_tag)
         res, run_cmd, data_flow_param_dict = \
-          nr.nbconvert_singularity(singularity_image_path=singularity_image_path)
+          nr.nbconvert_singularity(
+            singularity_image_path=singularity_image_path)
       except Exception as e:
         raise ValueError(
                 "Failed to run notebook, response: {0}, command: {1}, error: {2}".\
