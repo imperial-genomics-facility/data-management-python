@@ -165,11 +165,11 @@ class Projectutils_test2(unittest.TestCase):
        'platform_name':'MISEQ',
        'project_igf_id':'ProjectB'}]
     run_data = [
-      {'run_igf_id':'RunA1',
+      {'run_igf_id':'RunA_A',
        'experiment_igf_id':'ExperimentA',
        'seqrun_igf_id':'SeqrunA',
        'lane_number':'1'},
-      {'run_igf_id':'RunA2',
+      {'run_igf_id':'RunA_B',
        'experiment_igf_id':'ExperimentA',
        'seqrun_igf_id':'SeqrunB',
        'lane_number':'1'}]
@@ -197,9 +197,9 @@ class Projectutils_test2(unittest.TestCase):
        'type':'analysis_cram',
        'table':'run'}]
     collection_files_data = [
-      {'name':'RunA1',
+      {'name':'RunA_A',
        'type':'demultiplexed_fastq',
-       'file_path':'/path/RunA1_R1.fastq.gz'},
+       'file_path':'/path/RunA_A_R1.fastq.gz'},
       {'name':'ExperimentA',
        'type':'analysis_cram',
        'file_path':'/path/ExperimentA.cram'},
