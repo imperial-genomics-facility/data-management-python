@@ -112,31 +112,39 @@ def mark_project_barcode_check_off(project_igf_id,session_class,
   :returns: None
   '''
   try:
-    db_connected=False
-    pr=ProjectAdaptor(**{'session_class':session_class})
+    db_connected = False
+    pr = ProjectAdaptor(**{'session_class':session_class})
     pr.start_session()
-    db_connected=True
-    pr_attributes=pr.check_project_attributes(project_igf_id=project_igf_id,
-                                              attribute_name=barcode_check_attribute) # check for the existing project attribute
+    db_connected = True
+    pr_attributes = \
+      pr.check_project_attributes(
+        project_igf_id=project_igf_id,
+        attribute_name=barcode_check_attribute)                                 # check for the existing project attribute
     if pr_attributes:                                                           # if attribute present, then modify it
-      project=pr.fetch_project_records_igf_id(project_igf_id=project_igf_id)    # fetch project info
-      query=pr.session.\
-            query(Project_attribute).\
-            filter(Project_attribute.attribute_name==barcode_check_attribute).\
-            filter(Project_attribute.project_id==project.project_id).\
-            update({Project_attribute.attribute_value:barcode_check_val,},
-                   synchronize_session=False)                                   # create query for fetching attribute records and modify attribute records
+      project = \
+        pr.fetch_project_records_igf_id(
+          project_igf_id=project_igf_id)                                        # fetch project info
+      query = \
+        pr.session.\
+          query(Project_attribute).\
+          filter(Project_attribute.attribute_name==barcode_check_attribute).\
+          filter(Project_attribute.project_id==project.project_id).\
+          update({Project_attribute.attribute_value:barcode_check_val,},
+                  synchronize_session=False)                                    # create query for fetching attribute records and modify attribute records
     else:                                                                       # if project attribute is not present, store it
-      data=[{'project_igf_id':project_igf_id,
-             'attribute_name':barcode_check_attribute,
-             'attribute_value':barcode_check_val}]                              # create data structure for the attribute table
+      data = [{
+        'project_igf_id':project_igf_id,
+        'attribute_name':barcode_check_attribute,
+        'attribute_value':barcode_check_val}]                                   # create data structure for the attribute table
       pr.store_project_attributes(data,autosave=False)                          # store data to attribute table without auto commit
 
     pr.commit_session()
-  except:
+  except Exception as e:
     if db_connected:
       pr.rollback_session()
-    raise
+    raise ValueError(
+            "Failed to mark project barcode check off for {0}, error: {1}".\
+              format(project_igf_id,e))
   finally:
     if db_connected:
       pr.close_session()
@@ -202,4 +210,66 @@ def get_files_and_irods_path_for_project(project_igf_id,db_session_class,irods_p
             os.path.join(irods_path_prefix,user_res.username,project_igf_id)
     return file_list,irods_path
   except Exception as e:
-    raise ValueError('Failed to fetch file_list and irods path, error: {0}'.format(e))
+    raise ValueError(
+            'Failed to fetch file_list and irods path, error: {0}'.\
+              format(e))
+
+
+def mark_project_as_withdrawn(project_igf_id,db_session_class,withdrawn_tag='WITHDRAWN'):
+  '''
+  A function for marking all the entries for a specific project as withdrawn
+
+  :param project_igf_id: A string containing the project igf id
+  :param db_session_class: A dbsession object
+  :param withdrawn_tag: A string for withdrawn field in db, default WITHDRAWN
+  :returns: None
+  '''
+  try:
+    dbconnected = 0
+    base = ProjectAdaptor(**{'session_class':db_session_class})
+    base.start_session()
+    dbconnected = 1
+    base.session.\
+      query(Project).\
+      filter(Project.project_id==Sample.project_id).\
+      filter(Sample.sample_id==Experiment.sample_id).\
+      filter(Experiment.experiment_id==Run.experiment_id).\
+      filter(Project.project_igf_id==project_igf_id).\
+      update({
+        Project.status:withdrawn_tag,
+        Sample.status:withdrawn_tag,
+        Experiment.status:withdrawn_tag,
+        Run.status:withdrawn_tag},
+        synchronize_session='fetch')                                            # marking project, sample, experiment, run
+    base.session.\
+      query(File).\
+      filter(File.file_id==Collection_group.file_id).\
+      filter(Collection.collection_id==Collection_group.collection_id).\
+      filter(Run.run_igf_id==Collection.name).\
+      filter(Experiment.experiment_id==Run.experiment_id).\
+      filter(Sample.sample_id==Experiment.sample_id).\
+      filter(Project.project_id==Sample.project_id).\
+      filter(Collection.table=='run').\
+      filter(Project.project_igf_id==project_igf_id).\
+      update({File.status:withdrawn_tag},
+              synchronize_session='fetch')                                      # marking run files
+      base.session.\
+        query(File).\
+        filter(File.file_id==Collection_group.file_id).\
+        filter(Collection.collection_id==Collection_group.collection_id).\
+        filter(Experiment.experiment_id==Collection.name).\
+        filter(Sample.sample_id==Experiment.sample_id).\
+        filter(Project.project_id==Sample.project_id).\
+        filter(Collection.table=='experiment').\
+        filter(Project.project_igf_id==project_igf_id).\
+        update({File.status:withdrawn_tag},
+                synchronize_session='fetch')                                    # marking exp files
+      base.commit_session()
+      base.close_session()
+    except Exception as e:
+      if dbconnected==1:
+        base.rollback_session()
+        base.close_session()
+      raise ValueError(
+              'Failed to mark project {0} as withdrawn, error: {1}'.\
+                format(project_igf_id,e))
