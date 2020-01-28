@@ -50,8 +50,8 @@ class DBConnect:
     if driver not in self.supported_drivers:
       raise ValueError('Database driver {0} is not supported yet.'.format(driver)) # check for supported databases
 
-    if driver != 'sqlite' and (not dbuser or not dbpass or not dbhost):
-      raise ValueError('driver {0} require dbuser, dbpass and dbhost details, {1},{2},{3}'.format(driver,dbuser,dbpass,dbhost)) # check for required parameters
+    if driver != 'sqlite' and (not dbuser or not dbhost):
+      raise ValueError('driver {0} require dbuser and dbhost details, {1},{2}'.format(driver,dbuser,dbhost)) # check for required parameters
 
     dburl='{0}'.format(driver)
     if connector:  
