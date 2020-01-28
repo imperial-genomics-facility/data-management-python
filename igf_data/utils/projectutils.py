@@ -257,7 +257,7 @@ def mark_project_as_withdrawn(project_igf_id,db_session_class,withdrawn_tag='WIT
       query(File).\
       filter(File.file_id==Collection_group.file_id).\
       filter(Collection.collection_id==Collection_group.collection_id).\
-      filter(Experiment.experiment_id==Collection.name).\
+      filter(Experiment.experiment_igf_id==Collection.name).\
       filter(Sample.sample_id==Experiment.sample_id).\
       filter(Project.project_id==Sample.project_id).\
       filter(Collection.table=='experiment').\
