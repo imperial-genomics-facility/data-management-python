@@ -1,0 +1,8 @@
+{"dbhost":"127.0.0.1",
+ "dbport": 3306,
+ "dbuser":"travis",
+ "dbpass":"",
+ "dbname":"igfdb",
+ "driver":"mysql",
+ "connector":"pymysql",
+ "engine_config":{"pool_recycle":600}}
