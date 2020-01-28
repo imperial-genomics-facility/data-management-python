@@ -174,7 +174,7 @@ class Projectutils_test2(unittest.TestCase):
        'seqrun_igf_id':'SeqrunB',
        'lane_number':'1'}]
     file_data = [
-      {'file_path':'/path/RunA1_R1.fastq.gz',
+      {'file_path':'/path/RunA_A_R1.fastq.gz',
        'location':'HPC_PROJECT',
        'md5':'fd5a95c18ebb7145645e95ce08d729e4',
        'size':'1528121404'},
@@ -187,7 +187,7 @@ class Projectutils_test2(unittest.TestCase):
        'md5':'fd5a95c18ebb7145645e95ce08d729e3',
        'size':'1528121404'}]
     collection_data = [
-      {'name':'RunA1',
+      {'name':'RunA_A',
        'type':'demultiplexed_fastq',
        'table':'run'},
       {'name':'ExperimentA',
