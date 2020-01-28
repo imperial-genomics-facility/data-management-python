@@ -15,78 +15,89 @@ def get_project_read_count(project_igf_id,session_class,run_attribute_name='R1_R
   :param active_status: text label for active runs, default ACTIVE
   :returns: A pandas dataframe containing following columns
   
-               project_igf_id
-               sample_igf_id
-               flowcell_id
-               attribute_value
+               * project_igf_id
+               * sample_igf_id
+               * flowcell_id
+               * attribute_value
   '''
   try:
-    read_count=pd.DataFrame()
-    pr=ProjectAdaptor(**{'session_class':session_class})
+    read_count = pd.DataFrame()
+    pr = ProjectAdaptor(**{'session_class':session_class})
     pr.start_session()
-    query=pr.session.query(Project.project_igf_id,
-                           Sample.sample_igf_id,
-                           Seqrun.flowcell_id,
-                           Run_attribute.attribute_value).\
-                     join(Sample,Project.project_id==Sample.project_id).\
-                     join(Experiment,Sample.sample_id==Experiment.sample_id).\
-                     join(Run,Experiment.experiment_id==Run.experiment_id).\
-                     join(Seqrun,Seqrun.seqrun_id==Run.seqrun_id).\
-                     join(Run_attribute,Run.run_id==Run_attribute.run_id).\
-                     filter(Project.project_igf_id==project_igf_id).\
-                     filter(Sample.project_id==Project.project_id).\
-                     filter(Experiment.sample_id==Sample.sample_id).\
-                     filter(Run.experiment_id==Experiment.experiment_id).\
-                     filter(Seqrun.seqrun_id==Run.seqrun_id).\
-                     filter(Run_attribute.run_id==Run.run_id).\
-                     filter(Run_attribute.attribute_name==run_attribute_name).\
-                     filter(Run.status==active_status).\
-                     filter(Experiment.status==active_status).\
-                     filter(Sample.status==active_status)
-    results=pr.fetch_records(query=query)
+    query = \
+      pr.session.\
+        query(
+          Project.project_igf_id,
+          Sample.sample_igf_id,
+          Seqrun.flowcell_id,
+          Run_attribute.attribute_value).\
+        join(Sample,Project.project_id==Sample.project_id).\
+        join(Experiment,Sample.sample_id==Experiment.sample_id).\
+        join(Run,Experiment.experiment_id==Run.experiment_id).\
+        join(Seqrun,Seqrun.seqrun_id==Run.seqrun_id).\
+        join(Run_attribute,Run.run_id==Run_attribute.run_id).\
+        filter(Project.project_igf_id==project_igf_id).\
+        filter(Sample.project_id==Project.project_id).\
+        filter(Experiment.sample_id==Sample.sample_id).\
+        filter(Run.experiment_id==Experiment.experiment_id).\
+        filter(Seqrun.seqrun_id==Run.seqrun_id).\
+        filter(Run_attribute.run_id==Run.run_id).\
+        filter(Run_attribute.attribute_name==run_attribute_name).\
+        filter(Run.status==active_status).\
+        filter(Experiment.status==active_status).\
+        filter(Sample.status==active_status)
+    results = pr.fetch_records(query=query)
     pr.close_session()
     if len(results.index)>0:
-      read_count=results
+      read_count = results
     return read_count
-  except:
-    raise
+  except Exception as e:
+    raise ValueError(
+            "Failed to get project read count for {0}, error: {1}".\
+              format(project_igf_id,e))
+
 
 def get_seqrun_info_for_project(project_igf_id,session_class):
   '''
   A utility method for fetching seqrun_igf_id and flowcell_id which are linked
   to a specific project_igf_id
-  
-  required params:
-  project_igf_id: A project_igf_id string
-  session_class: A db session class object
-  
-  returns a pandas dataframe containing following columns
-    seqrun_igf_id
-    flowcell_id
+
+  :param project_igf_id: A project_igf_id string
+  :param session_class: A db session class object
+  :returns: A pandas dataframe containing following columns
+
+    * seqrun_igf_id
+    * flowcell_id
   '''
   try:
-    seqrun_info=pd.DataFrame()
-    pr=ProjectAdaptor(**{'session_class':session_class})
+    seqrun_info = pd.DataFrame()
+    pr = ProjectAdaptor(**{'session_class':session_class})
     pr.start_session()
-    query=pr.session.query(distinct(Seqrun.seqrun_igf_id).\
-                           label('seqrun_igf_id'),
-                           Seqrun.flowcell_id).\
-                     join(Run,Seqrun.seqrun_id==Run.seqrun_id).\
-                     join(Experiment,Experiment.experiment_id==Run.experiment_id).\
-                     join(Sample,Sample.sample_id==Experiment.sample_id).\
-                     join(Project,Project.project_id==Sample.project_id).\
-                     filter(Project.project_id==Sample.project_id).\
-                     filter(Sample.sample_id==Experiment.sample_id).\
-                     filter(Experiment.experiment_id==Run.experiment_id).\
-                     filter(Run.seqrun_id==Seqrun.seqrun_id).\
-                     filter(Project.project_igf_id==project_igf_id)
-    results=pr.fetch_records(query=query)
+    query = \
+      pr.session.\
+        query(
+          distinct(Seqrun.seqrun_igf_id).\
+            label('seqrun_igf_id'),
+          Seqrun.flowcell_id).\
+        join(Run,Seqrun.seqrun_id==Run.seqrun_id).\
+        join(Experiment,Experiment.experiment_id==Run.experiment_id).\
+        join(Sample,Sample.sample_id==Experiment.sample_id).\
+        join(Project,Project.project_id==Sample.project_id).\
+        filter(Project.project_id==Sample.project_id).\
+        filter(Sample.sample_id==Experiment.sample_id).\
+        filter(Experiment.experiment_id==Run.experiment_id).\
+        filter(Run.seqrun_id==Seqrun.seqrun_id).\
+        filter(Project.project_igf_id==project_igf_id)
+    results = pr.fetch_records(query=query)
     pr.close_session()
     if len(results.index)>0:
       seqrun_info=results
     return seqrun_info
-  except:
-    raise
+  except Exception as e:
+    raise ValueError(
+            "Failed to get seqrun info for the project {0}, error: {1}".\
+              format(project_igf_id,e))
+
 
 def mark_project_barcode_check_off(project_igf_id,session_class,
                                    barcode_check_attribute='barcode_check',
@@ -98,6 +109,7 @@ def mark_project_barcode_check_off(project_igf_id,session_class,
   :param session_class: A db session class object
   :param barcode_check_attribute: A text keyword for barcode check attribute, default barcode_check
   :param barcode_check_val: A text for barcode check attribute value, default is 'OFF'
+  :returns: None
   '''
   try:
     db_connected=False
