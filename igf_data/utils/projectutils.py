@@ -2,7 +2,7 @@ import os
 import pandas as pd
 from sqlalchemy import distinct
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
-from igf_data.igfdb.igfTables import Project,Sample,Seqrun,Experiment,Run,Run_attribute, Project_attribute
+from igf_data.igfdb.igfTables import Base,Project,User,ProjectUser,Sample,Experiment,Run,Collection,Collection_group,File,Seqrun,Run_attribute,Project_attribute
 
 def get_project_read_count(project_igf_id,session_class,run_attribute_name='R1_READ_COUNT',
                            active_status='ACTIVE'):
@@ -142,7 +142,7 @@ def get_files_and_irods_path_for_project(project_igf_id,db_session_class,irods_p
   try:
     file_list = list()
     irods_path = None
-    base = BaseAdaptor(**{'session_class':db_session_class})
+    base = ProjectAdaptor(**{'session_class':db_session_class})
     base.start_session()
     query_file_run = \
       base.session.\
