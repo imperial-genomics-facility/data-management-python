@@ -100,7 +100,7 @@ class Projectutils_test1(unittest.TestCase):
 
 class Projectutils_test2(unittest.TestCase):
   def setUp(self):
-    self.dbconfig = 'data/travis_dbconfig.json'
+    self.dbconfig = 'data/travis_dbconf.json'
     dbparam = read_dbconf_json(self.dbconfig)
     base = BaseAdaptor(**dbparam)
     self.engine = base.engine
