@@ -253,23 +253,23 @@ def mark_project_as_withdrawn(project_igf_id,db_session_class,withdrawn_tag='WIT
       filter(Project.project_igf_id==project_igf_id).\
       update({File.status:withdrawn_tag},
               synchronize_session='fetch')                                      # marking run files
-      base.session.\
-        query(File).\
-        filter(File.file_id==Collection_group.file_id).\
-        filter(Collection.collection_id==Collection_group.collection_id).\
-        filter(Experiment.experiment_id==Collection.name).\
-        filter(Sample.sample_id==Experiment.sample_id).\
-        filter(Project.project_id==Sample.project_id).\
-        filter(Collection.table=='experiment').\
-        filter(Project.project_igf_id==project_igf_id).\
-        update({File.status:withdrawn_tag},
-                synchronize_session='fetch')                                    # marking exp files
-      base.commit_session()
+    base.session.\
+      query(File).\
+      filter(File.file_id==Collection_group.file_id).\
+      filter(Collection.collection_id==Collection_group.collection_id).\
+      filter(Experiment.experiment_id==Collection.name).\
+      filter(Sample.sample_id==Experiment.sample_id).\
+      filter(Project.project_id==Sample.project_id).\
+      filter(Collection.table=='experiment').\
+      filter(Project.project_igf_id==project_igf_id).\
+      update({File.status:withdrawn_tag},
+              synchronize_session='fetch')                                    # marking exp files
+    base.commit_session()
+    base.close_session()
+  except Exception as e:
+    if dbconnected==1:
+      base.rollback_session()
       base.close_session()
-    except Exception as e:
-      if dbconnected==1:
-        base.rollback_session()
-        base.close_session()
-      raise ValueError(
-              'Failed to mark project {0} as withdrawn, error: {1}'.\
-                format(project_igf_id,e))
+    raise ValueError(
+            'Failed to mark project {0} as withdrawn, error: {1}'.\
+              format(project_igf_id,e))
