@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 from sqlalchemy import distinct
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
@@ -127,3 +128,66 @@ def mark_project_barcode_check_off(project_igf_id,session_class,
   finally:
     if db_connected:
       pr.close_session()
+
+
+def get_files_and_irods_path_for_project(project_igf_id,db_session_class,irods_path_prefix='/igfZone/home/'):
+  '''
+  A function for listing all the files and irods dir path for a given project
+
+  :param project_igf_id: A string containing the project igf id
+  :param db_session_class: A database session object
+  :param irods_path_prefix: A string containing irods path prefix, default '/igfZone/home/'
+  :returns: A list containing all the files for a project and a string containing the irods path for the project
+  '''
+  try:
+    file_list = list()
+    irods_path = None
+    base = BaseAdaptor(**{'session_class':db_session_class})
+    base.start_session()
+    query_file_run = \
+      base.session.\
+        query(File.file_path).\
+        join(Collection_group,File.file_id==Collection_group.file_id).\
+        join(Collection,Collection.collection_id==Collection_group.collection_id).\
+        join(Run,Run.run_igf_id==Collection.name).\
+        join(Experiment,Experiment.experiment_id==Run.experiment_id).\
+        join(Sample,Sample.sample_id==Experiment.sample_id).\
+        join(Project,Project.project_id==Sample.project_id).\
+        filter(Collection.table=='run').\
+        filter(Project.project_igf_id==project_igf_id)
+    run_files =  base.fetch_records(query_file_run)
+    if len(run_files.index) > 0:
+      run_files = list(run_files.get('file_path').values)
+      file_list.\
+        extend(run_files)
+      query_file_exp = \
+        base.session.\
+          query(File.file_path).\
+          join(Collection_group,File.file_id==Collection_group.file_id).\
+          join(Collection,Collection.collection_id==Collection_group.collection_id).\
+          join(Experiment,Experiment.experiment_igf_id==Collection.name).\
+          join(Sample,Sample.sample_id==Experiment.sample_id).\
+          join(Project,Project.project_id==Sample.project_id).\
+          filter(Collection.table=='experiment').\
+          filter(Project.project_igf_id==project_igf_id)
+      exp_files = base.fetch_records(query_file_exp)
+      user_query = \
+        base.session.\
+          query(User.username).\
+          join(ProjectUser,User.user_id==ProjectUser.user_id).\
+          join(Project,Project.project_id==ProjectUser.project_id).\
+          filter(Project.project_igf_id==project_igf_id).\
+          filter(ProjectUser.data_authority=='T')
+      user_res = \
+        base.fetch_records(user_query,output_mode='one_or_none')
+      base.close_session()
+      if len(exp_files.index) > 0:
+        exp_files = list(exp_files.get('file_path').values)
+        file_list.\
+          extend(exp_files)
+      if user_res.username is not None:
+        irods_path = \
+            os.path.join(irods_path_prefix,user_res.username,project_igf_id)
+    return file_list,irods_path
+  except Exception as e:
+    raise ValueError('Failed to fetch file_list and irods path, error: {0}'.format(e))
