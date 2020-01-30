@@ -1,4 +1,23 @@
 #!/usr/bin/env python
+################################################################################
+# A script for running commands within a singularity container in HPC
+#
+# USAGE:
+#   python run_singularity_container.py
+#     -i /path/SINGULARITY_IMAGE
+#     -b /path/CONTAINER_MOUNTED_DIR
+#     -a command
+#     -a arg1
+#     -a arg2
+#
+# It will run the following singularity run command:
+#   singularity run
+#     --bind /path/CONTAINER_MOUNTED_DIR:/tmp
+#     /path/SINGULARITY_IMAGE
+#       command arg1 arg2
+#
+################################################################################
+
 import argparse
 from igf_data.utils.singularity_run_wrapper import singularity_run
 
