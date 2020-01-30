@@ -343,6 +343,8 @@ class Projectutils_test2(unittest.TestCase):
         project_igf_id='ProjectA',
         db_session_class=self.session_class,
         irods_path_prefix='/igfZone/home/')
+    print(file_list)
+    print(irods_dir)
     base.start_session()
     query = \
       base.session.\
@@ -354,6 +356,7 @@ class Projectutils_test2(unittest.TestCase):
         join(Project,Project.project_id==Sample.project_id).\
         filter(Project.project_igf_id=='ProjectA')
     exp_file_list = base.fetch_records(query=query)
+    print(exp_file_list.to_dict(orient='records'))
     exp_file_list = exp_file_list['file_path'].values
     self.assertTrue(exp_file_list[0] in file_list)
     query = \
@@ -367,7 +370,9 @@ class Projectutils_test2(unittest.TestCase):
         filter(Project.project_igf_id=='ProjectB')
     exp_file_list = base.fetch_records(query=query)
     exp_file_list = exp_file_list['file_path'].values
+    print(exp_file_list.to_dict(orient='records'))
     self.assertTrue(exp_file_list[0] not in file_list)
+    base.close_session()
 
 
 if __name__ == '__main__':
