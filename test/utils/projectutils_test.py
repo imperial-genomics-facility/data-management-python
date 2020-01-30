@@ -13,8 +13,9 @@ from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_data.igfdb.platformadaptor import PlatformAdaptor
 from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
 from igf_data.utils.dbutils import read_dbconf_json
+from igf_data.utils.fileutils import get_temp_dir,remove_dir,check_file_path
 from igf_data.utils.projectutils import get_files_and_irods_path_for_project,mark_project_as_withdrawn
-from igf_data.utils.projectutils import get_project_read_count,mark_project_barcode_check_off,get_seqrun_info_for_project
+from igf_data.utils.projectutils import get_project_read_count,mark_project_barcode_check_off,get_seqrun_info_for_project,mark_project_and_list_files_for_cleanup
 
 class Projectutils_test1(unittest.TestCase):
   def setUp(self):
@@ -373,6 +374,21 @@ class Projectutils_test2(unittest.TestCase):
     self.assertTrue(exp_file_list[0] not in file_list)
     self.assertEqual(irods_dir, '/igfZone/home/usera/ProjectA')
 
+  def test_mark_project_and_list_files_for_cleanup(self):
+    work_dir = get_temp_dir()
+    mark_project_and_list_files_for_cleanup(
+      project_igf_id='ProjectA',
+      dbconfig_file=self.dbconfig,
+      outout_dir=work_dir,
+      force_overwrite=True,
+      use_ephemeral_space=False,
+      irods_path_prefix='/igfZone/home/',
+      withdrawn_tag='WITHDRAWN')
+    file_list_path = os.path.join(work_dir,'ProjectA_all_files.txt')
+    irods_file_path = os.path.join(work_dir,'ProjectA_irods_files.txt')
+    self.assertTrue(check_file_path(file_list_path))
+    self.assertTrue(check_file_path(irods_file_path))
+    remove_dir(work_dir)
 
 if __name__ == '__main__':
   unittest.main()
