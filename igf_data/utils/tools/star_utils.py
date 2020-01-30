@@ -133,7 +133,7 @@ class Star_utils:
       if dry_run:
         return star_cmd                                                         # return star cmd
 
-      subprocess.check_call(star_cmd,shell=False)
+      subprocess.check_call(' '.join(star_cmd),shell=True)
       genomic_bam = ''
       transcriptomic_bam = ''
       star_log_file = ''
@@ -228,7 +228,7 @@ class Star_utils:
       if dry_run:
         return star_cmd                                                         # return star cmd
 
-      subprocess.check_call(star_cmd)
+      subprocess.check_call(' '.join(star_cmd),shell=True)
       output_list = list()
       for file in os.listdir(temp_dir):
         if not fnmatch.fnmatch(file,'*.UniqueMultiple.*') and \
