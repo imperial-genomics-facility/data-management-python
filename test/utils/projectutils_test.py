@@ -371,7 +371,7 @@ class Projectutils_test2(unittest.TestCase):
     exp_file_list = exp_file_list['file_path'].values
     base.close_session()
     self.assertTrue(exp_file_list[0] not in file_list)
-    self.assertEqual(irods_dir, '/igfZone/home/UserA/ProjectA')
+    self.assertEqual(irods_dir, '/igfZone/home/usera/ProjectA')
 
 
 if __name__ == '__main__':
