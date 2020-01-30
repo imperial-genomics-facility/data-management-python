@@ -1,7 +1,9 @@
 import os
 import pandas as pd
 from sqlalchemy import distinct
+from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
+from igf_data.utils.fileutils import check_file_path,get_temp_dir,remove_dir,copy_local_file
 from igf_data.igfdb.igfTables import Base,Project,User,ProjectUser,Sample,Experiment,Run,Collection,Collection_group,File,Seqrun,Run_attribute,Project_attribute
 
 def get_project_read_count(project_igf_id,session_class,run_attribute_name='R1_READ_COUNT',
@@ -272,4 +274,63 @@ def mark_project_as_withdrawn(project_igf_id,db_session_class,withdrawn_tag='WIT
       base.close_session()
     raise ValueError(
             'Failed to mark project {0} as withdrawn, error: {1}'.\
+              format(project_igf_id,e))
+
+
+def mark_project_and_list_files_for_cleanup(project_igf_id,dbconfig_file,outout_dir,force_overwrite=True,
+                                            use_ephemeral_space=False,irods_path_prefix='/igfZone/home/',
+                                            withdrawn_tag='WITHDRAWN'):
+  '''
+  A wrapper function for project cleanup operation
+
+  :param project_igf_id: A string of project igf -id
+  :param dbconfig_file: A dbconf json file path
+  :param outout_dir: Output dir path for dumping file lists for project
+  :param force_overwrite: Overwrite existing output file, default True
+  :param use_ephemeral_space: A toggle for temp dir, default False
+  :param irods_path_prefix: Prefix for irods path, default /igfZone/home/
+  :param withdrawn_tag: A string tag for marking files in db, default WITHDRAWN
+  :returns: None
+  '''
+  try:
+    check_file_path(dbconfig_file)
+    check_file_path(outout_dir)
+    dbparams = read_dbconf_json(dbconfig_file)
+    pa = ProjectAdaptor(**dbparams)
+    temp_dir = get_temp_dir(use_ephemeral_space=use_ephemeral_space)
+    temp_project_file = os.path.join(temp_dir,'{0}_all_files.txt'.format(project_igf_id))
+    final_project_file = os.path.join(outout_dir,'{0}_all_files.txt'.format(project_igf_id))
+    temp_project_irods_file = os.path.join(temp_dir,'{0}_irods_files.txt'.format(project_igf_id))
+    final_project_irods_file = os.path.join(outout_dir,'{0}_irods_files.txt'.format(project_igf_id))
+    file_list, irods_path = \
+      get_files_and_irods_path_for_project(
+        project_igf_id=project_igf_id,
+        db_session_class=pa.session_class,
+        irods_path_prefix=irods_path_prefix)
+    if len(file_list)==0:
+      raise ValueError("No files found for project {0}".\
+                         format(project_igf_id))
+    if irods_path is None:
+      raise ValueError("IRODs path not found for project {0}".\
+                         format(project_igf_id))
+    with open(temp_project_file,'w') as fp:
+      fp.write('\n'.join(file_list))
+    with open(temp_project_irods_file,'w') as fp:
+      fp.write(irods_path)
+    copy_local_file(
+      temp_project_file,
+      final_project_file,
+      force=force_overwrite)
+    copy_local_file(
+      temp_project_irods_file,
+      final_project_irods_file,
+      force=force_overwrite)
+    remove_dir(temp_dir)
+    mark_project_as_withdrawn(
+      project_igf_id=project_igf_id,
+      db_session_class=pa.session_class,
+      withdrawn_tag=withdrawn_tag)
+  except Exception as e:
+    raise ValueError(
+            "Failed to mark project {0} for cleanup,error: {1}".\
               format(project_igf_id,e))
