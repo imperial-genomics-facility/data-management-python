@@ -386,7 +386,7 @@ class Projectutils_test2(unittest.TestCase):
       withdrawn_tag='WITHDRAWN')
     file_list_path = os.path.join(work_dir,'ProjectA_all_files.txt')
     irods_file_path = os.path.join(work_dir,'ProjectA_irods_files.txt')
-    self.assertTrue(os.path.exists((file_list_path))
+    self.assertTrue(os.path.exists(file_list_path))
     self.assertTrue(os.path.exists(irods_file_path))
     remove_dir(work_dir)
 
