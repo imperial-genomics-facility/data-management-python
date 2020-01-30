@@ -1,8 +1,14 @@
 #!/usr/bin/env python
-import argparse
+import argparse,textwrap
 from igf_data.process.seqrun_processing.find_and_register_new_project_data import Find_and_register_new_project_data
 
-parser = argparse.ArgumentParser()
+description = textwrap.dedent(
+"""
+ A script for registering new project metadata in IGf database
+"""
+)
+
+parser = argparse.ArgumentParser(formatter_class=argparse.RawDescriptionHelpFormatter,description=description)
 parser.add_argument('-p','--projet_info_path', required=True, help='Project metdata directory path')
 parser.add_argument('-d','--dbconfig', required=True, help='Database configuration file path')
 parser.add_argument('-t','--user_account_template', required=True, help='User account information email template file path')
