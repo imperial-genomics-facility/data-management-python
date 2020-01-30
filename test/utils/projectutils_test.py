@@ -192,10 +192,10 @@ class Projectutils_test2(unittest.TestCase):
        'table':'run'},
       {'name':'ExperimentA',
        'type':'analysis_cram',
-       'table':'run'},
+       'table':'experiment'},
       {'name':'ExperimentB',
        'type':'analysis_cram',
-       'table':'run'}]
+       'table':'experiment'}]
     collection_files_data = [
       {'name':'RunA_A',
        'type':'demultiplexed_fastq',
@@ -343,8 +343,6 @@ class Projectutils_test2(unittest.TestCase):
         project_igf_id='ProjectA',
         db_session_class=self.session_class,
         irods_path_prefix='/igfZone/home/')
-    print(file_list)
-    print(irods_dir)
     base.start_session()
     query = \
       base.session.\
@@ -354,9 +352,9 @@ class Projectutils_test2(unittest.TestCase):
         join(Experiment,Experiment.experiment_igf_id==Collection.name).\
         join(Sample,Sample.sample_id==Experiment.sample_id).\
         join(Project,Project.project_id==Sample.project_id).\
+        filter(Collection.table=='experiment').\
         filter(Project.project_igf_id=='ProjectA')
     exp_file_list = base.fetch_records(query=query)
-    print(exp_file_list.to_dict(orient='records'))
     exp_file_list = exp_file_list['file_path'].values
     self.assertTrue(exp_file_list[0] in file_list)
     query = \
@@ -367,12 +365,13 @@ class Projectutils_test2(unittest.TestCase):
         join(Experiment,Experiment.experiment_igf_id==Collection.name).\
         join(Sample,Sample.sample_id==Experiment.sample_id).\
         join(Project,Project.project_id==Sample.project_id).\
+        filter(Collection.table=='experiment').\
         filter(Project.project_igf_id=='ProjectB')
     exp_file_list = base.fetch_records(query=query)
     exp_file_list = exp_file_list['file_path'].values
-    print(exp_file_list.to_dict(orient='records'))
-    self.assertTrue(exp_file_list[0] not in file_list)
     base.close_session()
+    self.assertTrue(exp_file_list[0] not in file_list)
+    self.assertEqual(irods_dir, '/igfZone/home/UserA/ProjectA')
 
 
 if __name__ == '__main__':
