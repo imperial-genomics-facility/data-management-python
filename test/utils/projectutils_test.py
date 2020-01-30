@@ -13,7 +13,7 @@ from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_data.igfdb.platformadaptor import PlatformAdaptor
 from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
 from igf_data.utils.dbutils import read_dbconf_json
-from igf_data.utils.fileutils import get_temp_dir,remove_dir,check_file_path
+from igf_data.utils.fileutils import get_temp_dir,remove_dir
 from igf_data.utils.projectutils import get_files_and_irods_path_for_project,mark_project_as_withdrawn
 from igf_data.utils.projectutils import get_project_read_count,mark_project_barcode_check_off,get_seqrun_info_for_project,mark_project_and_list_files_for_cleanup
 
@@ -386,8 +386,8 @@ class Projectutils_test2(unittest.TestCase):
       withdrawn_tag='WITHDRAWN')
     file_list_path = os.path.join(work_dir,'ProjectA_all_files.txt')
     irods_file_path = os.path.join(work_dir,'ProjectA_irods_files.txt')
-    self.assertTrue(check_file_path(file_list_path))
-    self.assertTrue(check_file_path(irods_file_path))
+    self.assertTrue(os.path.exists((file_list_path))
+    self.assertTrue(os.path.exists(irods_file_path))
     remove_dir(work_dir)
 
 if __name__ == '__main__':
