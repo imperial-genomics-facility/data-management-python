@@ -336,7 +336,38 @@ class Projectutils_test2(unittest.TestCase):
     self.assertEqual(records['file_status'].values[0],'ACTIVE')
     base.close_session()
 
-
+  def test_get_files_and_irods_path_for_project(self):
+    base = BaseAdaptor(**{'session_class':self.session_class})
+    file_list, irods_dir = \
+      get_files_and_irods_path_for_project(
+        project_igf_id='ProjectA',
+        db_session_class=self.session_class,
+        irods_path_prefix='/igfZone/home/')
+    base.start_session()
+    query = \
+      base.session.\
+        query(File.file_path).\
+        join(Collection_group,File.file_id==Collection_group.file_id).\
+        join(Collection,Collection.collection_id==Collection_group.collection_id).\
+        join(Experiment,Experiment.experiment_igf_id==Collection.name).\
+        join(Sample,Sample.sample_id==Experiment.sample_id).\
+        join(Project,Project.project_id==Sample.project_id).\
+        filter(Project.project_igf_id=='ProjectA')
+    exp_file_list = base.fetch_records(query=query)
+    exp_file_list = exp_file_list['file_path'].values
+    self.assertTrue(exp_file_list[0] in file_list)
+    query = \
+      base.session.\
+        query(File.file_path).\
+        join(Collection_group,File.file_id==Collection_group.file_id).\
+        join(Collection,Collection.collection_id==Collection_group.collection_id).\
+        join(Experiment,Experiment.experiment_igf_id==Collection.name).\
+        join(Sample,Sample.sample_id==Experiment.sample_id).\
+        join(Project,Project.project_id==Sample.project_id).\
+        filter(Project.project_igf_id=='ProjectB')
+    exp_file_list = base.fetch_records(query=query)
+    exp_file_list = exp_file_list['file_path'].values
+    self.assertTrue(exp_file_list[0] not in file_list)
 
 
 if __name__ == '__main__':
