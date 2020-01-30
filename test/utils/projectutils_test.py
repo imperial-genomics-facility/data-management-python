@@ -267,7 +267,6 @@ class Projectutils_test2(unittest.TestCase):
         filter(Collection.table=='run').\
         filter(Project.project_igf_id=='ProjectA')
     records = base.fetch_records(query=query)
-    print(records.to_dict(orient='records'))
     self.assertEqual(records['sample_status'].values[0],'ACTIVE')
     self.assertEqual(records['exp_status'].values[0],'ACTIVE')
     self.assertEqual(records['run_status'].values[0],'ACTIVE')
@@ -284,10 +283,9 @@ class Projectutils_test2(unittest.TestCase):
         join(Collection_group,Collection.collection_id==Collection_group.collection_id).\
         join(File,File.file_id==Collection_group.file_id).\
         filter(Collection.type=='analysis_cram').\
-        filter(Collection.table=='run').\
+        filter(Collection.table=='experiment').\
         filter(Project.project_igf_id=='ProjectB')
     records = base.fetch_records(query=query)
-    print(records.to_dict(orient='records'))
     self.assertEqual(records['sample_status'].values[0],'ACTIVE')
     self.assertEqual(records['exp_status'].values[0],'ACTIVE')
     self.assertEqual(records['file_status'].values[0],'ACTIVE')
@@ -314,7 +312,6 @@ class Projectutils_test2(unittest.TestCase):
         filter(Collection.table=='run').\
         filter(Project.project_igf_id=='ProjectA')
     records = base.fetch_records(query=query)
-    print(records.to_dict(orient='records'))
     self.assertEqual(records['sample_status'].values[0],'WITHDRAWN')
     self.assertEqual(records['exp_status'].values[0],'WITHDRAWN')
     self.assertEqual(records['run_status'].values[0],'WITHDRAWN')
@@ -331,10 +328,9 @@ class Projectutils_test2(unittest.TestCase):
         join(Collection_group,Collection.collection_id==Collection_group.collection_id).\
         join(File,File.file_id==Collection_group.file_id).\
         filter(Collection.type=='analysis_cram').\
-        filter(Collection.table=='run').\
+        filter(Collection.table=='experiment').\
         filter(Project.project_igf_id=='ProjectB')
     records = base.fetch_records(query=query)
-    print(records.to_dict(orient='records'))
     self.assertEqual(records['sample_status'].values[0],'ACTIVE')
     self.assertEqual(records['exp_status'].values[0],'ACTIVE')
     self.assertEqual(records['file_status'].values[0],'ACTIVE')
