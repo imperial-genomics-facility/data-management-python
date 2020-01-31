@@ -2,7 +2,7 @@ import pandas as pd
 import os,fnmatch,re,subprocess,shutil
 from collections import defaultdict
 from igf_data.illumina.samplesheet import SampleSheet
-from igf_data.utils.fileutils import get_temp_dir,remove_dir
+from igf_data.utils.fileutils import get_temp_dir,remove_dir,copy_local_file
 
 class MergeSingleCellFastq:
   '''
@@ -225,7 +225,7 @@ class MergeSingleCellFastq:
             temp_file = os.path.join(temp_dir,output_filename)                  # assign temp filename
             cmd = ["cat"]+input_list+[">",temp_file]                            # shell command for merging fastq.gz files
             subprocess.check_call(" ".join(cmd),shell=True)                     # exact same command for fastq merge as 10x pipeline
-            shutil.copy(temp_file,final_path)                                   # copy file to final location
+            copy_local_file(temp_file,final_path,force=True)                    # copy file to final location
             remove_dir(temp_dir)                                                # remove temp dir
             for file_path in input_list:
               all_intermediate_files.append(file_path)                          # add fastq to intermediate list
