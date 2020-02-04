@@ -1035,7 +1035,7 @@ class Sample_attribute(Base):
   A table for loading sample attributes
   
   :param sample_attribute_id: An integer id for sample_attribute table
-  :param attribute_name: An optional string attribute name, allowed length 30
+  :param attribute_name: An optional string attribute name, allowed length 50
   :param attribute_value: An optional string attribute value, allowed length 50
   :param sample_id: An integer id from sample table (foreign key)
   '''
@@ -1045,7 +1045,7 @@ class Sample_attribute(Base):
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
   sample_attribute_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
-  attribute_name      = Column(String(30))
+  attribute_name      = Column(String(50))
   attribute_value     = Column(String(50))
   sample_id           = Column(INTEGER(unsigned=True), ForeignKey('sample.sample_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
 
