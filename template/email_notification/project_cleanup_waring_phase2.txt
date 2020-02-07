@@ -13,7 +13,7 @@ We would like to update you that the following old projects are now marked for d
 <p/>
 <b>List of projects:</b><p/><ul>{% for p in projectList %}
 <li><b>{{ p }}</b></li>
-{% end for %}
+{% endfor %}
 </ul><p/>
 Please let us know if you wish to remove any of your personal details or project information from our system following the GDPR regulation.
 <p/>

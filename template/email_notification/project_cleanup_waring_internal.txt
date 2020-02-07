@@ -10,6 +10,6 @@ Content-Type: text/html; charset=UTF-8
 <li><b>{{ p_data.name }}</b></li>
 <ul style="list-style-type:square;">{%for p in p_data.projects %}
 <li>{{ p }}</li>
-{% end for %}</ul><p/>
-{% end for %}
+{% endfor %}</ul><p/>
+{% endfor %}
 </ul><p/>

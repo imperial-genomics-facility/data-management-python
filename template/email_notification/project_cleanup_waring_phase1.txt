@@ -13,7 +13,7 @@ We would like to inform you that we are now preparing for data clean up for the 
 <p/>
 <b>List of projects:</b><p/><ul>{% for p in projectList %}
 <li><b>{{ p }}</b></li>
-{% end for %}
+{% endfor %}
 </ul><p/>
 It would be great if you could check and confirm by <span style="color:red"><b>{{ projectDeadline }}</b></span>, if you need copies for any of these projects. Otherwise, we will <span style="color:red"><b>REMOVE</b></span> the raw and analysis data for them after this deadline.<p/>
 Imperial College now offers a dedicated storage solution for the hpc:<p/>
