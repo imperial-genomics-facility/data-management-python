@@ -338,12 +338,13 @@ def mark_project_and_list_files_for_cleanup(project_igf_id,dbconfig_file,outout_
               format(project_igf_id,e))
 
 
-def find_projects_for_cleanup(dbconfig_file,warning_note_weeks=24):
+def find_projects_for_cleanup(dbconfig_file,warning_note_weeks=24,all_warning_note=False):
   '''
   A function for finding old projects for cleanup
 
   :param dbconfig_file: A dbconfig file path
   :param warning_note_weeks: Number of weeks from last sequencing run to wait before sending warnings, default 24
+  :param all_warning_note: A toggle for sending warning notes to all, default False
   :returns: A list containing warning lists, a list containing final note list and another list with clean up list
   '''
   try:
@@ -419,6 +420,15 @@ def find_projects_for_cleanup(dbconfig_file,warning_note_weeks=24):
             'email_id':user_email_id,
             'name':user_name,
             'projects':project_cleanup_list})
+      if all_warning_note:
+        warning_note_list.\
+          extend(final_note_list)
+        final_note_list = list()
+        warning_note_list.\
+          extend(cleanup_list)
+        cleanup_list = list()
     return warning_note_list,final_note_list,cleanup_list
   except Exception as e:
-    raise ValueError("Failed to get list of projects for cleanup")
+    raise ValueError(
+            "Failed to get list of projects for cleanup, error: {0}".\
+              format(e))
