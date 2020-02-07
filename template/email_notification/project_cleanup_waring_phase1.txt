@@ -26,7 +26,7 @@ Please follow the instructions for "Imperial College Research Data Store based t
 <p/><ul>
 <li><a href="https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html#imperial-college-research-data-store-based-transfer">https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html#imperial-college-research-data-store-based-transfer</a></li>
 </ul><p/>
-You need to confirm this before <span style="color:red"><b>{{ projectDeadline }}</b></span>. We will mark this project for clean up unless we get any response from you.
+You need to confirm this before <span style="color:red"><b>{{ projectDeadline }}</b></span>. <b>We will mark this project for clean up unless we get any response from you</b>.
 <p/>
 <p/>
 Kind regards</p>
