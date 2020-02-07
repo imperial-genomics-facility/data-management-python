@@ -59,8 +59,9 @@ class SendEmailToUser(IGFBaseProcess):
           email_template_path)
       template_env = \
         Environment(\
-          loader=FileSystemLoader(\
-                   searchpath=email_template_path),
+          loader=\
+            FileSystemLoader(
+              searchpath=email_template_path),
           autoescape=select_autoescape(['html','xml']))                         # set template env
       template_file = template_env.get_template(email_template)
       temp_work_dir = \

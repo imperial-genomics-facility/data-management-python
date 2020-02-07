@@ -1,10 +1,11 @@
-import os
+import os,time,subprocess
 import pandas as pd
 from sqlalchemy import distinct
 from datetime import datetime,timedelta
 from dateutil.parser import parse
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
+from jinja2 import Template,Environment, FileSystemLoader,select_autoescape
 from igf_data.utils.fileutils import check_file_path,get_temp_dir,remove_dir,copy_local_file
 from igf_data.igfdb.igfTables import Base,Project,User,ProjectUser,Sample,Experiment,Run,Collection,Collection_group,File,Seqrun,Run_attribute,Project_attribute
 
@@ -432,3 +433,142 @@ def find_projects_for_cleanup(dbconfig_file,warning_note_weeks=24,all_warning_no
     raise ValueError(
             "Failed to get list of projects for cleanup, error: {0}".\
               format(e))
+
+
+def check_project_for_cleanup_and_send_email(dbconfig_file,warning_template,final_notice_template,
+                                             cleanup_template,warning_note_weeks=24,all_warning_note=False,
+                                             use_ephemeral_space=False):
+  '''
+  A function for checking projects for cleanup and sending emails to users
+
+  :param dbconfig_file: A dbconfig file path
+  :param warning_template: A email template file for warning
+  :param final_notice_template: A email template for final notice
+  :param cleanup_template: A email template for sending cleanup list to igf
+  :param warning_note_weeks: Number of weeks from last sequencing run to wait before sending warnings, default 24
+  :param all_warning_note: A toggle for sending warning notes to all, default False
+  :param use_ephemeral_space: A toggle for using the ephemeral space, default False
+  '''
+  try:
+    check_file_path(warning_template)
+    check_file_path(final_notice_template)
+    check_file_path(cleanup_template)
+    check_file_path(dbconfig_file)
+    temp_dir = get_temp_dir(use_ephemeral_space=use_ephemeral_space)
+    warning_note_list, final_note_list, cleanup_list = \
+      find_projects_for_cleanup(
+        dbconfig_file=dbconfig_file,
+        warning_note_weeks=warning_note_weeks,
+        all_warning_note=all_warning_note)
+    warning_email_counter = 0
+    for data in warning_note_list:
+      warning_email_counter += 1
+      temp_draft = \
+        os.path.join(
+          temp_dir,
+          'warning_email_{0}.txt'.\
+            format(warning_email_counter))
+      draft_email_for_project_cleanup(
+        template_file=warning_template,
+        data=data,
+        draft_output=temp_draft)
+      send_email_to_user_via_sendmail(
+        draft_email_file=temp_draft)
+    final_notice_email_counter = 0
+    for data in final_note_list:
+      final_notice_email_counter += 1
+      temp_draft = \
+        os.path.join(
+          temp_dir,
+          'final_notice_email_{0}.txt'.\
+            format(final_notice_email_counter))
+      draft_email_for_project_cleanup(
+        template_file=final_notice_template,
+        data=data,
+        draft_output=temp_draft)
+      send_email_to_user_via_sendmail(
+        draft_email_file=temp_draft)
+    if len(cleanup_list) >0:
+      temp_draft = \
+        os.path.join(
+          temp_dir,
+          'cleanup_email_0.txt')
+      draft_email_for_project_cleanup(
+        template_file=cleanup_template,
+        data=cleanup_list,
+        draft_output=temp_draft)
+      send_email_to_user_via_sendmail(
+        draft_email_file=temp_draft)
+    remove_dir(temp_dir)
+  except Exception as e:
+    raise ValueError("Failed to run clean up scripts, error: {0}".format(e))
+
+
+def draft_email_for_project_cleanup(template_file,data,draft_output):
+  '''
+  '''
+  try:
+    template_env = \
+        Environment(\
+          loader=\
+            FileSystemLoader(
+              searchpath=os.path.dirname(template_file)),
+          autoescape=select_autoescape(['html','xml']))
+    template_file = \
+      template_env.\
+        get_template(os.path.basename(template_file))
+    
+    if isinstance(data,dict):
+      name = data.get('name')
+      email_id = data.get('email_id')
+      projects = data.get('projects')
+      cleanup_date = data.get('cleanup_date')
+      if (name is None) or (email_id is None) or \
+         (projects is None) or (cleanup_date is None):
+        raise ValueError(
+                "Failed to get required info in data: {0}".\
+                  format(data))
+      template_file.\
+        stream(\
+          customerEmail=email_id,
+          customerName=name,
+          projectList=projects,
+          projectDeadline=cleanup_date).\
+        dump(draft_output)
+    elif isinstance(data,dict):
+      template_file.\
+        stream(\
+          projectInfoList=data).\
+        dump(draft_output)
+  except Exception as e:
+    raise ValueError(
+            "Failed to draft email for project cleanup, error: {0}".\
+              format(e))
+
+def send_email_to_user_via_sendmail(draft_email_file,waiting_time=20,sendmail_exe='sendmail'):
+  '''
+  A function for sending email to users via sendmail
+
+  :param draft_email_file: A draft email to be sent to user
+  :param waiting_time: Wait after sending the email, default 20sec
+  :param sendmail_exe: Sendmail exe path, default sendmail
+  '''
+  try:
+    check_file_path(draft_email_file)
+    proc = \
+      subprocess.\
+        Popen([
+          'cat',draft_email_file],
+          stdout=subprocess.PIPE)
+    sendmail_cmd = [
+      sendmail_exe,'-t']
+    subprocess.\
+      check_call(
+        sendmail_cmd,
+        stdin=proc.stdout)
+    proc.stdout.close()
+    time.sleep(waiting_time)                                                    # wait for 20 secs
+  except Exception as e:
+    raise ValueError(
+            "Failed to send email {0}, error: {1}".\
+              format(draft_email_file,e))
