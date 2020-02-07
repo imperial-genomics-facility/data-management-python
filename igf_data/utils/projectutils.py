@@ -404,22 +404,31 @@ def find_projects_for_cleanup(dbconfig_file,warning_note_weeks=24,all_warning_no
           project_cleanup_list.append(project)                                  # silent list
 
       if len(project_warn_list) > 0:
+        cleanup_date = datetime.now() + timedelta(weeks=final_note_weeks)
+        cleanup_date = cleanup_date.strftime('%d-%b-%Y')
         warning_note_list.\
           append({
             'email_id':user_email_id,
             'name':user_name,
+            'cleanup_date':cleanup_date,
             'projects':project_warn_list})
       if len(project_final_list) > 0:
+        cleanup_date = datetime.now()
+        cleanup_date = cleanup_date.strftime('%d-%b-%Y')
         final_note_list.\
           append({
           'email_id':user_email_id,
           'name':user_name,
+          'cleanup_date':cleanup_date,
           'projects':project_final_list})
       if len(project_cleanup_list) > 0:
+        cleanup_date = datetime.now()
+        cleanup_date = cleanup_date.strftime('%d-%b-%Y')
         cleanup_list.\
           append({
             'email_id':user_email_id,
             'name':user_name,
+            'cleanup_date':cleanup_date,
             'projects':project_cleanup_list})
       if all_warning_note:
         warning_note_list.\
@@ -435,31 +444,40 @@ def find_projects_for_cleanup(dbconfig_file,warning_note_weeks=24,all_warning_no
               format(e))
 
 
-def check_project_for_cleanup_and_send_email(dbconfig_file,warning_template,final_notice_template,
-                                             cleanup_template,warning_note_weeks=24,all_warning_note=False,
-                                             use_ephemeral_space=False):
+def notify_project_for_cleanup(warning_template,final_notice_template,cleanup_template,
+                               warning_note_list, final_note_list, cleanup_list,
+                               use_ephemeral_space=False):
   '''
-  A function for checking projects for cleanup and sending emails to users
+  A function for sending emails to users for project cleanup
 
-  :param dbconfig_file: A dbconfig file path
   :param warning_template: A email template file for warning
   :param final_notice_template: A email template for final notice
   :param cleanup_template: A email template for sending cleanup list to igf
-  :param warning_note_weeks: Number of weeks from last sequencing run to wait before sending warnings, default 24
-  :param all_warning_note: A toggle for sending warning notes to all, default False
+  :param warning_note_list: A list of dictionary containing following fields to warn user about cleanup
+
+                 * name
+                 * email_id
+                 * projects
+                 * cleanup_date
+
+  :param final_note_list: A list of dictionary containing above mentioned fields to noftify user about final cleanup
+  :param cleanup_list: A list of dictionary containing above mentioned fields to list projects for cleanup
   :param use_ephemeral_space: A toggle for using the ephemeral space, default False
   '''
   try:
     check_file_path(warning_template)
     check_file_path(final_notice_template)
     check_file_path(cleanup_template)
-    check_file_path(dbconfig_file)
+    if not isinstance(warning_note_list,list) or \
+       not isinstance(final_note_list,list) or \
+       not isinstance(cleanup_list,list):
+      raise TypeError(
+              "Expection a list, got: {0}, {1}, {2}".
+                format(
+                  type(warning_note_list),
+                  type(final_note_list),
+                  type(cleanup_list)))
     temp_dir = get_temp_dir(use_ephemeral_space=use_ephemeral_space)
-    warning_note_list, final_note_list, cleanup_list = \
-      find_projects_for_cleanup(
-        dbconfig_file=dbconfig_file,
-        warning_note_weeks=warning_note_weeks,
-        all_warning_note=all_warning_note)
     warning_email_counter = 0
     for data in warning_note_list:
       warning_email_counter += 1
@@ -506,6 +524,17 @@ def check_project_for_cleanup_and_send_email(dbconfig_file,warning_template,fina
 
 def draft_email_for_project_cleanup(template_file,data,draft_output):
   '''
+  A method for drafting email for cleanup
+
+  :param template_file: A template file
+  :param data: A list of dictionary or a dictionary containing the following columns
+
+                * name
+                * email_id
+                * projects
+                * cleanup_date
+
+  :param draft_output: A output filename
   '''
   try:
     template_env = \
@@ -544,6 +573,7 @@ def draft_email_for_project_cleanup(template_file,data,draft_output):
     raise ValueError(
             "Failed to draft email for project cleanup, error: {0}".\
               format(e))
+
 
 def send_email_to_user_via_sendmail(draft_email_file,waiting_time=20,sendmail_exe='sendmail'):
   '''
