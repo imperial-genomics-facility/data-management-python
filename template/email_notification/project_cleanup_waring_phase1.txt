@@ -9,13 +9,13 @@ EMAIL FOR {{ customerEmail }}<p/>
 <p/>
 Dear {{ customerName }},<p/>
 <p/>
-We would like to inform you that we are now preparing for data clean up for the following old projects from our servers.<p/>
+We would like to inform you that we are now planning to cleanup the following old projects from our servers.<p/>
 <p/>
 <b>List of projects:</b><p/><ul>{% for p in projectList %}
 <li><b>{{ p }}</b></li>
 {% endfor %}
 </ul><p/>
-It would be great if you could check and confirm by <span style="color:red"><b>{{ projectDeadline }}</b></span>, if you need copies for any of these projects. Otherwise, we will <span style="color:red"><b>REMOVE</b></span> the raw and analysis data for them after this deadline.<p/>
+It would be great if you could check and confirm by <span style="color:red"><b>{{ projectDeadline }}</b></span>, if you need to backup any of these projects. Otherwise, we will <span style="color:red"><b>REMOVE</b></span> the raw and analysis data for them after this deadline.<p/>
 Imperial College now offers a dedicated storage solution for the hpc:<p/>
 <p/><ul>
 <li><b>Research data store:</b> <a href="https://www.imperial.ac.uk/admin-services/ict/self-service/research-support/rcs/rds/">https://www.imperial.ac.uk/admin-services/ict/self-service/research-support/rcs/rds/</a></li>
@@ -26,7 +26,7 @@ Please follow the instructions for "Imperial College Research Data Store based t
 <p/><ul>
 <li><a href="https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html#imperial-college-research-data-store-based-transfer">https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html#imperial-college-research-data-store-based-transfer</a></li>
 </ul><p/>
-You need to confirm this before <span style="color:red"><b>{{ projectDeadline }}</b></span>. <b>We will mark this project for clean up unless we get any response from you</b>.
+You need to confirm this before <span style="color:red"><b>{{ projectDeadline }}</b></span>. <b>We will mark this project for clean up unless we get any reply from you before the deadline</b>.
 <p/>
 <p/>
 Kind regards</p>
