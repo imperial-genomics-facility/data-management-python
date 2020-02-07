@@ -537,6 +537,7 @@ def draft_email_for_project_cleanup(template_file,data,draft_output):
   :param draft_output: A output filename
   '''
   try:
+    check_file_path(template_file)
     template_env = \
         Environment(\
           loader=\
@@ -546,7 +547,7 @@ def draft_email_for_project_cleanup(template_file,data,draft_output):
     template_file = \
       template_env.\
         get_template(os.path.basename(template_file))
-    
+
     if isinstance(data,dict):
       name = data.get('name')
       email_id = data.get('email_id')
@@ -564,7 +565,7 @@ def draft_email_for_project_cleanup(template_file,data,draft_output):
           projectList=projects,
           projectDeadline=cleanup_date).\
         dump(draft_output)
-    elif isinstance(data,dict):
+    elif isinstance(data,list):
       template_file.\
         stream(\
           projectInfoList=data).\
