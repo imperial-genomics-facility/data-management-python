@@ -575,13 +575,14 @@ def draft_email_for_project_cleanup(template_file,data,draft_output):
               format(e))
 
 
-def send_email_to_user_via_sendmail(draft_email_file,waiting_time=20,sendmail_exe='sendmail'):
+def send_email_to_user_via_sendmail(draft_email_file,waiting_time=20,sendmail_exe='sendmail',dry_run=False):
   '''
   A function for sending email to users via sendmail
 
   :param draft_email_file: A draft email to be sent to user
   :param waiting_time: Wait after sending the email, default 20sec
   :param sendmail_exe: Sendmail exe path, default sendmail
+  :param dry_run: A toggle for dry run, default False
   '''
   try:
     check_file_path(draft_email_file)
@@ -592,6 +593,8 @@ def send_email_to_user_via_sendmail(draft_email_file,waiting_time=20,sendmail_ex
           stdout=subprocess.PIPE)
     sendmail_cmd = [
       sendmail_exe,'-t']
+    if dry_run:
+      return sendmail_cmd
     subprocess.\
       check_call(
         sendmail_cmd,
