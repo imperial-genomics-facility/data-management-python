@@ -11,20 +11,36 @@ class IGF_ms_team:
           format(webhook_conf_file,e))
     self.webhook_conf = webhook_conf
 
-  def post_message_to_team(message,reaction=''):
+  def post_message_to_team(self,title,message,reaction=''):
     try:
+      webhook_url = self.webhook_conf.get('webhook_url')
       formatted_message = ''
+      themeColor = '#FFFFFF'
       if reaction !='' or reaction is not None:
         if reaction == 'pass':
-          reaction = ''
+          reaction =  '&#x2705;'
+          themeColor = '#00cc44'
         elif reaction == 'fail':
-          reaction = ''
+          reaction = '&#x274C'
+          themeColor = '#DC143C'
         elif reaction == 'sleep':
-          reaction = ''
+          reaction = '&#128564'
+          themeColor = '#000080'
         formatted_message = "{0}; {1}".format(reaction,message)
       else:
         formatted_message = message
-      print(formatted_message)
+      json_data = {
+        "@context": "https://schema.org/extensions",
+        "@type": "MessageText",
+        "themeColor": themeColor,
+        "TextFormat":"markdown",
+        "title": title,
+        "text": formatted_message}
+      r = requests.post(url=webhook_url,json=json_data)
+      if r.status_code != 200:
+        raise ValueError(
+          "Failed to post message to team, error code: {0},{1}".\
+            format(r.status_code,r.json()))
     except Exception as e:
-      raise ValueError('Failed to send message to team')
+      raise ValueError('Failed to send message to team, error: {0}'.format(e))
       
