@@ -1,4 +1,4 @@
-import os,requests,json
+import os,requests,json,time
 from igf_data.utils.dbutils import read_json_data
 
 class IGF_ms_team:
@@ -41,6 +41,7 @@ class IGF_ms_team:
         raise ValueError(
           "Failed to post message to team, error code: {0},{1}".\
             format(r.status_code,r.json()))
+      time.sleep(2)
     except Exception as e:
       raise ValueError('Failed to send message to team, error: {0}'.format(e))
       
