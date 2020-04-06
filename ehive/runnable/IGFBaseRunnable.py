@@ -3,6 +3,7 @@ from datetime import datetime
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.task_tracking.igf_slack import IGF_slack
 from igf_data.task_tracking.igf_asana import IGF_asana
+from igf_data.task_tracking.igf_ms_team import IGF_ms_team
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.utils.fileutils import get_datestamp_label,get_temp_dir,copy_local_file
 from numpy import isin
@@ -15,6 +16,7 @@ class IGFBaseRunnable(eHive.BaseRunnable):
   def param_defaults(self):
     return { 'log_slack':True,
              'log_asana':True,
+             'log_ms_team':True,
              'sub_tasks':list()
            }
 
@@ -39,8 +41,8 @@ class IGFBaseRunnable(eHive.BaseRunnable):
         igf_slack = IGF_slack(slack_config=slack_config)
         self.param('igf_slack', igf_slack)
 
-    except:
-      raise
+    except Exception as e:
+      raise ValueError('Failed to fetch input, error: {0}'.format(e))
 
   def run(self):
     pass
@@ -49,6 +51,26 @@ class IGFBaseRunnable(eHive.BaseRunnable):
   def write_output(self):
     pass
 
+
+  def post_message_to_ms_team(self,message,reaction=''):
+    '''
+    A method for posting message to MS Teams
+
+    :param message: A text message
+    :param reaction: Optional parameter for emoji
+    '''
+    try:
+      if self.param('log_ms_team'):
+        ms_team_config = self.param_required('ms_team_config')
+        igf_teams = IGF_ms_team(webhook_conf_file=ms_team_config)
+        igf_teams.\
+          post_message_to_team(
+            message=message,
+            reaction=reaction)
+    except Exception as e:
+      print('Error while posting message to MS Teams channel, error:{0}'.\
+        format(e))
+      pass
 
   def post_message_to_slack(self,message,reaction=''):
     '''
@@ -61,8 +83,9 @@ class IGFBaseRunnable(eHive.BaseRunnable):
       if self.param('log_slack'):
         igf_slack = self.param_required('igf_slack')
         igf_slack.post_message_to_channel(message,reaction)
-    except:
-      raise
+    except Exception as e:
+      print('Failed to send message to slack,error: {0}'.format(e))
+      pass
 
 
   def post_file_to_slack(self,filepath,message):
@@ -76,8 +99,9 @@ class IGFBaseRunnable(eHive.BaseRunnable):
       if self.param('log_slack'):
         igf_slack = self.param_required('igf_slack')
         igf_slack.post_file_to_channel(message=message,filepath=filepath)
-    except:
-      raise
+    except Exception as e:
+      print('Failed to send file to slack,error: {0}'.format(e))
+      pass
 
 
   def upload_file_to_asana_task(self,task_name,filepath,remote_filename=None,
@@ -104,7 +128,8 @@ class IGFBaseRunnable(eHive.BaseRunnable):
           filepath=filepath,
           remote_filename=remote_filename,
           comment=comment)
-    except:
+    except Exception as e:
+      print('Failed to send message to asana, error: {0}'.format(e))
       pass
 
 
@@ -117,7 +142,7 @@ class IGFBaseRunnable(eHive.BaseRunnable):
     :returns: response code asana update
     '''
     try:
-      res=None
+      res = None
       if self.param('log_asana'):
         asana_config = self.param_required('asana_config')
         asana_project_id = self.param_required('asana_project_id')
@@ -131,7 +156,8 @@ class IGFBaseRunnable(eHive.BaseRunnable):
               task_name=task_name,
               comment=comment)
       return res
-    except:
+    except Exception as e:
+      print('Failed to send comment to asana, error: {0}'.format(e))
       pass
 
 
@@ -144,7 +170,7 @@ class IGFBaseRunnable(eHive.BaseRunnable):
     :returns: response code asana update
     '''
     try:
-      res=None
+      res = None
       if self.param('log_asana'):
         try:
           asana_config = self.param_required('asana_config')
@@ -158,15 +184,16 @@ class IGFBaseRunnable(eHive.BaseRunnable):
           pass
 
       return res
-    except:
-      raise
+    except Exception as e:
+      print('Failed to send notes to asana, error: {0}'.format(e))
+      pass
 
 
   def get_job_id(self):
     '''
     A method for fetching job process id
     ''' 
-    job_pid=os.getpid()
+    job_pid = os.getpid()
     return job_pid
 
 
@@ -174,9 +201,9 @@ class IGFBaseRunnable(eHive.BaseRunnable):
     '''
     A method for getting a job name
     '''
-    class_name=self.__class__.__name__
-    job_id=self.get_job_id()
-    job_name='{0}_{1}'.format(class_name,job_id)
+    class_name = self.__class__.__name__
+    job_id = self.get_job_id()
+    job_name = '{0}_{1}'.format(class_name,job_id)
     return job_name
 
 
@@ -186,10 +213,11 @@ class IGFBaseRunnable(eHive.BaseRunnable):
     :returns: A padded string of format YYYYMMDD
     '''
     try:
-      datestamp=get_datestamp_label()
+      datestamp = get_datestamp_label()
       return datestamp
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+        'Failed to get datestamp, error: {0}'.format(e))
 
 
   def get_job_work_dir(self,work_dir):
@@ -200,15 +228,15 @@ class IGFBaseRunnable(eHive.BaseRunnable):
     :returns: A new job specific directory under the work dir
     '''
     try:
-      job_name=self.job_name()
-      datestamp=self.get_datestamp()
-      work_dir=os.path.join(work_dir,job_name,datestamp)                        # get work directory name
+      job_name = self.job_name()
+      datestamp = self.get_datestamp()
+      work_dir = os.path.join(work_dir,job_name,datestamp)                      # get work directory name
       if not os.path.exists(work_dir):
         os.makedirs(work_dir,mode=0o770)                                        # create work directory
 
       return work_dir
-    except:
-      raise
+    except Exception as e:
+      raise ValueError('Failed to get work dir, error: {0}'.format(e))
 
 
   def copy_input_file_to_temp(self,input_file):
@@ -220,18 +248,22 @@ class IGFBaseRunnable(eHive.BaseRunnable):
     '''
     try:
       if not os.path.exists(input_file):
-        raise IOError('File {0} not found'.\
-                      format(input_file))
+        raise IOError(
+          'File {0} not found'.\
+            format(input_file))
 
-      temp_dir=get_temp_dir()                                                   # get temp dir
-      destinationa_path=os.path.join(temp_dir,
-                                     os.path.basename(input_file))              # get destination file path
-      copy_local_file(source_path=input_file,
-                      destinationa_path=destinationa_path,
-                      force=True)                                               # copy file to temp dir
+      temp_dir = get_temp_dir()                                                 # get temp dir
+      destinationa_path = \
+        os.path.join(
+          temp_dir,
+          os.path.basename(input_file))                                         # get destination file path
+      copy_local_file(
+        source_path=input_file,
+        destinationa_path=destinationa_path,
+        force=True)                                                             # copy file to temp dir
       return destinationa_path
-    except:
-      raise
+    except Exception as e:
+      raise ValueError('Failed to copy file, error: {0}'.format(e))
 
 
   def format_tool_options(self,option,separator=None):
@@ -244,26 +276,34 @@ class IGFBaseRunnable(eHive.BaseRunnable):
     :returns: a formatted list
     '''
     try:
-      option_list=list()
+      option_list = list()
       if isinstance(option, str):
-        option=json.loads(option.replace('\'','"'))                             # replace ' with " and convert to json dict
+        option = \
+          json.loads(option.replace('\'','"'))                                  # replace ' with " and convert to json dict
         
       if not isinstance(option, dict):
-        raise ValueError('expecting param options as dictionary, got {0}'.\
-                         format(type(option)))
+        raise ValueError(
+          'expecting param options as dictionary, got {0}'.\
+            format(type(option)))
         
-      option_list=[[param,value] if value else [param]
-                       for param, value in option.items()]                      # remove empty values
+      option_list = \
+        [[param,value] if value else [param]
+          for param, value in option.items()]                                   # remove empty values
       if separator is None:
-        option_list=[col for row in option_list for col in row]                 # flatten sub lists
+        option_list = \
+          [col for row in option_list for col in row]                           # flatten sub lists
       else:
         if not isinstance(separator, str):
-          raise AttributeError('Expectian a string for param separator, got: {0}'.\
-                               format(type(separator)))
+          raise AttributeError(
+            'Expectian a string for param separator, got: {0}'.\
+              format(type(separator)))
 
-        option_list=[separator.join(row) for row in option_list]                # use separator string to combine params
+        option_list = \
+          [separator.join(row) for row in option_list]                          # use separator string to combine params
 
-      option_list=list(map(lambda x: str(x),option_list))                       # convert lists values to string
+      option_list = \
+        list(map(lambda x: str(x),option_list))                                 # convert lists values to string
       return option_list
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+        'Failed to format tool options, error: {0}'.format(e))
