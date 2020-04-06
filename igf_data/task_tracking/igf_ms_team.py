@@ -4,7 +4,7 @@ from igf_data.utils.dbutils import read_json_data
 class IGF_ms_team:
   def __init__(self,webhook_conf_file):
     try:
-      webhook_conf =  read_json_data(webhook_conf_file)
+      webhook_conf =  read_json_data(webhook_conf_file)[0]
     except Exception as e:
       raise ValueError(
         "Failed to parse webhook config file {0}, error: {1}".\
