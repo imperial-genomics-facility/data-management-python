@@ -46,3 +46,4 @@ dependencies:
     - bioservices==1.5.2
     - cellbrowser==0.7.7
     - spython
+    - request
