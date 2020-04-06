@@ -43,4 +43,3 @@ class IGF_ms_team:
       time.sleep(2)
     except Exception as e:
       raise ValueError('Failed to send message to team, error: {0}'.format(e))
-      
