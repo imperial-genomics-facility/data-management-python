@@ -11,7 +11,7 @@ class IGF_ms_team:
           format(webhook_conf_file,e))
     self.webhook_conf = webhook_conf
 
-  def post_message_to_team(self,title,message,reaction=''):
+  def post_message_to_team(self,message,reaction=''):
     try:
       webhook_url = self.webhook_conf.get('webhook_url')
       formatted_message = ''
@@ -34,7 +34,6 @@ class IGF_ms_team:
         "@type": "MessageText",
         "themeColor": themeColor,
         "TextFormat":"markdown",
-        "title": title,
         "text": formatted_message}
       r = requests.post(url=webhook_url,json=json_data)
       if r.status_code != 200:
