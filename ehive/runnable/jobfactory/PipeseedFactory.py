@@ -9,17 +9,20 @@ class PipeseedFactory(IGFBaseJobFactory):
   Job factory class for pipeline seed
   '''
   def param_defaults(self):
-    params_dict=super(PipeseedFactory,self).param_defaults()
-    params_dict.update({ 'seed_id_label':'seed_id',
-                         'seqrun_id_label':'seqrun_id',
-                         'seeded_label':'SEEDED',
-                         'running_label':'RUNNING',
-                         'seqrun_date_label':'seqrun_date',
-                         'seqrun_igf_id_label':'seqrun_igf_id',
-                         'seed_status_label':'status',
-                         'experiment_id_label':'experiment_id',
-                         'pipeseed_mode':'demultiplexing',
-                       })
+    params_dict = \
+      super(PipeseedFactory,self).param_defaults()
+    params_dict.\
+      update({
+        'seed_id_label':'seed_id',
+        'seqrun_id_label':'seqrun_id',
+        'seeded_label':'SEEDED',
+        'running_label':'RUNNING',
+        'seqrun_date_label':'seqrun_date',
+        'seqrun_igf_id_label':'seqrun_igf_id',
+        'seed_status_label':'status',
+        'experiment_id_label':'experiment_id',
+        'pipeseed_mode':'demultiplexing',
+      })
     return params_dict
 
 
@@ -40,60 +43,82 @@ class PipeseedFactory(IGFBaseJobFactory):
     :param pipeseed_mode: A text label for pipeline mode, default demultiplexing
                           Allowed values are 
                              
-                             demultiplexing
-                             alignment
+                          *   demultiplexing
+                          *   alignment
                              
     :returns: A list of dictionary containing the seqrun ids or experiment_igf_ids seed for analysis
     '''
     try:
-      dbconnected=False
+      dbconnected = False
       igf_session_class = self.param_required('igf_session_class')              # set by base class
       pipeline_name = self.param_required('pipeline_name')
-      seed_id_label = self.param_required('seed_id_label')
-      seqrun_id_label = self.param_required('seqrun_id_label')
-      seeded_label=self.param_required('seeded_label')
-      running_label=self.param_required('running_label')
-      seqrun_date_label=self.param_required('seqrun_date_label')
-      seqrun_igf_id_label=self.param_required('seqrun_igf_id_label')
-      seed_status_label=self.param_required('seed_status_label')
-      experiment_id_label = self.param_required('experiment_id_label')
-      pipeseed_mode=self.param_required('pipeseed_mode')
+      seeded_label = self.param_required('seeded_label')
+      running_label = self.param_required('running_label')
+      seed_status_label = self.param_required('seed_status_label')
+      pipeseed_mode = self.param_required('pipeseed_mode')
 
       if pipeseed_mode not in ('demultiplexing','alignment'):
-        raise ValueError('Pipeseed_mode {0} not supported'.format(pipeseed_mode))
+        raise ValueError(
+          'Pipeseed_mode {0} not supported'.\
+            format(pipeseed_mode))
 
-      pipeseeds_data,seed_data=get_pipeline_seeds(\
-                                 pipeseed_mode=pipeseed_mode,
-                                 pipeline_name=pipeline_name,
-                                 igf_session_class=igf_session_class)           # fetch pipeseed data from db
+      pipeseeds_data,seed_data = \
+        get_pipeline_seeds(
+          pipeseed_mode=pipeseed_mode,
+          pipeline_name=pipeline_name,
+          igf_session_class=igf_session_class)                                  # fetch pipeseed data from db
       if len(seed_data.index)>0:
-        seed_data=seed_data.\
-                  to_dict(orient='records')                                     # convert dataframe to list of dictionaries
+        seed_data = \
+          seed_data.\
+            to_dict(orient='records')                                           # convert dataframe to list of dictionaries
         self.param('sub_tasks',seed_data)                                       # set sub_tasks param for the data flow
-        pipeseeds_data[seed_status_label]=pipeseeds_data[seed_status_label].\
-                                          map({seeded_label:running_label})     # update seed records in pipeseed table, changed status to RUNNING
+        pipeseeds_data[seed_status_label] = \
+          pipeseeds_data[seed_status_label].\
+            map({seeded_label:running_label})                                   # update seed records in pipeseed table, changed status to RUNNING
         pa = PipelineAdaptor(**{'session_class':igf_session_class})             # get db adaptor
         pa.start_session()                                                      # connect to db
-        dbconnected=True
-        pa.update_pipeline_seed(data=pipeseeds_data.to_dict(orient='records'),
-                                autosave=False)                                 # set pipeline seeds as running
+        dbconnected = True
+        pa.update_pipeline_seed(
+          data=pipeseeds_data.to_dict(orient='records'),
+          autosave=False)                                                       # set pipeline seeds as running
         pa.commit_session()                                                     # save changes to db
         pa.close_session()                                                      # close db connection
         dbconnected=False
-        message='Total {0} new job found for {1}, pipeline: {2}'.\
-                format(len(seed_data),self.__class__.__name__,pipeline_name)    # format msg for slack
-        self.post_message_to_slack(message,reaction='pass')                     # send update to slack
+        message = \
+          'Total {0} new job found for {1}, pipeline: {2}'.\
+            format(
+              len(seed_data),
+              self.__class__.__name__,
+              pipeline_name)                                                    # format msg
+        self.post_message_to_slack(
+          message,reaction='pass')                                              # send update to slack
+        self.post_message_to_ms_team(
+          message=message,
+          reaction='pass')                                                      # send update to ms team
       else:
-        message='{0}, {1}: no new job created'.format(self.__class__.__name__,\
-                                                      pipeline_name)            # format msg for failed jobs
+        message = \
+          '{0}, {1}: no new job created'.\
+            format(
+              self.__class__.__name__,
+              pipeline_name)                                                    # format msg for failed jobs
         self.warning(message)
-        self.post_message_to_slack(message,reaction='sleep')                    # post about failed job to slack
-
+        self.post_message_to_slack(
+          message,reaction='sleep')                                             # post about failed job to slack
+        self.post_message_to_ms_team(
+          message=message,
+          reaction='sleep')                                                     # send update to ms team
     except Exception as e:
-      message='Error in {0},{1}: {2}'.format(self.__class__.__name__,\
-                                             pipeline_name, e)                  # format slack msg
+      message = \
+        'Error in {0},{1}: {2}'.\
+          format(
+            self.__class__.__name__,
+            pipeline_name, e)                                                   # format slack msg
       self.warning(message)
-      self.post_message_to_slack(message,reaction='fail')                       # send msg to slack
+      self.post_message_to_slack(
+        message,reaction='fail')                                                # send msg to slack
+      self.post_message_to_ms_team(
+        message=message,
+        reaction='fail')                                                        # send update to ms team
       if dbconnected:
         pa.rollback_session()                                                   # remove changes from db
         pa.close_session()
