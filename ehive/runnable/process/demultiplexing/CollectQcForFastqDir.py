@@ -59,4 +59,7 @@ class CollectQcForFastqDir(IGFBaseProcess):
             self.__class__.__name__,e)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='fail')
       raise

@@ -105,7 +105,9 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
             format(seqrun_igf_id,read1_val,read2_val)
           self.post_message_to_slack(message,reaction='pass')
           self.comment_asana_task(task_name=seqrun_igf_id, comment=message)     # send info about adapter trip to slack and asana
-
+          self.post_message_to_ms_team(
+            message=message,
+            reaction='pass')
       sa = SeqrunAdaptor(**{'session_class':igf_session_class})
       sa.start_session()
       rules_data = \
@@ -124,7 +126,9 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
           format(seqrun_igf_id)
         self.post_message_to_slack(message,reaction='pass')
         self.comment_asana_task(task_name=seqrun_igf_id, comment=message)
-
+        self.post_message_to_ms_team(
+          message=message,
+          reaction='pass')
       if len(samplesheet_sc._data) > 0:                                         # merge 10x samplesheet
         samplesheet._data.extend(samplesheet_sc._data)
         message = \
@@ -132,7 +136,9 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
           format(seqrun_igf_id)
         self.post_message_to_slack(message,reaction='pass')
         self.comment_asana_task(task_name=seqrun_igf_id, comment=message)
-
+        self.post_message_to_ms_team(
+          message=message,
+          reaction='pass')
       samplesheet.print_sampleSheet(outfile=output_file)
       self.param('dataflow_params',
                  {'samplesheet':output_file,
@@ -144,6 +150,9 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
             output_file)
       self.post_message_to_slack(message,reaction='pass')
       self.comment_asana_task(task_name=seqrun_igf_id, comment=message)
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='pass')
     except Exception as e:
       message = \
         'seqrun: {2}, Error in {0}: {1}'.\
@@ -153,4 +162,7 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
             seqrun_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='fail')
       raise

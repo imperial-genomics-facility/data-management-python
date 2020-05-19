@@ -32,9 +32,15 @@ class SampleSheetProjectFactory(IGFBaseJobFactory):
       self.add_asana_notes(task_name=seqrun_igf_id,\
                            notes='\n'.join(project_lane))                       # add project names to asana notes
     except Exception as e:
-      message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
-                                                      e, \
-                                                      seqrun_igf_id)
+      message = \
+        'seqrun: {2}, Error in {0}: {1}'.\
+          format(
+            self.__class__.__name__,
+            e,
+            seqrun_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='fail')
       raise

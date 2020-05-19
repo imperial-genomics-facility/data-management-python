@@ -97,6 +97,9 @@ class RunBcl2Fastq(IGFBaseProcess):
             flowcell_lane,
             index_length)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='pass')
       seqrun_temp_dir = \
         get_temp_dir(use_ephemeral_space=use_ephemeral_space)                   # create a new input directory in TMPDIR
       move_file = \
@@ -172,7 +175,9 @@ class RunBcl2Fastq(IGFBaseProcess):
       message = ' '.join(bcl2fastq_cmd)
       self.post_message_to_slack(message,reaction='pass')                       # send bcl2fastq command to Slack
       self.comment_asana_task(task_name=seqrun_igf_id, comment=message)         # send bcl2fastq command to Asana
-
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='pass')
       subprocess.check_call(' '.join(bcl2fastq_cmd),shell=True)                 # run bcl2fastq
 
       copytree(output_temp_dir,output_fastq_dir)                                # copy output from TMPDIR
@@ -198,6 +203,9 @@ class RunBcl2Fastq(IGFBaseProcess):
       self.comment_asana_task(\
         task_name=seqrun_igf_id,
         comment=message)                                                        # send log to asana
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='pass')
       remove_dir(seqrun_temp_dir)
       remove_dir(output_temp_dir)                                               # remove temp dirs
     except Exception as e:
@@ -209,4 +217,7 @@ class RunBcl2Fastq(IGFBaseProcess):
             seqrun_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='fail')
       raise

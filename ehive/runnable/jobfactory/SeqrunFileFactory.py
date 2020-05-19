@@ -72,13 +72,22 @@ class SeqrunFileFactory(IGFBaseJobFactory):
       self.post_message_to_slack(message,reaction='pass')
       self.comment_asana_task(task_name=seqrun_igf_id, \
                               comment=message)
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='pass')
 
     except Exception as e:
-      message='Error in {0}: {1}, seqrun: {2}'.format(self.__class__.__name__,\
-                                                      e,\
-                                                      seqrun_igf_id)
+      message = \
+        'Error in {0}: {1}, seqrun: {2}'.\
+          format(
+            self.__class__.__name__,
+            e,
+            seqrun_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='fail')
       self.comment_asana_task(task_name=seqrun_igf_id, \
                               comment=message)
       raise

@@ -57,4 +57,7 @@ class CreateUCSCCellBrowser(IGFBaseProcess):
             sample_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='fail')
       raise

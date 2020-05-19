@@ -77,6 +77,9 @@ class RunFeatureCounts(IGFBaseProcess):
           project_igf_id,
           experiment_igf_id)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='pass')
       message = \
         'featureCounts {0} command: {1}'.format(
           experiment_igf_id,
@@ -94,4 +97,7 @@ class RunFeatureCounts(IGFBaseProcess):
             sample_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='fail')
       raise

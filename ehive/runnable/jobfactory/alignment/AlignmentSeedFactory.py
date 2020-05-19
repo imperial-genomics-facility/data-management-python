@@ -72,15 +72,30 @@ class AlignmentSeedFactory(IGFBaseJobFactory):
         message='Total {0} new job found for {1}, pipeline: {2}'.\
                  format(len(seed_data),self.__class__.__name__,pipeline_name)   # format msg for slack
         self.post_message_to_slack(message,reaction='pass')                     # send update to slack
+        self.post_message_to_ms_team(
+          message=message,
+          reaction='pass')
       else:
-        message='{0}, {1}: no new job created'.format(self.__class__.__name__,\
-                                                      pipeline_name)            # format msg for failed jobs
+        message = \
+          '{0}, {1}: no new job created'.\
+            format(
+              self.__class__.__name__,
+              pipeline_name)            # format msg for failed jobs
         self.warning(message)
         self.post_message_to_slack(message,reaction='sleep')                    # post about failed job to slack
-
+        self.post_message_to_ms_team(
+          message=message,
+          reaction='sleep')
     except:
-      message='Error in {0},{1}: {2}'.format(self.__class__.__name__,\
-                                             pipeline_name, e)                  # format slack msg
+      message = \
+        'Error in {0},{1}: {2}'.\
+          format(
+            self.__class__.__name__,
+            pipeline_name,
+            e)                                                                  # format slack msg
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # send msg to slack
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='fail')
       raise

@@ -51,10 +51,16 @@ class CollectRunAnalysisChunks(IGFBaseProcess):
         raise ValueError('Output mode {0} not supported'.format(output_mode))
 
     except Exception as e:
-      message='project: {2}, sample:{3}, Error in {0}: {1}'.format(self.__class__.__name__, \
-                                                      e, \
-                                                      project_igf_id,
-                                                      sample_igf_id)
+      message = \
+        'project: {2}, sample:{3}, Error in {0}: {1}'.\
+          format(
+            self.__class__.__name__,
+            e,
+            project_igf_id,
+            sample_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='fail')
       raise

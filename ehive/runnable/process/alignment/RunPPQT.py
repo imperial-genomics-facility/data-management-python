@@ -130,6 +130,9 @@ class RunPPQT(IGFBaseProcess):
               format(project_igf_id,
                      sample_igf_id)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='pass')
       message='finished PPQT for {0} {1}: {2}'.\
               format(project_igf_id,
                      sample_igf_id,
@@ -143,4 +146,7 @@ class RunPPQT(IGFBaseProcess):
                      sample_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='fail')
       raise

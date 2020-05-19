@@ -134,6 +134,9 @@ class RunCellrangerCount(IGFBaseProcess):
           experiment_igf_id)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
       self.comment_asana_task(task_name=project_igf_id, comment=message)        # send comment to Asana
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='pass')
       message = ' '.join(cellranger_cmd)
       self.comment_asana_task(task_name=project_igf_id, comment=message)        # send cellranger command to Asana
       # start job execution
@@ -158,6 +161,9 @@ class RunCellrangerCount(IGFBaseProcess):
           cellranger_output)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
       self.comment_asana_task(task_name=project_igf_id, comment=message)        # send comment to Asana
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='pass')
       # validate output files after cellranger run
       check_cellranger_count_output(output_path=cellranger_output)              # check output file
       cellranger_report = \
@@ -179,6 +185,9 @@ class RunCellrangerCount(IGFBaseProcess):
           sample_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='fail')
       if work_dir:
         remove_dir(work_dir)
       raise

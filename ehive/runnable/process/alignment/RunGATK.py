@@ -200,6 +200,9 @@ class RunGATK(IGFBaseProcess):
       self.comment_asana_task(
         task_name=project_igf_id,
         comment=message)                                                        # send commandline to Asana
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='pass')
     except Exception as e:
       message = \
         'project: {2}, sample:{3}, Error in {0}: {1}'.\
@@ -210,4 +213,7 @@ class RunGATK(IGFBaseProcess):
             sample_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='fail')
       raise

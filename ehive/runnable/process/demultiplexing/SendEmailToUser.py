@@ -101,6 +101,9 @@ class SendEmailToUser(IGFBaseProcess):
         'finished data processing for seqrun: {0}, project: {1}, sent mail to igf'.\
         format(seqrun_igf_id, project_name)
       self.post_message_to_slack(message,reaction='pass')
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='pass')
     except Exception as e:
       message = \
         'seqrun: {2}, Error in {0}: {1}'.\
@@ -110,4 +113,7 @@ class SendEmailToUser(IGFBaseProcess):
            seqrun_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='fail')
       raise

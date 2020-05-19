@@ -32,7 +32,7 @@ class FastqFileFactory(IGFBaseJobFactory):
         raise IOError('fastq dir {0} not accessible'.format(fastq_dir))
       fastq_list=list()                                                         # create empty output list
       
-      for root, dirs, files in os.walk(top=fastq_dir):
+      for root, _, files in os.walk(top=fastq_dir):
         for file in files:
           if fnmatch.fnmatch(file, '*.fastq.gz'):                               # only consider fastq.gz files for now
             if re.search(read_pattern,file):                                    # skip if its not R1 and R2 reads and not illumina format name
@@ -44,9 +44,15 @@ class FastqFileFactory(IGFBaseJobFactory):
             
       self.param('sub_tasks',fastq_list)                                        # add fastq files to the dataflow
     except Exception as e:
-      message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
-                                                      e, \
-                                                      seqrun_igf_id)
+      message = \
+        'seqrun: {2}, Error in {0}: {1}'.\
+          format(
+            self.__class__.__name__,
+            e,
+            seqrun_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='fail')
       raise

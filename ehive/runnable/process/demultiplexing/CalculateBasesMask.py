@@ -55,6 +55,9 @@ class CalculateBasesMask(IGFBaseProcess):
           'using custom bases mask: {0}'.\
             format(custom_bases_mask)
         self.post_message_to_slack(message=message,reaction='pass')
+        self.post_message_to_ms_team(
+          message=message,
+          reaction='pass')
       else:
         bases_mask_object = \
           BasesMask(
@@ -74,6 +77,9 @@ class CalculateBasesMask(IGFBaseProcess):
             flowcell_lane,
             bases_mask_value)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='pass')
       self.comment_asana_task(task_name=seqrun_igf_id, comment=message)         # send log to asana
     except Exception as e:
       message = \
@@ -84,4 +90,7 @@ class CalculateBasesMask(IGFBaseProcess):
             seqrun_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='fail')
       raise

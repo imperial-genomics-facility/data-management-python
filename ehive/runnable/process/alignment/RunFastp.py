@@ -92,6 +92,9 @@ class RunFastp(IGFBaseProcess):
                 format(project_igf_id,
                        sample_igf_id)
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='pass')
     except Exception as e:
       message = \
         'project: {2}, sample:{3}, Error in {0}: {1}'.\
@@ -102,4 +105,7 @@ class RunFastp(IGFBaseProcess):
           sample_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='fail')
       raise

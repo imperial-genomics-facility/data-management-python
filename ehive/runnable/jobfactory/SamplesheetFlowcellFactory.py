@@ -38,10 +38,19 @@ class SampleSheetFlowcellFactory(IGFBaseJobFactory):
                      ','.join(flowcell_lanes))
       self.post_message_to_slack(message,reaction='pass')                       # send log to slack
       self.comment_asana_task(task_name=seqrun_igf_id, comment=message)         # send log to asana
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='pass')
     except Exception as e:
-      message='seqrun: {2}, Error in {0}: {1}'.format(self.__class__.__name__, \
-                                                      e, \
-                                                      seqrun_igf_id)
+      message = \
+        'seqrun: {2}, Error in {0}: {1}'.\
+          format(
+            self.__class__.__name__,
+            e,
+            seqrun_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='fail')
       raise

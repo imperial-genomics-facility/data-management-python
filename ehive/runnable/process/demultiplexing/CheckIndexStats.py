@@ -60,6 +60,9 @@ class CheckIndexStats(IGFBaseProcess):
         self.comment_asana_task(\
           task_name=seqrun_igf_id,
           comment=e.message)                                                    # log to asana task
+        self.post_message_to_ms_team(
+          message=message,
+          reaction='fail')
       else:
         for plot_file in e.plots:
           self.post_file_to_slack(message=message,filepath=plot_file)           # posting plot files to slack
@@ -76,4 +79,7 @@ class CheckIndexStats(IGFBaseProcess):
             seqrun_igf_id)
       self.warning(message)
       self.post_message_to_slack(message,reaction='fail')                       # post msg to slack for failed jobs
+      self.post_message_to_ms_team(
+          message=message,
+          reaction='fail')
       raise
