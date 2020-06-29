@@ -12,18 +12,20 @@ class IGF_ms_team:
           format(webhook_conf_file,e))
     self.webhook_conf = webhook_conf
 
-  def post_image_to_team(self,image_path,reaction=''):
+  def post_image_to_team(self,image_path,message='',reaction=''):
     '''
     A method for posting image file to MS team chanel
 
     :param image_path: An image file path
-    :param reaction: A text for image reacion theme
+    :param message: An optional message, default ''
+    :param reaction: A text for image reacion theme, default ''
     '''
     try:
       webhook_url = self.webhook_conf.get('webhook_url')
       check_file_path(image_path)
       encoded_image = base64.b64encode(open(image_path, "rb").read()).decode()
-      formatted_message = "![Failed image upload](data:image/png;base64,{0})".format(encoded_image)
+      formatted_message = "![Failed image upload](data:image/png;base64,{0}){1}".\
+                            format(encoded_image,message)
       themeColor = '#FFFFFF'
       if reaction !='' or reaction is not None:
         if reaction == 'pass':
