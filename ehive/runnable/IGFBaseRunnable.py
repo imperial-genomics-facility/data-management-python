@@ -51,6 +51,26 @@ class IGFBaseRunnable(eHive.BaseRunnable):
   def write_output(self):
     pass
 
+  def post_image_to_team(self,image_path,reaction=''):
+    '''
+    A method for posting image to MS team
+
+    :param image_path: An image file path
+    :param reaction: Optional parameter for theme color
+    '''
+    try:
+      if self.param('log_ms_team'):
+        ms_team_config = self.param_required('ms_team_config')
+        igf_teams = IGF_ms_team(webhook_conf_file=ms_team_config)
+        igf_teams.\
+          post_image_to_team(
+            image_path=image_path,
+            reaction=reaction)
+    except Exception as e:
+      print('Error while posting image to MS Teams channel, error:{0}'.\
+        format(e))
+      pass
+
 
   def post_message_to_ms_team(self,message,reaction=''):
     '''
