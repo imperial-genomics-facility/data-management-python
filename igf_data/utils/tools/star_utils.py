@@ -180,13 +180,14 @@ class Star_utils:
         remove_dir(temp_dir)
       raise
 
-  def generate_rna_bigwig(self,bedGraphToBigWig_path,chrom_length_file,
+  def generate_rna_bigwig(self,bedGraphToBigWig_path,chrom_length_file,bedsort_path,
                           stranded=True,dry_run=False):
     '''
     A method for generating bigWig signal tracks from star aligned bams files
     
-    :param bedGraphToBigWig_path: bedGraphToBigWig_path executable path
+    :param bedGraphToBigWig_path: bedGraphToBigWig executable path
     :param chrom_length_file: A file containing chromosome length, e.g. .fai file
+    :param bedsort_path: bedSort executable path
     :param stranded:Param for stranded analysis, default True
     :param dry_run: A toggle forreturning the star cmd without actual run, default False
     :returns: A list of bigWig files and star commandline
@@ -233,13 +234,23 @@ class Star_utils:
       for file in os.listdir(temp_dir):
         if not fnmatch.fnmatch(file,'*.UniqueMultiple.*') and \
            file.endswith('.bg'):
+          output_sorted_path = \
+            os.path.join(
+              temp_dir,
+              file.replace('.bg','sorted.bg'))
           output_path = \
             os.path.join(
               temp_dir,
               file.replace('.bg','.bw'))
+          bedsort_cmd = [
+            bedsort_path,
+            os.path.join(temp_dir,file),
+            output_sorted_path
+          ]
+          subprocess.check_call(bedsort_cmd)
           bw_cmd = [
             bedGraphToBigWig_path,
-            os.path.join(temp_dir,file),
+            output_sorted_path,
             chrom_length_file,
             output_path,]
           subprocess.check_call(bw_cmd)

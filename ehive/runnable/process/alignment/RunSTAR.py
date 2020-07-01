@@ -28,7 +28,8 @@ class RunSTAR(IGFBaseProcess):
                            "--alignMatesGapMax":1000000, \
                            "--outSAMattributes":"NH HI AS NM MD", \
                            "--limitBAMsortRAM":12000000000 \
-                          }'
+                          }',
+        'bedsort_exe':None,
     })
     return params_dict
 
@@ -55,6 +56,7 @@ class RunSTAR(IGFBaseProcess):
       two_pass_mode = self.param('two_pass_mode')
       seed_date_stamp = self.param_required('date_stamp')
       use_ephemeral_space = self.param('use_ephemeral_space')
+      bedsort_exe = self.param('bedsort_exe')
       base_work_dir = self.param_required('base_work_dir')
       seed_date_stamp = get_datestamp_label(seed_date_stamp)
       work_dir_prefix = \
@@ -144,6 +146,7 @@ class RunSTAR(IGFBaseProcess):
             generate_rna_bigwig(
               bedGraphToBigWig_path=bedGraphToBigWig_path,
               chrom_length_file=chrom_length_file,
+              bedsort_path=bedsort_exe,
               stranded=stranded,)                                               # generate bigwig signal tracks
         self.param('dataflow_params',{'star_bigwigs':output_paths})             # passing bigwig paths to dataflow
 
