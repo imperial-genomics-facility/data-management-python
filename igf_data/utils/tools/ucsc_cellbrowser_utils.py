@@ -4,7 +4,8 @@ from shlex import quote
 from igf_data.utils.fileutils import get_temp_dir,remove_dir,check_file_path
 
 def convert_scanpy_h5ad_to_cellbrowser_dir(cbImportScanpy_path,h5ad_path,project_name,
-                                           cellbrowser_htmldir,use_ephemeral_space=0):
+                                           cellbrowser_htmldir,use_ephemeral_space=0,
+                                           clusterField='leiden'):
   '''
   A wrapper function for Scanpy h5ad file to UCSC cellbrowser html dir conversion
 
@@ -13,6 +14,7 @@ def convert_scanpy_h5ad_to_cellbrowser_dir(cbImportScanpy_path,h5ad_path,project
   :param project_name: Project name for cellbrowser
   :param cellbrowser_htmldir: Output cellbrowser htmldir path
   :param use_ephemeral_space: A toggle for temp dir setting, default 0
+  :param clusterField: Cluster field, default leiden
   '''
   try:
     if os.path.exists(cellbrowser_htmldir):
@@ -35,6 +37,7 @@ def convert_scanpy_h5ad_to_cellbrowser_dir(cbImportScanpy_path,h5ad_path,project
        '-n',quote(project_name),
        '-i',quote(h5ad_path),
        '-o',temp_cellbrowser_dir,
+       '--clusterField',clusterField,
        '--htmlDir',temp_cellbrowser_html
       ]
     subprocess.check_call(' '.join(cbImportScanpy_cmd),shell=True)
