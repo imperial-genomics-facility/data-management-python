@@ -236,13 +236,17 @@ def calculate_file_checksum(filepath, hasher='md5'):
   try:
     with open(filepath, 'rb') as infile:
       if hasher=='md5':
-        file_checksum=hashlib.md5(infile.read()).hexdigest()
-        return file_checksum
+        hasher_obj = hashlib.md5()
       elif hasher=='sha256':
-        file_checksum=hashlib.sha256(infile.read()).hexdigest()
-        return file_checksum
+        hasher_obj = hashlib.sha256()
       else:
         raise ValueError('hasher {0} is not supported'.format(hasher))
+      while True:
+        fileBuffer = infile.read(16 * 1024)
+        if not fileBuffer:
+          break
+        hasher_obj.update(fileBuffer)
+      return hasher_obj.hexdigest()
   except Exception as e:
     raise ValueError("Failed to check file checksum, error: {0}".format(e))
 
