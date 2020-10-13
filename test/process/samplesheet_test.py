@@ -1,6 +1,5 @@
 import unittest,re
 from igf_data.illumina.samplesheet import SampleSheet
-from pandas.io.stata import _data_method_doc
 
 class Hiseq4000SampleSheet(unittest.TestCase):
   def setUp(self):
