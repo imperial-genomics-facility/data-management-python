@@ -31,19 +31,21 @@ class BaseAdaptor(DBConnect):
         raise AttributeError('Attribute session not found')
 
       if not isinstance(data,pd.Series):
-        raise  ValueError('Expecting a Pandas dataframe and recieved data type: {0}'.\
-                          format(type(data)))
+        raise ValueError(
+                'Expecting a Pandas dataframe and recieved data type: {0}'.\
+                format(type(data)))
 
-      session=self.session
-      data=data.fillna('')
-      data_frame_dict=data.to_dict()
-      data_frame_dict={key:value
-                        for key,value in data_frame_dict.items()
-                          if value}                                             # filter any key with empty value
-      mapped_object=table(**data_frame_dict)                                    # map dictionary to table class
+      session = self.session
+      data = data.fillna('')
+      data_frame_dict = data.to_dict()
+      data_frame_dict = \
+        {key:value
+          for key,value in data_frame_dict.items()
+            if value}                                                           # filter any key with empty value
+      mapped_object = table(**data_frame_dict)                                  # map dictionary to table class
       session.add(mapped_object)                                                # add data to session
-    except:
-      raise
+    except Exception as e:
+      raise ValueError('Failed to store record, error: {0}'.format(e))
 
 
   def _store_record_bulk(self,table,data):
@@ -59,15 +61,17 @@ class BaseAdaptor(DBConnect):
         raise AttributeError('Attribute session not found')
 
       if not isinstance(data,dict):
-        data=data.to_dict(orient='records')
+        data = data.to_dict(orient='records')
       else:
-        raise ValueError('Expecting a dictionary and recieved data type: {0}'.\
-                         format(type(data)))
+        raise ValueError(
+                'Expecting a dictionary and recieved data type: {0}'.\
+                format(type(data)))
 
-      session=self.session
+      session = self.session
       session.bulk_insert_mappings(table,data)
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              'Failed to store bulk record, error: {0}'.format(e))
 
 
   def _format_attribute_table_row(self,data,required_column,attribute_name_column,
@@ -83,56 +87,59 @@ class BaseAdaptor(DBConnect):
     '''
     try:
       if not isinstance(data,pd.DataFrame):
-        data=pd.DataFrame(data)
+        data = pd.DataFrame(data)
 
-      final_list=list()
-      data_dict=data.to_dict(orient='records')
+      final_list = list()
+      data_dict = data.to_dict(orient='records')
       for element in data_dict:
-        row_list=list()
-        id_name=''
-        id_value=''
-        id_list=dict()
+        row_list = list()
+        id_name = ''
+        id_value = ''
+        id_list = dict()
         for key, value in element.items():
-          row_dict=dict()
+          row_dict = dict()
           if isinstance(required_column,str):
             if value and key != required_column:
-              row_dict[attribute_name_column]=key
-              row_dict[attribute_value_column]=value
+              row_dict[attribute_name_column] = key
+              row_dict[attribute_value_column] = value
               row_list.append(row_dict)
             elif value and key == required_column:
-              id_name=key
-              id_value=value
+              id_name = key
+              id_value = value
           elif isinstance(required_column,list):
             if value and key not in required_column:
-              row_dict[attribute_name_column]=key
-              row_dict[attribute_value_column]=value
+              row_dict[attribute_name_column] = key
+              row_dict[attribute_value_column] = value
               row_list.append(row_dict)
             elif value and key in required_column:
-              id_name=key
-              id_value=value
-              id_list[key]=value
+              id_name = key
+              id_value = value
+              id_list[key] = value
           else:
-            raise TypeError('Expecting a string or list and got: {0}'.\
-                            format(type(required_column)))
-        row_df=pd.DataFrame(row_list)
+            raise TypeError(
+                    'Expecting a string or list and got: {0}'.\
+                    format(type(required_column)))
+        row_df = pd.DataFrame(row_list)
         if not id_name and id_value:
-          raise ValueError('Required id or value not found for column: {0}'.\
-                           format(required_column))
+          raise ValueError(
+                  'Required id or value not found for column: {0}'.\
+                  format(required_column))
 
         if isinstance(required_column,str):
-          row_df[id_name]=id_value
+          row_df[id_name] = id_value
         elif isinstance(required_column,list):
           for key,value in id_list.items():
-            row_df[key]=value
+            row_df[key] = value
 
-        row_df_data=row_df.to_dict(orient='records')
+        row_df_data = row_df.to_dict(orient='records')
         final_list.extend(row_df_data)
 
-      new_data_series=pd.DataFrame(final_list)
-      new_data_series=new_data_series.dropna()
+      new_data_series = pd.DataFrame(final_list)
+      new_data_series = new_data_series.dropna()
       return new_data_series
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              'Failed to format attribute table row, error: {0}'.format(e))
 
 
   def divide_data_to_table_and_attribute(self,data,required_column,table_columns,
@@ -150,28 +157,36 @@ class BaseAdaptor(DBConnect):
     '''
     try:
       if not isinstance(data,pd.DataFrame):
-        data=pd.DataFrame(data)
-      table_df=data.loc[:,table_columns]                                        # slice df for table
-      table_attr_columns=list(set(data.columns).\
-                              difference(set(table_df.columns)))                # assign remaining columns to attribute dataframe
+        data = pd.DataFrame(data)
+      table_df = data.loc[:,table_columns]                                      # slice df for table
+      table_attr_columns = \
+        list(
+          set(data.columns).\
+          difference(set(table_df.columns)))                                    # assign remaining columns to attribute dataframe
       if isinstance(required_column,str):
-        table_attr_columns.append(required_column)                              # append required column if its a string
+        table_attr_columns.\
+          append(required_column)                                               # append required column if its a string
       elif isinstance(required_column,list):
-        table_attr_columns.extend(required_column)                              # extend required column for a list
+        table_attr_columns.\
+          extend(required_column)                                               # extend required column for a list
       else:
-        raise TypeError('Expecting a string or list and got: {0}'.\
-                        format(type(required_column)))
+        raise TypeError(
+                'Expecting a string or list and got: {0}'.\
+                format(type(required_column)))
 
-      table_attr_df=data.loc[:,table_attr_columns]                              # slice df for attribute table
-      new_table_attr_df=self._format_attribute_table_row(\
-                                data=table_attr_df,
-                                required_column=required_column,
-                                attribute_name_column=attribute_name_column,
-                                attribute_value_column=attribute_value_column
-                              )
+      table_attr_df = \
+        data.loc[:,table_attr_columns]                                          # slice df for attribute table
+      new_table_attr_df = \
+        self._format_attribute_table_row(
+          data=table_attr_df,
+          required_column=required_column,
+          attribute_name_column=attribute_name_column,
+          attribute_value_column=attribute_value_column)
       return (table_df,new_table_attr_df)
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              'Failed to divide data between data and attribute table, error: {0}'.\
+                format(e))
 
 
   def map_foreign_table_and_store_attribute(self,data,lookup_table,lookup_column_name,
@@ -192,48 +207,57 @@ class BaseAdaptor(DBConnect):
         raise ValueError('Expecting a pandas data series for mapping foreign key id')
 
       if isinstance(lookup_column_name,list):
-        lookup_values=list()
-        lookup_columns=list()
+        lookup_values = list()
+        lookup_columns = list()
         for lookup_column_key in lookup_column_name:
-          value=data[lookup_column_key]
+          value = data[lookup_column_key]
           lookup_values.append(value)
-          column=[column
-                    for column in lookup_table.__table__.columns
-                       if column.key == lookup_column_key][0]
-          lookup_columns.append(column)
+          column = \
+            [column
+              for column in lookup_table.__table__.columns
+                if column.key == lookup_column_key][0]
+          lookup_columns.\
+            append(column)
           del data[lookup_column_key]
 
-        lookup_data=dict(zip(lookup_columns,lookup_values))
-        target_object=self.fetch_records_by_multiple_column(\
-                             table=lookup_table,
-                             column_data=lookup_data,
-                             output_mode='one'
-                          )
+        lookup_data = \
+          dict(zip(lookup_columns,lookup_values))
+        target_object = \
+          self.fetch_records_by_multiple_column(
+            table=lookup_table,
+            column_data=lookup_data,
+            output_mode='one')
       elif isinstance(lookup_column_name,str):
-        lookup_value=data[lookup_column_name]
-        lookup_column=[column
-                         for column in lookup_table.__table__.columns
-                           if column.key == lookup_column_name][0]
-        target_object=self.fetch_records_by_column(\
-                             table=lookup_table,
-                             column_name=lookup_column,
-                             column_id=lookup_value,
-                             output_mode='one'
-                           )
+        lookup_value = \
+          data[lookup_column_name]
+        lookup_column = \
+          [column
+            for column in lookup_table.__table__.columns
+              if column.key == lookup_column_name][0]
+        target_object = \
+          self.fetch_records_by_column(
+            table=lookup_table,
+            column_name=lookup_column,
+            column_id=lookup_value,
+            output_mode='one')
         del data[lookup_column_name]
       else:
-        raise TypeError('Expecting a list or a string and found :{}'.\
-                        format(type(lookup_column_name)))
+        raise TypeError(
+                'Expecting a list or a string and found :{}'.\
+                format(type(lookup_column_name)))
 
-      target_value=[getattr(target_object,column.key)
-                      for column in lookup_table.__table__.columns
-                         if column.key == target_column_name][0]                # get target value from the target_object
-      data[target_column_name]=target_value                                     # set value for target column
-      data=data.to_dict()
-      data=pd.Series(data)
+      target_value = \
+        [getattr(target_object,column.key)
+          for column in lookup_table.__table__.columns
+            if column.key == target_column_name][0]                             # get target value from the target_object
+      data[target_column_name] = target_value                                   # set value for target column
+      data = data.to_dict()
+      data = pd.Series(data)
       return data
-    except:
-        raise
+    except Exception as e:
+        raise ValueError(
+                'Failed to map foreign table and store attribute, error: {0}'\
+                  .format(e))
 
 
   def store_records(self,table,data,mode='serial'):
@@ -252,20 +276,25 @@ class BaseAdaptor(DBConnect):
         raise ValueError('Mode {0} is not recognised'.format(mode))
 
       if not isinstance(data,pd.DataFrame):
-        data=pd.DataFrame(data)                                                 # convert dictionary to dataframe
+        data = pd.DataFrame(data)                                               # convert dictionary to dataframe
 
-      session=self.session
+      session = self.session
       if mode is 'serial':
-        data.apply(lambda x: self._store_record_serial(\
-                                    table=table,
-                                    data=x),
-                   axis=1)                                                      # load data in serial mode
+        data.\
+          apply(
+            lambda x: \
+              self._store_record_serial(
+                table=table,
+                data=x),
+              axis=1)                                                           # load data in serial mode
       elif mode is 'bulk':
-        self._store_record_bulk( table=table,data=data)                         # load data in bulk mode
+        self._store_record_bulk(
+          table=table,data=data)                                                # load data in bulk mode
       session.flush()
-    except:
+    except Exception as e:
         session.rollback()
-        raise
+        raise ValueError(
+                'Failed to store records, error: {0}'.format(e))
 
 
   def store_attributes(self,attribute_table,data,linked_column='',db_id='',
@@ -280,15 +309,17 @@ class BaseAdaptor(DBConnect):
     '''
     try:
       if isinstance(data,dict):
-        data=pd.DataFrame(data)                                                 # converting to dataframe
+        data = pd.DataFrame(data)                                               # converting to dataframe
 
       if linked_column and db_id: 
-        data[linked_column]=db_id                                               # adding or reseting db_id value for the linked column
+        data[linked_column] = db_id                                             # adding or reseting db_id value for the linked column
 
-      self.store_records(table=attribute_table,
-                         data=data,mode=mode)                                   # storing data to attribute table
-    except:
-      raise
+      self.store_records(
+        table=attribute_table,
+        data=data,mode=mode)                                                    # storing data to attribute table
+    except Exception as e:
+      raise ValueError(
+              'Failed to store attributes, error: {0}'.format(e))
 
 
   def _fetch_records_as_dataframe(self,query):
@@ -299,11 +330,13 @@ class BaseAdaptor(DBConnect):
       if not hasattr(self,'session'):
         raise AttributeError('Attribute session not found')
 
-      session=self.session
-      result=pd.read_sql(query.statement,session.bind)
+      session = self.session
+      result = pd.read_sql(query.statement,session.bind)
       return result                                                             # return a dataframe
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              'Failed to fetch records as dataframe, error: {0}'.\
+                format(e))
 
 
   def _fetch_records_as_object(self,query):
@@ -313,8 +346,9 @@ class BaseAdaptor(DBConnect):
     try:
       for row in query:
         yield row                                                               # return a generator object
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              'Failed to fetch records as object, error; {0}'.format(e))
 
 
   def _fetch_records_as_one(self,query):
@@ -322,10 +356,11 @@ class BaseAdaptor(DBConnect):
     An internal method for fetching unique database record
     '''
     try:
-      result=query.one()
+      result = query.one()
       return result
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              'Failed to fetch a single record, error: {0}'.format(e))
 
 
   def _fetch_records_as_one_or_none(self,query):
@@ -333,10 +368,12 @@ class BaseAdaptor(DBConnect):
     An internal function for fetching record using one_or_none() method
     '''
     try:
-      result=query.one_or_none()
+      result = query.one_or_none()
       return result
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              'Failed to fetch record as one or none, error: {0}'.\
+                format(e))
 
 
   def _construct_query(self,table,filter_criteria):
@@ -357,18 +394,22 @@ class BaseAdaptor(DBConnect):
         raise ValueError('Expecting a list of filter_criteria, received data type: {0}'.\
                          format(type(filter_criteria)))
 
-      session=self.session
-      query=session.query(table)
+      session = self.session
+      query = session.query(table)
       for filter_statement in filter_criteria:
         if len(filter_statement) != 3:
-          raise ValueError('Expecting three parameters for filter criteria, got {0}'.\
-                           format(len(filter_statement)))
+          raise ValueError(
+                  'Expecting three parameters for filter criteria, got {0}'.\
+                  format(len(filter_statement)))
 
         if filter_statement[1] == '==':
-          query=query.filter(filter_statement[0] == filter_statement[2])
-      return query  
-    except:
-      raise
+          query = \
+            query.\
+              filter(filter_statement[0] == filter_statement[2])
+      return query
+    except Exception as e:
+      raise ValueError(
+              'Failed to construct query, error: {0}'.format(e))
 
 
   def fetch_records(self,query,output_mode='dataframe'):
@@ -381,8 +422,9 @@ class BaseAdaptor(DBConnect):
     '''
     try:
       if output_mode not in ('dataframe','object','one','one_or_none'):
-        raise ValueError('Expecting output_mode as dataframe or object, no support for {0}'.\
-                         format(output_mode))
+        raise ValueError(
+                'Expecting output_mode as dataframe or object, no support for {0}'.\
+                format(output_mode))
 
       result=''
       if output_mode == 'dataframe':
@@ -394,8 +436,9 @@ class BaseAdaptor(DBConnect):
       elif output_mode == 'one_or_none':
         result=self._fetch_records_as_one_or_none(query=query)                  # fetch record as a unique match or None
       return result
-    except:
-      raise 
+    except Exception as e:
+      raise ValueError(
+              'Failed to fetch records, error; {0}'.format(e))
 
 
   def fetch_records_by_column(self,table,column_name,column_id,output_mode):
@@ -410,13 +453,20 @@ class BaseAdaptor(DBConnect):
     try:
       if not hasattr(self,'session'):
         raise AttributeError('Attribute session not found')
- 
-      session=self.session
-      query=session.query(table).filter(column_name==column_id)
-      result=self.fetch_records(query=query, output_mode=output_mode)
+
+      session = self.session
+      query = \
+        session.\
+          query(table).\
+          filter(column_name==column_id)
+      result = \
+        self.fetch_records(
+          query=query,
+          output_mode=output_mode)
       return result
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              'Failed to fetch records by column, error: {0}'.format(e))
 
 
   def fetch_records_by_multiple_column(self,table,column_data,output_mode):
@@ -431,14 +481,21 @@ class BaseAdaptor(DBConnect):
       if not hasattr(self,'session'):
         raise AttributeError('Attribute session not found')
 
-      session=self.session
-      query=session.query(table)
+      session = self.session
+      query = session.query(table)
       for column_name, column_id in column_data.items():
-        query=query.filter(column_name.in_([column_id]))
-      result=self.fetch_records(query=query, output_mode=output_mode)
+        query = \
+          query.\
+            filter(column_name.in_([column_id]))
+      result = \
+        self.fetch_records(
+          query=query,
+          output_mode=output_mode)
       return result
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              'Failed to fetch records by multiple columns, error: {0}'.\
+                format(e))
 
 
   def get_attributes_by_dbid(self,attribute_table,linked_table,linked_column_name,
@@ -453,22 +510,27 @@ class BaseAdaptor(DBConnect):
     :returns a dataframe of records
     '''
     try:
-      session=self.session
-      linked_column=[column
-                       for column in linked_table.__table__.columns
-                         if column.key == linked_column_name][0]
-      attribute_linked_column=[column
-                                for column in attribute_table.__table__.columns
-                                  if column.key == linked_column_name][0]
-      query=session.\
-            query(attribute_table).\
-            join(linked_table).\
-            filter(linked_column==attribute_linked_column).\
-            filter(linked_column==db_id)
-      result=self.fetch_records(query=query)
+      session = self.session
+      linked_column = \
+        [column
+          for column in linked_table.__table__.columns
+            if column.key == linked_column_name][0]
+      attribute_linked_column = \
+        [column
+          for column in attribute_table.__table__.columns
+            if column.key == linked_column_name][0]
+      query = \
+        session.\
+          query(attribute_table).\
+          join(linked_table).\
+          filter(linked_column==attribute_linked_column).\
+          filter(linked_column==db_id)
+      result = self.fetch_records(query=query)
       return result
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              'Failed to get attributes by dbid, error; {0}'.\
+                format(e))
 
 
   def get_table_columns(self,table_name,excluded_columns):
@@ -479,10 +541,13 @@ class BaseAdaptor(DBConnect):
     :param excluded_columns: a list of column names to exclude from output
     '''
     try:
-      columns=[column.key
-                 for column in table_name.__table__.columns
-                   if column.key not in excluded_columns]
+      columns = \
+        [column.key
+          for column in table_name.__table__.columns
+            if column.key not in excluded_columns]
       return columns
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              'Failed to get table columns, error: {0}'.\
+                format(e))
 
