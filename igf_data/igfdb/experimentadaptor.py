@@ -8,12 +8,13 @@ class ExperimentAdaptor(BaseAdaptor):
   An adaptor class for Experiment and Experiment_attribute tables
   '''
 
-  def store_project_and_attribute_data(self, data, autosave=True):
+  def store_project_and_attribute_data(self,data,autosave=True):
     '''
     A method for dividing and storing data to experiment and attribute table
     
     :param data: A list of dictionaries or a Pandas DataFrame
     :param autosave: A toggle for automatically saving data to db, default True
+    :returns: None
     '''
     (experiment_data, experiment_attr_data) = \
       self.divide_data_to_table_and_attribute(data=data)
@@ -22,7 +23,8 @@ class ExperimentAdaptor(BaseAdaptor):
       self.store_experiment_data(data=experiment_data)                          # store experiment data
 
       if len(experiment_attr_data.index) > 0:                                   # check if any attribute is present of not
-        self.store_experiment_attributes(data=experiment_attr_data)             # store run attributes
+        self.store_experiment_attributes(
+          data=experiment_attr_data)                                            # store run attributes
 
       if autosave:
         self.commit_session() 
@@ -33,10 +35,10 @@ class ExperimentAdaptor(BaseAdaptor):
               'Failed to store data, error: {0}'.format(0))
 
 
-  def divide_data_to_table_and_attribute(self, data, required_column='experiment_igf_id',
-                                         table_columns=None,
-                                         attribute_name_column='attribute_name',
-                                         attribute_value_column='attribute_value'):
+  def divide_data_to_table_and_attribute(
+        self,data,required_column='experiment_igf_id',
+        table_columns=None,attribute_name_column='attribute_name',
+        attribute_value_column='attribute_value'):
     '''
     A method for separating data for Experiment and Experiment_attribute tables
     
@@ -77,12 +79,13 @@ class ExperimentAdaptor(BaseAdaptor):
               'Failed to dividee exp data, error: {0}'.format(e))
 
 
-  def store_experiment_data(self, data, autosave=False):
+  def store_experiment_data(self,data,autosave=False):
     '''
     Load data to Experiment table
     
     :param data: A list of dictionaries or a Pandas DataFrame
     :param autosave: A toggle for automatically saving data to db, default True
+    :returns: None
     '''
     try:
       if not isinstance(data, pd.DataFrame):
@@ -140,13 +143,14 @@ class ExperimentAdaptor(BaseAdaptor):
               'Failed to store experiment, error: {0}'.format(e))
 
 
-  def store_experiment_attributes(self, data, experiment_id='', autosave=False):
+  def store_experiment_attributes(self,data,experiment_id='',autosave=False):
     '''
     A method for storing data to Experiment_attribute table
     
     :param data: A list of dictionaries or a Pandas DataFrame for experiment attribute data
     :param experiment_id: An optional experiment_id to link attribute records
     :param autosave: A toggle for automatically saving data to db, default True
+    :returns: True
     '''
     try:
       if not isinstance(data, pd.DataFrame):
@@ -186,8 +190,8 @@ class ExperimentAdaptor(BaseAdaptor):
               'Failed to store exp attributes, error: {0}'.format(e))
 
 
-  def fetch_experiment_records_id(self, experiment_igf_id,
-                                  target_column_name='experiment_igf_id'):
+  def fetch_experiment_records_id(
+        self,experiment_igf_id,target_column_name='experiment_igf_id'):
     '''
     A method for fetching data for Experiment table
     
@@ -211,8 +215,8 @@ class ExperimentAdaptor(BaseAdaptor):
       raise ValueError(
               'Failed to fetch exp id, error: {0}'.format(e))
 
-  def check_experiment_records_id(self, experiment_igf_id,
-                                  target_column_name='experiment_igf_id'):
+  def check_experiment_records_id(
+        self, experiment_igf_id,target_column_name='experiment_igf_id'):
     '''
     A method for checking existing data for Experiment table
     
@@ -254,8 +258,10 @@ class ExperimentAdaptor(BaseAdaptor):
         self.session.\
           query(Sample_attribute.attribute_name,
                 Sample_attribute.attribute_value).\
-          join(Sample,Sample.sample_id==Sample_attribute.sample_id).\
-          join(Experiment,Sample.sample_id==Experiment.sample_id).\
+          join(Sample,
+               Sample.sample_id==Sample_attribute.sample_id).\
+          join(Experiment,
+               Sample.sample_id==Experiment.sample_id).\
           filter(Sample.sample_id==Sample_attribute.sample_id).\
           filter(Sample.sample_id==Experiment.sample_id).\
           filter(Experiment.experiment_igf_id==experiment_igf_id)               # get basic query
@@ -283,6 +289,7 @@ class ExperimentAdaptor(BaseAdaptor):
     :param experiment_igf_id: An igf ids for the experiment data lookup
     :param update_data: A dictionary containing the updated entries
     :param autosave: Toggle auto commit after database update, default True
+    :returns: None
     '''
     try:
       if not isinstance(update_data,dict):
@@ -324,8 +331,10 @@ class ExperimentAdaptor(BaseAdaptor):
       query = \
         self.session.\
           query(Project.project_igf_id,Sample.sample_igf_id).\
-          join(Sample,Project.project_id==Sample.project_id).\
-          join(Experiment,Sample.sample_id==Experiment.sample_id).\
+          join(Sample,
+               Project.project_id==Sample.project_id).\
+          join(Experiment,
+               Sample.sample_id==Experiment.sample_id).\
           filter(Project.project_id==Sample.project_id).\
           filter(Sample.sample_id==Experiment.sample_id).\
           filter(Experiment.experiment_igf_id==experiment_igf_id)
@@ -350,12 +359,14 @@ class ExperimentAdaptor(BaseAdaptor):
     :param experiment_igf_id: An experiment_igf_id
     :param include_active_runs: Include only active runs, if its True, default True
     :param output_mode: Record fetch mode, default dataframe
+    :returns: Run records
     '''
     try:
       query = \
         self.session.\
           query(Run.run_igf_id).\
-          join(Experiment,Experiment.experiment_id==Run.experiment_id).\
+          join(Experiment,
+               Experiment.experiment_id==Run.experiment_id).\
           filter(Experiment.experiment_id==Run.experiment_id).\
           filter(Experiment.experiment_igf_id==experiment_igf_id)
       if include_active_runs:
