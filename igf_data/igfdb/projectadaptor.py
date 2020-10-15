@@ -56,14 +56,13 @@ class ProjectAdaptor(BaseAdaptor):
           excluded_columns=['project_id'])                                      # get required columns for project table
       (project_df, project_attr_df) = \
         BaseAdaptor.\
-        divide_data_to_table_and_attribute(
-          self,
-          data=data,
-          required_column=required_column,
-          table_columns=project_columns,
-          attribute_name_column=attribute_name_column,
-          attribute_value_column=attribute_value_column
-        )
+          divide_data_to_table_and_attribute(
+            self,
+            data=data,
+            required_column=required_column,
+            table_columns=project_columns,
+            attribute_name_column=attribute_name_column,
+            attribute_value_column=attribute_value_column)
       return (project_df, project_attr_df)
     except Exception as e:
       raise ValueError(
@@ -109,10 +108,11 @@ class ProjectAdaptor(BaseAdaptor):
             data=x,
             lookup_table=Project,
             lookup_column_name='project_igf_id',
-            target_column_name='project_id' )                                   # prepare the function
-        new_data = data.apply(map_function, axis=1)                             # map foreign key id
-        data = new_data                                                         # overwrite data   
-       
+            target_column_name='project_id')                                    # prepare the function
+        data['project_id'] = ''
+        data = data.apply(map_function, axis=1,result_type=None)                # map foreign key id
+        #data = new_data                                                        # overwrite data   
+        data.drop('project_igf_id',axis=1,inplace=True)
       self.store_attributes(
         attribute_table=Project_attribute,
         linked_column='project_id',
@@ -161,19 +161,23 @@ class ProjectAdaptor(BaseAdaptor):
           lookup_table=Project,
           lookup_column_name=required_project_column,
           target_column_name='project_id' )                                     # prepare the function for Project id
-      new_data = data.apply(project_map_function, 1)                            # map project id
+      data['project_id'] = ''
+      data = data.apply(project_map_function, axis=1,result_type=None)                            # map project id
+      data.drop(required_project_column,axis=1,inplace=True)
       user_map_function = \
         lambda x: self.map_foreign_table_and_store_attribute(\
           data=x,
           lookup_table=User,
           lookup_column_name=required_user_column,
           target_column_name='user_id' )                                        # prepare the function for User id
-      new_data = new_data.apply(user_map_function, 1)                           # map user id
+      data['user_id'] = ''
+      data = data.apply(user_map_function, axis=1,result_type=None)             # map user id
+      data.drop(required_user_column,axis=1,inplace=True)
       data_authotiry_dict = {True:'T'}                                          # create a mapping dictionary for data authority value
-      new_data[data_authority_column] = \
-        new_data[data_authority_column].\
+      data[data_authority_column] = \
+        data[data_authority_column].\
         map(data_authotiry_dict)                                                # add value for data authority
-      self.store_records(table=ProjectUser, data=new_data)                      # store the project_user data
+      self.store_records(table=ProjectUser, data=data)                      # store the project_user data
       if autosave:
         self.commit_session()                                                   # save changes to database
     except Exception as e:
@@ -510,3 +514,39 @@ class ProjectAdaptor(BaseAdaptor):
     pass
 
   
+if __name__=='__main__':
+  import os
+  from igf_data.igfdb.igfTables import Base
+  from sqlalchemy import create_engine
+  from igf_data.utils.dbutils import read_dbconf_json
+  from igf_data.igfdb.baseadaptor import BaseAdaptor
+  
+  if os.path.exists('adapter_test.sqlite'):
+    os.remove('adapter_test.sqlite')
+  dbparam = {'dbname':'adapter_test.sqlite','driver':'sqlite'}
+  base = BaseAdaptor(**dbparam)
+  engine = base.engine
+  Base.metadata.create_all(engine)
+  base.start_session()
+  project_data = [{
+    'project_igf_id':'IGFP0001_test_22-8-2017_rna',
+    'project_name':'test_22-8-2017_rna',
+    'description':'Its project 1',
+    'project_deadline':'Before August 2017',
+    'comments':'Some samples are treated with drug X' }]#,
+   ##{'project_igf_id':'IGFP0002_test_22-8-2017_rna',
+    #'project_name':'test_23-8-2017_rna',
+    #'description':'Its project 2',
+    ##'project_deadline':'Before August 2017',
+    #'comments':'Some samples are treated with drug X' }]
+  pa = ProjectAdaptor(**{'session':base.session})
+  p_df, pa_df = pa.divide_data_to_table_and_attribute(data=project_data)
+  print('a',p_df.to_dict(orient='records'))
+  print('b',pa_df.to_dict(orient='records'))
+  pa.store_project_data(p_df,autosave=True)
+  pa.store_project_attributes(pa_df,autosave=True)
+  base.close_session()
+
+
+
+

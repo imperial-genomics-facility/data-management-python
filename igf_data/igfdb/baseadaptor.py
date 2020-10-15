@@ -45,7 +45,9 @@ class BaseAdaptor(DBConnect):
       mapped_object = table(**data_frame_dict)                                  # map dictionary to table class
       session.add(mapped_object)                                                # add data to session
     except Exception as e:
-      raise ValueError('Failed to store record, error: {0}'.format(e))
+      raise ValueError(
+              'Failed to store record, error: {0}'.\
+              format(e))
 
 
   def _store_record_bulk(self,table,data):
@@ -139,7 +141,8 @@ class BaseAdaptor(DBConnect):
       return new_data_series
     except Exception as e:
       raise ValueError(
-              'Failed to format attribute table row, error: {0}'.format(e))
+              'Failed to format attribute table row, error: {0}'.\
+              format(e))
 
 
   def divide_data_to_table_and_attribute(self,data,required_column,table_columns,
@@ -158,7 +161,9 @@ class BaseAdaptor(DBConnect):
     try:
       if not isinstance(data,pd.DataFrame):
         data = pd.DataFrame(data)
-      table_df = data.loc[:,table_columns]                                      # slice df for table
+      table_df = \
+        data.\
+          loc[:,data.columns.intersection(table_columns)]                       # slice df for table
       table_attr_columns = \
         list(
           set(data.columns).\
@@ -175,7 +180,8 @@ class BaseAdaptor(DBConnect):
                 format(type(required_column)))
 
       table_attr_df = \
-        data.loc[:,table_attr_columns]                                          # slice df for attribute table
+        data.\
+          loc[:,data.columns.intersection(table_attr_columns)]                  # slice df for attribute table
       new_table_attr_df = \
         self._format_attribute_table_row(
           data=table_attr_df,
@@ -210,7 +216,7 @@ class BaseAdaptor(DBConnect):
         lookup_values = list()
         lookup_columns = list()
         for lookup_column_key in lookup_column_name:
-          value = data[lookup_column_key]
+          value = data.get(lookup_column_key)
           lookup_values.append(value)
           column = \
             [column
@@ -218,7 +224,7 @@ class BaseAdaptor(DBConnect):
                 if column.key == lookup_column_key][0]
           lookup_columns.\
             append(column)
-          del data[lookup_column_key]
+          #del data[lookup_column_key]
 
         lookup_data = \
           dict(zip(lookup_columns,lookup_values))
@@ -229,7 +235,7 @@ class BaseAdaptor(DBConnect):
             output_mode='one')
       elif isinstance(lookup_column_name,str):
         lookup_value = \
-          data[lookup_column_name]
+          data.get(lookup_column_name)
         lookup_column = \
           [column
             for column in lookup_table.__table__.columns
@@ -240,7 +246,7 @@ class BaseAdaptor(DBConnect):
             column_name=lookup_column,
             column_id=lookup_value,
             output_mode='one')
-        del data[lookup_column_name]
+        #del data[lookup_column_name]
       else:
         raise TypeError(
                 'Expecting a list or a string and found :{}'.\
@@ -251,8 +257,8 @@ class BaseAdaptor(DBConnect):
           for column in lookup_table.__table__.columns
             if column.key == target_column_name][0]                             # get target value from the target_object
       data[target_column_name] = target_value                                   # set value for target column
-      data = data.to_dict()
-      data = pd.Series(data)
+      #data = data.to_dict()
+      #data = pd.Series(data)
       return data
     except Exception as e:
         raise ValueError(
