@@ -8,9 +8,13 @@ class PlatformAdaptor(BaseAdaptor):
   An adaptor class for Platform tables
   '''
 
-  def store_platform_data(self, data, autosave=True):
+  def store_platform_data(self,data,autosave=True):
     '''
     Load data to Platform table
+
+    :param data: A list of dictionaries or a pandas dataframe
+    :param autosave: A toggle for autocommit, default False
+    :returns: None
     '''
     try:
       self.store_records(
@@ -25,13 +29,14 @@ class PlatformAdaptor(BaseAdaptor):
 
 
   def fetch_platform_records_igf_id(
-        self, platform_igf_id, target_column_name='platform_igf_id',
+        self,platform_igf_id,target_column_name='platform_igf_id',
         output_mode='one'):
     '''
     A method for fetching data for Platform table
     
     :param platform_igf_id: an igf id
     :param target_column_name: column name in the Platform table, default is platform_igf_id
+    :returns: Platform record as object
     '''
     try:
       column = [
@@ -49,15 +54,18 @@ class PlatformAdaptor(BaseAdaptor):
       raise ValueError(
               'Failed to fetch platform data, error: {0}'.format(e))
 
-  def store_flowcell_barcode_rule(self, data, autosave=True):
+  def store_flowcell_barcode_rule(self,data,autosave=True):
     '''
     Load data to flowcell_barcode_rule table
-    required params:
-    data: A dictionary or dataframe containing following columns
-          * platform_igf_id / platform_id
-          * flowcell_type
-          * index_1 (NO_CHANGE/REVCOMP/UNKNOWN)
-          * index_2 (NO_CHANGE/REVCOMP/UNKNOWN)
+    
+    :param data: A dictionary or dataframe containing following columns
+          
+                 * platform_igf_id / platform_id
+                 * flowcell_type
+                 * index_1 (NO_CHANGE/REVCOMP/UNKNOWN)
+                 * index_2 (NO_CHANGE/REVCOMP/UNKNOWN)
+    :param autosave: A toggle for autocommit, default True
+    :returns: None
     '''
     try:
       if not isinstance(data, pd.DataFrame):

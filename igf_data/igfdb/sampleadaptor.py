@@ -10,7 +10,7 @@ class SampleAdaptor(BaseAdaptor):
   An adaptor class for Sample and Sample_attribute tables
   '''
 
-  def store_sample_and_attribute_data(self, data, autosave=True):
+  def store_sample_and_attribute_data(self,data,autosave=True):
     '''
     A method for dividing and storing data to sample and attribute table
     '''
@@ -29,10 +29,10 @@ class SampleAdaptor(BaseAdaptor):
       raise
 
 
-  def divide_data_to_table_and_attribute(self, data,required_column='sample_igf_id',
-                                         table_columns=None,
-                                         attribute_name_column='attribute_name',
-                                         attribute_value_column='attribute_value'):
+  def divide_data_to_table_and_attribute(
+        self,data,required_column='sample_igf_id',
+        table_columns=None,attribute_name_column='attribute_name',
+        attribute_value_column='attribute_value'):
     '''
     A method for separating data for Sample and Sample_attribute tables
     
@@ -43,32 +43,36 @@ class SampleAdaptor(BaseAdaptor):
     :param attribute_value_column: label for attribute value column
     :returns: Two pandas dataframes, one for Sample and another for Sample_attribute table
     '''
-    if not isinstance(data, pd.DataFrame):
-      data = pd.DataFrame(data)
+    try:
+      if not isinstance(data, pd.DataFrame):
+        data = pd.DataFrame(data)
 
-    sample_columns = \
-      self.get_table_columns(
-        table_name=Sample,
-        excluded_columns=['sample_id', 'project_id'])
-    sample_columns.extend(['project_igf_id'])
-    (sample_df, sample_attr_df)=\
-      BaseAdaptor.\
-        divide_data_to_table_and_attribute(\
-          self,
-          data=data,
-          required_column=required_column,
-          table_columns=sample_columns,
-          attribute_name_column=attribute_name_column,
-          attribute_value_column=attribute_value_column
-        )
-    return (sample_df, sample_attr_df)
+      sample_columns = \
+        self.get_table_columns(
+          table_name=Sample,
+          excluded_columns=['sample_id', 'project_id'])
+      sample_columns.extend(['project_igf_id'])
+      (sample_df, sample_attr_df)=\
+        BaseAdaptor.\
+          divide_data_to_table_and_attribute(\
+            self,
+            data=data,
+            required_column=required_column,
+            table_columns=sample_columns,
+            attribute_name_column=attribute_name_column,
+            attribute_value_column=attribute_value_column)
+      return (sample_df, sample_attr_df)
+    except Exception as e:
+      raise ValueError(
+              'Failed to divide sample data, error: {0}'.format(e))
 
-
-  def store_sample_data(self, data, autosave=False):
+  def store_sample_data(self,data,autosave=False):
     '''
     Load data to Sample table
     
     :param data: A dataframe or list of dictionary containing the data
+    :param autosave: A toggle for autocommit, default False
+    :returns: None
     '''
     try:
       if not isinstance(data, pd.DataFrame):
@@ -97,12 +101,13 @@ class SampleAdaptor(BaseAdaptor):
               'Failed to store sample data, error: {0}'.format(e))
 
 
-  def store_sample_attributes(self, data, sample_id='', autosave=False):
+  def store_sample_attributes(self,data,sample_id='',autosave=False):
     '''
     A method for storing data to Sample_attribute table
     
     :param data: A dataframe or list of dictionary containing the Sample_attribute data
     :param sample_id: An optional parameter to link the sample attributes to a specific sample
+    :returns: None
     '''
     try:
       if not isinstance(data, pd.DataFrame):
@@ -139,7 +144,7 @@ class SampleAdaptor(BaseAdaptor):
               'Failed to store sample attributes, error: {0}'.format(e))
 
 
-  def fetch_sample_records_igf_id(self, sample_igf_id, target_column_name='sample_igf_id'):
+  def fetch_sample_records_igf_id(self,sample_igf_id,target_column_name='sample_igf_id'):
     '''
     A method for fetching data for Sample table
     
@@ -207,7 +212,8 @@ class SampleAdaptor(BaseAdaptor):
       query = \
         self.session.\
           query(Sample).\
-          join(Project,Project.project_id==Sample.project_id).\
+          join(Project,
+               Project.project_id==Sample.project_id).\
           filter(Sample.sample_igf_id==sample_igf_id).\
           filter(Project.project_igf_id==project_igf_id)                        # construct join query
       sample_object = \
@@ -233,7 +239,8 @@ class SampleAdaptor(BaseAdaptor):
       query = \
         self.session.\
           query(Project.project_igf_id).\
-          join(Sample,Project.project_id==Sample.project_id).\
+          join(Sample,
+               Project.project_id==Sample.project_id).\
           filter(Project.project_id==Sample.project_id).\
           filter(Sample.sample_igf_id==sample_igf_id)                           # set query
       project = \

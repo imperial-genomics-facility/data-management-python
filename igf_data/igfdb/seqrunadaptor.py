@@ -8,7 +8,7 @@ class SeqrunAdaptor(BaseAdaptor):
   An adaptor class for table Seqrun
   '''
 
-  def store_seqrun_and_attribute_data(self, data, autosave=True):
+  def store_seqrun_and_attribute_data(self,data,autosave=True):
     '''
     A method for dividing and storing data to seqrun and attribute table
 
@@ -34,7 +34,7 @@ class SeqrunAdaptor(BaseAdaptor):
 
 
   def divide_data_to_table_and_attribute(
-        self, data, required_column='seqrun_igf_id',
+        self,data,required_column='seqrun_igf_id',
         table_columns=None,attribute_name_column='attribute_name',
         attribute_value_column='attribute_value'):
     '''
@@ -68,7 +68,7 @@ class SeqrunAdaptor(BaseAdaptor):
     return (seqrun_df, seqrun_attr_df)
 
 
-  def store_seqrun_data(self, data, autosave=False):
+  def store_seqrun_data(self,data,autosave=False):
     '''
     Load data to Seqrun table
 
@@ -205,7 +205,8 @@ class SeqrunAdaptor(BaseAdaptor):
               'Failed to store seqrun stats data, error: {0}'.format(e))
       
 
-  def fetch_seqrun_records_igf_id(self,seqrun_igf_id,target_column_name='seqrun_igf_id'):
+  def fetch_seqrun_records_igf_id(
+        self,seqrun_igf_id,target_column_name='seqrun_igf_id'):
     '''
     A method for fetching data for Seqrun table
     
@@ -249,9 +250,12 @@ class SeqrunAdaptor(BaseAdaptor):
             Platform.platform_igf_id,
             Flowcell_barcode_rule.index_1,
             Flowcell_barcode_rule.index_2).\
-          join(Seqrun_attribute,Seqrun.seqrun_id==Seqrun_attribute.seqrun_id).\
-          join(Platform,Platform.platform_id==Seqrun.platform_id).\
-          join(Flowcell_barcode_rule,Flowcell_barcode_rule.platform_id==Platform.platform_id).\
+          join(Seqrun_attribute,
+               Seqrun.seqrun_id==Seqrun_attribute.seqrun_id).\
+          join(Platform,
+               Platform.platform_id==Seqrun.platform_id).\
+          join(Flowcell_barcode_rule,
+               Flowcell_barcode_rule.platform_id==Platform.platform_id).\
           filter(Seqrun_attribute.attribute_name==flowcell_label).\
           filter(Seqrun_attribute.attribute_value==Flowcell_barcode_rule.flowcell_type).\
           filter(Seqrun.seqrun_igf_id==seqrun_igf_id)
