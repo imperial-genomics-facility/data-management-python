@@ -202,7 +202,7 @@ class ProjectAdaptor(BaseAdaptor):
         [column for column in Project.__table__.columns \
           if column.key == target_column_name][0]
       project_obj = \
-        self.fetch_records_by_column(\
+        self.fetch_records_by_column(
           table=Project,
           column_name=column,
           column_id=project_igf_id,
@@ -229,7 +229,7 @@ class ProjectAdaptor(BaseAdaptor):
         [column for column in Project.__table__.columns \
            if column.key == target_column_name][0]
       project = \
-        self.fetch_records_by_column(\
+        self.fetch_records_by_column(
           table=Project,
       	  column_name=column,
           column_id=project_igf_id,
@@ -269,7 +269,7 @@ class ProjectAdaptor(BaseAdaptor):
         query=query.filter(Project.project_igf_id==project_igf_id)
 
       results=\
-        self.fetch_records(\
+        self.fetch_records(
           query=query,
           output_mode=output_mode)
       return results
