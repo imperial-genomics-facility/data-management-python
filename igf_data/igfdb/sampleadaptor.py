@@ -207,7 +207,7 @@ class SampleAdaptor(BaseAdaptor):
       query = \
         self.session.\
           query(Sample).\
-          join(Project).\
+          join(Project,Project.project_id==Sample.project_id).\
           filter(Sample.sample_igf_id==sample_igf_id).\
           filter(Project.project_igf_id==project_igf_id)                        # construct join query
       sample_object = \
@@ -233,7 +233,7 @@ class SampleAdaptor(BaseAdaptor):
       query = \
         self.session.\
           query(Project.project_igf_id).\
-          join(Sample).\
+          join(Sample,Project.project_id==Sample.project_id).\
           filter(Project.project_id==Sample.project_id).\
           filter(Sample.sample_igf_id==sample_igf_id)                           # set query
       project = \
