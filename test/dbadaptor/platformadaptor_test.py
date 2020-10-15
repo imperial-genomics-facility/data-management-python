@@ -84,7 +84,7 @@ class Platformadaptor_test1(unittest.TestCase):
   def test_store_platform_data3(self):
     pl=PlatformAdaptor(**{'session_class':self.session_class})
     pl.start_session()
-    with self.assertRaises(sqlalchemy.exc.IntegrityError):
+    with self.assertRaises(ValueError):#sqlalchemy.exc.IntegrityError):
       pl.store_platform_data(data=[{}])
     pl.close_session()
 
@@ -109,7 +109,7 @@ class Platformadaptor_test1(unittest.TestCase):
     pl.start_session()
     pl.store_platform_data(data=self.platform_data,
                            autosave=True)
-    with self.assertRaises(sqlalchemy.exc.IntegrityError):
+    with self.assertRaises(ValueError):#sqlalchemy.exc.IntegrityError):
        pl.store_flowcell_barcode_rule(data=[{}])
     pl.close_session()
 
