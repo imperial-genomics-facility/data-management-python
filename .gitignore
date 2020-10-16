@@ -98,3 +98,5 @@ test/dbadaptor/data
 test/process/data
 test/utils/data
 migrations/alembictest.db
+
+*.sqlite

@@ -123,14 +123,20 @@ class CollectionAdaptor_test1(unittest.TestCase):
                        'table':'experiment',
                       }]
     collection_data2=pd.DataFrame(collection_data2)
-    collection_data2=collection_data2.apply(lambda x: \
-                                            ca._tag_existing_collection_data(\
-                                            data=x,\
-                                            tag='EXISTS',\
-                                            tag_column='data_exists'),
-                                           axis=1)                              # tag existing collections
+    #print(collection_data2.to_dict(orient='records'))
+    collection_data2['data_exists'] = ''
+    collection_data2 = \
+      collection_data2.apply(
+        lambda x: \
+          ca._tag_existing_collection_data(
+            data=x,
+            tag='EXISTS',
+            tag_column='data_exists'),
+        axis=1,
+        result_type=None)                                                       # tag existing collections
     ca_exists=collection_data2[collection_data2['data_exists']=='EXISTS']
     ca_not_exists=collection_data2[collection_data2['data_exists']!='EXISTS']
+    #print(collection_data2.to_dict(orient='records'))
     self.assertEqual(ca_exists['name'].values[0],'IGF001_MISEQ')
     self.assertEqual(ca_not_exists['name'].values[0],'IGF003_MISEQ')
     ca.close_session()
