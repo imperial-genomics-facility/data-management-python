@@ -315,6 +315,7 @@ class Pipelineadaptor_test3(unittest.TestCase):
                               pipeline_name='PrimaryAnalysis',
                               table_name='experiment',
                               status='SEEDED')
+    #print(type(exp_data))
     self.assertEqual(len(list(exp_data['experiment_igf_id'].values)),1)
     self.assertEqual(exp_data['experiment_igf_id'].values[0],'IGF103923_MISEQ')
   
