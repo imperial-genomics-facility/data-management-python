@@ -195,7 +195,7 @@ class Collect_seqrun_fastq_to_db:
           pd.DataFrame(samplesheet_sc._data).\
           drop(['Sample_ID','Sample_Name','index'],axis=1).\
           drop_duplicates().\
-          to_dict(orient='region')                                              # remove duplicate entries from single cell samplesheet
+          to_dict(orient='records')                                              # remove duplicate entries from single cell samplesheet
         final_data.extend(sc_new_data)                                          # add single cell entries to the final dataset
       samplesheet_data = \
         SampleSheet(infile=samplesheet_file)

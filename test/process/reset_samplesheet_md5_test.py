@@ -25,7 +25,7 @@ class Reset_samplesheet_md5_test1(unittest.TestCase):
                              'seqrun_file_name': 'RTAConfiguration.xml'}
                            ])
     with open(self.json_file_path,'w') as jp:
-      json.dump(json_data.to_dict(orient='record'),jp,indent=4)
+      json.dump(json_data.to_dict(orient='records'),jp,indent=4)
     self.initial_json_md5=calculate_file_checksum(filepath=self.json_file_path)
     self.correct_samplesheet_md5='259ed03f2e8c45980de121f7c3a70565'
     self.json_collection_name='seqrun1'
