@@ -59,7 +59,8 @@ class Analysis_collection_utils:
 
   def create_or_update_analysis_collection(
         self,file_path,dbsession,withdraw_exisitng_collection=True,
-        autosave_db=True,force=True,remove_file=False):
+        autosave_db=True,force=True,remove_file=False,size=None,md5=None,
+        calculate_file_size_and_md5=True):
     '''
     A method for create or update analysis file collection in db. Required elements will be
     collected from database if base_path element is given.
@@ -70,10 +71,12 @@ class Analysis_collection_utils:
     :param autosave_db: Save changes to database, default True
     :param remove_file: A toggle for removing existing file from disk, default False
     :param force: Toggle for removing existing file collection, default True
+    :param size: File size, default None
+    :param md5: File md5, default None
+    :param calculate_file_size_and_md5: Calculate file size and md5, default True
     '''
     try:
       ca = CollectionAdaptor(**{'session':dbsession})
-      
       collection_exists = \
         ca.get_collection_files(
           collection_name=self.collection_name,
@@ -86,23 +89,29 @@ class Analysis_collection_utils:
         ca.remove_collection_group_info(
           data=remove_data,
           autosave=autosave_db)                                                 # removing all existing collection groups for the collection name and type
-
       fa = FileAdaptor(**{'session':dbsession})
-      file_exists = fa.check_file_records_file_path(file_path=file_path)        # check if file already present in db
+      file_exists = \
+        fa.check_file_records_file_path(file_path=file_path)                    # check if file already present in db
       if file_exists and force:
         fa.remove_file_data_for_file_path(
           file_path=file_path,
           remove_file=remove_file,
           autosave=autosave_db)                                                 # remove entry from file table and disk
-
-      collection_data = [{
+      collection_data = {
         'name':self.collection_name,
         'type':self.collection_type,
         'table':self.collection_table,
-        'file_path':file_path}]
+        'file_path':file_path}
+      if size is not None:
+        collection_data.\
+          update({'size':size})
+      if md5 is not None:
+        collection_data.\
+          update({'md5':md5})
+      collection_data = [collection_data]
       ca.load_file_and_create_collection(
         data=collection_data,
-        calculate_file_size_and_md5=True,
+        calculate_file_size_and_md5=calculate_file_size_and_md5,
         autosave=autosave_db)                                                   # load file, collection and create collection group
     except Exception as e:
       raise ValueError(
@@ -110,7 +119,8 @@ class Analysis_collection_utils:
               format(e))
 
   @staticmethod
-  def _calculate_file_size_md5(input_file_list):
+  def _calculate_file_size_md5(
+        input_file_list,path_label='file_path',size_label='size',md5_label='md5'):
     try:
       input_file_size_md5 = list()
       for f in input_file_list:
@@ -119,9 +129,9 @@ class Analysis_collection_utils:
         file_md5 = calculate_file_checksum(f)
         input_file_size_md5.\
           append({
-            'file_path':f,
-            'size':file_size,
-            'md5':file_md5 })
+            path_label:f,
+            size_label:file_size,
+            md5_label:file_md5 })
       return input_file_size_md5
     except Exception as e:
       raise ValueError(
@@ -130,6 +140,7 @@ class Analysis_collection_utils:
 
   def load_file_to_disk_and_db(
         self,input_file_list,withdraw_exisitng_collection=True,
+        path_label='file_path',size_label='size',md5_label='md5',
         autosave_db=True,file_suffix=None,force=True,remove_file=False):
     '''
     A method for loading analysis results to disk and database. File will be moved to a new path if base_path is present.
@@ -147,6 +158,9 @@ class Analysis_collection_utils:
     :param autosave_db: Save changes to database, default True
     :param file_suffix: Use a specific file suffix, use None if it should be same as original file
                         e.g. input.vcf.gz to  output.vcf.gz
+    :param path_label: File path label: default file_path
+    :param size_label: File size label, default size
+    :param md5_label: File md5 label, default md5
     :param force: Toggle for removing existing file, default True
     :param remove_file: A toggle for removing existing file from disk, default False
     :returns: A list of final filepath
@@ -158,8 +172,12 @@ class Analysis_collection_utils:
       experiment_igf_id = None
       run_igf_id = None
       output_path_list = list()                                                 # define empty output list
-      #input_file_size_md5 = \
-      #  self._calculate_file_size_md5(input_file_list)
+      input_file_size_md5 = \
+        self._calculate_file_size_md5(
+          input_file_list,
+          path_label=path_label,
+          size_label=size_label,
+          md5_label=md5_label)
       dbconnected = False
       if self.collection_name is None or \
          self.collection_type is None or \
@@ -216,7 +234,11 @@ class Analysis_collection_utils:
       if self.rename_file and self.analysis_name is None:
         raise ValueError(
                 'Analysis name is required for renaming file')                  # check analysis name
-      for input_file in input_file_list:
+      #for input_file in input_file_list:
+      for entry in input_file_size_md5:
+        input_file = entry.get(path_label)
+        file_size = entry.get(size_label)
+        file_md5 = entry.get(md5_label)
         final_path = ''
         if self.base_path is None:                                              # do not move file if base_path is absent
           final_path = os.path.dirname(input_file)
@@ -300,7 +322,10 @@ class Analysis_collection_utils:
           dbsession=base.session,
           withdraw_exisitng_collection=withdraw_exisitng_collection,
           remove_file=remove_file,
-          autosave_db=autosave_db)                                              # load new file collection in db
+          autosave_db=autosave_db,
+          size=file_size,
+          md5=file_md5,
+          calculate_file_size_and_md5=False)                                    # load new file collection in db
         if autosave_db:
           base.commit_session()                                                 # save changes to db for each file
       base.commit_session()                                                     # save changes to db

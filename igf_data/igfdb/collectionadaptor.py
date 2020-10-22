@@ -419,8 +419,10 @@ class CollectionAdaptor(BaseAdaptor):
         raise ValueError(
                 'missing required columns: {0}, found columns:{1}'.\
                   format(required_coumns,data.columns))
-
-      if calculate_file_size_and_md5:
+      for r in required_coumns:                                                 # adding the missing required columns
+        if r not in data.columns:
+          data[r] = ''
+      if calculate_file_size_and_md5:                                           # adding md5 and size
         data['md5'] = \
           data['file_path'].\
             map(
@@ -436,17 +438,14 @@ class CollectionAdaptor(BaseAdaptor):
       file_data = \
         data.loc[:,data.columns.intersection(file_columns)]
       file_data = file_data.drop_duplicates()
-
       collection_columns = ['name','type','table']
       collection_data = \
         data.loc[:,data.columns.intersection(collection_columns)]
       collection_data = collection_data.drop_duplicates()
-
       file_group_column = ['name','type','file_path']
       file_group_data = \
         data.loc[:,data.columns.intersection(file_group_column)]
       file_group_data = file_group_data.drop_duplicates()
-
       fa = FileAdaptor(**{'session':self.session})
       fa.store_file_and_attribute_data(
         data=file_data,autosave=False)                                          # store file data
