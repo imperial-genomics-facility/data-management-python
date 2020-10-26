@@ -9,8 +9,9 @@ from jinja2 import Template,Environment, FileSystemLoader,select_autoescape
 from igf_data.utils.fileutils import check_file_path,get_temp_dir,remove_dir,copy_local_file
 from igf_data.igfdb.igfTables import Base,Project,User,ProjectUser,Sample,Experiment,Run,Collection,Collection_group,File,Seqrun,Run_attribute,Project_attribute
 
-def get_project_read_count(project_igf_id,session_class,run_attribute_name='R1_READ_COUNT',
-                           active_status='ACTIVE'):
+def get_project_read_count(
+      project_igf_id,session_class,run_attribute_name='R1_READ_COUNT',
+      active_status='ACTIVE'):
   '''
   A utility method for fetching sample read counts for an input project_igf_id
   
@@ -20,10 +21,10 @@ def get_project_read_count(project_igf_id,session_class,run_attribute_name='R1_R
   :param active_status: text label for active runs, default ACTIVE
   :returns: A pandas dataframe containing following columns
   
-               * project_igf_id
-               * sample_igf_id
-               * flowcell_id
-               * attribute_value
+    * project_igf_id
+    * sample_igf_id
+    * flowcell_id
+    * attribute_value
   '''
   try:
     read_count = pd.DataFrame()
@@ -104,9 +105,9 @@ def get_seqrun_info_for_project(project_igf_id,session_class):
               format(project_igf_id,e))
 
 
-def mark_project_barcode_check_off(project_igf_id,session_class,
-                                   barcode_check_attribute='barcode_check',
-                                   barcode_check_val='OFF'):
+def mark_project_barcode_check_off(
+      project_igf_id,session_class,barcode_check_attribute='barcode_check',
+      barcode_check_val='OFF'):
   '''
   A utility method for marking project barcode check as off using the project_igf_id
   
@@ -155,7 +156,8 @@ def mark_project_barcode_check_off(project_igf_id,session_class,
       pr.close_session()
 
 
-def get_files_and_irods_path_for_project(project_igf_id,db_session_class,irods_path_prefix='/igfZone/home/'):
+def get_files_and_irods_path_for_project(
+      project_igf_id,db_session_class,irods_path_prefix='/igfZone/home/'):
   '''
   A function for listing all the files and irods dir path for a given project
 
@@ -220,7 +222,8 @@ def get_files_and_irods_path_for_project(project_igf_id,db_session_class,irods_p
               format(e))
 
 
-def mark_project_as_withdrawn(project_igf_id,db_session_class,withdrawn_tag='WITHDRAWN'):
+def mark_project_as_withdrawn(
+      project_igf_id,db_session_class,withdrawn_tag='WITHDRAWN'):
   '''
   A function for marking all the entries for a specific project as withdrawn
 
@@ -280,9 +283,10 @@ def mark_project_as_withdrawn(project_igf_id,db_session_class,withdrawn_tag='WIT
               format(project_igf_id,e))
 
 
-def mark_project_and_list_files_for_cleanup(project_igf_id,dbconfig_file,outout_dir,force_overwrite=True,
-                                            use_ephemeral_space=False,irods_path_prefix='/igfZone/home/',
-                                            withdrawn_tag='WITHDRAWN'):
+def mark_project_and_list_files_for_cleanup(
+      project_igf_id,dbconfig_file,outout_dir,force_overwrite=True,
+      use_ephemeral_space=False,irods_path_prefix='/igfZone/home/',
+      withdrawn_tag='WITHDRAWN'):
   '''
   A wrapper function for project cleanup operation
 
@@ -339,7 +343,8 @@ def mark_project_and_list_files_for_cleanup(project_igf_id,dbconfig_file,outout_
               format(project_igf_id,e))
 
 
-def find_projects_for_cleanup(dbconfig_file,warning_note_weeks=24,all_warning_note=False):
+def find_projects_for_cleanup(
+      dbconfig_file,warning_note_weeks=24,all_warning_note=False):
   '''
   A function for finding old projects for cleanup
 
@@ -444,9 +449,10 @@ def find_projects_for_cleanup(dbconfig_file,warning_note_weeks=24,all_warning_no
               format(e))
 
 
-def notify_project_for_cleanup(warning_template,final_notice_template,cleanup_template,
-                               warning_note_list, final_note_list, cleanup_list,
-                               use_ephemeral_space=False):
+def notify_project_for_cleanup(
+      warning_template,final_notice_template,cleanup_template,
+      warning_note_list, final_note_list, cleanup_list,
+      use_ephemeral_space=False):
   '''
   A function for sending emails to users for project cleanup
 
@@ -455,10 +461,10 @@ def notify_project_for_cleanup(warning_template,final_notice_template,cleanup_te
   :param cleanup_template: A email template for sending cleanup list to igf
   :param warning_note_list: A list of dictionary containing following fields to warn user about cleanup
 
-                 * name
-                 * email_id
-                 * projects
-                 * cleanup_date
+    * name
+    * email_id
+    * projects
+    * cleanup_date
 
   :param final_note_list: A list of dictionary containing above mentioned fields to noftify user about final cleanup
   :param cleanup_list: A list of dictionary containing above mentioned fields to list projects for cleanup
@@ -529,10 +535,10 @@ def draft_email_for_project_cleanup(template_file,data,draft_output):
   :param template_file: A template file
   :param data: A list of dictionary or a dictionary containing the following columns
 
-                * name
-                * email_id
-                * projects
-                * cleanup_date
+    * name
+    * email_id
+    * projects
+    * cleanup_date
 
   :param draft_output: A output filename
   '''
@@ -576,7 +582,9 @@ def draft_email_for_project_cleanup(template_file,data,draft_output):
               format(e))
 
 
-def send_email_to_user_via_sendmail(draft_email_file,waiting_time=20,sendmail_exe='sendmail',dry_run=False):
+def send_email_to_user_via_sendmail(
+      draft_email_file,waiting_time=20,sendmail_exe='sendmail',
+      dry_run=False):
   '''
   A function for sending email to users via sendmail
 
