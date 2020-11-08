@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import json
 import pandas as pd
 import os,subprocess,hashlib,string,re
 import tarfile,fnmatch
@@ -32,6 +33,29 @@ def move_file(source_path,destinationa_path, force=False):
   except Exception as e:
     raise ValueError("Failed to move file, error: {0}".format(e))
 
+
+def read_json_data(data_file):
+  '''
+  A method for reading data from json file
+
+  :param data_file: A Json format file
+  :returns: A list of dictionaries
+  '''
+  data = None
+  try:
+    if not os.path.exists(data_file):
+      raise IOError('file {0} not found'.format(data_file))
+    with open(data_file, 'r') as json_data: 
+      data = json.load(json_data)
+    if data is None:
+      raise ValueError('No data found in file {0}'.format(data))
+    if not isinstance(data, list):
+      data=[data]                                                               # convert data dictionary to a list of dictionaries
+    return data
+  except Exception as e:
+    raise ValueError(
+            'Failed to copy JSON file {0}, error: {1}'.\
+              fomrat(data_file,e))
 
 def check_file_path(file_path):
   '''
