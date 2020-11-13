@@ -62,23 +62,25 @@ def check_for_finished_seqrun(
     ongoing_seqrun_list = list()
     finished_seqrun_list = list()
     for seqrun_id in seqrun_id_list:
-      seqrun_path = \
-        os.path.join(seqrun_base_path,seqrun_id)
-      seqrun_files = \
-        list_remote_file_or_dirs(
-          remote_server=seqrun_server,
-          remote_path=seqrun_path,
-          only_dirs=False,
-          only_files=True)                                                      # fetch all the files
-      seqrun_file_names = \
-        [os.path.basename(i)
-          for i in seqrun_files]
-      if required_file in seqrun_file_names:
-        finished_seqrun_list.\
-          append(os.path.basename(seqrun_id))
-      else:
-        ongoing_seqrun_list.\
-          append(os.path.basename(seqrun_id))
+      if seqrun_id != os.path.basename(seqrun_base_path):
+        seqrun_path = \
+          os.path.join(seqrun_base_path,seqrun_id)
+        seqrun_files = \
+          list_remote_file_or_dirs(
+            remote_server=seqrun_server,
+            remote_path=seqrun_path,
+            only_dirs=False,
+            only_files=True)                                                      # fetch all the files
+        seqrun_file_names = \
+          [os.path.basename(i)
+            for i in seqrun_files
+              if i != seqrun_path]
+        if required_file in seqrun_file_names:
+          finished_seqrun_list.\
+            append(os.path.basename(seqrun_id))
+        else:
+          ongoing_seqrun_list.\
+            append(os.path.basename(seqrun_id))
     return finished_seqrun_list,ongoing_seqrun_list
   except Exception as e:
     raise ValueError(
