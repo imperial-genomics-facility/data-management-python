@@ -32,7 +32,7 @@ def send_log_to_channels(
           comment=message)
     if ms_teams_conf is not None:
       message = \
-        '**Dag id**: {0}, **Task id**: {1}, **Project**: {2}, **Comment**: {3}'.\
+        '**Dag id**: `{0}`, **Task id**: `{1}`, **Project**: `{2}`, **Comment**: {3}'.\
           format(dag_id,task_id,project_id,comment)
       igf_ms = \
         IGF_ms_team(
