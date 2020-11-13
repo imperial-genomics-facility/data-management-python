@@ -81,11 +81,18 @@ def check_for_finished_seqrun(
         else:
           ongoing_seqrun_list.\
             append(os.path.basename(seqrun_id))
+      ongoing_seqrun_list = \
+        [i for i in ongoing_seqrun_list
+          if i != os.path.basename(seqrun_base_path)]
+      finished_seqrun_list = \
+        [i for i in finished_seqrun_list
+          if i != os.path.basename(seqrun_base_path)]
     return finished_seqrun_list,ongoing_seqrun_list
   except Exception as e:
     raise ValueError(
             'Failed to check for finished sequencing, error: {0}'.\
               format(e))
+
 
 def fetch_ongoing_seqruns(
       seqrun_server,seqrun_base_path,database_config_file,
