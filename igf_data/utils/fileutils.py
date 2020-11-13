@@ -115,15 +115,23 @@ def list_remote_file_or_dirs(remote_server,remote_path,only_dirs=True,
       client.close()
     except Exception as e:
       client.close()
-      raise ValueError("Failed to connect to remote server, error: {0}".format(e))
-
+      raise ValueError(
+              "Failed to connect to remote server, error: {0}".\
+                format(e))
     if error != '':
-      raise ValueError('Remote command got following errors: {0}'.\
-                       format(error))
-
-    return output.strip().split('\n')
+      raise ValueError(
+              'Remote command got following errors: {0}'.\
+                format(error))
+    output = output.strip().split('\n')
+    output = \
+      [i for i in output 
+        if i != remote_path]
+    return output
   except Exception as e:
-    raise ValueError("Failed to list files from remote server, error: {0}".format(e))
+    raise ValueError(
+            "Failed to list files from remote server, error: {0}".\
+              format(e))
+
 
 def copy_local_file(source_path,destinationa_path,cd_to_dest=True,force=False):
   '''
