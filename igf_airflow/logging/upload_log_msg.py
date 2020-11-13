@@ -47,59 +47,68 @@ def send_log_to_channels(
     pass
 
 def log_success(context):
-  slack_conf = context['var']['value'].get('slack_conf')
-  asana_conf = context['var']['value'].get('asana_conf')
-  ms_teams_conf = context['var']['value'].get('ms_teams_conf')
-  task_id = context['task'].task_id
-  dag_id = context['task'].dag_id
-  asana_project_id = context['params'].get('asana_project_id')
-  project_id = context['params'].get('project_id')
-  comment = context['params'].get('comment')
-  send_log_to_channels(
-    slack_conf=slack_conf,
-    asana_conf=asana_conf,
-    ms_teams_conf=ms_teams_conf,
-    dag_id=dag_id,
-    task_id=task_id,
-    asana_project_id=asana_project_id,
-    project_id=project_id,
-    comment=comment,
-    reaction='pass')
+  try:
+    slack_conf = context['var']['value'].get('slack_conf')
+    asana_conf = context['var']['value'].get('asana_conf')
+    ms_teams_conf = context['var']['value'].get('ms_teams_conf')
+    task_id = context['task'].task_id
+    dag_id = context['task'].dag_id
+    asana_project_id = context['params'].get('asana_project_id')
+    project_id = context['params'].get('project_id')
+    comment = context['params'].get('comment')
+    send_log_to_channels(
+      slack_conf=slack_conf,
+      asana_conf=asana_conf,
+      ms_teams_conf=ms_teams_conf,
+      dag_id=dag_id,
+      task_id=task_id,
+      asana_project_id=asana_project_id,
+      project_id=project_id,
+      comment=comment,
+      reaction='pass')
+  except:
+    pass
 
 def log_failure(context):
-  slack_conf = context['var']['value'].get('slack_conf')
-  asana_conf = context['var']['value'].get('asana_conf')
-  ms_teams_conf = context['var']['value'].get('ms_teams_conf')
-  task_id = context['task'].task_id
-  dag_id = context['task'].dag_id
-  project_id = context['params'].get('project_id')
-  comment = context['params'].get('comment')
-  send_log_to_channels(
-    slack_conf=slack_conf,
-    asana_conf=asana_conf,
-    ms_teams_conf=ms_teams_conf,
-    task_id=task_id,
-    dag_id=dag_id,
-    asana_project_id=None,
-    project_id=project_id,
-    comment=comment,
-    reaction='fail')
+  try:
+    slack_conf = context['var']['value'].get('slack_conf')
+    asana_conf = context['var']['value'].get('asana_conf')
+    ms_teams_conf = context['var']['value'].get('ms_teams_conf')
+    task_id = context['task'].task_id
+    dag_id = context['task'].dag_id
+    project_id = context['params'].get('project_id')
+    comment = context['params'].get('comment')
+    send_log_to_channels(
+      slack_conf=slack_conf,
+      asana_conf=asana_conf,
+      ms_teams_conf=ms_teams_conf,
+      task_id=task_id,
+      dag_id=dag_id,
+      asana_project_id=None,
+      project_id=project_id,
+      comment=comment,
+      reaction='fail')
+  except:
+    pass
 
 def log_sleep(context):
-  slack_conf = context['var']['value'].get('slack_conf')
-  asana_conf = context['var']['value'].get('asana_conf')
-  ms_teams_conf = context['var']['value'].get('ms_teams_conf')
-  task_id = context['task'].task_id
-  dag_id = context['task'].dag_id
-  project_id = context['params'].get('project_id')
-  comment = context['params'].get('comment')
-  send_log_to_channels(
-    slack_conf=slack_conf,
-    asana_conf=asana_conf,
-    ms_teams_conf=ms_teams_conf,
-    task_id=task_id,
-    dag_id=dag_id,
-    asana_project_id=None,
-    project_id=project_id,
-    comment=comment,
-    reaction='sleep')
+  try:
+    slack_conf = context['var']['value'].get('slack_conf')
+    asana_conf = context['var']['value'].get('asana_conf')
+    ms_teams_conf = context['var']['value'].get('ms_teams_conf')
+    task_id = context['task'].task_id
+    dag_id = context['task'].dag_id
+    project_id = context['params'].get('project_id')
+    comment = context['params'].get('comment')
+    send_log_to_channels(
+      slack_conf=slack_conf,
+      asana_conf=asana_conf,
+      ms_teams_conf=ms_teams_conf,
+      task_id=task_id,
+      dag_id=dag_id,
+      asana_project_id=None,
+      project_id=project_id,
+      comment=comment,
+      reaction='sleep')
+  except:
+    pass
