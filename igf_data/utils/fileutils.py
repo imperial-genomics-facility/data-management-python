@@ -99,9 +99,9 @@ def list_remote_file_or_dirs(remote_server,remote_path,only_dirs=True,
         username=user_name,
         password=user_pass)
       remote_cmd = \
-        [quote('find'),
+        ['find',
          quote(remote_path),
-         quote('-maxdepth 1')]
+         '-maxdepth 1']
       if only_dirs:
         remote_cmd.append('-type d')
 
