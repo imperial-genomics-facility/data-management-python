@@ -100,7 +100,7 @@ def list_remote_file_or_dirs(remote_server,remote_path,only_dirs=True,
         password=user_pass)
       remote_cmd = \
         [quote('find'),
-         quote('remote_path'),
+         quote(remote_path),
          quote('-maxdepth 1')]
       if only_dirs:
         remote_cmd.append('-type d')
@@ -119,7 +119,7 @@ def list_remote_file_or_dirs(remote_server,remote_path,only_dirs=True,
 
     if error != '':
       raise ValueError('Remote command got following errors: {0}'.\
-                       format(e))
+                       format(error))
 
     return output.strip().split('\n')
   except Exception as e:
