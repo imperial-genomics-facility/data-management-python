@@ -70,12 +70,15 @@ def check_for_finished_seqrun(
           remote_path=seqrun_path,
           only_dirs=False,
           only_files=True)                                                      # fetch all the files
-      if required_file in seqrun_files:
+      seqrun_file_names = \
+        [os.path.basename(i)
+          for i in seqrun_files]
+      if required_file in seqrun_file_names:
         finished_seqrun_list.\
-          append(seqrun_id)
+          append(os.path.basename(seqrun_id))
       else:
         ongoing_seqrun_list.\
-          append(seqrun_id)
+          append(os.path.basename(seqrun_id))
     return finished_seqrun_list,ongoing_seqrun_list
   except Exception as e:
     raise ValueError(
