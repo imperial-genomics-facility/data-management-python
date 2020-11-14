@@ -1,5 +1,7 @@
-import os
-from igf_data.utils.fileutils import list_remote_file_or_dirs
+import os,json
+import pandas as pd
+from igf_data.utils.fileutils import get_temp_dir,copy_local_file,list_remote_file_or_dirs,check_file_path
+from igf_airflow.seqrun.calculate_seqrun_file_size import calculate_seqrun_file_list
 from igf_data.process.seqrun_processing.find_and_process_new_seqrun import check_seqrun_dir_in_db
 
 def fetch_all_seqruns(seqrun_server,seqrun_base_path,user_name=None):
@@ -106,3 +108,68 @@ def fetch_ongoing_seqruns(
     raise ValueError(
             'Failed to fetch ongoing seqrun ids, error: {0}'.\
               format(e))
+
+
+def compare_existing_seqrun_files(json_path,seqrun_id,seqrun_base_path):
+  """
+  A function for comparing and re-writing the file list json for ongoing runs
+
+  :param json_path: A json file containing all the seqrun files.
+                    This should have the following keys for each list items
+
+                    * file_path
+                    * file_size
+
+  :param seqrun_id: Seqrun id
+  :param seqrun_base_path: Seqrun base path target dir
+  :returns: None
+  """
+  try:
+    check_file_path(json_path)
+    hpc_seqrun_path = \
+      os.path.join(
+        seqrun_base_path,
+        seqrun_id)
+    if os.path.exists(hpc_seqrun_path):                                         # only compare if traget files are present
+      tmp_dir = get_temp_dir()
+      tmp_file_list = \
+        calculate_seqrun_file_list(
+          seqrun_id=seqrun_id,
+          seqrun_base_dir=seqrun_base_path,
+          output_path=tmp_dir)                                                  # calculate existing files
+      transferred_files = \
+        pd.read_json(tmp_file_list).\
+          set_index('file_path')
+      if len(transferred_files.index) > 0:
+        all_files = \
+          pd.read_json(json_path).\
+            set_index('file_path')
+        merged_data = \
+          all_files.\
+            join(
+              transferred_files,
+              how='left',
+              rsuffix='_tmp')                                                   # join both DFs
+        merged_data.\
+          fillna(0,inplace=True)                                                # set NAN to 0
+        merged_data['t'] = \
+          pd.np.where(
+            merged_data['file_size'] > merged_data['file_size_tmp'],
+            'DIFF','')                                                          # tag files as DIFF if existing file is smaller than source
+        target_files = \
+          merged_data[merged_data['t']=='DIFF'].\
+            reset_index()[['file_path','file_size']]                            # get DF for non existing files
+        tmp_json = \
+          os.path.join(
+            tmp_dir,
+            os.path.basename(json_path))
+        with open(tmp_json,'w') as jp:
+          json.dump(target_files.to_dict(orient='records'),jp)                  # using json lib to preserve file paths
+        copy_local_file(
+          tmp_json,
+          json_path,
+          force=True)
+  except Exception as e:
+    raise ValueError(
+            'Failed to compare existing seqrun files for run {0}, error:{1}'.\
+              format(seqrun_id,e))
