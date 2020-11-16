@@ -183,7 +183,8 @@ def check_seqrun_dir_in_db(all_seqrun_dir,dbconfig):
   except:
     raise
 
-def calculate_file_md5(seqrun_info, md5_out, seqrun_path, file_suffix='md5.json', exclude_dir=()):
+def calculate_file_md5(
+      seqrun_info,md5_out,seqrun_path,file_suffix='md5.json',exclude_dir=()):
   '''
   A method for file md5 calculation for all the sequencing run files
   
@@ -195,33 +196,47 @@ def calculate_file_md5(seqrun_info, md5_out, seqrun_path, file_suffix='md5.json'
   
       {seqrun_name: seqrun_md5_list_path}
       Format of the json file
-      [{"seqrun_file_name":"file_path","file_md5":"md5_value"}]
+      [{"seqrun_file_name":"file_path",
+        "file_md5":"md5_value",
+        "file_size":"size"}]
   '''
   try:
     exclude_dir = list(exclude_dir)
-    seqrun_and_md5=dict()
-    for seqrun_name, seqrun_path in seqrun_info.items():
-      file_list_with_md5=list()
-      output_json_file=os.path.join(md5_out,'{0}.{1}'.\
-                                    format(seqrun_name, file_suffix))
-      for root_path,dirs,files in os.walk(seqrun_path, topdown=True):
-        dirs[:]=[ d for d in dirs if d not in exclude_dir ]                                     # exclude listed dires from search
+    seqrun_and_md5 = dict()
+    for seqrun_name,seqrun_path in seqrun_info.items():
+      file_list_with_md5 = list()
+      output_json_file = \
+        os.path.join(
+          md5_out,
+          '{0}.{1}'.format(seqrun_name,file_suffix))
+      for root_path,dirs,files in os.walk(seqrun_path,topdown=True):
+        dirs[:] = \
+          [d for d in dirs if d not in exclude_dir]                             # exclude listed dires from search
         if len(files)>0:
           for file_name in files:
             if not fnmatch.fnmatch(file_name, '*.fastq.gz'):
-              file_path=os.path.join(root_path,file_name)
+              file_path = os.path.join(root_path,file_name)
               if os.path.exists(file_path):
-                file_md5=calculate_file_checksum(filepath=file_path)                              # calculate file checksum
-                file_rel_path=os.path.relpath(file_path, start=seqrun_path)                       # get relative filepath
-                file_list_with_md5.append({"seqrun_file_name":file_rel_path,"file_md5":file_md5})
-
+                file_md5 = \
+                  calculate_file_checksum(filepath=file_path)                   # calculate file checksum
+                file_size = \
+                  os.path.getsize(file_path)
+                file_rel_path = \
+                  os.path.relpath(file_path, start=seqrun_path)                 # get relative filepath
+                file_list_with_md5.\
+                  append({
+                    "seqrun_file_name":file_rel_path,
+                    "file_size":file_size,
+                    "file_md5":file_md5})
       with open(output_json_file, 'w') as output_json:
-        json.dump(file_list_with_md5, output_json, indent=4)                                    # write json md5 list
-
-      seqrun_and_md5[seqrun_name]=output_json_file
+        json.dump(file_list_with_md5, output_json, indent=4)                    # write json md5 list
+      seqrun_and_md5[seqrun_name] = output_json_file
     return seqrun_and_md5
-  except:
-    raise
+  except Exception as e:
+    raise ValueError(
+            'Failed to calcaulate md5sum for seqrun error: {0}'.\
+              format(e))
+
 
 def prepare_seqrun_for_db(seqrun_name, seqrun_path, session_class):
   '''
