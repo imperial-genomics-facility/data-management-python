@@ -156,6 +156,10 @@ def compare_existing_seqrun_files(json_path,seqrun_id,seqrun_base_path):
           pd.np.where(
             merged_data['file_size'] > merged_data['file_size_tmp'],
             'DIFF','')                                                          # tag files as DIFF if existing file is smaller than source
+        merged_data['t'] = \
+          pd.np.where(
+            merged_data.reset_index()['file_path']=='SampleSheet.csv',
+            'DIFF',merged_data['t'])                                            # always copy SampleSheet.csv
         target_files = \
           merged_data[merged_data['t']=='DIFF'].\
             reset_index()[['file_path','file_size']]                            # get DF for non existing files
