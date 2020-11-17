@@ -188,7 +188,7 @@ def check_for_sequencing_progress(interop_dump,runinfo_file):
   :param interop_dump: A dump file created by interop dumptext command
   :param runinfo_file: RunInfo.xml file path for the target sequencing run
   :returns: An int value for current cycle number, a string for index cycle status and
-            a list for read format
+            a list of dictionary for read format
   """
   try:
     data = \
@@ -212,16 +212,19 @@ def check_for_sequencing_progress(interop_dump,runinfo_file):
       numcycles = \
         read_stat.get(read_index).get('numcycles')
       total_cycles += int(numcycles)
-      read_format.\
-        append(numcycles)
       if current_cycle >= total_cycles:
         status =  'Complete'
       else:
         status = 'Incomplete'
       if isindexedread=='Y':
+        read_format.\
+          append({'I':numcycles})
         index_cycles_count += 1
         if status=='Complete':
           index_cycles_complete_count += 1
+      else:
+        read_format.\
+          append({'R':numcycles})
     index_cycle_status = 'incomplete'
     if index_cycles_complete_count == index_cycles_count:
       index_cycle_status = 'complete'
