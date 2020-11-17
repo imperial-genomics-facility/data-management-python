@@ -154,7 +154,7 @@ def compare_existing_seqrun_files(json_path,seqrun_id,seqrun_base_path):
           fillna(0,inplace=True)                                                # set NAN to 0
         merged_data['t'] = \
           pd.np.where(
-            merged_data['file_size'] > merged_data['file_size_tmp'],
+            merged_data['file_size'] != merged_data['file_size_tmp'],
             'DIFF','')                                                          # tag files as DIFF if existing file is smaller than source
         merged_data['t'] = \
           pd.np.where(
