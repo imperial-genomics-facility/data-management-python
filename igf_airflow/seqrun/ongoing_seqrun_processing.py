@@ -3,6 +3,8 @@ import pandas as pd
 from igf_data.utils.fileutils import get_temp_dir,copy_local_file,list_remote_file_or_dirs,check_file_path
 from igf_airflow.seqrun.calculate_seqrun_file_size import calculate_seqrun_file_list
 from igf_data.process.seqrun_processing.find_and_process_new_seqrun import check_seqrun_dir_in_db
+from igf_data.illumina.interop import extract_data_from_interop_dump
+from igf_data.illumina.runinfo_xml import RunInfo_xml
 
 def fetch_all_seqruns(seqrun_server,seqrun_base_path,user_name=None):
   """
@@ -177,3 +179,54 @@ def compare_existing_seqrun_files(json_path,seqrun_id,seqrun_base_path):
     raise ValueError(
             'Failed to compare existing seqrun files for run {0}, error:{1}'.\
               format(seqrun_id,e))
+
+
+def check_for_sequencing_progress(interop_dump,runinfo_file):
+  """
+  A function for checking seqrun progress
+
+  :param interop_dump: A dump file created by interop dumptext command
+  :param runinfo_file: RunInfo.xml file path for the target sequencing run
+  :returns: An int value for current cycle number, a string for index cycle status and
+            a list for read format
+  """
+  try:
+    data = \
+      extract_data_from_interop_dump(run_dump=interop_dump)
+    if  'Extraction' not in data.keys():
+      raise ValueError(
+              'Key Extraction not found in interop dump {0}'.\
+                format(interop_dump))    
+    extraction = pd.DataFrame(data.get('Extraction'))
+    current_cycle = \
+      max([int(i) for i in extraction.groupby('Cycle').groups.keys()])
+    run_info = RunInfo_xml(runinfo_file)
+    read_stat = run_info.get_reads_stats()
+    total_cycles = 0
+    index_cycles_count = 0
+    index_cycles_complete_count = 0
+    read_format = list()
+    for read_index in sorted(read_stat.keys()):
+      isindexedread = \
+        read_stat.get(read_index).get('isindexedread')
+      numcycles = \
+        read_stat.get(read_index).get('numcycles')
+      total_cycles += int(numcycles)
+      read_format.\
+        append(numcycles)
+      if current_cycle >= total_cycles:
+        status =  'Complete'
+      else:
+        status = 'Incomplete'
+      if isindexedread=='Y':
+        index_cycles_count += 1
+        if status=='Complete':
+          index_cycles_complete_count += 1
+    index_cycle_status = 'incomplete'
+    if index_cycles_complete_count == index_cycles_count:
+      index_cycle_status = 'complete'
+    return current_cycle,index_cycle_status,read_format
+  except Exception as e:
+    raise ValueError(
+            'Failed to check sequencing progress, error: {0}'.\
+              format(e))
