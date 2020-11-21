@@ -166,6 +166,10 @@ class SeqrunFileFactory(IGFBaseJobFactory):
             pd.np.where(
               merged_data['file_size'] != merged_data['file_size_local'],
               'DIFF','')
+          merged_data['t'] = \
+            pd.np.where(
+              merged_data['seqrun_file_name'] == samplesheet_name,
+              'DIFF',merged_data['t'])
           target_files = \
             merged_data[merged_data['t']=='DIFF'].\
             reset_index()[[
