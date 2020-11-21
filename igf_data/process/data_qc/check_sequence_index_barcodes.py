@@ -112,7 +112,7 @@ class CheckSequenceIndexBarcodes:
                                    'total_read','mapping_ratio'])               # define structure for stats df
   
     json_data=self._get_dataframe_from_stats_json(json_file=stats_json)         # get stats json data for each file
-    stats_df=pd.concat([json_data,stats_df])                                    # combine all json files
+    stats_df=pd.concat([json_data,stats_df],sort=True)                          # combine all json files
     raw_df=pd.DataFrame()
     
     for rid, rg in stats_df.groupby('runid'):
