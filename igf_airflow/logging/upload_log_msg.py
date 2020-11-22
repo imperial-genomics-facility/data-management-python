@@ -112,3 +112,50 @@ def log_sleep(context):
       reaction='sleep')
   except:
     pass
+
+
+def post_image_to_channels(
+  image_file,remote_filename=None,slack_conf=None,asana_conf=None,ms_teams_conf=None,
+  task_id=None,dag_id=None,asana_project_id=None,project_id=None,comment=None,reaction=''):
+  try:
+    if slack_conf is not None:
+      message = \
+        'Dag id: {0}, Task id: {1}, Project: {2}, Comment: {3}'.\
+          format(dag_id,task_id,project_id,comment)
+      igf_slack = IGF_slack(slack_conf)
+      igf_slack.\
+        post_file_to_channel(
+          filepath=image_file,
+          message=message)
+    if asana_conf is not None and \
+       asana_project_id is not None and \
+       project_id is not None:
+      message = \
+        'Dag id: {0}, Task id: {1}, Comment: {2}'.\
+          format(dag_id,task_id,comment)
+      igf_asana = \
+        IGF_asana(
+          asana_config=asana_conf,
+          asana_project_id=asana_project_id)
+      igf_asana.\
+        attach_file_to_asana_task(
+          task_name=project_id,
+          filepath=image_file,
+          remote_filename=remote_filename,
+          comment=message)
+    if ms_teams_conf is not None:
+      message = \
+        '**Dag id**: `{0}`, **Task id**: `{1}`, **Project**: `{2}`, **Comment**: {3}'.\
+          format(dag_id,task_id,project_id,comment)
+      igf_ms = \
+        IGF_ms_team(
+          webhook_conf_file=ms_teams_conf)
+      igf_ms.\
+        post_image_to_team(
+          image_path=image_file,
+          message=message,
+          reaction='')
+    time.sleep(2)
+  except Exception as e:
+    logging.error('Failed to upload image, error: {0}'.format(e))
+    pass
