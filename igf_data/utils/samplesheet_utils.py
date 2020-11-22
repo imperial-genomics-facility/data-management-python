@@ -3,10 +3,10 @@ import pandas as pd
 from igf_data.illumina.basesMask import BasesMask
 from igf_data.utils.sequtils import rev_comp
 from igf_data.illumina.samplesheet import SampleSheet
-from igf_data.utils.fileutils import get_temp_dir,copy_local_file,check_file_path
+from igf_data.utils.fileutils import get_temp_dir,copy_local_file,check_file_path,remove_dir
 from igf_data.process.singlecell_seqrun.processsinglecellsamplesheet import ProcessSingleCellSamplesheet
 from igf_data.process.seqrun_processing.find_and_process_new_seqrun import validate_samplesheet_for_seqrun
-
+from igf_data.process.seqrun_processing.find_and_process_new_seqrun import check_for_registered_project_and_sample
 
 def get_formatted_samplesheet_per_lane(
     samplesheet_file,singlecell_barcode_json,runinfo_file,output_dir,filter_lane=None,
@@ -121,3 +121,70 @@ def get_formatted_samplesheet_per_lane(
     raise ValueError(
             'Failed to format samplesheet, error: {0}'.\
               format(e))
+
+
+def samplesheet_validation_and_metadata_checking(
+      samplesheet_file,schema_json_file,log_dir,seqrun_id,db_config_file):
+  """
+  A function for samplesheet validation and metadata checking
+
+  :param samplesheet_file: A Samplesheet file path
+  :param schema_json_file: A JSON schema for samplesheet validation checking
+  :param log_dir: Path for log dir
+  :param seqrun_id: Sequencing run id
+  :param db_config_file: DB config file
+  ;returns: A list of error file paths
+  """
+  try:
+    tmp_dir = get_temp_dir()
+    validation_output = list()
+    _,error_file_list = \
+      validate_samplesheet_for_seqrun(
+        seqrun_info={seqrun_id:os.path.dirname(samplesheet_file)},
+        schema_json=schema_json_file,
+        output_dir=tmp_dir,
+        samplesheet_file=os.path.basename(samplesheet_file))
+    if len(error_file_list.keys()) > 0:
+      tmp_err_file = \
+        error_file_list.\
+          get(seqrun_id)
+      if tmp_err_file is None or \
+         tmp_err_file == '':
+        raise ValueError('No validation error file found')
+      target_file = \
+        os.path.join(
+          log_dir,
+          os.path.basename(tmp_err_file))
+      copy_local_file(
+        tmp_err_file,
+        target_file)
+      validation_output.\
+        append(target_file)
+    _,msg = \
+      check_for_registered_project_and_sample(
+        seqrun_info={seqrun_id:os.path.dirname(samplesheet_file)},
+        dbconfig=db_config_file,
+        samplesheet_file=os.path.basename(samplesheet_file))
+    if msg != '' and \
+       msg is not None:
+      tmp_file = \
+        os.path.join(
+          tmp_dir,
+          '{0}_metadata_error.txt'.\
+            format(os.path.basename(samplesheet_file)))
+      with open(tmp_file,'w') as fp:
+        fp.write(msg,'\n')
+      target_file = \
+        os.path.join(
+          log_dir,
+          os.path.basename(tmp_file))
+      copy_local_file(
+        tmp_file,
+        target_file)
+      validation_output.\
+        append(target_file)
+    remove_dir(tmp_dir)
+    return validation_output
+  except Exception as e:
+    raise ValueError(
+            'Failed samplesheet checking, error: {0}'.format(e))
