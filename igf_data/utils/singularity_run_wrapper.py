@@ -53,3 +53,45 @@ def singularity_run(image_path,path_bind,args_list,container_dir='/tmp',return_r
     raise ValueError(
             'Failed to run image {0}, error: {1}'.\
               format(image_path,e))
+
+
+def execute_singuarity_cmd(image_path,command_string,log_dir,task_id=1,
+                           bind_dir_list=()):
+  """
+  A function for executing commands within Singularity container
+
+  :param image_path: A Singularity image (.sif) filepath
+  :param command_string: A command string to run within container
+  :param log_dir: Log dir for dumping errors, if return code is not zero
+  :param task_id: Task id for renaming log, default 1
+  :param bind_dir_list: List of dirs to bind
+  :returns: None
+  """
+  try:
+    check_file_path(image_path)
+    check_file_path(log_dir)
+    _ = [check_file_path(d)
+           for d in bind_dir_list]
+    if len(bind_dir_list)==0:
+      bind_dir_list = None
+    response = \
+      Client.execute(
+        image=image_path,
+        bind=bind_dir_list,
+        command=command_string,
+        return_result=True)
+    return_code = \
+      response.get('return_code')
+    if return_code != 0 and \
+       response.get('return_code') is not None:
+      log_file = \
+        os.path.join(
+          log_dir,
+          '{0}.log'.format(task_id))
+      with open(log_file,'w') as fp:
+        fp.write(response.get('message'))
+      raise ValueError(
+              'Failed to run command for task id: {0}, log dir: {1}'.\
+                format(task_id,log_file))
+  except Exception as e:
+    raise ValueError('Failed to execute singularity cmd, error: {0}'.format(e))
