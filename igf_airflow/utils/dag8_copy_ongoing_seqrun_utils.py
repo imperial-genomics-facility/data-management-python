@@ -1,13 +1,23 @@
 import os,logging,subprocess
 from airflow.models import Variable
+from igf_data.illumina.runinfo_xml import RunInfo_xml
 from igf_data.illumina.runparameters_xml import RunParameter_xml
 from igf_data.illumina.samplesheet import SampleSheet
 from igf_data.utils.box_upload import upload_file_or_dir_to_box
-from igf_airflow.seqrun.ongoing_seqrun_processing import fetch_ongoing_seqruns,compare_existing_seqrun_files
+from igf_airflow.seqrun.ongoing_seqrun_processing import fetch_ongoing_seqruns
+from igf_airflow.seqrun.ongoing_seqrun_processing import compare_existing_seqrun_files
 from igf_airflow.seqrun.ongoing_seqrun_processing import check_for_sequencing_progress
-from igf_airflow.logging.upload_log_msg import send_log_to_channels,log_success,log_failure,log_sleep
+from igf_airflow.logging.upload_log_msg import send_log_to_channels
+from igf_airflow.logging.upload_log_msg import log_success,log_failure,log_sleep
+from igf_airflow.logging.upload_log_msg import post_image_to_channels
 from igf_data.utils.fileutils import get_temp_dir,copy_remote_file,check_file_path,read_json_data
 from igf_data.utils.samplesheet_utils import samplesheet_validation_and_metadata_checking
+from igf_data.utils.samplesheet_utils import get_formatted_samplesheet_per_lane
+from igf_data.process.moveBclFilesForDemultiplexing import moveBclTilesForDemultiplexing
+from igf_data.utils.tools.bcl2fastq_utils import run_bcl2fastq
+from igf_data.utils.singularity_run_wrapper import execute_singuarity_cmd
+from igf_data.process.data_qc.check_sequence_index_barcodes import CheckSequenceIndexBarcodes
+from igf_data.process.data_qc.check_sequence_index_barcodes import IndexBarcodeValidationError
 
 def get_ongoing_seqrun_list(**context):
   """
@@ -355,7 +365,7 @@ def samplesheet_validation_and_branch_func(**context):
     no_job_prefix  = context['params'].get('no_job_prefix')
     next_job_prefix  = context['params'].get('next_job_prefix')
     next_job_range  = context['params'].get('next_job_range')
-    samplesheet_validation_json  = context['params'].get('samplesheet_validation_json')
+    samplesheet_validation_json  = Variable.get('samplesheet_validation_json')
     job_list = \
       ['{0}_{1}'.format(no_job_prefix,run_index_number)]
     seqrun_id = \
@@ -423,6 +433,169 @@ def samplesheet_validation_and_branch_func(**context):
             comment=message,
             reaction='pass')
     return job_list
+  except Exception as e:
+    logging.error(e)
+    send_log_to_channels(
+      slack_conf=Variable.get('slack_conf'),
+      ms_teams_conf=Variable.get('ms_teams_conf'),
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
+
+def run_tile_demult_list_func(**context):
+  try:
+    ti = context.get('ti')
+    local_seqrun_path = Variable.get('hpc_seqrun_path')
+    box_dir_prefix = Variable.get('box_dir_prefix_for_seqrun_report')
+    box_username = Variable.get('box_username')
+    box_config_file = Variable.get('box_config_file')
+    run_index_number = context['params'].get('run_index_number')
+    lane_id = context['params'].get('lane_id')
+    seqrun_id_pull_key = context['params'].get('seqrun_id_pull_key')
+    seqrun_id_pull_task_ids = context['params'].get('seqrun_id_pull_task_ids')
+    samplesheet_file_name = context['params'].get('samplesheet_file_name')
+    runinfo_xml_file_name = context['params'].get('runinfo_xml_file_name')
+    runParameters_xml_file_name = context['params'].get('runParameters_xml_file_name')
+    singlecell_barcode_json = Variable.get('singlecell_barcode_json')
+    tile_list = context['params'].get('tile_list')
+    bcl2fastq_image_path = Variable.get('bcl2fastq_image_path')
+    pandoc_image_path = Variable.get('pandoc_image_path')
+    threads = context['params'].get('threads')
+    seqrun_id = \
+      ti.xcom_pull(key=seqrun_id_pull_key,task_ids=seqrun_id_pull_task_ids)[run_index_number]
+    seqrun_path = \
+      os.path.join(
+        local_seqrun_path,
+        seqrun_id)
+    samplesheet_path = \
+      os.path.join(
+        seqrun_path,
+        samplesheet_file_name)
+    runParameters_path = \
+      os.path.join(
+        seqrun_path,
+        runParameters_xml_file_name)
+    runinfo_path = \
+      os.path.join(
+        seqrun_path,
+        runinfo_xml_file_name)
+    if not os.path.exists(runParameters_path):
+      raise ValueError(
+              '{0} not found for seqrun {1}'.\
+                format(runParameters_xml_file_name,seqrun_id))
+    runparameters_data = \
+      RunParameter_xml(xml_file=runParameters_path)
+    flowcell_type = \
+        runparameters_data.\
+          get_hiseq_flowcell()
+    index2_rule = None
+    if flowcell_type is  not None and \
+       flowcell_type == 'HiSeq 3000/4000 PE':
+      index2_rule = 'REVCOMP'
+    tmp_samplesheet_dir = get_temp_dir()
+    file_list = \
+      get_formatted_samplesheet_per_lane(
+        samplesheet_file=samplesheet_path,
+        singlecell_barcode_json=singlecell_barcode_json,
+        runinfo_file=runinfo_path,
+        output_dir=tmp_samplesheet_dir,
+        filter_lane=lane_id,
+        single_cell_tag='10X',
+        index1_rule=None,
+        index2_rule=index2_rule)
+    if len(file_list) > 1:
+      raise ValueError(
+              'Expecting one samplesheet for lane {0}, got {1}'.\
+                format(lane_id,len(file_list)))
+    if len(file_list) == 0:
+      raise ValueError(
+              'No samplesheet found for lane {0}'.\
+                format(lane_id))
+    lane_samplesheet_file = file_list[0].get('samplesheet_file')
+    lane_bases_mask = file_list[0].get('bases_mask')
+    tmp_run_path = get_temp_dir()
+    move_tiles = \
+      moveBclTilesForDemultiplexing(
+        input_dir=seqrun_path,
+        output_dir=tmp_run_path,
+        samplesheet=lane_samplesheet_file,
+        run_info_xml=runinfo_path,
+        tiles_list=tile_list)
+    tile_list_for_bcl2fq = \
+      move_tiles.copy_bcl_files()
+    tmp_bcl2fq_output = get_temp_dir()
+    _ = run_bcl2fastq(
+      runfolder_dir=tmp_run_path,
+      output_dir=tmp_bcl2fq_output,
+      samplesheet_path=lane_samplesheet_file,
+      bases_mask=lane_bases_mask,
+      threads=threads,
+      singularity_image_path=bcl2fastq_image_path,
+      tiles=tile_list_for_bcl2fq,
+      options=[
+        '--barcode-mismatches 1',
+        '--auto-set-to-zero-barcode-mismatches',
+        '--create-fastq-for-index-reads',
+        '--ignore-missing-bcls',
+        '--ignore-missing-filter'])
+    runinfo_data = \
+      RunInfo_xml(xml_file=runinfo_path)
+    flowcell_id = \
+      runinfo_data.\
+        get_flowcell_name()
+    html_report_path = \
+      os.path.join(
+        tmp_bcl2fq_output,
+        'Reports','html',
+        flowcell_id,'all','all','all',
+        'laneBarcode.html')
+    txt_report_path = \
+      '{0}.txt'.format(html_report_path)
+    txt_conversion_cmd = \
+      'pandoc {0} -o {1}'.format(
+        html_report_path,
+        txt_report_path)
+    execute_singuarity_cmd(
+      image_path=pandoc_image_path,
+      command_string=txt_conversion_cmd,
+      bind_dir_list=[tmp_bcl2fq_output],
+      log_dir=tmp_bcl2fq_output)
+    box_dir = \
+      os.path.join(
+        box_dir_prefix,
+        seqrun_id)
+    upload_file_or_dir_to_box(
+      box_config_file=box_config_file,
+      file_path=txt_report_path,
+      upload_dir=box_dir,
+      box_username=box_username)
+    stats_file_path = \
+      os.path.join(
+        tmp_bcl2fq_output,
+        'Stats',
+        'Stats.json')
+    barcode_stat = \
+      CheckSequenceIndexBarcodes(
+        stats_json_file=stats_file_path,
+        samplesheet_file=lane_samplesheet_file)
+    try:
+      barcode_stat.\
+        validate_barcode_stats(
+          work_dir=tmp_bcl2fq_output)
+    except IndexBarcodeValidationError as e:
+      error_msg = e.message
+      error_plots = e.plots
+      for plot in error_plots:
+        post_image_to_channels(
+          image_file=plot,
+          slack_conf=Variable.get('slack_conf'),
+          ms_teams_conf=Variable.get('ms_teams_conf'),
+          task_id=context['task'].task_id,
+          dag_id=context['task'].dag_id,
+          comment=error_msg)
   except Exception as e:
     logging.error(e)
     send_log_to_channels(
