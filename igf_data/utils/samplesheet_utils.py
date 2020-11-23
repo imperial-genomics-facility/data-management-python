@@ -48,7 +48,7 @@ def get_formatted_samplesheet_per_lane(
               'Lane not present in samplesheet {0}'.\
                 format(samplesheet_file))
     if filter_lane is not None and \
-       filter_lane in range(1,9):
+       int(filter_lane) in range(1,9):
       sa.filter_sample_data(
         condition_key='Lane',
         condition_value=str(filter_lane))
