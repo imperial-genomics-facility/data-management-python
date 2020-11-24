@@ -162,6 +162,8 @@ class SeqrunFileFactory(IGFBaseJobFactory):
                 rsuffix='_local')                                               # left df join
           merged_data.\
             fillna(0,inplace=True)                                              # replace NAN with 0
+          merged_data.\
+            reset_index(inplace=True)
           merged_data['t'] = \
             pd.np.where(
               merged_data['file_size'] != merged_data['file_size_local'],
@@ -171,8 +173,7 @@ class SeqrunFileFactory(IGFBaseJobFactory):
               merged_data['seqrun_file_name'] == samplesheet_name,
               'DIFF',merged_data['t'])
           target_files = \
-            merged_data[merged_data['t']=='DIFF'].\
-            reset_index()[[
+            merged_data[merged_data['t']=='DIFF'][[
               'seqrun_file_name',
               'file_size',
               'file_md5']]
