@@ -588,6 +588,9 @@ def run_tile_demult_list_func(**context):
     except IndexBarcodeValidationError as e:
       error_msg = e.message
       error_plots = e.plots
+      message = \
+        'Seqrun id: {0}, Lane id: {1}, Error: {2}'.\
+          format(seqrun_path,lane_id,error_msg)
       for plot in error_plots:
         post_image_to_channels(
           image_file=plot,
@@ -595,7 +598,7 @@ def run_tile_demult_list_func(**context):
           ms_teams_conf=Variable.get('ms_teams_conf'),
           task_id=context['task'].task_id,
           dag_id=context['task'].dag_id,
-          comment=error_msg)
+          comment=message)
   except Exception as e:
     logging.error(e)
     send_log_to_channels(
