@@ -1,10 +1,10 @@
-import os, json, time
+import os,json,time,logging
 from ftplib import FTP_TLS
 from igf_data.utils.dbutils import read_json_data
 from igf_data.utils.fileutils import check_file_path
 
 def upload_file_or_dir_to_box(
-      box_config_file,file_path,upload_dir,box_username,
+      box_config_file,file_path,upload_dir,box_username,skip_existing=False,
       time_wait_sec=2,box_ftp_url='ftp.box.com',box_size_limit=34359738368):
   try:
     check_file_path(box_config_file)
@@ -40,19 +40,33 @@ def upload_file_or_dir_to_box(
             if file in ftps.nlst(target_dir):
               ftp_file_size = \
                 ftps.size(os.path.join(target_dir,file))
-              if ftp_file_size != file_size:
+              if not skip_existing and \
+                 ftp_file_size != file_size:
                 ftps.storbinary('STOR {0}'.format(target_path),open(source_path,'rb'))
                 time.sleep(time_wait_sec)
+              else:
+                logging.\
+                  warning('Skipped existing file {0}'.format(target_path))
             else:
               ftps.storbinary('STOR {0}'.format(target_path),open(source_path,'rb'))
-              time.sleep(time_wait_sec)
+              time.sleep(int(time_wait_sec))
+          else:
+            logging.\
+              error('Failed to upload file {0}, size {1}'.\
+                      format(source_path,int(file_size) / 1073741824))
     elif os.path.isfile(file_path):
       target_path = \
         os.path.join(
           upload_dir,
           os.path.basename(file_path))
+      if os.path.getsize(file_path) > box_size_limit:
+        message = \
+          'Failed to upload file {0}, size {1}'.\
+            format(source_path,int(file_size) / 1073741824)
+        logging.error(message)
+        raise ValueError(message)
       ftps.storbinary('STOR {0}'.format(target_path),open(file_path,'rb'))
-      time.sleep(time_wait_sec)
+      time.sleep(int(time_wait_sec))
     else:
       raise IOError('Not a file, {0}'.format(file_path))
     ftps.close()
