@@ -1,4 +1,5 @@
 import os,json
+import numpy as np
 import pandas as pd
 from igf_data.utils.fileutils import get_temp_dir,copy_local_file,list_remote_file_or_dirs,check_file_path
 from igf_airflow.seqrun.calculate_seqrun_file_size import calculate_seqrun_file_list
@@ -157,11 +158,11 @@ def compare_existing_seqrun_files(json_path,seqrun_id,seqrun_base_path):
         merged_data.\
           reset_index(inplace=True)
         merged_data['t'] = \
-          pd.np.where(
+          np.where(
             merged_data['file_size'] != merged_data['file_size_tmp'],
             'DIFF','')                                                          # tag files as DIFF if existing file is smaller than source
         merged_data['t'] = \
-          pd.np.where(
+          np.where(
             merged_data['file_path']=='SampleSheet.csv',
             'DIFF',merged_data['t'])                                            # always copy SampleSheet.csv
         target_files = \

@@ -1,4 +1,4 @@
-import unittest,os,json
+import unittest,os
 import pandas as pd
 from igf_data.utils.fileutils import get_temp_dir,remove_dir
 from igf_airflow.seqrun.calculate_seqrun_file_size import calculate_seqrun_file_list
