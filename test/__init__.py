@@ -57,6 +57,7 @@ def full_suite():
   from .utils.jupyter_nbconvert_wrapper_test import Nbconvert_execute_test1
   from .utils.jupyter_nbconvert_wrapper_test import Nbconvert_execute_test2
   from .igf_airflow.calculate_seqrun_file_size_test import Calculate_seqrun_file_list_testA
+  from .igf_airflow.ongoing_seqrun_processing_test import Compare_existing_seqrun_filesA
 
   return unittest.TestSuite([
       unittest.TestLoader().loadTestsFromTestCase(BasesMask_testA), 
@@ -129,4 +130,5 @@ def full_suite():
       unittest.TestLoader().loadTestsFromTestCase(Nbconvert_execute_test1),
       unittest.TestLoader().loadTestsFromTestCase(Nbconvert_execute_test2),
       unittest.TestLoader().loadTestsFromTestCase(Calculate_seqrun_file_list_testA),
+      unittest.TestLoader().loadTestsFromTestCase(Compare_existing_seqrun_filesA),
     ])
