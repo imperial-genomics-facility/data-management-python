@@ -56,6 +56,7 @@ def full_suite():
   from .utils.singularity_run_wrapper_test import Singularity_run_test1
   from .utils.jupyter_nbconvert_wrapper_test import Nbconvert_execute_test1
   from .utils.jupyter_nbconvert_wrapper_test import Nbconvert_execute_test2
+  from .igf_airflow.calculate_seqrun_file_size_test import Calculate_seqrun_file_list_testA
 
   return unittest.TestSuite([
       unittest.TestLoader().loadTestsFromTestCase(BasesMask_testA), 
@@ -127,4 +128,5 @@ def full_suite():
       unittest.TestLoader().loadTestsFromTestCase(Singularity_run_test1),
       unittest.TestLoader().loadTestsFromTestCase(Nbconvert_execute_test1),
       unittest.TestLoader().loadTestsFromTestCase(Nbconvert_execute_test2),
+      unittest.TestLoader().loadTestsFromTestCase(Calculate_seqrun_file_list_testA),
     ])
