@@ -424,7 +424,7 @@ def samplesheet_validation_and_branch_func(**context):
               upload_dir=box_dir,
               box_username=box_username)
           message = \
-            'Samplesheet validation failed for seqrun: `{0}`, box dir: `{1}`'.\
+            'Samplesheet validation failed for seqrun: {0}, box dir: {1}'.\
               format(seqrun_id,box_dir)
           send_log_to_channels(
             slack_conf=Variable.get('slack_conf'),
