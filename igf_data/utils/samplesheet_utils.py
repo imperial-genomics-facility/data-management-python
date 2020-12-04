@@ -173,7 +173,7 @@ def samplesheet_validation_and_metadata_checking(
           '{0}_metadata_error.txt'.\
             format(os.path.basename(samplesheet_file)))
       with open(tmp_file,'w') as fp:
-        fp.write(msg,'\n')
+        fp.write('{0}\n'.format(msg))
       target_file = \
         os.path.join(
           log_dir,
