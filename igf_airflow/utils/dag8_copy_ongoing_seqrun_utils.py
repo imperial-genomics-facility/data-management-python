@@ -366,6 +366,8 @@ def samplesheet_validation_and_branch_func(**context):
     no_job_prefix  = context['params'].get('no_job_prefix')
     next_job_prefix  = context['params'].get('next_job_prefix')
     next_job_range  = context['params'].get('next_job_range')
+    next_job_range = \
+      [int(j) for j in next_job_range]
     samplesheet_validation_json  = Variable.get('samplesheet_validation_json')
     job_list = \
       ['{0}_{1}'.format(no_job_prefix,run_index_number)]
@@ -395,7 +397,7 @@ def samplesheet_validation_and_branch_func(**context):
           samplesheet.\
             get_lane_count()
         for lane in lanes:
-          if lane in next_job_range:
+          if int(lane) in next_job_range:
             next_job = \
               '{0}_{1}_{2}'.format(
                 next_job_prefix,
