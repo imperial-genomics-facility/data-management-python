@@ -22,8 +22,8 @@ def upload_file_or_dir_to_box(
     for d in target_dirs:
       target_dir = \
         os.path.join(target_dir,d)
-      if d not in ftps.nlst(target_dir):
-        ftps.mkd(os.path.dirname(target_dir))
+      if d not in ftps.nlst(os.path.dirname(target_dir)):
+        ftps.mkd(target_dir)
     if os.path.isdir(file_path):
       for root,_,files in os.walk(file_path):
         for file in files:
