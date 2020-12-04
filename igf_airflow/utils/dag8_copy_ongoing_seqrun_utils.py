@@ -357,6 +357,7 @@ def samplesheet_validation_and_branch_func(**context):
     box_dir_prefix = Variable.get('box_dir_prefix_for_seqrun_report')
     box_username = Variable.get('box_username')
     box_config_file  = Variable.get('box_config_file')
+    db_config_file = Variable.get('database_config_file')
     run_index_number = context['params'].get('run_index_number')
     seqrun_id_pull_key  = context['params'].get('seqrun_id_pull_key')
     seqrun_id_pull_task_ids  = context['params'].get('seqrun_id_pull_task_ids')
@@ -409,7 +410,7 @@ def samplesheet_validation_and_branch_func(**context):
             schema_json_file=samplesheet_validation_json,
             log_dir=log_dir,
             seqrun_id=seqrun_id,
-            db_config_file=box_config_file)
+            db_config_file=db_config_file)
         if len(validation_output_list) > 0:
           _ = \
             [check_file_path(i)
