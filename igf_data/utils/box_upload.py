@@ -10,6 +10,7 @@ def upload_file_or_dir_to_box(
     check_file_path(box_config_file)
     check_file_path(file_path)
     box_conf = read_json_data(box_config_file)
+    box_conf = box_conf[0]
     ftps = FTP_TLS()
     ftps.connect(box_ftp_url)
     ftps.login(
