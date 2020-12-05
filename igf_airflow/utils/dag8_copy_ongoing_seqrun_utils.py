@@ -530,9 +530,11 @@ def run_tile_demult_list_func(**context):
     tile_list_for_bcl2fq = \
       move_tiles.copy_bcl_files()
     tmp_bcl2fq_output = get_temp_dir()
+    tmp_report_path = get_temp_dir(use_ephemeral_space=True)                    # fix for horrible Illumina bug
     _ = run_bcl2fastq(
       runfolder_dir=tmp_run_path,
       output_dir=tmp_bcl2fq_output,
+      reports_dir=tmp_report_path,
       samplesheet_path=lane_samplesheet_file,
       bases_mask=lane_bases_mask,
       threads=threads,
@@ -551,7 +553,7 @@ def run_tile_demult_list_func(**context):
         get_flowcell_name()
     html_report_path = \
       os.path.join(
-        tmp_bcl2fq_output,
+        tmp_report_path,
         'Reports','html',
         flowcell_id,'all','all','all',
         'laneBarcode.html')
@@ -593,7 +595,7 @@ def run_tile_demult_list_func(**context):
       error_plots = e.plots
       message = \
         'Seqrun id: {0}, Lane id: {1}, Error: {2}'.\
-          format(seqrun_path,lane_id,error_msg)
+          format(seqrun_id,lane_id,error_msg)
       for plot in error_plots:
         post_image_to_channels(
           image_file=plot,
