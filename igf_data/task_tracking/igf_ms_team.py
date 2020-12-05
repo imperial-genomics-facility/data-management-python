@@ -24,25 +24,40 @@ class IGF_ms_team:
       webhook_url = self.webhook_conf.get('webhook_url')
       check_file_path(image_path)
       encoded_image = base64.b64encode(open(image_path, "rb").read()).decode()
-      formatted_message = "![Failed image upload](data:image/png;base64,{0}){1}".\
-                            format(encoded_image,message)
-      themeColor = '#FFFFFF'
+      formatted_image = "data:image/png;base64,{0}".format(encoded_image)
       if reaction !='' or reaction is not None:
         if reaction == 'pass':
-          reaction =  '&#x2705;'
-          themeColor = '#00cc44'
+          reaction =  'good'
         elif reaction == 'fail':
-          reaction = '&#x274C'
-          themeColor = '#DC143C'
+          reaction = 'attention'
         elif reaction == 'sleep':
-          reaction = '&#128564'
-          themeColor = '#000080'
+          reaction = 'default'
+      #json_data = {
+      #  "@context": "https://schema.org/extensions",
+      #  "@type": "MessageText",
+      #  "themeColor": themeColor,
+      #  "TextFormat":"markdown",
+      #  "text": formatted_message}
       json_data = {
-        "@context": "https://schema.org/extensions",
-        "@type": "MessageText",
-        "themeColor": themeColor,
-        "TextFormat":"markdown",
-        "text": formatted_message}
+        "type":"message",
+        "attachments":[{
+          "contentType":"application/vnd.microsoft.card.adaptive",
+          "contentUrl":None,
+          "content":{
+            "$schema":"http://adaptivecards.io/schemas/adaptive-card.json",
+            "type":"AdaptiveCard",
+            "version":"1.2",
+            "body":[{
+              "type": "Image",
+              "url": formatted_image
+              },{
+              "type":"TextBlock",
+              "text":message,
+              "color":reaction
+            }]
+          }
+        }]
+      }
       r = requests.post(url=webhook_url,json=json_data)
       if r.status_code != 200:
         raise ValueError(
