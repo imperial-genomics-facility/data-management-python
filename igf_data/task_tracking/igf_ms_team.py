@@ -32,6 +32,8 @@ class IGF_ms_team:
           reaction = 'attention'
         elif reaction == 'sleep':
           reaction = 'default'
+      if reaction == '':
+        reaction = 'default' 
       #json_data = {
       #  "@context": "https://schema.org/extensions",
       #  "@type": "MessageText",
