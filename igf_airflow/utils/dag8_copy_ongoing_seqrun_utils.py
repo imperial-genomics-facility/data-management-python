@@ -556,7 +556,7 @@ def run_tile_demult_list_func(**context):
         flowcell_id,'all','all','all',
         'laneBarcode.html')
     txt_report_path = \
-      '{0}.txt'.format(html_report_path)
+      '{0}_{1}.txt'.format(html_report_path,lane_id)
     txt_conversion_cmd = \
       'pandoc {0} -o {1}'.format(
         html_report_path,
