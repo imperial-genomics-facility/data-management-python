@@ -554,7 +554,7 @@ def run_tile_demult_list_func(**context):
     html_report_path = \
       os.path.join(
         tmp_report_path,
-        'Reports','html',
+        'html',
         flowcell_id,'all','all','all',
         'laneBarcode.html')
     txt_report_path = \
