@@ -58,6 +58,7 @@ def full_suite():
   from .utils.jupyter_nbconvert_wrapper_test import Nbconvert_execute_test2
   from .igf_airflow.calculate_seqrun_file_size_test import Calculate_seqrun_file_list_testA
   from .igf_airflow.ongoing_seqrun_processing_test import Compare_existing_seqrun_filesA
+  from .igf_airflow.dag9_tenx_single_cell_immune_profiling_utils_test import Dag9_tenx_single_cell_immune_profiling_utilstestA
 
   return unittest.TestSuite([
       unittest.TestLoader().loadTestsFromTestCase(BasesMask_testA), 
@@ -131,4 +132,5 @@ def full_suite():
       unittest.TestLoader().loadTestsFromTestCase(Nbconvert_execute_test2),
       unittest.TestLoader().loadTestsFromTestCase(Calculate_seqrun_file_list_testA),
       unittest.TestLoader().loadTestsFromTestCase(Compare_existing_seqrun_filesA),
+      unittest.TestLoader().loadTestsFromTestCase(Dag9_tenx_single_cell_immune_profiling_utilstestA),
     ])
