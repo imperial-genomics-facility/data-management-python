@@ -5,6 +5,7 @@ from igf_airflow.logging.upload_log_msg import log_success,log_failure,log_sleep
 from igf_airflow.logging.upload_log_msg import post_image_to_channels
 from igf_data.utils.fileutils import get_temp_dir,copy_remote_file,check_file_path,read_json_data
 from igf_data.utils.singularity_run_wrapper import execute_singuarity_cmd
+from igf_data.utils.analysis_fastq_fetch_utils import get_fastq_and_run_for_samples
 
 ## FUNCTION
 def fetch_analysis_info_and_branch_func(**context):
@@ -26,7 +27,7 @@ def fetch_analysis_info_and_branch_func(**context):
     # check the analysis description and sample validity
     # warn if multiple samples are allocated to same sub category
     # filter analysis branch list
-    analysis_list,messages = \
+    sample_id_list, analysis_list, messages = \
       _validate_analysis_description(
         analysis_description=analysis_description,
         feature_types=feature_types)
@@ -34,6 +35,12 @@ def fetch_analysis_info_and_branch_func(**context):
       raise ValueError('Analysis validation failed: {0}'.\
               format(messages))
     # get the fastq paths for sample ids and set the trim output dirs per run
+    fastq_list = \
+      get_fastq_and_run_for_samples(
+        dbconfig_file=database_config_file,
+        sample_igf_id_list=sample_id_list,
+        active_status='ACTIVE',
+        combine_fastq_dir=True)
     """
     gene_expression : {
     sample_id: IGF_ID,
@@ -60,6 +67,7 @@ def fetch_analysis_info_and_branch_func(**context):
 def _validate_analysis_description(analysis_description,feature_types):
   messages = list()
   analysis_list = list()
+  sample_id_list = list()
   sample_column = 'sample_igf_id'
   feature_column = 'feature_type'
   reference_column = 'reference'
@@ -86,6 +94,12 @@ def _validate_analysis_description(analysis_description,feature_types):
     set(
       [f.replace(' ','_').lower()
         for f in analysis_list])
+  sample_id_list = \
+    list(
+      df[sample_column].\
+        dropna().\
+        drop_duplicates().\
+        values)
   for f,f_data in df.groupby(feature_column):
     f = f.replace(' ','_').lower()
     f_samples = list(f_data[sample_column].values)
@@ -105,4 +119,4 @@ def _validate_analysis_description(analysis_description,feature_types):
     if len(ref_msg) > 0:
       messages.\
         extend(ref_msg)
-  return analysis_list,messages
+  return sample_id_list, analysis_list, messages

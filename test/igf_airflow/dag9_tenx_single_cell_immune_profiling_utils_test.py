@@ -45,7 +45,7 @@ class Dag9_tenx_single_cell_immune_profiling_utilstestA(unittest.TestCase):
         'feature_type':'vdj-b',
         'reference':'/path/a.csv'
     }]
-    feature_list,msgs = \
+    sample_ids,feature_list,msgs = \
       _validate_analysis_description(analysis_description,self.feature_types)
     errors = 0
     self.assertTrue('gene_expression' in feature_list)
