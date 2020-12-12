@@ -41,6 +41,13 @@ def fetch_analysis_info_and_branch_func(**context):
         sample_igf_id_list=sample_id_list,
         active_status='ACTIVE',
         combine_fastq_dir=True)
+    df = pd.DataFrame(fastq_list)
+    df_sample_ids = \
+      list(df['sample_igf_id'].drop_duplicates().values)
+    if len(sample_id_list) != len(df_sample_ids):
+      raise ValueError(
+              'Expecting samples: {0}, received samples: {1}'.\
+                format(sample_id_list,df_sample_ids))
     """
     gene_expression : {
     sample_id: IGF_ID,
