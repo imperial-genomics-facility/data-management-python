@@ -51,6 +51,7 @@ def full_suite():
   from .utils.project_analysis_utils_test import Project_analysis_test1,Project_analysis_test2
   from .process.project_pooling_info_test import Project_pooling_info_test1
   from .utils.analysis_fastq_fetch_utils_test import Analysis_fastq_fetch_utils_test1
+  from .utils.analysis_fastq_fetch_utils_test import Analysis_fastq_fetch_utils_test2
   from .process.reformat_metadata_file_test import Reformat_metadata_file_testA
   from .process.reformat_samplesheet_file_test import Reformat_samplesheet_file_testA
   from .utils.singularity_run_wrapper_test import Singularity_run_test1
@@ -124,7 +125,7 @@ def full_suite():
       unittest.TestLoader().loadTestsFromTestCase(Project_analysis_test2),
       unittest.TestLoader().loadTestsFromTestCase(Project_pooling_info_test1),
       unittest.TestLoader().loadTestsFromTestCase(Analysis_fastq_fetch_utils_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Analysis_fastq_fetch_utils_test1),
+      unittest.TestLoader().loadTestsFromTestCase(Analysis_fastq_fetch_utils_test2),
       unittest.TestLoader().loadTestsFromTestCase(Reformat_metadata_file_testA),
       unittest.TestLoader().loadTestsFromTestCase(Reformat_samplesheet_file_testA),
       unittest.TestLoader().loadTestsFromTestCase(Singularity_run_test1),
