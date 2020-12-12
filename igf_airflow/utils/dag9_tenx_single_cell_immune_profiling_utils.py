@@ -48,6 +48,8 @@ def fetch_analysis_info_and_branch_func(**context):
       raise ValueError(
               'Expecting samples: {0}, received samples: {1}'.\
                 format(sample_id_list,df_sample_ids))
+    formatted_analysis_description = \
+      _fetch_formatted_analysis_description(analysis_description,fastq_list)
     """
     gene_expression : {
     sample_id: IGF_ID,
@@ -71,59 +73,69 @@ def fetch_analysis_info_and_branch_func(**context):
   
   return analysis_list
 
+def _fetch_formatted_analysis_description(analysis_description,fastq_run_list):
+  try:
+    formatted_analysis_description = list()
+    return formatted_analysis_description
+  except Exception as e:
+    raise ValueError(e)
+
 def _validate_analysis_description(analysis_description,feature_types):
-  messages = list()
-  analysis_list = list()
-  sample_id_list = list()
-  sample_column = 'sample_igf_id'
-  feature_column = 'feature_type'
-  reference_column = 'reference'
-  if not isinstance(analysis_description,list):
-    raise ValueError(
-            'Expecting a list of analysis_description, got {0}'.\
-              format(type(analysis_description)))
-  if not isinstance(feature_types,list):
-    raise ValueError(
-            'Expecting a list for feature_types, got {0}'.\
-              format(type(feature_types)))
-  df = pd.DataFrame(analysis_description)
-  for c in (sample_column,feature_column):
-    if c not in df.columns:
-      messages.\
-        append('missing {0} in analysis_data'.format(c))
-  analysis_list = \
-    list(
-      df[feature_column].\
-        dropna().\
-        drop_duplicates().\
-        values)
-  analysis_list = \
-    set(
-      [f.replace(' ','_').lower()
-        for f in analysis_list])
-  sample_id_list = \
-    list(
-      df[sample_column].\
-        dropna().\
-        drop_duplicates().\
-        values)
-  for f,f_data in df.groupby(feature_column):
-    f = f.replace(' ','_').lower()
-    f_samples = list(f_data[sample_column].values)
-    if f not in feature_types:
-      messages.\
-        append('feature_type {0} in not defined: {1}'.\
-                 format(f,f_samples))
-    if len(f_samples) > 1:
-      messages.\
-        append('feature {0} has {1} samples: {2}'.\
-                 format(f,len(f_samples),','.join(f_samples)))
-  if reference_column in df.columns:
-    ref_msg = \
-      ['reference {0} does not exists'.format(r)
-        for r in list(df['reference'].dropna().values)
-          if not os.path.exists(r)]
-    if len(ref_msg) > 0:
-      messages.\
-        extend(ref_msg)
-  return sample_id_list, analysis_list, messages
+  try:
+    messages = list()
+    analysis_list = list()
+    sample_id_list = list()
+    sample_column = 'sample_igf_id'
+    feature_column = 'feature_type'
+    reference_column = 'reference'
+    if not isinstance(analysis_description,list):
+      raise ValueError(
+              'Expecting a list of analysis_description, got {0}'.\
+                format(type(analysis_description)))
+    if not isinstance(feature_types,list):
+      raise ValueError(
+              'Expecting a list for feature_types, got {0}'.\
+                format(type(feature_types)))
+    df = pd.DataFrame(analysis_description)
+    for c in (sample_column,feature_column):
+      if c not in df.columns:
+        messages.\
+          append('missing {0} in analysis_data'.format(c))
+    analysis_list = \
+      list(
+        df[feature_column].\
+          dropna().\
+          drop_duplicates().\
+          values)
+    analysis_list = \
+      set(
+        [f.replace(' ','_').lower()
+          for f in analysis_list])
+    sample_id_list = \
+      list(
+        df[sample_column].\
+          dropna().\
+          drop_duplicates().\
+          values)
+    for f,f_data in df.groupby(feature_column):
+      f = f.replace(' ','_').lower()
+      f_samples = list(f_data[sample_column].values)
+      if f not in feature_types:
+        messages.\
+          append('feature_type {0} in not defined: {1}'.\
+                   format(f,f_samples))
+      if len(f_samples) > 1:
+        messages.\
+          append('feature {0} has {1} samples: {2}'.\
+                   format(f,len(f_samples),','.join(f_samples)))
+    if reference_column in df.columns:
+      ref_msg = \
+        ['reference {0} does not exists'.format(r)
+          for r in list(df['reference'].dropna().values)
+            if not os.path.exists(r)]
+      if len(ref_msg) > 0:
+        messages.\
+          extend(ref_msg)
+    return sample_id_list, analysis_list, messages
+  except Exception as e:
+    raise ValueError(e)
