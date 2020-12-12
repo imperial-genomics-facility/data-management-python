@@ -27,6 +27,8 @@ def fetch_analysis_info_and_branch_func(**context):
         dag_run.conf.get('analysis_description')
       analysis_id = \
         dag_run.conf.get('analysis_id')
+      analysis_type = \
+        dag_run.conf.get('analysis_type')
       feature_types = \
         Variable.get('tenx_single_cell_immune_profiling_feature_types')
       # check the analysis description and sample validity
@@ -46,19 +48,33 @@ def fetch_analysis_info_and_branch_func(**context):
           sample_igf_id_list=sample_id_list,
           active_status='ACTIVE',
           combine_fastq_dir=False)
-      formatted_analysis_description = \
+      analysis_info = \
         _fetch_formatted_analysis_description(analysis_description,fastq_list)
       if len(messages) > 0:
         raise ValueError('Analysis description formatting failed: {0}'.\
                 format(messages))
       # mark analysis_id as running,if its not already running
       # TO DO
-      # xcom push formatted_analysis_description
-      # TO DO
-    
+      status = _check_and_mark_analysis_seed_running(
+        analysis_id=analysis_id,
+        anslysis_type=analysis_type,
+        database_config_file=database_config_file)
+      # xcom push analysis_info and analysis_description
+      if status:
+        ti.xcom_push(key='analysis_description',value=analysis_description)
+        ti.xcom_push(key='analysis_info',value=analysis_info)
+      else:
+        analysis_list = [no_analysis]
     return analysis_list
   except Exception as e:
     logging.error(e)
+    raise ValueError(e)
+
+
+def _check_and_mark_analysis_seed_running(analysis_id,anslysis_type,database_config_file):
+  try:
+    
+  except Exception as e:
     raise ValueError(e)
 
 def _fetch_formatted_analysis_description(
