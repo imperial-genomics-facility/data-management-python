@@ -128,6 +128,7 @@ class User(Base):
                 "ht_password = '{self.ht_password}'," \
                 "encryption_salt = '{self.encryption_salt}')".format(self=self)
 
+
 class ProjectUser(Base):
   '''
   A table for linking users to the projects
@@ -299,6 +300,7 @@ class Platform(Base):
                     "software_name = '{self.software_name}'," \
                     "software_version = '{self.software_version}'," \
                     "date_created = '{self.date_created}')".format(self=self)
+
 
 class Flowcell_barcode_rule(Base):
   '''
@@ -682,25 +684,17 @@ class Analysis(Base):
   
   :param analysis_id: An integer id for analysis table
   :param project_id: A required integer id from project table (foreign key)
-  :param analysis_type: An optional enum list to specify analysis type, default is UNKNOWN,
-                         allowed values are 
-                         
-                         * RNA_DIFFERENTIAL_EXPRESSION
-                         * RNA_TIME_SERIES
-                         * CHIP_PEAK_CALL
-                         * SOMATIC_VARIANT_CALLING
-                         * UNKNOWN
-
+  :param analysis_type: An optional string field of 120chrs to specify analysis type
   :param analysis_description: An optional json description for analysis
   '''
   __tablename__ = 'analysis'
   __table_args__ = (
-    UniqueConstraint('project_id', 'analysis_type'),
+    UniqueConstraint('project_id', 'analysis_description'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
   analysis_id          = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   project_id           = Column(INTEGER(unsigned=True), ForeignKey('project.project_id', onupdate="CASCADE", ondelete="SET NULL"))
-  analysis_type        = Column(Enum('RNA_DIFFERENTIAL_EXPRESSION','RNA_TIME_SERIES','CHIP_PEAK_CALL','SOMATIC_VARIANT_CALLING','UNKNOWN'), nullable=False, server_default='UNKNOWN')
+  analysis_type        = Column(String(120), nullable=False)
   analysis_description = Column(JSONType)
 
   def __repr__(self):
@@ -729,7 +723,7 @@ class Collection(Base):
   collection_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   name          = Column(String(70), nullable=False)
   type          = Column(String(50), nullable=False)
-  table         = Column(Enum('sample', 'experiment', 'run', 'file', 'project', 'seqrun','unknown'), nullable=False, server_default='unknown')
+  table         = Column(Enum('sample', 'experiment', 'run', 'file', 'project', 'seqrun', 'analysis', 'unknown'), nullable=False, server_default='unknown')
   date_stamp    = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
   collection_group      = relationship('Collection_group', backref='collection')
   collection_attribute  = relationship('Collection_attribute', backref='collection')
@@ -833,6 +827,7 @@ class Pipeline(Base):
                          
                          * EHIVE
                          * UNKNOWN
+                         * AIRFLOW
 
   :param is_active: An optional enum list to specify the status of pipeline, default Y,
                      allowed values are Y and N
@@ -844,11 +839,11 @@ class Pipeline(Base):
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
   pipeline_id        = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
-  pipeline_name      = Column(String(50), nullable=False)
+  pipeline_name      = Column(String(120), nullable=False)
   pipeline_db        = Column(String(200), nullable=False)
   pipeline_init_conf = Column(JSONType)
   pipeline_run_conf  = Column(JSONType)
-  pipeline_type      = Column(Enum('EHIVE','UNKNOWN'), nullable=False, server_default='EHIVE')
+  pipeline_type      = Column(Enum('EHIVE','AIRFLOW','UNKNOWN'), nullable=False, server_default='EHIVE')
   is_active          = Column(Enum('Y', 'N'), nullable=False, server_default='Y')
   date_stamp         = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
   pipeline_seed      = relationship('Pipeline_seed', backref='pipeline')
@@ -891,7 +886,7 @@ class Pipeline_seed(Base):
 
   pipeline_seed_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   seed_id          = Column(INTEGER(unsigned=True), nullable=False)
-  seed_table       = Column(Enum('project','sample','experiment','run','file','seqrun','collection','unknown'), nullable=False, server_default='unknown')
+  seed_table       = Column(Enum('project','sample','experiment','run','file','seqrun','analysis','collection','unknown'), nullable=False, server_default='unknown')
   pipeline_id      = Column(INTEGER(unsigned=True), ForeignKey('pipeline.pipeline_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
   status           = Column(Enum('SEEDED', 'RUNNING', 'FINISHED', 'FAILED', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   date_stamp       = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
