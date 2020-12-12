@@ -96,6 +96,7 @@ class PipelineAdaptor(BaseAdaptor):
 
       * seqrun - Entries from seqrun and platform tables
       * experiment - Entries from Project, Sample and Experiment tables
+
     '''
     try:
       if not isinstance(data, pd.Series):
@@ -232,6 +233,7 @@ class PipelineAdaptor(BaseAdaptor):
       raise ValueError(
               'Failed to fetch pipeline data, error: {0}'.format(e))
 
+
   def create_pipeline_seed(
         self,data,autosave=True,status_column='status',seeded_label='SEEDED',
         required_columns=('pipeline_id',
@@ -305,7 +307,7 @@ class PipelineAdaptor(BaseAdaptor):
     '''
     A method for updating the seed status in pipeline_seed table
 
-    :param data: dataframe or a hash, should contain following fields
+    :param data: dataframe or a dictionary, should contain following fields
 
       * pipeline_name / pipeline_id
       * seed_id
@@ -345,6 +347,61 @@ class PipelineAdaptor(BaseAdaptor):
         self.rollback_session()
       raise ValueError(
               'Failed to update records, error: {0}'.format(e))
+
+
+  def create_or_update_pipeline_seed(
+        self,seed_id,pipeline_name,new_status,seed_table,
+        no_change_status=None,autosave=True):
+    try:
+      change_status = False
+      query = \
+        self.session.\
+          query(Pipeline.pipeline_id).\
+          filter(Pipeline.pipeline_name==pipeline_name)
+      pipeline_id = \
+        self.fetch_records(
+          query=query,
+          output_mode='one_or_none')
+      if pipeline_id is None:
+        raise ValueError(
+                'No pipeline entry found for {0}'.\
+                  format(pipeline_name))
+      query = \
+        self.session.\
+          query(Pipeline_seed).\
+          filter(Pipeline_seed.seed_id==seed_id).\
+          filter(Pipeline_seed.seed_table==seed_table).\
+          filter(Pipeline_seed.pipeline_id==pipeline_id)
+      pipeseed_entry = \
+        self.fetch_records(
+          query=query,
+          output_mode='one_or_none')
+      if pipeseed_entry is None:
+        pipeseed_data = [{
+            'seed_id':seed_id,
+            'seed_table':seed_table,
+            'pipeline_name':pipeline_name,
+            'status':new_status}]
+        self.create_pipeline_seed(
+          data=pipeseed_data,
+          autosave=autosave)
+        change_status = True
+      else:
+        if no_change_status is not None and \
+           pipeseed_entry.status != no_change_status:
+          pipeseed_data = [{
+            'seed_id':seed_id,
+            'seed_table':seed_table,
+            'pipeline_id':pipeline_id,
+            'status':new_status}]
+          self.update_pipeline_seed(
+            data=pipeseed_data,
+            autosave=autosave)
+          change_status = True
+      return change_status
+    except Exception as e:
+      raise ValueError(
+              'Failed to change seed for analysis {0}, pipeline {1}, error: {2}')
 
 
   def seed_new_seqruns(self,pipeline_name,autosave=True,seed_table='seqrun'):
