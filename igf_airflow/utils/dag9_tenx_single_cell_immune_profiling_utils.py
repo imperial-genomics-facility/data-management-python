@@ -46,14 +46,7 @@ def fetch_analysis_info_and_branch_func(**context):
           sample_igf_id_list=sample_id_list,
           active_status='ACTIVE',
           combine_fastq_dir=False)
-      #df = pd.DataFrame(fastq_list)
-      #df_sample_ids = \
-      #  list(df['sample_igf_id'].drop_duplicates().values)
-      #if len(sample_id_list) != len(df_sample_ids):
-      #  raise ValueError(
-      #          'Expecting samples: {0}, received samples: {1}'.\
-      #            format(sample_id_list,df_sample_ids))
-      formatted_analysis_description,messages = \
+      formatted_analysis_description = \
         _fetch_formatted_analysis_description(analysis_description,fastq_list)
       if len(messages) > 0:
         raise ValueError('Analysis description formatting failed: {0}'.\
@@ -73,7 +66,6 @@ def _fetch_formatted_analysis_description(
       sample_column='sample_igf_id',run_column='run_igf_id',file_column='file_path'):
   try:
     formatted_analysis_description = dict()
-    messages = list()
     analysis_description_df = pd.DataFrame(analysis_description)
     fastq_run_list_df = pd.DataFrame(fastq_run_list)
     fastq_run_list_df['fastq_dir'] = \
@@ -89,9 +81,9 @@ def _fetch_formatted_analysis_description(
       sample_records = \
         fastq_run_list_df[fastq_run_list_df[sample_column]==sample_igf_id]
       if len(sample_records.index)==0:
-        messages.\
-          append('No records found for sample: {0}, feature: {1}'.\
-                   format(sample_igf_id,feature))
+        raise ValueError(
+                'No records found for sample: {0}, feature: {1}'.\
+                  format(sample_igf_id,feature))
       total_runs_for_sample = \
         len(list(
           sample_records[run_column].\
@@ -139,7 +131,7 @@ def _fetch_formatted_analysis_description(
             'run_count':total_runs_for_sample,
             'runs':formatted_run_records
           }})
-    return formatted_analysis_description,messages
+    return formatted_analysis_description
   except Exception as e:
     raise ValueError(e)
 
