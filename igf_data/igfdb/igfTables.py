@@ -677,7 +677,8 @@ class Run(Base):
                "status = '{self.status}'," \
                "lane_number = '{self.lane_number}'," \
                "date_created = '{self.date_created}')".format(self=self)
-  
+
+
 class Analysis(Base):
   '''
   A table for loading analysis design information
@@ -828,6 +829,7 @@ class Pipeline(Base):
                          * EHIVE
                          * UNKNOWN
                          * AIRFLOW
+                         * NEXTFLOW
 
   :param is_active: An optional enum list to specify the status of pipeline, default Y,
                      allowed values are Y and N
@@ -843,7 +845,7 @@ class Pipeline(Base):
   pipeline_db        = Column(String(200), nullable=False)
   pipeline_init_conf = Column(JSONType)
   pipeline_run_conf  = Column(JSONType)
-  pipeline_type      = Column(Enum('EHIVE','AIRFLOW','UNKNOWN'), nullable=False, server_default='EHIVE')
+  pipeline_type      = Column(Enum('EHIVE','AIRFLOW','NEXTFLOW','UNKNOWN'), nullable=False, server_default='EHIVE')
   is_active          = Column(Enum('Y', 'N'), nullable=False, server_default='Y')
   date_stamp         = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
   pipeline_seed      = relationship('Pipeline_seed', backref='pipeline')
