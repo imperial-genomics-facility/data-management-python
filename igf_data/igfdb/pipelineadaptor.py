@@ -401,7 +401,8 @@ class PipelineAdaptor(BaseAdaptor):
       return change_status
     except Exception as e:
       raise ValueError(
-              'Failed to change seed for analysis {0}, pipeline {1}, error: {2}')
+              'Failed to change seed for id {0}, pipeline {1}, error: {2}'.\
+                format(seed_id,pipeline_name,e))
 
 
   def seed_new_seqruns(self,pipeline_name,autosave=True,seed_table='seqrun'):
