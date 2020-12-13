@@ -690,19 +690,22 @@ class Analysis(Base):
   '''
   __tablename__ = 'analysis'
   __table_args__ = (
-    UniqueConstraint('project_id', 'analysis_description'),
+    UniqueConstraint('project_id', 'analysis_name'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  analysis_id          = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
-  project_id           = Column(INTEGER(unsigned=True), ForeignKey('project.project_id', onupdate="CASCADE", ondelete="SET NULL"))
-  analysis_type        = Column(String(120), nullable=False)
-  analysis_description = Column(TEXT())
+  analysis_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  project_id = Column(INTEGER(unsigned=True), ForeignKey('project.project_id', onupdate="CASCADE", ondelete="SET NULL"))
+  analysis_name = Column(String(120), nullable=False)
+  analysis_type = Column(String(120), nullable=False)
+  analysis_description = Column(JSONType)
 
   def __repr__(self):
-    return "Analysis(analysis_id = '{self.analysis_id}'," \
-                    "project_id = '{self.project_id}'," \
-                    "analysis_type = '{self.analysis_type}'," \
-                    "analysis_description = '{self.analysis_description}')".format(self=self)
+    return \
+      "Analysis(analysis_id = '{self.analysis_id}'," \
+      "project_id = '{self.project_id}'," \
+      "analysis_name = '{self.analysis_name}'," \
+      "analysis_type = '{self.analysis_type}'," \
+      "analysis_description = '{self.analysis_description}')".format(self=self)
 
 
 class Collection(Base):

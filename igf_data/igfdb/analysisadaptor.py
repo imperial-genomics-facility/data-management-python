@@ -15,6 +15,7 @@ class AnalysisAdaptor(BaseAdaptor):
     :param data: A dictionary or a dataframe. It sould have following columns
 
                   * project_igf_id / project_id
+                  * analysis_name: A string
                   * analysis_type: A string
                   * analysis_description: A json encoded string
 
@@ -69,6 +70,7 @@ class AnalysisAdaptor(BaseAdaptor):
       query = \
         session.\
           query(Project.project_igf_id,
+                Analysis.analysis_name,
                 Analysis.analysis_type,
                 Analysis.analysis_description).\
           join(Analysis,Project.project_id==Analysis.project_id).\
