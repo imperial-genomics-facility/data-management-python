@@ -696,7 +696,7 @@ class Analysis(Base):
   analysis_id          = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   project_id           = Column(INTEGER(unsigned=True), ForeignKey('project.project_id', onupdate="CASCADE", ondelete="SET NULL"))
   analysis_type        = Column(String(120), nullable=False)
-  analysis_description = Column(JSONType)
+  analysis_description = Column(TEXT())
 
   def __repr__(self):
     return "Analysis(analysis_id = '{self.analysis_id}'," \
