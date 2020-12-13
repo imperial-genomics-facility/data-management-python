@@ -11,6 +11,20 @@ from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 
 ## FUNCTION
+def configure_cellranger_run_func(**context):
+  try:
+    # xcop_pull analysis_description
+    # xcom_pull analysis_info
+    # fetch reference genomes, or
+    # accept overrides for reference genomes from analysis_description
+    # generate library.csv file for cellranger run
+    # push the csv path to xcom
+    pass
+  except Exception as e:
+    logging.error(e)
+    raise ValueError(e)
+
+
 def fetch_analysis_info_and_branch_func(**context):
   """
   Fetch dag_run.conf and analysis_description
@@ -19,7 +33,7 @@ def fetch_analysis_info_and_branch_func(**context):
     analysis_list = list()
     dag_run = context.get('dag_run')
     ti = context.get('ti')
-    no_analysis = context.get('no_analysis_task')
+    no_analysis = context['params'].get('no_analysis_task')
     database_config_file = Variable.get('database_config_file')
     analysis_list.append(no_analysis)
     if dag_run is not None and \
@@ -56,7 +70,6 @@ def fetch_analysis_info_and_branch_func(**context):
         raise ValueError('Analysis description formatting failed: {0}'.\
                 format(messages))
       # mark analysis_id as running,if its not already running
-      # TO DO
       status = _check_and_mark_analysis_seed_running(
         analysis_id=analysis_id,
         anslysis_type=analysis_type,
