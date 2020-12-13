@@ -382,10 +382,10 @@ class PipelineAdaptor(BaseAdaptor):
         pipeseed_data = [{
             'seed_id':seed_id,
             'seed_table':seed_table,
-            'pipeline_name':pipeline_name,
-            'status':new_status}]
+            'pipeline_name':pipeline_name}]
         self.create_pipeline_seed(
           data=pipeseed_data,
+          seeded_label=new_status,
           autosave=autosave)
         change_status = True
       else:

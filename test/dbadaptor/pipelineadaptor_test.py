@@ -421,11 +421,12 @@ class Pipelineadaptor_test4(unittest.TestCase):
       PipelineAdaptor(**{
         'session_class': self.session_class})
     pl.start_session()
-    pl.create_or_update_pipeline_seed(
-      seed_id=1,
-      pipeline_name='analysys_pipeline_1',
-      new_status='RUNNING',
-      seed_table='analysis')
+    status = \
+      pl.create_or_update_pipeline_seed(
+        seed_id=1,
+        pipeline_name='analysys_pipeline_1',
+        new_status='RUNNING',
+        seed_table='analysis')
     query = \
       pl.session.\
         query(Pipeline_seed).\
@@ -436,18 +437,40 @@ class Pipelineadaptor_test4(unittest.TestCase):
       pl.fetch_records(
         query=query,
         output_mode='one_or_none')
+    self.assertTrue(status)
     self.assertEqual(pipeseed_entry.status,'RUNNING')
-    pl.create_or_update_pipeline_seed(
-      seed_id=1,
-      pipeline_name='analysys_pipeline_1',
-      new_status='FAILED',
-      seed_table='analysis',
-      no_change_status='RUNNING')
+    status = \
+      pl.create_or_update_pipeline_seed(
+        seed_id=1,
+        pipeline_name='analysys_pipeline_1',
+        new_status='FAILED',
+        seed_table='analysis',
+        no_change_status='RUNNING')
     pipeseed_entry = \
       pl.fetch_records(
         query=query,
         output_mode='one_or_none')
     self.assertEqual(pipeseed_entry.status,'RUNNING')
+    self.assertFalse(status)
+    status = \
+      pl.create_or_update_pipeline_seed(
+        seed_id=2,
+        pipeline_name='analysys_pipeline_1',
+        new_status='RUNNING',
+        seed_table='analysis',
+        no_change_status='RUNNING')
+    query = \
+      pl.session.\
+        query(Pipeline_seed).\
+        filter(Pipeline_seed.seed_id==2).\
+        filter(Pipeline_seed.pipeline_id==1).\
+        filter(Pipeline_seed.seed_table=='analysis')
+    pipeseed_entry = \
+      pl.fetch_records(
+        query=query,
+        output_mode='one_or_none')
+    self.assertEqual(pipeseed_entry.status,'RUNNING')
+    self.assertTrue(status)
     pl.close_session()
     
 
