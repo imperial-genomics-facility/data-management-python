@@ -7,6 +7,8 @@ from igf_data.utils.fileutils import get_temp_dir,copy_remote_file,check_file_pa
 from igf_data.utils.singularity_run_wrapper import execute_singuarity_cmd
 from igf_data.utils.analysis_fastq_fetch_utils import get_fastq_and_run_for_samples
 from igf_data.utils.fileutils import get_temp_dir
+from igf_data.utils.dbutils import read_dbconf_json
+from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 
 ## FUNCTION
 def fetch_analysis_info_and_branch_func(**context):
@@ -71,9 +73,22 @@ def fetch_analysis_info_and_branch_func(**context):
     raise ValueError(e)
 
 
-def _check_and_mark_analysis_seed_running(analysis_id,anslysis_type,database_config_file):
+def _check_and_mark_analysis_seed_running(
+      analysis_id,anslysis_type,database_config_file,
+      running_status='RUNNING',analysis_table='analysis'):
   try:
-    pass
+    dbparam = \
+      read_dbconf_json(database_config_file)
+    pl = \
+      PipelineAdaptor(**dbparam)
+    status = \
+      pl.create_or_update_pipeline_seed(
+        seed_id=analysis_id,
+        pipeline_name=anslysis_type,
+        new_status=running_status,
+        seed_table=analysis_table,
+        no_change_status=running_status)
+    return status
   except Exception as e:
     raise ValueError(e)
 
