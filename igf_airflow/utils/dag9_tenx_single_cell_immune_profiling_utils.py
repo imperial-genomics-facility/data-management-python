@@ -73,7 +73,7 @@ def fetch_analysis_info_and_branch_func(**context):
 
 def _check_and_mark_analysis_seed_running(analysis_id,anslysis_type,database_config_file):
   try:
-    
+    pass
   except Exception as e:
     raise ValueError(e)
 

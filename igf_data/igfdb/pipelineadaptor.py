@@ -358,14 +358,16 @@ class PipelineAdaptor(BaseAdaptor):
         self.session.\
           query(Pipeline.pipeline_id).\
           filter(Pipeline.pipeline_name==pipeline_name)
-      pipeline_id = \
+      pipeline_entry = \
         self.fetch_records(
           query=query,
           output_mode='one_or_none')
-      if pipeline_id is None:
+      if pipeline_entry is None:
         raise ValueError(
                 'No pipeline entry found for {0}'.\
                   format(pipeline_name))
+      pipeline_id = \
+        pipeline_entry.pipeline_id
       query = \
         self.session.\
           query(Pipeline_seed).\
@@ -387,8 +389,7 @@ class PipelineAdaptor(BaseAdaptor):
           autosave=autosave)
         change_status = True
       else:
-        if no_change_status is not None and \
-           pipeseed_entry.status != no_change_status:
+        if pipeseed_entry.status != no_change_status:
           pipeseed_data = [{
             'seed_id':seed_id,
             'seed_table':seed_table,
