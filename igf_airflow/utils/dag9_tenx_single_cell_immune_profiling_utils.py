@@ -9,19 +9,71 @@ from igf_data.utils.analysis_fastq_fetch_utils import get_fastq_and_run_for_samp
 from igf_data.utils.fileutils import get_temp_dir
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
+from igf_data.utils.tools.reference_genome_utils import Reference_genome_utils
+from igf_data.igfdb.baseadaptor import BaseAdaptor
 
 ## FUNCTION
 def configure_cellranger_run_func(**context):
   try:
+    ti = context.get('ti')
     # xcop_pull analysis_description
     # xcom_pull analysis_info
+    xcom_pull_task_id = \
+      context['params'].get('xcom_pull_task_id')
+    analysis_description_xcom_key = \
+      context['params'].get('analysis_description_xcom_key')
+    analysis_info_xcom_key = \
+      context['params'].get('analysis_info_xcom_key')
+    library_csv_xcom_key = \
+      context['params'].get('library_csv_xcom_key')
+    database_config_file = Variable.get('database_config_file')
+    analysis_description = \
+      ti.xcom_pull(
+        task_id=xcom_pull_task_id,
+        key=analysis_description_xcom_key)
+    analysis_info = \
+      ti.xcom_pull(
+        task_id=xcom_pull_task_id,
+        key=analysis_info_xcom_key)
     # fetch reference genomes, or
     # accept overrides for reference genomes from analysis_description
+    analysis_description = \
+      _check_feature_type_and_fetch_reference_genome(
+        analysis_description,
+        database_config_file)
     # generate library.csv file for cellranger run
+    csv_path = \
+      _create_library_csv_for_cellranger_multi(
+        analysis_description,
+        analysis_info)
     # push the csv path to xcom
-    pass
+    ti.xcom_push(
+      key=library_csv_xcom_key,
+      value=csv_path)
   except Exception as e:
     logging.error(e)
+    raise ValueError(e)
+
+
+def _check_feature_type_and_fetch_reference_genome(
+      analysis_description,analysis_info,database_config_file,
+      reference_column='reference',feature_column='feature_type',genome_column='genome_build',
+      gene_expression_type='gene_expression',vdj_types=('vdj','vdj-t','vdj-b'),
+      cellranger_gex_reference_type='TRANSCRIPTOME_TENX',cellranger_vdj_reference_type='VDJ_TENX'):
+  try:
+    dbparams = read_dbconf_json(database_config_file)
+    base = BaseAdaptor(**dbparams)
+    for entry in analysis_description:
+      feature_type = entry.get(feature_column)
+      genome_tag = entry.get(genome_column)
+      if reference_column not in entry:
+        feature_type = \
+          feature_type.replace(' ','_').lower()
+        if feature_type == gene_expression_type:
+          ref_tool = \
+            Reference_genome_utils(dbsession_class=base.sesssion_class,genome_tag=genome_tag)
+
+  except Exception as e:
     raise ValueError(e)
 
 
@@ -34,6 +86,8 @@ def fetch_analysis_info_and_branch_func(**context):
     dag_run = context.get('dag_run')
     ti = context.get('ti')
     no_analysis = context['params'].get('no_analysis_task')
+    analysis_description_xcom_key = context['params'].get('analysis_description_xcom_key')
+    analysis_info_xcom_key = context['params'].get('analysis_info_xcom_key')
     database_config_file = Variable.get('database_config_file')
     analysis_list.append(no_analysis)
     if dag_run is not None and \
@@ -47,6 +101,13 @@ def fetch_analysis_info_and_branch_func(**context):
         dag_run.conf.get('analysis_type')
       feature_types = \
         Variable.get('tenx_single_cell_immune_profiling_feature_types')
+      # add reference genome paths if reference type and genome build is present
+      # check for genome build info
+      analysis_description = \
+        _add_reference_genome_path_for_analysis(
+          database_config_file=database_config_file,
+          analysis_description=analysis_description,
+          genome_required=True)
       # check the analysis description and sample validity
       # warn if multiple samples are allocated to same sub category
       # filter analysis branch list
@@ -76,14 +137,64 @@ def fetch_analysis_info_and_branch_func(**context):
         database_config_file=database_config_file)
       # xcom push analysis_info and analysis_description
       if status:
-        ti.xcom_push(key='analysis_description',value=analysis_description)
-        ti.xcom_push(key='analysis_info',value=analysis_info)
+        ti.xcom_push(key=analysis_description_xcom_key,value=analysis_description)
+        ti.xcom_push(key=analysis_info_xcom_key,value=analysis_info)
       else:
         analysis_list = [no_analysis]
     return analysis_list
   except Exception as e:
     logging.error(e)
     raise ValueError(e)
+
+
+def _add_reference_genome_path_for_analysis(
+      database_config_file,analysis_description,genome_column='genome_build',
+      genome_required=True,reference_column='reference',reference_type_column='reference_type'):
+  try:
+    dbparams = read_dbconf_json(database_config_file)
+    base = BaseAdaptor(**dbparams)
+    messages = list()
+    for entry in analysis_description:
+      reference = entry.get(reference_column)
+      genome_build = entry.get(genome_column)
+      reference_type = entry.get(reference_type_column)
+      if genome_build is None and \
+         genome_required:
+        raise ValueError(
+                'No genome build info present: {0}'.\
+                  format(entry))
+      if reference is None:
+        if genome_build is None or \
+           reference_type is None:
+           messages.\
+             append('No reference infor for entry {0}'.\
+                format(entry))
+        else:
+          ref_tool = \
+            Reference_genome_utils(
+              dbsession_class=base.get_session_class(),
+              genome_tag=genome_build)
+          reference = \
+            ref_tool.\
+              _fetch_collection_files(
+                collection_type=reference_type,
+                check_missing=False)
+          if reference is None:
+            messages.\
+              append('Failed to fetch ref from db for entry {0}'.\
+                format(entry))
+          entry.\
+            update({
+              reference_column:reference})
+    if len(messages) > 0:
+      raise ValueError(
+              'List of errors for reference lookup: {0}'.\
+                format(messages))
+    return analysis_description
+  except Exception as e:
+    raise ValueError(
+            'Failed to fetch reference genome, error: {0}'.\
+              format(e))
 
 
 def _check_and_mark_analysis_seed_running(
@@ -186,7 +297,6 @@ def _validate_analysis_description(
     messages = list()
     analysis_list = list()
     sample_id_list = list()
-    
     if not isinstance(analysis_description,list):
       raise ValueError(
               'Expecting a list of analysis_description, got {0}'.\

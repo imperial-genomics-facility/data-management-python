@@ -60,6 +60,7 @@ def full_suite():
   from .igf_airflow.calculate_seqrun_file_size_test import Calculate_seqrun_file_list_testA
   from .igf_airflow.ongoing_seqrun_processing_test import Compare_existing_seqrun_filesA
   from .igf_airflow.dag9_tenx_single_cell_immune_profiling_utils_test import Dag9_tenx_single_cell_immune_profiling_utilstestA
+  from .igf_airflow.dag9_tenx_single_cell_immune_profiling_utils_test import Dag9_tenx_single_cell_immune_profiling_utilstestB
 
   return unittest.TestSuite([
     unittest.TestLoader().loadTestsFromTestCase(t)
@@ -136,6 +137,7 @@ def full_suite():
         Nbconvert_execute_test2,
         Calculate_seqrun_file_list_testA,
         Compare_existing_seqrun_filesA,
-        Dag9_tenx_single_cell_immune_profiling_utilstestA
+        Dag9_tenx_single_cell_immune_profiling_utilstestA,
+        Dag9_tenx_single_cell_immune_profiling_utilstestB
       ]
     ])
