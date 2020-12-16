@@ -27,6 +27,8 @@ def configure_cellranger_run_func(**context):
     library_csv_xcom_key = \
       context['params'].get('library_csv_xcom_key')
     database_config_file = Variable.get('database_config_file')
+    work_dir = \
+      get_temp_dir(use_ephemeral_space=True)
     analysis_description = \
       ti.xcom_pull(
         task_id=xcom_pull_task_id,
@@ -35,17 +37,12 @@ def configure_cellranger_run_func(**context):
       ti.xcom_pull(
         task_id=xcom_pull_task_id,
         key=analysis_info_xcom_key)
-    # fetch reference genomes, or
-    # accept overrides for reference genomes from analysis_description
-    analysis_description = \
-      _check_feature_type_and_fetch_reference_genome(
-        analysis_description,
-        database_config_file)
     # generate library.csv file for cellranger run
     csv_path = \
       _create_library_csv_for_cellranger_multi(
-        analysis_description,
-        analysis_info)
+        analysis_description=analysis_description,
+        analysis_info=analysis_info,
+        work_dir=work_dir)
     # push the csv path to xcom
     ti.xcom_push(
       key=library_csv_xcom_key,
@@ -55,26 +52,106 @@ def configure_cellranger_run_func(**context):
     raise ValueError(e)
 
 
-def _check_feature_type_and_fetch_reference_genome(
-      analysis_description,analysis_info,database_config_file,
-      reference_column='reference',feature_column='feature_type',genome_column='genome_build',
-      gene_expression_type='gene_expression',vdj_types=('vdj','vdj-t','vdj-b'),
-      cellranger_gex_reference_type='TRANSCRIPTOME_TENX',cellranger_vdj_reference_type='VDJ_TENX'):
+def _get_data_for_csv_header_section(analysis_entry,column_list):
   try:
-    dbparams = read_dbconf_json(database_config_file)
-    base = BaseAdaptor(**dbparams)
-    for entry in analysis_description:
-      feature_type = entry.get(feature_column)
-      genome_tag = entry.get(genome_column)
-      if reference_column not in entry:
-        feature_type = \
-          feature_type.replace(' ','_').lower()
-        if feature_type == gene_expression_type:
-          ref_tool = \
-            Reference_genome_utils(dbsession_class=base.sesssion_class,genome_tag=genome_tag)
+    data = dict()
+    for col in column_list:
+      if col in analysis_entry and \
+         analysis_entry.get(col) is not None:
+        data.update({col:analysis_entry.get(col)})
+    return data
+  except:
+    raise
 
+def _create_library_csv_for_cellranger_multi(analysis_description,analysis_info,work_dir):
+  try:
+    header_section_columns = {
+      'gene-expression' : [
+        'reference',
+        'target-panel',
+        'no-target-umi-filter',
+        'r1-length',
+        'r2-length',
+        'chemistry',
+        'expect-cells',
+        'force-cells',
+        'include-introns'],
+      'feature':[
+        'reference',
+        'r1-length',
+        'r2-length'],
+      'vdj':[
+        'reference',
+        'inner-enrichment-primers',
+        'r1-length',
+        'r2-length']}
+    library_cols = [
+      'fastq_id',
+      'fastqs',
+      'lanes',
+      'feature_types',
+      'subsample_rate']
+    header_data = dict()
+    for analysis_entry in analysis_description:
+      feature_type = analysis_entry.get('feature_type')
+      feature_type = feature_type.replace(' ','_').lower()
+      header_section = None
+      if feature_type == 'gene_expression':
+        header_section = 'gene-expression'
+      elif feature_type in ('vdj','vdj-t','vdj-b'):
+        header_section = 'vdj'
+      elif feature_type in ("antibody_capture","antigen_capture","crisper_guide_capture"):
+        header_section = 'feature'
+      column_list = header_section_columns.get(header_section)
+      data = \
+        _get_data_for_csv_header_section(
+          analysis_entry,
+          column_list)
+      if header_section is None:
+        raise ValueError(
+                'Failed to get header section for {0}'.\
+                  format(analysis_entry))
+      header_data.\
+        update({header_section:data})
+    library_data = list()
+    for feature_name,feature_data in analysis_info.items():
+      fastq_id = feature_data.get('sample_name')
+      feature_name = feature_name.replace('_',' ')
+      runs = feature_data.get('runs')
+      for _,run_data in runs.items():
+        fastqs = run_data.get('output_path')
+        if fastq_id is None or \
+           feature_name is None or \
+           fastqs is None:
+          raise ValueError(
+                  'Misssing data: {0}, {1}'.\
+                    format(feature_name,feature_data))
+        library_data.\
+          append({
+            'fastq_id':fastq_id,
+            'fastqs':fastqs,
+            'lanes':'',
+            'feature_types':feature_name,
+            'subsample_rate':''
+          })
+    output_csv = os.path.join(work_dir,'library.csv')
+    with open(output_csv,'w') as fp:
+      for header_key,data in header_data.items():
+        fp.write('[{0}]\n'.format(header_key))
+        for data_key,data_value in data.items():
+          fp.write('{0},{1}\n'.format(data_key,data_value))
+      fp.write('[libraries]\n')
+      fp.write('{0}\n'.format(','.join(library_cols)))
+      for entry in library_data:
+        data_col = [
+          entry.get(col)
+            for col in library_cols]
+        fp.write('{0}\n'.format(','.join(data_col)))
+    return output_csv
   except Exception as e:
-    raise ValueError(e)
+    raise ValueError(
+            'Failed to create cellranger config file for run, error: {0}'.\
+              format(e))
 
 
 def fetch_analysis_info_and_branch_func(**context):

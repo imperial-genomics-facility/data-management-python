@@ -1,5 +1,6 @@
 import unittest,os
 import pandas as pd
+from collections import defaultdict
 from igf_data.utils.fileutils import get_temp_dir,remove_dir
 import sqlalchemy
 from sqlalchemy import create_engine
@@ -12,6 +13,7 @@ from igf_data.utils.tools.reference_genome_utils import Reference_genome_utils
 from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _validate_analysis_description
 from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _fetch_formatted_analysis_description
 from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _add_reference_genome_path_for_analysis
+from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _create_library_csv_for_cellranger_multi
 
 class Dag9_tenx_single_cell_immune_profiling_utilstestA(unittest.TestCase):
   def setUp(self):
@@ -23,7 +25,7 @@ class Dag9_tenx_single_cell_immune_profiling_utilstestA(unittest.TestCase):
       "vdj-b",
       "antibody_capture",
       "antigen_capture",
-      "crisper"]
+      "crisper_guide_capture"]
   def tearDown(self):
     remove_dir(self.workdir)
   def test_validate_analysis_description(self):
@@ -250,6 +252,80 @@ class Dag9_tenx_single_cell_immune_profiling_utilstestB(unittest.TestCase):
           database_config_file=self.dbconfig,
           analysis_description=analysis_description,
           genome_required=True)
-  
+
+class Dag9_tenx_single_cell_immune_profiling_utilstestC(unittest.TestCase):
+  def setUp(self):
+    self.work_dir = get_temp_dir()
+  def tearDown(self):
+    remove_dir(self.work_dir)
+  def test_create_library_csv_for_cellranger_multi(self):
+    analysis_info = {
+      'antibody_capture': {
+        'sample_igf_id': 'IGF003', 
+        'sample_name': 'IGF003-FB', 
+        'run_count': 1, 
+        'runs': {
+          '0': {
+            'run_igf_id': 'run3', 
+            'fastq_dir': '/path/IGF003/run3', 
+            'output_path': '/tmp/tempox6tw1kv/antibody_capture/IGF003/run3'}}}, 
+      'gene_expression': {
+        'sample_igf_id': 'IGF001', 
+        'sample_name': 'IGF001-GEX', 
+        'run_count': 1, 
+        'runs': {
+          '0': {
+            'run_igf_id': 'run1', 
+            'fastq_dir': '/path/IGF001/run1', 
+            'output_path': '/tmp/tempox6tw1kv/gene_expression/IGF001/run1'}}}, 
+      'vdj': {
+        'sample_igf_id': 'IGF002', 
+        'sample_name': 'IGF002-VDJ', 
+        'run_count': 1, 
+        'runs': {
+          '0': {
+            'run_igf_id': 'run2', 
+            'fastq_dir': '/path/IGF002/run2', 
+            'output_path': '/tmp/tempox6tw1kv/vdj/IGF002/run2'}}}}
+    analysis_description = [{
+      'sample_igf_id':'IGF001',
+      'feature_type':'gene expression',
+      'reference':'g.csv'
+    },{
+      'sample_igf_id':'IGF002',
+      'feature_type':'vdj',
+      'reference':'v.csv'
+    },{
+      'sample_igf_id':'IGF003',
+      'feature_type':'antibody capture',
+      'reference':'f.csv'
+    }]
+    csv_path = \
+      _create_library_csv_for_cellranger_multi(
+        analysis_description=analysis_description,
+        analysis_info=analysis_info,
+        work_dir=self.work_dir)
+    self.assertEqual(csv_path,os.path.join(self.work_dir,'library.csv'))
+    data = defaultdict(list)
+    header = ''
+    with open(csv_path, 'r') as f:
+      for i in f:
+        row = i.rstrip('\n')
+        if row.startswith('['):
+          header = row.split(',')[0].strip('[').strip(']')
+        else:
+          data[header].append(row)
+    gex_data = data.get('gene-expression')
+    self.assertEqual(gex_data[0],'reference,g.csv')
+    vdj_data = data.get('vdj')
+    self.assertEqual(vdj_data[0],'reference,v.csv')
+    feature_data = data.get('feature')
+    self.assertEqual(feature_data[0],'reference,f.csv')
+    lib_data = data.get('libraries')
+    self.assertEqual(lib_data[0].split(',')[0],'fastq_id')
+    self.assertEqual(lib_data[0].split(',')[1],'fastqs')
+    self.assertEqual(lib_data[1].split(',')[0],'IGF003-FB')
+    self.assertEqual(lib_data[1].split(',')[1],'/tmp/tempox6tw1kv/antibody_capture/IGF003/run3')
+
 if __name__=='__main__':
   unittest.main()
