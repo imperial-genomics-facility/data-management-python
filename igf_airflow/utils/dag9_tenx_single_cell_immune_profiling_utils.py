@@ -1,9 +1,10 @@
-import os,logging,subprocess,re
+import os,logging,subprocess,re,fnmatch
 import pandas as pd
 from airflow.models import Variable
 from igf_airflow.logging.upload_log_msg import log_success,log_failure,log_sleep
 from igf_airflow.logging.upload_log_msg import post_image_to_channels
-from igf_data.utils.fileutils import get_temp_dir,copy_remote_file,check_file_path,read_json_data
+from igf_data.utils.fileutils import get_temp_dir,copy_remote_file,check_file_path
+from igf_data.utils.fileutils import read_json_data,copy_local_file
 from igf_data.utils.singularity_run_wrapper import execute_singuarity_cmd
 from igf_data.utils.analysis_fastq_fetch_utils import get_fastq_and_run_for_samples
 from igf_data.utils.fileutils import get_temp_dir
@@ -11,8 +12,103 @@ from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.utils.tools.reference_genome_utils import Reference_genome_utils
 from igf_data.igfdb.baseadaptor import BaseAdaptor
+from igf_data.utils.tools.cutadapt_utils import run_cutadapt
 
 ## FUNCTION
+def run_sc_read_trimmming_func(**context):
+  try:
+    ti = context.get('ti')
+    xcom_pull_task_id = \
+      context['params'].get('xcom_pull_task_id')
+    analysis_info_xcom_key = \
+      context['params'].get('analysis_info_xcom_key')
+    analysis_name = \
+      context['params'].get('analysis_name')
+    run_id = \
+      context['params'].get('run_id')
+    r1_length = \
+      context['params'].get('r1_length')
+    r2_length = \
+      context['params'].get('r2_length')
+    fastq_input_dir_tag = \
+      context['params'].get('fastq_input_dir_tag')
+    fastq_output_dir_tag = \
+      context['params'].get('fastq_output_dir_tag')
+    analysis_info = \
+      ti.xcom_pull(
+        task_id=xcom_pull_task_id,
+        key=analysis_info_xcom_key)
+    _get_fastq_and_run_cutadapt_trim(
+      analysis_info= analysis_info,
+      analysis_name=analysis_name,
+      run_id=run_id,
+      r1_length=r1_length,
+      r2_length=r2_length,
+      fastq_input_dir_tag=fastq_input_dir_tag,
+      fastq_output_dir_tag=fastq_output_dir_tag)
+  except Exception as e:
+    logging.error(e)
+    raise ValueError(e)
+
+
+def _get_fastq_and_run_cutadapt_trim(
+      analysis_info,analysis_name,run_id,r1_length,
+      r2_length,fastq_input_dir_tag,fastq_output_dir_tag,
+      singularity_image,cutadapt_exe='cutadapt'):
+  try:
+    sample_info = \
+      analysis_info.get(analysis_name)
+    input_fastq_dir = sample_info.get(fastq_input_dir_tag)
+    output_fastq_dir = sample_info.get(fastq_output_dir_tag)
+    r1_file_name_pattern = \
+      re.compile(r'(\S+)_S\d+_L00\d_R1_001\.fastq\.gz')
+    r2_file_name_pattern = \
+      re.compile(r'(\S+)_S\d+_L00\d_R2_001\.fastq\.gz')
+    index_file_name_pattern = \
+      re.compile(r'(\S+)_S\d+_L00\d_I(\d)_001\.fastq\.gz')
+    for fastq in os.listdir(input_fastq_dir):
+      if fnmatch.fnmatch(fastq,'*.fastq.gz'):
+        input_fastq_file = \
+          os.path.join(input_fastq_dir,fastq)
+        output_fastq_file = \
+          os.path.join(output_fastq_dir,fastq)
+        if re.match(r1_file_name_pattern,fastq):
+          # trim R1
+          if r1_length > 0:
+            run_cutadapt(
+              read1_fastq_in=input_fastq_file,
+              read1_fastq_out=output_fastq_file,
+              cutadapt_options=['--cores=1','-l {0}'.format(r1_length)],
+              cutadapt_exe=cutadapt_exe,
+              singularity_image_path=singularity_image)
+          else:
+            copy_local_file(
+              input_fastq_file,
+              output_fastq_file)
+        if re.match(r2_file_name_pattern,fastq):
+          # trim R2
+          if r2_length > 0:
+            run_cutadapt(
+              read1_fastq_in=input_fastq_file,
+              read1_fastq_out=output_fastq_file,
+              cutadapt_options=['--cores=1','-l {0}'.format(r2_length)],
+              cutadapt_exe=cutadapt_exe,
+              singularity_image_path=singularity_image)
+          else:
+            copy_local_file(
+              input_fastq_file,
+              output_fastq_file)
+        if re.match(index_file_name_pattern,fastq):
+          # copy I1 or I2
+          copy_local_file(
+            input_fastq_file,
+            output_fastq_file)
+  except Exception as e:
+    raise ValueError(
+            'Failed to trim or copy reads, error: {0}'.\
+              format(e))
+
+
 def configure_cellranger_run_func(**context):
   try:
     ti = context.get('ti')
@@ -26,7 +122,6 @@ def configure_cellranger_run_func(**context):
       context['params'].get('analysis_info_xcom_key')
     library_csv_xcom_key = \
       context['params'].get('library_csv_xcom_key')
-    database_config_file = Variable.get('database_config_file')
     work_dir = \
       get_temp_dir(use_ephemeral_space=True)
     analysis_description = \
