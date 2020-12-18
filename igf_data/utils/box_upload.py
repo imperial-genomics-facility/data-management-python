@@ -29,7 +29,7 @@ def upload_file_or_dir_to_box(
         for file in files:
           source_path = os.path.join(root,file)
           file_size = os.stat(source_path).st_size
-          rel_path = os.path.relpath(file_path,source_path)
+          rel_path = os.path.relpath(source_path,file_path)
           target_path = \
             os.path.join(target_dir,rel_path)
           if file_size <= box_size_limit:
