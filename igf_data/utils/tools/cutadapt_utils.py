@@ -12,8 +12,12 @@ def run_cutadapt(
     if singularity_image_path is not None:
       check_file_path(singularity_image_path)
     cmd = [cutadapt_exe]
-    cmd.\
-      extend(cutadapt_options)
+    if isinstance(cutadapt_options,tuple):
+      cutadapt_options = list(cutadapt_options)
+    if cutadapt_options is not None and \
+       len(cutadapt_options) > 0:
+      cmd.\
+        extend(cutadapt_options)
     if read2_fastq_in is not None:
       if read2_fastq_out is None:
         raise ValueError(
@@ -53,6 +57,7 @@ def run_cutadapt(
         bind_dir_list=bind_dir_list)
     else:
       subprocess.check_call(cmd,shell=True)
+    return cmd
   except Exception as e:
     raise ValueError(
             'Failed to run cutadapt, error: {0}'.\

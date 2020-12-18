@@ -1,5 +1,6 @@
 import os,logging,subprocess,re,fnmatch
 import pandas as pd
+from copy import copy
 from airflow.models import Variable
 from igf_airflow.logging.upload_log_msg import log_success,log_failure,log_sleep
 from igf_airflow.logging.upload_log_msg import post_image_to_channels
@@ -34,6 +35,8 @@ def run_sc_read_trimmming_func(**context):
       context['params'].get('fastq_input_dir_tag')
     fastq_output_dir_tag = \
       context['params'].get('fastq_output_dir_tag')
+    singularity_image = \
+      Variable.get('cutadapt_singularity_image')
     analysis_info = \
       ti.xcom_pull(
         task_id=xcom_pull_task_id,
@@ -45,7 +48,8 @@ def run_sc_read_trimmming_func(**context):
       r1_length=r1_length,
       r2_length=r2_length,
       fastq_input_dir_tag=fastq_input_dir_tag,
-      fastq_output_dir_tag=fastq_output_dir_tag)
+      fastq_output_dir_tag=fastq_output_dir_tag,
+      singularity_image=singularity_image)
   except Exception as e:
     logging.error(e)
     raise ValueError(e)
@@ -54,12 +58,40 @@ def run_sc_read_trimmming_func(**context):
 def _get_fastq_and_run_cutadapt_trim(
       analysis_info,analysis_name,run_id,r1_length,
       r2_length,fastq_input_dir_tag,fastq_output_dir_tag,
-      singularity_image,cutadapt_exe='cutadapt'):
+      singularity_image,cutadapt_exe='cutadapt',dry_run=False,
+      cutadapt_options=('--cores=1',)):
+  """
+  An internal method for trimming or copying fastq files for Cellranger run
+
+  :param analysis_info: Analysis info dictionary object
+  :param analysis_name: Analysis name to fetch data from analysis info
+  :param run_id: Run id to fetch fastq paths from analysis info
+  :param r1_length: Trimmed length for R1 fastq
+  :param r2_length: Trimmed length for R2 fastq
+  :param fastq_input_dir_tag: Fastq input dir tag for analysis info lookup
+  :param fastq_output_dir_tag: Fastq output dir tag for analysis info lookup
+  :param singularity_image: Singularity image path for cutadapt tool
+  :param cutadapt_exe: Cutadapt exe path, default cutadapt
+  :param dry_run: A toggle for dry run, default False
+  :param cutadapt_options: Cutadapt run options, default ('--cores=1',)
+  :returns: None
+  """
   try:
     sample_info = \
       analysis_info.get(analysis_name)
-    input_fastq_dir = sample_info.get(fastq_input_dir_tag)
-    output_fastq_dir = sample_info.get(fastq_output_dir_tag)
+    if sample_info is None:
+      raise ValueError(
+              'No feature {0} found in analysis_info'.\
+                format(analysis_info))
+    run = sample_info.get('runs').get(str(run_id))
+    if run is None:
+      raise ValueError(
+              'No run {0} found for feature {1} in analysis_info'.\
+                format(run,analysis_name))
+    if isinstance(cutadapt_options,tuple):
+      cutadapt_options = list(cutadapt_options)
+    input_fastq_dir = run.get(fastq_input_dir_tag)
+    output_fastq_dir = run.get(fastq_output_dir_tag)
     r1_file_name_pattern = \
       re.compile(r'(\S+)_S\d+_L00\d_R1_001\.fastq\.gz')
     r2_file_name_pattern = \
@@ -75,12 +107,19 @@ def _get_fastq_and_run_cutadapt_trim(
         if re.match(r1_file_name_pattern,fastq):
           # trim R1
           if r1_length > 0:
-            run_cutadapt(
-              read1_fastq_in=input_fastq_file,
-              read1_fastq_out=output_fastq_file,
-              cutadapt_options=['--cores=1','-l {0}'.format(r1_length)],
-              cutadapt_exe=cutadapt_exe,
-              singularity_image_path=singularity_image)
+            cutadapt_options_r1 = None
+            if len(cutadapt_options) >0 :
+              cutadapt_options_r1 = copy(cutadapt_options)
+              cutadapt_options_r1.\
+                append('-l {0}'.format(r1_length))
+            c = \
+              run_cutadapt(
+                read1_fastq_in=input_fastq_file,
+                read1_fastq_out=output_fastq_file,
+                cutadapt_options=cutadapt_options_r1,
+                cutadapt_exe=cutadapt_exe,
+                dry_run=dry_run,
+                singularity_image_path=singularity_image)
           else:
             copy_local_file(
               input_fastq_file,
@@ -88,12 +127,19 @@ def _get_fastq_and_run_cutadapt_trim(
         if re.match(r2_file_name_pattern,fastq):
           # trim R2
           if r2_length > 0:
-            run_cutadapt(
-              read1_fastq_in=input_fastq_file,
-              read1_fastq_out=output_fastq_file,
-              cutadapt_options=['--cores=1','-l {0}'.format(r2_length)],
-              cutadapt_exe=cutadapt_exe,
-              singularity_image_path=singularity_image)
+            cutadapt_options_r2 = None
+            if len(cutadapt_options) >0 :
+              cutadapt_options_r2 = copy(cutadapt_options)
+              cutadapt_options_r2.\
+                append('-l {0}'.format(r2_length))
+            _ = \
+              run_cutadapt(
+                read1_fastq_in=input_fastq_file,
+                read1_fastq_out=output_fastq_file,
+                cutadapt_options=cutadapt_options_r2,
+                cutadapt_exe=cutadapt_exe,
+                dry_run=dry_run,
+                singularity_image_path=singularity_image)
           else:
             copy_local_file(
               input_fastq_file,

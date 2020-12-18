@@ -14,6 +14,7 @@ from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _vali
 from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _fetch_formatted_analysis_description
 from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _add_reference_genome_path_for_analysis
 from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _create_library_csv_for_cellranger_multi
+from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _get_fastq_and_run_cutadapt_trim
 
 class Dag9_tenx_single_cell_immune_profiling_utilstestA(unittest.TestCase):
   def setUp(self):
@@ -326,6 +327,108 @@ class Dag9_tenx_single_cell_immune_profiling_utilstestC(unittest.TestCase):
     self.assertEqual(lib_data[0].split(',')[1],'fastqs')
     self.assertEqual(lib_data[1].split(',')[0],'IGF003-FB')
     self.assertEqual(lib_data[1].split(',')[1],'/tmp/tempox6tw1kv/antibody_capture/IGF003/run3')
+
+class Dag9_tenx_single_cell_immune_profiling_utilstestD(unittest.TestCase):
+  def setUp(self):
+    self.work_dir = get_temp_dir()
+    self.output_dir = get_temp_dir()
+    self.analysis_info = {
+      'antibody_capture': {
+        'sample_igf_id': 'IGF003',
+        'sample_name': 'IGF003-FB',
+        'run_count': 1,
+        'runs': {
+          '0': {
+            'run_igf_id': 'run3',
+            'fastq_dir': os.path.join(self.work_dir,'IGF003','run3'),
+            'output_path': os.path.join(self.output_dir,'antibody_capture','IGF003','run3')}}},
+      'gene_expression': {
+        'sample_igf_id': 'IGF001',
+        'sample_name': 'IGF001-GEX',
+        'run_count': 1,
+        'runs': {
+          '0': {
+            'run_igf_id': 'run1',
+            'fastq_dir': os.path.join(self.work_dir,'IGF001','run1'),
+            'output_path': os.path.join(self.output_dir,'gene_expression','IGF001','run1')}}},
+      'vdj': {
+        'sample_igf_id': 'IGF002',
+        'sample_name': 'IGF002-VDJ',
+        'run_count': 1,
+        'runs': {
+          '0': {
+            'run_igf_id': 'run2',
+            'fastq_dir': os.path.join(self.work_dir,'IGF002','run2'),
+            'output_path': os.path.join(self.output_dir,'vdj','IGF002','run2')}}}}
+    os.makedirs(os.path.join(self.output_dir,'antibody_capture','IGF003','run3'),exist_ok=True)
+    os.makedirs(os.path.join(self.output_dir,'gene_expression','IGF001','run1'),exist_ok=True)
+    os.makedirs(os.path.join(self.output_dir,'vdj','IGF002','run2'),exist_ok=True)
+    for i in ('R1','R2','I1'):
+      dir_path1 = os.path.join(self.work_dir,'IGF003','run3')
+      os.makedirs(dir_path1,exist_ok=True)
+      fastq1_path = \
+        os.path.join(dir_path1,'IGF003_S1_L001_{0}_001.fastq.gz'.format(i))
+      dir_path2 = os.path.join(self.work_dir,'IGF001','run1')
+      os.makedirs(dir_path2,exist_ok=True)
+      fastq2_path = \
+        os.path.join(dir_path2,'IGF001_S1_L001_{0}_001.fastq.gz'.format(i))
+      dir_path3 = os.path.join(self.work_dir,'IGF002','run2')
+      os.makedirs(dir_path3,exist_ok=True)
+      fastq3_path = \
+        os.path.join(dir_path3,'IGF002_S1_L001_{0}_001.fastq.gz'.format(i))
+      with open(fastq1_path,'w') as fp:
+        fp.write('AAAA')
+      with open(fastq2_path,'w') as fp:
+        fp.write('AAAA')
+      with open(fastq3_path,'w') as fp:
+        fp.write('AAAA')
+
+  def tearDown(self):
+    remove_dir(self.work_dir)
+
+  def test_get_fastq_and_run_cutadapt_trim1(self):
+    analysis_name = 'gene_expression'
+    fastq_input_dir_tag = 'fastq_dir'
+    fastq_output_dir_tag = 'output_path'
+    vdj_data = self.analysis_info.get(analysis_name)
+    self.assertTrue(vdj_data is not None)
+    _get_fastq_and_run_cutadapt_trim(
+      analysis_info=self.analysis_info,
+      analysis_name=analysis_name,
+      run_id=0,
+      r1_length=0,
+      r2_length=0,
+      dry_run=True,
+      fastq_input_dir_tag=fastq_input_dir_tag,
+      fastq_output_dir_tag=fastq_output_dir_tag,
+      singularity_image=None)
+    gex_output_path = \
+      os.path.join(self.output_dir,'gene_expression','IGF001','run1')
+    self.assertTrue('IGF001_S1_L001_R1_001.fastq.gz' in os.listdir(gex_output_path))
+    self.assertTrue('IGF001_S1_L001_R2_001.fastq.gz' in os.listdir(gex_output_path))
+    self.assertTrue('IGF001_S1_L001_I1_001.fastq.gz' in os.listdir(gex_output_path))
+
+  def test_get_fastq_and_run_cutadapt_trim2(self):
+    analysis_name = 'vdj'
+    fastq_input_dir_tag = 'fastq_dir'
+    fastq_output_dir_tag = 'output_path'
+    vdj_data = self.analysis_info.get(analysis_name)
+    self.assertTrue(vdj_data is not None)
+    _get_fastq_and_run_cutadapt_trim(
+      analysis_info=self.analysis_info,
+      analysis_name=analysis_name,
+      run_id=0,
+      r1_length=26,
+      r2_length=0,
+      dry_run=True,
+      fastq_input_dir_tag=fastq_input_dir_tag,
+      fastq_output_dir_tag=fastq_output_dir_tag,
+      singularity_image=None)
+    vdj_output_path = \
+      os.path.join(self.output_dir,'vdj','IGF002','run2')
+    self.assertFalse('IGF002_S1_L001_R1_001.fastq.gz' in os.listdir(vdj_output_path))
+    self.assertTrue('IGF002_S1_L001_R2_001.fastq.gz' in os.listdir(vdj_output_path))
+    self.assertTrue('IGF002_S1_L001_I1_001.fastq.gz' in os.listdir(vdj_output_path))
 
 if __name__=='__main__':
   unittest.main()
