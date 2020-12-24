@@ -59,6 +59,12 @@ class Cellranger_count_utils_testA(unittest.TestCase):
       _check_cellranger_multi_output(
         cellranger_output=os.path.join(self.work_dir,self.sample_id,'outs'),
         library_csv=self.lib_csv),None)
+    with open(self.lib_csv,'a') as fp:
+      fp.write('1-VDJB,/var/tmp/pbs.2669197.pbs/4,,Antibody Capture BAD,\n')
+    with self.assertRaises(ValueError):
+       _check_cellranger_multi_output(
+        cellranger_output=os.path.join(self.work_dir,self.sample_id,'outs'),
+        library_csv=self.lib_csv)
 
 if __name__ == '__main__':
   unittest.main()
