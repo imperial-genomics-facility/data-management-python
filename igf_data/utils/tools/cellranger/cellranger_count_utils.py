@@ -1,7 +1,115 @@
-import os,tarfile
+import os,tarfile,subprocess
 import pandas as pd
-from igf_data.utils.fileutils import check_file_path,get_temp_dir,remove_dir
+from igf_data.utils.fileutils import check_file_path,get_temp_dir,remove_dir,copy_local_file
 from igf_data.utils.analysis_fastq_fetch_utils import get_fastq_input_list
+
+def run_cellranger_multi(
+      cellranger_exe,library_csv,sample_id,output_dir,use_ephemeral_space=False,
+      job_timeout=43200,cellranger_options=('--localcores 1','--localmem 8')):
+  try:
+    tmp_dir = \
+      get_temp_dir(use_ephemeral_space=use_ephemeral_space)
+    os.chdir(tmp_dir)
+    check_file_path(library_csv)
+    check_file_path(cellranger_exe)
+    check_file_path(output_dir)
+    cmd = [
+      cellranger_exe,
+      '--id',sample_id,
+      '--csv',library_csv,
+      '--disable-ui']
+    if isinstance(cellranger_options,tuple):
+      cellranger_options = list(cellranger_options)
+    if isinstance(cellranger_options,list) and \
+       len(cellranger_options) > 0:
+      cmd.extend(cellranger_options)
+    cmd = \
+      ' '.join(cmd)
+    try:
+      subprocess.\
+        check_call(
+          cmd,
+          shell=True,
+          timeout=job_timeout)
+    except Exception as e:
+      raise ValueError(
+              'Failed to run cellranger multi, error: {0}'.\
+                format(e))
+    cellranger_output = \
+      os.path.join(
+        tmp_dir,
+        sample_id,
+        'outs')
+    _check_cellranger_multi_output(
+      cellranger_output,
+      library_csv)
+    copy_local_file(
+      cellranger_output,
+      os.path.join(output_dir,sample_id))
+    return cmd
+  except Exception as e:
+    raise ValueError(
+            'Failed cellranger run: error: {0}'.format(e))
+
+
+def _check_cellranger_multi_output(cellranger_output,library_csv):
+  try:
+    file_check_dict = {
+      'gene_expression':[
+        'web_summary.html',
+        'count/filtered_feature_bc_matrix.h5',
+        'count/possorted_genome_bam.bam',
+        'count/cloupe.cloupe'],
+      'vdj':[
+        'web_summary.html',
+        'vdj/filtered_contig_annotations.csv',
+        'vdj/vloupe.vloupe'],
+      'vdj-b':[
+        'web_summary.html',
+        'vdj_b/filtered_contig_annotations.csv',
+        'vdj_b/vloupe.vloupe'],
+      'vdj-t':[
+        'web_summary.html',
+        'vdj_t/filtered_contig_annotations.csv',
+        'vdj_t/vloupe.vloupe'],
+      'antibody_capture':['web_summary.html'],
+      'antigen_capture':['web_summary.html'],
+      'crisper_guide_capture':['web_summary.html']}
+    check_file_path(library_csv)
+    data = list()
+    columns = list()
+    with open(library_csv,'r') as fp:
+      lib_data = 0
+      for line in fp:
+        line = line.strip()
+        if lib_data == 1:
+          if line.startswith('fastq_id'):
+            columns = line.split(',')
+          else:
+            data.extend([line.split(',')])
+        if line.startswith('[libraries]'):
+          lib_data = 1
+    df = pd.DataFrame(data,columns=columns)
+    feature_list = \
+      list(df['feature_types'].\
+           map(lambda x: x.lower().replace(' ','_')).\
+           drop_duplicates().values)
+    for f in feature_list:
+      if f not in file_check_dict:
+        raise KeyError('Missing feature {0}'.format(f))
+      file_list = file_check_dict.get(f)
+      if file_list is None:
+        raise ValueError(
+                'No file entry found for feature {0}'.\
+                  format(f))
+      for file_path in file_list:
+        check_file_path(
+          os.path.join(cellranger_output,file_path))
+  except Exception as e:
+    raise ValueError(
+            'Failed cellranger output checking, error: {0}'.\
+              format(e))
+
 
 def get_cellranger_count_input_list(db_session_class,experiment_igf_id,
                                     fastq_collection_type='demultiplexed_fastq',
