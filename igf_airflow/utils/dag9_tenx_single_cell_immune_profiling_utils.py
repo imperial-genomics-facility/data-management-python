@@ -14,8 +14,58 @@ from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.utils.tools.reference_genome_utils import Reference_genome_utils
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.utils.tools.cutadapt_utils import run_cutadapt
+from igf_data.utils.tools.cellranger.cellranger_count_utils import run_cellranger_multi
 
 ## FUNCTION
+def run_cellranger_tool(**context):
+  try:
+    ti = context.get('ti')
+    analysis_description_xcom_pull_task = \
+      context['params'].get('analysis_description_xcom_pull_task')
+    analysis_description_xcom_key = \
+      context['params'].get('analysis_description_xcom_key')
+    library_csv_xcom_key = \
+      context['params'].get('library_csv_xcom_key')
+    library_csv_xcom_pull_task = \
+      context['params'].get('library_csv_xcom_pull_task')
+    cellranger_xcom_key = \
+      context['params'].get('cellranger_xcom_key')
+    analysis_description = \
+      ti.xcom_pull(
+        task_id=analysis_description_xcom_pull_task,
+        key=analysis_description_xcom_key)
+    library_csv = \
+      ti.xcom_pull(
+        task_id=library_csv_xcom_pull_task,
+        key=library_csv_xcom_key)
+    cellranger_exe = Variable.get('cellranger_exe')
+    job_timeout = Variable.get('cellranger_job_timeout')
+    cellranger_options = context['params'].get('cellranger_options')
+    output_dir = get_temp_dir(use_ephemeral_space=True)
+    sample_id = None
+    for entry in analysis_description:
+      sample_igf_id = entry.get('sample_igf_id')
+      if sample_id is None:
+        sample_id = sample_igf_id
+      else:
+        sample_id = '{0}_{1}'.format(sample_id,sample_igf_id)
+    c = \
+      run_cellranger_multi(
+        cellranger_exe=cellranger_exe,
+        library_csv=library_csv,
+        sample_id=sample_id,
+        output_dir=output_dir,
+        use_ephemeral_space=False,
+        job_timeout=job_timeout,
+        cellranger_options=cellranger_options)
+    ti.xcom_push(
+      key=cellranger_xcom_key,
+      value=output_dir)
+  except Exception as e:
+    logging.error(e)
+    raise ValueError(e)
+
+
 def run_sc_read_trimmming_func(**context):
   try:
     ti = context.get('ti')
