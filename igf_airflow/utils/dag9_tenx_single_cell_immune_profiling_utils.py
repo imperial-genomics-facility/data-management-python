@@ -17,6 +17,91 @@ from igf_data.utils.tools.cutadapt_utils import run_cutadapt
 from igf_data.utils.tools.cellranger.cellranger_count_utils import run_cellranger_multi
 
 ## FUNCTION
+def decide_analysis_branch_func(**context):
+  try:
+    library_csv_xcom_pull_task = \
+      context['params'].get('library_csv_xcom_pull_task')
+    library_csv_xcom_key = \
+      context['params'].get('library_csv_xcom_key')
+    upload_report_to_ftp_task = \
+      context['params'].get('upload_report_to_ftp_task')
+    upload_results_to_irods_task = \
+      context['params'].get('upload_results_to_irods_task')
+    run_scanpy_for_sc_5p_task = \
+      context['params'].get('run_scanpy_for_sc_5p_task')
+    run_scirpy_for_vdj_task = \
+      context['params'].get('run_scirpy_for_vdj_task')
+    run_scirpy_for_vdj_b_task = \
+      context['params'].get('run_scirpy_for_vdj_b_task')
+    run_scirpy_vdj_t_task = \
+      context['params'].get('run_scirpy_vdj_t_task')
+    run_seurat_for_sc_5p_task = \
+      context['params'].get('run_seurat_for_sc_5p_task')
+    run_picard_alignment_summary_task = \
+      context['params'].get('run_picard_alignment_summary_task')
+    task_list = [
+      upload_report_to_ftp_task,
+      upload_results_to_irods_task]
+    library_csv = \
+      ti.xcom_pull(
+        task_id=library_csv_xcom_pull_task,
+        key=library_csv_xcom_key)
+    feature_list = \
+      _get_feature_list_from_lib_csv(library_csv)
+    if feature_list is None or \
+       len(feature_list) == 0:
+      raise ValueError(
+              'No features found in file {0}'.\
+                format(library_csv))
+    if 'gene_expression' in feature_list:
+      task_list.\
+        append(run_scanpy_for_sc_5p_task)
+      task_list.\
+        append(run_seurat_for_sc_5p_task)
+      task_list.\
+        append(run_picard_alignment_summary_task)
+    if 'vdj' in feature_list:
+      task_list.\
+        append(run_scirpy_for_vdj_task)
+    if 'vdj-b' in feature_list:
+      task_list.\
+        append(run_scirpy_for_vdj_b_task)
+    if 'vdj-t' in feature_list:
+      task_list.\
+        append(run_scirpy_vdj_t_task)
+    return task_list
+  except Exception as e:
+    logging.error(e)
+    raise ValueError(e)
+
+
+def _get_feature_list_from_lib_csv(library_csv):
+  try:
+    check_file_path(library_csv)
+    data = list()
+    columns = list()
+    feature_list = list()
+    with open(library_csv,'r') as fp:
+      lib_data = 0
+      for line in fp:
+        line = line.strip()
+        if lib_data == 1:
+          if line.startswith('fastq_id'):
+            columns = line.split(',')
+          else:
+            data.extend([line.split(',')])
+        if line.startswith('[libraries]'):
+          lib_data = 1
+    df = pd.DataFrame(data,columns=columns)
+    feature_list = \
+      list(df['feature_types'].\
+           map(lambda x: x.lower().replace(' ','_')).\
+           drop_duplicates().values)
+    return feature_list
+  except Exception as e:
+    raise
+
+
 def run_cellranger_tool(**context):
   try:
     ti = context.get('ti')
@@ -30,6 +115,8 @@ def run_cellranger_tool(**context):
       context['params'].get('library_csv_xcom_pull_task')
     cellranger_xcom_key = \
       context['params'].get('cellranger_xcom_key')
+    cellranger_options = \
+      context['params'].get('cellranger_options')
     analysis_description = \
       ti.xcom_pull(
         task_id=analysis_description_xcom_pull_task,
@@ -40,7 +127,6 @@ def run_cellranger_tool(**context):
         key=library_csv_xcom_key)
     cellranger_exe = Variable.get('cellranger_exe')
     job_timeout = Variable.get('cellranger_job_timeout')
-    cellranger_options = context['params'].get('cellranger_options')
     output_dir = get_temp_dir(use_ephemeral_space=True)
     sample_id = None
     for entry in analysis_description:
