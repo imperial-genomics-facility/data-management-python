@@ -15,18 +15,99 @@ from igf_data.utils.tools.reference_genome_utils import Reference_genome_utils
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.utils.tools.cutadapt_utils import run_cutadapt
 from igf_data.utils.tools.cellranger.cellranger_count_utils import run_cellranger_multi
+from igf_data.utils.fileutils import create_file_manifest_for_dir
+from igf_data.utils.fileutils import prepare_file_archive
+from igf_data.utils.analysis_collection_utils import Analysis_collection_utils
 
 ## FUNCTION
+def load_cellranger_result_to_db_func(**context):
+  try:
+    ti = context.get('ti')
+    cellranger_xcom_key = \
+      context['params'].get('cellranger_xcom_key')
+    cellranger_xcom_pull_task = \
+      context['params'].get('cellranger_xcom_pull_task')
+    analysis_description_xcom_pull_task = \
+      context['params'].get('analysis_description_xcom_pull_task')
+    analysis_description_xcom_key = \
+      context['params'].get('analysis_description_xcom_key')
+    analysis_name = \
+      context['params'].get('analysis_name')
+    collection_table = \
+      context['params'].get('collection_table')
+    collection_type = \
+      context['params'].get('collection_type')
+    genome_column = \
+      context['params'].get('genome_column')
+    output_xcom_key = \
+      context['params'].get('output_xcom_key')
+    analysis_description = \
+      ti.xcom_pull(
+        task_id=analysis_description_xcom_pull_task,
+        key=analysis_description_xcom_key)
+    sample_igf_id = \
+      analysis_description[0].get('sample_igf_id')
+    genome_build = \
+      analysis_description[0].get(genome_column)
+    if sample_igf_id is None:
+      raise ValueError(
+              'No sample id found for analysis {0}'.\
+                format(analysis_description))
+    cellranger_output = \
+      ti.xcom_pull(
+        task_id=cellranger_xcom_pull_task,
+        key=cellranger_xcom_key)
+    manifest_file = \
+        os.path.join(
+          cellranger_output,
+          'file_manifest.csv')
+    create_file_manifest_for_dir(
+        results_dirpath=cellranger_output,
+        output_file=manifest_file,
+        md5_label='md5',
+        exclude_list=['*.bam','*.bai','*.cram'])
+    temp_archive_name = \
+      os.path.join(
+        get_temp_dir(use_ephemeral_space=False),
+        '{0}.tar.gz'.format(sample_igf_id))
+    prepare_file_archive(
+        results_dirpath=cellranger_output,
+        output_file=temp_archive_name,
+        exclude_list=['*.bam','*.bai','*.cram'])
+    base_result_dir = Variable.get('base_result_dir')
+    database_config_file = Variable.get('database_config_file')
+    dbparams = read_dbconf_json(database_config_file)
+    base = BaseAdaptor(**dbparams)
+    au = \
+      Analysis_collection_utils(
+        dbsession_class=base.session_class(),
+        analysis_name=analysis_name,
+        tag_name=genome_build,
+        collection_name=sample_igf_id,
+        collection_type=collection_type,
+        collection_table=collection_table,
+        base_path=base_result_dir)
+    output_file_list = \
+      au.load_file_to_disk_and_db(
+        input_file_list=[temp_archive_name],
+        withdraw_exisitng_collection=True)
+    ti.xcom_push(
+      key=output_xcom_key,
+      value=output_file_list)
+  except Exception as e:
+    logging.error(e)
+    raise ValueError(e)
+
+
 def decide_analysis_branch_func(**context):
   try:
+    ti = context.get('ti')
     library_csv_xcom_pull_task = \
       context['params'].get('library_csv_xcom_pull_task')
     library_csv_xcom_key = \
       context['params'].get('library_csv_xcom_key')
-    upload_report_to_ftp_task = \
-      context['params'].get('upload_report_to_ftp_task')
-    upload_results_to_irods_task = \
-      context['params'].get('upload_results_to_irods_task')
+    load_cellranger_result_to_db_task = \
+      context['params'].get('load_cellranger_result_to_db_task')
     run_scanpy_for_sc_5p_task = \
       context['params'].get('run_scanpy_for_sc_5p_task')
     run_scirpy_for_vdj_task = \
@@ -39,9 +120,9 @@ def decide_analysis_branch_func(**context):
       context['params'].get('run_seurat_for_sc_5p_task')
     run_picard_alignment_summary_task = \
       context['params'].get('run_picard_alignment_summary_task')
-    task_list = [
-      upload_report_to_ftp_task,
-      upload_results_to_irods_task]
+    convert_bam_to_cram_task = \
+      context['params'].get('convert_bam_to_cram_task')
+    task_list = [load_cellranger_result_to_db_task]
     library_csv = \
       ti.xcom_pull(
         task_id=library_csv_xcom_pull_task,
@@ -60,6 +141,8 @@ def decide_analysis_branch_func(**context):
         append(run_seurat_for_sc_5p_task)
       task_list.\
         append(run_picard_alignment_summary_task)
+      task_list.\
+        append(convert_bam_to_cram_task)
     if 'vdj' in feature_list:
       task_list.\
         append(run_scirpy_for_vdj_task)
