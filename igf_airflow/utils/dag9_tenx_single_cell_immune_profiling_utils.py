@@ -8,7 +8,7 @@ from igf_data.utils.fileutils import get_temp_dir,copy_remote_file,check_file_pa
 from igf_data.utils.fileutils import read_json_data,copy_local_file
 from igf_data.utils.singularity_run_wrapper import execute_singuarity_cmd
 from igf_data.utils.analysis_fastq_fetch_utils import get_fastq_and_run_for_samples
-from igf_data.utils.fileutils import get_temp_dir
+from igf_data.utils.fileutils import get_temp_dir,remove_dir
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.utils.tools.reference_genome_utils import Reference_genome_utils
@@ -20,8 +20,76 @@ from igf_data.utils.fileutils import prepare_file_archive
 from igf_data.utils.analysis_collection_utils import Analysis_collection_utils
 from igf_data.igfdb.analysisadaptor import AnalysisAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
+from igf_data.igfdb.projectadaptor import ProjectAdaptor
+from igf_data.utils.igf_irods_client import IGF_irods_uploader
 
 ## FUNCTION
+def irods_files_upload_for_analysis(**context):
+  try:
+    ti = context.get('ti')
+    xcom_pull_task = \
+      context['params'].get('xcom_pull_task')
+    xcom_pull_files_key = \
+      context['params'].get('xcom_pull_files_key')
+    collection_name_key = \
+      context['params'].get('collection_name_key')
+    irods_exe_dir = \
+      Variable.get('irods_exe_dir')
+    analysis_name = \
+      context['params'].get('analysis_name')
+    dag_run = context.get('dag_run')
+    if dag_run is None or \
+       dag_run.conf is None or \
+       dag_run.conf.get('analysis_id') is None:
+      raise ValueError('No analysis id found for collection')
+    analysis_id = \
+        dag_run.conf.get('analysis_id')
+    database_config_file = \
+      Variable.get('database_config_file')
+    dbparams = \
+      read_dbconf_json(database_config_file)
+    aa = \
+      AnalysisAdaptor(**dbparams)
+    aa.start_session()
+    project_igf_id = \
+      aa.fetch_project_igf_id_for_analysis_id(analysis_id=int(analysis_id))
+    aa.close_session()
+    file_list_for_copy = \
+      ti.xcom_pull(
+        task_id=xcom_pull_task,
+        key=xcom_pull_files_key)
+    collection_name = \
+      ti.xcom_pull(
+        task_id=xcom_pull_task,
+        key=collection_name_key)
+    pa = ProjectAdaptor(**dbparams)
+    pa.start_session()
+    user = \
+      pa.fetch_data_authority_for_project(
+        project_igf_id=project_igf_id)                                        # fetch user info from db
+    pa.close_session()
+    if user is None:
+        raise ValueError(
+                'No user found for project {0}'.\
+                  format(project_igf_id))
+    username = user.username                                                  # get username for irods
+    irods_upload = IGF_irods_uploader(irods_exe_dir)
+    for file in file_list_for_copy:
+      check_file_path(file)
+    dir_path_list = ['analysis',collection_name]
+    irods_upload.\
+      upload_analysis_results_and_create_collection(
+        file_list=file_list_for_copy,
+        irods_user=username,
+        project_name=project_igf_id,
+        analysis_name=analysis_name,
+        dir_path_list=dir_path_list,
+        file_tag=collection_name)
+  except Exception as e:
+    logging.error(e)
+    raise ValueError(e)
+
+
 def ftp_files_upload_for_analysis(**context):
   try:
     ti = context.get('ti')
@@ -74,6 +142,7 @@ def ftp_files_upload_for_analysis(**context):
         project_igf_id,
         'analysis',
         collection_name)
+    output_file_list = list()
     temp_work_dir = \
       get_temp_dir(use_ephemeral_space=False)
     for file in file_list_for_copy:
