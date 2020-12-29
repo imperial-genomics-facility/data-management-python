@@ -18,8 +18,147 @@ from igf_data.utils.tools.cellranger.cellranger_count_utils import run_cellrange
 from igf_data.utils.fileutils import create_file_manifest_for_dir
 from igf_data.utils.fileutils import prepare_file_archive
 from igf_data.utils.analysis_collection_utils import Analysis_collection_utils
+from igf_data.igfdb.analysisadaptor import AnalysisAdaptor
+from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 
 ## FUNCTION
+def ftp_files_upload_for_analysis(**context):
+  try:
+    ti = context.get('ti')
+    xcom_pull_task = \
+      context['params'].get('xcom_pull_task')
+    xcom_pull_files_key = \
+      context['params'].get('xcom_pull_files_key')
+    collection_name_key = \
+      context['params'].get('collection_name_key')
+    collection_type = \
+      context['params'].get('collection_type')
+    collection_table = \
+      context['params'].get('collection_table')
+    collect_remote_file = \
+      context['params'].get('collect_remote_file')
+    dag_run = context.get('dag_run')
+    if dag_run is None or \
+       dag_run.conf is None or \
+       dag_run.conf.get('analysis_id') is None:
+      raise ValueError('No analysis id found for collection')
+    analysis_id = \
+        dag_run.conf.get('analysis_id')
+    database_config_file = \
+      Variable.get('database_config_file')
+    dbparams = \
+      read_dbconf_json(database_config_file)
+    aa = \
+      AnalysisAdaptor(**dbparams)
+    aa.start_session()
+    project_igf_id = \
+      aa.fetch_project_igf_id_for_analysis_id(analysis_id=int(analysis_id))
+    aa.close_session()
+    ftp_hostname = \
+      Variable.get('ftp_hostname')
+    ftp_username = \
+      Variable.get('ftp_username')
+    ftp_project_path = \
+      Variable.get('ftp_project_path')
+    file_list_for_copy = \
+      ti.xcom_pull(
+        task_id=xcom_pull_task,
+        key=xcom_pull_files_key)
+    collection_name = \
+      ti.xcom_pull(
+        task_id=xcom_pull_task,
+        key=collection_name_key)
+    destination_output_path = \
+      os.path.join(
+        ftp_project_path,
+        project_igf_id,
+        'analysis',
+        collection_name)
+    temp_work_dir = \
+      get_temp_dir(use_ephemeral_space=False)
+    for file in file_list_for_copy:
+      check_file_path(file)
+      if os.path.isfile(file):
+        copy_local_file(
+          file,
+          os.path.join(
+            temp_work_dir,
+            os.path.basename(file)))
+        dest_file_path = \
+          os.path.join(
+            destination_output_path,
+            os.path.basename(file))
+        os.chmod(
+          os.path.join(
+            temp_work_dir,
+            os.path.basename(file)),
+          mode=0o764)
+      elif os.path.isdir(file):
+        copy_local_file(
+          file,
+          os.path.join(
+            temp_work_dir,
+            os.path.basename(file)))
+        dest_file_path = destination_output_path
+        for root,dirs,files in os.walk(temp_work_dir):
+          for dir_name in dirs:
+            os.chmod(
+              os.path.join(root,dir_name),
+              mode=0o775)
+          for file_name in files:
+            os.chmod(
+              os.path.join(root,file_name),
+              mode=0o764)
+      else:
+        raise ValueError(
+                'Unknown source file type: {0}'.\
+                  format(file))
+      copy_remote_file(
+        source_path=os.path.join(temp_work_dir,
+                                 os.path.basename(file)),
+        destinationa_path=dest_file_path,
+        destination_address='{0}@{1}'.format(ftp_username,ftp_hostname),
+        force_update=True)
+      if os.path.isdir(file):
+        dest_file_path = \
+          os.path.join(
+            dest_file_path,
+            os.path.basename(file))
+      output_file_list.append(dest_file_path)
+    remove_dir(dir_path=temp_work_dir)
+    if collect_remote_file:
+      data = list()
+      remove_data_list = [{
+        'name':collection_name,
+        'type':collection_type}]
+      for file in output_file_list:
+        data.append({
+          'name':collection_name,
+          'type':collection_type,
+          'table':collection_table,
+          'file_path':file,
+          'location':file_location})
+        ca = CollectionAdaptor(**dbparams)
+        ca.start_session()
+        try:
+          ca.remove_collection_group_info(
+            data=remove_data_list,
+            autosave=False)                                                     # remove existing data before loading new collection
+          ca.load_file_and_create_collection(
+            data=data,
+            autosave=False,
+            calculate_file_size_and_md5=False)                                  # load remote files to db
+          ca.commit_session()                                                   # commit changes
+          ca.close_session()
+        except:
+          ca.rollback_session()                                                 # rollback changes
+          ca.close_session()
+          raise
+  except Exception as e:
+    logging.error(e)
+    raise ValueError(e)
+
+
 def load_cellranger_result_to_db_func(**context):
   try:
     ti = context.get('ti')
@@ -41,6 +180,12 @@ def load_cellranger_result_to_db_func(**context):
       context['params'].get('genome_column')
     output_xcom_key = \
       context['params'].get('output_xcom_key')
+    xcom_collection_name_key = \
+      context['params'].get('xcom_collection_name_key')
+    html_xcom_key = \
+      context['params'].get('html_xcom_key')
+    html_report_file_name = \
+      context['params'].get('html_report_file_name')
     analysis_description = \
       ti.xcom_pull(
         task_id=analysis_description_xcom_pull_task,
@@ -57,30 +202,39 @@ def load_cellranger_result_to_db_func(**context):
       ti.xcom_pull(
         task_id=cellranger_xcom_pull_task,
         key=cellranger_xcom_key)
+    html_report_filepath = \
+      os.path.join(
+        cellranger_output,
+        html_report_file_name)
+    check_file_path(html_report_filepath)
     manifest_file = \
-        os.path.join(
-          cellranger_output,
-          'file_manifest.csv')
+      os.path.join(
+        cellranger_output,
+        'file_manifest.csv')
     create_file_manifest_for_dir(
-        results_dirpath=cellranger_output,
-        output_file=manifest_file,
-        md5_label='md5',
-        exclude_list=['*.bam','*.bai','*.cram'])
+      results_dirpath=cellranger_output,
+      output_file=manifest_file,
+      md5_label='md5',
+      exclude_list=['*.bam','*.bai','*.cram'])
     temp_archive_name = \
       os.path.join(
         get_temp_dir(use_ephemeral_space=False),
         '{0}.tar.gz'.format(sample_igf_id))
     prepare_file_archive(
-        results_dirpath=cellranger_output,
-        output_file=temp_archive_name,
-        exclude_list=['*.bam','*.bai','*.cram'])
-    base_result_dir = Variable.get('base_result_dir')
-    database_config_file = Variable.get('database_config_file')
-    dbparams = read_dbconf_json(database_config_file)
-    base = BaseAdaptor(**dbparams)
+      results_dirpath=cellranger_output,
+      output_file=temp_archive_name,
+      exclude_list=['*.bam','*.bai','*.cram'])
+    base_result_dir = \
+      Variable.get('base_result_dir')
+    database_config_file = \
+      Variable.get('database_config_file')
+    dbparams = \
+      read_dbconf_json(database_config_file)
+    base = \
+      BaseAdaptor(**dbparams)
     au = \
       Analysis_collection_utils(
-        dbsession_class=base.session_class(),
+        dbsession_class=base.get_session_class(),
         analysis_name=analysis_name,
         tag_name=genome_build,
         collection_name=sample_igf_id,
@@ -94,6 +248,12 @@ def load_cellranger_result_to_db_func(**context):
     ti.xcom_push(
       key=output_xcom_key,
       value=output_file_list)
+    ti.xcom_push(
+      key=xcom_collection_name_key,
+      value=sample_igf_id)
+    ti.xcom_push(
+      key=html_xcom_key,
+      value=html_report_filepath)
   except Exception as e:
     logging.error(e)
     raise ValueError(e)
@@ -182,7 +342,7 @@ def _get_feature_list_from_lib_csv(library_csv):
            drop_duplicates().values)
     return feature_list
   except Exception as e:
-    raise
+    raise ValueError(e)
 
 
 def run_cellranger_tool(**context):
@@ -522,10 +682,14 @@ def fetch_analysis_info_and_branch_func(**context):
     analysis_list = list()
     dag_run = context.get('dag_run')
     ti = context.get('ti')
-    no_analysis = context['params'].get('no_analysis_task')
-    analysis_description_xcom_key = context['params'].get('analysis_description_xcom_key')
-    analysis_info_xcom_key = context['params'].get('analysis_info_xcom_key')
-    database_config_file = Variable.get('database_config_file')
+    no_analysis = \
+      context['params'].get('no_analysis_task')
+    analysis_description_xcom_key = \
+      context['params'].get('analysis_description_xcom_key')
+    analysis_info_xcom_key = \
+      context['params'].get('analysis_info_xcom_key')
+    database_config_file = \
+      Variable.get('database_config_file')
     analysis_list.append(no_analysis)
     if dag_run is not None and \
        dag_run.conf is not None and \
@@ -563,19 +727,26 @@ def fetch_analysis_info_and_branch_func(**context):
           active_status='ACTIVE',
           combine_fastq_dir=False)
       analysis_info = \
-        _fetch_formatted_analysis_description(analysis_description,fastq_list)
+        _fetch_formatted_analysis_description(
+          analysis_description,
+          fastq_list)
       if len(messages) > 0:
         raise ValueError('Analysis description formatting failed: {0}'.\
                 format(messages))
       # mark analysis_id as running,if its not already running
-      status = _check_and_mark_analysis_seed_running(
-        analysis_id=analysis_id,
-        anslysis_type=analysis_type,
-        database_config_file=database_config_file)
+      status = \
+        _check_and_mark_analysis_seed_running(
+          analysis_id=analysis_id,
+          anslysis_type=analysis_type,
+          database_config_file=database_config_file)
       # xcom push analysis_info and analysis_description
       if status:
-        ti.xcom_push(key=analysis_description_xcom_key,value=analysis_description)
-        ti.xcom_push(key=analysis_info_xcom_key,value=analysis_info)
+        ti.xcom_push(
+          key=analysis_description_xcom_key,
+          value=analysis_description)
+        ti.xcom_push(
+          key=analysis_info_xcom_key,
+          value=analysis_info)
       else:
         analysis_list = [no_analysis]
     return analysis_list
@@ -653,6 +824,7 @@ def _check_and_mark_analysis_seed_running(
   except Exception as e:
     raise ValueError(e)
 
+
 def _fetch_formatted_analysis_description(
       analysis_description,fastq_run_list,feature_column='feature_type',
       sample_column='sample_igf_id',run_column='run_igf_id',file_column='file_path'):
@@ -726,6 +898,7 @@ def _fetch_formatted_analysis_description(
     return formatted_analysis_description
   except Exception as e:
     raise ValueError(e)
+
 
 def _validate_analysis_description(
       analysis_description,feature_types,sample_column='sample_igf_id',
