@@ -56,6 +56,30 @@ class AnalysisAdaptor(BaseAdaptor):
               'Failed to store analysis data, error: {0}'.format(e))
 
 
+  def fetch_project_igf_id_for_analysis_id(self,analysis_id):
+    try:
+      session = self.session
+      query = \
+        session.\
+          query(Project.project_igf_id).\
+          join(Analysis,Project.project_id==Analysis.project_id).\
+          filter(Analysis.analysis_id==analysis_id)
+      result = \
+        self.fetch_records(
+          query=query,
+          output_mode='one_or_none')
+      if result is None or \
+         result.project_igf_id is None:
+        raise ValueError(
+                'No project id found for analysis {0}'.\
+                  format(analysis_id))
+      return result.project_igf_id
+    except Exception as e:
+      raise ValueError(
+              'Failed to fetch project id for abalysis {0},error: {1}'.\
+                format(analysis_id,e))
+
+
   def fetch_analysis_records_project_igf_id(
         self,project_igf_id,output_mode='dataframe'):
     '''

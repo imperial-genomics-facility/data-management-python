@@ -64,6 +64,7 @@ def full_suite():
   from .igf_airflow.dag9_tenx_single_cell_immune_profiling_utils_test import Dag9_tenx_single_cell_immune_profiling_utilstestC
   from .igf_airflow.dag9_tenx_single_cell_immune_profiling_utils_test import Dag9_tenx_single_cell_immune_profiling_utilstestD
   from .utils.cellranger_count_utils_test import Cellranger_count_utils_testA
+  from .dbadaptor.analysisadaptor_test import Analysisadaptor_test1
 
   return unittest.TestSuite([
     unittest.TestLoader().loadTestsFromTestCase(t)
@@ -144,6 +145,7 @@ def full_suite():
         Dag9_tenx_single_cell_immune_profiling_utilstestB,
         Dag9_tenx_single_cell_immune_profiling_utilstestC,
         Dag9_tenx_single_cell_immune_profiling_utilstestD,
-        Cellranger_count_utils_testA
+        Cellranger_count_utils_testA,
+        Analysisadaptor_test1
       ]
     ])
