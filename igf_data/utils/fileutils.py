@@ -559,3 +559,20 @@ def create_file_manifest_for_dir(results_dirpath,output_file,md5_label='md5',
                               index=False)                                      # write manifest csv file
   except Exception as e:
     raise ValueError("Failed to create manifest file, error: {0}".format(e))
+
+def get_date_stamp():
+  '''
+  A method for generating datestamp for files
+
+  :returns: A string of datestampe in 'YYYY-MM-DD HH:MM' format
+  '''
+  try:
+    date_stamp = None
+    date_stamp = \
+      datetime.\
+        strftime(
+          datetime.now(),
+          '%Y-%b-%d %H:%M')                                                     # date tag values
+    return date_stamp
+  except Exception as e:
+    raise ValueError("Failed to get datestamp, error: {0}".format(e))
