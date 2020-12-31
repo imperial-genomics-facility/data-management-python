@@ -20,8 +20,10 @@ def singularity_run(
     check_file_path(image_path)
     if log_dir is not None:
       check_file_path(log_dir)
-    _ = [check_file_path(d)
-           for d in bind_dir_list]
+    for d in bind_dir_list:
+      paths = d.split(':')
+      check_file_path(paths[0])
+
     temp_dir = \
       get_temp_dir(use_ephemeral_space=False)
     temp_image_path = \
@@ -93,8 +95,9 @@ def execute_singuarity_cmd(image_path,command_string,log_dir=None,task_id=1,
     check_file_path(image_path)
     if log_dir is not None:
       check_file_path(log_dir)
-    _ = [check_file_path(d)
-           for d in bind_dir_list]
+    for d in bind_dir_list:
+      paths = d.split(':')
+      check_file_path(paths[0])
     if len(bind_dir_list)==0:
       bind_dir_list = None
     singularity_cmd = \
