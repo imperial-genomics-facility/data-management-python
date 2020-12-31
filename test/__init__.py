@@ -56,7 +56,6 @@ def full_suite():
   from .process.reformat_samplesheet_file_test import Reformat_samplesheet_file_testA
   from .utils.singularity_run_wrapper_test import Singularity_run_test1
   from .utils.jupyter_nbconvert_wrapper_test import Nbconvert_execute_test1
-  from .utils.jupyter_nbconvert_wrapper_test import Nbconvert_execute_test2
   from .igf_airflow.calculate_seqrun_file_size_test import Calculate_seqrun_file_list_testA
   from .igf_airflow.ongoing_seqrun_processing_test import Compare_existing_seqrun_filesA
   from .igf_airflow.dag9_tenx_single_cell_immune_profiling_utils_test import Dag9_tenx_single_cell_immune_profiling_utilstestA
@@ -138,7 +137,6 @@ def full_suite():
         Reformat_samplesheet_file_testA,
         Singularity_run_test1,
         Nbconvert_execute_test1,
-        Nbconvert_execute_test2,
         Calculate_seqrun_file_list_testA,
         Compare_existing_seqrun_filesA,
         Dag9_tenx_single_cell_immune_profiling_utilstestA,
