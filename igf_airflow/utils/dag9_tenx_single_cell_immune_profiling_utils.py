@@ -22,7 +22,7 @@ from igf_data.igfdb.analysisadaptor import AnalysisAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.utils.igf_irods_client import IGF_irods_uploader
-from igf_data.utils.tools.jupyter_nbconverter_wrapper import Notebook_runner
+from igf_data.utils.jupyter_nbconverter_wrapper import Notebook_runner
 
 ## FUNCTION
 def run_scirpy_for_vdj_func(**context):
