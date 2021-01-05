@@ -265,8 +265,7 @@ def run_scanpy_for_sc_5p_func(**context):
       value=output_notebook_path)
     ti.xcom_push(
       key=output_cellbrowser_key,
-      value={'cellbrowser_dir':cellbrowser_dir,
-             'cellbrowser_html_dir':cellbrowser_html_dir})
+      value=cellbrowser_html_dir)
   except Exception as e:
     logging.error(e)
     raise ValueError(e)
@@ -346,6 +345,8 @@ def ftp_files_upload_for_analysis(**context):
       context['params'].get('xcom_pull_task')
     xcom_pull_files_key = \
       context['params'].get('xcom_pull_files_key')
+    collection_name_task = \
+      context['params'].get('collection_name_task')
     collection_name_key = \
       context['params'].get('collection_name_key')
     collection_type = \
@@ -381,9 +382,11 @@ def ftp_files_upload_for_analysis(**context):
       ti.xcom_pull(
         task_id=xcom_pull_task,
         key=xcom_pull_files_key)
+    if isinstance(file_list_for_copy,str):
+      file_list_for_copy = [file_list_for_copy]
     collection_name = \
       ti.xcom_pull(
-        task_id=xcom_pull_task,
+        task_id=collection_name_task,
         key=collection_name_key)
     destination_output_path = \
       os.path.join(
