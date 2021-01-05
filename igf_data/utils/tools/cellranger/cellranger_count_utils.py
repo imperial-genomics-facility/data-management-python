@@ -43,10 +43,12 @@ def run_cellranger_multi(
     _check_cellranger_multi_output(
       cellranger_output,
       library_csv)
+    output_dir = \
+      os.path.join(output_dir,sample_id)
     copy_local_file(
       cellranger_output,
-      os.path.join(output_dir,sample_id))
-    return cmd
+      output_dir)
+    return cmd,output_dir
   except Exception as e:
     raise ValueError(
             'Failed cellranger run: error: {0}'.format(e))
