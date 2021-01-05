@@ -22,10 +22,69 @@ from igf_data.igfdb.analysisadaptor import AnalysisAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.utils.igf_irods_client import IGF_irods_uploader
-from igf_data.utils.jupyter_nbconverter_wrapper import Notebook_runner
+from igf_data.utils.jupyter_nbconvert_wrapper import Notebook_runner
 
 ## FUNCTION
-def run_scirpy_for_vdj_func(**context):
+def load_analysis_files_func(**context):
+  try:
+    ti = context.get('ti')
+    collection_name_task = \
+      context['params'].get('collection_name_task')
+    collection_name_key = \
+      context['params'].get('collection_name_key')
+    file_name_task = \
+      context['params'].get('file_name_task')
+    file_name_key = \
+      context['params'].get('file_name_key')
+    analysis_name = \
+      context['params'].get('analysis_name')
+    collection_type = \
+      context['params'].get('collection_type')
+    collection_table = \
+      context['params'].get('collection_table')
+    output_files_key = \
+      context['params'].get('output_files_key')
+    database_config_file = \
+      Variable.get('database_config_file')
+    base_result_dir = \
+      Variable.get('base_result_dir')
+    dbparams = \
+      read_dbconf_json(database_config_file)
+    base = \
+      BaseAdaptor(**dbparams)
+    tag_name = 'no_tag'
+    collection_name = \
+      ti.xcom_pull(
+        task_id=collection_name_task,
+        key=collection_name_key)
+    temp_file = \
+      ti.xcom_pull(
+        task_id=file_name_task,
+        key=file_name_key)
+    if isinstance(temp_file,str):
+      temp_file = [temp_file]
+    au = \
+      Analysis_collection_utils(
+        dbsession_class=base.get_session_class(),
+        analysis_name=analysis_name,
+        tag_name=tag_name,
+        collection_name=collection_name,
+        collection_type=collection_type,
+        collection_table=collection_table,
+        base_path=base_result_dir)
+    output_file_list = \
+      au.load_file_to_disk_and_db(
+        input_file_list=temp_file,
+        withdraw_exisitng_collection=True)
+    ti.xcom_push(
+      key=output_files_key,
+      value=output_file_list)
+  except Exception as e:
+    logging.error(e)
+    raise ValueError(e)
+
+
+def run_singlecell_notebook_wrapper_func(**context):
   try:
     ti = context.get('ti')
     cellranger_xcom_key = \
@@ -38,23 +97,30 @@ def run_scirpy_for_vdj_func(**context):
       context['params'].get('allow_errors')
     output_notebook_key = \
       context['params'].get('output_notebook_key')
+    count_dir = \
+      context['params'].get('count_dir')
     vdj_dir = \
       context['params'].get('vdj_dir')
     analysis_description_xcom_pull_task = \
       context['params'].get('analysis_description_xcom_pull_task')
     analysis_description_xcom_key = \
       context['params'].get('analysis_description_xcom_key')
+    kernel_name = \
+      context['params'].get('kernel_name')
+    template_ipynb_path = \
+      context['params'].get('template_ipynb_path')
+    singularity_image_path = \
+      context['params'].get('singularity_image_path')
+    cell_marker_list = \
+      context['params'].get('cell_marker_list')
     cellranger_output = \
       ti.xcom_pull(
         task_id=cellranger_xcom_pull_task,
         key=cellranger_xcom_key)
     cellranger_count_dir = \
-      os.path.join(cellranger_output,'count')
+      os.path.join(cellranger_output,count_dir)
     cellranger_vdj_dir = \
       os.path.join(cellranger_output,vdj_dir)
-    template_ipynb_path = Variable.get('scirpy_single_sample_template')
-    singularity_image_path = Variable.get('scirpy_notebook_image')
-    cell_marker_list = Variable.get('cell_marker_list')
     dag_run = context.get('dag_run')
     if dag_run is None or \
        dag_run.conf is None or \
@@ -81,6 +147,7 @@ def run_scirpy_for_vdj_func(**context):
       analysis_description[0].get('sample_igf_id')
     genome_build = \
       analysis_description[0].get('genome_build')
+    tmp_dir = get_temp_dir(use_ephemeral_space=True)
     input_params = {
       'DATE_TAG':get_date_stamp(),
       'PROJECT_IGF_ID':project_igf_id,
@@ -91,7 +158,6 @@ def run_scirpy_for_vdj_func(**context):
       'GENOME_BUILD':genome_build}
     container_bind_dir_list = [
       cellranger_count_dir,
-      tmp_dir,
       os.path.dirname(cell_marker_list)]
     nb = Notebook_runner(
       template_ipynb_path=template_ipynb_path,
@@ -99,6 +165,7 @@ def run_scirpy_for_vdj_func(**context):
       input_param_map=input_params,
       container_paths=container_bind_dir_list,
       timeout=timeout,
+      kernel=kernel_name,
       allow_errors=allow_errors,
       singularity_image_path=singularity_image_path)
     output_notebook_path,_ = \
@@ -142,7 +209,7 @@ def run_scanpy_for_sc_5p_func(**context):
     cellbrowser_html_dir = os.path.join(tmp_dir,'cellbrowser_html_dir')
     template_ipynb_path = Variable.get('scanpy_single_sample_template')
     singularity_image_path = Variable.get('scanpy_notebook_image')
-    cell_marker_list = Variable.get('cell_marker_list')
+    cell_marker_list = Variable.get('all_cell_marker_list')
     dag_run = context.get('dag_run')
     if dag_run is None or \
        dag_run.conf is None or \
