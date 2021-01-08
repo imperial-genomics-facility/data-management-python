@@ -70,13 +70,13 @@ class User(Base):
   :param hpc_username: An optional string as Imperial College's HPC login name, allowed length 20
   :param twitter_user: An optional string as twitter user name, allowed length 20
   :param category: An optional enum list as user category, default NON_HPC_USER, allowed values are 
-                    
+
     * HPC_USER
     * NON_HPC_USER
     * EXTERNAL
 
   :param status: An optional enum list as user status, default is ACTIVE, allowed values are 
-                  
+
     * ACTIVE
     * BLOCKED
     * WITHDRAWN
@@ -141,7 +141,7 @@ class ProjectUser(Base):
   __table_args__ = (
     UniqueConstraint('project_id','data_authority'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
-    
+
   project_user_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   project_id = Column(INTEGER(unsigned=True), ForeignKey("project.project_id", onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
   user_id = Column(INTEGER(unsigned=True), ForeignKey("user.user_id", onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
@@ -169,20 +169,20 @@ class Sample(Base):
   :param description: An optional string as sample description
   :param phenotype: An optional string as sample phenotype information
   :param sex: An optional enum list to specify sample sex, default UNKNOWN, allowed values are 
-               
+
     * FEMALE
     * MALE
     * MIXED
     * UNKNOWN
 
   :param status: An optional enum list to specify sample status, default ACTIVE, allowed values are 
-                  
+
     * ACTIVE
     * FAILED
     * WITHDRAWS
 
   :param biomaterial_type: An optional enum list as sample biomaterial type, default UNKNOWN, allowed values are 
-                            
+
     * PRIMARY_TISSUE
     * PRIMARY_CELL
     * PRIMARY_CELL_CULTURE
@@ -261,16 +261,16 @@ class Platform(Base):
     * DNBSEQ-T7
 
   :param vendor_name: A required enum list to specify vendor's name, allowed values are
-                       
+
     * ILLUMINA
     * NANOPORE
     * MGI
 
   :param software_name: A required enum list for specifying platform software, allowed values are
-                         
+
     * RTA
     * UNKNOWN
-                       
+
   :param software_version: A optional software version number, default is UNKNOWN
   :param date_created: An optional timestamp column to record entry creation time, default current timestamp
   '''
@@ -308,13 +308,13 @@ class Flowcell_barcode_rule(Base):
   :param platform_id: An integer id for platform table (foreign key)
   :param flowcell_type: A required string as flowcell type name, allowed length 50
   :param index_1: An optional enum list as index_1 specific rule, default UNKNOWN, allowed values are 
-                   
+
     * NO_CHANGE
     * REVCOMP
     * UNKNOWN
 
   :param index_2: An optional enum list as index_2 specific rule, default UNKNOWN, allowed values are 
-                   
+
     * NO_CHANGE
     * REVCOMP
     * UNKNOWN
@@ -378,7 +378,7 @@ class Seqrun(Base):
 class Seqrun_stats(Base):
   '''
   A table for loading sequencing stats information
-  
+
   :param seqrun_stats_id: An integer id for seqrun_stats table
   :param seqrun_id: An integer seqrun id (foreign key)
   :param lane_number: A required enum list for specifying lane information,
@@ -400,7 +400,7 @@ class Seqrun_stats(Base):
   undetermined_barcodes = Column(JSONType)
   known_barcodes = Column(JSONType)
   undetermined_fastqc = Column(JSONType)
-  
+
   def __repr__(self):
     return \
       "Seqrun_stats(seqrun_stats_id = '{self.seqrun_stats_id}'," \
@@ -422,7 +422,7 @@ class Experiment(Base):
   :param sample_id: A required integer id from sample table (foreign key)
   :param library_name: A required string to specify library name, allowed length 50
   :param library_source: An optional enum list to specify library source information, default is UNKNOWN, allowed values are 
-                          
+
     * GENOMIC
     * TRANSCRIPTOMIC
     * GENOMIC_SINGLE_CELL
@@ -434,7 +434,7 @@ class Experiment(Base):
     * UNKNOWN
 
   :param library_strategy: An optional enum list to specify library strategy information, default is UNKNOWN, allowed values are 
-                            
+
     * WGS
     * WXS
     * WGA
@@ -477,7 +477,7 @@ class Experiment(Base):
     * UNKNOWN
 
   :param experiment_type: An optional enum list as experiment type information, default is UNKNOWN, allowed values are
-                           
+
     * POLYA-RNA
     * POLYA-RNA-3P
     * TOTAL-RNA
@@ -550,20 +550,20 @@ class Experiment(Base):
     * UNKNOWN
 
   :param library_layout: An optional enum list to specify library layout, default is UNONWN, allowed values are 
-                          
+
     * SINGLE
     * PAIRED
     * UNKNOWN
 
   :param status: An optional enum list to specify experiment status, default is ACTIVE, allowed values are 
-                  
+
     * ACTIVE
     * FAILED
     * WITHDRAWN
 
   :param date_created: An optional timestamp column to record entry creation or modification time, default current timestamp
   :param platform_name: An optional enum list to specify platform model, default is UNKNOWN, allowed values are 
-                         
+
     * HISEQ250
     * HISEQ4000
     * MISEQ
@@ -632,13 +632,13 @@ class Experiment(Base):
 class Run(Base):
   '''
   A table for loading run (unique combination of experiment, sequencing flowcell and lane) information
-  
+
   :param run_id: An integer id for run table
   :param run_igf_id: A required string as run id specific to IGF team, allowed length 70
   :param experiment_id: A required integer id from experiment table (foreign key)
   :param seqrun_id: A required integer id from seqrun table (foreign key)
   :param status: An optional enum list to specify experiment status, default is ACTIVE, allowed values are 
-                  
+
     * ACTIVE
     * FAILED
     * WITHDRAWN
@@ -676,7 +676,7 @@ class Run(Base):
 class Analysis(Base):
   '''
   A table for loading analysis design information
-  
+
   :param analysis_id: An integer id for analysis table
   :param project_id: A required integer id from project table (foreign key)
   :param analysis_type: An optional string field of 120chrs to specify analysis type
@@ -705,7 +705,7 @@ class Analysis(Base):
 class Collection(Base):
   '''
   A table for loading collection information
-  
+
   :param collection_id: An integer id for collection table
   :param name: A required string to specify collection name, allowed length 70
   :param type: A required string to specify collection type, allowed length 50
@@ -738,11 +738,11 @@ class Collection(Base):
 class File(Base):
   '''
   A table for loading file information
-  
+
   :param file_id: An integer id for file table
   :param file_path: A required string to specify file path information, allowed length 500
   :param location: An optional enum list to specify storage location, default UNKNOWN, allowed values are 
-                    
+
     * ORWELL
     * HPC_PROJECT
     * ELIOT
@@ -750,7 +750,7 @@ class File(Base):
     * UNKNOWN
 
   :param status: An optional enum list to specify experiment status, default is ACTIVE, allowed values are 
-                  
+
     * ACTIVE
     * FAILED
     * WITHDRAWN
@@ -791,7 +791,7 @@ class File(Base):
 class Collection_group(Base):
   '''
   A table for linking files to the collection entries
-  
+
   :param collection_group_id: An integer id for collection_group table
   :param collection_id: A required integer id from collection table (foreign key)
   :param file_id: A required integer id from file table (foreign key)
@@ -815,14 +815,14 @@ class Collection_group(Base):
 class Pipeline(Base):
   '''
   A table for loading pipeline information
-  
+
   :param pipeline_id: An integer id for pipeline table
   :param pipeline_name: A required string to specify pipeline name, allowed length 50
   :param pipeline_db: A required string to specify pipeline database url, allowed length 200
   :param pipeline_init_conf: An optional json field to specify initial pipeline configuration
   :param pipeline_run_conf: An optional json field to specify modified pipeline configuration
   :param pipeline_type: An optional enum list to specify pipeline type, default EHIVE, allowed values are 
-                         
+
     * EHIVE
     * UNKNOWN
     * AIRFLOW
@@ -862,7 +862,7 @@ class Pipeline(Base):
 class Pipeline_seed(Base):
   '''
   A table for loading pipeline seed information
-  
+
   :param pipeline_seed_id: An integer id for pipeline_seed table
   :param seed_id: A required integer id
   :param seed_table: An optional enum list to specify seed table information, default unknown,
@@ -870,7 +870,7 @@ class Pipeline_seed(Base):
   :param pipeline_id: An integer id from pipeline table (foreign key)
   :param status: An optional enum list to specify the status of pipeline, default UNKNOWN,
                   allowed values are 
-                  
+
     * SEEDED
     * RUNNING
     * FINISHED
@@ -890,7 +890,7 @@ class Pipeline_seed(Base):
   pipeline_id = Column(INTEGER(unsigned=True), ForeignKey('pipeline.pipeline_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
   status = Column(Enum('SEEDED', 'RUNNING', 'FINISHED', 'FAILED', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   date_stamp = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
- 
+
   def __repr__(self):
     return \
       "Pipeline_seed(pipeline_seed_id = '{self.pipeline_seed_id}'," \
@@ -903,16 +903,16 @@ class Pipeline_seed(Base):
 class History(Base):
   '''
   A table for loading history information
-  
+
   :param log_id: An integer id for history table
   :param log_type: A required enum value to specify log type, allowed values are
-                    
+
     * CREATED
     * MODIFIED
     * DELETED
 
   :param table_name: A required enum value to specify table information, allowed values are
-                      
+
     * PROJECT
     * USER
     * SAMPLE
@@ -952,7 +952,7 @@ class History(Base):
 class Project_attribute(Base):
   '''
   A table for loading project attributes
-  
+
   :param project_attribute_id: An integer id for project_attribute table
   :param attribute_name: An optional string attribute name, allowed length 50
   :param attribute_value: An optional string attribute value, allowed length 50
@@ -979,7 +979,7 @@ class Project_attribute(Base):
 class Experiment_attribute(Base):
   '''
   A table for loading experiment attributes
-  
+
   :param experiment_attribute_id: An integer id for experiment_attribute table
   :param attribute_name: An optional string attribute name, allowed length 30
   :param attribute_value: An optional string attribute value, allowed length 50
@@ -1001,12 +1001,12 @@ class Experiment_attribute(Base):
       "attribute_name = '{self.attribute_name}'," \
       "attribute_value = '{self.attribute_value}'," \
       "experiment_id = '{self.experiment_id}')".format(self=self)
-  
+
 
 class Collection_attribute(Base):
   '''
   A table for loading collection attributes
-  
+
   :param collection_attribute_id: An integer id for collection_attribute table
   :param attribute_name: An optional string attribute name, allowed length 200
   :param attribute_value: An optional string attribute value, allowed length 200
@@ -1033,7 +1033,7 @@ class Collection_attribute(Base):
 class Sample_attribute(Base):
   '''
   A table for loading sample attributes
-  
+
   :param sample_attribute_id: An integer id for sample_attribute table
   :param attribute_name: An optional string attribute name, allowed length 50
   :param attribute_value: An optional string attribute value, allowed length 50
@@ -1060,7 +1060,7 @@ class Sample_attribute(Base):
 class Seqrun_attribute(Base):
   '''
   A table for loading seqrun attributes
-  
+
   :param seqrun_attribute_id: An integer id for seqrun_attribute table
   :param attribute_name: An optional string attribute name, allowed length 50
   :param attribute_value: An optional string attribute value, allowed length 100
@@ -1079,7 +1079,7 @@ class Seqrun_attribute(Base):
 class Run_attribute(Base):
   '''
   A table for loading run attributes
-  
+
   :param run_attribute_id: An integer id for run_attribute table
   :param attribute_name: An optional string attribute name, allowed length 30
   :param attribute_value: An optional string attribute value, allowed length 50
@@ -1106,7 +1106,7 @@ class Run_attribute(Base):
 class File_attribute(Base):
   '''
   A table for loading file attributes
-  
+
   :param file_attribute_id: An integer id for file_attribute table
   :param attribute_name: An optional string attribute name, allowed length 30
   :param attribute_value: An optional string attribute value, allowed length 50
