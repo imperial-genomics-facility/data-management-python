@@ -164,8 +164,11 @@ def copy_local_file(source_path,destinationa_path,cd_to_dest=True,force=False):
 
     if os.path.isfile(source_path):
       copy2(source_path, destination_path, follow_symlinks=True)                # copy file
+      check_file_path(destination_path)
     elif os.path.isdir(source_path):
       copytree(source_path,destination_path)                                    # copy dir
+      check_file_path(
+        os.path.join(destination_path,os.path.basename(source_path)))
     if cd_to_dest:
       os.chdir(current_dir)                                                     # change to original path after copy
   except Exception as e:
@@ -178,7 +181,7 @@ def copy_remote_file(source_path,destinationa_path, source_address=None,
                      exclude_pattern_list=None):
     '''
     A method for copy files from or to remote location
-    
+
     :param source_path: A source file path
     :param destination_path: A destination file path
     :param source_address: Address of the source server
