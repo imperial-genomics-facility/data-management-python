@@ -9,7 +9,7 @@ from dateutil.parser import parse
 from tempfile import mkdtemp,gettempdir
 from shutil import rmtree, move, copy2,copytree
 
-def move_file(source_path,destinationa_path, force=False):
+def move_file(source_path,destinationa_path,cd_to_dest=True,force=False):
   '''
   A method for moving files to local disk
   
@@ -28,8 +28,13 @@ def move_file(source_path,destinationa_path, force=False):
     dir_path=os.path.dirname(destinationa_path)
     if not os.path.exists(dir_path):
       os.makedirs(dir_path, mode=0o770)
-
-    move(source_path, destinationa_path, copy_function=copy2)
+    current_dir = os.getcwd()
+    if cd_to_dest:
+      os.chdir(dir_path)
+    move(source_path,destinationa_path,copy_function=copy2)
+    check_file_path(destinationa_path)
+    if cd_to_dest:
+      os.chdir(current_dir)
   except Exception as e:
     raise ValueError("Failed to move file, error: {0}".format(e))
 
