@@ -234,7 +234,8 @@ def copy_seqrun_chunk(**context):
           local_seqrun_path,
           file_path)
       if os.path.exists(local_path) and \
-         os.path.getsize(local_path) == file_size:
+          os.path.getsize(local_path) == file_size and \
+         os.path.basename(local_path) != 'SampleSheet.csv':
         pass
       else:
         copy_remote_file(
@@ -566,7 +567,7 @@ def run_tile_demult_list_func(**context):
     execute_singuarity_cmd(
       image_path=pandoc_image_path,
       command_string=txt_conversion_cmd,
-      bind_dir_list=[tmp_bcl2fq_output],
+      bind_dir_list=[tmp_bcl2fq_output,os.path.dirname(html_report_path)],
       log_dir=tmp_bcl2fq_output)
     box_dir = \
       os.path.join(
