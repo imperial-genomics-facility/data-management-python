@@ -3,7 +3,7 @@ from igf_data.utils.fileutils import get_datestamp_label
 from igf_data.utils.fileutils import preprocess_path_name
 from igf_data.utils.fileutils import get_file_extension
 from igf_data.utils.fileutils import move_file,check_file_path
-from igf_data.utils.fileutils import calculate_file_checksum
+from igf_data.utils.fileutils import calculate_file_checksum,copy_local_file
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.igfdb.sampleadaptor import SampleAdaptor
@@ -17,7 +17,7 @@ class Analysis_collection_utils:
   A class for dealing with analysis file collection. It has specific method for moving analysis files
   to a specific directory structure and rename the file using a uniform rule, if required.
   Example '<collection_name>_<analysis_name>_<tag>_<datestamp>.<original_suffix>'
-    
+
   :param dbsession_class: A database session class
   :param collection_name: Collection name information for file, default None
   :param collection_type: Collection type information for file, default None
@@ -64,7 +64,7 @@ class Analysis_collection_utils:
     '''
     A method for create or update analysis file collection in db. Required elements will be
     collected from database if base_path element is given.
-    
+
     :param file_path: file path to load as db collection
     :param dbsession: An active database session
     :param withdraw_exisitng_collection: Remove existing collection group
@@ -145,14 +145,14 @@ class Analysis_collection_utils:
     '''
     A method for loading analysis results to disk and database. File will be moved to a new path if base_path is present.
     Directory structure of the final path is based on the collection_table information.
-    
+
     Following will be the final directory structure if base_path is present
-    
+
      * project - base_path/project_igf_id/analysis_name
      * sample - base_path/project_igf_id/sample_igf_id/analysis_name
      * experiment - base_path/project_igf_id/sample_igf_id/experiment_igf_id/analysis_name
      * run - base_path/project_igf_id/sample_igf_id/experiment_igf_id/run_igf_id/analysis_name
-    
+
     :param input_file_list: A list of input file to load, all using the same collection info
     :param withdraw_exisitng_collection: Remove existing collection group, DO NOT use this while loading a list of files
     :param autosave_db: Save changes to database, default True
@@ -312,7 +312,7 @@ class Analysis_collection_utils:
         if final_path !=input_file:                                             # move file if its required
           final_path = \
             preprocess_path_name(input_path=final_path)                         # remove unexpected characters from file path
-          move_file(
+          copy_local_file(
             source_path=input_file,
             destinationa_path=final_path,
             force=force)                                                        # move or overwrite file to destination dir
@@ -340,7 +340,7 @@ class Analysis_collection_utils:
   def get_new_file_name(self,input_file,file_suffix=None):
     '''
     A method for fetching new file name
-    
+
     :param input_file: An input filepath
     :param file_suffix: A file suffix
     '''
