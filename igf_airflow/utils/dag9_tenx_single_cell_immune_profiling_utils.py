@@ -45,7 +45,7 @@ def load_analysis_files_func(**context):
     output_files_key = \
       context['params'].get('output_files_key')
     database_config_file = \
-      Variable.get('database_config_file')
+      Variable.get('test_database_config_file')
     base_result_dir = \
       Variable.get('base_result_dir')
     dbparams = \
@@ -129,7 +129,7 @@ def run_singlecell_notebook_wrapper_func(**context):
     analysis_id = \
         dag_run.conf.get('analysis_id')
     database_config_file = \
-      Variable.get('database_config_file')
+      Variable.get('test_database_config_file')
     dbparams = \
       read_dbconf_json(database_config_file)
     aa = \
@@ -218,7 +218,7 @@ def run_scanpy_for_sc_5p_func(**context):
     analysis_id = \
         dag_run.conf.get('analysis_id')
     database_config_file = \
-      Variable.get('database_config_file')
+      Variable.get('test_database_config_file')
     dbparams = \
       read_dbconf_json(database_config_file)
     aa = \
@@ -292,7 +292,7 @@ def irods_files_upload_for_analysis(**context):
     analysis_id = \
         dag_run.conf.get('analysis_id')
     database_config_file = \
-      Variable.get('database_config_file')
+      Variable.get('test_database_config_file')
     dbparams = \
       read_dbconf_json(database_config_file)
     aa = \
@@ -363,7 +363,7 @@ def ftp_files_upload_for_analysis(**context):
     analysis_id = \
         dag_run.conf.get('analysis_id')
     database_config_file = \
-      Variable.get('database_config_file')
+      Variable.get('test_database_config_file')
     dbparams = \
       read_dbconf_json(database_config_file)
     aa = \
@@ -548,7 +548,7 @@ def load_cellranger_result_to_db_func(**context):
     base_result_dir = \
       Variable.get('base_result_dir')
     database_config_file = \
-      Variable.get('database_config_file')
+      Variable.get('test_database_config_file')
     dbparams = \
       read_dbconf_json(database_config_file)
     base = \
@@ -1010,7 +1010,7 @@ def fetch_analysis_info_and_branch_func(**context):
     analysis_info_xcom_key = \
       context['params'].get('analysis_info_xcom_key')
     database_config_file = \
-      Variable.get('database_config_file')
+      Variable.get('test_database_config_file')
     analysis_list.append(no_analysis)
     if dag_run is not None and \
        dag_run.conf is not None and \
