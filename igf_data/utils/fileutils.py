@@ -154,10 +154,7 @@ def copy_local_file(source_path,destinationa_path,cd_to_dest=True,force=False):
       raise IOError('source file {0} not found'.\
                     format(source_path))
 
-    if os.path.exists(destination_path) and not force:
-      raise IOError(
-              'destination file {0} already present. set option "force" as True to overwrite it'.\
-                format(destination_path))
+    
 
     dir_path = os.path.dirname(destination_path)
     if not os.path.exists(dir_path):
@@ -168,12 +165,21 @@ def copy_local_file(source_path,destinationa_path,cd_to_dest=True,force=False):
       os.chdir(dir_path)                                                        # change to dest dir before copy
 
     if os.path.isfile(source_path):
+      if os.path.exists(destination_path) and not force:
+        raise IOError(
+                'destination file {0} already present. set option "force" as True to overwrite it'.\
+                  format(destination_path))
       copy2(source_path, destination_path, follow_symlinks=True)                # copy file
       check_file_path(destination_path)
     elif os.path.isdir(source_path):
+      if os.path.exists(destination_path) and not force:
+        raise ValueError(
+                'Failed to copy dir {0}, path already exists, use force to remove it'.\
+                  format(destination_path))
+      if os.path.exists(destination_path) and force:
+        remove_dir(destination_path)
       copytree(source_path,destination_path)                                    # copy dir
-      check_file_path(
-        os.path.join(destination_path,os.path.basename(source_path)))
+      check_file_path(destination_path)
     if cd_to_dest:
       os.chdir(current_dir)                                                     # change to original path after copy
   except Exception as e:
