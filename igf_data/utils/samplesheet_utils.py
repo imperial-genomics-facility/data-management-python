@@ -56,6 +56,9 @@ def get_formatted_samplesheet_per_lane(
     file_list = list()
     for lane_id in lanes:
       sa = SampleSheet(tmp_file)
+      sa.filter_sample_data(
+        condition_key='Lane',
+        condition_value=str(lane_id))
       df = pd.DataFrame(sa._data)
       lane_df = df[df['Lane']==lane_id].copy()
       if len(lane_df.index)==0:
