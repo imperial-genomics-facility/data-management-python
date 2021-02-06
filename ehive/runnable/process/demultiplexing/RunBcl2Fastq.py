@@ -2,7 +2,7 @@
 import os, subprocess,re
 from shutil import copytree,copy2,move
 from shlex import quote
-from igf_data.utils.fileutils import get_temp_dir,remove_dir,copy_local_file
+from igf_data.utils.fileutils import get_temp_dir,remove_dir,copy_local_file,check_file_path
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.illumina.samplesheet import SampleSheet
 from igf_data.process.moveBclFilesForDemultiplexing import moveBclFilesForDemultiplexing
@@ -187,8 +187,31 @@ class RunBcl2Fastq(IGFBaseProcess):
         os.path.join(\
           output_fastq_dir,
           samplesheet_filename))                                                # add samplesheet to output dir
-      copy_local_file(report_dir,output_fastq_dir)                                         # move report directory to project dir
-      copy_local_file(stats_dir,output_fastq_dir)                                          # move stats directory to project dir
+      copy_local_file(
+        report_dir,
+        os.path.join(output_fastq_dir,"Reports"))                                        # move report directory to project dir
+      check_file_path(
+        os.path.join(
+          output_fastq_dir,
+          'Reports',
+          'html',
+          flowcell_id,
+          'all',
+          'all',
+          'all',
+          'laneBarcode.html'
+        )
+      )
+      copy_local_file(
+        stats_dir,
+        os.path.join(output_fastq_dir,'Stats'))                                          # move stats directory to project dir
+      check_file_path(
+        os.path.join(
+          output_fastq_dir,
+          'Stats',
+          'Stats.json'
+        )
+      )
       self.param('dataflow_params',
                  {'fastq_dir':output_fastq_dir,
                   'bcl2fq_project_type':project_type})                          # set dataflow params
