@@ -521,6 +521,15 @@ class PrepareQcPageForRemote(IGFBaseProcess):
       merged_data['FastqFile'] = \
         merged_data['FastqFile'].\
         map(lambda path: os.path.basename(path))                                # keep only fastq filename
+      df = merged_data.copy()
+      err_list = list()
+      for sample_id,s_data in df.groupby('Sample_ID'):
+        if len(s_data.index) > 1:
+          total_reads_list = list(s_data['TotalReads'].drop_duplicates().values)
+          if len(total_reads_list) > 1:
+            err_list.append('{0}: e'.format(sample_id))
+      if len(err_list) > 0:
+        raise ValueError('Read count not matching for paired end: {0}'.format(';'.join(err_list)))
       qc_merged_data = \
         merged_data.loc[:,required_headers].\
         to_dict(orient='records')                                               #  extract final data
