@@ -684,7 +684,7 @@ class Analysis(Base):
   '''
   __tablename__ = 'analysis'
   __table_args__ = (
-    UniqueConstraint('project_id', 'analysis_name'),
+    UniqueConstraint('analysis_name','project_id'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
   analysis_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
