@@ -100,3 +100,4 @@ test/utils/data
 migrations/alembictest.db
 
 *.sqlite
+condaenv.ybiha2u5.requirements.txt
