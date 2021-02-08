@@ -24,6 +24,7 @@ def upgrade():
     op.execute("ALTER TABLE `pipeline_seed` MODIFY COLUMN `seed_table` ENUM('project','sample','experiment','run','file','seqrun','collection','analysis','unknown') NOT NULL DEFAULT 'unknown'")
     op.execute("ALTER TABLE `collection` MODIFY COLUMN `table` ENUM('sample','experiment','run','file','project','seqrun','analysis','unknown') NOT NULL DEFAULT 'unknown'")
     op.execute("ALTER TABLE `pipeline` MODIFY COLUMN `pipeline_type` ENUM('EHIVE','AIRFLOW','NEXTFLOW','UNKNOWN') NOT NULL DEFAULT 'EHIVE'")
+    op.execute("ALTER TABLE `analysis` MODIFY COLUMN `analysis_type` varchar(120) NOT NULL")
     # ### end Alembic commands ###
 
 
@@ -35,4 +36,5 @@ def downgrade():
     op.execute("ALTER TABLE `pipeline_seed` MODIFY COLUMN `seed_table` ENUM('project','sample','experiment','run','file','seqrun','collection','unknown') NOT NULL DEFAULT 'unknown'")
     op.execute("ALTER TABLE `collection` MODIFY COLUMN `table` ENUM('sample','experiment','run','file','project','seqrun','unknown') NOT NULL DEFAULT 'unknown'")
     op.execute("ALTER TABLE `pipeline` MODIFY COLUMN `pipeline_type` ENUM('EHIVE','UNKNOWN') NOT NULL DEFAULT 'EHIVE'")
+    op.execute("ALTER TABLE `analysis` MODIFY COLUMN `analysis_type` enum('RNA_DIFFERENTIAL_EXPRESSION','RNA_TIME_SERIES','CHIP_PEAK_CALL','SOMATIC_VARIANT_CALLING','UNKNOWN') NOT NULL DEFAULT 'UNKNOWN'")
     # ### end Alembic commands ###

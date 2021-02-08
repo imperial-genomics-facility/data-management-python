@@ -321,5 +321,7 @@ ALTER TABLE `collection` MODIFY COLUMN `table` ENUM('sample','experiment','run',
 
 ALTER TABLE `pipeline` MODIFY COLUMN `pipeline_type` ENUM('EHIVE','AIRFLOW','NEXTFLOW','UNKNOWN') NOT NULL DEFAULT 'EHIVE';
 
+ALTER TABLE `analysis` MODIFY COLUMN `analysis_type` varchar(120) NOT NULL;
+
 UPDATE alembic_version SET version_num='4d320ef483f9' WHERE alembic_version.version_num = '4c97401b8961';
 
