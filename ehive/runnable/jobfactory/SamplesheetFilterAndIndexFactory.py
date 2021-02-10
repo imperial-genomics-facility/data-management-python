@@ -14,8 +14,8 @@ class SamplesheetFilterAndIndexFactory(IGFBaseJobFactory):
         'samplesheet_filename':'SampleSheet.csv',
       })
     return params_dict
-  
-  
+
+
   def run(self):
     try:
       samplesheet_file=self.param_required('samplesheet')
@@ -23,26 +23,26 @@ class SamplesheetFilterAndIndexFactory(IGFBaseJobFactory):
       seqrun_igf_id=self.param_required('seqrun_igf_id')
       base_work_dir=self.param_required('base_work_dir')
       samplesheet_filename=self.param('samplesheet_filename')
-      
+
       job_name=self.job_name()
       work_dir=os.path.join(base_work_dir,seqrun_igf_id,job_name)               # get work directory name
       if not os.path.exists(work_dir):
         os.mkdir(work_dir)                                                      # create work directory
-        
+
       if not os.path.exists(samplesheet_file):
         raise IOError('Samplesheet file {0} not found'.format(samplesheet_file))
-      
+
       samplesheet=SampleSheet(infile=samplesheet_file)                          # read samplesheet
       samplesheet.filter_sample_data(condition_key='Sample_Project', 
                                      condition_value=project_name, 
                                      method='include')                          # keep only selected project
       lanes=samplesheet.get_lane_count()                                        # get samplesheet lanes
       data_group=dict()
-      
+
       if not len(lanes)>0:
         raise ValueError('project {0} is not present in the samplesheet {1}'.\
                          format(project_name,samplesheet_file))
-        
+
       if len(lanes)>1:
         for lane_id in lanes:
           samplesheet_project_data=copy.deepcopy(samplesheet)                   # deep copy samplesheet object
@@ -53,7 +53,7 @@ class SamplesheetFilterAndIndexFactory(IGFBaseJobFactory):
                               group_data_by_index_length()                      # group data by lane
       else:
         data_group[lanes[0]]=samplesheet.group_data_by_index_length()           # For MiSeq and NextSeq or single lane hiseq projects
-        
+
       sub_tasks=list()                                                          # create empty sub_tasks data structure
       for lane_id in data_group.keys():
         for index_length in data_group[lane_id].keys():

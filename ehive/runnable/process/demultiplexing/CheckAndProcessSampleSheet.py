@@ -3,8 +3,10 @@ import os
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.illumina.samplesheet import SampleSheet
 from igf_data.illumina.runinfo_xml import RunInfo_xml
+from igf_data.utils.fileutils import get_temp_dir
 from igf_data.illumina.runparameters_xml import RunParameter_xml
 from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
+from igf_data.process.singlecell_seqrun.processsinglecellsamplesheet import ProcessSingleCellDualIndexSamplesheet
 
 class CheckAndProcessSampleSheet(IGFBaseProcess):
   '''
@@ -43,6 +45,8 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
       read1_adapter_label = self.param('read1_adapter_label')
       read2_adapter_label = self.param('read2_adapter_label')
       project_type = self.param('project_type')
+      sc_dual_index_json = self.param_required('sc_dual_index_json')
+      model_name = self.param_required('model_name')
 
       job_name = self.job_name()
       work_dir = \
@@ -70,6 +74,17 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
         raise IOError('seqrun: {0}, samplesheet file {1} not found'.\
                       format(seqrun_igf_id,samplesheet_file))
 
+      tmp_dir = get_temp_dir(use_ephemeral_space=True)
+      tmp_samplesheet = os.path.join(tmp_dir,samplesheet_filename)
+      sc_dual_process = \
+        ProcessSingleCellDualIndexSamplesheet(
+          samplesheet_file=samplesheet_file,
+          singlecell_dual_index_barcode_json=sc_dual_index_json,
+          platform=model_name)
+      sc_dual_process.\
+        modify_samplesheet_for_sc_dual_barcode(
+          output_samplesheet=tmp_samplesheet)                                   # fix for sc dual index
+      samplesheet_file = tmp_samplesheet
       samplesheet_sc = \
         SampleSheet(infile=samplesheet_file)                                    # read samplesheet for single cell check
       samplesheet_sc.\

@@ -19,11 +19,11 @@ class SeqrunAdaptor(BaseAdaptor):
     (seqrun_data, seqrun_attr_data) = \
       self.divide_data_to_table_and_attribute(data=data)
 
-    try:                                                                                 
+    try:
       self.store_seqrun_data(data=seqrun_data)                                                # store run
       if len(seqrun_attr_data.index)>0:                                                     # check if any attribute exists
         self.store_seqrun_attributes(data=seqrun_attr_data)                                   # store run attributes
-     
+
       if autosave:
         self.commit_session()                                                                 # save changes to database
     except Exception as e:
@@ -156,7 +156,7 @@ class SeqrunAdaptor(BaseAdaptor):
         self.rollback_session()
       raise ValueError(
               'Failed to store seqrun attribute, error: {0}'.format(e))
-      
+
 
   def store_seqrun_stats_data(self,data,seqrun_id='',autosave=True):
     '''
@@ -203,13 +203,13 @@ class SeqrunAdaptor(BaseAdaptor):
         self.rollback_session()
       raise ValueError(
               'Failed to store seqrun stats data, error: {0}'.format(e))
-      
+
 
   def fetch_seqrun_records_igf_id(
         self,seqrun_igf_id,target_column_name='seqrun_igf_id'):
     '''
     A method for fetching data for Seqrun table
-    
+
     :param seqrun_igf_id: an igf id
     :param target_column_name: a column name in the Seqrun table, default seqrun_igf_id
     :returns: Seqrun record as oblect

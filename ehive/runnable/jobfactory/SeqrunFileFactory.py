@@ -88,7 +88,7 @@ class SeqrunFileFactory(IGFBaseJobFactory):
         md5_json = json.load(json_data)                                         # read json data, get all file and md5 from json file
       self.param('sub_tasks',md5_json)                                          # seed dataflow
       remove_dir(temp_dir)                                                      # remove temp dir when its not required
-      
+
       message = \
         'seqrun: {0}, seeded {1} files for copy'.\
           format(seqrun_igf_id,len(md5_json))
