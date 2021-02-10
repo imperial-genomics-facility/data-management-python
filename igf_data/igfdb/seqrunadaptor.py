@@ -230,12 +230,31 @@ class SeqrunAdaptor(BaseAdaptor):
       raise ValueError(
               'Failed to fetch seqrun if, error: {0}'.format(e))
 
+  def fetch_platform_info_for_seqrun(self,seqrun_igf_id):
+    '''
+    A method for fetching platform info for seqrun
+
+    :param seqrun_igf_id: Seqrun igf id for platform name lookup
+    :returns: A string containing platform name or None
+    '''
+    try:
+      query = \
+        self.session.\
+        query(Platform.model_name).\
+        join(Seqrun,Seqrun.platform_id==Platform.platform_id).\
+        filter(Seqrun.seqrun_igf_id==seqrun_igf_id)
+      platform_name = \
+        self.fetch_records(query=query,output_mode='one_or_none')
+      return platform_name
+    except Exception as e:
+      raise ValueError('Failed to fetch platform info for seqrun {0}'.\
+              format(seqrun_igf_id))
 
   def fetch_flowcell_barcode_rules_for_seqrun(
         self,seqrun_igf_id,flowcell_label='flowcell',output_mode='dataframe'):
     '''
     A method for fetching flowcell barcode rule for Seqrun
-    
+
     :param seqrun_igf_id: A seqrun igf id
     :param flowcell_label: Flowcell label, default 'flowcell'
     :param output_mode: Query output mode, default 'dataframe'
