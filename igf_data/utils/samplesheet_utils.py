@@ -1,22 +1,26 @@
 import os
+import traceback
 import pandas as pd
 from igf_data.illumina.basesMask import BasesMask
 from igf_data.utils.sequtils import rev_comp
 from igf_data.illumina.samplesheet import SampleSheet
 from igf_data.utils.fileutils import get_temp_dir,copy_local_file,check_file_path,remove_dir
 from igf_data.process.singlecell_seqrun.processsinglecellsamplesheet import ProcessSingleCellSamplesheet
+from igf_data.process.singlecell_seqrun.processsinglecellsamplesheet import ProcessSingleCellDualIndexSamplesheet
 from igf_data.process.seqrun_processing.find_and_process_new_seqrun import validate_samplesheet_for_seqrun
 from igf_data.process.seqrun_processing.find_and_process_new_seqrun import check_for_registered_project_and_sample
 
 def get_formatted_samplesheet_per_lane(
-    samplesheet_file,singlecell_barcode_json,runinfo_file,output_dir,filter_lane=None,
-    single_cell_tag='10X',index1_rule=None,index2_rule=None):
+    samplesheet_file,singlecell_barcode_json,singlecell_dual_barcode_json,runinfo_file,output_dir,
+    platform,filter_lane=None,single_cell_tag='10X',index1_rule=None,index2_rule=None):
   """
   A function for filtering and reformatting samplesheet files and splitting the data per lane
 
   :param samplesheet_file: Samplesheet file path
   :param singlecell_barcode_json: Singlecell barcode json path
+  :param singlecell_dual_barcode_json: Single cell dual barcode json path
   :param runinfo_file: Path to RunInfo.xml file
+  :param platform: Platform name for setting sc dual index workflow
   :param output_dir: Output dir path
   :param filter_lane: Lane to filter Samplesheeet data, default None
   :param single_cell_tag: Tag for singlecell samples, default 10X
@@ -30,6 +34,20 @@ def get_formatted_samplesheet_per_lane(
 
   """
   try:
+    tmp_dir = get_temp_dir()
+    tmp_file = \
+      os.path.join(
+        tmp_dir,
+        os.path.basename(samplesheet_file))
+    sc_dual_process = \
+      ProcessSingleCellDualIndexSamplesheet(
+        samplesheet_file=samplesheet_file,
+        singlecell_dual_index_barcode_json=singlecell_dual_barcode_json,
+        platform=platform)
+    sc_dual_process.\
+      modify_samplesheet_for_sc_dual_barcode(
+        output_samplesheet=tmp_file)
+    samplesheet_file = tmp_file
     tmp_dir = get_temp_dir()
     tmp_file = \
       os.path.join(
@@ -121,6 +139,7 @@ def get_formatted_samplesheet_per_lane(
           'bases_mask':bases_mask_value})
     return file_list
   except Exception as e:
+    traceback.print_exc()
     raise ValueError(
             'Failed to format samplesheet, error: {0}'.\
               format(e))
