@@ -6,11 +6,14 @@ services:
   - mysql
 before_install:
   - mysql -e 'CREATE DATABASE IF NOT EXISTS igfdb;'
+  - sudo apt-get install jq
+  - curl -LSs "$(curl -LSs https://api.github.com/repos/codacy/codacy-coverage-reporter/releases/latest | jq -r '.assets | map({name, browser_download_url} | select(.name | endswith(".jar"))) | .[0].browser_download_url')" -o codacy-coverage-reporter-assembly.jar
 install:
  - sudo apt-get update
  - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
  - bash miniconda.sh -b -p $HOME/miniconda
  - export PATH="$HOME/miniconda/bin:$PATH"
+ - export CODACY_PROJECT_TOKEN=903c12a4fb2a477282db8d9578a4986c
  - hash -r
  - conda config --set always_yes yes --set changeps1 no
  - conda update -q conda
@@ -22,6 +25,7 @@ script:
 after_success:
 - coverage combine
 - coveralls
+- java -jar codacy-coverage-reporter-assembly.jar report -l Java -r build/reports/jacoco/test/jacocoTestReport.xml
 notifications:
   slack:
     secure: c0YtfTFtGgK2deesuMBBdEURwlXvJwc1UC9JKjMKQ+5mUHwEicIO0T4YlsI7KzHFBue01bE6zn9p7Az9Bp5VFzQUAjCMzJ25ScBJan/RWEuYA/A3uz5WOcFA0Th0bZu6Zu0bGkk9goyYvUNpzA50Dav7bqvrn1k6HOEBaj3GhA949T3WG1tSWCYktphqgyMV1MW0o5j5KFGqK08034Ex2t8l+Om25RANAJwf+6dVLKpJJvrlqbk7O0PgJXiCZmcCyysWHpY9+ZLk5zFAuADBThKt6PycYRX8sDOgTqt29DhpCKXOMfUPwQVN9yaHcQCLFxWJEcoxdNNy65jFGmPg9oMvzA1gHq1bVgBqZ/bN35WUShqL4eBELL7C5rhtednh46bBNeFTz37CtdZRvi21EXK7kuKT/+5bqlt+uUWYt3QoPGykgD42pg9c9XaGnXCI6rZ/F0ACLrxMR8DEKcqxFKIhI+aUieBUruyHmHhRUSkUX4iPtY/tCQriE69/McaToRae0d0p8GSF1UXv9jihzQJJ8DS5S9mlSY5NzMvteDi5yptBeYmKdSIy1/MG24j4MBevzfXO8M+JiIA40rCx/yaoKt9haAvDU9gzOCGSdNdNFsNXsLxY3mPMC5QFcNXdshq6Gv9HZhoRRnZV9l0pIx2mclvvadbszFAOpqKYajE=
