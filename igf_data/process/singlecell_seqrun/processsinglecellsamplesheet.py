@@ -31,7 +31,7 @@ class ProcessSingleCellDualIndexSamplesheet:
                     ('MISEQ', 'index2_workflow_a(i5)'))):
     self.samplesheet_file = samplesheet_file
     self.singlecell_barcodes = \
-      read_json_data(singlecell_dual_index_barcode_json)
+      read_json_data(singlecell_dual_index_barcode_json)[0]
     self.platform = platform
     self.singlecell_tag = singlecell_tag
     self.index_column = index_column
@@ -58,12 +58,14 @@ class ProcessSingleCellDualIndexSamplesheet:
       sa = SampleSheet(self.samplesheet_file)
       df = pd.DataFrame(sa._data)
       df[self.sample_description_column] = \
-        df[self.sample_description_column].map(lambda x: x.upper())             # convert sample description to upper case
+        df[self.sample_description_column].map(lambda x: x.strip().upper())             # convert sample description to upper case
       df = \
         df.apply(
           lambda series: self._replace_sc_dual_barcodes(series),
+          result_type='reduce',
           axis=1)
-
+      sa._data = df.to_dict(orient='records')
+      sa.print_sampleSheet(output_samplesheet)
     except Exception as e:
       raise ValueError('Failed to convert samplesheet {0}, error: {1}'.\
               format(self.samplesheet_file,e))
@@ -76,7 +78,7 @@ class ProcessSingleCellDualIndexSamplesheet:
     :returns: Samplesheet row as Pandas Series
     '''
     try:
-      if series[self.sample_description_column] == self.singlecell_tag.upper() and \
+      if series[self.sample_description_column].strip() == self.singlecell_tag and \
          series[self.index_column] in self.singlecell_barcodes:
         index_barcode = series[self.index_column]
         index2_tag = self.workflow_group[self.platform]

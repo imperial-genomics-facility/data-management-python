@@ -1,0 +1,29 @@
+[Header],,,,,,,,,,
+IEMFileVersion,4,,,,,,,,,
+Investigator Name,N6_L4,,,,,,,,,
+Experiment Name,HXX1_2X150,,,,,,,,,
+Date,28/02/2017,,,,,,,,,
+Workflow,GenerateFASTQ,,,,,,,,,
+Application,HiSeq FASTQ Only,,,,,,,,,
+Assay,,,,,,,,,,
+Description,,,,,,,,,,
+Chemistry,,,,,,,,,,
+,,,,,,,,,,
+[Reads],,,,,,,,,,
+151,,,,,,,,,,
+151,,,,,,,,,,
+,,,,,,,,,,
+[Settings],,,,,,,,,,
+ReverseComplement,0,,,,,,,,,
+,,,,,,,,,,
+[Data],,,,,,,,,,
+Lane,Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description
+1,PhiX,PhiX-1,,,No_index,NNNNNNNN,No_index,NNNNNNNN,phix_test,
+2,PhiX,PhiX-2,,,No_index,NNNNNNNN,No_index,NNNNNNNN,phix_test,
+3,IGF0001,s1,,,701,ATTACTCG,501,AGGCTATA,project_1,
+3,IGF0002,s2,,,701,ATTACTCG,502,GCCTCTAT,project_1,
+3,IGF0003,s3,,,701,ATTACTCG,503,AGGATAGG,project_1,
+4,IGF0004,s4,,,SI-GA-C3,SI-GA-C3,,,project_2,10X
+5,IGF0008,s8,,,SI-GA-B3,SI-GA-B3,,,project_2,10X
+5,IGF0009,s9,,,SI-NT-B3,SI-NT-B3,,,project_3,10X
+5,IGF00010,s10,,,SI-TT-B3,SI-TT-B3,,,project_3,10X
