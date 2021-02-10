@@ -46,8 +46,14 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
       read2_adapter_label = self.param('read2_adapter_label')
       project_type = self.param('project_type')
       sc_dual_index_json = self.param_required('sc_dual_index_json')
-      model_name = self.param_required('model_name')
 
+      sa = SeqrunAdaptor(**{'session_class':igf_session_class})
+      sa.start_session()
+      rules_data = \
+        sa.fetch_flowcell_barcode_rules_for_seqrun(seqrun_igf_id)               # convert index based on barcode rules
+      platform_name = \
+        sa.fetch_platform_info_for_seqrun(seqrun_igf_id)
+      sa.close_session()
       job_name = self.job_name()
       work_dir = \
         os.path.join(\
@@ -56,7 +62,6 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
           job_name)                                                             # get work directory name
       if not os.path.exists(work_dir):
         os.makedirs(work_dir,mode=0o770)                                        # create work directory
-
       output_file = \
         os.path.join(\
           work_dir,
@@ -64,7 +69,6 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
       if os.path.exists(output_file):
         raise IOError('seqrun: {0}, reformatted samplesheet {1} already present'.\
                       format(seqrun_igf_id,output_file))
-
       samplesheet_file = \
         os.path.join(\
           seqrun_local_dir,
@@ -73,14 +77,13 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
       if not os.path.exists(samplesheet_file):
         raise IOError('seqrun: {0}, samplesheet file {1} not found'.\
                       format(seqrun_igf_id,samplesheet_file))
-
       tmp_dir = get_temp_dir(use_ephemeral_space=True)
       tmp_samplesheet = os.path.join(tmp_dir,samplesheet_filename)
       sc_dual_process = \
         ProcessSingleCellDualIndexSamplesheet(
           samplesheet_file=samplesheet_file,
           singlecell_dual_index_barcode_json=sc_dual_index_json,
-          platform=model_name)
+          platform=platform_name)
       sc_dual_process.\
         modify_samplesheet_for_sc_dual_barcode(
           output_samplesheet=tmp_samplesheet)                                   # fix for sc dual index
@@ -123,12 +126,6 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
           self.post_message_to_ms_team(
             message=message,
             reaction='pass')
-      sa = SeqrunAdaptor(**{'session_class':igf_session_class})
-      sa.start_session()
-      rules_data = \
-        sa.fetch_flowcell_barcode_rules_for_seqrun(seqrun_igf_id)               # convert index based on barcode rules
-      sa.close_session()
-
       rules_data_set = rules_data.to_dict(orient='records')                     # convert dataframe to dictionary
       if len(rules_data_set) > 0:
         rules_data=rules_data_set[0]                                            # consider only the first rule
