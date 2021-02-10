@@ -464,6 +464,7 @@ def run_tile_demult_list_func(**context):
     runinfo_xml_file_name = context['params'].get('runinfo_xml_file_name')
     runParameters_xml_file_name = context['params'].get('runParameters_xml_file_name')
     singlecell_barcode_json = Variable.get('singlecell_barcode_json')
+    singlecell_dual_barcode_json = Variable.get('singlecell_dual_barcode_json')
     tile_list = context['params'].get('tile_list')
     bcl2fastq_image_path = Variable.get('bcl2fastq_image_path')
     pandoc_image_path = Variable.get('pandoc_image_path')
@@ -496,14 +497,20 @@ def run_tile_demult_list_func(**context):
         runparameters_data.\
           get_hiseq_flowcell()
     index2_rule = None
-    if flowcell_type is  not None and \
+    platform_name = None
+    if flowcell_type is not None and \
        flowcell_type == 'HiSeq 3000/4000 PE':
       index2_rule = 'REVCOMP'
+    if flowcell_type is not None and \
+       flowcell_type.startswith('HiSeq 3000/4000'):
+      platform_name = 'HISEQ4000'                                       # FIX ME: No neet to add MiSeq now, change it for Nova
     tmp_samplesheet_dir = get_temp_dir()
     file_list = \
       get_formatted_samplesheet_per_lane(
         samplesheet_file=samplesheet_path,
         singlecell_barcode_json=singlecell_barcode_json,
+        singlecell_dual_barcode_json=singlecell_dual_barcode_json,
+        platform=platform_name,
         runinfo_file=runinfo_path,
         output_dir=tmp_samplesheet_dir,
         filter_lane=lane_id,
