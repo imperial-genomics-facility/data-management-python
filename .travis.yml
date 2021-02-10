@@ -3,21 +3,23 @@ language: python
 python:
 - '3.6'
 services:
-  - mysql
+- mysql
 before_install:
-  - mysql -e 'CREATE DATABASE IF NOT EXISTS igfdb;'
-  - sudo apt-get install jq
-  - curl -LSs "$(curl -LSs https://api.github.com/repos/codacy/codacy-coverage-reporter/releases/latest | jq -r '.assets | map({name, browser_download_url} | select(.name | endswith(".jar"))) | .[0].browser_download_url')" -o codacy-coverage-reporter-assembly.jar
+- mysql -e 'CREATE DATABASE IF NOT EXISTS igfdb;'
+- sudo apt-get install jq
+- curl -LSs "$(curl -LSs https://api.github.com/repos/codacy/codacy-coverage-reporter/releases/latest
+  | jq -r '.assets | map({name, browser_download_url} | select(.name | endswith(".jar")))
+  | .[0].browser_download_url')" -o codacy-coverage-reporter-assembly.jar
 install:
- - sudo apt-get update
- - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
- - bash miniconda.sh -b -p $HOME/miniconda
- - export PATH="$HOME/miniconda/bin:$PATH"
- - hash -r
- - conda config --set always_yes yes --set changeps1 no
- - conda update -q conda
- - conda env create -n test-environment -f environment.yaml
- - source activate test-environment
+- sudo apt-get update
+- wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
+- bash miniconda.sh -b -p $HOME/miniconda
+- export PATH="$HOME/miniconda/bin:$PATH"
+- hash -r
+- conda config --set always_yes yes --set changeps1 no
+- conda update -q conda
+- conda env create -n test-environment -f environment.yaml
+- source activate test-environment
 script:
 - coverage run --branch --source=igf_data setup.py test
 - coverage report -m
@@ -28,3 +30,6 @@ after_success:
 notifications:
   slack:
     secure: c0YtfTFtGgK2deesuMBBdEURwlXvJwc1UC9JKjMKQ+5mUHwEicIO0T4YlsI7KzHFBue01bE6zn9p7Az9Bp5VFzQUAjCMzJ25ScBJan/RWEuYA/A3uz5WOcFA0Th0bZu6Zu0bGkk9goyYvUNpzA50Dav7bqvrn1k6HOEBaj3GhA949T3WG1tSWCYktphqgyMV1MW0o5j5KFGqK08034Ex2t8l+Om25RANAJwf+6dVLKpJJvrlqbk7O0PgJXiCZmcCyysWHpY9+ZLk5zFAuADBThKt6PycYRX8sDOgTqt29DhpCKXOMfUPwQVN9yaHcQCLFxWJEcoxdNNy65jFGmPg9oMvzA1gHq1bVgBqZ/bN35WUShqL4eBELL7C5rhtednh46bBNeFTz37CtdZRvi21EXK7kuKT/+5bqlt+uUWYt3QoPGykgD42pg9c9XaGnXCI6rZ/F0ACLrxMR8DEKcqxFKIhI+aUieBUruyHmHhRUSkUX4iPtY/tCQriE69/McaToRae0d0p8GSF1UXv9jihzQJJ8DS5S9mlSY5NzMvteDi5yptBeYmKdSIy1/MG24j4MBevzfXO8M+JiIA40rCx/yaoKt9haAvDU9gzOCGSdNdNFsNXsLxY3mPMC5QFcNXdshq6Gv9HZhoRRnZV9l0pIx2mclvvadbszFAOpqKYajE=
+env:
+  global:
+    secure: e1cMqLQh3LU7QS9+om9v829/FptA0NU9X+p8eCGWivwq7zW5SvLQfOzS9vkHzo9RE2gAA3WuSDt1/ysuE8MksMPx6VbsZIWOaw77QaAjbcPEW+dt+EG6UPuhr8T4DjZ4RavTKjfHH8LytgyO1+MNXsSJZuWpH4WfunqmbSeu9R57LvpvRJbSOAZ5+15uGuTyVEE0+0v7Dbs6OsAHclQoRydI+Y06eV/skB7uVSNLXxpaeYdUtqY6iLf4YE9xD10IbUfc0Jm/fbhdKXJuL2w48xTEVbibdDK4gBrhFiwMzcaLk2btT8eQHnLpbI2eR7HJiWYtzuXOcnlAOaUFM6q1SRTN/90OboOHWq0g8kLWJoJaQDSlcsrS+Xp0K4TQvT+jrMSrYDeA+yat51QQ+00jWe/COvd+lZ1K0EbSgcM5v0/BrvWf6WeyvmECD7/cqaPEdE7HpjGnCSSIzan0Ng6Zg6tYK5qwyKQXoFG8OmZVLSKW/7qvcz80WchRQGSFISztWCQD8Wl9V7m2bTreXS6bih87ay0hnt7dQPiuz4lebcfdXdryGnwHWb5DSF70WhkwGonPFXoMQ+s2bciUHdJL/hF3Rt60MDQImdDYh+1OH8x68Z3a0O/90pgFG4Ul1Ua6m1a7rkG84aQZrUybTNCKvq0Z8zz9hhJFg6dnsUpe9Dw=
