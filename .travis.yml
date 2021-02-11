@@ -4,9 +4,6 @@ python:
 - '3.6'
 services:
 - mysql
-env:
-  global:
-    secure:"e1cMqLQh3LU7QS9+om9v829/FptA0NU9X+p8eCGWivwq7zW5SvLQfOzS9vkHzo9RE2gAA3WuSDt1/ysuE8MksMPx6VbsZIWOaw77QaAjbcPEW+dt+EG6UPuhr8T4DjZ4RavTKjfHH8LytgyO1+MNXsSJZuWpH4WfunqmbSeu9R57LvpvRJbSOAZ5+15uGuTyVEE0+0v7Dbs6OsAHclQoRydI+Y06eV/skB7uVSNLXxpaeYdUtqY6iLf4YE9xD10IbUfc0Jm/fbhdKXJuL2w48xTEVbibdDK4gBrhFiwMzcaLk2btT8eQHnLpbI2eR7HJiWYtzuXOcnlAOaUFM6q1SRTN/90OboOHWq0g8kLWJoJaQDSlcsrS+Xp0K4TQvT+jrMSrYDeA+yat51QQ+00jWe/COvd+lZ1K0EbSgcM5v0/BrvWf6WeyvmECD7/cqaPEdE7HpjGnCSSIzan0Ng6Zg6tYK5qwyKQXoFG8OmZVLSKW/7qvcz80WchRQGSFISztWCQD8Wl9V7m2bTreXS6bih87ay0hnt7dQPiuz4lebcfdXdryGnwHWb5DSF70WhkwGonPFXoMQ+s2bciUHdJL/hF3Rt60MDQImdDYh+1OH8x68Z3a0O/90pgFG4Ul1Ua6m1a7rkG84aQZrUybTNCKvq0Z8zz9hhJFg6dnsUpe9Dw="
 before_install:
   - mysql -e 'CREATE DATABASE IF NOT EXISTS igfdb;'
   - sudo apt-get install jq
