@@ -245,6 +245,8 @@ class SeqrunAdaptor(BaseAdaptor):
         filter(Seqrun.seqrun_igf_id==seqrun_igf_id)
       platform_name = \
         self.fetch_records(query=query,output_mode='one_or_none')
+      if isinstance(platform_name,tuple):
+        platform_name = platform_name[0]
       return platform_name
     except Exception as e:
       raise ValueError('Failed to fetch platform info for seqrun {0}'.\
