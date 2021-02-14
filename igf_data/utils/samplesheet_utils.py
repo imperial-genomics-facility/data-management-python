@@ -43,7 +43,8 @@ def get_formatted_samplesheet_per_lane(
       ProcessSingleCellDualIndexSamplesheet(
         samplesheet_file=samplesheet_file,
         singlecell_dual_index_barcode_json=singlecell_dual_barcode_json,
-        platform=platform)
+        platform=platform,
+        index2_rule=index2_rule)
     sc_dual_process.\
       modify_samplesheet_for_sc_dual_barcode(
         output_samplesheet=tmp_file)

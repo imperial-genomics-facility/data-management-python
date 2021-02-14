@@ -2,6 +2,7 @@ import os,json
 import pandas as pd
 from igf_data.utils.fileutils import check_file_path,read_json_data
 from igf_data.illumina.samplesheet import SampleSheet
+from igf_data.utils.sequtils import rev_comp
 
 class ProcessSingleCellDualIndexSamplesheet:
   '''
@@ -15,6 +16,7 @@ class ProcessSingleCellDualIndexSamplesheet:
   :param index2_column: Column name for index2 lookup, default 'index2'
   :param sc_barcode_index1_tag: Index I7 tag in the json barcode file, default 'index(i7)'
   :param sample_description_column: Sample description column name in samplesheet, default 'Description'
+  :param index2_rule: Rule for changing index2 barcode, default None
   :param workflow_group: A dictionary containing the I5 index tag for different platforms, default
                           (('HISEQ4000', 'index2_workflow_b(i5)'),
                            ('NEXTSEQ', 'index2_workflow_b(i5)'),
@@ -24,7 +26,7 @@ class ProcessSingleCellDualIndexSamplesheet:
   def __init__(
     self,samplesheet_file,singlecell_dual_index_barcode_json,platform,singlecell_tag='10X',
     index_column='index',index2_column='index2',sample_description_column='Description',
-    sc_barcode_index1_tag='index(i7)',
+    sc_barcode_index1_tag='index(i7)',index2_rule=None,
     workflow_group=(('HISEQ4000', 'index2_workflow_b(i5)'),
                     ('NEXTSEQ', 'index2_workflow_b(i5)'),
                     ('NOVASEQ6000', 'index2_workflow_a(i5)'),
@@ -39,6 +41,7 @@ class ProcessSingleCellDualIndexSamplesheet:
     self.sample_description_column = sample_description_column
     self.workflow_group = workflow_group
     self.sc_barcode_index1_tag = sc_barcode_index1_tag
+    self.index2_rule = index2_rule
 
   def modify_samplesheet_for_sc_dual_barcode(self,output_samplesheet):
     '''
@@ -94,8 +97,12 @@ class ProcessSingleCellDualIndexSamplesheet:
             raise KeyError('Correct index info not found for dual index barcode {0}'.\
                     format(index_barcode))
           series[self.index_column] = index1_seq
-          series[self.index2_column] = index2_seq
           series[self.sample_description_column] = ''
+          if self.index2_rule is not None and \
+             self.index2_rule == 'REVCOMP':
+            series[self.index2_column] = rev_comp(index2_seq)
+          else:
+            series[self.index2_column] = index2_seq
       return series
     except Exception as e:
       raise ValueError('Failed sc dual index conversion, error: {0}'.\

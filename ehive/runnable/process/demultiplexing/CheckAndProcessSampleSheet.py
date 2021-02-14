@@ -54,6 +54,7 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
       platform_name = \
         sa.fetch_platform_info_for_seqrun(seqrun_igf_id)
       sa.close_session()
+      rules_data_set = rules_data.to_dict(orient='records')
       job_name = self.job_name()
       work_dir = \
         os.path.join(\
@@ -79,11 +80,16 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
                       format(seqrun_igf_id,samplesheet_file))
       tmp_dir = get_temp_dir(use_ephemeral_space=True)
       tmp_samplesheet = os.path.join(tmp_dir,samplesheet_filename)
+      index2_rule_for_sc = None
+      if len(rules_data_set) > 0:
+        rules_data = rules_data_set[0]                                            # consider only the first rule
+        index2_rule_for_sc = rules_data[index2_label]
       sc_dual_process = \
         ProcessSingleCellDualIndexSamplesheet(
           samplesheet_file=samplesheet_file,
           singlecell_dual_index_barcode_json=sc_dual_index_json,
-          platform=platform_name)
+          platform=platform_name,
+          index2_rule=index2_rule_for_sc)
       sc_dual_process.\
         modify_samplesheet_for_sc_dual_barcode(
           output_samplesheet=tmp_samplesheet)                                   # fix for sc dual index
@@ -126,7 +132,7 @@ class CheckAndProcessSampleSheet(IGFBaseProcess):
           self.post_message_to_ms_team(
             message=message,
             reaction='pass')
-      rules_data_set = rules_data.to_dict(orient='records')                     # convert dataframe to dictionary
+      #rules_data_set = rules_data.to_dict(orient='records')                     # convert dataframe to dictionary
       if len(rules_data_set) > 0:
         rules_data=rules_data_set[0]                                            # consider only the first rule
         if rules_data[index2_label]==revcomp_label:
