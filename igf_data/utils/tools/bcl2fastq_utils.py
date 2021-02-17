@@ -1,5 +1,5 @@
 import os,subprocess
-from igf_data.utils.fileutils import check_file_path
+from igf_data.utils.fileutils import check_file_path,get_temp_dir
 from igf_data.utils.singularity_run_wrapper import execute_singuarity_cmd
 
 def run_bcl2fastq(
@@ -57,6 +57,7 @@ def run_bcl2fastq(
         extend(['--tiles',','.join(tiles)])
     command = \
       ' '.join(command)
+    log_dir = get_temp_dir(use_ephemeral_space=True)
     if dry_run:
       return command
     if singularity_image_path is not None:
@@ -73,7 +74,7 @@ def run_bcl2fastq(
       execute_singuarity_cmd(
         image_path=singularity_image_path,
         command_string=command,
-        log_dir=output_dir,
+        log_dir=log_dir,
         task_id='bcl2fastq',
         bind_dir_list=bind_dir_list)
     else:
