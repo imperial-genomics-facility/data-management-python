@@ -537,7 +537,7 @@ def run_tile_demult_list_func(**context):
         tiles_list=tile_list)
     tile_list_for_bcl2fq = \
       move_tiles.copy_bcl_files()
-    tmp_bcl2fq_output = get_temp_dir()
+    tmp_bcl2fq_output = get_temp_dir(use_ephemeral_space=True)
     tmp_report_path = get_temp_dir(use_ephemeral_space=True)                    # fix for horrible Illumina bug
     _ = run_bcl2fastq(
       runfolder_dir=tmp_run_path,
