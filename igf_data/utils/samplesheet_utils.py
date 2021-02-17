@@ -68,6 +68,7 @@ def get_formatted_samplesheet_per_lane(
                 format(samplesheet_file))
     if filter_lane is not None and \
        int(filter_lane) in range(1,9):
+      sa = SampleSheet(tmp_file)
       sa.filter_sample_data(
         condition_key='Lane',
         condition_value=str(filter_lane))
