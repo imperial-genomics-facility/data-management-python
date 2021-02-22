@@ -10,7 +10,7 @@ from igf_airflow.seqrun.ongoing_seqrun_processing import check_for_sequencing_pr
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_airflow.logging.upload_log_msg import log_success,log_failure,log_sleep
 from igf_airflow.logging.upload_log_msg import post_image_to_channels
-from igf_data.utils.fileutils import get_temp_dir,copy_remote_file,check_file_path,read_json_data
+from igf_data.utils.fileutils import get_temp_dir,copy_remote_file,check_file_path,read_json_data,get_date_stamp
 from igf_data.utils.samplesheet_utils import samplesheet_validation_and_metadata_checking
 from igf_data.utils.samplesheet_utils import get_formatted_samplesheet_per_lane
 from igf_data.process.moveBclFilesForDemultiplexing import moveBclTilesForDemultiplexing
@@ -18,6 +18,7 @@ from igf_data.utils.tools.bcl2fastq_utils import run_bcl2fastq
 from igf_data.utils.singularity_run_wrapper import execute_singuarity_cmd
 from igf_data.process.data_qc.check_sequence_index_barcodes import CheckSequenceIndexBarcodes
 from igf_data.process.data_qc.check_sequence_index_barcodes import IndexBarcodeValidationError
+from igf_data.utils.jupyter_nbconvert_wrapper import Notebook_runner
 
 def get_ongoing_seqrun_list(**context):
   """
@@ -284,6 +285,73 @@ def run_interop_dump(**context):
     subprocess.\
       check_call(cmd,shell=True)
     return dump_file
+  except Exception as e:
+    logging.error(e)
+    send_log_to_channels(
+      slack_conf=Variable.get('slack_conf'),
+      ms_teams_conf=Variable.get('ms_teams_conf'),
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
+def generate_interop_report_func(**context):
+  try:
+    ti = context.get('ti')
+    local_seqrun_path = Variable.get('hpc_seqrun_path')
+    seqrun_id_pull_key = context['params'].get('seqrun_id_pull_key')
+    seqrun_id_pull_task_ids = context['params'].get('seqrun_id_pull_task_ids')
+    run_index_number = context['params'].get('run_index_number')
+    interop_dump_pull_task = context['params'].get('interop_dump_pull_task')
+    interop_notebook_image_path = Variable.get('interop_notebook_image_path')
+    interop_notebook_template = Variable.get('interop_notebook_template')
+    timeout = context['params'].get('timeout')
+    kernel_name = context['params'].get('kernel_name')
+    output_notebook_key = context['params'].get('output_notebook_key')
+    runInfo_xml_file_name = context['params'].get('runInfo_xml_file_name')
+    box_dir_prefix = Variable.get('box_dir_prefix_for_seqrun_report')
+    box_username = Variable.get('box_username')
+    box_config_file  = Variable.get('box_config_file')
+    seqrun_id = \
+      ti.xcom_pull(key=seqrun_id_pull_key,task_ids=seqrun_id_pull_task_ids)[run_index_number]
+    runinfo_path = \
+      os.path.join(
+        local_seqrun_path,
+        seqrun_id,
+        runInfo_xml_file_name)
+    interop_dump_path = \
+      ti.xcom_pull(task_ids=interop_dump_pull_task)
+    temp_dir = get_temp_dir(use_ephemeral_space=True)
+    input_params = {
+      'DATE_TAG':get_date_stamp(),
+      'SEQRUN_IGF_ID':seqrun_id,
+      'RUNINFO_XML_PATH':runinfo_path,
+      'INTEROP_DUMP_PATH':interop_dump_path }
+    container_bind_dir_list = [
+      os.path.dirname(interop_dump_path),
+      os.path.dirname(runinfo_path) ]
+    nb = Notebook_runner(
+      template_ipynb_path=interop_notebook_template,
+      output_dir=temp_dir,
+      input_param_map=input_params,
+      container_paths=container_bind_dir_list,
+      timeout=timeout,
+      kernel=kernel_name,
+      allow_errors=False,
+      singularity_image_path=interop_notebook_image_path)
+    output_notebook_path,_ = \
+      nb.execute_notebook_in_singularity()
+    ti.xcom_push(
+      key=output_notebook_key,
+      value=output_notebook_path)
+    box_dir = \
+      os.path.join(box_dir_prefix,seqrun_id)
+    upload_file_or_dir_to_box(
+      box_config_file=box_config_file,
+      file_path=output_notebook_path,
+      upload_dir=box_dir,
+      box_username=box_username)
   except Exception as e:
     logging.error(e)
     send_log_to_channels(
