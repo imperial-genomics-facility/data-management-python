@@ -60,7 +60,7 @@ def read_json_data(data_file):
   except Exception as e:
     raise ValueError(
             'Failed to copy JSON file {0}, error: {1}'.\
-              fomrat(data_file,e))
+              format(data_file,e))
 
 def check_file_path(file_path):
   '''
