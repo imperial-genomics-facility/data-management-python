@@ -3,7 +3,7 @@ from ftplib import FTP_TLS
 from igf_data.utils.dbutils import read_json_data
 from igf_data.utils.fileutils import check_file_path
 
- def upload_file_or_dir_to_box(
+def upload_file_or_dir_to_box(
       box_config_file,file_path,upload_dir,box_username,skip_existing=False,
       time_wait_sec=2,box_ftp_url='ftp.box.com',box_size_limit=34359738368):
   try:
