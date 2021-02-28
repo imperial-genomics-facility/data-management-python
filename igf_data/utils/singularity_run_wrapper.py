@@ -123,7 +123,10 @@ def execute_singuarity_cmd(image_path,command_string,log_dir=None,task_id=1,
           log_dir,
           '{0}.log'.format(task_id))
       with open(log_file,'w') as fp:
-        fp.write(response.get('message'))
+        message = response.get('message')
+        if isinstance(message,list):
+          message = '\n'.join(message)
+        fp.write(message)
       raise ValueError(
               'Failed to run command for task id: {0}, log dir: {1}'.\
                 format(task_id,log_file))
