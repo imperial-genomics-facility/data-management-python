@@ -65,8 +65,11 @@ def singularity_run(
           os.path.join(
             log_dir,
             '{0}.log'.format(task_id))
+        messages = response.get('message')
+        if isinstance(messages,list):
+          messages = '\n'.join(messages)
         with open(log_file,'w') as fp:
-          fp.write(response.get('message'))
+          fp.write(messages)
         raise ValueError(
                 'Failed to run command for task id: {0}, log dir: {1}'.\
                   format(task_id,log_file))
