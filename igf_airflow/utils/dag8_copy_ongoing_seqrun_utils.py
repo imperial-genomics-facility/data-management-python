@@ -338,6 +338,7 @@ def generate_interop_report_func(**context):
       container_paths=container_bind_dir_list,
       timeout=timeout,
       kernel=kernel_name,
+      singularity_options=['--no-home','-C'],
       allow_errors=False,
       singularity_image_path=interop_notebook_image_path)
     output_notebook_path,_ = \

@@ -166,6 +166,7 @@ def run_singlecell_notebook_wrapper_func(**context):
       container_paths=container_bind_dir_list,
       timeout=timeout,
       kernel=kernel_name,
+      singularity_options=['--no-home','-C'],
       allow_errors=allow_errors,
       singularity_image_path=singularity_image_path)
     output_notebook_path,_ = \
@@ -256,6 +257,7 @@ def run_scanpy_for_sc_5p_func(**context):
       input_param_map=input_params,
       container_paths=container_bind_dir_list,
       timeout=timeout,
+      singularity_options=['--no-home','-C'],
       allow_errors=allow_errors,
       singularity_image_path=singularity_image_path)
     output_notebook_path,_ = \

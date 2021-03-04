@@ -4,7 +4,7 @@ from igf_data.utils.fileutils import check_file_path,copy_local_file,get_temp_di
 
 def singularity_run(
       image_path,args_list,log_dir=None,bind_dir_list=(),
-      task_id=1,dry_run=False):
+      options=None,task_id=1,dry_run=False):
   '''
   A wrapper module for running singularity based containers
 
@@ -13,6 +13,7 @@ def singularity_run(
   :param args_list: List of args for singulatiy run
   :param log_dir: Log dir path, default None
   :param task_id: Task id for renaming log, default 1
+  :params options: Additional list of options for singularity, default None
   :param dry_run: Return the singularity command without run, default False
   :returns: A response from container run and a string containing singularity command line
   '''
@@ -53,6 +54,7 @@ def singularity_run(
           image=temp_image_path,
           bind=bind_dir_list,
           args=args,
+          options=options,
           return_result=True)
       return_code = \
         response.get('return_code')
@@ -82,7 +84,7 @@ def singularity_run(
 
 
 def execute_singuarity_cmd(image_path,command_string,log_dir=None,task_id=1,
-                           bind_dir_list=(),dry_run=False):
+                           options=None,bind_dir_list=(),dry_run=False):
   """
   A function for executing commands within Singularity container
 
@@ -91,6 +93,7 @@ def execute_singuarity_cmd(image_path,command_string,log_dir=None,task_id=1,
   :param log_dir: Log dir for dumping errors, if return code is not zero
   :param task_id: Task id for renaming log, default 1
   :param bind_dir_list: List of dirs to bind
+  :params options: Additional list of options for singularity, default None
   :param dry_run: Return the singularity command without run, default False
   :returns: None
   """
@@ -112,6 +115,7 @@ def execute_singuarity_cmd(image_path,command_string,log_dir=None,task_id=1,
       Client.execute(
         image=image_path,
         bind=bind_dir_list,
+        options=options,
         command=command_string,
         return_result=True)
     return_code = \
@@ -125,10 +129,10 @@ def execute_singuarity_cmd(image_path,command_string,log_dir=None,task_id=1,
         os.path.join(
           log_dir,
           '{0}.log'.format(task_id))
+      message = response.get('message')
+      if isinstance(message,list):
+        message = '\n'.join(message)
       with open(log_file,'w') as fp:
-        message = response.get('message')
-        if isinstance(message,list):
-          message = '\n'.join(message)
         fp.write(message)
       raise ValueError(
               'Failed to run command for task id: {0}, log dir: {1}'.\

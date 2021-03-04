@@ -21,11 +21,13 @@ class Notebook_runner:
   :param allow_errors: Allow notebook execution with errors, default False
   :param dry_run: A toggle for test, default False
   :param jupyter_exe: Jupyter exe path, default jupyter
+  :param singularity_options: A list of singularity options, default None
   :param notebook_tag: A tag for dataflow to identify notebook output, default notebook
   '''
   def __init__(self,template_ipynb_path,output_dir,input_param_map,container_paths=None,
                singularity_image_path=None,use_ephemeral_space=False,output_format='html',
-               timeout=600,kernel='python3',allow_errors=False,jupyter_exe='jupyter',dry_run=False):
+               singularity_options=None,timeout=600,kernel='python3',allow_errors=False,
+               jupyter_exe='jupyter',dry_run=False):
     self.template_ipynb_path = template_ipynb_path
     self.output_dir = output_dir
     self.input_param_map = input_param_map
@@ -38,6 +40,7 @@ class Notebook_runner:
     self.allow_errors = allow_errors
     self.dry_run = dry_run
     self.jupyter_exe = jupyter_exe
+    self.singularity_options = singularity_options
     self.temp_dir = \
       get_temp_dir(use_ephemeral_space=self.use_ephemeral_space)
 
@@ -106,6 +109,7 @@ class Notebook_runner:
       cmd = singularity_run(
             image_path=self.singularity_image_path,
             args_list=args_list,
+            options=self.singularity_options,
             bind_dir_list=container_paths,
             dry_run=self.dry_run)
       temp_notebook_path = \
