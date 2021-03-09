@@ -306,6 +306,8 @@ def generate_interop_report_func(**context):
     interop_dump_pull_task = context['params'].get('interop_dump_pull_task')
     interop_notebook_image_path = Variable.get('interop_notebook_image_path')
     interop_notebook_template = Variable.get('interop_notebook_template')
+    seqrun_ml_notebook_template = Variable.get('seqrun_ml_notebook_template')
+    seqrun_training_data_csv = Variable.get('seqrun_training_data_csv')
     timeout = context['params'].get('timeout')
     kernel_name = context['params'].get('kernel_name')
     output_notebook_key = context['params'].get('output_notebook_key')
@@ -349,6 +351,33 @@ def generate_interop_report_func(**context):
       value=output_notebook_path)
     box_dir = \
       os.path.join(box_dir_prefix,seqrun_id)
+    upload_file_or_dir_to_box(
+      box_config_file=box_config_file,
+      file_path=output_notebook_path,
+      upload_dir=box_dir,
+      box_username=box_username)
+    input_params = {
+      'SEQRUN_IGF_ID':seqrun_id,
+      'RUNINFO_XML_PATH':runinfo_path,
+      'INTEROP_DUMP_PATH':interop_dump_path,
+      'SEQRUN_TRAINING_DATA':seqrun_training_data_csv }
+    container_bind_dir_list = [
+      os.path.dirname(interop_dump_path),
+      os.path.dirname(runinfo_path),
+      os.path.dirname(seqrun_training_data_csv) ]
+    nb = Notebook_runner(
+      template_ipynb_path=seqrun_ml_notebook_template,
+      output_dir=temp_dir,
+      input_param_map=input_params,
+      container_paths=container_bind_dir_list,
+      timeout=timeout,
+      kernel=kernel_name,
+      use_ephemeral_space=True,
+      singularity_options=['--no-home','-C'],
+      allow_errors=False,
+      singularity_image_path=interop_notebook_image_path)
+    output_notebook_path,_ = \
+      nb.execute_notebook_in_singularity()
     upload_file_or_dir_to_box(
       box_config_file=box_config_file,
       file_path=output_notebook_path,
