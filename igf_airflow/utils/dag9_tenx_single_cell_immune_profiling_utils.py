@@ -1027,6 +1027,19 @@ def fetch_analysis_info_and_branch_func(**context):
         Variable.get('tenx_single_cell_immune_profiling_feature_types').split(',')
       # add reference genome paths if reference type and genome build is present
       # check for genome build info
+      # INPUT:
+      # analysis_description = [{
+      #   'sample_igf_id':'IGF001',
+      #   'feature_type':'gene expression',
+      #   'reference_type':'TRANSCRIPTOME_TENX',
+      #   'genome_build':'HG38' }]
+      #  OUTPUT:
+      # analysis_description = [{
+      #   'sample_igf_id':'IGF001',
+      #   'feature_type':'gene expression',
+      #   'reference_type':'TRANSCRIPTOME_TENX',
+      #   'reference':'/path/ref',
+      #   'genome_build':'HG38' }]
       analysis_description = \
         _add_reference_genome_path_for_analysis(
           database_config_file=database_config_file,
@@ -1035,6 +1048,8 @@ def fetch_analysis_info_and_branch_func(**context):
       # check the analysis description and sample validity
       # warn if multiple samples are allocated to same sub category
       # filter analysis branch list
+      # INPUT: formatted analysis description with reference column
+      # OUTPUT: a list of samples, a list of analysis and a list of errors
       sample_id_list, analysis_list, messages = \
         _validate_analysis_description(
           analysis_description=analysis_description,
@@ -1049,6 +1064,35 @@ def fetch_analysis_info_and_branch_func(**context):
           sample_igf_id_list=sample_id_list,
           active_status='ACTIVE',
           combine_fastq_dir=False)
+      #
+      # INPUT:
+      # formatted analysis description
+      # analysis_description = [{
+      #   'sample_igf_id':'IGF003',
+      #   'feature_type':'Gene Expression',
+      #   'reference':'/path/ref' }]
+      #
+      # list of dictionary containing the sample_igf_id, run_igf_id and fastq file_paths
+      # fastq_run_list = [{
+      #   'sample_igf_id':'IGF001',
+      #   'run_igf_id':'run1',
+      #   'file_path':'/path/IGF001/run1/IGF001-GEX_S1_L001_R1_001.fastq.gz' },{
+      #   'sample_igf_id':'IGF001',
+      #   'run_igf_id':'run1',
+      #   'file_path':'/path/IGF001/run1/IGF001-GEX_S1_L001_R2_001.fastq.gz' }]
+      #
+      # OUTPUT:
+      # formatted_analysis_description = [{
+      #   sample_igf_id: 'IGF001'
+      #   sample_name: 'Sample_XYZ'
+      #   run_count: 1,
+      #   feature:gene_expression,
+      #   runs:[{
+      #     run_igf_id: 'run_01',
+      #     fastq_dir: '/path/input',
+      #     output_path: '/path/output' }]
+      # }]
+      #
       analysis_info = \
         _fetch_formatted_analysis_description(
           analysis_description,
@@ -1058,9 +1102,11 @@ def fetch_analysis_info_and_branch_func(**context):
                 format(messages))
       # mark analysis_id as running,if its not already running
       status = \
-        _check_and_mark_analysis_seed_running(
+        _check_and_mark_analysis_seed(
           analysis_id=analysis_id,
           anslysis_type=analysis_type,
+          new_status='RUNNING',
+          no_change_status='FINISHED',
           database_config_file=database_config_file)
       # xcom push analysis_info and analysis_description
       if status:
@@ -1128,9 +1174,19 @@ def _add_reference_genome_path_for_analysis(
               format(e))
 
 
-def _check_and_mark_analysis_seed_running(
-      analysis_id,anslysis_type,database_config_file,
-      running_status='RUNNING',analysis_table='analysis'):
+def _check_and_mark_analysis_seed(
+      analysis_id,anslysis_type,database_config_file,new_status='RUNNING',
+      analysis_table='analysis',no_change_status='FINISHED'):
+  """
+  Mark pipeline seed as running for analysis
+
+  :param analysis_id: Analysis id to mark in pipeline_seed table
+  :param anslysis_type: Analysis type to select Pipeline name
+  :param database_config_file: Database config file for dbconnection
+  :param new_status: Running tag for pipelien_seed table, default 'RUNNING'
+  :param analysis_table: Analsysis table name, default 'analysis'
+  :returns: Boolean change status
+  """
   try:
     dbparam = \
       read_dbconf_json(database_config_file)
@@ -1140,9 +1196,9 @@ def _check_and_mark_analysis_seed_running(
       pl.create_or_update_pipeline_seed(
         seed_id=analysis_id,
         pipeline_name=anslysis_type,
-        new_status=running_status,
+        new_status=new_status,
         seed_table=analysis_table,
-        no_change_status=running_status)
+        no_change_status=no_change_status)
     return status
   except Exception as e:
     raise ValueError(e)
@@ -1151,6 +1207,36 @@ def _check_and_mark_analysis_seed_running(
 def _fetch_formatted_analysis_description(
       analysis_description,fastq_run_list,feature_column='feature_type',
       sample_column='sample_igf_id',run_column='run_igf_id',file_column='file_path'):
+  """
+  A function for formatting analysis description with fastq paths
+
+  :param analysis_description: A list of dictionary containing analysis description
+  :param fastq_run_list: A list of dictionary containg fastq file paths
+  :param feature_column: Feature column in analysis description, default 'feature_type'
+  :param sample_column: Sample column name in analysis description and fastq list, default 'sample_igf_id'
+  :param run_column: Run column name in fastq list, default 'run_igf_id'
+  :param file_column: File column name in fastq list, default 'file_path'
+  :returns: A list of analysis description with run details
+
+  analysis_description = [{
+    'sample_igf_id':'IGF001',
+    'sample_name': 'sample_name',
+    'feature_type':'gene expression',
+    'reference_type':'TRANSCRIPTOME_TENX',
+    'reference':'/path/ref',
+    'genome_build':'HG38' }]
+
+  formatted_analysis_description = [{
+    sample_igf_id: 'IGF001'
+    sample_name: 'Sample_XYZ'
+    run_count: 1,
+    feature:gene_expression,
+    runs:[{
+      run_igf_id: 'run_01',
+      fastq_dir: '/path/input',
+      output_path: '/path/output' }]
+    }]
+  """
   try:
     formatted_analysis_description = dict()
     analysis_description_df = pd.DataFrame(analysis_description)
@@ -1216,7 +1302,8 @@ def _fetch_formatted_analysis_description(
             'sample_igf_id':sample_igf_id,
             'sample_name':sample_prefix,
             'run_count':total_runs_for_sample,
-            'runs':formatted_run_records
+            'runs':formatted_run_records,
+            "feature":feature
           }})
     return formatted_analysis_description
   except Exception as e:
@@ -1226,6 +1313,18 @@ def _fetch_formatted_analysis_description(
 def _validate_analysis_description(
       analysis_description,feature_types,sample_column='sample_igf_id',
       feature_column='feature_type',reference_column='reference'):
+  """
+  An internal function for validating analysis description. 
+  This function loads the data to a Pandas DataFrame and extracts a list of
+  formatted feature list and an unique sample list. Also, it checks the paths
+  mentioned in the reference column and looks for the presence of duplicate features
+
+  :param analysis_description: A list of analysis description dictionary
+  :param feature_types: A list of immuno profiling feature names
+  :param sample_column: Sample column name, default 'sample_igf_id'
+  :param feature_column: Feature type column name, default 'feature_type'
+  :param reference_column: Reference column name, default 'reference'
+  """
   try:
     messages = list()
     analysis_list = list()
@@ -1243,6 +1342,8 @@ def _validate_analysis_description(
       if c not in df.columns:
         messages.\
           append('missing {0} in analysis_data'.format(c))
+    if len(messages) > 0:
+      raise KeyError('Missing key column: {0}'.format(messages))
     analysis_list = \
       list(
         df[feature_column].\
@@ -1264,7 +1365,7 @@ def _validate_analysis_description(
       f_samples = list(f_data[sample_column].values)
       if f not in feature_types:
         messages.\
-          append('feature_type {0} in not defined: {1}'.\
+          append('feature_type {0} is not defined: {1}'.\
                    format(f,f_samples))
       if len(f_samples) > 1:
         messages.\
