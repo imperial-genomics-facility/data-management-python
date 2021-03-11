@@ -32,7 +32,7 @@ class PipelineAdaptor(BaseAdaptor):
         self,pipeline_name,target_column_name='pipeline_name'):
     '''
     A method for fetching data for Pipeline table
-    
+
     :param pipeline_name: a name
     :param target_column_name: default pipeline_name
     :returns: Pipeline record
@@ -59,7 +59,7 @@ class PipelineAdaptor(BaseAdaptor):
         target_column_name=('pipeline_id', 'seed_id','seed_table')):
     '''
     A method for fetching unique pipeline seed using pipeline_id, seed_id and seed_table
-    
+
     :param pipeline_id: A pipeline db id
     :param seed_id: A seed entry db id
     :param seed_table: A seed table name
@@ -409,7 +409,7 @@ class PipelineAdaptor(BaseAdaptor):
   def seed_new_seqruns(self,pipeline_name,autosave=True,seed_table='seqrun'):
     '''
     A method for creating seed for new seqruns
-    
+
     :param pipeline_name: A pipeline name
     :param autosave: A toggle for autocommit, default True
     :param seed_table: Seed table name, default seqrun
@@ -461,7 +461,7 @@ class PipelineAdaptor(BaseAdaptor):
         seed_table='experiment'):
     '''
     A method for seeding new experiments for primary analysis
-    
+
     :param pipeline_name: Name of the analysis pipeline
     :param project_list: List of projects to consider for seeding analysis pipeline, default None
     :param library_source_list: List of library source to consider for analysis, default None
