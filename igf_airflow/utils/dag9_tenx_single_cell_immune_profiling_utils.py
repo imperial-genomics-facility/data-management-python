@@ -1049,8 +1049,8 @@ def fetch_analysis_info_and_branch_func(**context):
       #   'sample_igf_id':'IGF001',
       #   'feature_type':'gene expression',
       #   'reference_type':'TRANSCRIPTOME_TENX',
-      #   'r1_trim_length':26,
-      #   'r2_trim_length':0,                     # optional, 0 for no trimming
+      #   'r1_length':26,
+      #   'r2_length':0,                          # optional, 0 for no trimming
       #   'cell_annotation_csv':'/path/csv',      # optional, cell annotation file
       #   'genome_build':'HG38' }]
       #  OUTPUT:
@@ -1203,7 +1203,7 @@ def _add_reference_genome_path_for_analysis(
 
 def _check_and_mark_analysis_seed(
       analysis_id,anslysis_type,database_config_file,new_status='RUNNING',
-      analysis_table='analysis',no_change_status='FINISHED'):
+      analysis_table='analysis',no_change_status='RUNNING'):
   """
   Mark pipeline seed as running for analysis
 
@@ -1219,13 +1219,23 @@ def _check_and_mark_analysis_seed(
       read_dbconf_json(database_config_file)
     pl = \
       PipelineAdaptor(**dbparam)
-    status = \
-      pl.create_or_update_pipeline_seed(
-        seed_id=analysis_id,
-        pipeline_name=anslysis_type,
-        new_status=new_status,
-        seed_table=analysis_table,
-        no_change_status=no_change_status)
+    pl.start_session()
+    try:
+      status = \
+        pl.create_or_update_pipeline_seed(
+          seed_id=analysis_id,
+          pipeline_name=anslysis_type,
+          new_status=new_status,
+          seed_table=analysis_table,
+          no_change_status=no_change_status,
+          autosave=False)
+      pl.commit_session()
+      pl.close_session()
+    except Exception as e:
+      pl.rollback_session()
+      pl.close_session()
+      raise ValueError(
+        'Failed to change seeds in db, error: {0}'.format(e))
     return status
   except Exception as e:
     raise ValueError(e)
