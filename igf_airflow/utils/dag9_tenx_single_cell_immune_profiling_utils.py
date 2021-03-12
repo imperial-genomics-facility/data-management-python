@@ -55,11 +55,11 @@ def load_analysis_files_func(**context):
     tag_name = 'no_tag'
     collection_name = \
       ti.xcom_pull(
-        task_id=collection_name_task,
+        task_ids=collection_name_task,
         key=collection_name_key)
     temp_file = \
       ti.xcom_pull(
-        task_id=file_name_task,
+        task_ids=file_name_task,
         key=file_name_key)
     if isinstance(temp_file,str):
       temp_file = [temp_file]
@@ -115,7 +115,7 @@ def run_singlecell_notebook_wrapper_func(**context):
       context['params'].get('cell_marker_list')
     cellranger_output = \
       ti.xcom_pull(
-        task_id=cellranger_xcom_pull_task,
+        task_ids=cellranger_xcom_pull_task,
         key=cellranger_xcom_key)
     cellranger_count_dir = \
       os.path.join(cellranger_output,count_dir)
@@ -141,7 +141,7 @@ def run_singlecell_notebook_wrapper_func(**context):
     aa.close_session()
     analysis_description = \
       ti.xcom_pull(
-        task_id=analysis_description_xcom_pull_task,
+        task_ids=analysis_description_xcom_pull_task,
         key=analysis_description_xcom_key)
     sample_igf_id = \
       analysis_description[0].get('sample_igf_id')
@@ -200,7 +200,7 @@ def run_scanpy_for_sc_5p_func(**context):
       context['params'].get('analysis_description_xcom_key')
     cellranger_output = \
       ti.xcom_pull(
-        task_id=cellranger_xcom_pull_task,
+        task_ids=cellranger_xcom_pull_task,
         key=cellranger_xcom_key)
     cellranger_count_dir = \
       os.path.join(cellranger_output,'count')
@@ -231,7 +231,7 @@ def run_scanpy_for_sc_5p_func(**context):
     aa.close_session()
     analysis_description = \
       ti.xcom_pull(
-        task_id=analysis_description_xcom_pull_task,
+        task_ids=analysis_description_xcom_pull_task,
         key=analysis_description_xcom_key)
     sample_igf_id = \
       analysis_description[0].get('sample_igf_id')
@@ -306,11 +306,11 @@ def irods_files_upload_for_analysis(**context):
     aa.close_session()
     file_list_for_copy = \
       ti.xcom_pull(
-        task_id=xcom_pull_task,
+        task_ids=xcom_pull_task,
         key=xcom_pull_files_key)
     collection_name = \
       ti.xcom_pull(
-        task_id=xcom_pull_task,
+        task_ids=xcom_pull_task,
         key=collection_name_key)
     pa = ProjectAdaptor(**dbparams)
     pa.start_session()
@@ -382,13 +382,13 @@ def ftp_files_upload_for_analysis(**context):
       Variable.get('ftp_project_path')
     file_list_for_copy = \
       ti.xcom_pull(
-        task_id=xcom_pull_task,
+        task_ids=xcom_pull_task,
         key=xcom_pull_files_key)
     if isinstance(file_list_for_copy,str):
       file_list_for_copy = [file_list_for_copy]
     collection_name = \
       ti.xcom_pull(
-        task_id=collection_name_task,
+        task_ids=collection_name_task,
         key=collection_name_key)
     destination_output_path = \
       os.path.join(
@@ -511,7 +511,7 @@ def load_cellranger_result_to_db_func(**context):
       context['params'].get('html_report_file_name')
     analysis_description = \
       ti.xcom_pull(
-        task_id=analysis_description_xcom_pull_task,
+        task_ids=analysis_description_xcom_pull_task,
         key=analysis_description_xcom_key)
     sample_igf_id = \
       analysis_description[0].get('sample_igf_id')
@@ -523,7 +523,7 @@ def load_cellranger_result_to_db_func(**context):
                 format(analysis_description))
     cellranger_output = \
       ti.xcom_pull(
-        task_id=cellranger_xcom_pull_task,
+        task_ids=cellranger_xcom_pull_task,
         key=cellranger_xcom_key)
     html_report_filepath = \
       os.path.join(
@@ -608,7 +608,7 @@ def decide_analysis_branch_func(**context):
     task_list = [load_cellranger_result_to_db_task]
     library_csv = \
       ti.xcom_pull(
-        task_id=library_csv_xcom_pull_task,
+        task_ids=library_csv_xcom_pull_task,
         key=library_csv_xcom_key)
     feature_list = \
       _get_feature_list_from_lib_csv(library_csv)
@@ -685,11 +685,11 @@ def run_cellranger_tool(**context):
       context['params'].get('cellranger_options')
     analysis_description = \
       ti.xcom_pull(
-        task_id=analysis_description_xcom_pull_task,
+        task_ids=analysis_description_xcom_pull_task,
         key=analysis_description_xcom_key)
     library_csv = \
       ti.xcom_pull(
-        task_id=library_csv_xcom_pull_task,
+        task_ids=library_csv_xcom_pull_task,
         key=library_csv_xcom_key)
     cellranger_exe = Variable.get('cellranger_exe')
     job_timeout = Variable.get('cellranger_job_timeout')
@@ -701,7 +701,7 @@ def run_cellranger_tool(**context):
         sample_id = sample_igf_id
       else:
         sample_id = '{0}_{1}'.format(sample_id,sample_igf_id)
-    c,output_dir = \
+    _,output_dir = \
       run_cellranger_multi(
         cellranger_exe=cellranger_exe,
         library_csv=library_csv,
@@ -743,11 +743,11 @@ def run_sc_read_trimmming_func(**context):
       Variable.get('cutadapt_singularity_image')
     analysis_info = \
       ti.xcom_pull(
-        task_id=xcom_pull_task_id,
+        task_ids=xcom_pull_task_id,
         key=analysis_info_xcom_key)
     analysis_description = \
       ti.xcom_pull(
-        task_id=xcom_pull_task_id,
+        task_ids=xcom_pull_task_id,
         key=analysis_description_xcom_key)
     _get_fastq_and_run_cutadapt_trim(
       analysis_info= analysis_info,
@@ -891,11 +891,11 @@ def configure_cellranger_run_func(**context):
       get_temp_dir(use_ephemeral_space=True)
     analysis_description = \
       ti.xcom_pull(
-        task_id=xcom_pull_task_id,
+        task_ids=xcom_pull_task_id,
         key=analysis_description_xcom_key)
     analysis_info = \
       ti.xcom_pull(
-        task_id=xcom_pull_task_id,
+        task_ids=xcom_pull_task_id,
         key=analysis_info_xcom_key)
     # generate library.csv file for cellranger run
     csv_path = \
