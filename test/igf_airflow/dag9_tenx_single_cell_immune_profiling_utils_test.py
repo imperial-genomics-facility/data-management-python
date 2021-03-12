@@ -332,6 +332,19 @@ class Dag9_tenx_single_cell_immune_profiling_utilstestD(unittest.TestCase):
   def setUp(self):
     self.work_dir = get_temp_dir()
     self.output_dir = get_temp_dir()
+    self.analysis_description = [{
+        'sample_igf_id':'IGF001',
+        'feature_type':'gene expression',
+        'reference':'g.csv'
+      },{
+        'sample_igf_id':'IGF002',
+        'feature_type':'vdj',
+        'reference':'v.csv'
+      },{
+        'sample_igf_id':'IGF003',
+        'feature_type':'antibody capture',
+        'reference':'f.csv'
+      }]
     self.analysis_info = {
       'antibody_capture': {
         'sample_igf_id': 'IGF003',
@@ -395,6 +408,7 @@ class Dag9_tenx_single_cell_immune_profiling_utilstestD(unittest.TestCase):
     _get_fastq_and_run_cutadapt_trim(
       analysis_info=self.analysis_info,
       analysis_name=analysis_name,
+      analysis_description=self.analysis_description,
       run_id=0,
       r1_length=0,
       r2_length=0,
@@ -417,6 +431,7 @@ class Dag9_tenx_single_cell_immune_profiling_utilstestD(unittest.TestCase):
     _get_fastq_and_run_cutadapt_trim(
       analysis_info=self.analysis_info,
       analysis_name=analysis_name,
+      analysis_description=self.analysis_description,
       run_id=0,
       r1_length=26,
       r2_length=0,

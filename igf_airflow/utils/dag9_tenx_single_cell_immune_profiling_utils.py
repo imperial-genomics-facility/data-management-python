@@ -725,6 +725,8 @@ def run_sc_read_trimmming_func(**context):
       context['params'].get('xcom_pull_task_id')
     analysis_info_xcom_key = \
       context['params'].get('analysis_info_xcom_key')
+    analysis_description_xcom_key = \
+      context['params'].get('analysis_description_xcom_key')
     analysis_name = \
       context['params'].get('analysis_name')
     run_id = \
@@ -743,9 +745,14 @@ def run_sc_read_trimmming_func(**context):
       ti.xcom_pull(
         task_id=xcom_pull_task_id,
         key=analysis_info_xcom_key)
+    analysis_description = \
+      ti.xcom_pull(
+        task_id=xcom_pull_task_id,
+        key=analysis_description_xcom_key)
     _get_fastq_and_run_cutadapt_trim(
       analysis_info= analysis_info,
       analysis_name=analysis_name,
+      analysis_description=analysis_description,
       run_id=run_id,
       r1_length=r1_length,
       r2_length=r2_length,
@@ -758,18 +765,20 @@ def run_sc_read_trimmming_func(**context):
 
 
 def _get_fastq_and_run_cutadapt_trim(
-      analysis_info,analysis_name,run_id,r1_length,
-      r2_length,fastq_input_dir_tag,fastq_output_dir_tag,
-      singularity_image,cutadapt_exe='cutadapt',dry_run=False,
+      analysis_info,analysis_description,analysis_name,
+      run_id,fastq_input_dir_tag,fastq_output_dir_tag,
+      singularity_image,r1_length=0,r2_length=0,
+      cutadapt_exe='cutadapt',dry_run=False,
       cutadapt_options=('--cores=1',)):
   """
   An internal method for trimming or copying fastq files for Cellranger run
 
   :param analysis_info: Analysis info dictionary object
+  :param analysis_description: Analysis description list of dictionary object
   :param analysis_name: Analysis name to fetch data from analysis info
   :param run_id: Run id to fetch fastq paths from analysis info
-  :param r1_length: Trimmed length for R1 fastq
-  :param r2_length: Trimmed length for R2 fastq
+  :param r1_length: Trimmed length for R1 fastq, default 0
+  :param r2_length: Trimmed length for R2 fastq, default 0
   :param fastq_input_dir_tag: Fastq input dir tag for analysis info lookup
   :param fastq_output_dir_tag: Fastq output dir tag for analysis info lookup
   :param singularity_image: Singularity image path for cutadapt tool
@@ -785,6 +794,14 @@ def _get_fastq_and_run_cutadapt_trim(
       raise ValueError(
               'No feature {0} found in analysis_info'.\
                 format(analysis_info))
+    sample_igf_id = sample_info.get('sample_igf_id')
+    analysis_description = pd.DataFrame(analysis_description).fillna(0)
+    analysis_entry = \
+      analysis_description[analysis_description['sample_igf_id']==sample_igf_id].copy()
+    if 'r1_length' in analysis_entry.columns:
+      r1_length = analysis_entry['r1_length'].values[0]                         # reset r1 length
+    if 'r2_length' in analysis_entry.columns:
+      r2_length = analysis_entry['r2_length'].values[0]                         # reset r2 length
     run = sample_info.get('runs').get(str(run_id))
     if run is None:
       raise ValueError(
@@ -814,7 +831,7 @@ def _get_fastq_and_run_cutadapt_trim(
               cutadapt_options_r1 = copy(cutadapt_options)
               cutadapt_options_r1.\
                 append('-l {0}'.format(r1_length))
-            c = \
+            _ = \
               run_cutadapt(
                 read1_fastq_in=input_fastq_file,
                 read1_fastq_out=output_fastq_file,
@@ -1012,7 +1029,7 @@ def fetch_analysis_info_and_branch_func(**context):
     analysis_info_xcom_key = \
       context['params'].get('analysis_info_xcom_key')
     database_config_file = \
-      Variable.get('test_database_config_file')
+      Variable.get('test_database_config_file')                                 # using test db
     analysis_list.append(no_analysis)
     if dag_run is not None and \
        dag_run.conf is not None and \
@@ -1032,12 +1049,18 @@ def fetch_analysis_info_and_branch_func(**context):
       #   'sample_igf_id':'IGF001',
       #   'feature_type':'gene expression',
       #   'reference_type':'TRANSCRIPTOME_TENX',
+      #   'r1_trim_length':26,
+      #   'r2_trim_length':0,                     # optional, 0 for no trimming
+      #   'cell_annotation_csv':'/path/csv',      # optional, cell annotation file
       #   'genome_build':'HG38' }]
       #  OUTPUT:
       # analysis_description = [{
       #   'sample_igf_id':'IGF001',
       #   'feature_type':'gene expression',
       #   'reference_type':'TRANSCRIPTOME_TENX',
+      #   'r1_length':26,
+      #   'r2_length':0,                          # optional, 0 for no trimming
+      #   'cell_annotation_csv':'/path/csv',      # optional, cell annotation file
       #   'reference':'/path/ref',
       #   'genome_build':'HG38' }]
       analysis_description = \
@@ -1066,11 +1089,15 @@ def fetch_analysis_info_and_branch_func(**context):
           combine_fastq_dir=False)
       #
       # INPUT:
-      # formatted analysis description
-      # analysis_description = [{
-      #   'sample_igf_id':'IGF003',
-      #   'feature_type':'Gene Expression',
-      #   'reference':'/path/ref' }]
+      # formatted analysis description = [{
+      #   'sample_igf_id':'IGF001',
+      #   'feature_type':'gene expression',
+      #   'reference_type':'TRANSCRIPTOME_TENX',
+      #   'r1_length':26,
+      #   'r2_length':0,                          # optional, 0 for no trimming
+      #   'cell_annotation_csv':'/path/csv',      # optional, cell annotation file
+      #   'reference':'/path/ref',
+      #   'genome_build':'HG38' }]
       #
       # list of dictionary containing the sample_igf_id, run_igf_id and fastq file_paths
       # fastq_run_list = [{
@@ -1082,16 +1109,16 @@ def fetch_analysis_info_and_branch_func(**context):
       #   'file_path':'/path/IGF001/run1/IGF001-GEX_S1_L001_R2_001.fastq.gz' }]
       #
       # OUTPUT:
-      # formatted_analysis_description = [{
-      #   sample_igf_id: 'IGF001'
-      #   sample_name: 'Sample_XYZ'
-      #   run_count: 1,
-      #   feature:gene_expression,
-      #   runs:[{
-      #     run_igf_id: 'run_01',
-      #     fastq_dir: '/path/input',
-      #     output_path: '/path/output' }]
-      # }]
+      # analysis_info = {
+      #   gene_expression:{
+      #     sample_igf_id: 'IGF001'
+      #     sample_name: 'Sample_XYZ'
+      #     run_count: 1,
+      #     runs:[{
+      #       run_igf_id: 'run_01',
+      #       fastq_dir: '/path/input',
+      #       output_path: '/path/output' }]
+      #   }}
       #
       analysis_info = \
         _fetch_formatted_analysis_description(
@@ -1117,8 +1144,8 @@ def fetch_analysis_info_and_branch_func(**context):
           key=analysis_info_xcom_key,
           value=analysis_info)
       else:
-        analysis_list = [no_analysis]
-    return analysis_list
+        analysis_list = [no_analysis]                                           # reset analysis list with no_analysis
+    return analysis_list                                                        # return analysis list for branching
   except Exception as e:
     logging.error(e)
     raise ValueError(e)
@@ -1226,16 +1253,16 @@ def _fetch_formatted_analysis_description(
     'reference':'/path/ref',
     'genome_build':'HG38' }]
 
-  formatted_analysis_description = [{
-    sample_igf_id: 'IGF001'
-    sample_name: 'Sample_XYZ'
-    run_count: 1,
-    feature:gene_expression,
-    runs:[{
-      run_igf_id: 'run_01',
-      fastq_dir: '/path/input',
-      output_path: '/path/output' }]
-    }]
+  formatted_analysis_description = {
+    gene_expression:{
+      sample_igf_id: 'IGF001'
+      sample_name: 'Sample_XYZ'
+      run_count: 1,
+      runs:[{
+        run_igf_id: 'run_01',
+        fastq_dir: '/path/input',
+        output_path: '/path/output' }]
+    }}
   """
   try:
     formatted_analysis_description = dict()
@@ -1302,8 +1329,7 @@ def _fetch_formatted_analysis_description(
             'sample_igf_id':sample_igf_id,
             'sample_name':sample_prefix,
             'run_count':total_runs_for_sample,
-            'runs':formatted_run_records,
-            "feature":feature
+            'runs':formatted_run_records
           }})
     return formatted_analysis_description
   except Exception as e:
