@@ -750,7 +750,7 @@ def run_sc_read_trimmming_func(**context):
         task_ids=xcom_pull_task_id,
         key=analysis_description_xcom_key)
     _get_fastq_and_run_cutadapt_trim(
-      analysis_info= analysis_info,
+      analysis_info=analysis_info,
       analysis_name=analysis_name,
       analysis_description=analysis_description,
       run_id=run_id,
