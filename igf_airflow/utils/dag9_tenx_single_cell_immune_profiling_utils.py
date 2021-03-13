@@ -283,7 +283,7 @@ def run_scanpy_for_sc_5p_func(**context):
       input_param_map=input_params,
       container_paths=container_bind_dir_list,
       timeout=timeout,
-      singularity_options=['--no-home','-C'],
+      singularity_options=['--no-home','-C','--env','NUMBA_CACHE_DIR=/tmp'],
       allow_errors=allow_errors,
       use_ephemeral_space=True,
       singularity_image_path=singularity_image_path)
