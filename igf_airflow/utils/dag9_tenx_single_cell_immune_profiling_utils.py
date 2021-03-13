@@ -285,6 +285,7 @@ def run_scanpy_for_sc_5p_func(**context):
       timeout=timeout,
       singularity_options=['--no-home','-C'],
       allow_errors=allow_errors,
+      use_ephemeral_space=True,
       singularity_image_path=singularity_image_path)
     output_notebook_path,_ = \
       nb.execute_notebook_in_singularity()
