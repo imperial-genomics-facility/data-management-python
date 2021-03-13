@@ -15,6 +15,7 @@ def run_cellranger_multi(
     check_file_path(output_dir)
     cmd = [
       cellranger_exe,
+      'multi',
       '--id',sample_id,
       '--csv',library_csv,
       '--disable-ui']
