@@ -25,6 +25,32 @@ from igf_data.utils.igf_irods_client import IGF_irods_uploader
 from igf_data.utils.jupyter_nbconvert_wrapper import Notebook_runner
 
 ## FUNCTION
+def task_branch_function(**context):
+  try:
+    ti = context.get('ti')
+    xcom_pull_task_id = \
+      context['params'].get('xcom_pull_task_id')
+    analysis_info_xcom_key = \
+      context['params'].get('analysis_info_xcom_key')
+    analysis_name = \
+      context['params'].get('analysis_name')
+    task_prefix = \
+      context['params'].get('task_prefix')
+    analysis_info = \
+      ti.xcom_pull(
+        task_ids=xcom_pull_task_id,
+        key=analysis_info_xcom_key)
+    sample_info = \
+      analysis_info.get(analysis_name)
+    run_list = sample_info.get('runs').keys()
+    task_list = [
+      '{0}_{1}_{2}'.format(task_prefix,analysis_name,run_id)
+        for run_id in run_list]
+    return task_list
+  except Exception as e:
+    logging.error(e)
+    raise ValueError(e)
+
 def load_analysis_files_func(**context):
   try:
     ti = context.get('ti')
