@@ -134,9 +134,9 @@ def run_singlecell_notebook_wrapper_func(**context):
     kernel_name = \
       context['params'].get('kernel_name')
     template_ipynb_path = \
-      context['params'].get('template_ipynb_path')
+      Variable.get('scanpy_single_sample_template')
     singularity_image_path = \
-      context['params'].get('singularity_image_path')
+      Variable.get('scanpy_notebook_image')
     cell_marker_list = \
       context['params'].get('cell_marker_list')
     cellranger_output = \
