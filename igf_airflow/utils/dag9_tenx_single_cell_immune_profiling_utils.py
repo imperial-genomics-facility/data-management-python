@@ -241,7 +241,11 @@ def run_scanpy_for_sc_5p_func(**context):
     tmp_dir = get_temp_dir(use_ephemeral_space=True)
     scanpy_h5ad = os.path.join(tmp_dir,'scanpy.h5ad')
     cellbrowser_dir = os.path.join(tmp_dir,'cellbrowser_dir')
+    if not os.path.exists(cellbrowser_dir):
+      os.makedirs(cellbrowser_dir)
     cellbrowser_html_dir = os.path.join(tmp_dir,'cellbrowser_html_dir')
+    if not os.path.exists(cellbrowser_html_dir):
+      os.makedirs(cellbrowser_html_dir)
     template_ipynb_path = SCANPY_SINGLE_SAMPLE_TEMPLATE
     singularity_image_path = SCANPY_NOTEBOOK_IMAGE
     cell_marker_list = Variable.get('all_cell_marker_list')
@@ -285,22 +289,13 @@ def run_scanpy_for_sc_5p_func(**context):
       cellranger_count_dir,
       tmp_dir,
       os.path.dirname(cell_marker_list)]
-    msg = 'input_params: {0}, bind_dirs: {1}, template: {2}, image: {3}'.\
-      format(input_params,container_bind_dir_list,template_ipynb_path,singularity_image_path)
-    send_log_to_channels(
-      slack_conf=SLACK_CONF,
-      ms_teams_conf=MS_TEAMS_CONF,
-      task_id=context['task'].task_id,
-      dag_id=context['task'].dag_id,
-      comment=msg,
-      reaction='fail')
     nb = Notebook_runner(
       template_ipynb_path=template_ipynb_path,
       output_dir=tmp_dir,
       input_param_map=input_params,
       container_paths=container_bind_dir_list,
       timeout=timeout,
-      singularity_options=['--no-home','-C','--env','NUMBA_CACHE_DIR=/tmp'],
+      singularity_options=['--no-home','-C'],
       allow_errors=allow_errors,
       use_ephemeral_space=True,
       singularity_image_path=singularity_image_path)
