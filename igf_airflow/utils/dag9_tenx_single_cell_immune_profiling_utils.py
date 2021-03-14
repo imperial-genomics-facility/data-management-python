@@ -23,6 +23,7 @@ from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.utils.igf_irods_client import IGF_irods_uploader
 from igf_data.utils.jupyter_nbconvert_wrapper import Notebook_runner
+from igf_airflow.logging.upload_log_msg import send_log_to_channels
 
 ## DEFAULTS
 DATABASE_CONFIG_FILE = Variable.get('test_database_config_file')
