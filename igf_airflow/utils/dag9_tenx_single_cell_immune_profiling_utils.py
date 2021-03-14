@@ -24,6 +24,13 @@ from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.utils.igf_irods_client import IGF_irods_uploader
 from igf_data.utils.jupyter_nbconvert_wrapper import Notebook_runner
 
+## DEFAULTS
+DATABASE_CONFIG_FILE = Variable.get('test_database_config_file')
+SCANPY_SINGLE_SAMPLE_TEMPLATE= Variable.get('scanpy_single_sample_template')
+SCANPY_NOTEBOOK_IMAGE = Variable.get('scanpy_notebook_image')
+SLACK_CONF = Variable.get('slack_conf')
+MS_TEAMS_CONF = Variable.get('ms_teams_conf')
+
 ## FUNCTION
 def task_branch_function(**context):
   try:
@@ -71,7 +78,7 @@ def load_analysis_files_func(**context):
     output_files_key = \
       context['params'].get('output_files_key')
     database_config_file = \
-      Variable.get('test_database_config_file')
+      DATABASE_CONFIG_FILE
     base_result_dir = \
       Variable.get('base_result_dir')
     dbparams = \
@@ -134,9 +141,9 @@ def run_singlecell_notebook_wrapper_func(**context):
     kernel_name = \
       context['params'].get('kernel_name')
     template_ipynb_path = \
-      Variable.get('scanpy_single_sample_template')
+      SCANPY_SINGLE_SAMPLE_TEMPLATE
     singularity_image_path = \
-      Variable.get('scanpy_notebook_image')
+      SCANPY_NOTEBOOK_IMAGE
     cell_marker_list = \
       context['params'].get('cell_marker_list')
     cellranger_output = \
@@ -155,7 +162,7 @@ def run_singlecell_notebook_wrapper_func(**context):
     analysis_id = \
         dag_run.conf.get('analysis_id')
     database_config_file = \
-      Variable.get('test_database_config_file')
+      DATABASE_CONFIG_FILE
     dbparams = \
       read_dbconf_json(database_config_file)
     aa = \
@@ -234,8 +241,8 @@ def run_scanpy_for_sc_5p_func(**context):
     scanpy_h5ad = os.path.join(tmp_dir,'scanpy.h5ad')
     cellbrowser_dir = os.path.join(tmp_dir,'cellbrowser_dir')
     cellbrowser_html_dir = os.path.join(tmp_dir,'cellbrowser_html_dir')
-    template_ipynb_path = Variable.get('scanpy_single_sample_template')
-    singularity_image_path = Variable.get('scanpy_notebook_image')
+    template_ipynb_path = SCANPY_SINGLE_SAMPLE_TEMPLATE
+    singularity_image_path = SCANPY_NOTEBOOK_IMAGE
     cell_marker_list = Variable.get('all_cell_marker_list')
     dag_run = context.get('dag_run')
     if dag_run is None or \
@@ -245,7 +252,7 @@ def run_scanpy_for_sc_5p_func(**context):
     analysis_id = \
         dag_run.conf.get('analysis_id')
     database_config_file = \
-      Variable.get('test_database_config_file')
+      DATABASE_CONFIG_FILE
     dbparams = \
       read_dbconf_json(database_config_file)
     aa = \
@@ -277,6 +284,15 @@ def run_scanpy_for_sc_5p_func(**context):
       cellranger_count_dir,
       tmp_dir,
       os.path.dirname(cell_marker_list)]
+    msg = 'input_params: {0}, bind_dirs: {1}, template: {2}, image: {3}'.\
+      format(input_params,container_bind_dir_list,template_ipynb_path,singularity_image_path)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=msg,
+      reaction='fail')
     nb = Notebook_runner(
       template_ipynb_path=template_ipynb_path,
       output_dir=tmp_dir,
@@ -321,7 +337,7 @@ def irods_files_upload_for_analysis(**context):
     analysis_id = \
         dag_run.conf.get('analysis_id')
     database_config_file = \
-      Variable.get('test_database_config_file')
+      DATABASE_CONFIG_FILE
     dbparams = \
       read_dbconf_json(database_config_file)
     aa = \
@@ -392,7 +408,7 @@ def ftp_files_upload_for_analysis(**context):
     analysis_id = \
         dag_run.conf.get('analysis_id')
     database_config_file = \
-      Variable.get('test_database_config_file')
+      DATABASE_CONFIG_FILE
     dbparams = \
       read_dbconf_json(database_config_file)
     aa = \
@@ -577,7 +593,7 @@ def load_cellranger_result_to_db_func(**context):
     base_result_dir = \
       Variable.get('base_result_dir')
     database_config_file = \
-      Variable.get('test_database_config_file')
+      DATABASE_CONFIG_FILE
     dbparams = \
       read_dbconf_json(database_config_file)
     base = \
@@ -1056,7 +1072,7 @@ def fetch_analysis_info_and_branch_func(**context):
     analysis_info_xcom_key = \
       context['params'].get('analysis_info_xcom_key')
     database_config_file = \
-      Variable.get('test_database_config_file')                                 # using test db
+      DATABASE_CONFIG_FILE
     analysis_list.append(no_analysis)
     if dag_run is not None and \
        dag_run.conf is not None and \
