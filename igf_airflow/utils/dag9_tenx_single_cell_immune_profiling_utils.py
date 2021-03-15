@@ -29,8 +29,22 @@ from igf_airflow.logging.upload_log_msg import send_log_to_channels
 DATABASE_CONFIG_FILE = Variable.get('test_database_config_file')
 SCANPY_SINGLE_SAMPLE_TEMPLATE= Variable.get('scanpy_single_sample_template')
 SCANPY_NOTEBOOK_IMAGE = Variable.get('scanpy_notebook_image')
+SCIRPY_SINGLE_SAMPLE_TEMPLATE = Variable.get('scirpy_single_sample_template')
+SCIRPY_NOTEBOOK_IMAGE = Variable.get('scirpy_notebook_image')
+SEURAT_SINGLE_SAMPLE_TEMPLATE = Variable.get('seurat_single_sample_template')
+SEURAT_NOTEBOOK_IMAGE = Variable.get('seurat_notebook_image')
+CUTADAPT_IMAGE = Variable.get('cutadapt_singularity_image')
+MULTIQC_IMAGE = Variable.get('multiqc_singularity_image')
+PICARD_IMAGE = Variable.get('picard_singularity_image')
 SLACK_CONF = Variable.get('slack_conf')
 MS_TEAMS_CONF = Variable.get('ms_teams_conf')
+BOX_USERNAME = Variable.get('box_username')
+BOX_CONFIG_FILE = Variable.get('box_config_file')
+FTP_HOSTNAME = Variable.get('ftp_hostname')
+FTP_USERNAME = Variable.get('ftp_username')
+FTP_PROJECT_PATH = Variable.get('ftp_project_path')
+BASE_RESULT_DIR = Variable.get('base_result_dir')
+ALL_CELL_MARKER_LIST = Variable.get('all_cell_marker_list')
 
 ## FUNCTION
 def task_branch_function(**context):
@@ -78,10 +92,8 @@ def load_analysis_files_func(**context):
       context['params'].get('collection_table')
     output_files_key = \
       context['params'].get('output_files_key')
-    database_config_file = \
-      DATABASE_CONFIG_FILE
-    base_result_dir = \
-      Variable.get('base_result_dir')
+    database_config_file = DATABASE_CONFIG_FILE
+    base_result_dir = BASE_RESULT_DIR
     dbparams = \
       read_dbconf_json(database_config_file)
     base = \
@@ -141,12 +153,9 @@ def run_singlecell_notebook_wrapper_func(**context):
       context['params'].get('analysis_description_xcom_key')
     kernel_name = \
       context['params'].get('kernel_name')
-    template_ipynb_path = \
-      SCANPY_SINGLE_SAMPLE_TEMPLATE
-    singularity_image_path = \
-      SCANPY_NOTEBOOK_IMAGE
-    cell_marker_list = \
-      context['params'].get('cell_marker_list')
+    template_ipynb_path = SCANPY_SINGLE_SAMPLE_TEMPLATE
+    singularity_image_path = SCANPY_NOTEBOOK_IMAGE
+    cell_marker_list = ALL_CELL_MARKER_LIST
     cellranger_output = \
       ti.xcom_pull(
         task_ids=cellranger_xcom_pull_task,
@@ -162,8 +171,7 @@ def run_singlecell_notebook_wrapper_func(**context):
       raise ValueError('No analysis id found for collection')
     analysis_id = \
         dag_run.conf.get('analysis_id')
-    database_config_file = \
-      DATABASE_CONFIG_FILE
+    database_config_file = DATABASE_CONFIG_FILE
     dbparams = \
       read_dbconf_json(database_config_file)
     aa = \
@@ -248,7 +256,7 @@ def run_scanpy_for_sc_5p_func(**context):
       os.makedirs(cellbrowser_html_dir)
     template_ipynb_path = SCANPY_SINGLE_SAMPLE_TEMPLATE
     singularity_image_path = SCANPY_NOTEBOOK_IMAGE
-    cell_marker_list = Variable.get('all_cell_marker_list')
+    cell_marker_list = ALL_CELL_MARKER_LIST
     dag_run = context.get('dag_run')
     if dag_run is None or \
        dag_run.conf is None or \
@@ -256,8 +264,7 @@ def run_scanpy_for_sc_5p_func(**context):
       raise ValueError('No analysis id found for collection')
     analysis_id = \
         dag_run.conf.get('analysis_id')
-    database_config_file = \
-      DATABASE_CONFIG_FILE
+    database_config_file = DATABASE_CONFIG_FILE
     dbparams = \
       read_dbconf_json(database_config_file)
     aa = \
@@ -403,8 +410,7 @@ def ftp_files_upload_for_analysis(**context):
       raise ValueError('No analysis id found for collection')
     analysis_id = \
         dag_run.conf.get('analysis_id')
-    database_config_file = \
-      DATABASE_CONFIG_FILE
+    database_config_file = DATABASE_CONFIG_FILE
     dbparams = \
       read_dbconf_json(database_config_file)
     aa = \
@@ -413,12 +419,9 @@ def ftp_files_upload_for_analysis(**context):
     project_igf_id = \
       aa.fetch_project_igf_id_for_analysis_id(analysis_id=int(analysis_id))
     aa.close_session()
-    ftp_hostname = \
-      Variable.get('ftp_hostname')
-    ftp_username = \
-      Variable.get('ftp_username')
-    ftp_project_path = \
-      Variable.get('ftp_project_path')
+    ftp_hostname = FTP_HOSTNAME
+    ftp_username = FTP_USERNAME
+    ftp_project_path = FTP_PROJECT_PATH
     file_list_for_copy = \
       ti.xcom_pull(
         task_ids=xcom_pull_task,
@@ -586,10 +589,8 @@ def load_cellranger_result_to_db_func(**context):
       results_dirpath=cellranger_output,
       output_file=temp_archive_name,
       exclude_list=['*.bam','*.bai','*.cram'])
-    base_result_dir = \
-      Variable.get('base_result_dir')
-    database_config_file = \
-      DATABASE_CONFIG_FILE
+    base_result_dir = BASE_RESULT_DIR
+    database_config_file = DATABASE_CONFIG_FILE
     dbparams = \
       read_dbconf_json(database_config_file)
     base = \
@@ -778,8 +779,7 @@ def run_sc_read_trimmming_func(**context):
       context['params'].get('fastq_input_dir_tag')
     fastq_output_dir_tag = \
       context['params'].get('fastq_output_dir_tag')
-    singularity_image = \
-      Variable.get('cutadapt_singularity_image')
+    singularity_image = CUTADAPT_IMAGE
     analysis_info = \
       ti.xcom_pull(
         task_ids=xcom_pull_task_id,
