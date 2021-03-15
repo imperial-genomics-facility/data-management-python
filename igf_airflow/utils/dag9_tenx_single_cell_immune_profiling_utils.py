@@ -137,6 +137,8 @@ def run_singlecell_notebook_wrapper_func(**context):
       context['params'].get('cellranger_xcom_key')
     cellranger_xcom_pull_task = \
       context['params'].get('cellranger_xcom_pull_task')
+    output_cellbrowser_key = \
+      context['params'].get('output_cellbrowser_key')
     timeout = \
       context['params'].get('timeout')
     allow_errors = \
@@ -153,8 +155,9 @@ def run_singlecell_notebook_wrapper_func(**context):
       context['params'].get('analysis_description_xcom_key')
     kernel_name = \
       context['params'].get('kernel_name')
-    template_ipynb_path = SCANPY_SINGLE_SAMPLE_TEMPLATE
-    singularity_image_path = SCANPY_NOTEBOOK_IMAGE
+    analysis_name = \
+      context['params'].get('analysis_name')
+    analysis_name = analysis_name.upper()
     cell_marker_list = ALL_CELL_MARKER_LIST
     cellranger_output = \
       ti.xcom_pull(
@@ -199,8 +202,31 @@ def run_singlecell_notebook_wrapper_func(**context):
       'CELL_MARKER_LIST':cell_marker_list,
       'GENOME_BUILD':genome_build}
     container_bind_dir_list = [
-      cellranger_count_dir,
+      cellranger_output,
+      tmp_dir,
       os.path.dirname(cell_marker_list)]
+    if analysis_name == 'SCANPY':
+      template_ipynb_path = SCANPY_SINGLE_SAMPLE_TEMPLATE
+      singularity_image_path = SCANPY_NOTEBOOK_IMAGE
+      scanpy_h5ad = os.path.join(tmp_dir,'scanpy.h5ad')
+      cellbrowser_dir = os.path.join(tmp_dir,'cellbrowser_dir')
+      if not os.path.exists(cellbrowser_dir):
+        os.makedirs(cellbrowser_dir)
+      cellbrowser_html_dir = os.path.join(tmp_dir,'cellbrowser_html_dir')
+      if not os.path.exists(cellbrowser_html_dir):
+        os.makedirs(cellbrowser_html_dir)
+      input_params.update({
+        'SCANPY_H5AD':scanpy_h5ad,
+        'CELLBROWSER_DIR':cellbrowser_dir,
+        'CELLBROWSER_HTML_DIR':cellbrowser_html_dir})
+    elif analysis_name == 'SCIRPY':
+      template_ipynb_path = SCIRPY_SINGLE_SAMPLE_TEMPLATE
+      singularity_image_path = SCIRPY_NOTEBOOK_IMAGE
+    elif analysis_name == 'SEURAT':
+      template_ipynb_path = SEURAT_SINGLE_SAMPLE_TEMPLATE
+      singularity_image_path = SEURAT_NOTEBOOK_IMAGE
+    else:
+      raise ValueError('Analysis name {0} not supported'.format(analysis_name))
     nb = Notebook_runner(
       template_ipynb_path=template_ipynb_path,
       output_dir=tmp_dir,
@@ -210,17 +236,22 @@ def run_singlecell_notebook_wrapper_func(**context):
       kernel=kernel_name,
       singularity_options=['--no-home','-C'],
       allow_errors=allow_errors,
+      use_ephemeral_space=True,
       singularity_image_path=singularity_image_path)
     output_notebook_path,_ = \
       nb.execute_notebook_in_singularity()
     ti.xcom_push(
       key=output_notebook_key,
       value=output_notebook_path)
+    if analysis_name == 'SCANPY':
+      ti.xcom_push(
+        key=output_cellbrowser_key,
+        value=cellbrowser_html_dir)
   except Exception as e:
     logging.error(e)
     raise ValueError(e)
 
-
+"""
 def run_scanpy_for_sc_5p_func(**context):
   try:
     ti = context.get('ti')
@@ -287,9 +318,9 @@ def run_scanpy_for_sc_5p_func(**context):
       'PROJECT_IGF_ID':project_igf_id,
       'SAMPLE_IGF_ID':sample_igf_id,
       'CELLRANGER_COUNT_DIR':cellranger_count_dir,
-      'SCANPY_H5AD':scanpy_h5ad,
       'CELL_MARKER_LIST':cell_marker_list,
       'GENOME_BUILD':genome_build,
+      'SCANPY_H5AD':scanpy_h5ad,
       'CELLBROWSER_DIR':cellbrowser_dir,
       'CELLBROWSER_HTML_DIR':cellbrowser_html_dir}
     container_bind_dir_list = [
@@ -317,7 +348,7 @@ def run_scanpy_for_sc_5p_func(**context):
   except Exception as e:
     logging.error(e)
     raise ValueError(e)
-
+"""
 
 def irods_files_upload_for_analysis(**context):
   try:
