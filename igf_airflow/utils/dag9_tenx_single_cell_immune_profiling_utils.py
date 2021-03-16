@@ -89,9 +89,9 @@ def upload_analysis_file_to_box(**context):
       raise ValueError(
               'No analysis records found for analysis_id {0}'.\
               format(analysis_id))
-    if 'analysis_name' not in analysis_record:
-      raise KeyError('Missing required key analysis_name')
-    analysis_name = analysis_record.get('analysis_name')
+    if analysis_record is None:
+      raise KeyError('Missing required analysis record')
+    analysis_name = analysis_record.analysis_name
     dag_id = context['task'].dag_id
     box_dir = \
       os.path.join(
