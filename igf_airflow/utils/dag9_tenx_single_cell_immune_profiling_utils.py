@@ -24,6 +24,7 @@ from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.utils.igf_irods_client import IGF_irods_uploader
 from igf_data.utils.jupyter_nbconvert_wrapper import Notebook_runner
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
+from igf_data.utils.box_upload import upload_file_or_dir_to_box
 
 ## DEFAULTS
 DATABASE_CONFIG_FILE = Variable.get('test_database_config_file')
@@ -40,13 +41,77 @@ SLACK_CONF = Variable.get('slack_conf')
 MS_TEAMS_CONF = Variable.get('ms_teams_conf')
 BOX_USERNAME = Variable.get('box_username')
 BOX_CONFIG_FILE = Variable.get('box_config_file')
+BOX_DIR_PREFIX = 'SecondaryAnalysis'
 FTP_HOSTNAME = Variable.get('ftp_hostname')
 FTP_USERNAME = Variable.get('ftp_username')
 FTP_PROJECT_PATH = Variable.get('ftp_project_path')
 BASE_RESULT_DIR = Variable.get('base_result_dir')
 ALL_CELL_MARKER_LIST = Variable.get('all_cell_marker_list')
 
+
 ## FUNCTION
+def upload_analysis_file_to_box(**context):
+  try:
+    ti = context.get('ti')
+    xcom_pull_task = \
+      context['params'].get('xcom_pull_task')
+    xcom_pull_files_key = \
+      context['params'].get('xcom_pull_files_key')
+    analysis_tag = \
+      context['params'].get('analysis_tag')
+    file_list_for_copy = \
+      ti.xcom_pull(
+        task_ids=xcom_pull_task,
+        key=xcom_pull_files_key)
+    if isinstance(file_list_for_copy,str):
+      file_list_for_copy = [file_list_for_copy]
+    dbparams = \
+      read_dbconf_json(DATABASE_CONFIG_FILE)
+    dag_run = context.get('dag_run')
+    if dag_run is None or \
+       dag_run.conf is None or \
+       dag_run.conf.get('analysis_id') is None:
+      raise ValueError('No analysis id found for collection')
+    analysis_id = \
+        dag_run.conf.get('analysis_id')
+    aa = \
+      AnalysisAdaptor(**dbparams)
+    aa.start_session()
+    project_igf_id = \
+      aa.fetch_project_igf_id_for_analysis_id(
+        analysis_id=int(analysis_id))
+    analysis_record = \
+      aa.fetch_analysis_records_project_igf_id(
+        analysis_id=int(analysis_id),
+        output_mode='one_or_none')
+    aa.close_session()
+    if analysis_record is None:
+      raise ValueError(
+              'No analysis records found for analysis_id {0}'.\
+              format(analysis_id))
+    if 'analysis_name' not in analysis_record:
+      raise KeyError('Missing required key analysis_name')
+    analysis_name = analysis_record.get('analysis_name')
+    dag_id = context['task'].dag_id
+    box_dir = \
+      os.path.join(
+        BOX_DIR_PREFIX,
+        project_igf_id,
+        dag_id,
+        analysis_name,
+        analysis_tag)
+    for file_path in file_list_for_copy:
+      upload_file_or_dir_to_box(
+        box_config_file=BOX_CONFIG_FILE,
+        file_path=file_path,
+        upload_dir=box_dir,
+        box_username=BOX_USERNAME,
+        skip_existing=False)
+  except Exception as e:
+    logging.error(e)
+    raise ValueError(e)
+
+
 def task_branch_function(**context):
   try:
     ti = context.get('ti')
