@@ -20,16 +20,23 @@ from igf_data.process.data_qc.check_sequence_index_barcodes import CheckSequence
 from igf_data.process.data_qc.check_sequence_index_barcodes import IndexBarcodeValidationError
 from igf_data.utils.jupyter_nbconvert_wrapper import Notebook_runner
 
+SEQRUN_SERVER = Variable.get('seqrun_server',default_var=None)
+SEQRUN_BASE_PATH = Variable.get('seqrun_base_path',default_var=None)
+SEQRUN_SERVER_USER = Variable.get('seqrun_server_user',default_var=None)
+DATABASE_CONFIG_FILE = Variable.get('database_config_file',default_var=None)
+SLACK_CONF = Variable.get('slack_conf',default_var=None)
+MS_TEAMS_CONF = Variable.get('ms_teams_conf',default_var=None)
+
 def get_ongoing_seqrun_list(**context):
   """
   A function for fetching ongoing sequencing run ids
   """
   try:
     ti = context.get('ti')
-    seqrun_server = Variable.get('seqrun_server')
-    seqrun_base_path = Variable.get('seqrun_base_path')
-    seqrun_server_user = Variable.get('seqrun_server_user')
-    database_config_file = Variable.get('database_config_file')
+    seqrun_server = SEQRUN_SERVER
+    seqrun_base_path = SEQRUN_BASE_PATH
+    seqrun_server_user = SEQRUN_SERVER_USER
+    database_config_file = DATABASE_CONFIG_FILE
     ongoing_seqruns = \
       fetch_ongoing_seqruns(
         seqrun_server=seqrun_server,
@@ -43,8 +50,8 @@ def get_ongoing_seqrun_list(**context):
       branch_list = ['no_ongoing_seqrun']
     else:
       send_log_to_channels(
-        slack_conf=Variable.get('slack_conf'),
-        ms_teams_conf=Variable.get('ms_teams_conf'),
+        slack_conf=SLACK_CONF,
+        ms_teams_conf=MS_TEAMS_CONF,
         task_id=context['task'].task_id,
         dag_id=context['task'].dag_id,
         comment='Ongoing seqruns found: {0}'.format(ongoing_seqruns),
@@ -53,8 +60,8 @@ def get_ongoing_seqrun_list(**context):
   except Exception as e:
     logging.error(e)
     send_log_to_channels(
-      slack_conf=Variable.get('slack_conf'),
-      ms_teams_conf=Variable.get('ms_teams_conf'),
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
       comment=e,
@@ -68,8 +75,8 @@ def copy_seqrun_manifest_file(**context):
   """
   try:
     remote_file_path = context['params'].get('file_path')
-    seqrun_server = Variable.get('seqrun_server')
-    seqrun_server_user = Variable.get('seqrun_server_user')
+    seqrun_server = SEQRUN_SERVER
+    seqrun_server_user = SEQRUN_SERVER_USER
     xcom_pull_task_ids = context['params'].get('xcom_pull_task_ids')
     ti = context.get('ti')
     remote_file_path = ti.xcom_pull(task_ids=xcom_pull_task_ids)
@@ -91,8 +98,8 @@ def copy_seqrun_manifest_file(**context):
   except Exception as e:
     logging.error(e)
     send_log_to_channels(
-      slack_conf=Variable.get('slack_conf'),
-      ms_teams_conf=Variable.get('ms_teams_conf'),
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
       comment=e,
@@ -124,8 +131,8 @@ def reset_manifest_file(**context):
   except Exception as e:
     logging.error(e)
     send_log_to_channels(
-      slack_conf=Variable.get('slack_conf'),
-      ms_teams_conf=Variable.get('ms_teams_conf'),
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
       comment=e,
@@ -173,8 +180,8 @@ def get_seqrun_chunks(**context):
   except Exception as e:
     logging.error(e)
     send_log_to_channels(
-      slack_conf=Variable.get('slack_conf'),
-      ms_teams_conf=Variable.get('ms_teams_conf'),
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
       comment=e,
@@ -196,9 +203,9 @@ def copy_seqrun_chunk(**context):
     local_seqrun_path = context['params'].get('local_seqrun_path')
     seqrun_id_pull_key = context['params'].get('seqrun_id_pull_key')
     seqrun_id_pull_task_ids = context['params'].get('seqrun_id_pull_task_ids')
-    seqrun_server = Variable.get('seqrun_server')
-    seqrun_server_user = Variable.get('seqrun_server_user')
-    seqrun_base_path = Variable.get('seqrun_base_path')
+    seqrun_server = SEQRUN_SERVER
+    seqrun_server_user = SEQRUN_SERVER_USER
+    seqrun_base_path = SEQRUN_BASE_PATH
     seqrun_id = \
       ti.xcom_pull(key=seqrun_id_pull_key,task_ids=seqrun_id_pull_task_ids)[run_index_number]
     file_path = \
@@ -247,8 +254,8 @@ def copy_seqrun_chunk(**context):
   except Exception as e:
     logging.error(e)
     send_log_to_channels(
-      slack_conf=Variable.get('slack_conf'),
-      ms_teams_conf=Variable.get('ms_teams_conf'),
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
       comment=e,
