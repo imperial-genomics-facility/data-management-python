@@ -25,7 +25,6 @@ class AnalysisAdaptor(BaseAdaptor):
     try:
       if not isinstance(data, pd.DataFrame):
         data=pd.DataFrame(data)
-      
       if 'project_igf_id' in data.columns:
         project_map_function = \
           lambda x: \
