@@ -76,8 +76,9 @@ class Analysisadaptor_test1(unittest.TestCase):
     aa.close_session()
     self.assertEqual(project_id,'IGFP0001_test_22-8-2017_rna')
     self.assertTrue(analysis_records is not None)
-    self.assertEqual(analysis_records.get('analysis_name'),'analysis_1')
-    self.assertEqual(analysis_records.get('analysis_type'),'type_1')
+    print(analysis_records)
+    self.assertEqual(analysis_records.analysis_name,'analysis_1')
+    self.assertEqual(analysis_records.analysis_type,'type_1')
 
 if __name__ == '__main__':
   unittest.main()
