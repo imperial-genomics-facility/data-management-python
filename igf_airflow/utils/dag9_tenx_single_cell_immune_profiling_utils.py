@@ -44,7 +44,7 @@ BOX_CONFIG_FILE = Variable.get('box_config_file',default_var=None)
 BOX_DIR_PREFIX = 'SecondaryAnalysis'
 FTP_HOSTNAME = Variable.get('ftp_hostname',default_var=None)
 FTP_USERNAME = Variable.get('ftp_username',default_var=None)
-FTP_PROJECT_PATH = Variable.get('ftp_project_path')
+FTP_PROJECT_PATH = Variable.get('ftp_project_path',default_var=None)
 BASE_RESULT_DIR = Variable.get('base_result_dir',default_var=None)
 ALL_CELL_MARKER_LIST = Variable.get('all_cell_marker_list',default_var=None)
 
@@ -81,7 +81,7 @@ def upload_analysis_file_to_box(**context):
       aa.fetch_project_igf_id_for_analysis_id(
         analysis_id=int(analysis_id))
     analysis_record = \
-      aa.fetch_analysis_records_project_igf_id(
+      aa.fetch_analysis_records_analysis_id(
         analysis_id=int(analysis_id),
         output_mode='one_or_none')
     aa.close_session()
