@@ -79,6 +79,33 @@ class AnalysisAdaptor(BaseAdaptor):
                 format(analysis_id,e))
 
 
+  def fetch_analysis_records_analysis_id(
+        self,analysis_id,output_mode='dataframe'):
+    '''
+    A method for fetching analysis records using the analysis_id
+
+    :param analysis_id: Analysis id form db
+    :param :param output_mode:  dataframe / object, default: dataframe
+    :returns: Analysis record
+    '''
+    try:
+      session = self.session
+      query = \
+        session.\
+        query(
+          Analysis.analysis_name,
+          Analysis.analysis_type,
+          Analysis.analysis_description).\
+        filter(Analysis.analysis_id==analysis_id)
+      results = \
+        self.fetch_records(
+          query=query,
+          output_mode=output_mode)
+      return results
+    except Exception as e:
+      raise ValueError(
+              'Failed to fetch analysis record, error: {0}'.format(e))
+
   def fetch_analysis_records_project_igf_id(
         self,project_igf_id,output_mode='dataframe'):
     '''
