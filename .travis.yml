@@ -16,6 +16,7 @@ install:
   - conda update -q conda
   - conda env create -n test-environment -f environment.yaml
   - source activate test-environment
+  - airflow upgradedb
 script:
   - coverage run --branch --source=igf_data setup.py test
   - coverage report -m > report
