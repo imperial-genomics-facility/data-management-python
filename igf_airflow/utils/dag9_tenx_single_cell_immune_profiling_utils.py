@@ -25,6 +25,8 @@ from igf_data.utils.igf_irods_client import IGF_irods_uploader
 from igf_data.utils.jupyter_nbconvert_wrapper import Notebook_runner
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_data.utils.box_upload import upload_file_or_dir_to_box
+from igf_data.utils.tools.samtools_utils import convert_bam_to_cram
+from igf_data.utils.tools.samtools_utils import index_bam_or_cram
 
 ## DEFAULTS
 DATABASE_CONFIG_FILE = Variable.get('test_database_config_file',default_var=None)
@@ -36,7 +38,7 @@ SEURAT_SINGLE_SAMPLE_TEMPLATE = Variable.get('seurat_single_sample_template',def
 SEURAT_NOTEBOOK_IMAGE = Variable.get('seurat_notebook_image',default_var=None)
 CUTADAPT_IMAGE = Variable.get('cutadapt_singularity_image',default_var=None)
 MULTIQC_IMAGE = Variable.get('multiqc_singularity_image',default_var=None)
-PICARD_IMAGE = Variable.get('picard_singularity_image',default_var=None)
+PICARD_IMAGE = Variable.get('picard_ ',default_var=None)
 SLACK_CONF = Variable.get('slack_conf',default_var=None)
 MS_TEAMS_CONF = Variable.get('ms_teams_conf',default_var=None)
 BOX_USERNAME = Variable.get('box_username',default_var=None)
@@ -47,9 +49,89 @@ FTP_USERNAME = Variable.get('ftp_username',default_var=None)
 FTP_PROJECT_PATH = Variable.get('ftp_project_path',default_var=None)
 BASE_RESULT_DIR = Variable.get('base_result_dir',default_var=None)
 ALL_CELL_MARKER_LIST = Variable.get('all_cell_marker_list',default_var=None)
-
+SAMTOOLS_IMAGE = Variable.get('samtools_singularity_image',default_var=None)
 
 ## FUNCTION
+
+def convert_bam_to_cram_func(**context):
+  try:
+    ti = context.get('ti')
+    xcom_pull_task = \
+      context['params'].get('xcom_pull_task')
+    xcom_pull_files_key = \
+      context['params'].get('xcom_pull_files_key')
+    reference_type = \
+      context['params'].get('reference_type')
+    analysis_description_xcom_pull_task = \
+      context['params'].get('analysis_description_xcom_pull_task')
+    analysis_description_xcom_key = \
+      context['params'].get('analysis_description_xcom_key')
+    use_ephemeral_space = \
+      context['params'].get('use_ephemeral_space')
+    threads = \
+      context['params'].get('threads')
+    analysis_description = \
+      ti.xcom_pull(
+        task_ids=analysis_description_xcom_pull_task,
+        key=analysis_description_xcom_key)
+    bam_file = \
+      ti.xcom_pull(
+        task_ids=xcom_pull_task,
+        key=xcom_pull_files_key)
+    if isinstance(bam_file,list):
+      bam_file = bam_file[0]
+    genome_build = \
+      analysis_description[0].get('genome_build')
+    dbparams = \
+      read_dbconf_json(DATABASE_CONFIG_FILE)
+    aa = \
+      AnalysisAdaptor(**dbparams)
+    ref_genome = \
+        Reference_genome_utils(\
+          genome_tag=genome_build,
+          dbsession_class=aa.session_class(),
+          genome_fasta_type=reference_type)
+    genome_fasta = ref_genome.get_genome_fasta()
+    temp_work_dir = get_temp_dir(use_ephemeral_space=use_ephemeral_space)
+    cram_file = os.path.basename(bam_file).replace('.bam','.cram')
+    cram_file = os.path.join(temp_work_dir,cram_file)
+    convert_bam_to_cram(
+      samtools_exe=samtools_exe,
+      bam_file=bam_file,
+      reference_file=genome_fasta,
+      cram_path=cram_file,
+      use_ephemeral_space=use_ephemeral_space,
+      threads=threads)
+    au = \
+      Analysis_collection_utils(
+        dbsession_class=aa.session_class(),
+        analysis_name=analysis_name,
+        tag_name=genome_build,
+        collection_name=collection_name,
+        collection_type=collection_type,
+        collection_table=collection_table,
+        base_path=BASE_RESULT_DIR)
+    output_cram_list = \
+      au.load_file_to_disk_and_db(\
+        input_file_list=[cram_file],
+        file_suffix='cram',
+        withdraw_exisitng_collection=True)
+    final_output_list = list()
+    for cram in output_cram_list:
+      _ = \
+        index_bam_or_cram(\
+          samtools_exe=samtools_exe,
+          input_path=cram,
+          threads=threads)                                                    # index cram files
+      final_output_list.append(cram)
+      cram_index = '{0}.crai'.format(cram)                                    # cram index has suffix .crai
+      check_file_path(cram_index)
+      final_output_list.append(cram_index)
+  except Exception as e:
+    logging.error(e)
+    raise ValueError(e)
+
+
 def upload_analysis_file_to_box(**context):
   try:
     ti = context.get('ti')
