@@ -339,7 +339,15 @@ def run_bam_stats(
         with subprocess.Popen(stats_cmd, stdout=subprocess.PIPE) as proc:
           fp.write(proc.stdout.read().decode('utf-8'))                            # write bam stats output
     else:
-      raise ValueError('Singularity not supported for samtools stats')
+      command = \
+        'singularity exec --bind {0} --bind {1} {2} {3} >> {4}'.\
+        format(
+          os.path.dirname(bam_file),
+          os.path.dirname(output_path),
+          singuarity_image,
+          ' '.join(stats_cmd),
+          output_path)
+      subprocess.check_call(command,shell=True)
     stats_data_list = \
       _parse_samtools_stats_output(stats_file=output_path)                      # parse stats output file
     return output_path,stats_cmd,stats_data_list
@@ -430,7 +438,15 @@ def run_bam_flagstat(samtools_exe,bam_file,output_dir,threads=1,force=False,
         with subprocess.Popen(flagstat_cmd, stdout=subprocess.PIPE) as proc:
           fp.write(proc.stdout.read().decode('utf-8'))                            # write bam flagstat output
     else:
-      raise ValueError('Singularity not supported for samtools flagstat')
+      command = \
+        'singularity exec --bind {0} --bind {1} {2} {3} >> {4}'.\
+        format(
+          os.path.dirname(bam_file),
+          os.path.dirname(output_path),
+          singuarity_image,
+          ' '.join(flagstat_cmd),
+          output_path)
+      subprocess.check_call(command,shell=True)
     return output_path,flagstat_cmd
   except:
     raise
@@ -485,7 +501,15 @@ def run_bam_idxstat(samtools_exe,bam_file,output_dir,output_prefix=None,
         with subprocess.Popen(idxstat_cmd, stdout=subprocess.PIPE) as proc:
           fp.write(proc.stdout.read().decode('utf-8'))                            # write bam flagstat output
     else:
-      raise ValueError('Singularity not supported for samtools idxstats')
+      command = \
+        'singularity exec --bind {0} --bind {1} {2} {3} >> {4}'.\
+        format(
+          os.path.dirname(bam_file),
+          os.path.dirname(output_path),
+          singuarity_image,
+          ' '.join(idxstat_cmd),
+          output_path)
+      subprocess.check_call(command,shell=True)
     return output_path,idxstat_cmd
   except:
     raise
