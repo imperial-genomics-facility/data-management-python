@@ -50,6 +50,8 @@ FTP_PROJECT_PATH = Variable.get('ftp_project_path',default_var=None)
 BASE_RESULT_DIR = Variable.get('base_result_dir',default_var=None)
 ALL_CELL_MARKER_LIST = Variable.get('all_cell_marker_list',default_var=None)
 SAMTOOLS_IMAGE = Variable.get('samtools_singularity_image',default_var=None)
+GENOME_FASTA_TYPE = 'GENOME_FASTA'
+
 
 ## FUNCTION
 
@@ -60,8 +62,6 @@ def convert_bam_to_cram_func(**context):
       context['params'].get('xcom_pull_task')
     xcom_pull_files_key = \
       context['params'].get('xcom_pull_files_key')
-    reference_type = \
-      context['params'].get('reference_type')
     analysis_description_xcom_pull_task = \
       context['params'].get('analysis_description_xcom_pull_task')
     analysis_description_xcom_key = \
@@ -70,18 +70,35 @@ def convert_bam_to_cram_func(**context):
       context['params'].get('use_ephemeral_space')
     threads = \
       context['params'].get('threads')
+    analysis_name = \
+      context['params'].get('analysis_name')
+    collection_type = \
+      context['params'].get('collection_type')
+    collection_table = \
+      context['params'].get('collection_table')
+    cram_files_xcom_key = \
+      context['params'].get('cram_files_xcom_key')
     analysis_description = \
       ti.xcom_pull(
         task_ids=analysis_description_xcom_pull_task,
         key=analysis_description_xcom_key)
+    analysis_description = pd.DataFrame(analysis_description)
+    analysis_description['feature_type'] = \
+      analysis_description['feature_type'].\
+        map(lambda x: x.lower().replace(' ','_').replace('-','_'))
+    gex_samples = \
+      analysis_description[analysis_description['feature_type']=='gene_expression']\
+        [['sample_igf_id','genome_build']]
+    if len(gex_samples.index) == 0:
+      raise ValueError('No gene expression entry found in analysis description')
+    sample_igf_id = gex_samples['sample_igf_id'].values[0]
+    genome_build = gex_samples['genome_build'].values[0]
     bam_file = \
       ti.xcom_pull(
         task_ids=xcom_pull_task,
         key=xcom_pull_files_key)
     if isinstance(bam_file,list):
       bam_file = bam_file[0]
-    genome_build = \
-      analysis_description[0].get('genome_build')
     dbparams = \
       read_dbconf_json(DATABASE_CONFIG_FILE)
     aa = \
@@ -90,24 +107,25 @@ def convert_bam_to_cram_func(**context):
         Reference_genome_utils(\
           genome_tag=genome_build,
           dbsession_class=aa.session_class(),
-          genome_fasta_type=reference_type)
+          genome_fasta_type=GENOME_FASTA_TYPE)
     genome_fasta = ref_genome.get_genome_fasta()
     temp_work_dir = get_temp_dir(use_ephemeral_space=use_ephemeral_space)
     cram_file = os.path.basename(bam_file).replace('.bam','.cram')
     cram_file = os.path.join(temp_work_dir,cram_file)
     convert_bam_to_cram(
-      samtools_exe=samtools_exe,
+      samtools_exe='samtools',
       bam_file=bam_file,
       reference_file=genome_fasta,
       cram_path=cram_file,
-      use_ephemeral_space=use_ephemeral_space,
+      use_ephemeral_space=True,
+      singuarity_image=SAMTOOLS_IMAGE,
       threads=threads)
     au = \
       Analysis_collection_utils(
         dbsession_class=aa.session_class(),
         analysis_name=analysis_name,
         tag_name=genome_build,
-        collection_name=collection_name,
+        collection_name=sample_igf_id,
         collection_type=collection_type,
         collection_table=collection_table,
         base_path=BASE_RESULT_DIR)
@@ -120,13 +138,17 @@ def convert_bam_to_cram_func(**context):
     for cram in output_cram_list:
       _ = \
         index_bam_or_cram(\
-          samtools_exe=samtools_exe,
+          samtools_exe='samtools',
           input_path=cram,
+          singuarity_image=SAMTOOLS_IMAGE,
           threads=threads)                                                    # index cram files
       final_output_list.append(cram)
       cram_index = '{0}.crai'.format(cram)                                    # cram index has suffix .crai
       check_file_path(cram_index)
       final_output_list.append(cram_index)
+    ti.xcom_push(
+      key=cram_files_xcom_key,
+      value=final_output_list)
   except Exception as e:
     logging.error(e)
     raise ValueError(e)
