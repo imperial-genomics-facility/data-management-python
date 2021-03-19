@@ -21,12 +21,14 @@ from igf_data.utils.analysis_collection_utils import Analysis_collection_utils
 from igf_data.igfdb.analysisadaptor import AnalysisAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
+from igf_data.igfdb.sampleadaptor import SampleAdaptor
 from igf_data.utils.igf_irods_client import IGF_irods_uploader
 from igf_data.utils.jupyter_nbconvert_wrapper import Notebook_runner
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_data.utils.box_upload import upload_file_or_dir_to_box
 from igf_data.utils.tools.samtools_utils import convert_bam_to_cram
 from igf_data.utils.tools.samtools_utils import index_bam_or_cram
+from igf_data.utils.tools.picard_util import Picard_tools
 
 ## DEFAULTS
 DATABASE_CONFIG_FILE = Variable.get('test_database_config_file',default_var=None)
@@ -51,9 +53,150 @@ BASE_RESULT_DIR = Variable.get('base_result_dir',default_var=None)
 ALL_CELL_MARKER_LIST = Variable.get('all_cell_marker_list',default_var=None)
 SAMTOOLS_IMAGE = Variable.get('samtools_singularity_image',default_var=None)
 GENOME_FASTA_TYPE = 'GENOME_FASTA'
-
+GENE_REFFLAT_TYPE = 'GENE_REFFLAT'
+RIBOSOMAL_INTERVAL_TYPE = 'RIBOSOMAL_INTERVAL'
+ANALYSIS_CRAM_TYPE = 'ANALYSIS_CRAM'
+PATTERNED_FLOWCELL_LIST = ['HISEQ4000','NEXTSEQ']
 
 ## FUNCTION
+
+def run_picard_for_cellranger(**context):
+  try:
+    ti = context.get('ti')
+    xcom_pull_task = \
+      context['params'].get('xcom_pull_task')
+    xcom_pull_files_key = \
+      context['params'].get('xcom_pull_files_key')
+    analysis_description_xcom_pull_task = \
+      context['params'].get('analysis_description_xcom_pull_task')
+    analysis_description_xcom_key = \
+      context['params'].get('analysis_description_xcom_key')
+    use_ephemeral_space = \
+      context['params'].get('use_ephemeral_space')
+    load_metrics_to_cram = \
+      context['params'].get('load_metrics_to_cram')
+    output_prefix = \
+      context['params'].get('output_prefix')
+    java_param = \
+      context['params'].get('java_param')
+    picard_command = \
+      context['params'].get('picard_command')
+    picard_option = \
+      context['params'].get('picard_option')
+    analysis_files_xcom_key = \
+      context['params'].get('analysis_files_xcom_key')
+    bam_files_xcom_key = \
+      context['params'].get('bam_files_xcom_key')
+    analysis_description = \
+      ti.xcom_pull(
+        task_ids=analysis_description_xcom_pull_task,
+        key=analysis_description_xcom_key)
+    analysis_description = pd.DataFrame(analysis_description)
+    analysis_description['feature_type'] = \
+      analysis_description['feature_type'].\
+        map(lambda x: x.lower().replace(' ','_').replace('-','_'))
+    gex_samples = \
+      analysis_description[analysis_description['feature_type']=='gene_expression']\
+        [['sample_igf_id','genome_build']]
+    if len(gex_samples.index) == 0:
+      raise ValueError('No gene expression entry found in analysis description')
+    genome_build = gex_samples['genome_build'].values[0]
+    sample_igf_id = gex_samples['sample_igf_id'].values[0]
+    bam_file = \
+      ti.xcom_pull(
+        task_ids=xcom_pull_task,
+        key=xcom_pull_files_key)
+    if isinstance(bam_file,list):
+      bam_file = bam_file[0]
+    dbparams = \
+      read_dbconf_json(DATABASE_CONFIG_FILE)
+    sa = SampleAdaptor(**dbparams)
+    ref_genome = \
+      Reference_genome_utils(
+        genome_tag=genome_build,
+        dbsession_class=sa.session_class(),
+        genome_fasta_type=GENOME_FASTA_TYPE,
+        gene_reflat_type=GENE_REFFLAT_TYPE,
+        ribosomal_interval_type=RIBOSOMAL_INTERVAL_TYPE)
+    genome_fasta = ref_genome.get_genome_fasta()
+    ref_flat_file = ref_genome.get_gene_reflat()
+    ribosomal_interval_file = ref_genome.get_ribosomal_interval()
+    sa.start_session()
+    sample_platform_records = \
+      sa.fetch_seqrun_and_platform_list_for_sample_id(
+        sample_igf_id=sample_igf_id)
+    sa.close_session()
+    sample_platform_records.\
+      drop_duplicates(inplace=True)
+    if len(sample_platform_records.index)==0:
+      raise ValueError(
+              'Failed to get platform information for sample {0}'.\
+                format(sample_igf_id))
+    platform_name = \
+      sample_platform_records['model_name'].values[0]
+    patterned_flowcell = False
+    if platform_name in PATTERNED_FLOWCELL_LIST:                              # check for patterned flowcell
+      patterned_flowcell = True
+    temp_output_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    picard = \
+       Picard_tools(
+        java_exe='java',
+        java_param=java_param,
+        singularity_image=PICARD_IMAGE,
+        picard_jar='picard.jar',
+        input_files=[bam_file],
+        output_dir=temp_output_dir,
+        ref_fasta=genome_fasta,
+        patterned_flowcell=patterned_flowcell,
+        ref_flat_file=ref_flat_file,
+        picard_option=picard_option,
+        output_prefix=output_prefix,
+        use_ephemeral_space=use_ephemeral_space,
+        ribisomal_interval=ribosomal_interval_file)
+    temp_output_files,picard_command_line,picard_metrics = \
+      picard.run_picard_command(
+        command_name=picard_command)
+    output_analysis_files = list()
+    output_bam_files = list()
+    for file in temp_output_files:
+      if file.endswith('.bam'):
+        output_bam_files.append(file)
+      else:
+        output_analysis_files.append(file)
+    if load_metrics_to_cram and \
+       len(picard_metrics) > 0:
+      ca = CollectionAdaptor(**dbparams)
+      attribute_data = \
+        ca.prepare_data_for_collection_attribute(
+          collection_name=sample_igf_id,
+          collection_type=ANALYSIS_CRAM_TYPE,
+          data_list=picard_metrics)
+      ca.start_session()
+      try:
+        ca.create_or_update_collection_attributes(
+          data=attribute_data,
+          autosave=False)                                                     # load data to collection attribute table
+        ca.commit_session()
+        ca.close_session()
+      except Exception as e:
+        ca.rollback_session()
+        ca.close_session()
+        raise ValueError(
+                'Failed to load pcard matrics to cram, error: {0}'.\
+                 format(e))
+    if len(output_analysis_files) > 0:
+      ti.xcom_push(
+        key=analysis_files_xcom_key,
+        value=output_analysis_files)
+    if len(output_bam_files) > 0:
+      ti.xcom_push(
+        key=bam_files_xcom_key,
+        value=output_bam_files)
+  except Exception as e:
+    logging.error(e)
+    raise ValueError(e)
+
 
 def convert_bam_to_cram_func(**context):
   try:
@@ -72,8 +215,6 @@ def convert_bam_to_cram_func(**context):
       context['params'].get('threads')
     analysis_name = \
       context['params'].get('analysis_name')
-    collection_type = \
-      context['params'].get('collection_type')
     collection_table = \
       context['params'].get('collection_table')
     cram_files_xcom_key = \
@@ -126,7 +267,7 @@ def convert_bam_to_cram_func(**context):
         analysis_name=analysis_name,
         tag_name=genome_build,
         collection_name=sample_igf_id,
-        collection_type=collection_type,
+        collection_type=ANALYSIS_CRAM_TYPE,
         collection_table=collection_table,
         base_path=BASE_RESULT_DIR)
     output_cram_list = \

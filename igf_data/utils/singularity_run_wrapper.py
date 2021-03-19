@@ -95,7 +95,7 @@ def execute_singuarity_cmd(image_path,command_string,log_dir=None,task_id=1,
   :param bind_dir_list: List of dirs to bind
   :params options: Additional list of options for singularity, default None
   :param dry_run: Return the singularity command without run, default False
-  :returns: None
+  :returns: string command
   """
   try:
     check_file_path(image_path)
