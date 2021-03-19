@@ -1,8 +1,9 @@
 import json
 import pandas as pd
-from sqlalchemy.sql import table, column
+from sqlalchemy.sql import table,column,func
+from sqlalchemy import distinct
 from igf_data.igfdb.baseadaptor import BaseAdaptor
-from igf_data.igfdb.igfTables import Project, Sample, Sample_attribute, Experiment
+from igf_data.igfdb.igfTables import Project,Sample,Sample_attribute,Experiment,Run,Seqrun,Platform
 
 
 class SampleAdaptor(BaseAdaptor):
@@ -253,3 +254,34 @@ class SampleAdaptor(BaseAdaptor):
       return project
     except Exception as e:
       raise ValueError('Failed to sample project, error: {0}'.format(e))
+
+
+  def fetch_seqrun_and_platform_list_for_sample_id(self,sample_igf_id,output_mode='dataframe'):
+    '''
+    A method for fetching seqrn and platform information for a sample
+
+    :param sample_igf_id: Sample igf id
+    :param output_mode: Output format, default 'dataframe'
+    :returns: A object or dataframe
+    '''
+    try:
+      query = \
+        self.session.\
+          query(
+            Seqrun.seqrun_igf_id,
+            Platform.platform_igf_id,
+            Platform.model_name).\
+          join(Platform,Seqrun.platform_id==Platform.platform_id).\
+          join(Run,Run.seqrun_id==Seqrun.seqrun_id).\
+          join(Experiment,Experiment.experiment_id==Run.experiment_id).\
+          join(Sample,Sample.sample_id==Experiment.sample_id).\
+          filter(Sample.sample_igf_id==sample_igf_id)
+      records = \
+        self.fetch_records(
+          query=query,
+          output_mode=output_mode)
+      return records
+    except Exception as e:
+      raise ValueError(
+              'Failed to retrieve seqrun and platform list for sample {0}, error: {1}'.\
+                format(sample_igf_id,e))
