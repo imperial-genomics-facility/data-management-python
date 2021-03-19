@@ -75,8 +75,6 @@ def run_picard_for_cellranger(**context):
       context['params'].get('use_ephemeral_space')
     load_metrics_to_cram = \
       context['params'].get('load_metrics_to_cram')
-    output_prefix = \
-      context['params'].get('output_prefix')
     java_param = \
       context['params'].get('java_param')
     picard_command = \
@@ -151,7 +149,7 @@ def run_picard_for_cellranger(**context):
         patterned_flowcell=patterned_flowcell,
         ref_flat_file=ref_flat_file,
         picard_option=picard_option,
-        output_prefix=output_prefix,
+        output_prefix=sample_igf_id,
         use_ephemeral_space=use_ephemeral_space,
         ribisomal_interval=ribosomal_interval_file)
     temp_output_files,picard_command_line,picard_metrics = \
