@@ -31,6 +31,7 @@ from igf_data.utils.tools.samtools_utils import index_bam_or_cram
 from igf_data.utils.tools.picard_util import Picard_tools
 from igf_data.utils.tools.samtools_utils import run_bam_idxstat,run_bam_stats,index_bam_or_cram
 
+
 ## DEFAULTS
 DATABASE_CONFIG_FILE = Variable.get('test_database_config_file',default_var=None)
 SCANPY_SINGLE_SAMPLE_TEMPLATE= Variable.get('scanpy_single_sample_template',default_var=None)
@@ -58,8 +59,241 @@ GENE_REFFLAT_TYPE = 'GENE_REFFLAT'
 RIBOSOMAL_INTERVAL_TYPE = 'RIBOSOMAL_INTERVAL'
 ANALYSIS_CRAM_TYPE = 'ANALYSIS_CRAM'
 PATTERNED_FLOWCELL_LIST = ['HISEQ4000','NEXTSEQ']
+MULTIQC_TEMPLATE_FILE = Variable.get('multiqc_template_file',default_var=None)
 
 ## FUNCTION
+
+def run_multiqc_for_cellranger(**context):
+  try:
+    ti = context.get('ti')
+    list_of_analysis_xcoms_and_tasks = \
+      context['params'].get('list_of_analysis_xcoms_and_tasks')
+    analysis_description_xcom_pull_task = \
+      context['params'].get('analysis_description_xcom_pull_task')
+    analysis_description_xcom_key = \
+      context['params'].get('analysis_description_xcom_key')
+    multiqc_html_file_xcom_key = \
+      context['params'].get('multiqc_html_file_xcom_key')
+    multiqc_data_file_xcom_key = \
+      context['params'].get('multiqc_data_file_xcom_key')
+    use_ephemeral_space = \
+      context['params'].get('use_ephemeral_space',default=True)
+    tool_order_list = \
+      context['params'].get('tool_order_list',default=['fastp','picard','samtools'])
+    multiqc_options = \
+      context['params'].get('multiqc_options',default=['--zip-data-dir'])
+    multiqc_exe = \
+      context['params'].get('multiqc_exe',default='multiqc')
+    temp_work_dir = \
+      get_temp_dir(use_ephemeral_space=use_ephemeral_space)
+    ### fetch sample id and genome build from analysis description
+    analysis_description = \
+      ti.xcom_pull(
+        task_ids=analysis_description_xcom_pull_task,
+        key=analysis_description_xcom_key)
+    analysis_description = pd.DataFrame(analysis_description)
+    analysis_description['feature_type'] = \
+      analysis_description['feature_type'].\
+        map(lambda x: x.lower().replace(' ','_').replace('-','_'))
+    gex_samples = \
+      analysis_description[analysis_description['feature_type']=='gene_expression']\
+        [['sample_igf_id','genome_build']]
+    if len(gex_samples.index) == 0:
+      raise ValueError('No gene expression entry found in analysis description')
+    genome_build = gex_samples['genome_build'].values[0]
+    sample_igf_id = gex_samples['sample_igf_id'].values[0]
+    ### fetch project id from analysis entry
+    dbparams = \
+      read_dbconf_json(DATABASE_CONFIG_FILE)
+    dag_run = context.get('dag_run')
+    if dag_run is None or \
+       dag_run.conf is None or \
+       dag_run.conf.get('analysis_id') is None:
+      raise ValueError('No analysis id found for collection')
+    analysis_id = \
+      dag_run.conf.get('analysis_id')
+    aa = \
+      AnalysisAdaptor(**dbparams)
+    aa.start_session()
+    project_igf_id = \
+      aa.fetch_project_igf_id_for_analysis_id(
+        analysis_id=int(analysis_id))
+    analysis_record = \
+      aa.fetch_analysis_records_analysis_id(
+        analysis_id=int(analysis_id),
+        output_mode='one_or_none')
+    aa.close_session()
+    ### fetch analysis file paths
+    analysis_paths_list = list()
+    if not isinstance(list_of_analysis_xcoms_and_tasks,dict) or \
+       len(list_of_analysis_xcoms_and_tasks.keys()) > 0:
+      raise TypeError(
+              'No analysis ids found for xcom fetching, {0}'.\
+              format(list_of_analysis_xcoms_and_tasks))
+    for xcom_pull_task,key_list in list_of_analysis_xcoms_and_tasks:
+      if isinstance(key_list,list):
+        for xcom_pull_files_key in key_list:
+          file_paths = \
+            ti.xcom_pull(
+              task_ids=xcom_pull_task,
+              key=xcom_pull_files_key)
+          if isinstance(file_paths,list):
+            analysis_paths_list.\
+              extend(file_paths)
+          elif isinstance(file_paths,str):
+            analysis_paths_list.\
+              append(file_paths)
+          else:
+            raise TypeError(
+                    'Expecting a list or string of file paths, got: {0}, task: {1}, key: {2}'.\\
+                    format(type(file_paths),xcom_pull_task,xcom_pull_files_key))
+      elif isinstance(key_list,str):
+        file_paths = \
+          ti.xcom_pull(
+            task_ids=xcom_pull_task,
+            key=key_list)
+        if isinstance(file_paths,list):
+          analysis_paths_list.\
+            extend(file_paths)
+        elif isinstance(file_paths,str):
+          analysis_paths_list.\
+            append(file_paths)
+        else:
+          raise TypeError(
+                  'Expecting a list or string of file paths, got: {0}, task: {1}, key: {2}'.\\
+                  format(type(file_paths),xcom_pull_task,key_list))
+      else:
+        raise TypeError(
+                'Expecting a list of string for xcom pull keys, got {0}, keys: {1}'.\
+                  format(type(key_list),key_list))
+    ### configure and run Multiqc
+    multiqc_html,multiqc_data,cmd = \
+      _configure_and_run_multiqc(
+        analysis_paths_list=analysis_paths_list,
+        project_igf_id=project_igf_id,
+        sample_igf_id=sample_igf_id,
+        work_dir=temp_work_dir,
+        genome_build=genome_build,
+        multiqc_template_file=MULTIQC_TEMPLATE_FILE,
+        tool_order_list=tool_order_list,
+        singularity_mutiqc_image=MULTIQC_IMAGE,
+        multiqc_params=multiqc_params,
+        dry_run=False)
+    ti.xcom_push(
+      key=multiqc_html_file_xcom_key,
+      value=multiqc_html)
+    ti.xcom_push(
+      key=multiqc_data_file_xcom_key,
+      value=multiqc_data)
+  except Exception as e:
+    logging.error(e)
+    raise ValueError(e)
+
+
+
+def _configure_and_run_multiqc(
+      analysis_paths_list,project_igf_id,sample_igf_id,work_dir,
+      genome_build,multiqc_template_file,tool_order_list,
+      singularity_mutiqc_image,multiqc_params,dry_run=False):
+    """
+    An internal function for configuribg and executing MultiQC for single cell data
+
+    :param analysis_paths_list: A list of analysis output to run Multiqc 
+    :param project_igf_id: Project igf id
+    :param sample_igf_id: Sample igf id
+    :param work_dir: Path to write temp output files, must exists
+    :param tool_order_list: Tool order list for MultiQC
+    :param singularity_mutiqc_image: Singularity image path for MultiQC
+    :param multiqc_params: A list of params to multiqc
+    :param dry_run: Toggle for dry run, default False
+    :returns: MultiQC html path, MultiQC data path, singularity command
+    """
+  try:
+    ### final check
+    if len(analysis_paths_list)== 0:
+      raise ValueError('No analysis file found for multiqc report')
+    ### write a multiqc input file
+    multiqc_input_file = \
+      os.path.join(work_dir,'multiqc.txt')
+    with open(multiqc_input_file,'w') as fp:
+      for file_path in analysis_paths_list:
+        check_file_path(file_path)
+        fp.write('{}\n'.format(file_path))
+    date_stamp = get_date_stamp()
+    ### write multiqc config file
+    check_file_path(multiqc_template_file)
+    multiqc_conf_file = \
+      os.path.join(
+        work_dir,os.path.basename(multiqc_template_file))
+    template_env = \
+      Environment(
+        loader=\
+          FileSystemLoader(
+            searchpath=os.path.dirname(multiqc_template_file)),
+        autoescape=select_autoescape(['html', 'xml']))
+    multiqc_conf = \
+      template_env.\
+        get_template(
+          os.path.basename(multiqc_template_file))
+    multiqc_conf.\
+      stream(
+        project_igf_id=project_igf_id,
+        sample_igf_id=sample_igf_id,
+        tag_name='Single cell gene expression - {0}'.format(genome_build),
+        date_stamp=date_stamp,
+        tool_order_list=tool_order_list).\
+      dump(multiqc_conf_file)
+    ### configure multiqc run
+    multiqc_report_title = \
+      'Project:{0}, Sample: {1}'.\
+        format(project_igf_id,sample_igf_id)
+    multiqc_cmd = [
+      multiqc_exe,
+      '--file-list',multiqc_input_file,
+      '--outdir',work_dir,
+      '--title',multiqc_report_title,
+      '-c',multiqc_conf_file]                                                   # multiqc base parameter
+    if not isinstance(multiqc_param,list):
+      raise TypeError(
+              'Expecting a list of params for multiqc run, got: {0}'.\
+                format(type(multiqc_param)))
+    multiqc_cmd.\
+      extend(multiqc_param)
+    ### configure singularity run
+    bind_dir_list = \
+      [os.path.dirname(path)
+        for path in analysis_paths_list]
+    bind_dir_list = list(set(bind_dir_list))
+    bind_dir_list.append(temp_work_dir)
+    cmd = \
+      execute_singuarity_cmd(
+        image_path=MULTIQC_IMAGE,
+        command_string=' '.join(multiqc_cmd),
+        bind_dir_list=bind_dir_list,
+        dry_run=dry_run)
+    if dry_run:
+      return None,None,cmd
+    else:
+      multiqc_html = None
+      multiqc_data = None
+      for root, _,files in os.walk(top=work_dir):
+        for file in files:
+          if fnmatch.fnmatch(file, '*.html'):
+            multiqc_html = os.path.join(root,file)
+          if fnmatch.fnmatch(file, '*.zip'):
+            multiqc_data = os.path.join(root,file)
+      if multiqc_html is None or \
+         multiqc_data is None:
+        raise IoError('Failed to get Multiqc output file')
+      check_file_path(multiqc_html)
+      check_file_path(multiqc_data)
+      return multiqc_html,multiqc_data,cmd
+  except Exception as e:
+    raise ValueError(
+            'Failed to configure and run multiqc, error: {0}'.\
+              format(e))
+
+
 
 def run_samtools_for_cellranger(**context):
   try:
@@ -99,7 +333,6 @@ def run_samtools_for_cellranger(**context):
         [['sample_igf_id','genome_build']]
     if len(gex_samples.index) == 0:
       raise ValueError('No gene expression entry found in analysis description')
-    genome_build = gex_samples['genome_build'].values[0]
     sample_igf_id = gex_samples['sample_igf_id'].values[0]
     bam_file = \
       ti.xcom_pull(
