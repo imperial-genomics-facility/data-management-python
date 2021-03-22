@@ -29,6 +29,7 @@ from igf_data.utils.box_upload import upload_file_or_dir_to_box
 from igf_data.utils.tools.samtools_utils import convert_bam_to_cram
 from igf_data.utils.tools.samtools_utils import index_bam_or_cram
 from igf_data.utils.tools.picard_util import Picard_tools
+from igf_data.utils.tools.samtools_utils import run_bam_idxstat,run_bam_stats,index_bam_or_cram
 
 ## DEFAULTS
 DATABASE_CONFIG_FILE = Variable.get('test_database_config_file',default_var=None)
@@ -59,6 +60,108 @@ ANALYSIS_CRAM_TYPE = 'ANALYSIS_CRAM'
 PATTERNED_FLOWCELL_LIST = ['HISEQ4000','NEXTSEQ']
 
 ## FUNCTION
+
+def run_samtools_for_cellranger(**context):
+  try:
+    ti = context.get('ti')
+    xcom_pull_task = \
+      context['params'].get('xcom_pull_task')
+    xcom_pull_files_key = \
+      context['params'].get('xcom_pull_files_key')
+    analysis_description_xcom_pull_task = \
+      context['params'].get('analysis_description_xcom_pull_task')
+    analysis_description_xcom_key = \
+      context['params'].get('analysis_description_xcom_key')
+    use_ephemeral_space = \
+      context['params'].get('use_ephemeral_space',default=True)
+    load_metrics_to_cram = \
+      context['params'].get('load_metrics_to_cram',default=False)
+    threads = \
+      context['params'].get('threads',default=1)
+    samtools_command = \
+      context['params'].get('samtools_command')
+    samtools_exe = \
+      context['params'].get('samtools_exe',default='samtools')
+    analysis_files_xcom_key = \
+      context['params'].get('analysis_files_xcom_key')
+    temp_output_dir = \
+      get_temp_dir(use_ephemeral_space=use_ephemeral_space)
+    analysis_description = \
+      ti.xcom_pull(
+        task_ids=analysis_description_xcom_pull_task,
+        key=analysis_description_xcom_key)
+    analysis_description = pd.DataFrame(analysis_description)
+    analysis_description['feature_type'] = \
+      analysis_description['feature_type'].\
+        map(lambda x: x.lower().replace(' ','_').replace('-','_'))
+    gex_samples = \
+      analysis_description[analysis_description['feature_type']=='gene_expression']\
+        [['sample_igf_id','genome_build']]
+    if len(gex_samples.index) == 0:
+      raise ValueError('No gene expression entry found in analysis description')
+    genome_build = gex_samples['genome_build'].values[0]
+    sample_igf_id = gex_samples['sample_igf_id'].values[0]
+    bam_file = \
+      ti.xcom_pull(
+        task_ids=xcom_pull_task,
+        key=xcom_pull_files_key)
+    if isinstance(bam_file,list):
+      bam_file = bam_file[0]
+    temp_output = None
+    if samtools_command == 'idxstats':
+      temp_output,_ = \
+        run_bam_idxstat(
+          samtools_exe=samtools_exe,
+          bam_file=bam_file,
+          output_dir=temp_output_dir,
+          output_prefix=sample_igf_id,
+          singuarity_image=SAMTOOLS_IMAGE,
+          force=True)
+    elif samtools_command == 'stats':
+      temp_output,_,stats_metrics = \
+        run_bam_stats(\
+          samtools_exe=samtools_exe,
+          bam_file=bam_file,
+          output_dir=temp_output_dir,
+          output_prefix=sample_igf_id,
+          threads=threads,
+          singuarity_image=SAMTOOLS_IMAGE,
+          force=True)
+      if load_metrics_to_cram and \
+           len(stats_metrics) > 0:
+        dbparams = \
+        read_dbconf_json(DATABASE_CONFIG_FILE)
+        ca = CollectionAdaptor(**dbparams)
+        attribute_data = \
+          ca.prepare_data_for_collection_attribute(
+            collection_name=sample_igf_id,
+            collection_type=ANALYSIS_CRAM_TYPE,
+            data_list=stats_metrics)
+        ca.start_session()
+        try:
+          ca.create_or_update_collection_attributes(
+            data=attribute_data,
+            autosave=False)
+          ca.commit_session()
+          ca.close_session()
+        except Exception as e:
+          ca.rollback_session()
+          ca.close_session()
+          raise ValueError(
+                  'Failed to load data to db: {0}'.\
+                  format(e))
+    else:
+      raise ValueError(
+              'Samtools command {0} not supported'.\
+              format(samtools_command))
+    if temp_output is not None:
+      ti.xcom_push(
+        key=analysis_files_xcom_key,
+        value=temp_output)
+  except Exception as e:
+    logging.error(e)
+    raise ValueError(e)
+
 
 def run_picard_for_cellranger(**context):
   try:
