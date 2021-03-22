@@ -493,6 +493,13 @@ class Dag9_tenx_single_cell_immune_profiling_utilstestE(unittest.TestCase):
     self.assertTrue(self.singularity_image in cmd)
     self.assertTrue('--file-list {0}'.format(input_file_list) in cmd)
     self.assertTrue('--zip-data-dir' in cmd)
+    with open(os.path.join(self.work_dir,'multiqc.txt'),'r') as fp:
+      data = fp.read()
+    data = data.split('\n')
+    self.assertTrue(os.path.join(self.input_dir,'A') in data)
+    self.assertTrue(os.path.join(self.input_dir,'B') in data)
+    self.assertTrue(os.path.join(self.input_dir,'C') in data)
+
 
 
 if __name__=='__main__':
