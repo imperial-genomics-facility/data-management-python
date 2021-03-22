@@ -15,6 +15,8 @@ from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _fetc
 from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _add_reference_genome_path_for_analysis
 from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _create_library_csv_for_cellranger_multi
 from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _get_fastq_and_run_cutadapt_trim
+from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _configure_and_run_multiqc
+
 
 class Dag9_tenx_single_cell_immune_profiling_utilstestA(unittest.TestCase):
   def setUp(self):
@@ -444,6 +446,54 @@ class Dag9_tenx_single_cell_immune_profiling_utilstestD(unittest.TestCase):
     self.assertFalse('IGF002_S1_L001_R1_001.fastq.gz' in os.listdir(vdj_output_path))
     self.assertTrue('IGF002_S1_L001_R2_001.fastq.gz' in os.listdir(vdj_output_path))
     self.assertTrue('IGF002_S1_L001_I1_001.fastq.gz' in os.listdir(vdj_output_path))
+
+
+class Dag9_tenx_single_cell_immune_profiling_utilstestE(unittest.TestCase):
+  def setUp(self):
+    self.work_dir = get_temp_dir()
+    self.input_dir = get_temp_dir()
+    self.singularity_image = \
+      os.path.join(self.input_dir,'multiqc.sif')
+    with open(self.singularity_image,'w') as fp:
+      fp.write('A')
+    self.analysis_paths_list = [
+      os.path.join(self.input_dir,'A'),
+      os.path.join(self.input_dir,'B'),
+      os.path.join(self.input_dir,'C')]
+    with open(os.path.join(self.input_dir,'A'),'w') as fp:
+      fp.write('A')
+    with open(os.path.join(self.input_dir,'B'),'w') as fp:
+      fp.write('A')
+    with open(os.path.join(self.input_dir,'C'),'w') as fp:
+      fp.write('A')
+    self.multiqc_template_file = \
+      os.path.join('template','multiqc_report','multiqc_config.yaml')
+
+  def tearDown(self):
+    remove_dir(self.input_dir)
+    remove_dir(self.work_dir)
+
+  def test_configure_and_run_multiqc(self):
+    multiqc_html,multiqc_data,cmd = \
+      _configure_and_run_multiqc(
+        analysis_paths_list=self.analysis_paths_list,
+        project_igf_id='test_project',
+        sample_igf_id='test_sample',
+        work_dir=self.work_dir,
+        genome_build='HG38',
+        multiqc_template_file=self.multiqc_template_file,
+        tool_order_list=[],
+        singularity_mutiqc_image=self.singularity_image,
+        multiqc_params=['--zip-data-dir'],
+        dry_run=True)
+    self.assertTrue(multiqc_html is None)
+    self.assertTrue(multiqc_data is None)
+    input_file_list = os.path.join(self.work_dir,'multiqc.txt')
+    self.assertTrue('singularity exec --bind')
+    self.assertTrue(self.singularity_image in cmd)
+    self.assertTrue('--file-list {0}'.format(input_file_list) in cmd)
+    self.assertTrue('--zip-data-dir' in cmd)
+
 
 if __name__=='__main__':
   unittest.main()

@@ -2,6 +2,7 @@ import os,logging,subprocess,re,fnmatch
 import pandas as pd
 from copy import copy
 from airflow.models import Variable
+from jinja2 import Template,Environment, FileSystemLoader, select_autoescape
 from igf_airflow.logging.upload_log_msg import log_success,log_failure,log_sleep
 from igf_airflow.logging.upload_log_msg import post_image_to_channels
 from igf_data.utils.fileutils import get_temp_dir,copy_remote_file,check_file_path
@@ -145,7 +146,7 @@ def run_multiqc_for_cellranger(**context):
               append(file_paths)
           else:
             raise TypeError(
-                    'Expecting a list or string of file paths, got: {0}, task: {1}, key: {2}'.\\
+                    'Expecting a list or string of file paths, got: {0}, task: {1}, key: {2}'.\
                     format(type(file_paths),xcom_pull_task,xcom_pull_files_key))
       elif isinstance(key_list,str):
         file_paths = \
@@ -160,7 +161,7 @@ def run_multiqc_for_cellranger(**context):
             append(file_paths)
         else:
           raise TypeError(
-                  'Expecting a list or string of file paths, got: {0}, task: {1}, key: {2}'.\\
+                  'Expecting a list or string of file paths, got: {0}, task: {1}, key: {2}'.\
                   format(type(file_paths),xcom_pull_task,key_list))
       else:
         raise TypeError(
@@ -177,7 +178,8 @@ def run_multiqc_for_cellranger(**context):
         multiqc_template_file=MULTIQC_TEMPLATE_FILE,
         tool_order_list=tool_order_list,
         singularity_mutiqc_image=MULTIQC_IMAGE,
-        multiqc_params=multiqc_params,
+        multiqc_params=multiqc_options,
+        multiqc_exe=multiqc_exe,
         dry_run=False)
     ti.xcom_push(
       key=multiqc_html_file_xcom_key,
@@ -193,21 +195,21 @@ def run_multiqc_for_cellranger(**context):
 
 def _configure_and_run_multiqc(
       analysis_paths_list,project_igf_id,sample_igf_id,work_dir,
-      genome_build,multiqc_template_file,tool_order_list,
-      singularity_mutiqc_image,multiqc_params,dry_run=False):
-    """
-    An internal function for configuribg and executing MultiQC for single cell data
-
-    :param analysis_paths_list: A list of analysis output to run Multiqc 
-    :param project_igf_id: Project igf id
-    :param sample_igf_id: Sample igf id
-    :param work_dir: Path to write temp output files, must exists
-    :param tool_order_list: Tool order list for MultiQC
-    :param singularity_mutiqc_image: Singularity image path for MultiQC
-    :param multiqc_params: A list of params to multiqc
-    :param dry_run: Toggle for dry run, default False
-    :returns: MultiQC html path, MultiQC data path, singularity command
-    """
+      genome_build,multiqc_template_file,singularity_mutiqc_image,
+      tool_order_list,multiqc_params,multiqc_exe='muliqc',dry_run=False):
+  """
+  An internal function for configuribg and executing MultiQC for single cell data
+  :param analysis_paths_list: A list of analysis output to run Multiqc
+  :param project_igf_id: Project igf id
+  :param sample_igf_id: Sample igf id
+  :param work_dir: Path to write temp output files, must exists
+  :param tool_order_list: Tool order list for MultiQC
+  :param singularity_mutiqc_image: Singularity image path for MultiQC
+  :param multiqc_params: A list of params to multiqc
+  :param multiqc_exe: Multiqc exe path, default multiqc
+  :param dry_run: Toggle for dry run, default False
+  :returns: MultiQC html path, MultiQC data path, singularity command
+  """
   try:
     ### final check
     if len(analysis_paths_list)== 0:
@@ -245,7 +247,7 @@ def _configure_and_run_multiqc(
       dump(multiqc_conf_file)
     ### configure multiqc run
     multiqc_report_title = \
-      'Project:{0}, Sample: {1}'.\
+      'Project:{0},Sample:{1}'.\
         format(project_igf_id,sample_igf_id)
     multiqc_cmd = [
       multiqc_exe,
@@ -253,21 +255,21 @@ def _configure_and_run_multiqc(
       '--outdir',work_dir,
       '--title',multiqc_report_title,
       '-c',multiqc_conf_file]                                                   # multiqc base parameter
-    if not isinstance(multiqc_param,list):
+    if not isinstance(multiqc_params,list):
       raise TypeError(
               'Expecting a list of params for multiqc run, got: {0}'.\
-                format(type(multiqc_param)))
+                format(type(multiqc_params)))
     multiqc_cmd.\
-      extend(multiqc_param)
+      extend(multiqc_params)
     ### configure singularity run
     bind_dir_list = \
       [os.path.dirname(path)
         for path in analysis_paths_list]
+    bind_dir_list.append(work_dir)
     bind_dir_list = list(set(bind_dir_list))
-    bind_dir_list.append(temp_work_dir)
     cmd = \
       execute_singuarity_cmd(
-        image_path=MULTIQC_IMAGE,
+        image_path=singularity_mutiqc_image,
         command_string=' '.join(multiqc_cmd),
         bind_dir_list=bind_dir_list,
         dry_run=dry_run)
@@ -284,7 +286,7 @@ def _configure_and_run_multiqc(
             multiqc_data = os.path.join(root,file)
       if multiqc_html is None or \
          multiqc_data is None:
-        raise IoError('Failed to get Multiqc output file')
+        raise IOError('Failed to get Multiqc output file')
       check_file_path(multiqc_html)
       check_file_path(multiqc_data)
       return multiqc_html,multiqc_data,cmd
