@@ -89,6 +89,7 @@ def index_and_copy_bam_for_parallel_analysis(**context):
       ti.xcom_push(
         key=analysis_name,
         value=bam_file)
+    return list_of_tasks
   except Exception as e:
     logging.error(e)
     raise ValueError(e)
