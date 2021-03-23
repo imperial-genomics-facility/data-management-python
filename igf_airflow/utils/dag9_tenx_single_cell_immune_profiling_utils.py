@@ -64,6 +64,92 @@ MULTIQC_TEMPLATE_FILE = Variable.get('multiqc_template_file',default_var=None)
 
 ## FUNCTION
 
+def index_and_copy_bam_for_parallel_analysis(**context):
+  try:
+    ti = context.get('ti')
+    list_of_tasks = \
+      context['params'].get('list_of_tasks')
+    xcom_pull_task = \
+      context['params'].get('xcom_pull_task')
+    xcom_pull_files_key = \
+      context['params'].get('xcom_pull_files_key')
+    samtools_exe = \
+      context['params'].get('samtools_exe',default='samtools')
+    bam_file = \
+      ti.xcom_pull(
+        task_ids=xcom_pull_task,
+        key=xcom_pull_files_key)
+    output_temp_bams = \
+      _check_bam_index_and_copy(
+      samtools_exe=samtools_exe,
+      singularity_image=SAMTOOLS_IMAGE,
+      bam_file=bam_file,
+      list_of_analysis=list_of_tasks)
+    for analysis_name,bam_file in output_temp_bams:                             # push temp bam paths to xcom
+      ti.xcom_push(
+        key=analysis_name,
+        value=bam_file)
+  except Exception as e:
+    logging.error(e)
+    raise ValueError(e)
+
+
+def _check_bam_index_and_copy(
+      samtools_exe,singularity_image,bam_file,list_of_analysis,
+      use_ephemeral_space=True,threads=1,dry_run=False):
+  """
+  An internal function for checking bam index and copying one file per analysis
+
+  :param samtools_exe: Samtools exe path
+  :param singularity_image: Singularity image path
+  :param bam_file: Input bam file path for copy
+  :param list_of_analysis: A list of analysis name for bam copy
+  :param threads: Number of threads for samtools index, default 1
+  :param dry_run: A toggle for dry_run, default False
+  :param use_ephemeral_space: A toggle for using ephemeral space on hpc, default True
+  :return: A dictionary, keys are the analysis names and values are the temp bam paths
+  """
+  try:
+    output_temp_dirs = dict()
+    check_file_path(bam_file)
+    if not isinstance(list_of_analysis,list) or \
+       len(list_of_analysis)==0:
+      raise TypeError('Expecing a list of analysis names for copy bam')
+    bai_file = '{0}.bai'.format(bam_file)                                       # check bam index path
+    if not os.path.exists(bai_file):                                            # create index in not found
+      _ = \
+        index_bam_or_cram(
+          samtools_exe=samtools_exe,
+          input_path=bam_file,
+          threads=threads,
+          singuarity_image=singularity_image,
+          dry_run=dry_run)
+    if not dry_run:
+      check_file_path(bai_file)                                                 # check final bam index
+    for analysis_name in list_of_analysis:
+      temp_dir = \
+        get_temp_dir(use_ephemeral_space=use_ephemeral_space)
+      temp_bam = \
+        os.path.join(temp_dir,os.path.basename(bam_file))
+      temp_bai = \
+        os.path.join(temp_dir,os.path.basename(bai_file))
+      copy_local_file(
+        bam_file,temp_bam)
+      if not dry_run:
+        copy_local_file(
+          bai_file,temp_bai)
+      output_temp_dirs.\
+        update({analysis_name:temp_bam})
+    if len(output_temp_dirs.keys())==0:
+      raise ValueError(
+              'No output temp bam path found for input {0}'\
+                .format(bam_file))
+    return output_temp_dirs
+  except Exception as e:
+    raise ValueError(
+            'Failed to copy bam and index, error: {0}'.format(e))
+
+
 def run_multiqc_for_cellranger(**context):
   try:
     ti = context.get('ti')
@@ -119,10 +205,6 @@ def run_multiqc_for_cellranger(**context):
     project_igf_id = \
       aa.fetch_project_igf_id_for_analysis_id(
         analysis_id=int(analysis_id))
-    analysis_record = \
-      aa.fetch_analysis_records_analysis_id(
-        analysis_id=int(analysis_id),
-        output_mode='one_or_none')
     aa.close_session()
     ### fetch analysis file paths
     analysis_paths_list = list()

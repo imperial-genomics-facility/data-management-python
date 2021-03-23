@@ -16,6 +16,7 @@ from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _add_
 from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _create_library_csv_for_cellranger_multi
 from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _get_fastq_and_run_cutadapt_trim
 from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _configure_and_run_multiqc
+from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _check_bam_index_and_copy
 
 
 class Dag9_tenx_single_cell_immune_profiling_utilstestA(unittest.TestCase):
@@ -500,6 +501,41 @@ class Dag9_tenx_single_cell_immune_profiling_utilstestE(unittest.TestCase):
     self.assertTrue(os.path.join(self.input_dir,'B') in data)
     self.assertTrue(os.path.join(self.input_dir,'C') in data)
 
+
+class Dag9_tenx_single_cell_immune_profiling_utilstestF(unittest.TestCase):
+  def setUp(self):
+    self.work_dir = get_temp_dir()
+    self.input_dir = get_temp_dir()
+    self.singularity_image = \
+      os.path.join(self.input_dir,'samtools.sif')
+    with open(self.singularity_image,'w') as fp:
+      fp.write('A')
+    self.bam_file = \
+      os.path.join(self.input_dir,'samtools.sif')
+    with open(self.bam_file,'w') as fp:
+      fp.write('A')
+
+  def tearDown(self):
+    remove_dir(self.input_dir)
+    remove_dir(self.work_dir)
+
+  def test_check_bam_index_and_copy(self):
+    list_of_tasks = [
+      'taskA',
+      'taskB']
+    output_temp_dirs = \
+      _check_bam_index_and_copy(
+        samtools_exe='samtools',
+        singularity_image=self.singularity_image,
+        bam_file=self.bam_file,
+        list_of_analysis=list_of_tasks,
+        use_ephemeral_space=True,
+        dry_run=True)
+    self.assertEqual(len(output_temp_dirs.keys()),2)
+    self.assertTrue('taskA' in output_temp_dirs.keys())
+    self.assertTrue(os.path.exists(output_temp_dirs.get('taskA')))
+    self.assertTrue('taskB' in output_temp_dirs.keys())
+    self.assertTrue(os.path.exists(output_temp_dirs.get('taskB')))
 
 
 if __name__=='__main__':

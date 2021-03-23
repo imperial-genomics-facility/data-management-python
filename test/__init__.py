@@ -64,6 +64,7 @@ def full_suite():
   from .igf_airflow.dag9_tenx_single_cell_immune_profiling_utils_test import Dag9_tenx_single_cell_immune_profiling_utilstestC
   from .igf_airflow.dag9_tenx_single_cell_immune_profiling_utils_test import Dag9_tenx_single_cell_immune_profiling_utilstestD
   from .igf_airflow.dag9_tenx_single_cell_immune_profiling_utils_test import Dag9_tenx_single_cell_immune_profiling_utilstestE
+  from .igf_airflow.dag9_tenx_single_cell_immune_profiling_utils_test import Dag9_tenx_single_cell_immune_profiling_utilstestF
   from .utils.cellranger_count_utils_test import Cellranger_count_utils_testA
   from .dbadaptor.analysisadaptor_test import Analysisadaptor_test1
   from .dbadaptor.seqrunadaptor_test import SeqrunAdaptor_test1
@@ -150,6 +151,7 @@ def full_suite():
         Dag9_tenx_single_cell_immune_profiling_utilstestC,
         Dag9_tenx_single_cell_immune_profiling_utilstestD,
         Dag9_tenx_single_cell_immune_profiling_utilstestE,
+        Dag9_tenx_single_cell_immune_profiling_utilstestF,
         Cellranger_count_utils_testA,
         Analysisadaptor_test1,
         SeqrunAdaptor_test1,
