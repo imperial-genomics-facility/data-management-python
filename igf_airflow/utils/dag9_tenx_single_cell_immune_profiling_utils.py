@@ -1573,7 +1573,7 @@ def run_sc_read_trimmming_func(**context):
     fastq_output_dir_tag = \
       context['params'].get('fastq_output_dir_tag')
     use_ephemeral_space = \
-      context['params'].get('use_ephemeral_space',default=True)
+      context['params'].get('use_ephemeral_space')
     singularity_image = CUTADAPT_IMAGE
     analysis_info = \
       ti.xcom_pull(
