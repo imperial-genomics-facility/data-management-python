@@ -64,7 +64,7 @@ MULTIQC_TEMPLATE_FILE = Variable.get('multiqc_template_file',default_var=None)
 FEATURE_TYPE = Variable.get('tenx_single_cell_immune_profiling_feature_types',deserialize_json=True,default_var=None)#.split(',')
 IRDOS_EXE_DIR = Variable.get('irods_exe_dir',default_var=None)
 CELLRANGER_EXE = Variable.get('cellranger_exe',default_var=None)
-CELLRANGER_JOB_TIMEOUT = Variable.get('cellranger_job_timeout,default_var=None')
+CELLRANGER_JOB_TIMEOUT = Variable.get('cellranger_job_timeout',default_var=None)
 
 ## FUNCTION
 
