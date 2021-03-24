@@ -61,6 +61,7 @@ RIBOSOMAL_INTERVAL_TYPE = 'RIBOSOMAL_INTERVAL'
 ANALYSIS_CRAM_TYPE = 'ANALYSIS_CRAM'
 PATTERNED_FLOWCELL_LIST = ['HISEQ4000','NEXTSEQ']
 MULTIQC_TEMPLATE_FILE = Variable.get('multiqc_template_file',default_var=None)
+FEATURE_TYPE = Variable.get('tenx_single_cell_immune_profiling_feature_types',deserialize_json=True)#.split(',')
 
 ## FUNCTION
 
@@ -1839,8 +1840,7 @@ def fetch_analysis_info_and_branch_func(**context):
         dag_run.conf.get('analysis_id')
       analysis_type = \
         dag_run.conf.get('analysis_type')
-      feature_types = \
-        Variable.get('tenx_single_cell_immune_profiling_feature_types').split(',')
+      feature_types = FEATURE_TYPE
       # add reference genome paths if reference type and genome build is present
       # check for genome build info
       # INPUT:
