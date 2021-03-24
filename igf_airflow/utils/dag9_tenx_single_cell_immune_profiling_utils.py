@@ -68,6 +68,36 @@ CELLRANGER_JOB_TIMEOUT = Variable.get('cellranger_job_timeout,default_var=None')
 
 ## FUNCTION
 
+def change_pipeline_status(**context):
+  try:
+    dag_run = context.get('dag_run')
+    new_status = \
+      context['params'].get('new_status')
+    no_change_status = \
+      context['params'].get('no_change_status')
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('analysis_description') is not None:
+      analysis_id = \
+        dag_run.conf.get('analysis_id')
+      analysis_type = \
+        dag_run.conf.get('analysis_type')
+      status = \
+        _check_and_mark_analysis_seed(
+          analysis_id=analysis_id,
+          anslysis_type=analysis_type,
+          new_status=new_status,
+          no_change_status=no_change_status,
+          database_config_file=DATABASE_CONFIG_FILE)
+      if not status:
+        raise ValueError(
+                'Failed to update pipeline seed for analysis id {0} and type {1}'.\
+                  format(analysis_id,analysis_type))
+  except Exception as e:
+    logging.error(e)
+    raise ValueError(e)
+
+
 def index_and_copy_bam_for_parallel_analysis(**context):
   try:
     ti = context.get('ti')
@@ -1934,7 +1964,7 @@ def fetch_analysis_info_and_branch_func(**context):
           analysis_id=analysis_id,
           anslysis_type=analysis_type,
           new_status='RUNNING',
-          no_change_status='FINISHED',
+          no_change_status='RUNNING',
           database_config_file=database_config_file)
       # xcom push analysis_info and analysis_description
       if status:
