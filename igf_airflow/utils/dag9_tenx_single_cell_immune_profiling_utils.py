@@ -1572,6 +1572,8 @@ def run_sc_read_trimmming_func(**context):
       context['params'].get('fastq_input_dir_tag')
     fastq_output_dir_tag = \
       context['params'].get('fastq_output_dir_tag')
+    use_ephemeral_space = \
+      context['params'].get('use_ephemeral_space',default=True)
     singularity_image = CUTADAPT_IMAGE
     analysis_info = \
       ti.xcom_pull(
@@ -1590,6 +1592,7 @@ def run_sc_read_trimmming_func(**context):
       r2_length=r2_length,
       fastq_input_dir_tag=fastq_input_dir_tag,
       fastq_output_dir_tag=fastq_output_dir_tag,
+      use_ephemeral_space=use_ephemeral_space,
       singularity_image=singularity_image)
   except Exception as e:
     logging.error(e)
@@ -1597,9 +1600,9 @@ def run_sc_read_trimmming_func(**context):
 
 
 def _get_fastq_and_run_cutadapt_trim(
-      analysis_info,analysis_description,analysis_name,
-      run_id,fastq_input_dir_tag,fastq_output_dir_tag,
-      singularity_image,r1_length=0,r2_length=0,
+      analysis_info,analysis_description,analysis_name,run_id,
+      fastq_input_dir_tag,fastq_output_dir_tag,singularity_image,
+      use_ephemeral_space=False,r1_length=0,r2_length=0,
       cutadapt_exe='cutadapt',dry_run=False,
       cutadapt_options=('--cores=1',)):
   """
@@ -1616,6 +1619,7 @@ def _get_fastq_and_run_cutadapt_trim(
   :param singularity_image: Singularity image path for cutadapt tool
   :param cutadapt_exe: Cutadapt exe path, default cutadapt
   :param dry_run: A toggle for dry run, default False
+  :param use_ephemeral_space: Toggle for using ephimeral space for temp files
   :param cutadapt_options: Cutadapt run options, default ('--cores=1',)
   :returns: None
   """
@@ -1643,6 +1647,8 @@ def _get_fastq_and_run_cutadapt_trim(
       cutadapt_options = list(cutadapt_options)
     input_fastq_dir = run.get(fastq_input_dir_tag)
     output_fastq_dir = run.get(fastq_output_dir_tag)
+    temp_output_dir = \
+      get_temp_dir(use_ephemeral_space=use_ephemeral_space)
     r1_file_name_pattern = \
       re.compile(r'(\S+)_S\d+_L00\d_R1_001\.fastq\.gz')
     r2_file_name_pattern = \
@@ -1655,6 +1661,8 @@ def _get_fastq_and_run_cutadapt_trim(
           os.path.join(input_fastq_dir,fastq)
         output_fastq_file = \
           os.path.join(output_fastq_dir,fastq)
+        temp_fastq_file = \
+          os.path.join(temp_output_dir,fastq)
         if re.match(r1_file_name_pattern,fastq):
           # trim R1
           if r1_length > 0:
@@ -1666,11 +1674,13 @@ def _get_fastq_and_run_cutadapt_trim(
             _ = \
               run_cutadapt(
                 read1_fastq_in=input_fastq_file,
-                read1_fastq_out=output_fastq_file,
+                read1_fastq_out=temp_fastq_file,
                 cutadapt_options=cutadapt_options_r1,
                 cutadapt_exe=cutadapt_exe,
                 dry_run=dry_run,
                 singularity_image_path=singularity_image)
+            copy_local_file(
+              temp_fastq_file,output_fastq_file)
           else:
             copy_local_file(
               input_fastq_file,
@@ -1686,11 +1696,13 @@ def _get_fastq_and_run_cutadapt_trim(
             _ = \
               run_cutadapt(
                 read1_fastq_in=input_fastq_file,
-                read1_fastq_out=output_fastq_file,
+                read1_fastq_out=temp_fastq_file,
                 cutadapt_options=cutadapt_options_r2,
                 cutadapt_exe=cutadapt_exe,
                 dry_run=dry_run,
                 singularity_image_path=singularity_image)
+            copy_local_file(
+              temp_fastq_file,output_fastq_file)
           else:
             copy_local_file(
               input_fastq_file,
