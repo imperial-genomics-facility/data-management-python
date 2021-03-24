@@ -1872,7 +1872,7 @@ def fetch_analysis_info_and_branch_func(**context):
         dag_run.conf.get('analysis_id')
       analysis_type = \
         dag_run.conf.get('analysis_type')
-      feature_types = FEATURE_TYPE
+      feature_types = list(FEATURE_TYPE.keys())
       # add reference genome paths if reference type and genome build is present
       # check for genome build info
       # INPUT:
