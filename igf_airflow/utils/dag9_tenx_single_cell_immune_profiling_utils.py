@@ -34,6 +34,12 @@ from igf_data.utils.tools.samtools_utils import run_bam_idxstat,run_bam_stats,in
 
 
 ## DEFAULTS
+GENOME_FASTA_TYPE = 'GENOME_FASTA'
+GENE_REFFLAT_TYPE = 'GENE_REFFLAT'
+RIBOSOMAL_INTERVAL_TYPE = 'RIBOSOMAL_INTERVAL'
+ANALYSIS_CRAM_TYPE = 'ANALYSIS_CRAM'
+PATTERNED_FLOWCELL_LIST = ['HISEQ4000','NEXTSEQ']
+BOX_DIR_PREFIX = 'SecondaryAnalysis'
 DATABASE_CONFIG_FILE = Variable.get('test_database_config_file',default_var=None)
 SCANPY_SINGLE_SAMPLE_TEMPLATE= Variable.get('scanpy_single_sample_template',default_var=None)
 SCANPY_NOTEBOOK_IMAGE = Variable.get('scanpy_notebook_image',default_var=None)
@@ -48,20 +54,17 @@ SLACK_CONF = Variable.get('slack_conf',default_var=None)
 MS_TEAMS_CONF = Variable.get('ms_teams_conf',default_var=None)
 BOX_USERNAME = Variable.get('box_username',default_var=None)
 BOX_CONFIG_FILE = Variable.get('box_config_file',default_var=None)
-BOX_DIR_PREFIX = 'SecondaryAnalysis'
 FTP_HOSTNAME = Variable.get('ftp_hostname',default_var=None)
 FTP_USERNAME = Variable.get('ftp_username',default_var=None)
 FTP_PROJECT_PATH = Variable.get('ftp_project_path',default_var=None)
 BASE_RESULT_DIR = Variable.get('base_result_dir',default_var=None)
 ALL_CELL_MARKER_LIST = Variable.get('all_cell_marker_list',default_var=None)
 SAMTOOLS_IMAGE = Variable.get('samtools_singularity_image',default_var=None)
-GENOME_FASTA_TYPE = 'GENOME_FASTA'
-GENE_REFFLAT_TYPE = 'GENE_REFFLAT'
-RIBOSOMAL_INTERVAL_TYPE = 'RIBOSOMAL_INTERVAL'
-ANALYSIS_CRAM_TYPE = 'ANALYSIS_CRAM'
-PATTERNED_FLOWCELL_LIST = ['HISEQ4000','NEXTSEQ']
 MULTIQC_TEMPLATE_FILE = Variable.get('multiqc_template_file',default_var=None)
-FEATURE_TYPE = Variable.get('tenx_single_cell_immune_profiling_feature_types',deserialize_json=True)#.split(',')
+FEATURE_TYPE = Variable.get('tenx_single_cell_immune_profiling_feature_types',deserialize_json=True,default_var=None)#.split(',')
+IRDOS_EXE_DIR = Variable.get('irods_exe_dir',default_var=None)
+CELLRANGER_EXE = Variable.get('cellranger_exe',default_var=None)
+CELLRANGER_JOB_TIMEOUT = Variable.get('cellranger_job_timeout,default_var=None')
 
 ## FUNCTION
 
@@ -1089,8 +1092,7 @@ def irods_files_upload_for_analysis(**context):
       context['params'].get('xcom_pull_files_key')
     collection_name_key = \
       context['params'].get('collection_name_key')
-    irods_exe_dir = \
-      Variable.get('irods_exe_dir')
+    irods_exe_dir = IRDOS_EXE_DIR
     analysis_name = \
       context['params'].get('analysis_name')
     dag_run = context.get('dag_run')
@@ -1492,8 +1494,8 @@ def run_cellranger_tool(**context):
       ti.xcom_pull(
         task_ids=library_csv_xcom_pull_task,
         key=library_csv_xcom_key)
-    cellranger_exe = Variable.get('cellranger_exe')
-    job_timeout = Variable.get('cellranger_job_timeout')
+    cellranger_exe = CELLRANGER_EXE
+    job_timeout = CELLRANGER_JOB_TIMEOUT
     output_dir = get_temp_dir(use_ephemeral_space=True)
     sample_id = None
     for entry in analysis_description:
