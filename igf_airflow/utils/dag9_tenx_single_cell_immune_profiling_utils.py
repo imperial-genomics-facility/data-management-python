@@ -40,6 +40,8 @@ RIBOSOMAL_INTERVAL_TYPE = 'RIBOSOMAL_INTERVAL'
 ANALYSIS_CRAM_TYPE = 'ANALYSIS_CRAM'
 PATTERNED_FLOWCELL_LIST = ['HISEQ4000','NEXTSEQ']
 BOX_DIR_PREFIX = 'SecondaryAnalysis'
+SAMTOOLS_EXE = 'samtools'
+PICARD_JAR = 'picard.jar'
 DATABASE_CONFIG_FILE = Variable.get('test_database_config_file',default_var=None)
 SCANPY_SINGLE_SAMPLE_TEMPLATE= Variable.get('scanpy_single_sample_template',default_var=None)
 SCANPY_NOTEBOOK_IMAGE = Variable.get('scanpy_notebook_image',default_var=None)
@@ -107,15 +109,13 @@ def index_and_copy_bam_for_parallel_analysis(**context):
       context['params'].get('xcom_pull_task')
     xcom_pull_files_key = \
       context['params'].get('xcom_pull_files_key')
-    samtools_exe = \
-      context['params'].get('samtools_exe',default='samtools')
     bam_file = \
       ti.xcom_pull(
         task_ids=xcom_pull_task,
         key=xcom_pull_files_key)
     output_temp_bams = \
       _check_bam_index_and_copy(
-      samtools_exe=samtools_exe,
+      samtools_exe=SAMTOOLS_EXE,
       singularity_image=SAMTOOLS_IMAGE,
       bam_file=bam_file,
       list_of_analysis=list_of_tasks)
@@ -199,13 +199,13 @@ def run_multiqc_for_cellranger(**context):
     multiqc_data_file_xcom_key = \
       context['params'].get('multiqc_data_file_xcom_key')
     use_ephemeral_space = \
-      context['params'].get('use_ephemeral_space',default=True)
+      context['params'].get('use_ephemeral_space',True)
     tool_order_list = \
-      context['params'].get('tool_order_list',default=['fastp','picard','samtools'])
+      context['params'].get('tool_order_list',['fastp','picard','samtools'])
     multiqc_options = \
-      context['params'].get('multiqc_options',default=['--zip-data-dir'])
+      context['params'].get('multiqc_options',['--zip-data-dir'])
     multiqc_exe = \
-      context['params'].get('multiqc_exe',default='multiqc')
+      context['params'].get('multiqc_exe','multiqc')
     temp_work_dir = \
       get_temp_dir(use_ephemeral_space=use_ephemeral_space)
     ### fetch sample id and genome build from analysis description
@@ -426,15 +426,13 @@ def run_samtools_for_cellranger(**context):
     analysis_description_xcom_key = \
       context['params'].get('analysis_description_xcom_key')
     use_ephemeral_space = \
-      context['params'].get('use_ephemeral_space',default=True)
+      context['params'].get('use_ephemeral_space',True)
     load_metrics_to_cram = \
-      context['params'].get('load_metrics_to_cram',default=False)
+      context['params'].get('load_metrics_to_cram',False)
     threads = \
-      context['params'].get('threads',default=1)
+      context['params'].get('threads',1)
     samtools_command = \
       context['params'].get('samtools_command')
-    samtools_exe = \
-      context['params'].get('samtools_exe',default='samtools')
     analysis_files_xcom_key = \
       context['params'].get('analysis_files_xcom_key')
     temp_output_dir = \
@@ -463,7 +461,7 @@ def run_samtools_for_cellranger(**context):
     if samtools_command == 'idxstats':
       temp_output,_ = \
         run_bam_idxstat(
-          samtools_exe=samtools_exe,
+          samtools_exe=SAMTOOLS_EXE,
           bam_file=bam_file,
           output_dir=temp_output_dir,
           output_prefix=sample_igf_id,
@@ -472,7 +470,7 @@ def run_samtools_for_cellranger(**context):
     elif samtools_command == 'stats':
       temp_output,_,stats_metrics = \
         run_bam_stats(\
-          samtools_exe=samtools_exe,
+          samtools_exe=SAMTOOLS_EXE,
           bam_file=bam_file,
           output_dir=temp_output_dir,
           output_prefix=sample_igf_id,
@@ -597,7 +595,7 @@ def run_picard_for_cellranger(**context):
         java_exe='java',
         java_param=java_param,
         singularity_image=PICARD_IMAGE,
-        picard_jar='picard.jar',
+        picard_jar=PICARD_JAR,
         input_files=[bam_file],
         output_dir=temp_output_dir,
         ref_fasta=genome_fasta,
@@ -707,7 +705,7 @@ def convert_bam_to_cram_func(**context):
     cram_file = os.path.basename(bam_file).replace('.bam','.cram')
     cram_file = os.path.join(temp_work_dir,cram_file)
     convert_bam_to_cram(
-      samtools_exe='samtools',
+      samtools_exe=SAMTOOLS_EXE,
       bam_file=bam_file,
       reference_file=genome_fasta,
       cram_path=cram_file,
@@ -732,7 +730,7 @@ def convert_bam_to_cram_func(**context):
     for cram in output_cram_list:
       _ = \
         index_bam_or_cram(\
-          samtools_exe='samtools',
+          samtools_exe=SAMTOOLS_EXE,
           input_path=cram,
           singuarity_image=SAMTOOLS_IMAGE,
           threads=threads)                                                    # index cram files
