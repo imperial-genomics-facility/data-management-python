@@ -569,7 +569,7 @@ def run_picard_for_cellranger(**context):
     ref_genome = \
       Reference_genome_utils(
         genome_tag=genome_build,
-        dbsession_class=sa.session_class,
+        dbsession_class=sa.get_session_class(),
         genome_fasta_type=GENOME_FASTA_TYPE,
         gene_reflat_type=GENE_REFFLAT_TYPE,
         ribosomal_interval_type=RIBOSOMAL_INTERVAL_TYPE)
@@ -702,7 +702,7 @@ def convert_bam_to_cram_func(**context):
     ref_genome = \
         Reference_genome_utils(\
           genome_tag=genome_build,
-          dbsession_class=aa.session_class(),
+          dbsession_class=aa.get_session_class(),
           genome_fasta_type=GENOME_FASTA_TYPE)
     genome_fasta = ref_genome.get_genome_fasta()
     temp_work_dir = get_temp_dir(use_ephemeral_space=use_ephemeral_space)
@@ -718,7 +718,7 @@ def convert_bam_to_cram_func(**context):
       threads=threads)
     au = \
       Analysis_collection_utils(
-        dbsession_class=aa.session_class(),
+        dbsession_class=aa.get_session_class(),
         analysis_name=analysis_name,
         tag_name=genome_build,
         collection_name=sample_igf_id,
