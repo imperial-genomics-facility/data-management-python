@@ -386,6 +386,12 @@ class Picard_tools:
               for f in metrics_list])
           bind_dir_list.\
             append(picard_temp_run_dir)
+          if self.ref_flat_file is not None:
+            bind_dir_list.\
+              append(os.path.dirname(self.ref_flat_file))
+          if self.ref_fasta is not None:
+            bind_dir_list.\
+              append(os.path.dirname(self.ref_fasta))
           bind_dir_list = \
             list(set(bind_dir_list))                                            # remove duplicates
           _ = \
