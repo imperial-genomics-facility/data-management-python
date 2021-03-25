@@ -569,7 +569,7 @@ def run_picard_for_cellranger(**context):
     ref_genome = \
       Reference_genome_utils(
         genome_tag=genome_build,
-        dbsession_class=sa.session_class(),
+        dbsession_class=sa.session_class,
         genome_fasta_type=GENOME_FASTA_TYPE,
         gene_reflat_type=GENE_REFFLAT_TYPE,
         ribosomal_interval_type=RIBOSOMAL_INTERVAL_TYPE)
