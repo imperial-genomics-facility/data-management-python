@@ -674,6 +674,8 @@ def convert_bam_to_cram_func(**context):
       context['params'].get('collection_table')
     cram_files_xcom_key = \
       context['params'].get('cram_files_xcom_key')
+    cellranger_bam_path = \
+      context['params'].get('cellranger_bam_path','count/possorted_genome_bam.bam')
     analysis_description = \
       ti.xcom_pull(
         task_ids=analysis_description_xcom_pull_task,
@@ -689,10 +691,12 @@ def convert_bam_to_cram_func(**context):
       raise ValueError('No gene expression entry found in analysis description')
     sample_igf_id = gex_samples['sample_igf_id'].values[0]
     genome_build = gex_samples['genome_build'].values[0]
-    bam_file = \
+    cellranger_output_dir = \
       ti.xcom_pull(
         task_ids=xcom_pull_task,
         key=xcom_pull_files_key)
+    bam_file = \
+      os.path.join(cellranger_output_dir,cellranger_bam_path)
     if isinstance(bam_file,list):
       bam_file = bam_file[0]
     dbparams = \
