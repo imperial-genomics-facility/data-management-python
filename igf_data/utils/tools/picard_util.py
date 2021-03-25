@@ -392,6 +392,9 @@ class Picard_tools:
           if self.ref_fasta is not None:
             bind_dir_list.\
               append(os.path.dirname(self.ref_fasta))
+          if self.ribisomal_interval is not None:
+            bind_dir_list.\
+              append(os.path.dirname(self.ribisomal_interval))
           bind_dir_list = \
             list(set(bind_dir_list))                                            # remove duplicates
           _ = \
