@@ -123,7 +123,7 @@ def index_and_copy_bam_for_parallel_analysis(**context):
       singularity_image=SAMTOOLS_IMAGE,
       bam_file=bam_file,
       list_of_analysis=list_of_tasks)
-    for analysis_name,bam_file in output_temp_bams:                             # push temp bam paths to xcom
+    for analysis_name,bam_file in output_temp_bams.items():                     # push temp bam paths to xcom
       ti.xcom_push(
         key=analysis_name,
         value=bam_file)
