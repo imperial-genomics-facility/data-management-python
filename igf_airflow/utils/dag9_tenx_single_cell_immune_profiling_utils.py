@@ -1437,7 +1437,7 @@ def decide_analysis_branch_func(**context):
     #run_picard_alignment_summary_task = \
     #  context['params'].get('run_picard_alignment_summary_task')
     copy_bam_for_parallel_runs = \
-      context['params'].get('copy_bam_for_parallel_runs')
+      context['params'].get('copy_bam_for_parallel_runs_task')
     task_list = [load_cellranger_result_to_db_task]
     library_csv = \
       ti.xcom_pull(
