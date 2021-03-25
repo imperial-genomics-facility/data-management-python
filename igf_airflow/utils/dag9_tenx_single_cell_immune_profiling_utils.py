@@ -1128,7 +1128,6 @@ def irods_files_upload_for_analysis(**context):
       context['params'].get('xcom_pull_files_key')
     collection_name_key = \
       context['params'].get('collection_name_key')
-    irods_exe_dir = IRDOS_EXE_DIR
     analysis_name = \
       context['params'].get('analysis_name')
     dag_run = context.get('dag_run')
@@ -1162,16 +1161,16 @@ def irods_files_upload_for_analysis(**context):
     user = \
       pa.fetch_data_authority_for_project(
         project_igf_id=project_igf_id)                                        # fetch user info from db
-    pa.close_session()
     if user is None:
         raise ValueError(
                 'No user found for project {0}'.\
                   format(project_igf_id))
     username = user.username                                                  # get username for irods
-    irods_upload = IGF_irods_uploader(irods_exe_dir)
+    pa.close_session()
+    irods_upload = IGF_irods_uploader(IRDOS_EXE_DIR)
     for file in file_list_for_copy:
       check_file_path(file)
-    dir_path_list = ['analysis',collection_name]
+    dir_path_list = ['analysis', ]
     irods_upload.\
       upload_analysis_results_and_create_collection(
         file_list=file_list_for_copy,
