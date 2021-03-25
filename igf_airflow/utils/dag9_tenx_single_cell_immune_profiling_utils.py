@@ -911,9 +911,9 @@ def run_singlecell_notebook_wrapper_func(**context):
     output_notebook_key = \
       context['params'].get('output_notebook_key')
     count_dir = \
-      context['params'].get('count_dir')
+      context['params'].get('count_dir','count')
     vdj_dir = \
-      context['params'].get('vdj_dir')
+      context['params'].get('vdj_dir','vdj')
     analysis_description_xcom_pull_task = \
       context['params'].get('analysis_description_xcom_pull_task')
     analysis_description_xcom_key = \
