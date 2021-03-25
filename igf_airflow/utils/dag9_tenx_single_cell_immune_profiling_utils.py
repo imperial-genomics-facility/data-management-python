@@ -51,7 +51,7 @@ SEURAT_SINGLE_SAMPLE_TEMPLATE = Variable.get('seurat_single_sample_template',def
 SEURAT_NOTEBOOK_IMAGE = Variable.get('seurat_notebook_image',default_var=None)
 CUTADAPT_IMAGE = Variable.get('cutadapt_singularity_image',default_var=None)
 MULTIQC_IMAGE = Variable.get('multiqc_singularity_image',default_var=None)
-PICARD_IMAGE = Variable.get('picard_singularity_image ',default_var=None)
+PICARD_IMAGE = Variable.get('picard_singularity_image',default_var=None)
 SLACK_CONF = Variable.get('slack_conf',default_var=None)
 MS_TEAMS_CONF = Variable.get('ms_teams_conf',default_var=None)
 BOX_USERNAME = Variable.get('box_username',default_var=None)
