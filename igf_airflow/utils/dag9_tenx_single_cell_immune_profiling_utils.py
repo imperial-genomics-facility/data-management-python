@@ -1719,7 +1719,8 @@ def _get_fastq_and_run_cutadapt_trim(
           # copy I1 or I2
           copy_local_file(
             input_fastq_file,
-            output_fastq_file)
+            output_fastq_file,
+            force=True)
   except Exception as e:
     raise ValueError(
             'Failed to trim or copy reads, error: {0}'.\
