@@ -109,10 +109,14 @@ def index_and_copy_bam_for_parallel_analysis(**context):
       context['params'].get('xcom_pull_task')
     xcom_pull_files_key = \
       context['params'].get('xcom_pull_files_key')
-    bam_file = \
+    cellranger_bam_path = \
+      context['params'].get('cellranger_bam_path','count/possorted_genome_bam.bam')
+    cellranger_output_dir = \
       ti.xcom_pull(
         task_ids=xcom_pull_task,
         key=xcom_pull_files_key)
+    bam_file = \
+      os.path.join(cellranger_output_dir,cellranger_bam_path)
     output_temp_bams = \
       _check_bam_index_and_copy(
       samtools_exe=SAMTOOLS_EXE,
