@@ -1128,6 +1128,8 @@ def irods_files_upload_for_analysis(**context):
       context['params'].get('xcom_pull_files_key')
     collection_name_key = \
       context['params'].get('collection_name_key')
+    collection_name_task = \
+      context['params'].get('collection_name_task')
     analysis_name = \
       context['params'].get('analysis_name')
     dag_run = context.get('dag_run')
@@ -1154,7 +1156,7 @@ def irods_files_upload_for_analysis(**context):
         key=xcom_pull_files_key)
     collection_name = \
       ti.xcom_pull(
-        task_ids=xcom_pull_task,
+        task_ids=collection_name_task,
         key=collection_name_key)
     pa = ProjectAdaptor(**dbparams)
     pa.start_session()
