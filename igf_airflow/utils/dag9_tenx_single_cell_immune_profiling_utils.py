@@ -1679,12 +1679,16 @@ def _get_fastq_and_run_cutadapt_trim(
                 cutadapt_exe=cutadapt_exe,
                 dry_run=dry_run,
                 singularity_image_path=singularity_image)
-            copy_local_file(
-              temp_fastq_file,output_fastq_file)
+            if not dry_run:
+              copy_local_file(
+                temp_fastq_file,
+                output_fastq_file,
+                force=True)
           else:
             copy_local_file(
               input_fastq_file,
-              output_fastq_file)
+              output_fastq_file,
+              force=True)
         if re.match(r2_file_name_pattern,fastq):
           # trim R2
           if r2_length > 0:
@@ -1701,12 +1705,16 @@ def _get_fastq_and_run_cutadapt_trim(
                 cutadapt_exe=cutadapt_exe,
                 dry_run=dry_run,
                 singularity_image_path=singularity_image)
-            copy_local_file(
-              temp_fastq_file,output_fastq_file)
+            if not dry_run:
+              copy_local_file(
+                temp_fastq_file,
+                output_fastq_file,
+                force=True)
           else:
             copy_local_file(
               input_fastq_file,
-              output_fastq_file)
+              output_fastq_file,
+              force=True)
         if re.match(index_file_name_pattern,fastq):
           # copy I1 or I2
           copy_local_file(
