@@ -70,6 +70,39 @@ CELLRANGER_JOB_TIMEOUT = Variable.get('cellranger_job_timeout',default_var=None)
 
 ## FUNCTION
 
+def clean_up_files(**context):
+  try:
+    ti = context.get('ti')
+    xcom_pull_task = \
+      context['params'].get('xcom_pull_task')
+    xcom_pull_files_key = \
+      context['params'].get('xcom_pull_files_key')
+    file_list = \
+      ti.xcom_pull(
+        task_ids=xcom_pull_task,
+        key=xcom_pull_files_key)
+    if isinstance(file_list,list):
+      for path in file_list:
+        if os.path.isdir(path):
+          raise ValueError(
+                  'Its not safe to delete dirs automatically, {0}'.\
+                    format(path))
+        os.remove(path)
+    elif isinstance(file_list,str):
+      if os.path.isdir(file_list):
+        raise ValueError(
+                'Its not safe to delete dirs automatically, {0}'.\
+                  format(file_list))
+      os.remove(file_list)
+    else:
+      raise TypeError(
+              'Expecting a list of a filepath for cleanup, got {0}'.\
+                format(type(file_list)))
+  except Exception as e:
+    logging.error(e)
+    raise ValueError(e)
+
+
 def change_pipeline_status(**context):
   try:
     dag_run = context.get('dag_run')
