@@ -248,7 +248,7 @@ def run_multiqc_for_cellranger(**context):
     ### fetch analysis file paths
     analysis_paths_list = list()
     if not isinstance(list_of_analysis_xcoms_and_tasks,dict) or \
-       len(list_of_analysis_xcoms_and_tasks.keys()) > 0:
+       len(list_of_analysis_xcoms_and_tasks.keys())==0:
       raise TypeError(
               'No analysis ids found for xcom fetching, {0}'.\
               format(list_of_analysis_xcoms_and_tasks))
