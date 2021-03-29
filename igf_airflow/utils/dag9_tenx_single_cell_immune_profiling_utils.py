@@ -31,7 +31,8 @@ from igf_data.utils.tools.samtools_utils import convert_bam_to_cram
 from igf_data.utils.tools.samtools_utils import index_bam_or_cram
 from igf_data.utils.tools.picard_util import Picard_tools
 from igf_data.utils.tools.samtools_utils import run_bam_idxstat,run_bam_stats,index_bam_or_cram
-
+from igf_data.utils.project_analysis_utils import Project_analysis
+from igf_data.utils.project_status_utils import Project_status
 
 ## DEFAULTS
 GENOME_FASTA_TYPE = 'GENOME_FASTA'
@@ -69,6 +70,49 @@ CELLRANGER_EXE = Variable.get('cellranger_exe',default_var=None)
 CELLRANGER_JOB_TIMEOUT = Variable.get('cellranger_job_timeout',default_var=None)
 
 ## FUNCTION
+def _generate_status_and_analysis_page_data(
+      project_igf_id,db_session_class,collection_type_list,pipeline_name,
+      attribute_collection_file_type,pipeline_seed_table,sample_id_label,remote_analysis_dir,
+      pipeline_finished_status,use_ephemeral_space=False,analysis_data_json='analysis_data.json',
+      chart_data_json='analysis_chart_data.json',chart_data_csv='analysis_chart_data.csv',
+      status_data_json='status_data.json',demultiplexing_pipeline_name='igf_demultiplexing'):
+  try:
+    temp_dir = get_temp_dir(use_ephemeral_space=use_ephemeral_space)
+    analysis_data_output_file = os.path.join(temp_dir,analysis_data_json)
+    chart_json_output_file = os.path.join(temp_dir,chart_data_json)
+    csv_output_file = os.path.join(temp_dir,chart_data_csv)
+    temp_status_output = os.path.join(temp_dir,status_data_json)
+    ps = \
+      Project_status(
+        igf_session_class=db_session_class,
+        project_igf_id=project_igf_id)
+    ps.generate_gviz_json_file(
+      output_file=temp_status_output,
+      demultiplexing_pipeline=demultiplexing_pipeline_name,
+      analysis_pipeline=pipeline_name)
+    prj_data = \
+      Project_analysis(
+        igf_session_class=db_session_class,
+        collection_type_list=collection_type_list,
+        remote_analysis_dir=remote_analysis_dir,
+        attribute_collection_file_type=attribute_collection_file_type,
+        pipeline_name=pipeline_name,
+        pipeline_seed_table=pipeline_seed_table,
+        pipeline_finished_status=pipeline_finished_status,
+        use_ephemeral_space=use_ephemeral_space,
+        sample_id_label=sample_id_label)
+    prj_data.\
+      get_analysis_data_for_project(
+        project_igf_id=project_igf_id,
+        output_file=analysis_data_output_file,
+        chart_json_output_file=chart_json_output_file,
+        csv_output_file=csv_output_file)
+    return temp_status_output,analysis_data_output_file,chart_json_output_file,csv_output_file
+  except Exception as e:
+    raise ValueError(
+            'Failed to generate data for analysis page, error: {0}'.\
+              format(e))
+
 
 def clean_up_files(**context):
   try:
