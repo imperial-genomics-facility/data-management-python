@@ -70,12 +70,170 @@ CELLRANGER_EXE = Variable.get('cellranger_exe',default_var=None)
 CELLRANGER_JOB_TIMEOUT = Variable.get('cellranger_job_timeout',default_var=None)
 
 ## FUNCTION
+def create_and_update_qc_pages(**context):
+  try:
+    collection_type_list = \
+      context['params'].get('collection_type_list')
+    attribute_collection_file_type = \
+      context['params'].get('attribute_collection_file_type',[ANALYSIS_CRAM_TYPE])
+    pipeline_seed_table = \
+      context['params'].get('pipeline_seed_table','sample')
+    sample_id_label = \
+      context['params'].get('sample_id_label','sample_igf_id')
+    remote_analysis_dir = \
+      context['params'].get('remote_analysis_dir',os.path.join(FTP_PROJECT_PATH,'analysis'))
+    pipeline_finished_status = \
+      context['params'].get('pipeline_finished_status','FINISHED')
+    use_ephemeral_space = \
+      context['params'].get('use_ephemeral_space',False)
+    analysis_data_json = \
+      context['params'].get('analysis_data_json','analysis_data.json')
+    chart_data_json = \
+      context['params'].get('chart_data_json','analysis_chart_data.json')
+    chart_data_csv = \
+      context['params'].get('chart_data_csv','analysis_chart_data.csv')
+    status_data_json = \
+      context['params'].get('status_data_json','status_data.json')
+    demultiplexing_pipeline_name = \
+      context['params'].get('demultiplexing_pipeline_name')
+    dbparams = \
+      read_dbconf_json(DATABASE_CONFIG_FILE)
+    dag_run = context.get('dag_run')
+    if dag_run is None or \
+       dag_run.conf is None or \
+       dag_run.conf.get('analysis_id') is None:
+      raise ValueError('No analysis id found for collection')
+    analysis_id = \
+      dag_run.conf.get('analysis_id')
+    analysis_type = \
+        dag_run.conf.get('analysis_type')                                       # passing pipeline name as analysis_type
+    aa = \
+      AnalysisAdaptor(**dbparams)
+    aa.start_session()
+    project_igf_id = \
+      aa.fetch_project_igf_id_for_analysis_id(
+        analysis_id=int(analysis_id))                                           # fetch project id for analysis
+    aa.close_session()
+    (temp_status_output,analysis_data_output_file,
+     chart_json_output_file,csv_output_file) = \
+      _generate_status_and_analysis_page_data(
+        project_igf_id=project_igf_id,
+        db_session_class=aa.get_session_class(),
+        collection_type_list=collection_type_list,
+        pipeline_name=analysis_type,
+        attribute_collection_file_type=attribute_collection_file_type,
+        pipeline_seed_table=pipeline_seed_table,
+        sample_id_label=sample_id_label,
+        remote_analysis_dir=remote_analysis_dir,
+        pipeline_finished_status=pipeline_finished_status,
+        use_ephemeral_space=use_ephemeral_space,
+        analysis_data_json=analysis_data_json,
+        chart_data_json=chart_data_json,
+        chart_data_csv=chart_data_csv,
+        status_data_json=status_data_json,
+        demultiplexing_pipeline_name=demultiplexing_pipeline_name)              # get json files
+    remote_project_dir = \
+      os.path.join(
+        FTP_PROJECT_PATH,
+        project_igf_id)
+    remote_status_json_path = \
+      os.path.join(
+        remote_project_dir,
+        status_data_json)
+    remote_analysis_json_path = \
+      os.path.join(
+        remote_project_dir,
+        analysis_data_json)
+    remote_chart_file_path = \
+      os.path.join(
+        remote_project_dir,
+        chart_data_json)
+    remote_csv_file_path = \
+      os.path.join(
+        remote_project_dir,
+        chart_data_csv)
+    _check_and_copy_remote_file(
+      remote_user=FTP_USERNAME,
+      remote_host=FTP_HOSTNAME,
+      source_file=temp_status_output,
+      remote_file=remote_status_json_path)                                      # copy json data for status page
+    _check_and_copy_remote_file(
+      remote_user=FTP_USERNAME,
+      remote_host=FTP_HOSTNAME,
+      source_file=analysis_data_output_file,
+      remote_file=remote_analysis_json_path)                                    # copy json data for analysis page
+    _check_and_copy_remote_file(
+      remote_user=FTP_USERNAME,
+      remote_host=FTP_HOSTNAME,
+      source_file=chart_json_output_file,
+      remote_file=remote_chart_file_path)                                       # copy json data for analysis charts
+    _check_and_copy_remote_file(
+      remote_user=FTP_USERNAME,
+      remote_host=FTP_HOSTNAME,
+      source_file=csv_output_file,
+      remote_file=remote_csv_file_path)                                         # copy json data for analysis csv data
+  except Exception as e:
+    logging.error(e)
+    raise ValueError(e)
+
+
+def _check_and_copy_remote_file(
+      remote_user,remote_host,source_file,remote_file):
+    '''
+    An internal static method for copying files to remote path
+
+    :param remote_user: Username for the remote server
+    :param remote_host: Hostname for the remote server
+    :param source_file: Source filepath
+    :param remote_file: Remote filepath
+    '''
+    try:
+      check_file_path(source_file)
+      remote_config = '{0}@{1}'.format(remote_user,remote_host)
+      os.chmod(
+        source_file,
+        mode=0o754)
+      copy_remote_file(
+        source_path=source_file,
+        destinationa_path=remote_file,
+        destination_address=remote_config,
+        force_update=True)                                                      # create dir and copy file to remote
+    except Exception as e:
+      raise ValueError(
+              'Failed to copy remote file {0}, error: {1}'.\
+                format(remote_file,e))
+
+
 def _generate_status_and_analysis_page_data(
       project_igf_id,db_session_class,collection_type_list,pipeline_name,
       attribute_collection_file_type,pipeline_seed_table,sample_id_label,remote_analysis_dir,
-      pipeline_finished_status,use_ephemeral_space=False,analysis_data_json='analysis_data.json',
+      pipeline_finished_status='FINISHED',use_ephemeral_space=False,analysis_data_json='analysis_data.json',
       chart_data_json='analysis_chart_data.json',chart_data_csv='analysis_chart_data.csv',
       status_data_json='status_data.json',demultiplexing_pipeline_name='igf_demultiplexing'):
+  """
+  An internal function for gviz json data generation for status and analysis page
+
+  :param project_igf_id: Project igf id
+  :param db_session_class: SQLAlchemy session class for db connection
+  :param collection_type_list: A list of collection types for db lookup
+  :param pipeline_name: Pipeline name for db lookup
+  :param attribute_collection_file_type: Attribute collection type for csv data
+  :param pipeline_seed_table: Pipeline seed table
+  :param sample_id_label: Sample igf id label, default sample_igf_id
+  :param remote_analysis_dir: FTP analysis dir path
+  :param pipeline_finished_status: Pipeline finished status, default FINISHED
+  :param use_ephemeral_space: A toggle for using ephemeral temp dir, default False
+  :param analysis_data_json: Name of the analysis page json data, default analysis_data.json
+  :param chart_data_json: Name of analysis chart json data default analysis_chart_data.json
+  :param chart_data_csv: Name of analysis csv data, default analysis_chart_data.csv
+  :param status_data_json: Name of status json data, default status_data.json
+  :param demultiplexing_pipeline_name: Name of demultiplexing pipeline name, default igf_demultiplexing
+  :returns: A list of json data file paths
+              * temp_status_output
+              * analysis_data_output_file
+              * chart_json_output_file
+              * csv_output_file
+  """
   try:
     temp_dir = get_temp_dir(use_ephemeral_space=use_ephemeral_space)
     analysis_data_output_file = os.path.join(temp_dir,analysis_data_json)
