@@ -144,6 +144,30 @@ class SampleAdaptor(BaseAdaptor):
               'Failed to store sample attributes, error: {0}'.format(e))
 
 
+  def fetch_sample_species_name(
+        self,sample_igf_id,sample_column_name='sample_igf_id',
+        species_column_name='species_name'):
+    try:
+      sample = \
+        self.fetch_sample_records_igf_id(
+          sample_igf_id=sample_igf_id,
+          target_column_name=sample_column_name)
+      species_column = [
+        column
+          for column in Sample.__table__.columns
+            if column.key == species_column_name]
+      if(len(species_column))==0:
+        raise KeyError(
+                'Failed to find species column {0}'.\
+                  format(species_column_name))
+      species_name = getattr(sample,species_column_name)
+      return species_name
+    except Exception as e:
+      raise ValueError(
+              'No species info found for sample: {0},error: {1}'.\
+                format(sample_igf_id,e))
+
+
   def fetch_sample_records_igf_id(self,sample_igf_id,target_column_name='sample_igf_id'):
     '''
     A method for fetching data for Sample table
@@ -153,14 +177,17 @@ class SampleAdaptor(BaseAdaptor):
     :returns: An object or dataframe, based on the output_mode
     '''
     try:
-      column = [
+      sample_column = [
         column
           for column in Sample.__table__.columns
-            if column.key == target_column_name][0]
+            if column.key == target_column_name]
+      if len(sample_column)==0:
+        raise KeyError('Column {0} not found'.format(target_column_name))
+      sample_column = sample_column[0]
       sample = \
         self.fetch_records_by_column(
           table=Sample,
-          column_name=column,
+          column_name=sample_column,
           column_id=sample_igf_id,
           output_mode='one')
       return sample

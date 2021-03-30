@@ -34,7 +34,7 @@ class Sampleadaptor_test1(unittest.TestCase):
   def tearDown(self):
     Base.metadata.drop_all(self.engine)
     os.remove(self.dbname)
-    
+
   def test_store_sample_and_attribute_data(self):
     sa=SampleAdaptor(**{'session_class': self.session_class})
     sample_data=[{'sample_igf_id':'IGFS001','library_id':'IGFS001','project_igf_id':'IGFP0001_test_22-8-2017_rna',},
@@ -140,6 +140,57 @@ class Sampleadaptor_test2(unittest.TestCase):
     self.assertTrue(isinstance(records,pd.DataFrame))
     records.drop_duplicates(inplace=True)
     self.assertTrue('MISEQ' in records['model_name'].values)
+
+class Sampleadaptor_test3(unittest.TestCase):
+  def setUp(self):
+    self.dbconfig = 'data/dbconfig.json'
+    dbparam = read_dbconf_json(self.dbconfig)
+    base = BaseAdaptor(**dbparam)
+    self.engine = base.engine
+    self.dbname = dbparam['dbname']
+    Base.metadata.create_all(self.engine)
+    self.session_class = base.get_session_class()
+    base.start_session()
+    project_data = [{
+      'project_igf_id':'IGFP0001_test_22-8-2017_rna',
+      'project_name':'test_22-8-2017_rna',
+      'description':'Its project 1',
+      'project_deadline':'Before August 2017',
+      'comments':'Some samples are treated with drug X' }]
+    pa = ProjectAdaptor(**{'session':base.session})
+    pa.store_project_and_attribute_data(data=project_data)
+    sample_data = [{
+      'sample_igf_id':'IGF00001',
+      'project_igf_id':'IGFP0001_test_22-8-2017_rna',
+      'species_name':'HG38'},{
+      'sample_igf_id':'IGF00002',
+      'project_igf_id':'IGFP0001_test_22-8-2017_rna',
+      'species_name':'UNKNOWN'},{
+      'sample_igf_id':'IGF00003',
+      'project_igf_id':'IGFP0001_test_22-8-2017_rna'}]
+    sa = SampleAdaptor(**{'session':base.session})
+    sa.store_sample_and_attribute_data(data=sample_data)
+    base.close_session()
+
+  def tearDown(self):
+    Base.metadata.drop_all(self.engine)
+    os.remove(self.dbname)
+
+  def test_fetch_sample_species_name(self):
+    sa = SampleAdaptor(**{'session_class': self.session_class})
+    sa.start_session()
+    species_name = \
+      sa.fetch_sample_species_name(sample_igf_id='IGF00001')
+    self.assertEqual(species_name,'HG38')
+    species_name = \
+      sa.fetch_sample_species_name(sample_igf_id='IGF00002')
+    self.assertEqual(species_name,'UNKNOWN')
+    species_name = \
+      sa.fetch_sample_species_name(sample_igf_id='IGF00003')
+    self.assertTrue(species_name is None)
+    sa.close_session()
+
+
 
 
 if __name__ == '__main__':
