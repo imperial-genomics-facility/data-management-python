@@ -272,6 +272,10 @@ def _generate_status_and_analysis_page_data(
         output_file=analysis_data_output_file,
         chart_json_output_file=chart_json_output_file,
         csv_output_file=csv_output_file)
+    check_file_path(temp_status_output)
+    check_file_path(analysis_data_output_file)
+    check_file_path(chart_json_output_file)
+    check_file_path(csv_output_file)
     return temp_status_output,analysis_data_output_file,chart_json_output_file,csv_output_file
   except Exception as e:
     raise ValueError(
