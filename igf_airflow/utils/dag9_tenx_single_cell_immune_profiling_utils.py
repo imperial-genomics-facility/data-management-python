@@ -1500,6 +1500,8 @@ def load_cellranger_result_to_db_func(**context):
       context['params'].get('collection_table')
     collection_type = \
       context['params'].get('collection_type')
+    html_collection_type = \
+      context['params'].get('html_collection_type')
     genome_column = \
       context['params'].get('genome_column')
     output_xcom_key = \
@@ -1566,7 +1568,24 @@ def load_cellranger_result_to_db_func(**context):
     output_file_list = \
       au.load_file_to_disk_and_db(
         input_file_list=[temp_archive_name],
-        withdraw_exisitng_collection=True)
+        withdraw_exisitng_collection=True)                                      # loading cellranger output files without BAM
+    au = \
+      Analysis_collection_utils(
+        dbsession_class=base.get_session_class(),
+        analysis_name=analysis_name,
+        tag_name=genome_build,
+        collection_name=sample_igf_id,
+        collection_type=html_collection_type,
+        collection_table=collection_table,
+        base_path=base_result_dir)
+    output_html_file = \
+      au.load_file_to_disk_and_db(
+        input_file_list=[html_report_filepath],
+        withdraw_exisitng_collection=True)                                      # loading cellranger html file
+    if len(output_html_file)==0:
+      raise ValueError(
+              'No html file found after file load, sample: {0}'.\
+                format(sample_igf_id))
     ti.xcom_push(
       key=output_xcom_key,
       value=output_file_list)
@@ -1575,7 +1594,7 @@ def load_cellranger_result_to_db_func(**context):
       value=sample_igf_id)
     ti.xcom_push(
       key=html_xcom_key,
-      value=html_report_filepath)
+      value=output_html_file[0])
   except Exception as e:
     logging.error(e)
     raise ValueError(e)
