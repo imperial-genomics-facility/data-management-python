@@ -2,15 +2,18 @@ import os,logging,subprocess,re,fnmatch
 import pandas as pd
 from copy import copy
 from airflow.models import Variable
-from jinja2 import Template,Environment, FileSystemLoader, select_autoescape
-from igf_airflow.logging.upload_log_msg import log_success,log_failure,log_sleep
+from igf_data.utils.fileutils import get_temp_dir
+from igf_data.utils.fileutils import remove_dir
+from igf_data.utils.fileutils import read_json_data
+from igf_data.utils.fileutils import copy_remote_file
+from igf_data.utils.fileutils import check_file_path
+from igf_data.utils.fileutils import copy_local_file
+from igf_data.utils.fileutils import get_date_stamp
+from igf_data.utils.fileutils import get_datestamp_label
+from igf_data.utils.dbutils import read_dbconf_json
 from igf_airflow.logging.upload_log_msg import post_image_to_channels
-from igf_data.utils.fileutils import get_temp_dir,copy_remote_file,check_file_path
-from igf_data.utils.fileutils import read_json_data,copy_local_file,get_date_stamp
 from igf_data.utils.singularity_run_wrapper import execute_singuarity_cmd
 from igf_data.utils.analysis_fastq_fetch_utils import get_fastq_and_run_for_samples
-from igf_data.utils.fileutils import get_temp_dir,remove_dir
-from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.utils.tools.reference_genome_utils import Reference_genome_utils
 from igf_data.igfdb.baseadaptor import BaseAdaptor
@@ -30,9 +33,13 @@ from igf_data.utils.box_upload import upload_file_or_dir_to_box
 from igf_data.utils.tools.samtools_utils import convert_bam_to_cram
 from igf_data.utils.tools.samtools_utils import index_bam_or_cram
 from igf_data.utils.tools.picard_util import Picard_tools
-from igf_data.utils.tools.samtools_utils import run_bam_idxstat,run_bam_stats,index_bam_or_cram
+from igf_data.utils.tools.samtools_utils import run_bam_idxstat
+from igf_data.utils.tools.samtools_utils import run_bam_stats
+from igf_data.utils.tools.samtools_utils import index_bam_or_cram
 from igf_data.utils.project_analysis_utils import Project_analysis
 from igf_data.utils.project_status_utils import Project_status
+from jinja2 import Template,Environment,FileSystemLoader,select_autoescape
+from igf_airflow.logging.upload_log_msg import log_success,log_failure,log_sleep
 
 ## DEFAULTS
 GENOME_FASTA_TYPE = 'GENOME_FASTA'
@@ -1077,6 +1084,7 @@ def task_branch_function(**context):
     logging.error(e)
     raise ValueError(e)
 
+
 def load_analysis_files_func(**context):
   try:
     ti = context.get('ti')
@@ -1227,7 +1235,10 @@ def run_singlecell_notebook_wrapper_func(**context):
       cellbrowser_dir = os.path.join(tmp_dir,'cellbrowser_dir')
       if not os.path.exists(cellbrowser_dir):
         os.makedirs(cellbrowser_dir)
-      cellbrowser_html_dir = os.path.join(tmp_dir,'cellbrowser_html_dir')
+      cellbrowser_html_dir = \
+        os.path.join(
+          tmp_dir,
+          'cellbrowser_html_{0}'.format(get_datestamp_label()))                 # adding datestamp label to cellbrowser html dir path
       if not os.path.exists(cellbrowser_html_dir):
         os.makedirs(cellbrowser_html_dir)
       input_params.update({
@@ -1266,104 +1277,6 @@ def run_singlecell_notebook_wrapper_func(**context):
     logging.error(e)
     raise ValueError(e)
 
-"""
-def run_scanpy_for_sc_5p_func(**context):
-  try:
-    ti = context.get('ti')
-    cellranger_xcom_key = \
-      context['params'].get('cellranger_xcom_key')
-    cellranger_xcom_pull_task = \
-      context['params'].get('cellranger_xcom_pull_task')
-    timeout = \
-      context['params'].get('scanpy_timeout')
-    allow_errors = \
-      context['params'].get('allow_errors')
-    output_notebook_key = \
-      context['params'].get('output_notebook_key')
-    output_cellbrowser_key = \
-      context['params'].get('output_cellbrowser_key')
-    analysis_description_xcom_pull_task = \
-      context['params'].get('analysis_description_xcom_pull_task')
-    analysis_description_xcom_key = \
-      context['params'].get('analysis_description_xcom_key')
-    cellranger_output = \
-      ti.xcom_pull(
-        task_ids=cellranger_xcom_pull_task,
-        key=cellranger_xcom_key)
-    cellranger_count_dir = \
-      os.path.join(cellranger_output,'count')
-    tmp_dir = get_temp_dir(use_ephemeral_space=True)
-    scanpy_h5ad = os.path.join(tmp_dir,'scanpy.h5ad')
-    cellbrowser_dir = os.path.join(tmp_dir,'cellbrowser_dir')
-    if not os.path.exists(cellbrowser_dir):
-      os.makedirs(cellbrowser_dir)
-    cellbrowser_html_dir = os.path.join(tmp_dir,'cellbrowser_html_dir')
-    if not os.path.exists(cellbrowser_html_dir):
-      os.makedirs(cellbrowser_html_dir)
-    template_ipynb_path = SCANPY_SINGLE_SAMPLE_TEMPLATE
-    singularity_image_path = SCANPY_NOTEBOOK_IMAGE
-    cell_marker_list = ALL_CELL_MARKER_LIST
-    dag_run = context.get('dag_run')
-    if dag_run is None or \
-       dag_run.conf is None or \
-       dag_run.conf.get('analysis_id') is None:
-      raise ValueError('No analysis id found for collection')
-    analysis_id = \
-        dag_run.conf.get('analysis_id')
-    database_config_file = DATABASE_CONFIG_FILE
-    dbparams = \
-      read_dbconf_json(database_config_file)
-    aa = \
-      AnalysisAdaptor(**dbparams)
-    aa.start_session()
-    project_igf_id = \
-      aa.fetch_project_igf_id_for_analysis_id(
-        analysis_id=int(analysis_id))
-    aa.close_session()
-    analysis_description = \
-      ti.xcom_pull(
-        task_ids=analysis_description_xcom_pull_task,
-        key=analysis_description_xcom_key)
-    sample_igf_id = \
-      analysis_description[0].get('sample_igf_id')
-    genome_build = \
-      analysis_description[0].get('genome_build')
-    input_params = {
-      'DATE_TAG':get_date_stamp(),
-      'PROJECT_IGF_ID':project_igf_id,
-      'SAMPLE_IGF_ID':sample_igf_id,
-      'CELLRANGER_COUNT_DIR':cellranger_count_dir,
-      'CELL_MARKER_LIST':cell_marker_list,
-      'GENOME_BUILD':genome_build,
-      'SCANPY_H5AD':scanpy_h5ad,
-      'CELLBROWSER_DIR':cellbrowser_dir,
-      'CELLBROWSER_HTML_DIR':cellbrowser_html_dir}
-    container_bind_dir_list = [
-      cellranger_count_dir,
-      tmp_dir,
-      os.path.dirname(cell_marker_list)]
-    nb = Notebook_runner(
-      template_ipynb_path=template_ipynb_path,
-      output_dir=tmp_dir,
-      input_param_map=input_params,
-      container_paths=container_bind_dir_list,
-      timeout=timeout,
-      singularity_options=['--no-home','-C'],
-      allow_errors=allow_errors,
-      use_ephemeral_space=True,
-      singularity_image_path=singularity_image_path)
-    output_notebook_path,_ = \
-      nb.execute_notebook_in_singularity()
-    ti.xcom_push(
-      key=output_notebook_key,
-      value=output_notebook_path)
-    ti.xcom_push(
-      key=output_cellbrowser_key,
-      value=cellbrowser_html_dir)
-  except Exception as e:
-    logging.error(e)
-    raise ValueError(e)
-"""
 
 def irods_files_upload_for_analysis(**context):
   try:
