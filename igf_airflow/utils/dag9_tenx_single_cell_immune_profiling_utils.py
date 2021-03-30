@@ -1096,13 +1096,16 @@ def load_analysis_files_func(**context):
       context['params'].get('collection_table')
     output_files_key = \
       context['params'].get('output_files_key')
+    tag_name = \
+      context['params'].get('tag_name','no_tag')
+    collection_as_sample = \
+      context['params'].get('collection_as_sample',True)
     database_config_file = DATABASE_CONFIG_FILE
     base_result_dir = BASE_RESULT_DIR
     dbparams = \
       read_dbconf_json(database_config_file)
     base = \
       BaseAdaptor(**dbparams)
-    tag_name = 'no_tag'
     collection_name = \
       ti.xcom_pull(
         task_ids=collection_name_task,
@@ -1111,6 +1114,14 @@ def load_analysis_files_func(**context):
       ti.xcom_pull(
         task_ids=file_name_task,
         key=file_name_key)
+    if collection_as_sample:
+      sa = SampleAdaptor(dbparams)
+      sa.start_session()
+      sample_entry = \
+        sa.fetch_sample_records_igf_id(
+          sample_igf_id=collection_name)
+      tag_name = sample_entry.species_name                                      # update tag_name from sample entry
+      sa.close_session()
     if isinstance(temp_file,str):
       temp_file = [temp_file]
     au = \
