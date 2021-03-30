@@ -10,7 +10,7 @@ from igf_data.utils.gviz_utils import convert_to_gviz_json_for_display
 class Project_analysis:
   '''
   A class for fetching all the analysis files linked to a project
-  
+
   :param igf_session_class: A database session class
   :param collection_type_list: A list of collection type for database lookup
   :param remote_analysis_dir: A remote path prefix for analysis file look up, default analysis
@@ -42,7 +42,7 @@ class Project_analysis:
                     remote_prefix='analysis'):
     '''
     An internal static method for reformatting filepath with html code
-    
+
     :param data_series: A pandas series with 'file_path' and 'sample_igf_id'
     :param sample_igf_id_column: A column name for sample igf id, default sample_igf_id
     :param file_path_column: A column name for file path, default file_path
@@ -80,18 +80,35 @@ class Project_analysis:
     try:
       base = BaseAdaptor(**{'session_class':self.igf_session_class})
       base.start_session()
-      subquery = \
-        base.session.\
-          query(Experiment.experiment_igf_id).\
-          join(Sample,Sample.sample_id==Experiment.sample_id).\
-          join(Project,Project.project_id==Sample.project_id).\
-          join(Pipeline_seed,Pipeline_seed.seed_id==Experiment.experiment_id).\
-          join(Pipeline,Pipeline.pipeline_id==Pipeline_seed.pipeline_id).\
-          filter(Pipeline_seed.seed_table==self.pipeline_seed_table).\
-          filter(Pipeline_seed.status==self.pipeline_finished_status).\
-          filter(Pipeline.pipeline_name==self.pipeline_name).\
-          filter(Project.project_igf_id==project_igf_id).\
-          subquery()
+      if self.pipeline_seed_table=='experiment':
+        subquery = \
+          base.session.\
+            query(Experiment.experiment_igf_id).\
+            join(Sample,Sample.sample_id==Experiment.sample_id).\
+            join(Project,Project.project_id==Sample.project_id).\
+            join(Pipeline_seed,Pipeline_seed.seed_id==Experiment.experiment_id).\
+            join(Pipeline,Pipeline.pipeline_id==Pipeline_seed.pipeline_id).\
+            filter(Pipeline_seed.seed_table==self.pipeline_seed_table).\
+            filter(Pipeline_seed.status==self.pipeline_finished_status).\
+            filter(Pipeline.pipeline_name==self.pipeline_name).\
+            filter(Project.project_igf_id==project_igf_id).\
+            subquery()
+      elif self.pipeline_seed_table=='sample':
+        subquery = \
+          base.session.\
+            query(Sample.sample_id).\
+            join(Project,Project.project_id==Sample.project_id).\
+            join(Pipeline_seed,Pipeline_seed.seed_id==Sample.sample_id).\
+            join(Pipeline,Pipeline.pipeline_id==Pipeline_seed.pipeline_id).\
+            filter(Pipeline_seed.seed_table==self.pipeline_seed_table).\
+            filter(Pipeline_seed.status==self.pipeline_finished_status).\
+            filter(Pipeline.pipeline_name==self.pipeline_name).\
+            filter(Project.project_igf_id==project_igf_id).\
+            subquery()
+      else:
+        raise ValueError(
+                'Only sample and experiment tables are supported, got {0}'.\
+                  format(self.pipeline_seed_table))
       query = \
         base.session.\
           query(
@@ -127,7 +144,7 @@ class Project_analysis:
                                     sample_igf_id_column='sample_igf_id',):
     '''
     A method for fetching all the analysis files for a project
-    
+
     :param project_igf_id: A project igf id for database lookup
     :param output_file: An output filepath, either a csv or a gviz json
     :param gviz_out: A toggle for converting output to gviz output, default is True
@@ -138,24 +155,46 @@ class Project_analysis:
     try:
       base = BaseAdaptor(**{'session_class':self.igf_session_class})
       base.start_session()                                                      # connect to database
-      query = \
-        base.session.\
-          query(
-            Sample.sample_igf_id,
-            Collection.type,
-            File.file_path).\
-          join(Project,Project.project_id==Sample.project_id).\
-          join(Experiment,Sample.sample_id==Experiment.sample_id).\
-          join(Collection, Experiment.experiment_igf_id==Collection.name).\
-          join(Collection_group,Collection.collection_id==Collection_group.collection_id).\
-          join(File,File.file_id==Collection_group.file_id).\
-          filter(Project.project_igf_id==project_igf_id).\
-          filter(Sample.project_id==Project.project_id).\
-          filter(Sample.sample_id==Experiment.sample_id).\
-          filter(Collection.collection_id==Collection_group.collection_id).\
-          filter(Collection_group.file_id==File.file_id).\
-          filter(Collection.table=='experiment').\
-          filter(Collection.type.in_(self.collection_type_list))
+      if self.pipeline_seed_table=='experiment':
+        query = \
+          base.session.\
+            query(
+              Sample.sample_igf_id,
+              Collection.type,
+              File.file_path).\
+            join(Project,Project.project_id==Sample.project_id).\
+            join(Experiment,Sample.sample_id==Experiment.sample_id).\
+            join(Collection, Experiment.experiment_igf_id==Collection.name).\
+            join(Collection_group,Collection.collection_id==Collection_group.collection_id).\
+            join(File,File.file_id==Collection_group.file_id).\
+            filter(Project.project_igf_id==project_igf_id).\
+            filter(Sample.project_id==Project.project_id).\
+            filter(Sample.sample_id==Experiment.sample_id).\
+            filter(Collection.collection_id==Collection_group.collection_id).\
+            filter(Collection_group.file_id==File.file_id).\
+            filter(Collection.table=='experiment').\
+            filter(Collection.type.in_(self.collection_type_list))
+      elif self.pipeline_seed_table=='sample':
+        query = \
+          base.session.\
+            query(
+              Sample.sample_igf_id,
+              Collection.type,
+              File.file_path).\
+            join(Project,Project.project_id==Sample.project_id).\
+            join(Collection, Sample.sample_igf_id==Collection.name).\
+            join(Collection_group,Collection.collection_id==Collection_group.collection_id).\
+            join(File,File.file_id==Collection_group.file_id).\
+            filter(Project.project_igf_id==project_igf_id).\
+            filter(Sample.project_id==Project.project_id).\
+            filter(Collection.collection_id==Collection_group.collection_id).\
+            filter(Collection_group.file_id==File.file_id).\
+            filter(Collection.table=='sample').\
+            filter(Collection.type.in_(self.collection_type_list))
+      else:
+        raise ValueError(
+                'Only sample and experiment tables are supported, got {0}'.\
+                  format(self.pipeline_seed_table))
       results = \
         base.fetch_records(
           query=query,
