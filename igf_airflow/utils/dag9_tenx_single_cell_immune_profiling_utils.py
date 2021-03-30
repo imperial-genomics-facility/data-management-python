@@ -777,7 +777,7 @@ def run_picard_for_cellranger(**context):
     java_param = \
       context['params'].get('java_param')
     picard_command = \
-      context['params'].get('picard_command')
+      context['params'].get( 'picard_command')
     picard_option = \
       context['params'].get('picard_option')
     analysis_files_xcom_key = \
@@ -797,17 +797,22 @@ def run_picard_for_cellranger(**context):
         [['sample_igf_id','genome_build']]
     if len(gex_samples.index) == 0:
       raise ValueError('No gene expression entry found in analysis description')
-    genome_build = gex_samples['genome_build'].values[0]
+    #genome_build = gex_samples['genome_build'].values[0]
     sample_igf_id = gex_samples['sample_igf_id'].values[0]
+    dbparams = \
+      read_dbconf_json(DATABASE_CONFIG_FILE)
+    sa = SampleAdaptor(**dbparams)
+    sa.start_session()
+    genome_build = \
+      sa.fetch_sample_species_name(
+        sample_igf_id=sample_igf_id)
+    sa.close_session()
     bam_file = \
       ti.xcom_pull(
         task_ids=xcom_pull_task,
         key=xcom_pull_files_key)
     if isinstance(bam_file,list):
       bam_file = bam_file[0]
-    dbparams = \
-      read_dbconf_json(DATABASE_CONFIG_FILE)
-    sa = SampleAdaptor(**dbparams)
     ref_genome = \
       Reference_genome_utils(
         genome_tag=genome_build,
@@ -932,7 +937,15 @@ def convert_bam_to_cram_func(**context):
     if len(gex_samples.index) == 0:
       raise ValueError('No gene expression entry found in analysis description')
     sample_igf_id = gex_samples['sample_igf_id'].values[0]
-    genome_build = gex_samples['genome_build'].values[0]
+    #genome_build = gex_samples['genome_build'].values[0]
+    dbparams = \
+      read_dbconf_json(DATABASE_CONFIG_FILE)
+    sa = SampleAdaptor(**dbparams)
+    sa.start_session()
+    genome_build = \
+      sa.fetch_sample_species_name(
+        sample_igf_id=sample_igf_id)
+    sa.close_session()
     cellranger_output_dir = \
       ti.xcom_pull(
         task_ids=xcom_pull_task,
@@ -1123,12 +1136,11 @@ def load_analysis_files_func(**context):
         task_ids=file_name_task,
         key=file_name_key)
     if collection_as_sample:
-      sa = SampleAdaptor(dbparams)
+      sa = SampleAdaptor(**dbparams)
       sa.start_session()
-      sample_entry = \
-        sa.fetch_sample_records_igf_id(
+      tag_name = \
+        sa.fetch_sample_species_name(
           sample_igf_id=collection_name)
-      tag_name = sample_entry.species_name                                      # update tag_name from sample entry
       sa.close_session()
     if isinstance(temp_file,str):
       temp_file = [temp_file]
@@ -1213,8 +1225,14 @@ def run_singlecell_notebook_wrapper_func(**context):
         key=analysis_description_xcom_key)
     sample_igf_id = \
       analysis_description[0].get('sample_igf_id')
+    #genome_build = \
+    #  analysis_description[0].get('genome_build')
+    sa = SampleAdaptor(**dbparams)
+    sa.start_session()
     genome_build = \
-      analysis_description[0].get('genome_build')
+      sa.fetch_sample_species_name(
+        sample_igf_id=sample_igf_id)
+    sa.close_session()
     tmp_dir = get_temp_dir(use_ephemeral_space=True)
     input_params = {
       'DATE_TAG':get_date_stamp(),
@@ -1502,8 +1520,8 @@ def load_cellranger_result_to_db_func(**context):
       context['params'].get('collection_type')
     html_collection_type = \
       context['params'].get('html_collection_type')
-    genome_column = \
-      context['params'].get('genome_column')
+    #genome_column = \
+    #  context['params'].get('genome_column')
     output_xcom_key = \
       context['params'].get('output_xcom_key')
     xcom_collection_name_key = \
@@ -1518,8 +1536,8 @@ def load_cellranger_result_to_db_func(**context):
         key=analysis_description_xcom_key)
     sample_igf_id = \
       analysis_description[0].get('sample_igf_id')
-    genome_build = \
-      analysis_description[0].get(genome_column)
+    #genome_build = \
+    #  analysis_description[0].get(genome_column)
     if sample_igf_id is None:
       raise ValueError(
               'No sample id found for analysis {0}'.\
@@ -1554,11 +1572,15 @@ def load_cellranger_result_to_db_func(**context):
     database_config_file = DATABASE_CONFIG_FILE
     dbparams = \
       read_dbconf_json(database_config_file)
-    base = \
-      BaseAdaptor(**dbparams)
+    sa = SampleAdaptor(**dbparams)
+    sa.start_session()
+    genome_build = \
+      sa.fetch_sample_species_name(
+        sample_igf_id=sample_igf_id)
+    sa.close_session()
     au = \
       Analysis_collection_utils(
-        dbsession_class=base.get_session_class(),
+        dbsession_class=sa.get_session_class(),
         analysis_name=analysis_name,
         tag_name=genome_build,
         collection_name=sample_igf_id,
@@ -1571,7 +1593,7 @@ def load_cellranger_result_to_db_func(**context):
         withdraw_exisitng_collection=True)                                      # loading cellranger output files without BAM
     au = \
       Analysis_collection_utils(
-        dbsession_class=base.get_session_class(),
+        dbsession_class=sa.get_session_class(),
         analysis_name=analysis_name,
         tag_name=genome_build,
         collection_name=sample_igf_id,
