@@ -102,7 +102,7 @@ def create_and_update_qc_pages(**context):
     status_data_json = \
       context['params'].get('status_data_json','status_data.json')
     demultiplexing_pipeline_name = \
-      context['params'].get('demultiplexing_pipeline_name')
+      context['params'].get('demultiplexing_pipeline_name','DemultiplexIlluminaFastq')
     dbparams = \
       read_dbconf_json(DATABASE_CONFIG_FILE)
     dag_run = context.get('dag_run')
@@ -216,7 +216,7 @@ def _generate_status_and_analysis_page_data(
       attribute_collection_file_type,pipeline_seed_table,sample_id_label,remote_analysis_dir,
       pipeline_finished_status='FINISHED',use_ephemeral_space=False,analysis_data_json='analysis_data.json',
       chart_data_json='analysis_chart_data.json',chart_data_csv='analysis_chart_data.csv',
-      status_data_json='status_data.json',demultiplexing_pipeline_name='igf_demultiplexing'):
+      status_data_json='status_data.json',demultiplexing_pipeline_name='DemultiplexIlluminaFastq'):
   """
   An internal function for gviz json data generation for status and analysis page
 
