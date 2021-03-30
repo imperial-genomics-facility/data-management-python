@@ -1643,8 +1643,8 @@ def decide_analysis_branch_func(**context):
       context['params'].get('run_seurat_for_sc_5p_task')
     #run_picard_alignment_summary_task = \
     #  context['params'].get('run_picard_alignment_summary_task')
-    copy_bam_for_parallel_runs = \
-      context['params'].get('copy_bam_for_parallel_runs_task')
+    convert_cellranger_bam_to_cram = \
+      context['params'].get('convert_cellranger_bam_to_cram_task')
     task_list = [load_cellranger_result_to_db_task]
     library_csv = \
       ti.xcom_pull(
@@ -1665,7 +1665,7 @@ def decide_analysis_branch_func(**context):
       #task_list.\
       #  append(run_picard_alignment_summary_task)
       task_list.\
-        append(copy_bam_for_parallel_runs)
+        append(convert_cellranger_bam_to_cram)
     if 'vdj' in feature_list:
       task_list.\
         append(run_scirpy_for_vdj_task)
