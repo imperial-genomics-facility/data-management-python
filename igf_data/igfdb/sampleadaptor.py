@@ -36,7 +36,7 @@ class SampleAdaptor(BaseAdaptor):
         attribute_value_column='attribute_value'):
     '''
     A method for separating data for Sample and Sample_attribute tables
-    
+
     :param data: A list of dictionaries or a pandas dataframe
     :param table_columns: List of table column names, default None
     :param required_column: column name to add to the attribute data
@@ -67,10 +67,11 @@ class SampleAdaptor(BaseAdaptor):
       raise ValueError(
               'Failed to divide sample data, error: {0}'.format(e))
 
+
   def store_sample_data(self,data,autosave=False):
     '''
     Load data to Sample table
-    
+
     :param data: A dataframe or list of dictionary containing the data
     :param autosave: A toggle for autocommit, default False
     :returns: None
@@ -91,7 +92,6 @@ class SampleAdaptor(BaseAdaptor):
         data = data.apply(project_map_function,axis=1,result_type=None)         # map project id
         data.drop('project_igf_id',axis=1,inplace=True)
         #data=new_data                                                          # overwrite data
-
       self.store_records(table=Sample, data=data)                               # store data without autocommit
       if autosave:
         self.commit_session()
@@ -105,7 +105,7 @@ class SampleAdaptor(BaseAdaptor):
   def store_sample_attributes(self,data,sample_id='',autosave=False):
     '''
     A method for storing data to Sample_attribute table
-    
+
     :param data: A dataframe or list of dictionary containing the Sample_attribute data
     :param sample_id: An optional parameter to link the sample attributes to a specific sample
     :returns: None
@@ -130,7 +130,6 @@ class SampleAdaptor(BaseAdaptor):
             result_type=None)                                                   # map sample id
         data.drop('sample_igf_id',axis=1,inplace=True)
         #data=new_data                                                          # overwrite data
-
       self.store_attributes(
         data=data,
         attribute_table=Sample_attribute,
@@ -148,7 +147,7 @@ class SampleAdaptor(BaseAdaptor):
   def fetch_sample_records_igf_id(self,sample_igf_id,target_column_name='sample_igf_id'):
     '''
     A method for fetching data for Sample table
-    
+
     :param sample_igf_id: A sample igf id
     :param output_mode: dataframe, object, one or on_on_none
     :returns: An object or dataframe, based on the output_mode
@@ -164,16 +163,17 @@ class SampleAdaptor(BaseAdaptor):
           column_name=column,
           column_id=sample_igf_id,
           output_mode='one')
-      return sample  
+      return sample
     except Exception as e:
       raise ValueError(
               'Failed to sample igf id, error: {0}'.format(e))
-    
+
+
   def check_sample_records_igf_id(self, sample_igf_id,
                                   target_column_name='sample_igf_id'):
     '''
     A method for checking existing data for sample table
-    
+
     :param sample_igf_id: an igf id
     :param target_column_name: name of the target lookup column, default sample_igf_id
     :returns: True if the file is present in db or False if its not
@@ -202,8 +202,7 @@ class SampleAdaptor(BaseAdaptor):
     '''
     A method for checking existing project and sample igf id combination
     in sample table
-    
-    
+
     :param project_igf_id: A project igf id string
     :param sample_igf_id: A sample igf id string
     :returns: True if target entry is present or return False
@@ -232,7 +231,7 @@ class SampleAdaptor(BaseAdaptor):
   def fetch_sample_project(self, sample_igf_id):
     '''
     A method for fetching project information for the sample
-    
+
     :param sample_igf_id: A sample_igf_id for database lookup
     :returns: A project_igf_id or None, if not found
     '''
