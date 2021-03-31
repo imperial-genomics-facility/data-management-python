@@ -154,3 +154,97 @@ class Project_analysis_test2(unittest.TestCase):
     with open(output_file,'r') as jp:
       json_data=json.load(jp)
     #print(json_data)
+
+class Project_analysis_test3(unittest.TestCase):
+  def setUp(self):
+    self.dbconfig = 'data/dbconfig.json'
+    dbparam = read_dbconf_json(self.dbconfig)
+    base = BaseAdaptor(**dbparam)
+    self.engine = base.engine
+    self.dbname = dbparam['dbname']
+    Base.metadata.drop_all(self.engine)
+    if os.path.exists(self.dbname):
+      os.remove(self.dbname)
+    Base.metadata.create_all(self.engine)
+    self.session_class=base.get_session_class()
+    base.start_session()
+    self.temp_dir = get_temp_dir()
+    project_data = [{'project_igf_id':'ProjectA'}]
+    pa = ProjectAdaptor(**{'session':base.session})
+    pa.store_project_and_attribute_data(data=project_data)                      # load project data
+    sample_data = [{
+      'sample_igf_id':'SampleA',
+      'project_igf_id':'ProjectA'},{
+      'sample_igf_id':'SampleB',
+      'project_igf_id':'ProjectA'}]                                             # sample data
+    sa=SampleAdaptor(**{'session':base.session})
+    sa.store_sample_and_attribute_data(data=sample_data)                        # store sample data
+    file_type_data = [
+      ["ANALYSIS_CRAM","rds/IGF116623_cellranger_HG38_20210330.cram"],
+      ["CELLRANGER_HTML","rds/IGF116623_cellranger_multi_HG38_20210330.html"],
+      ["CELLRANGER_MULTI","rds/IGF116623_cellranger_multi_HG38_20210330.tar.gz"],
+      ["FTP_CELLBROWSER","www/cellbrowser_html_20210330"],
+      ["FTP_CELLRANGER_HTML","www/IGF116623_cellranger_multi_HG38_20210330.html"],
+      ["FTP_MULTIQC_HTML","www/IGF116623_multiqc_HG38_20210330.html"],
+      ["FTP_SCANPY_HTML","www/IGF116623_scanpy_5p_HG38_20210330.0.4.1.html"],
+      ["FTP_SCIRPY_VDJ_T_HTML","www/IGF116623_scirpy_vdj_t_HG38_20210330.0.2.html"],
+      ["FTP_SEURAT_HTML","www/IGF116623_seurat_5p_HG38_20210330.0.1.html"],
+      ["MULTIQC_HTML","rds/IGF116623_multiqc_HG38_20210330.html"],
+      ["SCANPY_HTML","rds/IGF116623_scanpy_5p_HG38_20210330.0.4.1.html"],
+      ["SCIRPY_VDJ_T_HTML","rds/IGF116623_scirpy_vdj_t_HG38_20210330.0.2.html"],
+      ["SEURAT_HTML","rds/IGF116623_seurat_5p_HG38_20210330.0.1.html"]]
+    collection_data = []
+    os.makedirs(os.path.join(self.temp_dir,'rds'))
+    os.makedirs(os.path.join(self.temp_dir,'www'))
+    for entry in file_type_data:
+      collection_data.append({
+        'name':'SampleA','type':entry[0],'table':'sample',
+        'file_path':os.path.join(self.temp_dir,entry[1])})
+      with open(os.path.join(self.temp_dir,entry[1]),'w') as fp:
+        fp.write('A')
+    ca = CollectionAdaptor(**{'session':base.session})
+    ca.load_file_and_create_collection(
+      data=collection_data,
+      calculate_file_size_and_md5=False)
+    base.close_session()
+
+  def tearDown(self):
+    Base.metadata.drop_all(self.engine)
+    os.remove(self.dbname)
+    if os.path.exists(self.temp_dir):
+      remove_dir(dir_path=self.temp_dir)
+
+  def test_get_analysis_data_for_project_2(self):
+    output_file = \
+      os.path.join(
+        self.temp_dir,
+        'test.json')
+    chart_output_file = \
+      os.path.join(
+        self.temp_dir,
+        'chart_test.json')
+    cvs_output_file =  \
+      os.path.join(
+        self.temp_dir,
+        'chart_test.csv')
+    prj_data = \
+      Project_analysis(\
+        igf_session_class=self.session_class,
+        collection_type_list=['FTP_CELLBROWSER',
+                              'FTP_CELLRANGER_HTML',
+                              'FTP_MULTIQC_HTML',
+                              'FTP_SCANPY_HTML',
+                              'FTP_SCIRPY_VDJ_T_HTML',
+                              'FTP_SEURAT_HTML'])
+    prj_data.\
+      get_analysis_data_for_project(\
+        project_igf_id='ProjectA',
+        output_file=output_file,
+        chart_json_output_file=chart_output_file,
+        csv_output_file=cvs_output_file,
+        gviz_out=True)
+    with open(chart_output_file,'r') as jp:
+      for i in jp:
+        print(i)
+if __name__=='__main__':
+  unittest.main()
