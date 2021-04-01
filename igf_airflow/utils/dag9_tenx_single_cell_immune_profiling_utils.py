@@ -84,7 +84,7 @@ def create_and_update_qc_pages(**context):
     attribute_collection_file_type = \
       context['params'].get('attribute_collection_file_type',[ANALYSIS_CRAM_TYPE])
     pipeline_seed_table = \
-      context['params'].get('pipeline_seed_table','sample')
+      context['params'].get('pipeline_seed_table','analysis')
     sample_id_label = \
       context['params'].get('sample_id_label','sample_igf_id')
     remote_analysis_dir = \
