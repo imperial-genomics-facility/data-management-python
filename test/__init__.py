@@ -49,7 +49,7 @@ def full_suite():
   from .dbadaptor.platformadaptor_test import Platformadaptor_test1
   from .utils.metadata_validation_test import Validate_project_and_samplesheet_metadata_test1
   from .utils.metadata_validation_test import Validate_project_and_samplesheet_metadata_test2
-  from .utils.project_analysis_utils_test import Project_analysis_test1,Project_analysis_test2
+  from .utils.project_analysis_utils_test import Project_analysis_test1,Project_analysis_test2,Project_analysis_test3
   from .process.project_pooling_info_test import Project_pooling_info_test1
   from .utils.analysis_fastq_fetch_utils_test import Analysis_fastq_fetch_utils_test1
   from .utils.analysis_fastq_fetch_utils_test import Analysis_fastq_fetch_utils_test2
@@ -138,6 +138,7 @@ def full_suite():
         Validate_project_and_samplesheet_metadata_test2,
         Project_analysis_test1,
         Project_analysis_test2,
+        Project_analysis_test3,
         Project_pooling_info_test1,
         Analysis_fastq_fetch_utils_test1,
         Analysis_fastq_fetch_utils_test2,

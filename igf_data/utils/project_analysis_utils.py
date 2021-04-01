@@ -2,8 +2,21 @@ import os
 import pandas as pd
 from copy import deepcopy
 from igf_data.igfdb.baseadaptor import BaseAdaptor
-from igf_data.utils.fileutils import get_temp_dir,move_file
-from igf_data.igfdb.igfTables import Base, Project,Sample,Experiment,Run,Seqrun,Collection,Collection_group,File,Collection_attribute,Pipeline,Pipeline_seed
+from igf_data.utils.fileutils import get_temp_dir
+from igf_data.utils.fileutils import move_file
+from igf_data.igfdb.igfTables import Base
+from igf_data.igfdb.igfTables import Project
+from igf_data.igfdb.igfTables import Sample
+from igf_data.igfdb.igfTables import Experiment
+from igf_data.igfdb.igfTables import Run
+from igf_data.igfdb.igfTables import Seqrun
+from igf_data.igfdb.igfTables import Collection
+from igf_data.igfdb.igfTables import Collection_group
+from igf_data.igfdb.igfTables import File
+from igf_data.igfdb.igfTables import Collection_attribute
+from igf_data.igfdb.igfTables import Pipeline
+from igf_data.igfdb.igfTables import Pipeline_seed
+from igf_data.igfdb.igfTables import Analysis
 from igf_data.utils.gviz_utils import convert_to_gviz_json_for_display
 
 
@@ -17,9 +30,10 @@ class Project_analysis:
   :param attribute_collection_file_type: A filetype list for fetching collection attribute records, default ('ANALYSIS_CRAM')
 
   '''
-  def __init__(self,igf_session_class,collection_type_list,remote_analysis_dir='analysis',use_ephemeral_space=0,
-               attribute_collection_file_type=('ANALYSIS_CRAM'),pipeline_name='PrimaryAnalysisCombined',
-               pipeline_seed_table='experiment',pipeline_finished_status='FINISHED',sample_id_label='SAMPLE_ID'):
+  def __init__(
+        self,igf_session_class,collection_type_list,remote_analysis_dir='analysis',use_ephemeral_space=0,
+        attribute_collection_file_type=('ANALYSIS_CRAM'),pipeline_name='PrimaryAnalysisCombined',
+        pipeline_seed_table='experiment',pipeline_finished_status='FINISHED',sample_id_label='SAMPLE_ID'):
     try:
       self.igf_session_class = igf_session_class
       if not isinstance(collection_type_list, list):
@@ -37,9 +51,9 @@ class Project_analysis:
       raise
 
   @staticmethod
-  def _add_html_tag(data_series,file_path_column='file_path',
-                    sample_igf_id_column='sample_igf_id',
-                    remote_prefix='analysis'):
+  def _add_html_tag(
+        data_series,file_path_column='file_path',sample_igf_id_column='sample_igf_id',
+        remote_prefix='analysis'):
     '''
     An internal static method for reformatting filepath with html code
 
@@ -104,6 +118,19 @@ class Project_analysis:
             filter(Pipeline_seed.status==self.pipeline_finished_status).\
             filter(Pipeline.pipeline_name==self.pipeline_name).\
             filter(Project.project_igf_id==project_igf_id).\
+            subquery()
+      elif self.pipeline_seed_table=='analysis':
+        subquery = \
+          base.session.\
+            query(Sample.sample_igf_id).\
+            join(Project,Project.project_id==Sample.project_id).\
+            join(Analysis,Analysis.project_id==Project.project_id).\
+            join(Pipeline_seed,Pipeline_seed.seed_id==Analysis.analysis_id).\
+            join(Pipeline,Pipeline.pipeline_id==Pipeline_seed.pipeline_id).\
+            filter(Pipeline_seed.seed_table==self.pipeline_seed_table).\
+            filter(Pipeline_seed.status==self.pipeline_finished_status).\
+            filter(Project.project_igf_id==project_igf_id).\
+            filter(Pipeline.pipeline_name==self.pipeline_name).\
             subquery()
       else:
         raise ValueError(
@@ -174,7 +201,8 @@ class Project_analysis:
             filter(Collection_group.file_id==File.file_id).\
             filter(Collection.table=='experiment').\
             filter(Collection.type.in_(self.collection_type_list))
-      elif self.pipeline_seed_table=='sample':
+      elif self.pipeline_seed_table=='sample' or \
+           self.pipeline_seed_table=='analysis':
         query = \
           base.session.\
             query(
