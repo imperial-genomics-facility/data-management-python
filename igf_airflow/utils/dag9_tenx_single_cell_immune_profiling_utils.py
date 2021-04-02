@@ -47,6 +47,7 @@ GENOME_FASTA_TYPE = 'GENOME_FASTA'
 GENE_REFFLAT_TYPE = 'GENE_REFFLAT'
 RIBOSOMAL_INTERVAL_TYPE = 'RIBOSOMAL_INTERVAL'
 ANALYSIS_CRAM_TYPE = 'ANALYSIS_CRAM'
+CELLRANGER_MULTI_TYPE = 'CELLRANGER_MULTI'
 PATTERNED_FLOWCELL_LIST = ['HISEQ4000','NEXTSEQ']
 BOX_DIR_PREFIX = 'SecondaryAnalysis'
 SAMTOOLS_EXE = 'samtools'
@@ -83,7 +84,7 @@ def create_and_update_qc_pages(**context):
     collection_type_list = \
       context['params'].get('collection_type_list')
     attribute_collection_file_type = \
-      context['params'].get('attribute_collection_file_type',[ANALYSIS_CRAM_TYPE])
+      context['params'].get('attribute_collection_file_type',[ANALYSIS_CRAM_TYPE,CELLRANGER_MULTI_TYPE])
     pipeline_seed_table = \
       context['params'].get('pipeline_seed_table','analysis')
     sample_id_label = \
