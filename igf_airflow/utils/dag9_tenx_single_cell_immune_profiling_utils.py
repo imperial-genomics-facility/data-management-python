@@ -40,6 +40,7 @@ from igf_data.utils.project_analysis_utils import Project_analysis
 from igf_data.utils.project_status_utils import Project_status
 from jinja2 import Template,Environment,FileSystemLoader,select_autoescape
 from igf_airflow.logging.upload_log_msg import log_success,log_failure,log_sleep
+from igf_data.utils.tools.cellranger.cellranger_count_utils import extract_cellranger_count_metrics_summary
 
 ## DEFAULTS
 GENOME_FASTA_TYPE = 'GENOME_FASTA'
@@ -1710,6 +1711,112 @@ def _get_feature_list_from_lib_csv(library_csv):
     return feature_list
   except Exception as e:
     raise ValueError(e)
+
+
+def load_cellranger_metrices_to_collection(**context):
+  try:
+    ti = context.get('ti')
+    cellranger_xcom_key = \
+      context['params'].get('cellranger_xcom_key')
+    cellranger_xcom_pull_task = \
+      context['params'].get('cellranger_xcom_pull_task')
+    collection_type = \
+      context['params'].get('collection_type')
+    collection_name_task = \
+      context['params'].get('collection_name_task')
+    collection_name_key = \
+      context['params'].get('collection_name_key')
+    metrics_summary_file = \
+      context['params'].get('metrics_summary_file')
+    attribute_prefix = \
+      context['params'].get('attribute_prefix')
+    attribute_name_key = \
+      context['params'].get('attribute_name_key','attribute_name')
+    attribute_value_key = \
+      context['params'].get('attribute_value_key','attribute_value')
+    cellranger_output_path = \
+      ti.xcom_pull(
+        task_ids=cellranger_xcom_pull_task,
+        key=cellranger_xcom_key)
+    collection_name = \
+      ti.xcom_pull(
+        task_ids=collection_name_task,
+        key=collection_name_key)
+    metrics_file_path = \
+      os.path.join(
+        cellranger_output_path,
+        metrics_summary_file)
+    attribute_data = \
+      _build_collection_attribute_data_for_cellranger(
+        metrics_file=metrics_file_path,
+        collection_name=collection_name,
+        collection_type=collection_type,
+        attribute_name=attribute_name_key,
+        attribute_value=attribute_value_key,
+        attribute_prefix=attribute_prefix)
+    dbparams = \
+      read_dbconf_json(DATABASE_CONFIG_FILE)
+    ca = CollectionAdaptor(**dbparams)
+    ca.start_session()
+    try:
+      ca.create_or_update_collection_attributes(
+        data=attribute_data,
+        autosave=False)                                                         # load cellranger metrics to collection attribute table
+      ca.commit_session()
+      ca.close_session()
+    except:
+      ca.rollback_session()
+      ca.close_session()
+      raise
+  except Exception as e:
+    logging.error(e)
+    raise ValueError(e)
+
+
+def _build_collection_attribute_data_for_cellranger(
+      metrics_file,collection_name,collection_type,attribute_name='attribute_name',
+      attribute_value='attribute_value',attribute_prefix=None):
+  """
+  An internal function for building collection attribute data for cellranger
+  metrics summary output
+
+  :param metrics_file: Metrics summary filepath
+  :param collection_name: Collection name
+  :param collection_type: Collection_type
+  :param attribute_name: Attribute name, default attribute_name
+  :param attribute_value: Attribute value, default attribute_value
+  :param attribute_prefix: Optional string for attribute prefix, default None
+  :returns: A list of dictionary wiuth thecollection attribute data
+  """
+  try:
+    check_file_path(metrics_file)
+    attribute_data = \
+      pd.read_csv(metrics_file).T.\
+        reset_index()
+    attribute_data.columns = [
+      attribute_name,
+      attribute_value]
+    if attribute_prefix is None:
+      attribute_data[attribute_name] = \
+        attribute_data[attribute_name].\
+          map(lambda x: x.replace(' ','_'))
+    else:
+      attribute_data[attribute_name] = \
+        attribute_data[attribute_name].\
+          map(lambda x: \
+              '{0}_{1}'.format(\
+                attribute_prefix,
+                x.replace(' ','_')))
+    attribute_data['name'] = collection_name
+    attribute_data['type'] = collection_type
+    attribute_data = \
+      attribute_data.\
+        to_dict(orient='records')
+    return attribute_data
+  except Exception as e:
+    raise ValueError(
+            'Failed to build collection attribute data for collection {0}:{1}'.\
+              format(collection_name,collection_type))
 
 
 def run_cellranger_tool(**context):
