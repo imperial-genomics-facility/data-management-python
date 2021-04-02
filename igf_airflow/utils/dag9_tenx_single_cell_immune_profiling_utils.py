@@ -1809,6 +1809,12 @@ def _build_collection_attribute_data_for_cellranger(
                 x.replace(' ','_')))
     attribute_data['name'] = collection_name
     attribute_data['type'] = collection_type
+    attribute_data[attribute_value] = \
+      attribute_data[attribute_value].astype(str)
+    attribute_data[attribute_value] = \
+      attribute_data[attribute_value].\
+        map(lambda x: \
+              x.replace(',',''))
     attribute_data = \
       attribute_data.\
         to_dict(orient='records')

@@ -17,7 +17,7 @@ from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _crea
 from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _get_fastq_and_run_cutadapt_trim
 from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _configure_and_run_multiqc
 from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _check_bam_index_and_copy
-
+from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _build_collection_attribute_data_for_cellranger
 
 class Dag9_tenx_single_cell_immune_profiling_utilstestA(unittest.TestCase):
   def setUp(self):
@@ -537,6 +537,58 @@ class Dag9_tenx_single_cell_immune_profiling_utilstestF(unittest.TestCase):
     self.assertTrue('taskB' in output_temp_dirs.keys())
     self.assertTrue(os.path.exists(output_temp_dirs.get('taskB')))
 
+class Dag9_tenx_single_cell_immune_profiling_utilstestG(unittest.TestCase):
+  def setUp(self):
+    self.temp_dir = get_temp_dir()
+    vdj_data = [
+      'Estimated Number of Cells,Mean Read Pairs per Cell,Number of Cells With Productive V-J Spanning Pair,Number of Read Pairs,Valid Barcodes,Q30 Bases in Barcode,Q30 Bases in RNA Read 1,Q30 Bases in UMI,Reads Mapped to Any V(D)J Gene,Reads Mapped to TRA,Reads Mapped to TRB,Mean Used Read Pairs per Cell,Fraction Reads in Cells,Median TRA UMIs per Cell,Median TRB UMIs per Cell,Cells With Productive V-J Spanning Pair,"Cells With Productive V-J Spanning (TRA, TRB) Pair",Paired Clonotype Diversity,Cells With TRA Contig,Cells With TRB Contig,Cells With CDR3-annotated TRA Contig,Cells With CDR3-annotated TRB Contig,Cells With V-J Spanning TRA Contig,Cells With V-J Spanning TRB Contig,Cells With Productive TRA Contig,Cells With Productive TRB Contig',
+      '"2,561","16,056","1,824","41,120,098",93.8%,97.5%,80.1%,97.4%,85.3%,19.7%,65.4%,"11,443",81.1%,2.0,8.0,71.2%,71.2%,145.62,79.4%,98.6%,76.9%,97.9%,78.7%,97.9%,74.0%,97.2%']
+    count_data = [
+      'Estimated Number of Cells,Mean Reads per Cell,Median Genes per Cell,Number of Reads,Valid Barcodes,Sequencing Saturation,Q30 Bases in Barcode,Q30 Bases in RNA Read,Q30 Bases in UMI,Reads Mapped to Genome,Reads Mapped Confidently to Genome,Reads Mapped Confidently to Intergenic Regions,Reads Mapped Confidently to Intronic Regions,Reads Mapped Confidently to Exonic Regions,Reads Mapped Confidently to Transcriptome,Reads Mapped Antisense to Gene,Fraction Reads in Cells,Total Genes Detected,Median UMI Counts per Cell',
+      '"5,819","24,988","1,186","145,406,860",91.1%,78.2%,97.6%,86.1%,97.5%,96.1%,88.0%,1.1%,7.8%,79.1%,69.6%,4.1%,93.7%,"22,037","2,977"']
+    self.vdj_metrics_file = os.path.join(self.temp_dir,'vdj_metrics_summary.csv')
+    self.count_metrics_file = os.path.join(self.temp_dir,'count_metrics_summary.csv')
+    with open(self.vdj_metrics_file,'w') as fp:
+      for i in vdj_data:
+        fp.write(i+'\n')
+    with open(self.count_metrics_file,'w') as fp:
+      for i in count_data:
+        fp.write(i+'\n')
+
+  def tearDown(self):
+    remove_dir(self.temp_dir)
+
+  def test_build_collection_attribute_data_for_cellranger(self):
+    vdj_t_attribute_data = \
+      _build_collection_attribute_data_for_cellranger(
+        metrics_file=self.vdj_metrics_file,
+        collection_name='TEST',
+        collection_type='TEST',
+        attribute_name='attribute_name',
+        attribute_value='attribute_value',
+        attribute_prefix='VDJ_T')
+    gex_attribute_data = \
+      _build_collection_attribute_data_for_cellranger(
+        metrics_file=self.count_metrics_file,
+        collection_name='TEST',
+        collection_type='TEST',
+        attribute_name='attribute_name',
+        attribute_value='attribute_value',
+        attribute_prefix='COUNT')
+    vdj_t_attribute_data = \
+      pd.DataFrame(vdj_t_attribute_data)
+    vdj_cell_count = \
+      vdj_t_attribute_data[
+        vdj_t_attribute_data['attribute_name']=='VDJ_T_Estimated_Number_of_Cells']\
+        ['attribute_value'].values[0]
+    self.assertEqual(vdj_cell_count,'2561')
+    gex_attribute_data = \
+      pd.DataFrame(gex_attribute_data)
+    gex_cell_count = \
+      gex_attribute_data[
+        gex_attribute_data['attribute_name']=='COUNT_Estimated_Number_of_Cells']\
+        ['attribute_value'].values[0]
+    self.assertEqual(gex_cell_count,'5819')
 
 if __name__=='__main__':
   unittest.main()
