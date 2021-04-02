@@ -1815,8 +1815,8 @@ def _build_collection_attribute_data_for_cellranger(
     return attribute_data
   except Exception as e:
     raise ValueError(
-            'Failed to build collection attribute data for collection {0}:{1}'.\
-              format(collection_name,collection_type))
+            'Failed to build collection attribute data for collection {0}:{1}, error: {2}'.\
+              format(collection_name,collection_type,e))
 
 
 def run_cellranger_tool(**context):
