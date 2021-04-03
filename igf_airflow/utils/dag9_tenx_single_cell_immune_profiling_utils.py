@@ -62,8 +62,10 @@ SEURAT_NOTEBOOK_IMAGE = Variable.get('seurat_notebook_image',default_var=None)
 CUTADAPT_IMAGE = Variable.get('cutadapt_singularity_image',default_var=None)
 MULTIQC_IMAGE = Variable.get('multiqc_singularity_image',default_var=None)
 PICARD_IMAGE = Variable.get('picard_singularity_image',default_var=None)
-SLACK_CONF = Variable.get('slack_conf',default_var=None)
-MS_TEAMS_CONF = Variable.get('ms_teams_conf',default_var=None)
+SLACK_CONF = Variable.get('analysis_slack_conf',default_var=None)
+MS_TEAMS_CONF = Variable.get('analysis_ms_teams_conf',default_var=None)
+ASANA_CONF = Variable.get('asana_conf',default_var=None)
+ASANA_PROJECT = Variable.get('asana_analysis_project',default_var=None)
 BOX_USERNAME = Variable.get('box_username',default_var=None)
 BOX_CONFIG_FILE = Variable.get('box_config_file',default_var=None)
 FTP_HOSTNAME = Variable.get('ftp_hostname',default_var=None)
@@ -1859,6 +1861,14 @@ def run_cellranger_tool(**context):
         sample_id = sample_igf_id
       else:
         sample_id = '{0}_{1}'.format(sample_id,sample_igf_id)
+    message = 'Started cellranger run, output patha: {0}'.format(output_dir)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=message,
+      reaction='pass')
     _,output_dir = \
       run_cellranger_multi(
         cellranger_exe=cellranger_exe,
