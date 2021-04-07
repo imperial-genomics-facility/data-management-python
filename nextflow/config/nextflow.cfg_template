@@ -50,5 +50,5 @@ process {
 singularity {
     enabled = true
     autoMounts = false
-    runOptions = "--bind /rds/general/user/$USER/ephemeral:/tmp,{{ DIR_LIST }}"
+    runOptions = "--bind /rds/general/user/$USER/ephemeral:/tmp,/rds/general/user/$USER/ephemeral:/var/tmp,{{ DIR_LIST }}"
 }
