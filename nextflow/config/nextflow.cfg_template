@@ -1,0 +1,54 @@
+params {
+  // configs
+  config_profile_description = 'Nextflow conf for Imperial BRC Genomics Facility'
+  config_profile_contact = 'igf [at] imperial.ac.uk'
+  config_profile_url = 'http://www.imperial.ac.uk/medicine/research-and-impact/facilities/genomics-facility/'
+
+  // resources
+  max_memory = 96.GB
+  max_cpus = 16
+  max_time = 24.h
+}
+
+executor {
+  $pbspro {
+    queueSize = 10
+  }
+  $local {
+    cpus = 1
+    queueSize = 1
+    memory = '4 GB'
+  }
+}
+
+process {
+  // base params
+  executor = 'pbspro'
+  queue = '{{ HPC_QUEUE }}'
+
+  // resource specific params
+  withLabel:process_low {
+    cpus = { check_max( 1 * task.attempt, 'cpus' ) }
+    memory = { check_max( 4.GB * task.attempt, 'memory' ) }
+    time = { check_max( 2.h * task.attempt, 'time' ) }
+  }
+  withLabel:process_medium {
+    cpus = { check_max( 4 * task.attempt, 'cpus' ) }
+    memory = { check_max( 8.GB * task.attempt, 'memory' ) }
+    time = { check_max( 6.h * task.attempt, 'time' ) }
+  }
+  withLabel:process_high {
+    cpus = { check_max( 8 * task.attempt, 'cpus' ) }
+    memory = { check_max( 32.GB * task.attempt, 'memory' ) }
+    time = { check_max( 6.h * task.attempt, 'time' ) }
+  }
+  withName: VEP {
+    memory = 32.GB
+  }
+}
+
+singularity {
+    enabled = true
+    autoMounts = false
+    runOptions = "--bind /rds/general/user/$USER/ephemeral:/tmp,{{ DIR_LIST }}"
+}
