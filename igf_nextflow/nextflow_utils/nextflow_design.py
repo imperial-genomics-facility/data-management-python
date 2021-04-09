@@ -1,5 +1,5 @@
 import os
-import pandasa as pd
+import pandas as pd
 from igf_data.utils.analysis_fastq_fetch_utils import get_fastq_and_run_for_samples
 
 def extend_nextflow_analysis_design_and_params(analysis_description,dbconf_file):

@@ -70,6 +70,7 @@ def full_suite():
   from .dbadaptor.analysisadaptor_test import Analysisadaptor_test1
   from .dbadaptor.seqrunadaptor_test import SeqrunAdaptor_test1
   from .utils.samplesheet_utils_test import SamplesheetUtils_testA
+  from .igf_nextflow.nextflow_design_test import Nextflow_config_formatter_testA
 
   return unittest.TestSuite([
     unittest.TestLoader().loadTestsFromTestCase(t)
@@ -159,6 +160,7 @@ def full_suite():
         Cellranger_count_utils_testA,
         Analysisadaptor_test1,
         SeqrunAdaptor_test1,
-        SamplesheetUtils_testA
+        SamplesheetUtils_testA,
+        Nextflow_config_formatter_testA
       ]
     ])
