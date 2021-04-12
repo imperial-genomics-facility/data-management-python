@@ -45,6 +45,9 @@ def extend_nextflow_analysis_design_and_params(
     elif nextflow_pipeline=='chipseq':
       extended_analysis_design,extended_analysis_params,input_dir_list = \
         get_nextflow_chipseq_design_and_params(analysis_description,dbconf_file)
+    elif nextflow_pipeline=='sarek':
+      extended_analysis_design,extended_analysis_params,input_dir_list = \
+        get_nextflow_sarek_design_and_params(analysis_description,dbconf_file)
     else:
       raise ValueError('analysis not supported: {0}'.format(nextflow_pipeline))
     if len(extended_analysis_params)==0:
@@ -189,6 +192,7 @@ def get_nextflow_atacseq_design_and_params(
             'Failed to get design and params for atac-seq, error: {0}'.\
               format(e))
 
+
 def get_nextflow_chipseq_design_and_params(
       analysis_description,dbconf_file,pipeline_name='nf-core/chipseq',
       igf_seq_center='Imperial BRC Genomics Facility'):
@@ -205,5 +209,20 @@ def get_nextflow_chipseq_design_and_params(
     return extended_analysis_design,extended_analysis_params,input_dir_list
   except Exception as e:
     raise ValueError(
-            'Failed to get design and params for atac-seq, error: {0}'.\
+            'Failed to get design and params for chip-seq, error: {0}'.\
+              format(e))
+
+
+def get_nextflow_sarek_design_and_params(
+      analysis_description,dbconf_file,pipeline_name='nf-core/sarek',
+      igf_seq_center='Imperial BRC Genomics Facility'):
+  try:
+    extended_analysis_design = list()
+    extended_analysis_params = list()
+    input_dir_list = list()
+    raise NotImplementedError('Its not implemented yet')
+    return extended_analysis_design,extended_analysis_params,input_dir_list
+  except Exception as e:
+    raise ValueError(
+            'Failed to get design and params for sarek, error: {0}'.\
               format(e))
