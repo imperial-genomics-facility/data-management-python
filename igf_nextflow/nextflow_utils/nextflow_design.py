@@ -1,5 +1,6 @@
 import os,re
 import pandas as pd
+from copy import copy
 from igf_data.utils.analysis_fastq_fetch_utils import get_fastq_and_run_for_samples
 
 def extend_nextflow_analysis_design_and_params(
@@ -60,13 +61,13 @@ def extend_nextflow_analysis_design_and_params(
               format(e))
 
 
-def collect_fastq_with_run_and_pair_info_for_sample(sample_igf_id,dbconf_file):
+def collect_fastq_with_run_and_pair_info_for_sample(sample_igf_id_list,dbconf_file):
   try:
     sample_fastq_data = list()
     fastq_df = \
       get_fastq_and_run_for_samples(
         dbconfig_file=dbconf_file,
-        sample_igf_id_list=[sample_igf_id])
+        sample_igf_id_list=sample_igf_id_list)
     if not isinstance(fastq_df,pd.DataFrame):
       raise TypeError(
               'Expecting a Pndas dataframe, got {0}'.\
@@ -115,12 +116,42 @@ def collect_fastq_with_run_and_pair_info_for_sample(sample_igf_id,dbconf_file):
             'Failed to get fastq for sample: {0}, error: {1}'.\
               format(sample_igf_id,e))
 
+
 def get_nextflow_atacseq_design_and_params(analysis_description,dbconf_file):
   try:
+    extended_analysis_design = list()
+    extended_analysis_params = list()
+    input_dir_list = list()
+    sample_igf_id_list = list()
+    nextflow_design = analysis_description.get('nextflow_design')
+    for entry in nextflow_design:
+      for key,val in entry:
+        if key=='group':
+          sample_igf_id_list.\
+            append(val)
     sample_fastq_data = \
       collect_fastq_with_run_and_pair_info_for_sample(
-        sample_igf_id,
-        dbconf_file)
+        sample_igf_id_list=sample_igf_id_list,
+        dbconf_file=dbconf_file)
+    sample_fastq_df = pd.DataFrame(sample_fastq_data)
+    sample_fastq_df.fillna('',inplace=True)
+    for entry in nextflow_design:
+      sample_igf_id = entry.get('group')                                        # specific for atac-seq design
+      if sample_igf_id is None:
+        raise ValueError('Missing sample id')
+      sample_fastqs = \
+        sample_fastq_df[sample_fastq_df['sample_igf_id']==sample_igf_id].\
+          to_dict(orient='records')
+      for run in sample_fastqs:
+        run_data = copy(entry)
+        fastq_1 = run.get('r1_fastq_file')
+        run_data.update({'fastq_1':fastq_1})
+        if 'r2_fastq_file' in run and \
+           run.get('r2_fastq_file')!='':
+          fastq_2 = run.get('r2_fastq_file')
+          run_data.update({'fastq_2':fastq_2})
+        extended_analysis_design.append(run_data)                               # add fastq file details to design
+    return extended_analysis_design,extended_analysis_params,input_dir_list
   except Exception as e:
     raise ValueError(
             'Failed to get design and params for atac-seq, error: {0}'.\
