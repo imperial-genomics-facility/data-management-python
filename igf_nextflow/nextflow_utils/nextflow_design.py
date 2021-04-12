@@ -74,10 +74,11 @@ def collect_fastq_with_run_and_pair_info_for_sample(sample_igf_id_list,dbconf_fi
       get_fastq_and_run_for_samples(
         dbconfig_file=dbconf_file,
         sample_igf_id_list=sample_igf_id_list)
-    if not isinstance(fastq_df,pd.DataFrame):
+    if not isinstance(fastq_df,list):
       raise TypeError(
-              'Expecting a Pndas dataframe, got {0}'.\
+              'Expecting a list, got {0}'.\
                 format(type(fastq_df)))
+    fastq_df = pd.DataFrame(fastq_df)
     if 'sample_igf_id' not in fastq_df.columns or \
        'run_igf_id' not in fastq_df.columns or \
        'file_path' not in fastq_df.columns:
@@ -120,7 +121,7 @@ def collect_fastq_with_run_and_pair_info_for_sample(sample_igf_id_list,dbconf_fi
   except Exception as e:
     raise ValueError(
             'Failed to get fastq for sample: {0}, error: {1}'.\
-              format(sample_igf_id,e))
+              format(sample_igf_id_list,e))
 
 
 def get_nextflow_atacseq_design_and_params(
@@ -137,7 +138,7 @@ def get_nextflow_atacseq_design_and_params(
     nextflow_params = \
       analysis_description.get('nextflow_params')
     for entry in nextflow_design:
-      for key,val in entry:
+      for key,val in entry.items():
         if key=='sample_igf_id':
           sample_igf_id_list.\
             append(val)

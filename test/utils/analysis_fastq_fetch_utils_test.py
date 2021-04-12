@@ -356,7 +356,8 @@ class Analysis_fastq_fetch_utils_test2(unittest.TestCase):
 
   def tearDown(self):
     Base.metadata.drop_all(self.engine)
-    os.remove(self.dbname)
+    if os.path.exists(self.dbname):
+      os.remove(self.dbname)
 
   def test_get_fastq_and_run_for_samples(self):
     fastq_info = \
