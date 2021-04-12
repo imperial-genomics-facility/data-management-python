@@ -117,15 +117,17 @@ def collect_fastq_with_run_and_pair_info_for_sample(sample_igf_id_list,dbconf_fi
               format(sample_igf_id,e))
 
 
-def get_nextflow_atacseq_design_and_params(analysis_description,dbconf_file):
+def get_nextflow_atacseq_design_and_params(
+      analysis_description,dbconf_file,igf_seq_center='Imperial BRC Genomics Facility'):
   try:
     extended_analysis_design = list()
+    extended_analysis_params = list()
     input_dir_list = list()
     sample_igf_id_list = list()
     paired_read = False
     nextflow_design = \
       analysis_description.get('nextflow_design')
-    extended_analysis_params = \
+    nextflow_params = \
       analysis_description.get('nextflow_params')
     for entry in nextflow_design:
       for key,val in entry:
@@ -162,9 +164,20 @@ def get_nextflow_atacseq_design_and_params(analysis_description,dbconf_file):
         extended_analysis_design.append(run_data)                               # add fastq file details to design
     input_dir_list = list(set(input_dir_list))                                  # creating unique listy
     if not paired_read and \
-       '--single_end' not in extended_analysis_params:
+       '--single_end' not in nextflow_params:
       extended_analysis_params.\
         append('--single_end')
+    seq_center_exists = False
+    for i in nextflow_params:
+      if i.startswith('--seq_center'):
+        seq_center_exists = True
+        extended_analysis_params.\
+          append('--seq_center {0}'.format(igf_seq_center))                     # change seq center name
+      else:
+        extended_analysis_params.append(i)
+    if not seq_center_exists:
+      extended_analysis_params.\
+          append('--seq_center {0}'.format(igf_seq_center))                     # add seqcenter name
     return extended_analysis_design,extended_analysis_params,input_dir_list
   except Exception as e:
     raise ValueError(
