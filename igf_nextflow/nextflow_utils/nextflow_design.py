@@ -123,7 +123,10 @@ def get_nextflow_atacseq_design_and_params(analysis_description,dbconf_file):
     extended_analysis_params = list()
     input_dir_list = list()
     sample_igf_id_list = list()
-    nextflow_design = analysis_description.get('nextflow_design')
+    nextflow_design = \
+      analysis_description.get('nextflow_design')
+    extended_analysis_params = \
+      analysis_description.get('nextflow_params')                               # not changing any params for atac-seq
     for entry in nextflow_design:
       for key,val in entry:
         if key=='group':
@@ -145,12 +148,17 @@ def get_nextflow_atacseq_design_and_params(analysis_description,dbconf_file):
       for run in sample_fastqs:
         run_data = copy(entry)
         fastq_1 = run.get('r1_fastq_file')
+        input_dir_list.\
+          append(os.path.dirname(fastq_1))
         run_data.update({'fastq_1':fastq_1})
         if 'r2_fastq_file' in run and \
            run.get('r2_fastq_file')!='':
           fastq_2 = run.get('r2_fastq_file')
           run_data.update({'fastq_2':fastq_2})
+          input_dir_list.\
+            append(os.path.dirname(fastq_2))                                    # allowing fastq_2 from separate temp dir
         extended_analysis_design.append(run_data)                               # add fastq file details to design
+    input_dir_list = list(set(input_dir_list))                                  # creating unique list
     return extended_analysis_design,extended_analysis_params,input_dir_list
   except Exception as e:
     raise ValueError(
