@@ -131,7 +131,7 @@ def get_nextflow_atacseq_design_and_params(
       analysis_description.get('nextflow_params')
     for entry in nextflow_design:
       for key,val in entry:
-        if key=='group':
+        if key=='sample_igf_id':
           sample_igf_id_list.\
             append(val)
     sample_fastq_data = \
@@ -141,7 +141,7 @@ def get_nextflow_atacseq_design_and_params(
     sample_fastq_df = pd.DataFrame(sample_fastq_data)
     sample_fastq_df.fillna('',inplace=True)
     for entry in nextflow_design:
-      sample_igf_id = entry.get('group')                                        # specific for atac-seq design
+      sample_igf_id = entry.get('sample_igf_id')                                        # specific for atac-seq design
       if sample_igf_id is None:
         raise ValueError('Missing sample id')
       sample_fastqs = \
@@ -149,6 +149,7 @@ def get_nextflow_atacseq_design_and_params(
           to_dict(orient='records')
       for run in sample_fastqs:
         run_data = copy(entry)
+        run_data.pop('sample_igf_id')
         fastq_1 = run.get('r1_fastq_file')
         input_dir_list.\
           append(os.path.dirname(fastq_1))
@@ -178,6 +179,18 @@ def get_nextflow_atacseq_design_and_params(
     if not seq_center_exists:
       extended_analysis_params.\
           append('--seq_center {0}'.format(igf_seq_center))                     # add seqcenter name
+    return extended_analysis_design,extended_analysis_params,input_dir_list
+  except Exception as e:
+    raise ValueError(
+            'Failed to get design and params for atac-seq, error: {0}'.\
+              format(e))
+
+def get_nextflow_chipseq_design_and_params(
+      analysis_description,dbconf_file,igf_seq_center='Imperial BRC Genomics Facility'):
+  try:
+    extended_analysis_design = list()
+    extended_analysis_params = list()
+
     return extended_analysis_design,extended_analysis_params,input_dir_list
   except Exception as e:
     raise ValueError(
