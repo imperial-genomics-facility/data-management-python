@@ -42,6 +42,9 @@ def extend_nextflow_analysis_design_and_params(
     if nextflow_pipeline=='atacseq':
       extended_analysis_design,extended_analysis_params,input_dir_list = \
         get_nextflow_atacseq_design_and_params(analysis_description,dbconf_file)
+    elif nextflow_pipeline=='chipseq':
+      extended_analysis_design,extended_analysis_params,input_dir_list = \
+        get_nextflow_chipseq_design_and_params(analysis_description,dbconf_file)
     else:
       raise ValueError('analysis not supported: {0}'.format(nextflow_pipeline))
     if len(extended_analysis_params)==0:
@@ -118,10 +121,11 @@ def collect_fastq_with_run_and_pair_info_for_sample(sample_igf_id_list,dbconf_fi
 
 
 def get_nextflow_atacseq_design_and_params(
-      analysis_description,dbconf_file,igf_seq_center='Imperial BRC Genomics Facility'):
+      analysis_description,dbconf_file,pipeline_name='nf-core/atacseq',
+      igf_seq_center='Imperial BRC Genomics Facility'):
   try:
     extended_analysis_design = list()
-    extended_analysis_params = list()
+    extended_analysis_params = [pipeline_name]
     input_dir_list = list()
     sample_igf_id_list = list()
     paired_read = False
@@ -186,7 +190,8 @@ def get_nextflow_atacseq_design_and_params(
               format(e))
 
 def get_nextflow_chipseq_design_and_params(
-      analysis_description,dbconf_file,igf_seq_center='Imperial BRC Genomics Facility'):
+      analysis_description,dbconf_file,pipeline_name='nf-core/chipseq',
+      igf_seq_center='Imperial BRC Genomics Facility'):
   try:
     extended_analysis_design = list()
     extended_analysis_params = list()
@@ -195,6 +200,7 @@ def get_nextflow_chipseq_design_and_params(
       get_nextflow_atacseq_design_and_params(
         analysis_description=analysis_description,
         dbconf_file=dbconf_file,
+        pipeline_name=pipeline_name,
         igf_seq_center=igf_seq_center)                                          # its almost similar to atacseq conf
     return extended_analysis_design,extended_analysis_params,input_dir_list
   except Exception as e:
