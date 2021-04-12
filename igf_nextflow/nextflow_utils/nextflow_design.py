@@ -190,7 +190,12 @@ def get_nextflow_chipseq_design_and_params(
   try:
     extended_analysis_design = list()
     extended_analysis_params = list()
-
+    input_dir_list = list()
+    extended_analysis_design,extended_analysis_params,input_dir_list = \
+      get_nextflow_atacseq_design_and_params(
+        analysis_description=analysis_description,
+        dbconf_file=dbconf_file,
+        igf_seq_center=igf_seq_center)                                          # its almost similar to atacseq conf
     return extended_analysis_design,extended_analysis_params,input_dir_list
   except Exception as e:
     raise ValueError(
