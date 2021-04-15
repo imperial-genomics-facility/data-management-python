@@ -188,6 +188,7 @@ class Nextflow_pre_run_setup_testA(unittest.TestCase):
         use_ephemeral_space=False)
     self.assertEqual(nextflow_params[0],self.nextflow_exe)
     self.assertTrue('-profile singularity' in nextflow_params)
+    self.assertTrue('-resume' in nextflow_params)
     self.assertTrue('--input {0}/atacseq_input_design.csv'.format(work_dir) in nextflow_params)
     self.assertTrue(os.path.exists(work_dir))
     self.assertTrue(os.path.exists(os.path.join(work_dir,'atacseq_input_design.csv')))
