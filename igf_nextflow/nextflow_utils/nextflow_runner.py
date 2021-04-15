@@ -50,7 +50,7 @@ def nextflow_pre_run_setup(
       hpc_queue_name=hpc_queue_name,
       bind_dir_list=input_dir_list)                                             # get formatted config file
     extended_analysis_params.\
-      append('-c output_nextflow_config')                                       # adding nextflow config to params
+      append('-c {0}'.format(output_nextflow_config))                           # adding nextflow config to params
     nextflow_pipeline = \
       analysis_description.get('nextflow_pipeline')
     if nextflow_pipeline is None:

@@ -72,6 +72,7 @@ def full_suite():
   from .utils.samplesheet_utils_test import SamplesheetUtils_testA
   from .igf_nextflow.nextflow_config_formatter_test import Nextflow_config_formatter_testA
   from .igf_nextflow.nextflow_design_test import Nextflow_design_testA
+  from .igf_nextflow.nextflow_runner_test import Nextflow_pre_run_setup_testA
 
   return unittest.TestSuite([
     unittest.TestLoader().loadTestsFromTestCase(t)
@@ -163,6 +164,7 @@ def full_suite():
         SeqrunAdaptor_test1,
         SamplesheetUtils_testA,
         Nextflow_config_formatter_testA,
-        Nextflow_design_testA
+        Nextflow_design_testA,
+        Nextflow_pre_run_setup_testA
       ]
     ])
