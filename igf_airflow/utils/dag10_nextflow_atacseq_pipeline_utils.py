@@ -2,10 +2,11 @@ import os,logging,subprocess,re,fnmatch
 import pandas as pd
 from copy import copy
 from airflow.models import Variable
-from igf_data.igfdb.sampleadaptor import SampleAdaptor
-from igf_data.igfdb.analysisadaptor import AnalysisAdaptor
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.utils.fileutils import check_file_path
+from igf_data.igfdb.sampleadaptor import SampleAdaptor
+from igf_data.igfdb.analysisadaptor import AnalysisAdaptor
+from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_nextflow.nextflow_utils.nextflow_runner import nextflow_pre_run_setup
 from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _check_and_mark_analysis_seed
 
@@ -59,12 +60,23 @@ def run_nf_command_func(**context):
        not isinstance(nextflow_command,list) or \
        len(nextflow_command)==0:
       raise ValueError('Failed to get command list for nextflow')
+    message = \
+      'Started Nextflow run, output path: {0}, command: {1}'.\
+        format(nextflow_work_dir,' '.join(nextflow_command))
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=message,
+      reaction='pass')
     subprocess.check_call(' '.join(nextflow_command),shell=True)
   except Exception as e:
     logging.error(e)
     raise ValueError(e)
 
-def prep_nf_atacseq_run_func(**context):
+
+def prep_nf_run_func(**context):
   try:
     ti = context.get('ti')
     analysis_description_xcom_key = \
