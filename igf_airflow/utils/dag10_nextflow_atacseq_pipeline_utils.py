@@ -166,7 +166,7 @@ def _fetch_sample_ids_from_nextflow_analysis_design(
   '''
   try:
     sample_igf_id_list = list()
-    if not isinstance(analysis_description) or \
+    if not isinstance(analysis_description,dict) or \
        nextflow_design_key not in analysis_description:
       raise TypeError(
               'Expecting a dictionary with key {0}'.\
