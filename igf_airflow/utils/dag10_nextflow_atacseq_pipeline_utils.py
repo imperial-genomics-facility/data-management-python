@@ -5,6 +5,7 @@ from airflow.models import Variable
 from igf_data.igfdb.sampleadaptor import SampleAdaptor
 from igf_data.igfdb.analysisadaptor import AnalysisAdaptor
 from igf_data.utils.dbutils import read_dbconf_json
+from igf_data.utils.fileutils import check_file_path
 from igf_nextflow.nextflow_utils.nextflow_runner import nextflow_pre_run_setup
 from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _check_and_mark_analysis_seed
 
@@ -25,9 +26,6 @@ NEXTFLOW_EXE = Variable.get('nextflow_exe',default_var=None)
 def change_pipeline_status(**context):
   pass
 
-def run_nf_atacseq_func(**context):
-  pass
-
 def copy_nf_atacseq_branch_func(**context):
   pass
 
@@ -36,6 +34,35 @@ def copy_data_to_irods_func(**context):
 
 def copy_data_to_box_func(**context):
   pass
+
+def run_nf_command_func(**context):
+  try:
+    ti = context.get('ti')
+    nextflow_command_xcom_task = \
+      context['params'].get('nextflow_command_xcom_task')
+    nextflow_command_xcom_key = \
+      context['params'].get('nextflow_command_xcom_key')
+    nextflow_work_dir_xcom_task = \
+      context['params'].get('nextflow_work_dir_xcom_task')
+    nextflow_work_dir_xcom_key = \
+      context['params'].get('nextflow_work_dir_xcom_key')
+    nextflow_work_dir = \
+      ti.xcom_pull(
+        task_ids=nextflow_work_dir_xcom_task,
+        key=nextflow_work_dir_xcom_key)
+    nextflow_command = \
+      ti.xcom_pull(
+        task_ids=nextflow_command_xcom_task,
+        key=nextflow_command_xcom_key)
+    check_file_path(nextflow_work_dir)
+    if nextflow_command is None or \
+       not isinstance(nextflow_command,list) or \
+       len(nextflow_command)==0:
+      raise ValueError('Failed to get command list for nextflow')
+    subprocess.check_call(' '.join(nextflow_command),shell=True)
+  except Exception as e:
+    logging.error(e)
+    raise ValueError(e)
 
 def prep_nf_atacseq_run_func(**context):
   try:
