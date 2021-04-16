@@ -24,7 +24,7 @@ def full_suite():
   from .process.samplesheet_test import TestValidateSampleSheet1,TestValidateSampleSheet2
   from .process.find_and_register_new_project_data_test import Find_and_register_project_data1
   from .dbadaptor.useradaptor_test import Useradaptor_test1
-  from .dbadaptor.sampleadaptor_test import Sampleadaptor_test1,Sampleadaptor_test2,Sampleadaptor_test3
+  from .dbadaptor.sampleadaptor_test import Sampleadaptor_test1,Sampleadaptor_test2,Sampleadaptor_test3,Sampleadaptor_test4
   from .process.processsinglecellsamplesheet_test import ProcessSingleCellSamplesheet_testA
   from .process.processsinglecellsamplesheet_test import ProcessSingleCellSamplesheet_testB
   from .process.processsinglecellsamplesheet_test import ProcessSingleCellDualIndexSamplesheetA
@@ -111,6 +111,7 @@ def full_suite():
         Sampleadaptor_test1,
         Sampleadaptor_test2,
         Sampleadaptor_test3,
+        Sampleadaptor_test4,
         ProcessSingleCellSamplesheet_testA,
         ProcessSingleCellSamplesheet_testB,
         ProcessSingleCellDualIndexSamplesheetA,

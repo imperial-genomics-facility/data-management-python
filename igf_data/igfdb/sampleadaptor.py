@@ -224,6 +224,30 @@ class SampleAdaptor(BaseAdaptor):
       raise ValueError(
               'Failed to check sample igf id, error: {0}'.format(e))
 
+  def get_project_ids_for_list_of_samples(self,sample_igf_id_list):
+    try:
+      if not isinstance(sample_igf_id_list,list) or \
+         len(sample_igf_id_list)==0:
+        raise TypeError('No input sample list found')
+      query = \
+        self.session.\
+          query(Project.project_igf_id).\
+          join(Sample,Project.project_id==Sample.project_id).\
+          filter(Sample.sample_igf_id.in_(sample_igf_id_list))
+      project_ids = \
+        self.fetch_records(
+          query=query,
+          output_mode='dataframe')
+      if 'project_igf_id' not in project_ids.columns:
+        raise KeyError('Missing project_igf_id in db output')
+      project_id_list = \
+        list(project_ids['project_igf_id'].drop_duplicates().values)
+      return project_id_list
+    except Exception as e:
+      raise ValueError(
+        'Failed to fetch project ids for sample list, error: {0}'.\
+          format(e))
+
 
   def check_project_and_sample(self,project_igf_id,sample_igf_id):
     '''
