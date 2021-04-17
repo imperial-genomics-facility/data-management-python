@@ -28,6 +28,9 @@ params {
   }
 }
 
+env {
+     NXF_OPTS = '-Xms1g -Xmx4g'
+}
 executor {
   $pbspro {
     queueSize = 10
@@ -46,19 +49,19 @@ process {
 
   // resource specific params
   withLabel:process_low {
-    cpus = { check_max( 1 * task.attempt, 'cpus' ) }
-    memory = { check_max( 4.GB * task.attempt, 'memory' ) }
-    time = { check_max( 2.h * task.attempt, 'time' ) }
+    cpus = { 1 * task.attempt }
+    memory = { 4.GB * task.attempt }
+    time = { 2.h * task.attempt }
   }
   withLabel:process_medium {
-    cpus = { check_max( 4 * task.attempt, 'cpus' ) }
-    memory = { check_max( 8.GB * task.attempt, 'memory' ) }
-    time = { check_max( 6.h * task.attempt, 'time' ) }
+    cpus = { 4 * task.attempt }
+    memory = { 8.GB * task.attempt }
+    time = { 6.h * task.attempt }
   }
   withLabel:process_high {
-    cpus = { check_max( 8 * task.attempt, 'cpus' ) }
-    memory = { check_max( 32.GB * task.attempt, 'memory' ) }
-    time = { check_max( 6.h * task.attempt, 'time' ) }
+    cpus = { 8 * task.attempt }
+    memory = { 32.GB * task.attempt }
+    time = { 6.h * task.attempt }
   }
   withName: VEP {
     memory = 32.GB
@@ -67,6 +70,7 @@ process {
 
 singularity {
     enabled = true
-    autoMounts = false
+    autoMounts = true
+    cacheDir = {{ NEXTFLOW_SINGULARITY_CACHE_DIR }}
     runOptions = "--bind /rds/general/user/$USER/ephemeral:/tmp,/rds/general/user/$USER/ephemeral:/var/tmp,{{ DIR_LIST }}"
 }

@@ -61,7 +61,7 @@ def extend_nextflow_analysis_design_and_params(
       append('-resume')
     if use_local_igenomes_base is not None:
       extended_analysis_params.\
-        append('-igenomes_base {0}'.format(igenomes_base_path))
+        append('--igenomes_base {0}'.format(igenomes_base_path))
     return extended_analysis_design,extended_analysis_params,input_dir_list
   except Exception as e:
     raise ValueError(
