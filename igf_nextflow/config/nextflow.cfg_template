@@ -34,7 +34,7 @@ env {
 
 executor {
   $pbspro {
-    queueSize = 10
+    queueSize = 25
   }
   $local {
     cpus = 1
