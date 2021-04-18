@@ -73,5 +73,5 @@ singularity {
     enabled = true
     autoMounts = true
     {% if NEXTFLOW_SINGULARITY_CACHE_DIR is not none %}cacheDir = "{{ NEXTFLOW_SINGULARITY_CACHE_DIR }}"{% endif %}
-    runOptions = "--bind /rds/general/user/$USER/ephemeral:/tmp,/rds/general/user/$USER/ephemeral:/var/tmp,{{ DIR_LIST }}"
+    runOptions = "-B /rds/general/user/$USER/ephemeral:/tmp,/rds/general/user/$USER/ephemeral:/var/tmp,{{ DIR_LIST }}"
 }
