@@ -43,6 +43,11 @@ def nextflow_pre_run_setup(
     work_dir = \
       get_temp_dir(use_ephemeral_space=use_ephemeral_space)
     input_dir_list.append(work_dir)
+    log_dir = os.path.join(work_dir,'run.log')
+    extended_analysis_params.\
+      insert(1,'-log {0}'.format(log_dir))                                      # add log dir for nextflow run
+    extended_analysis_params.\
+      insert(2,'-q')                                                            # run nextflow in quite mode
     output_nextflow_config = \
       os.path.join(work_dir,'nextflow.cfg')
     if igenomes_base_path is not None:
@@ -55,6 +60,9 @@ def nextflow_pre_run_setup(
       nextflow_singularity_cache_dir=nextflow_singularity_cache_dir)                                             # get formatted config file
     extended_analysis_params.\
       append('-c {0}'.format(output_nextflow_config))                           # adding nextflow config to params
+    dag_file = os.path.join(work_dir,'dag.html')                                # adding dag file
+    extended_analysis_params.\
+      append('-with-dag {0}'.format(dag_file))
     nextflow_pipeline = \
       analysis_description.get('nextflow_pipeline')
     if nextflow_pipeline is None:
