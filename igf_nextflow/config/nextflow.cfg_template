@@ -46,29 +46,25 @@ executor {
 process {
   // base params
   executor = 'pbspro'
+  errorStrategy = { task.attempt <= 4 ? 'retry' : 'finish' }
+  maxRetries = 4
   {% if HPC_QUEUE is not none %}queue = "{{ HPC_QUEUE }}"{% endif %}
 
   // resource specific params
   withLabel:process_low {
-    cpus = { 1 * task.attempt }
-    memory = { 4.GB * task.attempt }
-    time = { 2.h * task.attempt }
-    errorStrategy = { task.attempt <= 4 ? 'retry' : 'finish' }
-    maxRetries = 4
+    cpus = { check_max(1 * task.attempt,'cpus') }
+    memory = { check_max(4.GB * task.attempt,'memory') }
+    time = { check_max(2.h * task.attempt,'time') }
   }
   withLabel:process_medium {
-    cpus = { 4 * task.attempt }
-    memory = { 8.GB * task.attempt }
-    time = { 6.h * task.attempt }
-    errorStrategy = { task.attempt <= 4 ? 'retry' : 'finish' }
-    maxRetries = 4
+    cpus = { check_max(4 * task.attempt,'cpus') }
+    memory = { check_max(8.GB * task.attempt,'memory') }
+    time = { check_max(6.h * task.attempt,'time') }
   }
   withLabel:process_high {
-    cpus = { 8 * task.attempt }
-    memory = { 32.GB * task.attempt }
-    time = { 6.h * task.attempt }
-    errorStrategy = { task.attempt <= 4 ? 'retry' : 'finish' }
-    maxRetries = 4
+    cpus = { check_max(8 * task.attempt,'cpus') }
+    memory = { check_max(32.GB * task.attempt,'memory') }
+    time = { check_max(6.h * task.attempt,'time') }
   }
   withName: VEP {
     memory = 32.GB
