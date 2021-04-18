@@ -31,7 +31,7 @@ class Nextflow_config_formatter_testA(unittest.TestCase):
           bind_dir_args = [
               i.strip('"')
                 for i in line.strip().split(',')]
-    self.assertEqual(hpc_queue_entry,"queue = '{0}'".format(hpc_queue))
+    self.assertEqual(hpc_queue_entry,'queue = "{0}"'.format(hpc_queue))
     self.assertTrue(self.workdir in bind_dir_args)
 
 if __name__=='__main__':
