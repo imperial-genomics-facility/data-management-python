@@ -6,15 +6,16 @@ from igf_data.utils.fileutils import copy_local_file
 from jinja2 import Environment,FileSystemLoader,select_autoescape
 
 def format_nextflow_config_file(
-      template_file,output_file,bind_dir_list=None,
-      hpc_queue_name='',force_update=True):
+      template_file,output_file,bind_dir_list=None,hpc_queue_name=None,
+      force_update=True,nextflow_singularity_cache_dir=None):
   '''
   A function for generating project specific Nextflow config file
 
   :param template_file: A Jinja template for Nextflow config
   :param output_file: Output config file path
   :param bind_dir_list: A list of dirs to bind to singularity container, default None
-  :param hpc_queue_name: HPC queue name, default empty string
+  :param hpc_queue_name: HPC queue name, default None
+  :param nextflow_singularity_cache_dir: Nextflow singularity cache dir, default None
   :param force_update: Overwrite the existing config file, default True
   :returns: None
   '''
@@ -39,6 +40,7 @@ def format_nextflow_config_file(
     nextflow_conf.\
       stream(
         HPC_QUEUE=hpc_queue_name,
+        NEXTFLOW_SINGULARITY_CACHE_DIR=nextflow_singularity_cache_dir,
         DIR_LIST=','.join(bind_dir_list)).\
       dump(temp_output_file)
     copy_local_file(

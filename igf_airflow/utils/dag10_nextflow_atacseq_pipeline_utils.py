@@ -22,6 +22,7 @@ BOX_DIR_PREFIX = 'SecondaryAnalysis'
 IGENOME_BASE_PATH = Variable.get('igenome_base_path',default_var=None)
 NEXTFLOW_TEMPLATE_FILE = Variable.get('nextflow_template_file',default_var=None)
 NEXTFLOW_EXE = Variable.get('nextflow_exe',default_var=None)
+NEXTFLOW_SINGULARITY_CACHE_DIR = Variable.get('nextflow_singularity_cache_dir',default_var=None)
 
 
 def change_pipeline_status(**context):
@@ -97,7 +98,8 @@ def prep_nf_run_func(**context):
         analysis_description=analysis_description,
         dbconf_file=DATABASE_CONFIG_FILE,
         nextflow_config_template=NEXTFLOW_TEMPLATE_FILE,
-        igenomes_base_path=IGENOME_BASE_PATH)
+        igenomes_base_path=IGENOME_BASE_PATH,
+        nextflow_singularity_cache_dir=NEXTFLOW_SINGULARITY_CACHE_DIR)
     ti.xcom_push(
       key=nextflow_command_xcom_key,
       value=nextflow_command_list)

@@ -7,7 +7,8 @@ from igf_nextflow.nextflow_utils.nextflow_design import extend_nextflow_analysis
 
 def nextflow_pre_run_setup(
       nextflow_exe,analysis_description,dbconf_file,nextflow_config_template,
-      igenomes_base_path=None,hpc_queue_name='pqcgi',use_ephemeral_space=True):
+      igenomes_base_path=None,hpc_queue_name='pqcgi',use_ephemeral_space=True,
+      nextflow_singularity_cache_dir=None):
   '''
   A function to prepare Nextflow run execution
 
@@ -22,6 +23,7 @@ def nextflow_pre_run_setup(
   :param igenomes_base_path: igenomes local path, default None
   :param hpc_queue_name: HPC queue name specific for user, default pqcgi
   :param use_ephemeral_space: A toggle for using ephemeral space, default True
+  :param nextflow_singularity_cache_dir: Nextflow singularity cache dir, default None
   :returns:
     * A list of Nextflow command and params
     * A string containing the work dir path
@@ -40,6 +42,7 @@ def nextflow_pre_run_setup(
       insert(0,nextflow_exe)
     work_dir = \
       get_temp_dir(use_ephemeral_space=use_ephemeral_space)
+    input_dir_list.append(work_dir)
     output_nextflow_config = \
       os.path.join(work_dir,'nextflow.cfg')
     if igenomes_base_path is not None:
@@ -48,7 +51,8 @@ def nextflow_pre_run_setup(
       template_file=nextflow_config_template,
       output_file=output_nextflow_config,
       hpc_queue_name=hpc_queue_name,
-      bind_dir_list=input_dir_list)                                             # get formatted config file
+      bind_dir_list=input_dir_list,
+      nextflow_singularity_cache_dir=nextflow_singularity_cache_dir)                                             # get formatted config file
     extended_analysis_params.\
       append('-c {0}'.format(output_nextflow_config))                           # adding nextflow config to params
     nextflow_pipeline = \
