@@ -4,6 +4,9 @@ from copy import copy
 from airflow.models import Variable
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.utils.fileutils import check_file_path
+from igf_data.utils.fileutils import copy_local_file
+from igf_data.utils.fileutils import get_datestamp_label
+from igf_data.utils.fileutils import create_file_manifest_for_dir
 from igf_data.igfdb.sampleadaptor import SampleAdaptor
 from igf_data.igfdb.analysisadaptor import AnalysisAdaptor
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
@@ -23,19 +26,218 @@ IGENOME_BASE_PATH = Variable.get('igenome_base_path',default_var=None)
 NEXTFLOW_TEMPLATE_FILE = Variable.get('nextflow_template_file',default_var=None)
 NEXTFLOW_EXE = Variable.get('nextflow_exe',default_var=None)
 NEXTFLOW_SINGULARITY_CACHE_DIR = Variable.get('nextflow_singularity_cache_dir',default_var=None)
+BASE_RESULT_DIR = Variable.get('base_result_dir',default_var=None)
 
 
 def change_pipeline_status(**context):
-  pass
+  try:
+    pass
+  except Exception as e:
+    logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise ValueError(e)
 
-def copy_nf_atacseq_branch_func(**context):
-  pass
 
-def copy_data_to_irods_func(**context):
-  pass
+def copy_nf_data_to_irods_func(**context):
+  try:
+    pass
+  except Exception as e:
+    logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise ValueError(e)
 
-def copy_data_to_box_func(**context):
-  pass
+
+def copy_nf_data_to_box_func(**context):
+  try:
+    pass
+  except Exception as e:
+    logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise ValueError(e)
+
+
+def copy_nf_output_to_disk_func(**context):
+  try:
+    ti = context.get('ti')
+    nextflow_work_dir_xcom_task = \
+      context['params'].get('nextflow_work_dir_xcom_task')
+    nextflow_work_dir_xcom_key = \
+      context['params'].get('nextflow_work_dir_xcom_key')
+    result_dirname = \
+      context['params'].get('result_dirname')
+    data_dir_list = \
+      context['params'].get('data_dir_list')
+    report_file_dirs = \
+      context['params'].get('report_file_dirs')
+    dag_file_name = \
+      context['params'].get('dag_file_name')
+    dag_run = context.get('dag_run')
+    if dag_run is None or \
+       dag_run.conf is None or \
+       dag_run.conf.get('analysis_id') is None or \
+       dag_run.conf.get('analysis_name') is None:
+      raise ValueError('No analysis_id or analysis_name found in dag.conf')
+    analysis_id = \
+      dag_run.conf.get('analysis_id')
+    analysis_name = \
+      dag_run.conf.get('analysis_name')
+    dbparams = \
+      read_dbconf_json(DATABASE_CONFIG_FILE)
+    aa = \
+      AnalysisAdaptor(**dbparams)
+    aa.start_session()
+    project_igf_id = \
+      aa.fetch_project_igf_id_for_analysis_id(analysis_id=int(analysis_id))
+    aa.close_session()
+    datestamp_label = get_datestamp_label()
+    output_dir_label = [
+      BASE_RESULT_DIR,
+      project_igf_id,
+      context['task'].dag_id,
+      analysis_name,
+      datestamp_label]
+    target_base_path = \
+      os.path.join(*output_dir_label)
+    nextflow_work_dir = \
+      ti.xcom_pull(
+        task_ids=nextflow_work_dir_xcom_task,
+        key=nextflow_work_dir_xcom_key)
+    create_file_manifest_for_dir(
+      results_dirpath=os.path.join(nextflow_work_dir,result_dirname),
+      output_file=os.path.join(target_base_path,'file_manefest.csv'))           # creatine manifest file before move
+    result_dirs = list()
+    result_dirs.extend(data_dir_list)
+    result_dirs.extend(report_file_dirs)
+    for dir_name in result_dirs:
+      source_path = \
+        os.path.join(
+          nextflow_work_dir,
+          result_dirname,
+          dir_name)
+      target_path = \
+        os.path.join(target_base_path,dir_name)
+      copy_local_file(source_path,target_path,force=True)
+    source_dag_file = \
+      os.path.join(nextflow_work_dir,dag_file_name)
+    target_dag_file = \
+      os.path.join(target_base_path,dag_file_name)
+    copy_local_file(source_dag_file,target_dag_file,force=True)
+    message = \
+      'NF data for analysis {0} loaded to {1}'.\
+        format(analysis_name,target_base_path)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=message,
+      reaction='pass')
+  except Exception as e:
+    logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise ValueError(e)
+
+
+def nf_analysis_copy_branch_func(**context):
+  try:
+    ti = context.get('ti')
+    nextflow_work_dir_xcom_task = \
+      context['params'].get('nextflow_work_dir_xcom_task')
+    nextflow_work_dir_xcom_key = \
+      context['params'].get('nextflow_work_dir_xcom_key')
+    result_dirname = \
+      context['params'].get('result_dirname')
+    data_dir_list = \
+      context['params'].get('data_dir_list')
+    data_dir_xcom_key = \
+      context['params'].get('data_dir_xcom_key')
+    report_file_dirs = \
+      context['params'].get('report_file_dirs')
+    report_file_xcom_key = \
+      context['params'].get('report_file_xcom_key')
+    dag_file_name = \
+      context['params'].get('dag_file_name')
+    dag_file_xcom_key = \
+      context['params'].get('dag_file_xcom_key')
+    data_file_copy_tasks = \
+      context['params'].get('data_file_copy_tasks')
+    report_file_copy_tasks = \
+      context['params'].get('report_file_copy_tasks')
+    nextflow_work_dir = \
+      ti.xcom_pull(
+        task_ids=nextflow_work_dir_xcom_task,
+        key=nextflow_work_dir_xcom_key)
+    result_dir = os.path.join(nextflow_work_dir,result_dirname)
+    check_file_path(result_dir)                                                 # check if output dir exists
+    target_data_dir = list()
+    target_report_dir = list()
+    for dir_name in data_dir_list:
+      target_path = \
+        os.path.join(result_dir,dir_name)
+      check_file_path(target_path)                                            # check target dir path
+      target_data_dir.\
+        append(target_path)
+    for dir_name in report_file_dirs:
+      target_path = \
+        os.path.join(result_dir,dir_name)
+      check_file_path(target_path)
+      target_report_dir.\
+        append(target_path)
+    dag_path = \
+      os.path.join(nextflow_work_dir,dag_file_name)
+    check_file_path(dag_path)
+    ti.xcom_push(
+      key=data_dir_xcom_key,
+      value=target_data_dir)
+    ti.xcom_push(
+      key=report_file_xcom_key,
+      value=target_report_dir)
+    ti.xcom_push(
+      key=dag_file_xcom_key,
+      value=dag_path)
+    output_tasks = list()
+    if len(target_data_dir) > 0:
+      output_tasks.\
+        extend(data_file_copy_tasks)
+    if len(target_report_dir) > 0:
+      output_tasks.\
+        extend(report_file_copy_tasks)
+    return output_tasks
+  except Exception as e:
+    logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise ValueError(e)
+
 
 def run_nf_command_func(**context):
   try:
