@@ -9,9 +9,13 @@ from igf_data.utils.fileutils import get_datestamp_label
 from igf_data.utils.fileutils import create_file_manifest_for_dir
 from igf_data.igfdb.sampleadaptor import SampleAdaptor
 from igf_data.igfdb.analysisadaptor import AnalysisAdaptor
+from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_nextflow.nextflow_utils.nextflow_runner import nextflow_pre_run_setup
+from igf_data.utils.igf_irods_client import IGF_irods_uploader
+from igf_data.utils.box_upload import upload_file_or_dir_to_box
 from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _check_and_mark_analysis_seed
+
 
 DATABASE_CONFIG_FILE = Variable.get('test_database_config_file',default_var=None)
 SLACK_CONF = Variable.get('analysis_slack_conf',default_var=None)
@@ -46,7 +50,87 @@ def change_pipeline_status(**context):
 
 def copy_nf_data_to_irods_func(**context):
   try:
-    pass
+    ti = context.get('ti')
+    dag_run = context.get('dag_run')
+    nextflow_work_dir_xcom_task = \
+      context['params'].get('nextflow_work_dir_xcom_task')
+    nextflow_work_dir_xcom_key = \
+      context['params'].get('nextflow_work_dir_xcom_key')
+    data_dir_xcom_key = \
+      context['params'].get('data_dir_xcom_key')
+    data_dir_xcom_task = \
+      context['params'].get('data_dir_xcom_task')
+    if dag_run is None or \
+       dag_run.conf is None or \
+       dag_run.conf.get('analysis_id') is None or \
+       dag_run.conf.get('analysis_name') is None:
+      raise ValueError('No analysis_id or analysis_name found in dag.conf')
+    analysis_id = \
+      dag_run.conf.get('analysis_id')
+    analysis_name = \
+      dag_run.conf.get('analysis_name')
+    dbparams = \
+      read_dbconf_json(DATABASE_CONFIG_FILE)
+    aa = \
+      AnalysisAdaptor(**dbparams)
+    aa.start_session()
+    project_igf_id = \
+      aa.fetch_project_igf_id_for_analysis_id(analysis_id=int(analysis_id))
+    pa = ProjectAdaptor(**{'session':aa.session})
+    user = \
+      pa.fetch_data_authority_for_project(
+        project_igf_id=project_igf_id)                                        # fetch user info from db
+    if user is None:
+        raise ValueError(
+                'No user found for project {0}'.\
+                  format(project_igf_id))
+    username = user.username                                                  # get username for irods
+    aa.close_session()
+    datestamp_label = get_datestamp_label()
+    output_dir_label = [
+      project_igf_id,
+      context['task'].dag_id,
+      analysis_name,
+      datestamp_label]
+    data_dirs = \
+      ti.xcom_pull(
+        task_ids=data_dir_xcom_task,
+        key=data_dir_xcom_key)
+    nextflow_work_dir_xcom_task = \
+      context['params'].get('nextflow_work_dir_xcom_task')
+    nextflow_work_dir_xcom_key = \
+      context['params'].get('nextflow_work_dir_xcom_key')
+    result_dirname = \
+      context['params'].get('result_dirname')
+    nextflow_work_dir = \
+      ti.xcom_pull(
+        task_ids=nextflow_work_dir_xcom_task,
+        key=nextflow_work_dir_xcom_key)
+    nextflow_result_dir = \
+      os.path.join(nextflow_work_dir,result_dirname)
+    if data_dirs is None or \
+       not isinstance(data_dirs,list) or \
+       len(data_dirs)==0:
+      raise ValueError('No data dir found for irods upload')
+    irods_upload = IGF_irods_uploader(IRDOS_EXE_DIR)
+    for dir_name in data_dirs:
+      check_file_path(dir_name)
+      for root,_,files in os.walk(dir_name):
+        if len(files)>0:
+          file_list = [
+            os.path.join(root,file)
+              for file in files]
+          dir_labels = output_dir_label
+          dir_labels.\
+            extend(os.path.relpath(root,nextflow_result_dir).split('/'))
+          irods_upload.\
+            upload_analysis_results_and_create_collection(
+              file_list=file_list,
+              irods_user=username,
+              project_name=project_igf_id,
+              analysis_name=analysis_name,
+              dir_path_list=dir_labels,
+              file_tag=analysis_name)
   except Exception as e:
     logging.error(e)
     send_log_to_channels(
@@ -61,7 +145,73 @@ def copy_nf_data_to_irods_func(**context):
 
 def copy_nf_data_to_box_func(**context):
   try:
-    pass
+    ti = context.get('ti')
+    dag_run = context.get('dag_run')
+    report_file_xcom_key = \
+      context['params'].get('report_file_xcom_key')
+    report_file_xcom_task = \
+      context['params'].get('report_file_xcom_task')
+    dag_file_xcom_key = \
+      context['params'].get('dag_file_xcom_key')
+    dag_file_xcom_task =  \
+      context['params'].get('dag_file_xcom_task')
+    if dag_run is None or \
+       dag_run.conf is None or \
+       dag_run.conf.get('analysis_id') is None or \
+       dag_run.conf.get('analysis_name') is None:
+      raise ValueError('No analysis_id or analysis_name found in dag.conf')
+    analysis_id = \
+      dag_run.conf.get('analysis_id')
+    analysis_name = \
+      dag_run.conf.get('analysis_name')
+    dbparams = \
+      read_dbconf_json(DATABASE_CONFIG_FILE)
+    aa = \
+      AnalysisAdaptor(**dbparams)
+    aa.start_session()
+    project_igf_id = \
+      aa.fetch_project_igf_id_for_analysis_id(analysis_id=int(analysis_id))
+    aa.close_session()
+    datestamp_label = get_datestamp_label()
+    output_dir_label = [
+      BOX_DIR_PREFIX,
+      project_igf_id,
+      context['task'].dag_id,
+      analysis_name,
+      datestamp_label]
+    box_upload_base_dir = \
+      os.path.join(*output_dir_label)
+    data_dirs = \
+      ti.xcom_pull(
+        task_ids=report_file_xcom_task,
+        key=report_file_xcom_key)
+    dag_file = \
+      ti.xcom_pull(
+        task_ids=dag_file_xcom_task,
+        key=dag_file_xcom_key)
+    check_file_path(dag_file)
+    upload_file_or_dir_to_box(
+      box_config_file=BOX_CONFIG_FILE,
+      file_path=dag_file,
+      upload_dir=box_upload_base_dir,
+      box_username=BOX_USERNAME,
+      skip_existing=False)
+    if data_dirs is None or \
+       not isinstance(data_dirs,list) or \
+       len(data_dirs)==0:
+      raise ValueError('No data dir found for box upload')
+    for dir_name in data_dirs:
+      check_file_path(dir_name)
+      box_dir = \
+        os.path.join(
+          box_upload_base_dir,
+          os.path.basename(dir_name.rstrip('/')))
+      upload_file_or_dir_to_box(
+        box_config_file=BOX_CONFIG_FILE,
+        file_path=dir_name,
+        upload_dir=box_dir,
+        box_username=BOX_USERNAME,
+        skip_existing=False)
   except Exception as e:
     logging.error(e)
     send_log_to_channels(
