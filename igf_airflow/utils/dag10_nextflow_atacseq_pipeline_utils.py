@@ -39,6 +39,8 @@ def copy_data_to_box_func(**context):
 
 def run_nf_command_func(**context):
   try:
+    nextflow_work_dir = ''
+    nextflow_command = list()
     ti = context.get('ti')
     nextflow_command_xcom_task = \
       context['params'].get('nextflow_command_xcom_task')
@@ -72,8 +74,28 @@ def run_nf_command_func(**context):
       comment=message,
       reaction='pass')
     subprocess.check_call(' '.join(nextflow_command),shell=True)
+    message = \
+      'Finished Nextflow run, output path: {0}, command: {1}'.\
+        format(nextflow_work_dir,' '.join(nextflow_command))
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=message,
+      reaction='pass')
   except Exception as e:
+    message = \
+      'Failed Nextflow run, workdir: {0}, cmd: {1}, error: {2}'.\
+        format(nextflow_work_dir,' '.join(nextflow_command),e)
     logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=message,
+      reaction='fail')
     raise ValueError(e)
 
 
