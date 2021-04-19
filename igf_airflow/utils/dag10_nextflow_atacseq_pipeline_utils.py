@@ -35,7 +35,29 @@ BASE_RESULT_DIR = Variable.get('base_result_dir',default_var=None)
 
 def change_pipeline_status(**context):
   try:
-    pass
+    dag_run = context.get('dag_run')
+    new_status = \
+      context['params'].get('new_status')
+    no_change_status = \
+      context['params'].get('no_change_status')
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('analysis_description') is not None:
+      analysis_id = \
+        dag_run.conf.get('analysis_id')
+      analysis_type = \
+        dag_run.conf.get('analysis_type')
+      status = \
+        _check_and_mark_analysis_seed(
+          analysis_id=analysis_id,
+          anslysis_type=analysis_type,
+          new_status=new_status,
+          no_change_status=no_change_status,
+          database_config_file=DATABASE_CONFIG_FILE)
+      if not status:
+        raise ValueError(
+                'Failed to update pipeline seed for analysis id {0} and type {1}'.\
+                  format(analysis_id,analysis_type))
   except Exception as e:
     logging.error(e)
     send_log_to_channels(
