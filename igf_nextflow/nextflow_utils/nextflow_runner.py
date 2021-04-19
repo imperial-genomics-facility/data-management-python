@@ -48,6 +48,8 @@ def nextflow_pre_run_setup(
       insert(1,'-log {0}'.format(log_dir))                                      # add log dir for nextflow run
     extended_analysis_params.\
       insert(2,'-q')                                                            # run nextflow in quite mode
+    extended_analysis_params.\
+      insert(3,'run')
     output_nextflow_config = \
       os.path.join(work_dir,'nextflow.cfg')
     if igenomes_base_path is not None:
