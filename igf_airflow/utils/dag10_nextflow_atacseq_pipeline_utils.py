@@ -447,7 +447,8 @@ def run_nf_command_func(**context):
       dag_id=context['task'].dag_id,
       comment=message,
       reaction='pass')
-    subprocess.check_call(' '.join(nextflow_command),shell=True)
+    os.chdir(nextflow_work_dir)                                                 # cd to work dir
+    subprocess.check_call(' '.join(nextflow_command),shell=True)                # run nextflow cmd
     message = \
       'Finished Nextflow run, output path: {0}, command: {1}'.\
         format(nextflow_work_dir,' '.join(nextflow_command))
