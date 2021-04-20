@@ -78,6 +78,8 @@ def copy_nf_data_to_irods_func(**context):
       context['params'].get('nextflow_work_dir_xcom_task')
     nextflow_work_dir_xcom_key = \
       context['params'].get('nextflow_work_dir_xcom_key')
+    result_dirname = \
+      context['params'].get('result_dirname')
     data_dir_xcom_key = \
       context['params'].get('data_dir_xcom_key')
     data_dir_xcom_task = \
@@ -118,12 +120,6 @@ def copy_nf_data_to_irods_func(**context):
       ti.xcom_pull(
         task_ids=data_dir_xcom_task,
         key=data_dir_xcom_key)
-    nextflow_work_dir_xcom_task = \
-      context['params'].get('nextflow_work_dir_xcom_task')
-    nextflow_work_dir_xcom_key = \
-      context['params'].get('nextflow_work_dir_xcom_key')
-    result_dirname = \
-      context['params'].get('result_dirname')
     nextflow_work_dir = \
       ti.xcom_pull(
         task_ids=nextflow_work_dir_xcom_task,
@@ -192,7 +188,8 @@ def copy_nf_data_to_box_func(**context):
       AnalysisAdaptor(**dbparams)
     aa.start_session()
     project_igf_id = \
-      aa.fetch_project_igf_id_for_analysis_id(analysis_id=int(analysis_id))
+      aa.fetch_project_igf_id_for_analysis_id(
+        analysis_id=int(analysis_id))
     aa.close_session()
     datestamp_label = get_datestamp_label()
     output_dir_label = [
