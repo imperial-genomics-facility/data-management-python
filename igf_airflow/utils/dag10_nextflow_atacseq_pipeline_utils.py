@@ -288,6 +288,7 @@ def copy_nf_output_to_disk_func(**context):
       datestamp_label]
     target_base_path = \
       os.path.join(*output_dir_label)
+    os.makedirs(target_base_path,exist_ok=True)                                 # create base path
     nextflow_work_dir = \
       ti.xcom_pull(
         task_ids=nextflow_work_dir_xcom_task,
