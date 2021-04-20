@@ -83,7 +83,11 @@ def nextflow_pre_run_setup(
         os.path.join(work_dir,'chipseq_input_design.csv')
       extended_analysis_design = \
         pd.DataFrame(extended_analysis_design)
-      extended_analysis_design.\
+      if 'fastq_2' in extended_analysis_design.columns:
+        column = ['group','replicate','fastq_1','fastq_2','antibody','control'] # nextflow complains if the column orders are not correct :-/
+      else:
+        column = ['group','replicate','fastq_1','antibody','control']
+      extended_analysis_design[column].\
         to_csv(analysis_design_file,index=False)
       extended_analysis_params.\
         append('--input {0}'.format(analysis_design_file))
