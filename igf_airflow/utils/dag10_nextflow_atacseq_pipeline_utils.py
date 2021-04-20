@@ -112,7 +112,7 @@ def copy_nf_data_to_irods_func(**context):
     aa.close_session()
     datestamp_label = get_datestamp_label()
     output_dir_label = [
-      project_igf_id,
+      'analysis',
       context['task'].dag_id,
       analysis_name,
       datestamp_label]
@@ -138,9 +138,11 @@ def copy_nf_data_to_irods_func(**context):
           file_list = [
             os.path.join(root,file)
               for file in files]
-          dir_labels = output_dir_label
+          dir_labels = copy(output_dir_label)
           dir_labels.\
-            extend(os.path.relpath(root,nextflow_result_dir).split('/'))
+            extend(
+              os.path.relpath(root,nextflow_result_dir).\
+                split('/'))
           irods_upload.\
             upload_analysis_results_and_create_collection(
               file_list=file_list,
@@ -148,7 +150,7 @@ def copy_nf_data_to_irods_func(**context):
               project_name=project_igf_id,
               analysis_name=analysis_name,
               dir_path_list=dir_labels,
-              file_tag=analysis_name)
+              file_tag='nf')                                                    # not trying to check the sample genome info
   except Exception as e:
     logging.error(e)
     send_log_to_channels(
