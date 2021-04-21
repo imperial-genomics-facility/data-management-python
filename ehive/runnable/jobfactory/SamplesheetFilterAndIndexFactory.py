@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import os, copy
+import pandas as pd
 from ehive.runnable.IGFBaseJobFactory import IGFBaseJobFactory
 from igf_data.illumina.samplesheet import SampleSheet
 
@@ -62,6 +63,42 @@ class SamplesheetFilterAndIndexFactory(IGFBaseJobFactory):
                                           project_name,
                                           lane_id,
                                           index_length))                        # get output file name
+          ## remove adepter trim for single cell samplesheets
+          singlecell_tag = '10X'
+          adapter_section = 'Settings'
+          adapter1_label = 'Adapter'
+          adapter2_label = 'AdapterRead2'
+          raw_samplesheet_data = data_group[lane_id][index_length]._data        # extract data
+          raw_samplesheet_data = pd.DataFrame(raw_samplesheet_data).fillna('')  # load data to pandas df
+          raw_samplesheet_data['Description'] = \
+            raw_samplesheet_data['Description'].\
+              map(lambda x: x.upper())                                          # convert Description to UC
+          sc_entry = \
+            raw_samplesheet_data[
+              raw_samplesheet_data['Description']==singlecell_tag]              # filter 10X samples
+          if len(sc_entry.index) > 0:                                           # check for 10X samples
+            adapter1_count = \
+              data_group[lane_id][index_length].\
+                check_sample_header(
+                  section=adapter_section,
+                  condition_key=adapter1_label)
+            if len(adapter1_count) > 0:
+              data_group[lane_id][index_length].\
+                modify_sample_header(
+                  section=adapter_section,
+                  type='remove',
+                  condition_key=adapter1_label)                                 # remove adapter1
+            adapter2_count = \
+              data_group[lane_id][index_length].\
+                check_sample_header(
+                  section=adapter_section,
+                  condition_key=adapter2_label)
+            if len(adapter2_count) > 0:
+              data_group[lane_id][index_length].\
+                modify_sample_header(
+                  section=adapter_section,
+                  type='remove',
+                  condition_key=adapter2_label)                                 # remove adapter2
           data_group[lane_id][index_length].\
            print_sampleSheet(outfile=output_file)                               # write output file
           sub_tasks.append({'project_name':project_name,

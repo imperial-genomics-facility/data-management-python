@@ -494,7 +494,7 @@ class SampleSheet:
             filtered_header_section.append(row)
         header_data[section]=filtered_header_section
       else:
-        raise valueError('type {} not supported'.format(type))
+        raise ValueError('type {} not supported'.format(type))
 
       # resetting the header
       self._header_data=header_data
