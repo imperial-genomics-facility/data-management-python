@@ -10,6 +10,7 @@ from igf_airflow.seqrun.ongoing_seqrun_processing import check_for_sequencing_pr
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_airflow.logging.upload_log_msg import log_success,log_failure,log_sleep
 from igf_airflow.logging.upload_log_msg import post_image_to_channels
+from igf_data.utils.fileutils import copy_local_file
 from igf_data.utils.fileutils import get_temp_dir,copy_remote_file,check_file_path,read_json_data,get_date_stamp
 from igf_data.utils.samplesheet_utils import samplesheet_validation_and_metadata_checking
 from igf_data.utils.samplesheet_utils import get_formatted_samplesheet_per_lane
@@ -575,6 +576,8 @@ def run_tile_demult_list_func(**context):
     bcl2fastq_image_path = Variable.get('bcl2fastq_image_path')
     pandoc_image_path = Variable.get('pandoc_image_path')
     threads = context['params'].get('threads')
+    interop_notebook_image_path = Variable.get('interop_notebook_image_path')
+    seqrun_demult_notebook_template = Variable.get('seqrun_demult_notebook_template')
     seqrun_id = \
       ti.xcom_pull(key=seqrun_id_pull_key,task_ids=seqrun_id_pull_task_ids)[run_index_number]
     seqrun_path = \
@@ -696,6 +699,36 @@ def run_tile_demult_list_func(**context):
         tmp_bcl2fq_output,
         'Stats',
         'Stats.json')
+    ## generate the demult plots
+    input_params = {
+      'STATS_JSON':stats_file_path,
+      'SAMPLESHEET_CSV':lane_samplesheet_file}
+    container_bind_dir_list = [
+      tmp_bcl2fq_output,
+      os.path.dirname(lane_samplesheet_file)]
+    nb = Notebook_runner(
+      template_ipynb_path=seqrun_demult_notebook_template,
+      output_dir=tmp_bcl2fq_output,
+      input_param_map=input_params,
+      container_paths=container_bind_dir_list,
+      kernel='python',
+      use_ephemeral_space=True,
+      singularity_options=['--no-home','-C'],
+      allow_errors=False,
+      singularity_image_path=interop_notebook_image_path)
+    output_notebook_path,_ = \
+      nb.execute_notebook_in_singularity()
+    target_notebook_path = \
+      os.path.join(
+        os.path.dirname(output_notebook_path),
+        '{0}_{1}'.format(lane_id,os.path.basename(output_notebook_path)))
+    copy_local_file(output_notebook_path,target_notebook_path)
+    upload_file_or_dir_to_box(
+      box_config_file=box_config_file,
+      file_path=target_notebook_path,
+      upload_dir=box_dir,
+      box_username=box_username)
+    ## check barcode stats
     barcode_stat = \
       CheckSequenceIndexBarcodes(
         stats_json_file=stats_file_path,
