@@ -59,7 +59,7 @@ process {
   }
   withLabel:process_medium {
     cpus = { 4 * task.attempt }
-    memory = { 8.GB * task.attempt }
+    memory = { 16.GB * task.attempt }
     time = { 6.h * task.attempt }
     errorStrategy = { task.attempt <= 4 ? 'retry' : 'finish' }
     maxRetries = 4
@@ -80,5 +80,5 @@ singularity {
     enabled = true
     autoMounts = true
     {% if NEXTFLOW_SINGULARITY_CACHE_DIR is not none %}cacheDir = "{{ NEXTFLOW_SINGULARITY_CACHE_DIR }}"{% endif %}
-    runOptions = "-B /rds/general/user/$USER/ephemeral:/tmp,/rds/general/user/$USER/ephemeral:/var/tmp,{{ DIR_LIST }}"
+    runOptions = "-B /rds/general/user/igf/ephemeral/tmp:/tmp,/rds/general/user/igf/ephemeral/var/tmp:/var/tmp,{{ DIR_LIST }}"
 }
