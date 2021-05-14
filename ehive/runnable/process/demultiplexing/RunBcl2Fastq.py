@@ -151,7 +151,8 @@ class RunBcl2Fastq(IGFBaseProcess):
                            if i.startswith('y') and re.match(read_pattern,i)
                              if int(re.match(read_pattern,i).group(1)) < 22 ]   # hack for checking if reads are lower than the Illumina threasholds
         if len(read_values) > 0 and \
-            min(read_values) > 5:
+            min(read_values) > 5 and \
+            project_type!=singlecell_tag:
           bcl2fastq_cmd.\
             append("--mask-short-adapter-reads={0}".\
                    format(quote(str(min(read_values)))))
