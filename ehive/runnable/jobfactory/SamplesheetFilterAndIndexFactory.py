@@ -82,7 +82,7 @@ class SamplesheetFilterAndIndexFactory(IGFBaseJobFactory):
                 check_sample_header(
                   section=adapter_section,
                   condition_key=adapter1_label)
-            if len(adapter1_count) > 0:
+            if adapter1_count > 0:
               data_group[lane_id][index_length].\
                 modify_sample_header(
                   section=adapter_section,
@@ -93,7 +93,7 @@ class SamplesheetFilterAndIndexFactory(IGFBaseJobFactory):
                 check_sample_header(
                   section=adapter_section,
                   condition_key=adapter2_label)
-            if len(adapter2_count) > 0:
+            if adapter2_count > 0:
               data_group[lane_id][index_length].\
                 modify_sample_header(
                   section=adapter_section,
