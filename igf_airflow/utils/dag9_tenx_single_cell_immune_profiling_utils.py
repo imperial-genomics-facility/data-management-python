@@ -1334,7 +1334,15 @@ def irods_files_upload_for_analysis(**context):
     project_igf_id = \
       aa.fetch_project_igf_id_for_analysis_id(
         analysis_id=int(analysis_id))
+    analysis_db_records = \
+      aa.fetch_analysis_records_analysis_id(
+        analysis_id=int(analysis_id),
+        output_mode='one_or_none')
     aa.close_session()
+    analysis_db_name = None
+    if analysis_db_records is not None:
+      analysis_db_name = \
+        analysis_db_records.analysis_name
     file_list_for_copy = \
       ti.xcom_pull(
         task_ids=xcom_pull_task,
@@ -1357,7 +1365,11 @@ def irods_files_upload_for_analysis(**context):
     irods_upload = IGF_irods_uploader(IRDOS_EXE_DIR)
     for file in file_list_for_copy:
       check_file_path(file)
-    dir_path_list = ['analysis', ]
+    dir_path_list = \
+      ['analysis',context['task'].dag_id]
+    if analysis_db_name is not None:
+      dir_path_list.\
+        append(analysis_db_name)
     irods_upload.\
       upload_analysis_results_and_create_collection(
         file_list=file_list_for_copy,
@@ -1402,8 +1414,17 @@ def ftp_files_upload_for_analysis(**context):
       AnalysisAdaptor(**dbparams)
     aa.start_session()
     project_igf_id = \
-      aa.fetch_project_igf_id_for_analysis_id(analysis_id=int(analysis_id))
+      aa.fetch_project_igf_id_for_analysis_id(
+        analysis_id=int(analysis_id))
+    analysis_db_records = \
+      aa.fetch_analysis_records_analysis_id(
+        analysis_id=int(analysis_id),
+        output_mode='one_or_none')
     aa.close_session()
+    analysis_db_name = None
+    if analysis_db_records is not None:
+      analysis_db_name = \
+        analysis_db_records.analysis_name
     ftp_hostname = FTP_HOSTNAME
     ftp_username = FTP_USERNAME
     ftp_project_path = FTP_PROJECT_PATH
@@ -1417,12 +1438,18 @@ def ftp_files_upload_for_analysis(**context):
       ti.xcom_pull(
         task_ids=collection_name_task,
         key=collection_name_key)
+    dest_dir_list = [
+      ftp_project_path,
+      project_igf_id,
+      'analysis',
+      context['task'].dag_id]
+    if analysis_db_name is not None:
+      dest_dir_list.\
+        append(analysis_db_name)
+    dest_dir_list.\
+        append(collection_name)
     destination_output_path = \
-      os.path.join(
-        ftp_project_path,
-        project_igf_id,
-        'analysis',
-        collection_name)
+      os.path.join(*dest_dir_list)
     output_file_list = list()
     temp_work_dir = \
       get_temp_dir(use_ephemeral_space=False)
