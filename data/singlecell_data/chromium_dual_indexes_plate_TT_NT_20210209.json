@@ -958,5 +958,486 @@
         "index(i7)": "TGATGATTCA",
         "index2_workflow_a(i5)": "GTAGGAGTCG",
         "index2_workflow_b(i5)": "CGACTCCTAC"
+    },
+    "SI-TN-A1": {
+        "index(i7)": "AGTATCTGCA",
+        "index2_workflow_a(i5)": "TCGCTAGCGA",
+        "index2_workflow_b(i5)": "TCGCTAGCGA"
+    },
+    "SI-TN-A2": {
+        "index(i7)": "TCTATGAGTG",
+        "index2_workflow_a(i5)": "CAACCAACGA",
+        "index2_workflow_b(i5)": "TCGTTGGTTG"
+    },
+    "SI-TN-A3": {
+        "index(i7)": "TTATTGACAC",
+        "index2_workflow_a(i5)": "GCGAACTGAT",
+        "index2_workflow_b(i5)": "ATCAGTTCGC"
+    },
+    "SI-TN-A4": {
+        "index(i7)": "GAACAACCTT",
+        "index2_workflow_a(i5)": "GAACTGGTAC",
+        "index2_workflow_b(i5)": "GTACCAGTTC"
+    },
+    "SI-TN-A5": {
+        "index(i7)": "TCTCGAATGT",
+        "index2_workflow_a(i5)": "ACGATCGCGA",
+        "index2_workflow_b(i5)": "TCGCGATCGT"
+    },
+    "SI-TN-A6": {
+        "index(i7)": "TTTGCTGGGT",
+        "index2_workflow_a(i5)": "CAAATTCCGG",
+        "index2_workflow_b(i5)": "CCGGAATTTG"
+    },
+    "SI-TN-A7": {
+        "index(i7)": "TCCGAATAAA",
+        "index2_workflow_a(i5)": "ATGCTACCGC",
+        "index2_workflow_b(i5)": "GCGGTAGCAT"
+    },
+    "SI-TN-A8": {
+        "index(i7)": "GTTTGAAAGT",
+        "index2_workflow_a(i5)": "GTACGCCATG",
+        "index2_workflow_b(i5)": "CATGGCGTAC"
+    },
+    "SI-TN-A9": {
+        "index(i7)": "GCACGTGACA",
+        "index2_workflow_a(i5)": "AGGAAGTCTG",
+        "index2_workflow_b(i5)": "CAGACTTCCT"
+    },
+    "SI-TN-A10": {
+        "index(i7)": "GTCGTTGCCT",
+        "index2_workflow_a(i5)": "AGAACTTCTT",
+        "index2_workflow_b(i5)": "AAGAAGTTCT"
+    },
+    "SI-TN-A11": {
+        "index(i7)": "TCGTACGATG",
+        "index2_workflow_a(i5)": "ACCCTCCCAT",
+        "index2_workflow_b(i5)": "ATGGGAGGGT"
+    },
+    "SI-TN-A12": {
+        "index(i7)": "CGCGAGTAGG",
+        "index2_workflow_a(i5)": "CCTGGTGACA",
+        "index2_workflow_b(i5)": "TGTCACCAGG"
+    },
+    "SI-TN-B1": {
+        "index(i7)": "CATAGCATGA",
+        "index2_workflow_a(i5)": "GACCTGCCTG",
+        "index2_workflow_b(i5)": "CAGGCAGGTC"
+    },
+    "SI-TN-B2": {
+        "index(i7)": "TACTGCAATA",
+        "index2_workflow_a(i5)": "AGAGTCCATG",
+        "index2_workflow_b(i5)": "CATGGACTCT"
+    },
+    "SI-TN-B3": {
+        "index(i7)": "TGGCTACCGG",
+        "index2_workflow_a(i5)": "CTGAGTCATT",
+        "index2_workflow_b(i5)": "AATGACTCAG"
+    },
+    "SI-TN-B4": {
+        "index(i7)": "ACGTTTGATT",
+        "index2_workflow_a(i5)": "TACTGAGAGA",
+        "index2_workflow_b(i5)": "TCTCTCAGTA"
+    },
+    "SI-TN-B5": {
+        "index(i7)": "TGGGTGCACA",
+        "index2_workflow_a(i5)": "CATGCATCAT",
+        "index2_workflow_b(i5)": "ATGATGCATG"
+    },
+    "SI-TN-B6": {
+        "index(i7)": "ACGAGCGGAA",
+        "index2_workflow_a(i5)": "AACAACTAAG",
+        "index2_workflow_b(i5)": "CTTAGTTGTT"
+    },
+    "SI-TN-B7": {
+        "index(i7)": "CCATTGTAAG",
+        "index2_workflow_a(i5)": "TACGAATTGA",
+        "index2_workflow_b(i5)": "TCAATTCGTA"
+    },
+    "SI-TN-B8": {
+        "index(i7)": "TAGTAGTTTG",
+        "index2_workflow_a(i5)": "TCATCGGGCG",
+        "index2_workflow_b(i5)": "CGCCCGATGA"
+    },
+    "SI-TN-B9": {
+        "index(i7)": "GATGGAAGGT",
+        "index2_workflow_a(i5)": "AAATTGAGCA",
+        "index2_workflow_b(i5)": "TGCTCAATTT"
+    },
+    "SI-TN-B10": {
+        "index(i7)": "ACAGGTTACG",
+        "index2_workflow_a(i5)": "AGATAAACAG",
+        "index2_workflow_b(i5)": "CTGTTTATCT"
+    },
+    "SI-TN-B11": {
+        "index(i7)": "AGTAGTTTGG",
+        "index2_workflow_a(i5)": "ATAGCATGCA",
+        "index2_workflow_b(i5)": "TGCATGCTAT"
+    },
+    "SI-TN-B12": {
+        "index(i7)": "TCGCCATTTG",
+        "index2_workflow_a(i5)": "ACGGGCATGT",
+        "index2_workflow_b(i5)": "ACATGCCCGT"
+    },
+    "SI-TN-C1": {
+        "index(i7)": "AAGGGTTTAC",
+        "index2_workflow_a(i5)": "TACTCACGCG",
+        "index2_workflow_b(i5)": "CGCGTGAGTA"
+    },
+    "SI-TN-C2": {
+        "index(i7)": "GCTTAAGCAA",
+        "index2_workflow_a(i5)": "GCCTACCGAA",
+        "index2_workflow_b(i5)": "TTCGGTAGGC"
+    },
+    "SI-TN-C3": {
+        "index(i7)": "GTGATCTGGG",
+        "index2_workflow_a(i5)": "ACTGTGTCGC",
+        "index2_workflow_b(i5)": "GCGACACAGT"
+    },
+    "SI-TN-C4": {
+        "index(i7)": "ATGCAAGATC",
+        "index2_workflow_a(i5)": "ACGCCTCTGA",
+        "index2_workflow_b(i5)": "TCAGAGGCGT"
+    },
+    "SI-TN-C5": {
+        "index(i7)": "TCAAAGGGTT",
+        "index2_workflow_a(i5)": "GATTACTGAG",
+        "index2_workflow_b(i5)": "CTCAGTAATC"
+    },
+    "SI-TN-C6": {
+        "index(i7)": "TCAAGTAAAG",
+        "index2_workflow_a(i5)": "CAGTGCTGTT",
+        "index2_workflow_b(i5)": "AACAGCACTG"
+    },
+    "SI-TN-C7": {
+        "index(i7)": "GCTGCTCCCA",
+        "index2_workflow_a(i5)": "CTACAGGGTC",
+        "index2_workflow_b(i5)": "GACCCTGTAG"
+    },
+    "SI-TN-C8": {
+        "index(i7)": "ATCTGTAGTT",
+        "index2_workflow_a(i5)": "AGGCCCAATG",
+        "index2_workflow_b(i5)": "CATTGGGCCT"
+    },
+    "SI-TN-C9": {
+        "index(i7)": "ATGGCGCAAA",
+        "index2_workflow_a(i5)": "CGATGCAAGC",
+        "index2_workflow_b(i5)": "GCTTGCATCG"
+    },
+    "SI-TN-C10": {
+        "index(i7)": "TAATGGGCAA",
+        "index2_workflow_a(i5)": "GCGCATAGGC",
+        "index2_workflow_b(i5)": "GCCTATGCGC"
+    },
+    "SI-TN-C11": {
+        "index(i7)": "TAACTGTAGT",
+        "index2_workflow_a(i5)": "ATGACCGATA",
+        "index2_workflow_b(i5)": "TATCGGTCAT"
+    },
+    "SI-TN-C12": {
+        "index(i7)": "AGCCTTCTCT",
+        "index2_workflow_a(i5)": "CTGTCCGCGT",
+        "index2_workflow_b(i5)": "ACGCGGACAG"
+    },
+    "SI-TN-D1": {
+        "index(i7)": "AGCGCCTTGC",
+        "index2_workflow_a(i5)": "GTACGAAGTG",
+        "index2_workflow_b(i5)": "CACTTCGTAC"
+    },
+    "SI-TN-D2": {
+        "index(i7)": "CAGTAATACA",
+        "index2_workflow_a(i5)": "TTGAGCTGAG",
+        "index2_workflow_b(i5)": "CTCAGCTCAA"
+    },
+    "SI-TN-D3": {
+        "index(i7)": "ATAGAACCAC",
+        "index2_workflow_a(i5)": "CTAACCTAAC",
+        "index2_workflow_b(i5)": "GTTAGGTTAG"
+    },
+    "SI-TN-D4": {
+        "index(i7)": "TTACAATCGT",
+        "index2_workflow_a(i5)": "CAGATTGTAC",
+        "index2_workflow_b(i5)": "GTACAATCTG"
+    },
+    "SI-TN-D5": {
+        "index(i7)": "CTGCCTGGGT",
+        "index2_workflow_a(i5)": "GACCAATAGC",
+        "index2_workflow_b(i5)": "GCTATTGGTC"
+    },
+    "SI-TN-D6": {
+        "index(i7)": "GAAAGCGCGC",
+        "index2_workflow_a(i5)": "GAAACATATC",
+        "index2_workflow_b(i5)": "GATATGTTTC"
+    },
+    "SI-TN-D7": {
+        "index(i7)": "TGTTCGCGAA",
+        "index2_workflow_a(i5)": "TCGTGAAATA",
+        "index2_workflow_b(i5)": "TATTTCACGA"
+    },
+    "SI-TN-D8": {
+        "index(i7)": "GCGTAACGAT",
+        "index2_workflow_a(i5)": "ATTCGTTCAA",
+        "index2_workflow_b(i5)": "TTGAACGAAT"
+    },
+    "SI-TN-D9": {
+        "index(i7)": "TGTCAGTAAG",
+        "index2_workflow_a(i5)": "AGATGACATC",
+        "index2_workflow_b(i5)": "GATGTCATCT"
+    },
+    "SI-TN-D10": {
+        "index(i7)": "CTACGTAGGT",
+        "index2_workflow_a(i5)": "GTCCCACTTA",
+        "index2_workflow_b(i5)": "TAAGTGGGAC"
+    },
+    "SI-TN-D11": {
+        "index(i7)": "CCTAGGCAAA",
+        "index2_workflow_a(i5)": "CAGAAATATC",
+        "index2_workflow_b(i5)": "GATATTTCTG"
+    },
+    "SI-TN-D12": {
+        "index(i7)": "TTAACGGACG",
+        "index2_workflow_a(i5)": "CAAACGTCGC",
+        "index2_workflow_b(i5)": "GCGACGTTTG"
+    },
+    "SI-TN-E1": {
+        "index(i7)": "GTCATCCTAT",
+        "index2_workflow_a(i5)": "CTAGGGCAAA",
+        "index2_workflow_b(i5)": "TTTGCCCTAG"
+    },
+    "SI-TN-E2": {
+        "index(i7)": "CGACCCAGTG",
+        "index2_workflow_a(i5)": "TCGCACCAAC",
+        "index2_workflow_b(i5)": "GTTGGTGCGA"
+    },
+    "SI-TN-E3": {
+        "index(i7)": "CATAGTTCGC",
+        "index2_workflow_a(i5)": "TTTCGTAACT",
+        "index2_workflow_b(i5)": "AGTTACGAAA"
+    },
+    "SI-TN-E4": {
+        "index(i7)": "TCACGTTGGG",
+        "index2_workflow_a(i5)": "CTTTGCTCCA",
+        "index2_workflow_b(i5)": "TGGAGCAAAG"
+    },
+    "SI-TN-E5": {
+        "index(i7)": "TAATCTTCGG",
+        "index2_workflow_a(i5)": "AGCCATCAAT",
+        "index2_workflow_b(i5)": "ATTGATGGCT"
+    },
+    "SI-TN-E6": {
+        "index(i7)": "CCATCACCAC",
+        "index2_workflow_a(i5)": "GTGATCCCAA",
+        "index2_workflow_b(i5)": "TTGGGATCAC"
+    },
+    "SI-TN-E7": {
+        "index(i7)": "CCATTAGGCG",
+        "index2_workflow_a(i5)": "GCATTTCATC",
+        "index2_workflow_b(i5)": "GATGAAATGC"
+    },
+    "SI-TN-E8": {
+        "index(i7)": "CTGGTGATAA",
+        "index2_workflow_a(i5)": "AGGGACCTGG",
+        "index2_workflow_b(i5)": "CCAGGTCCCT"
+    },
+    "SI-TN-E9": {
+        "index(i7)": "CGTTGGTCCG",
+        "index2_workflow_a(i5)": "GTAGCTGATA",
+        "index2_workflow_b(i5)": "TATCAGCTAC"
+    },
+    "SI-TN-E10": {
+        "index(i7)": "CTTCCTACTT",
+        "index2_workflow_a(i5)": "TCCTCCTGTA",
+        "index2_workflow_b(i5)": "TACAGGAGGA"
+    },
+    "SI-TN-E11": {
+        "index(i7)": "AGACGCATCT",
+        "index2_workflow_a(i5)": "TTGTACGTGG",
+        "index2_workflow_b(i5)": "CCACGTACAA"
+    },
+    "SI-TN-E12": {
+        "index(i7)": "TCGGGAGCTG",
+        "index2_workflow_a(i5)": "CCAGACTGCA",
+        "index2_workflow_b(i5)": "TGCAGTCTGG"
+    },
+    "SI-TN-F1": {
+        "index(i7)": "CCTGGCTATA",
+        "index2_workflow_a(i5)": "CCCTCACAAA",
+        "index2_workflow_b(i5)": "TTTGTGAGGG"
+    },
+    "SI-TN-F2": {
+        "index(i7)": "ACTTGTTCGA",
+        "index2_workflow_a(i5)": "TGGATGGGTG",
+        "index2_workflow_b(i5)": "CACCCATCCA"
+    },
+    "SI-TN-F3": {
+        "index(i7)": "AACCATTAGT",
+        "index2_workflow_a(i5)": "GTATGTCGGG",
+        "index2_workflow_b(i5)": "CCCGACATAC"
+    },
+    "SI-TN-F4": {
+        "index(i7)": "TTGCGGGACT",
+        "index2_workflow_a(i5)": "TGAGGATCGC",
+        "index2_workflow_b(i5)": "GCGATCCTCA"
+    },
+    "SI-TN-F5": {
+        "index(i7)": "GAGCGAAAGC",
+        "index2_workflow_a(i5)": "TCCTTACCAA",
+        "index2_workflow_b(i5)": "TTGGTAAGGA"
+    },
+    "SI-TN-F6": {
+        "index(i7)": "AGCATCACAT",
+        "index2_workflow_a(i5)": "TCGTAGAGGA",
+        "index2_workflow_b(i5)": "TCCTCTACGA"
+    },
+    "SI-TN-F7": {
+        "index(i7)": "ACCATTGCAC",
+        "index2_workflow_a(i5)": "ACAGTTAAGC",
+        "index2_workflow_b(i5)": "GCTTAACTGT"
+    },
+    "SI-TN-F8": {
+        "index(i7)": "GTTCTGGAAC",
+        "index2_workflow_a(i5)": "CGGGTACTGG",
+        "index2_workflow_b(i5)": "CCAGTACCCG"
+    },
+    "SI-TN-F9": {
+        "index(i7)": "CGGACGACCT",
+        "index2_workflow_a(i5)": "GTTGCGCCTC",
+        "index2_workflow_b(i5)": "GAGGCGCAAC"
+    },
+    "SI-TN-F10": {
+        "index(i7)": "TGGACCTTTG",
+        "index2_workflow_a(i5)": "TAAATCTCTG",
+        "index2_workflow_b(i5)": "CAGAGATTTA"
+    },
+    "SI-TN-F11": {
+        "index(i7)": "TCATATGTGA",
+        "index2_workflow_a(i5)": "AAAGTGTTCT",
+        "index2_workflow_b(i5)": "AGAACACTTT"
+    },
+    "SI-TN-F12": {
+        "index(i7)": "CGCCCTCATC",
+        "index2_workflow_a(i5)": "GCGTCTACGC",
+        "index2_workflow_b(i5)": "GCGTAGACGC"
+    },
+    "SI-TN-G1": {
+        "index(i7)": "TCATCGTTCT",
+        "index2_workflow_a(i5)": "AATTCGGGAA",
+        "index2_workflow_b(i5)": "TTCCCGAATT"
+    },
+    "SI-TN-G2": {
+        "index(i7)": "GCACTACTGA",
+        "index2_workflow_a(i5)": "CACTACGGTT",
+        "index2_workflow_b(i5)": "AACCGTAGTG"
+    },
+    "SI-TN-G3": {
+        "index(i7)": "GTTATCACGA",
+        "index2_workflow_a(i5)": "GCAACACCTC",
+        "index2_workflow_b(i5)": "GAGGTGTTGC"
+    },
+    "SI-TN-G4": {
+        "index(i7)": "CAGGCGAATA",
+        "index2_workflow_a(i5)": "CCCTTTACCG",
+        "index2_workflow_b(i5)": "CGGTAAAGGG"
+    },
+    "SI-TN-G5": {
+        "index(i7)": "TAAGTAGAAG",
+        "index2_workflow_a(i5)": "CGCGTTTCCT",
+        "index2_workflow_b(i5)": "AGGAAACGCG"
+    },
+    "SI-TN-G6": {
+        "index(i7)": "CGAGGAGCAT",
+        "index2_workflow_a(i5)": "CAGTAAGTCT",
+        "index2_workflow_b(i5)": "AGACTTACTG"
+    },
+    "SI-TN-G7": {
+        "index(i7)": "ATCACCGTTT",
+        "index2_workflow_a(i5)": "TGTCGAGGAG",
+        "index2_workflow_b(i5)": "CTCCTCGACA"
+    },
+    "SI-TN-G8": {
+        "index(i7)": "GACCGCCTTT",
+        "index2_workflow_a(i5)": "TTTAACTCGT",
+        "index2_workflow_b(i5)": "ACGAGTTAAA"
+    },
+    "SI-TN-G9": {
+        "index(i7)": "TCCCGACCTG",
+        "index2_workflow_a(i5)": "AACCCACCAA",
+        "index2_workflow_b(i5)": "TTGGTGGGTT"
+    },
+    "SI-TN-G10": {
+        "index(i7)": "ATTGTACAGT",
+        "index2_workflow_a(i5)": "TTGGTTACGT",
+        "index2_workflow_b(i5)": "ACGTAACCAA"
+    },
+    "SI-TN-G11": {
+        "index(i7)": "GACAATTGGG",
+        "index2_workflow_a(i5)": "ACATTTGGAA",
+        "index2_workflow_b(i5)": "TTCCAAATGT"
+    },
+    "SI-TN-G12": {
+        "index(i7)": "ATTGGCGCAA",
+        "index2_workflow_a(i5)": "TCAATTGCAA",
+        "index2_workflow_b(i5)": "TTGCAATTGA"
+    },
+    "SI-TN-H1": {
+        "index(i7)": "CGTTCCACAT",
+        "index2_workflow_a(i5)": "GAGGGAGCCA",
+        "index2_workflow_b(i5)": "TGGCTCCCTC"
+    },
+    "SI-TN-H2": {
+        "index(i7)": "ATCTTGCAGC",
+        "index2_workflow_a(i5)": "CGAGTAAGGA",
+        "index2_workflow_b(i5)": "TCCTTACTCG"
+    },
+    "SI-TN-H3": {
+        "index(i7)": "CAGCTGTTAT",
+        "index2_workflow_a(i5)": "AGTACGTGAG",
+        "index2_workflow_b(i5)": "CTCACGTACT"
+    },
+    "SI-TN-H4": {
+        "index(i7)": "CTACGACTGA",
+        "index2_workflow_a(i5)": "CATCGCCCTC",
+        "index2_workflow_b(i5)": "GAGGGCGATG"
+    },
+    "SI-TN-H5": {
+        "index(i7)": "GCTGGGATGC",
+        "index2_workflow_a(i5)": "GACTAACTGG",
+        "index2_workflow_b(i5)": "CCAGTTAGTC"
+    },
+    "SI-TN-H6": {
+        "index(i7)": "CCGTCGCTGA",
+        "index2_workflow_a(i5)": "AGGTGTTAGT",
+        "index2_workflow_b(i5)": "ACTAACACCT"
+    },
+    "SI-TN-H7": {
+        "index(i7)": "AAGTTAGTAC",
+        "index2_workflow_a(i5)": "ACGCGGAATA",
+        "index2_workflow_b(i5)": "TATTCCGCGT"
+    },
+    "SI-TN-H8": {
+        "index(i7)": "GACTCAGGGT",
+        "index2_workflow_a(i5)": "GAGACCCTTC",
+        "index2_workflow_b(i5)": "GAAGGGTCTC"
+    },
+    "SI-TN-H9": {
+        "index(i7)": "TGCACAAGCG",
+        "index2_workflow_a(i5)": "TGATGTTTGC",
+        "index2_workflow_b(i5)": "GCAAACATCA"
+    },
+    "SI-TN-H10": {
+        "index(i7)": "TTCGCTTAAC",
+        "index2_workflow_a(i5)": "CCGCTCGTTA",
+        "index2_workflow_b(i5)": "TAACGAGCGG"
+    },
+    "SI-TN-H11": {
+        "index(i7)": "AGACGACCGA",
+        "index2_workflow_a(i5)": "CCACAGAACA",
+        "index2_workflow_b(i5)": "TGTTCTGTGG"
+    },
+    "SI-TN-H12": {
+        "index(i7)": "AGTGGAGGGA",
+        "index2_workflow_a(i5)": "TGCATAGTTT",
+        "index2_workflow_b(i5)": "AAACTATGCA"
     }
 }
+

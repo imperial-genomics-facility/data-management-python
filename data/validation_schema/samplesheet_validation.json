@@ -31,7 +31,7 @@
            },
            "index":{
                "type" : "string",
-               "pattern" : "^[ATCG]+$|^SI-[GNT][AT]-[A-Z][0-9]+$"
+               "pattern" : "^[ATCG]+$|^SI-[GNT][ATN]-[A-Z][0-9]+$"
            },
            "I5_Index_ID" : {
                "type" : "string"
