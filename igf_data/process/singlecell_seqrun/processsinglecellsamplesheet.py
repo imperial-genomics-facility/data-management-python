@@ -43,11 +43,17 @@ class ProcessSingleCellDualIndexSamplesheet:
     self.sc_barcode_index1_tag = sc_barcode_index1_tag
     self.index2_rule = index2_rule
 
-  def modify_samplesheet_for_sc_dual_barcode(self,output_samplesheet):
+  def modify_samplesheet_for_sc_dual_barcode(
+        self,output_samplesheet, remove_adapters=True, adapter_trim_section='Settings',
+        adapter1_label='Adapter', adapter2_label='AdapterRead2'):
     '''
     A method for modifying samplesheet file sor sc dual index barcodes
 
     :param output_samplesheet: A file path for output samplesheet file. This file shouldn't be present.
+    :param remove_adapters: Remove adapter config from samplesheet, default True
+    :param adapter_trim_section: Adapter trim section name on samplesheet, default 'Settings'
+    :param adapter1_label: Adapter 1 label, default 'Adapter'
+    :param adapter2_label: Adapter 2 label, default 'AdapterRead2'
     '''
     try:
       if isinstance(self.workflow_group,tuple):
@@ -68,6 +74,25 @@ class ProcessSingleCellDualIndexSamplesheet:
           result_type='reduce',
           axis=1)
       sa._data = df.to_dict(orient='records')
+      if remove_adapters:
+        adapter1_count = \
+          sa.check_sample_header(
+            section=adapter_trim_section,
+            condition_key=adapter1_label)
+        adapter2_count = \
+          sa.check_sample_header(
+            section=adapter_trim_section,
+            condition_key=adapter2_label)
+        if adapter1_count > 0:
+          sa.modify_sample_header(
+            section=adapter_trim_section,
+            type='remove',
+            condition_key=adapter1_label)                                       # remove adapter 1, if its present
+        if adapter2_count > 0:
+          sa.modify_sample_header(
+            section=adapter_trim_section,
+            type='remove',
+            condition_key=adapter2_label)                                       # remove adapter 2, if its present
       sa.print_sampleSheet(output_samplesheet)
     except Exception as e:
       raise ValueError('Failed to convert samplesheet {0}, error: {1}'.\
