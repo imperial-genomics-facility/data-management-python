@@ -903,6 +903,16 @@ def run_picard_for_cellranger(**context):
       ti.xcom_push(
         key=bam_files_xcom_key,
         value=output_bam_files)
+    message = \
+      'Finished Picard {0}, sample: {1}, command: {2}'.\
+        format(picard_command, sample_igf_id, picard_command_line)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=message,
+      reaction='pass')
   except Exception as e:
     logging.error(e)
     raise ValueError(e)
@@ -1012,6 +1022,16 @@ def convert_bam_to_cram_func(**context):
     ti.xcom_push(
       key=cram_files_xcom_key,
       value=final_output_list)
+    message = \
+      'Finished BAM to CRAM conversion for sample {0}: {1}'.\
+        format(sample_igf_id, final_output_list)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=message,
+      reaction='pass')
   except Exception as e:
     logging.error(e)
     raise ValueError(e)
@@ -1290,7 +1310,7 @@ def run_singlecell_notebook_wrapper_func(**context):
       allow_errors=allow_errors,
       use_ephemeral_space=True,
       singularity_image_path=singularity_image_path)
-    output_notebook_path,_ = \
+    output_notebook_path, notebook_cmd = \
       nb.execute_notebook_in_singularity()
     ti.xcom_push(
       key=output_notebook_key,
@@ -1299,6 +1319,19 @@ def run_singlecell_notebook_wrapper_func(**context):
       ti.xcom_push(
         key=output_cellbrowser_key,
         value=cellbrowser_html_dir)
+    message = \
+      'Generated notebook for analysis: {0}, command: {1}'.\
+        format(analysis_name,notebook_cmd)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      asana_conf=ASANA_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      asana_project_id=ASANA_PROJECT,
+      project_id=project_igf_id,
+      comment=message,
+      reaction='pass')
   except Exception as e:
     logging.error(e)
     raise ValueError(e)
@@ -2151,6 +2184,17 @@ def configure_cellranger_run_func(**context):
     ti.xcom_push(
       key=library_csv_xcom_key,
       value=csv_path)
+    # log
+    message = \
+      'Generated temp lib file {0} for cellranger multi'.\
+        format(csv_path)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=message,
+      reaction='pass')
   except Exception as e:
     logging.error(e)
     raise ValueError(e)
