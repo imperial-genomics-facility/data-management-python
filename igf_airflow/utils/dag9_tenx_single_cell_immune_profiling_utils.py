@@ -1870,6 +1870,22 @@ def run_cellranger_tool(**context):
       context['params'].get('cellranger_xcom_key')
     cellranger_options = \
       context['params'].get('cellranger_options')
+    dbparams = \
+      read_dbconf_json(DATABASE_CONFIG_FILE)
+    dag_run = context.get('dag_run')
+    if dag_run is None or \
+       dag_run.conf is None or \
+       dag_run.conf.get('analysis_id') is None:
+      raise ValueError('No analysis id found for collection')
+    analysis_id = \
+      dag_run.conf.get('analysis_id')
+    aa = \
+      AnalysisAdaptor(**dbparams)
+    aa.start_session()
+    project_igf_id = \
+      aa.fetch_project_igf_id_for_analysis_id(
+        analysis_id=int(analysis_id))                                           # fetch project id for analysis
+    aa.close_session()
     analysis_description = \
       ti.xcom_pull(
         task_ids=analysis_description_xcom_pull_task,
@@ -1887,8 +1903,8 @@ def run_cellranger_tool(**context):
       if sample_id is None:
         sample_id = sample_igf_id
       else:
-        sample_id = '{0}_{1}'.format(sample_id,sample_igf_id)
-    message = 'Started cellranger run, output patha: {0}'.format(output_dir)
+        sample_id = '{0}_{1}'.format(sample_id, sample_igf_id)
+    message = 'Started cellranger run, output path: {0}'.format(output_dir)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
@@ -1896,7 +1912,7 @@ def run_cellranger_tool(**context):
       dag_id=context['task'].dag_id,
       comment=message,
       reaction='pass')
-    _,output_dir = \
+    cellranger_multi_cmd, output_dir = \
       run_cellranger_multi(
         cellranger_exe=cellranger_exe,
         library_csv=library_csv,
@@ -1908,6 +1924,19 @@ def run_cellranger_tool(**context):
     ti.xcom_push(
       key=cellranger_xcom_key,
       value=output_dir)
+    message = \
+      'Finished cellranger multi {0}: {1}'.\
+        format(sample_id, cellranger_multi_cmd)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      asana_conf=ASANA_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      asana_project_id=ASANA_PROJECT,
+      project_id=project_igf_id,
+      comment=message,
+      reaction='pass')
   except Exception as e:
     logging.error(e)
     raise ValueError(e)
