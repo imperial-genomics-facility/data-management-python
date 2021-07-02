@@ -1927,9 +1927,9 @@ def run_sc_read_trimmming_func(**context):
     run_id = \
       context['params'].get('run_id')
     r1_length = \
-      context['params'].get('r1_length')
+      context['params'].get('r1-length')
     r2_length = \
-      context['params'].get('r2_length')
+      context['params'].get('r2-length')
     fastq_input_dir_tag = \
       context['params'].get('fastq_input_dir_tag')
     fastq_output_dir_tag = \
@@ -1996,10 +1996,10 @@ def _get_fastq_and_run_cutadapt_trim(
     analysis_description = pd.DataFrame(analysis_description).fillna(0)
     analysis_entry = \
       analysis_description[analysis_description['sample_igf_id']==sample_igf_id].copy()
-    if 'r1_length' in analysis_entry.columns:
-      r1_length = analysis_entry['r1_length'].values[0]                         # reset r1 length
-    if 'r2_length' in analysis_entry.columns:
-      r2_length = analysis_entry['r2_length'].values[0]                         # reset r2 length
+    if 'r1-length' in analysis_entry.columns:
+      r1_length = analysis_entry['r1-length'].values[0]                         # reset r1-length
+    if 'r2-length' in analysis_entry.columns:
+      r2_length = analysis_entry['r2-length'].values[0]                         # reset r2-length
     run = sample_info.get('runs').get(str(run_id))
     if run is None:
       raise ValueError(
@@ -2150,7 +2150,10 @@ def _create_library_csv_for_cellranger_multi(analysis_description,analysis_info,
         'chemistry',
         'expect-cells',
         'force-cells',
-        'include-introns'],
+        'include-introns',
+        'no-secondary',
+        'no-bam',
+        'min-assignment-confidence'],
       'feature':[
         'reference',
         'r1-length',
@@ -2263,8 +2266,8 @@ def fetch_analysis_info_and_branch_func(**context):
       #   'sample_igf_id':'IGF001',
       #   'feature_type':'gene expression',
       #   'reference_type':'TRANSCRIPTOME_TENX',
-      #   'r1_length':26,
-      #   'r2_length':0,                          # optional, 0 for no trimming
+      #   'r1-length':26,
+      #   'r2-length':0,                          # optional, 0 for no trimming
       #   'cell_annotation_csv':'/path/csv',      # optional, cell annotation file
       #   'genome_build':'HG38' }]
       #  OUTPUT:
@@ -2272,8 +2275,8 @@ def fetch_analysis_info_and_branch_func(**context):
       #   'sample_igf_id':'IGF001',
       #   'feature_type':'gene expression',
       #   'reference_type':'TRANSCRIPTOME_TENX',
-      #   'r1_length':26,
-      #   'r2_length':0,                          # optional, 0 for no trimming
+      #   'r1-length':26,
+      #   'r2-length':0,                          # optional, 0 for no trimming
       #   'cell_annotation_csv':'/path/csv',      # optional, cell annotation file
       #   'reference':'/path/ref',
       #   'genome_build':'HG38' }]
@@ -2307,8 +2310,8 @@ def fetch_analysis_info_and_branch_func(**context):
       #   'sample_igf_id':'IGF001',
       #   'feature_type':'gene expression',
       #   'reference_type':'TRANSCRIPTOME_TENX',
-      #   'r1_length':26,
-      #   'r2_length':0,                          # optional, 0 for no trimming
+      #   'r1-length':26,
+      #   'r2-length':0,                          # optional, 0 for no trimming
       #   'cell_annotation_csv':'/path/csv',      # optional, cell annotation file
       #   'reference':'/path/ref',
       #   'genome_build':'HG38' }]
