@@ -1709,8 +1709,6 @@ def decide_analysis_branch_func(**context):
       context['params'].get('run_scirpy_vdj_t_task')
     run_seurat_for_sc_5p_task = \
       context['params'].get('run_seurat_for_sc_5p_task')
-    #run_picard_alignment_summary_task = \
-    #  context['params'].get('run_picard_alignment_summary_task')
     convert_cellranger_bam_to_cram = \
       context['params'].get('convert_cellranger_bam_to_cram_task')
     task_list = [load_cellranger_result_to_db_task]
@@ -1730,8 +1728,6 @@ def decide_analysis_branch_func(**context):
         append(run_scanpy_for_sc_5p_task)
       task_list.\
         append(run_seurat_for_sc_5p_task)
-      #task_list.\
-      #  append(run_picard_alignment_summary_task)
       task_list.\
         append(convert_cellranger_bam_to_cram)
     if 'vdj' in feature_list:
@@ -2154,8 +2150,10 @@ def _get_fastq_and_run_cutadapt_trim(
 def configure_cellranger_run_func(**context):
   try:
     ti = context.get('ti')
+    #
     # xcop_pull analysis_description
     # xcom_pull analysis_info
+    #
     xcom_pull_task_id = \
       context['params'].get('xcom_pull_task_id')
     analysis_description_xcom_key = \
@@ -2174,17 +2172,23 @@ def configure_cellranger_run_func(**context):
       ti.xcom_pull(
         task_ids=xcom_pull_task_id,
         key=analysis_info_xcom_key)
+    #
     # generate library.csv file for cellranger run
+    #
     csv_path = \
       _create_library_csv_for_cellranger_multi(
         analysis_description=analysis_description,
         analysis_info=analysis_info,
         work_dir=work_dir)
+    #
     # push the csv path to xcom
+    #
     ti.xcom_push(
       key=library_csv_xcom_key,
       value=csv_path)
+    #
     # log
+    #
     message = \
       'Generated temp lib file {0} for cellranger multi'.\
         format(csv_path)
@@ -2337,11 +2341,14 @@ def fetch_analysis_info_and_branch_func(**context):
         raise KeyError('Key sample_igf_id not in analysis_description')
       sample_igf_id_list = \
         analysis_description_df['sample_igf_id'].values.tolist()
+      #
       # check if sample and analysis are from the same project
+      #
       _check_sample_id_and_analysis_id_for_project(
         analysis_id=analysis_id,
         sample_igf_id_list=sample_igf_id_list,
         dbconfig_file=DATABASE_CONFIG_FILE)
+      #
       # add reference genome paths if reference type and genome build is present
       # check for genome build info
       # INPUT:
@@ -2363,16 +2370,19 @@ def fetch_analysis_info_and_branch_func(**context):
       #   'cell_annotation_csv':'/path/csv',      # optional, cell annotation file
       #   'reference':'/path/ref',
       #   'genome_build':'HG38' }]
+      #
       analysis_description = \
         _add_reference_genome_path_for_analysis(
           database_config_file=database_config_file,
           analysis_description=analysis_description,
           genome_required=True)
+      #
       # check the analysis description and sample validity
       # warn if multiple samples are allocated to same sub category
       # filter analysis branch list
       # INPUT: formatted analysis description with reference column
       # OUTPUT: a list of samples, a list of analysis and a list of errors
+      #
       sample_id_list, analysis_list, messages = \
         _validate_analysis_description(
           analysis_description=analysis_description,
@@ -2380,7 +2390,9 @@ def fetch_analysis_info_and_branch_func(**context):
       if len(messages) > 0:
         raise ValueError('Analysis validation failed: {0}'.\
                 format(messages))
+      #
       # get the fastq paths for sample ids and set the trim output dirs per run
+      #
       fastq_list = \
         get_fastq_and_run_for_samples(
           dbconfig_file=database_config_file,
@@ -2427,7 +2439,9 @@ def fetch_analysis_info_and_branch_func(**context):
       if len(messages) > 0:
         raise ValueError('Analysis description formatting failed: {0}'.\
                 format(messages))
+      #
       # mark analysis_id as running,if its not already running
+      #
       status = \
         _check_and_mark_analysis_seed(
           analysis_id=analysis_id,
@@ -2435,7 +2449,9 @@ def fetch_analysis_info_and_branch_func(**context):
           new_status='RUNNING',
           no_change_status='RUNNING',
           database_config_file=database_config_file)
+      #
       # xcom push analysis_info and analysis_description
+      #
       if status:
         ti.xcom_push(
           key=analysis_description_xcom_key,
