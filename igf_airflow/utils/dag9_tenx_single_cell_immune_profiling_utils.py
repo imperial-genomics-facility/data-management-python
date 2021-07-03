@@ -2332,6 +2332,16 @@ def fetch_analysis_info_and_branch_func(**context):
       analysis_type = \
         dag_run.conf.get('analysis_type')
       feature_types = list(FEATURE_TYPE.keys())
+      analysis_description_df = pd.DataFrame(analysis_description)
+      if 'sample_igf_id' not in analysis_description_df.columns:
+        raise KeyError('Key sample_igf_id not in analysis_description')
+      sample_igf_id_list = \
+        analysis_description_df['sample_igf_id'].values.tolist()
+      # check if sample and analysis are from the same project
+      _check_sample_id_and_analysis_id_for_project(
+        analysis_id=analysis_id,
+        sample_igf_id_list=sample_igf_id_list,
+        dbconfig_file=DATABASE_CONFIG_FILE)
       # add reference genome paths if reference type and genome build is present
       # check for genome build info
       # INPUT:
@@ -2439,6 +2449,42 @@ def fetch_analysis_info_and_branch_func(**context):
   except Exception as e:
     logging.error(e)
     raise ValueError(e)
+
+
+def _check_sample_id_and_analysis_id_for_project(
+      analysis_id,sample_igf_id_list,dbconfig_file):
+  '''
+  An internal method for checking the consistency of sample ids and analysis records
+
+  :param analysis_id: Analysis id
+  :param sample_igf_id_list: A list of sample_igf_id
+  :returns: None
+  '''
+  try:
+    dbparams = read_dbconf_json(dbconfig_file)
+    sa = SampleAdaptor(**dbparams)
+    sa.start_session()
+    project_igf_id_list = \
+      sa.get_project_ids_for_list_of_samples(
+        sample_igf_id_list=sample_igf_id_list)
+    aa = AnalysisAdaptor(**{'session':sa.session})
+    project_igf_id = \
+      aa.fetch_project_igf_id_for_analysis_id(
+        analysis_id=int(analysis_id))
+    sa.close_session()
+    if len(project_igf_id_list)>1:
+      raise ValueError(
+              'More than one project found for sample list, projects: {0}'.\
+                format(project_igf_id_list))
+    if len(project_igf_id_list)==1 and \
+       project_igf_id_list[0]!=project_igf_id:
+      raise ValueError(
+              'Analysis is linked to project {0} and samples are linked to poject {1}'.\
+                format(project_igf_id,project_igf_id_list))
+  except Exception as e:
+    raise ValueError(
+            'Failed sample and project consistancy check, error: {0}'.\
+              format(e))
 
 
 def _add_reference_genome_path_for_analysis(
