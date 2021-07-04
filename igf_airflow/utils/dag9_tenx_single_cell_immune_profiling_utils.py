@@ -36,6 +36,7 @@ from igf_data.utils.tools.picard_util import Picard_tools
 from igf_data.utils.tools.samtools_utils import run_bam_idxstat
 from igf_data.utils.tools.samtools_utils import run_bam_stats
 from igf_data.utils.tools.samtools_utils import index_bam_or_cram
+from igf_data.utils.tools.samtools_utils import run_sort_bam
 from igf_data.utils.project_analysis_utils import Project_analysis
 from igf_data.utils.project_status_utils import Project_status
 from jinja2 import Template,Environment,FileSystemLoader,select_autoescape
