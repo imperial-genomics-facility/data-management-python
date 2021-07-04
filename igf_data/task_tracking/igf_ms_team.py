@@ -78,10 +78,10 @@ class IGF_ms_team:
       themeColor = '#FFFFFF'
       if reaction !='' or reaction is not None:
         if reaction == 'pass':
-          reaction =  '&#x2705;'
+          reaction =  '&#x1f7e2;'
           themeColor = '#00cc44'
         elif reaction == 'fail':
-          reaction = '&#x274C'
+          reaction = '&#x1f534;'
           themeColor = '#DC143C'
         elif reaction == 'sleep':
           reaction = '&#128564'
