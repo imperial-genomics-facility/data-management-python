@@ -1,4 +1,5 @@
 import os,logging,subprocess,re,fnmatch
+from typing import IO
 import pandas as pd
 from copy import copy
 from airflow.models import Variable
@@ -31,7 +32,6 @@ from igf_data.utils.jupyter_nbconvert_wrapper import Notebook_runner
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_data.utils.box_upload import upload_file_or_dir_to_box
 from igf_data.utils.tools.samtools_utils import convert_bam_to_cram
-from igf_data.utils.tools.samtools_utils import index_bam_or_cram
 from igf_data.utils.tools.picard_util import Picard_tools
 from igf_data.utils.tools.samtools_utils import run_bam_idxstat
 from igf_data.utils.tools.samtools_utils import run_bam_stats
@@ -81,7 +81,58 @@ IRDOS_EXE_DIR = Variable.get('irods_exe_dir',default_var=None)
 CELLRANGER_EXE = Variable.get('cellranger_exe',default_var=None)
 CELLRANGER_JOB_TIMEOUT = Variable.get('cellranger_job_timeout',default_var=None)
 
+
 ## FUNCTION
+def generate_cell_sorted_bam_func(**context):
+  try:
+    ti = context.get('ti')
+    xcom_pull_task = \
+      context['params'].get('xcom_pull_task')
+    xcom_pull_files_key = \
+      context['params'].get('xcom_pull_files_key')
+    cellranger_bam_path = \
+      context['params'].get('cellranger_bam_path', 'count/possorted_genome_bam.bam')
+    cellsorted_bam_path = \
+      context['params'].get('cellranger_bam_path', 'count/cellsorted_possorted_genome_bam.bam')
+    threads = \
+      context['params'].get('threads', 1)
+    cellranger_output_dir = \
+      ti.xcom_pull(
+        task_ids=xcom_pull_task,
+        key=xcom_pull_files_key)
+    input_bam_path = \
+      os.path.join(cellranger_output_dir, cellranger_bam_path)
+    output_bam_path = \
+      os.path.join(cellranger_output_dir, cellsorted_bam_path)
+    if os.path.exists(output_bam_path):
+      raise IOError(
+        'File {0} already present. Check and remove it before restarting the job'.\
+          format(output_bam_path))
+    run_sort_bam(
+      samtools_exe=SAMTOOLS_EXE,
+      singularity_image=SAMTOOLS_IMAGE,
+      input_bam_path=input_bam_path,
+      output_bam_path=output_bam_path,
+      sort_by_name=False,
+      use_ephemeral_space=1,
+      threads=threads,
+      force=False,
+      dry_run=False,
+      cram_out=False,
+      index_output=True,
+      sort_params=None)
+  except Exception as e:
+    logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise ValueError(e)
+
+
 def create_and_update_qc_pages(**context):
   try:
     collection_type_list = \
@@ -186,6 +237,13 @@ def create_and_update_qc_pages(**context):
       remote_file=remote_csv_file_path)                                         # copy json data for analysis csv data
   except Exception as e:
     logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
     raise ValueError(e)
 
 
@@ -318,6 +376,13 @@ def clean_up_files(**context):
                 format(type(file_list)))
   except Exception as e:
     logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
     raise ValueError(e)
 
 
@@ -348,6 +413,13 @@ def change_pipeline_status(**context):
                   format(analysis_id,analysis_type))
   except Exception as e:
     logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
     raise ValueError(e)
 
 
@@ -381,6 +453,13 @@ def index_and_copy_bam_for_parallel_analysis(**context):
     return list_of_tasks
   except Exception as e:
     logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
     raise ValueError(e)
 
 
@@ -561,6 +640,13 @@ def run_multiqc_for_cellranger(**context):
       value=multiqc_data)
   except Exception as e:
     logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
     raise ValueError(e)
 
 
@@ -594,7 +680,9 @@ def _configure_and_run_multiqc(
         check_file_path(file_path)
         fp.write('{}\n'.format(file_path))
     date_stamp = get_date_stamp()
-    ### write multiqc config file
+    #
+    # write multiqc config file
+    #
     check_file_path(multiqc_template_file)
     multiqc_conf_file = \
       os.path.join(
@@ -617,7 +705,9 @@ def _configure_and_run_multiqc(
         date_stamp=date_stamp,
         tool_order_list=tool_order_list).\
       dump(multiqc_conf_file)
-    ### configure multiqc run
+    #
+    # configure multiqc run
+    #
     multiqc_report_title = \
       'Project:{0},Sample:{1}'.\
         format(project_igf_id,sample_igf_id)
@@ -633,7 +723,9 @@ def _configure_and_run_multiqc(
                 format(type(multiqc_params)))
     multiqc_cmd.\
       extend(multiqc_params)
-    ### configure singularity run
+    #
+    # configure singularity run
+    #
     bind_dir_list = \
       [os.path.dirname(path)
         for path in analysis_paths_list]
@@ -765,6 +857,13 @@ def run_samtools_for_cellranger(**context):
         value=temp_output)
   except Exception as e:
     logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
     raise ValueError(e)
 
 
@@ -916,6 +1015,13 @@ def run_picard_for_cellranger(**context):
       reaction='pass')
   except Exception as e:
     logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
     raise ValueError(e)
 
 
@@ -1035,6 +1141,13 @@ def convert_bam_to_cram_func(**context):
       reaction='pass')
   except Exception as e:
     logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
     raise ValueError(e)
 
 
@@ -1097,6 +1210,13 @@ def upload_analysis_file_to_box(**context):
         skip_existing=False)
   except Exception as e:
     logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
     raise ValueError(e)
 
 
@@ -1124,6 +1244,13 @@ def task_branch_function(**context):
     return task_list
   except Exception as e:
     logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
     raise ValueError(e)
 
 
@@ -1191,6 +1318,13 @@ def load_analysis_files_func(**context):
       value=output_file_list)
   except Exception as e:
     logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
     raise ValueError(e)
 
 
@@ -1335,6 +1469,13 @@ def run_singlecell_notebook_wrapper_func(**context):
       reaction='pass')
   except Exception as e:
     logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
     raise ValueError(e)
 
 
@@ -1414,6 +1555,13 @@ def irods_files_upload_for_analysis(**context):
         file_tag=collection_name)
   except Exception as e:
     logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
     raise ValueError(e)
 
 
@@ -1567,6 +1715,13 @@ def ftp_files_upload_for_analysis(**context):
           raise
   except Exception as e:
     logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
     raise ValueError(e)
 
 
@@ -1688,6 +1843,13 @@ def load_cellranger_result_to_db_func(**context):
       value=output_html_file[0])
   except Exception as e:
     logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
     raise ValueError(e)
 
 
@@ -1743,6 +1905,13 @@ def decide_analysis_branch_func(**context):
     return task_list
   except Exception as e:
     logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
     raise ValueError(e)
 
 
@@ -1830,6 +1999,13 @@ def load_cellranger_metrices_to_collection(**context):
       raise
   except Exception as e:
     logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
     raise ValueError(e)
 
 
@@ -1969,6 +2145,13 @@ def run_cellranger_tool(**context):
       reaction='pass')
   except Exception as e:
     logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
     raise ValueError(e)
 
 
@@ -2017,6 +2200,13 @@ def run_sc_read_trimmming_func(**context):
       singularity_image=singularity_image)
   except Exception as e:
     logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
     raise ValueError(e)
 
 
@@ -2202,6 +2392,13 @@ def configure_cellranger_run_func(**context):
       reaction='pass')
   except Exception as e:
     logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
     raise ValueError(e)
 
 
@@ -2465,6 +2662,13 @@ def fetch_analysis_info_and_branch_func(**context):
     return analysis_list                                                        # return analysis list for branching
   except Exception as e:
     logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
     raise ValueError(e)
 
 
