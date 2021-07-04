@@ -1,7 +1,7 @@
 import os,subprocess,fnmatch
 import pandas as pd
 from shlex import quote
-from igf_data.utils.fileutils import check_file_path,get_temp_dir,remove_dir,copy_local_file
+from igf_data.utils.fileutils import check_file_path,get_temp_dir, remove_dir,copy_local_file
 from igf_data.utils.singularity_run_wrapper import execute_singuarity_cmd
 
 def _check_cram_file(cram_path):
@@ -38,7 +38,7 @@ def _check_bam_file(bam_file):
     raise
 
 
-def _check_bam_index(samtools_exe,bam_file,singuarity_image=None,dry_run=False):
+def _check_bam_index(samtools_exe,bam_file, singuarity_image=None, dry_run=False):
   '''
   An internal method for checking bam index files. It will generate a new index if its not found.
   
@@ -52,7 +52,7 @@ def _check_bam_index(samtools_exe,bam_file,singuarity_image=None,dry_run=False):
       check_file_path(samtools_exe)
     bam_index='{0}.bai'.format(bam_file)
     if not os.path.exists(bam_index):
-      index_bam_or_cram(\
+      index_bam_or_cram(
         samtools_exe=samtools_exe,
         input_path=bam_file,
         singuarity_image=singuarity_image,
@@ -62,8 +62,8 @@ def _check_bam_index(samtools_exe,bam_file,singuarity_image=None,dry_run=False):
 
 
 def index_bam_or_cram(
-      samtools_exe,input_path,threads=1,
-      singuarity_image=None,dry_run=False):
+      samtools_exe, input_path, threads=1,
+      singuarity_image=None, dry_run=False):
   '''
   A method for running samtools index
 
@@ -86,7 +86,7 @@ def index_bam_or_cram(
         return index_cmd
     if singuarity_image is None:
       subprocess.\
-        check_call(\
+        check_call(
           ' '.join(index_cmd),
           shell=True)
     else:
@@ -94,16 +94,16 @@ def index_bam_or_cram(
       execute_singuarity_cmd(
         image_path=singuarity_image,
         command_string=' '.join(index_cmd),
-        bind_dir_list=bind_dir_list)      
+        bind_dir_list=bind_dir_list)
     return index_cmd
   except:
     raise
 
 
 def run_samtools_view(
-      samtools_exe,input_file,output_file,reference_file=None,force=True,
-      cram_out=False,threads=1,samtools_params=None,singuarity_image=None,
-      index_output=True,dry_run=False,use_ephemeral_space=0):
+      samtools_exe, input_file, output_file, reference_file=None, force=True,
+      cram_out=False, threads=1, samtools_params=None, singuarity_image=None,
+      index_output=True, dry_run=False, use_ephemeral_space=0):
   '''
   A function for running samtools view command
 
@@ -135,7 +135,7 @@ def run_samtools_view(
     temp_dir = \
       get_temp_dir(use_ephemeral_space=use_ephemeral_space)
     temp_file = \
-      os.path.join(\
+      os.path.join(
         temp_dir,
         os.path.basename(output_file))                                          # get temp output file path
     view_cmd = [
@@ -156,13 +156,13 @@ def run_samtools_view(
     if samtools_params is not None and \
        isinstance(samtools_params, list) and \
        len(samtools_params) > 0:
-      view_cmd.extend(\
+      view_cmd.extend(
         [quote(i) for i in samtools_params])                                    # add additional params
     view_cmd.append(quote(input_file))
     if dry_run:
       return view_cmd
     if singuarity_image is None:
-      subprocess.check_call(\
+      subprocess.check_call(
         ' '.join(view_cmd),
         shell=True)
     else:
@@ -178,13 +178,13 @@ def run_samtools_view(
         bind_dir_list=bind_dir_list)
     if cram_out:
       _check_cram_file(cram_path=temp_file)                                     # check cram output
-    copy_local_file(\
+    copy_local_file(
       source_path=temp_file,
       destinationa_path=output_file,
       force=force)                                                              # move cram file to original path
     remove_dir(temp_dir)                                                        # remove temp directory
     if index_output:
-      index_bam_or_cram(\
+      index_bam_or_cram(
         samtools_exe=samtools_exe,
         input_path=output_file,
         singuarity_image=singuarity_image,
@@ -195,8 +195,8 @@ def run_samtools_view(
 
 
 def convert_bam_to_cram(
-      samtools_exe,bam_file,reference_file,cram_path,threads=1,
-      singuarity_image=None,force=False,dry_run=False,use_ephemeral_space=0):
+      samtools_exe, bam_file, reference_file, cram_path, threads=1,
+      singuarity_image=None, force=False, dry_run=False, use_ephemeral_space=0):
   '''
   A function for converting bam files to cram using pysam utility
   
@@ -235,9 +235,9 @@ def convert_bam_to_cram(
 
 
 def filter_bam_file(
-      samtools_exe,input_bam,output_bam,samFlagInclude=None,reference_file=None,
-      samFlagExclude=None,threads=1,mapq_threshold=20,cram_out=False,
-      singuarity_image=None,index_output=True,dry_run=False):
+      samtools_exe, input_bam, output_bam, samFlagInclude=None, reference_file=None,
+      samFlagExclude=None, threads=1, mapq_threshold=20, cram_out=False,
+      singuarity_image=None, index_output=True, dry_run=False):
   '''
   A function for filtering bam file using samtools view
 
@@ -270,7 +270,7 @@ def filter_bam_file(
         append("-F{0}".format(quote(str(samFlagExclude))))
 
     view_cmd = \
-      run_samtools_view(\
+      run_samtools_view(
         samtools_exe=samtools_exe,
         input_file=input_bam,
         output_file=output_bam,
@@ -287,8 +287,8 @@ def filter_bam_file(
 
 
 def run_bam_stats(
-      samtools_exe,bam_file,output_dir,threads=1,force=False,
-      singuarity_image=None,output_prefix=None,dry_run=False):
+      samtools_exe, bam_file, output_dir, threads=1, force=False,
+      singuarity_image=None, output_prefix=None, dry_run=False):
   '''
   A method for generating samtools stats output
   
@@ -317,7 +317,7 @@ def run_bam_stats(
       '{0}.{1}.{2}'.\
       format(output_prefix,'stats','txt')
     output_path = \
-      os.path.join(\
+      os.path.join(
         output_dir,
         output_path)
     if not os.path.exists(output_dir):
@@ -350,7 +350,7 @@ def run_bam_stats(
       subprocess.check_call(command,shell=True)
     stats_data_list = \
       _parse_samtools_stats_output(stats_file=output_path)                      # parse stats output file
-    return output_path,stats_cmd,stats_data_list
+    return output_path, stats_cmd, stats_data_list
   except:
     raise
 
@@ -364,7 +364,7 @@ def _parse_samtools_stats_output(stats_file):
   '''
   try:
     data = \
-      pd.read_csv(\
+      pd.read_csv(
         stats_file,
         sep='\n',
         header=None,
@@ -388,8 +388,9 @@ def _parse_samtools_stats_output(stats_file):
           format(stats_file,e))
 
 
-def run_bam_flagstat(samtools_exe,bam_file,output_dir,threads=1,force=False,
-                     singuarity_image=None,output_prefix=None,dry_run=False):
+def run_bam_flagstat(
+      samtools_exe, bam_file, output_dir, threads=1, force=False,
+      singuarity_image=None, output_prefix=None, dry_run=False):
   '''
   A method for generating bam flagstat output
   
@@ -408,7 +409,7 @@ def run_bam_flagstat(samtools_exe,bam_file,output_dir,threads=1,force=False,
       check_file_path(samtools_exe)
     _check_bam_file(bam_file=bam_file)                                          # check bam file
     if not dry_run:
-      _check_bam_index(\
+      _check_bam_index(
         samtools_exe=samtools_exe,
         singuarity_image=singuarity_image,
         bam_file=bam_file)                                                      # generate bam index
@@ -418,7 +419,7 @@ def run_bam_flagstat(samtools_exe,bam_file,output_dir,threads=1,force=False,
       '{0}.{1}.{2}'.\
       format(output_prefix,'flagstat','txt')                                    # get output filename
     output_path = \
-      os.path.join(\
+      os.path.join(
         output_dir,
         output_path)                                                            # get complete output path
     if not os.path.exists(output_dir):
@@ -452,8 +453,9 @@ def run_bam_flagstat(samtools_exe,bam_file,output_dir,threads=1,force=False,
     raise
 
 
-def run_bam_idxstat(samtools_exe,bam_file,output_dir,output_prefix=None,
-                    singuarity_image=None,force=False,dry_run=False):
+def run_bam_idxstat(
+      samtools_exe, bam_file, output_dir, output_prefix=None,
+      singuarity_image=None, force=False, dry_run=False):
   '''
   A function for running samtools index stats generation
   
@@ -471,7 +473,7 @@ def run_bam_idxstat(samtools_exe,bam_file,output_dir,output_prefix=None,
       check_file_path(samtools_exe)
     _check_bam_file(bam_file=bam_file)                                          # check bam file
     if not dry_run:
-      _check_bam_index(\
+      _check_bam_index(
         samtools_exe=samtools_exe,
         singuarity_image=singuarity_image,
         bam_file=bam_file)                                                      # generate bam index
@@ -481,7 +483,7 @@ def run_bam_idxstat(samtools_exe,bam_file,output_dir,output_prefix=None,
       '{0}.{1}.{2}'.\
       format(output_prefix,'idxstats','txt')                                    # get output filename
     output_path = \
-      os.path.join(\
+      os.path.join(
         output_dir,
         output_path)                                                            # get complete output path
     if not os.path.exists(output_dir):
@@ -553,7 +555,7 @@ def run_sort_bam(
     temp_dir = \
       get_temp_dir(use_ephemeral_space=use_ephemeral_space)
     temp_bam = \
-      os.path.join(\
+      os.path.join(
         temp_dir,
         os.path.basename(output_bam_path))
     sort_cmd.extend(['-o',quote(temp_bam)])
@@ -581,7 +583,7 @@ def run_sort_bam(
         image_path=singuarity_image,
         command_string=' '.join(sort_cmd),
         bind_dir_list=bind_dir_list)
-    copy_local_file(\
+    copy_local_file(
       source_path=temp_bam,
       destinationa_path=output_bam_path,
       force=force)                                                              # copy output bam
@@ -591,7 +593,7 @@ def run_sort_bam(
     else:
       _check_bam_file(output_bam_path)
     if index_output:
-      index_bam_or_cram(\
+      index_bam_or_cram(
         samtools_exe=samtools_exe,
         input_path=output_bam_path,
         singuarity_image=singuarity_image,
@@ -601,8 +603,8 @@ def run_sort_bam(
 
 
 def merge_multiple_bam(
-      samtools_exe,input_bam_list,output_bam_path,sorted_by_name=False,singuarity_image=None,
-      use_ephemeral_space=0,threads=1,force=False,dry_run=False,index_output=True):
+      samtools_exe, input_bam_list, output_bam_path, sorted_by_name=False, singuarity_image=None,
+      use_ephemeral_space=0, threads=1, force=False, dry_run=False, index_output=True):
   '''
   A function for merging multiple input bams to a single output bam
   
@@ -628,7 +630,7 @@ def merge_multiple_bam(
     temp_dir = \
       get_temp_dir(use_ephemeral_space=use_ephemeral_space)
     temp_bam = \
-      os.path.join(\
+      os.path.join(
         temp_dir,
         os.path.basename(output_bam_path))
     merge_cmd = [
@@ -653,7 +655,7 @@ def merge_multiple_bam(
         image_path=singuarity_image,
         command_string=' '.join(merge_cmd),
         bind_dir_list=bind_dir_list)                                            # run samtools merge
-    copy_local_file(\
+    copy_local_file(
       source_path=temp_bam,
       destinationa_path=output_bam_path,
       force=force)                                                              # copy bamfile
@@ -661,7 +663,7 @@ def merge_multiple_bam(
     _check_bam_file(output_bam_path)
     if index_output and \
        not sorted_by_name:
-      index_bam_or_cram(\
+      index_bam_or_cram(
         samtools_exe=samtools_exe,
         input_path=output_bam_path,
         singuarity_image=singuarity_image,
