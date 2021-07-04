@@ -516,8 +516,9 @@ def run_bam_idxstat(samtools_exe,bam_file,output_dir,output_prefix=None,
 
 
 def run_sort_bam(
-      samtools_exe,input_bam_path,output_bam_path,sort_by_name=False,use_ephemeral_space=0,
-      singuarity_image=None,threads=1,force=False,dry_run=False,cram_out=False,index_output=True):
+      samtools_exe, input_bam_path, output_bam_path, sort_by_name=False,
+      use_ephemeral_space=0, singuarity_image=None, threads=1, force=False,
+      dry_run=False, cram_out=False, index_output=True, sort_params=None):
   '''
   A function for sorting input bam file and generate a output bam
   
@@ -532,6 +533,7 @@ def run_sort_bam(
   :param singuarity_image: Singularity image path, default None
   :param use_ephemeral_space: A toggle for temp dir settings, default 0
   :param dry_run: A toggle for returning the samtools command without actually running it, default False
+  :param sort_params: A list of params for samtools sort, default None
   :return: None
   '''
   try:
@@ -555,6 +557,17 @@ def run_sort_bam(
         temp_dir,
         os.path.basename(output_bam_path))
     sort_cmd.extend(['-o',quote(temp_bam)])
+    if sort_params is not None and \
+       isinstance(sort_params, list) and \
+       len(sort_params) > 0:
+      sort_params = [
+        f
+        for f in sort_params
+        if f.startswith('-t') or \
+           f.startswith('-l') or \
+           f.startswith('-m')]                                                  # filter params list
+      if len(sort_params) > 0:
+        sort_cmd.extend(sort_params)                                            # add params to sort command
     sort_cmd.append(quote(input_bam_path))
     if dry_run:
       return sort_cmd

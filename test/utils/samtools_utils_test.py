@@ -158,6 +158,21 @@ class Samtools_util_test2(unittest.TestCase):
         dry_run=True,
         cram_out=True)
     self.assertTrue('--output-fmt CRAM' in samtools_cmd)
+    samtools_cmd = \
+      run_sort_bam(\
+        samtools_exe=self.samtools_exe,
+        input_bam_path=self.input_bam,
+        output_bam_path='data/test.cram',
+        sort_by_name=False,
+        sort_params=['-l7','-m6000M','-tCB','--threads16'],
+        threads=1,
+        force=False,
+        dry_run=True,
+        cram_out=True)
+    self.assertTrue('--output-fmt CRAM' in samtools_cmd)
+    self.assertTrue('-@1' in samtools_cmd)
+    self.assertTrue('-tCB' in samtools_cmd)
+    self.assertFalse('--threads16' in samtools_cmd)
 
   def test_merge_multiple_bam(self):
     with open(os.path.join(self.temp_dir,'bam_list'),'w') as fp:
