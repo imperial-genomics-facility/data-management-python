@@ -567,7 +567,8 @@ def run_sort_bam(
         for f in sort_params
         if f.startswith('-t') or \
            f.startswith('-l') or \
-           f.startswith('-m')]                                                  # filter params list
+           f.startswith('-m') or \
+           f.startswith('-T')]                                                  # filter params list
       if len(sort_params) > 0:
         sort_cmd.extend(sort_params)                                            # add params to sort command
     sort_cmd.append(quote(input_bam_path))
