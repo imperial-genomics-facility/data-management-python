@@ -559,6 +559,10 @@ def run_sort_bam(
         temp_dir,
         os.path.basename(output_bam_path))
     sort_cmd.extend(['-o',quote(temp_bam)])
+    if singuarity_image is None:
+      sort_cmd.append('-T {0}'.format(temp_dir))
+    else:
+      sort_cmd.append('-T /tmp')
     if sort_params is not None and \
        isinstance(sort_params, list) and \
        len(sort_params) > 0:
@@ -567,8 +571,7 @@ def run_sort_bam(
         for f in sort_params
         if f.startswith('-t') or \
            f.startswith('-l') or \
-           f.startswith('-m') or \
-           f.startswith('-T')]                                                  # filter params list
+           f.startswith('-m')]                                                  # filter params list
       if len(sort_params) > 0:
         sort_cmd.extend(sort_params)                                            # add params to sort command
     sort_cmd.append(quote(input_bam_path))
@@ -577,13 +580,17 @@ def run_sort_bam(
     if singuarity_image is None:
       subprocess.check_call(' '.join(sort_cmd),shell=True)
     else:
+      container_temp_dir = \
+        get_temp_dir(use_ephemeral_space=use_ephemeral_space)
       bind_dir_list = [
         os.path.dirname(input_bam_path),
-        temp_dir]
+        temp_dir,
+        '{0}:/tmp'.format(container_temp_dir)]
       execute_singuarity_cmd(
         image_path=singuarity_image,
         command_string=' '.join(sort_cmd),
         bind_dir_list=bind_dir_list)
+      remove_dir(container_temp_dir)
     copy_local_file(
       source_path=temp_bam,
       destinationa_path=output_bam_path,
