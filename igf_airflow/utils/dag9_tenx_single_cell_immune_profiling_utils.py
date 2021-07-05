@@ -1,4 +1,4 @@
-import os,logging,subprocess,re,fnmatch
+import os, sys, logging, subprocess, re, fnmatch
 from typing import IO
 import pandas as pd
 from copy import copy
@@ -53,36 +53,142 @@ PATTERNED_FLOWCELL_LIST = ['HISEQ4000','NEXTSEQ']
 BOX_DIR_PREFIX = 'SecondaryAnalysis'
 SAMTOOLS_EXE = 'samtools'
 PICARD_JAR = '/picard/picard.jar'
-DATABASE_CONFIG_FILE = Variable.get('test_database_config_file',default_var=None)
-SCANPY_SINGLE_SAMPLE_TEMPLATE= Variable.get('scanpy_single_sample_template',default_var=None)
-SCANPY_NOTEBOOK_IMAGE = Variable.get('scanpy_notebook_image',default_var=None)
-SCIRPY_SINGLE_SAMPLE_TEMPLATE = Variable.get('scirpy_single_sample_template',default_var=None)
-SCIRPY_NOTEBOOK_IMAGE = Variable.get('scirpy_notebook_image',default_var=None)
-SEURAT_SINGLE_SAMPLE_TEMPLATE = Variable.get('seurat_single_sample_template',default_var=None)
-SEURAT_NOTEBOOK_IMAGE = Variable.get('seurat_notebook_image',default_var=None)
-CUTADAPT_IMAGE = Variable.get('cutadapt_singularity_image',default_var=None)
-MULTIQC_IMAGE = Variable.get('multiqc_singularity_image',default_var=None)
-PICARD_IMAGE = Variable.get('picard_singularity_image',default_var=None)
-SLACK_CONF = Variable.get('analysis_slack_conf',default_var=None)
-MS_TEAMS_CONF = Variable.get('analysis_ms_teams_conf',default_var=None)
-ASANA_CONF = Variable.get('asana_conf',default_var=None)
-ASANA_PROJECT = Variable.get('asana_analysis_project',default_var=None)
-BOX_USERNAME = Variable.get('box_username',default_var=None)
-BOX_CONFIG_FILE = Variable.get('box_config_file',default_var=None)
-FTP_HOSTNAME = Variable.get('ftp_hostname',default_var=None)
-FTP_USERNAME = Variable.get('ftp_username',default_var=None)
-FTP_PROJECT_PATH = Variable.get('ftp_project_path',default_var=None)
-BASE_RESULT_DIR = Variable.get('base_result_dir',default_var=None)
-ALL_CELL_MARKER_LIST = Variable.get('all_cell_marker_list',default_var=None)
-SAMTOOLS_IMAGE = Variable.get('samtools_singularity_image',default_var=None)
-MULTIQC_TEMPLATE_FILE = Variable.get('multiqc_template_file',default_var=None)
-FEATURE_TYPE = Variable.get('tenx_single_cell_immune_profiling_feature_types',default_var={})#.split(','),deserialize_json=True
-IRDOS_EXE_DIR = Variable.get('irods_exe_dir',default_var=None)
-CELLRANGER_EXE = Variable.get('cellranger_exe',default_var=None)
-CELLRANGER_JOB_TIMEOUT = Variable.get('cellranger_job_timeout',default_var=None)
-
+DATABASE_CONFIG_FILE = Variable.get('test_database_config_file', default_var=None)
+SCANPY_SINGLE_SAMPLE_TEMPLATE= Variable.get('scanpy_single_sample_template', default_var=None)
+SCANPY_NOTEBOOK_IMAGE = Variable.get('scanpy_notebook_image', default_var=None)
+SCIRPY_SINGLE_SAMPLE_TEMPLATE = Variable.get('scirpy_single_sample_template', default_var=None)
+SCIRPY_NOTEBOOK_IMAGE = Variable.get('scirpy_notebook_image', default_var=None)
+SEURAT_SINGLE_SAMPLE_TEMPLATE = Variable.get('seurat_single_sample_template', default_var=None)
+SEURAT_NOTEBOOK_IMAGE = Variable.get('seurat_notebook_image', default_var=None)
+CUTADAPT_IMAGE = Variable.get('cutadapt_singularity_image', default_var=None)
+MULTIQC_IMAGE = Variable.get('multiqc_singularity_image', default_var=None)
+PICARD_IMAGE = Variable.get('picard_singularity_image', default_var=None)
+SLACK_CONF = Variable.get('analysis_slack_conf', default_var=None)
+MS_TEAMS_CONF = Variable.get('analysis_ms_teams_conf', default_var=None)
+ASANA_CONF = Variable.get('asana_conf', default_var=None)
+ASANA_PROJECT = Variable.get('asana_analysis_project', default_var=None)
+BOX_USERNAME = Variable.get('box_username', default_var=None)
+BOX_CONFIG_FILE = Variable.get('box_config_file', default_var=None)
+FTP_HOSTNAME = Variable.get('ftp_hostname', default_var=None)
+FTP_USERNAME = Variable.get('ftp_username', default_var=None)
+FTP_PROJECT_PATH = Variable.get('ftp_project_path', default_var=None)
+BASE_RESULT_DIR = Variable.get('base_result_dir', default_var=None)
+ALL_CELL_MARKER_LIST = Variable.get('all_cell_marker_list', default_var=None)
+SAMTOOLS_IMAGE = Variable.get('samtools_singularity_image', default_var=None)
+MULTIQC_TEMPLATE_FILE = Variable.get('multiqc_template_file', default_var=None)
+FEATURE_TYPE = Variable.get('tenx_single_cell_immune_profiling_feature_types', default_var={})#.split(','),deserialize_json=True
+IRDOS_EXE_DIR = Variable.get('irods_exe_dir', default_var=None)
+CELLRANGER_EXE = Variable.get('cellranger_exe', default_var=None)
+CELLRANGER_JOB_TIMEOUT = Variable.get('cellranger_job_timeout', default_var=None)
+VELOCYTO_EXE = 'velocyto'
 
 ## FUNCTION
+def run_velocyto_func(**context):
+  try:
+    ti = context.get('ti')
+    xcom_pull_task = \
+      context['params'].get('xcom_pull_task')
+    xcom_pull_files_key = \
+      context['params'].get('xcom_pull_files_key')
+    analysis_description_xcom_pull_task = \
+      context['params'].get('analysis_description_xcom_pull_task')
+    analysis_description_xcom_key = \
+      context['params'].get('analysis_description_xcom_key')
+    cell_sorted_bam_name = \
+      context['params'].get('cellranger_bam_path', 'count/cellsorted_possorted_genome_bam.bam')
+    threads = \
+      context['params'].get('threads', 1)
+    samtools_memory = \
+      context['params'].get('samtools_memory', 6000)
+    sys.exit()                                                                  # FIX ME
+    cellranger_output_dir = \
+      ti.xcom_pull(
+        task_ids=xcom_pull_task,
+        key=xcom_pull_files_key)
+    cell_sorted_bam_path = \
+      os.path.join(cellranger_output_dir, cell_sorted_bam_name)
+    cellranger_count_dir = \
+      os.path.join(cellranger_output_dir, 'count')
+    cellranger_outs_dir = \
+      os.path.join(cellranger_output_dir, 'outs')
+    check_file_path(cell_sorted_bam_path)
+    if not os.path.exists(cellranger_outs_dir):
+      os.symlink(cellranger_count_dir, cellranger_outs_dir)                     # create link for velocyto input path
+    analysis_description = \
+      ti.xcom_pull(
+        task_ids=analysis_description_xcom_pull_task,
+        key=analysis_description_xcom_key)
+    analysis_description = pd.DataFrame(analysis_description)
+    analysis_description['feature_type'] = \
+      analysis_description['feature_type'].\
+        map(lambda x: x.lower().replace(' ','_').replace('-','_'))
+    gex_samples = \
+      analysis_description[analysis_description['feature_type']=='gene_expression']\
+        [['sample_igf_id','genome_build']]
+    if len(gex_samples.index) == 0:
+      raise ValueError('No gene expression entry found in analysis description')
+    sample_igf_id = gex_samples['sample_igf_id'].values[0]
+    dbparams = \
+      read_dbconf_json(DATABASE_CONFIG_FILE)
+    sa = SampleAdaptor(**dbparams)
+    sa.start_session()
+    genome_build = \
+      sa.fetch_sample_species_name(
+        sample_igf_id=sample_igf_id)
+    sa.close_session()
+    ## need to add cellranger ref and repeat mask gtf
+    ref_genome = \
+      Reference_genome_utils(
+        genome_tag=genome_build,
+        dbsession_class=sa.get_session_class())
+    ref_genome.get_re()
+    mask_file = \
+      ref_genome._fetch_collection_files(
+        collection_type=None,
+        check_missing=True)
+    gtf_file = \
+      ref_genome._fetch_collection_files(
+        collection_type=None,
+        check_missing=True)
+    commandline = [
+      VELOCYTO_EXE,
+      'run10x',
+      '--mask={0}'.format(mask_file),
+      '--samtools-memory={0}'.format(samtools_memory),
+      '--samtools-threads={0}'.format(threads),
+      cellranger_output_dir,
+      gtf_file]
+    commandline = ' '.join(commandline)
+    container_tmp_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    bind_dir_lists = [
+      '{0}:/tmp'.format(container_tmp_dir),
+      cellranger_output_dir,
+      os.path.dirname(mask_file),
+      os.path.dirname(gtf_file)]
+    execute_singuarity_cmd(
+      image_path=SCANPY_NOTEBOOK_IMAGE,
+      command_string=commandline,
+      options=['--no-home','-C'],
+      bind_dir_list=bind_dir_lists)
+    loom_output = \
+      os.path.join(
+        cellranger_output_dir,
+        'outs',
+        '{0}.loom'.format(os.path.basename(cellranger_output_dir)))
+    check_file_path(loom_output)
+  except Exception as e:
+    logging.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise ValueError(e)
+
+
 def generate_cell_sorted_bam_func(**context):
   try:
     ti = context.get('ti')
@@ -96,6 +202,8 @@ def generate_cell_sorted_bam_func(**context):
       context['params'].get('cellranger_bam_path', 'count/cellsorted_possorted_genome_bam.bam')
     threads = \
       context['params'].get('threads', 1)
+    samtools_mem = \
+      context['params'].get('samtools_mem', 6000)
     cellranger_output_dir = \
       ti.xcom_pull(
         task_ids=xcom_pull_task,
@@ -120,7 +228,7 @@ def generate_cell_sorted_bam_func(**context):
       dry_run=False,
       cram_out=False,
       index_output=True,
-      sort_params=None)
+      sort_params=['-m {0}M'.format(samtools_mem), '-t CB'])
   except Exception as e:
     logging.error(e)
     send_log_to_channels(
@@ -816,7 +924,7 @@ def run_samtools_for_cellranger(**context):
           force=True)
     elif samtools_command == 'stats':
       temp_output,_,stats_metrics = \
-        run_bam_stats(\
+        run_bam_stats(
           samtools_exe=SAMTOOLS_EXE,
           bam_file=bam_file,
           output_dir=temp_output_dir,
