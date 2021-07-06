@@ -229,7 +229,7 @@ def generate_cell_sorted_bam_func(**context):
       force=False,
       dry_run=False,
       cram_out=False,
-      index_output=True,
+      index_output=False,
       sort_params=['-m{0}'.format(samtools_mem), '-tCB'])
   except Exception as e:
     logging.error(e)
