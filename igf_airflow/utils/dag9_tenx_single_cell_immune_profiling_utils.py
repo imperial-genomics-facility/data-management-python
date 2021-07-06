@@ -1552,6 +1552,7 @@ def run_singlecell_notebook_wrapper_func(**context):
     cell_marker_list = ALL_CELL_MARKER_LIST
     s_genes = None
     g2m_genes = None
+    cell_marker_mode = ''
     cellranger_output = \
       ti.xcom_pull(
         task_ids=cellranger_xcom_pull_task,
@@ -1604,6 +1605,9 @@ def run_singlecell_notebook_wrapper_func(**context):
         raise TypeError(
           'Expecting a list for g2m_genes and got {0}'.\
             format(type(g2m_genes)))
+    if analysis_description.get('cell_marker_mode') is not None:
+      cell_marker_mode = \
+        analysis_description.get('cell_marker_mode')
     #genome_build = \
     #  analysis_description[0].get('genome_build')
     sa = SampleAdaptor(**dbparams)
@@ -1622,6 +1626,7 @@ def run_singlecell_notebook_wrapper_func(**context):
       'CELL_MARKER_LIST': cell_marker_list,
       'CUSTOM_S_GENES_LIST': s_genes,
       'CUSTOM_G2M_GENES_LIST': g2m_genes,
+      'CELL_MARKER_MODE': cell_marker_mode,
       'GENOME_BUILD': genome_build}
     container_bind_dir_list = [
       cellranger_output,
