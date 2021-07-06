@@ -1,18 +1,15 @@
-import os, sys, logging, subprocess, re, fnmatch
-from typing import IO
+import os, sys, logging, re, fnmatch
 import pandas as pd
 from copy import copy
 from airflow.models import Variable
 from igf_data.utils.fileutils import get_temp_dir
 from igf_data.utils.fileutils import remove_dir
-from igf_data.utils.fileutils import read_json_data
 from igf_data.utils.fileutils import copy_remote_file
 from igf_data.utils.fileutils import check_file_path
 from igf_data.utils.fileutils import copy_local_file
 from igf_data.utils.fileutils import get_date_stamp
 from igf_data.utils.fileutils import get_datestamp_label
 from igf_data.utils.dbutils import read_dbconf_json
-from igf_airflow.logging.upload_log_msg import post_image_to_channels
 from igf_data.utils.singularity_run_wrapper import execute_singuarity_cmd
 from igf_data.utils.analysis_fastq_fetch_utils import get_fastq_and_run_for_samples
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
@@ -39,9 +36,7 @@ from igf_data.utils.tools.samtools_utils import index_bam_or_cram
 from igf_data.utils.tools.samtools_utils import run_sort_bam
 from igf_data.utils.project_analysis_utils import Project_analysis
 from igf_data.utils.project_status_utils import Project_status
-from jinja2 import Template,Environment,FileSystemLoader,select_autoescape
-from igf_airflow.logging.upload_log_msg import log_success,log_failure,log_sleep
-from igf_data.utils.tools.cellranger.cellranger_count_utils import extract_cellranger_count_metrics_summary
+from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 ## DEFAULTS
 GENOME_FASTA_TYPE = 'GENOME_FASTA'
@@ -179,12 +174,19 @@ def run_velocyto_func(**context):
     check_file_path(loom_output)
   except Exception as e:
     logging.error(e)
+    log_file = context.get('task_instance').log_filepath
+    if log_file is not None:
+      message = \
+        'Error: {0}, Log: {1}'.format(e, log_file)
+    else:
+      message = \
+        'Error: {0}'.format(e)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise ValueError(e)
 
@@ -231,12 +233,19 @@ def generate_cell_sorted_bam_func(**context):
       sort_params=['-m {0}M'.format(samtools_mem), '-t CB'])
   except Exception as e:
     logging.error(e)
+    log_file = context.get('task_instance').log_filepath
+    if log_file is not None:
+      message = \
+        'Error: {0}, Log: {1}'.format(e, log_file)
+    else:
+      message = \
+        'Error: {0}'.format(e)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise ValueError(e)
 
@@ -345,12 +354,19 @@ def create_and_update_qc_pages(**context):
       remote_file=remote_csv_file_path)                                         # copy json data for analysis csv data
   except Exception as e:
     logging.error(e)
+    log_file = context.get('task_instance').log_filepath
+    if log_file is not None:
+      message = \
+        'Error: {0}, Log: {1}'.format(e, log_file)
+    else:
+      message = \
+        'Error: {0}'.format(e)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise ValueError(e)
 
@@ -484,12 +500,19 @@ def clean_up_files(**context):
                 format(type(file_list)))
   except Exception as e:
     logging.error(e)
+    log_file = context.get('task_instance').log_filepath
+    if log_file is not None:
+      message = \
+        'Error: {0}, Log: {1}'.format(e, log_file)
+    else:
+      message = \
+        'Error: {0}'.format(e)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise ValueError(e)
 
@@ -521,12 +544,19 @@ def change_pipeline_status(**context):
                   format(analysis_id,analysis_type))
   except Exception as e:
     logging.error(e)
+    log_file = context.get('task_instance').log_filepath
+    if log_file is not None:
+      message = \
+        'Error: {0}, Log: {1}'.format(e, log_file)
+    else:
+      message = \
+        'Error: {0}'.format(e)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise ValueError(e)
 
@@ -561,12 +591,19 @@ def index_and_copy_bam_for_parallel_analysis(**context):
     return list_of_tasks
   except Exception as e:
     logging.error(e)
+    log_file = context.get('task_instance').log_filepath
+    if log_file is not None:
+      message = \
+        'Error: {0}, Log: {1}'.format(e, log_file)
+    else:
+      message = \
+        'Error: {0}'.format(e)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise ValueError(e)
 
@@ -748,15 +785,21 @@ def run_multiqc_for_cellranger(**context):
       value=multiqc_data)
   except Exception as e:
     logging.error(e)
+    log_file = context.get('task_instance').log_filepath
+    if log_file is not None:
+      message = \
+        'Error: {0}, Log: {1}'.format(e, log_file)
+    else:
+      message = \
+        'Error: {0}'.format(e)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise ValueError(e)
-
 
 
 def _configure_and_run_multiqc(
@@ -965,12 +1008,19 @@ def run_samtools_for_cellranger(**context):
         value=temp_output)
   except Exception as e:
     logging.error(e)
+    log_file = context.get('task_instance').log_filepath
+    if log_file is not None:
+      message = \
+        'Error: {0}, Log: {1}'.format(e, log_file)
+    else:
+      message = \
+        'Error: {0}'.format(e)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise ValueError(e)
 
@@ -1123,12 +1173,19 @@ def run_picard_for_cellranger(**context):
       reaction='pass')
   except Exception as e:
     logging.error(e)
+    log_file = context.get('task_instance').log_filepath
+    if log_file is not None:
+      message = \
+        'Error: {0}, Log: {1}'.format(e, log_file)
+    else:
+      message = \
+        'Error: {0}'.format(e)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise ValueError(e)
 
@@ -1249,12 +1306,19 @@ def convert_bam_to_cram_func(**context):
       reaction='pass')
   except Exception as e:
     logging.error(e)
+    log_file = context.get('task_instance').log_filepath
+    if log_file is not None:
+      message = \
+        'Error: {0}, Log: {1}'.format(e, log_file)
+    else:
+      message = \
+        'Error: {0}'.format(e)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise ValueError(e)
 
@@ -1318,12 +1382,19 @@ def upload_analysis_file_to_box(**context):
         skip_existing=False)
   except Exception as e:
     logging.error(e)
+    log_file = context.get('task_instance').log_filepath
+    if log_file is not None:
+      message = \
+        'Error: {0}, Log: {1}'.format(e, log_file)
+    else:
+      message = \
+        'Error: {0}'.format(e)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise ValueError(e)
 
@@ -1352,12 +1423,19 @@ def task_branch_function(**context):
     return task_list
   except Exception as e:
     logging.error(e)
+    log_file = context.get('task_instance').log_filepath
+    if log_file is not None:
+      message = \
+        'Error: {0}, Log: {1}'.format(e, log_file)
+    else:
+      message = \
+        'Error: {0}'.format(e)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise ValueError(e)
 
@@ -1426,12 +1504,19 @@ def load_analysis_files_func(**context):
       value=output_file_list)
   except Exception as e:
     logging.error(e)
+    log_file = context.get('task_instance').log_filepath
+    if log_file is not None:
+      message = \
+        'Error: {0}, Log: {1}'.format(e, log_file)
+    else:
+      message = \
+        'Error: {0}'.format(e)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise ValueError(e)
 
@@ -1602,12 +1687,19 @@ def run_singlecell_notebook_wrapper_func(**context):
       reaction='pass')
   except Exception as e:
     logging.error(e)
+    log_file = context.get('task_instance').log_filepath
+    if log_file is not None:
+      message = \
+        'Error: {0}, Log: {1}'.format(e, log_file)
+    else:
+      message = \
+        'Error: {0}'.format(e)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise ValueError(e)
 
@@ -1688,12 +1780,19 @@ def irods_files_upload_for_analysis(**context):
         file_tag=collection_name)
   except Exception as e:
     logging.error(e)
+    log_file = context.get('task_instance').log_filepath
+    if log_file is not None:
+      message = \
+        'Error: {0}, Log: {1}'.format(e, log_file)
+    else:
+      message = \
+        'Error: {0}'.format(e)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise ValueError(e)
 
@@ -1848,12 +1947,19 @@ def ftp_files_upload_for_analysis(**context):
           raise
   except Exception as e:
     logging.error(e)
+    log_file = context.get('task_instance').log_filepath
+    if log_file is not None:
+      message = \
+        'Error: {0}, Log: {1}'.format(e, log_file)
+    else:
+      message = \
+        'Error: {0}'.format(e)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise ValueError(e)
 
@@ -1976,12 +2082,19 @@ def load_cellranger_result_to_db_func(**context):
       value=output_html_file[0])
   except Exception as e:
     logging.error(e)
+    log_file = context.get('task_instance').log_filepath
+    if log_file is not None:
+      message = \
+        'Error: {0}, Log: {1}'.format(e, log_file)
+    else:
+      message = \
+        'Error: {0}'.format(e)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise ValueError(e)
 
@@ -2038,12 +2151,19 @@ def decide_analysis_branch_func(**context):
     return task_list
   except Exception as e:
     logging.error(e)
+    log_file = context.get('task_instance').log_filepath
+    if log_file is not None:
+      message = \
+        'Error: {0}, Log: {1}'.format(e, log_file)
+    else:
+      message = \
+        'Error: {0}'.format(e)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise ValueError(e)
 
@@ -2132,12 +2252,19 @@ def load_cellranger_metrices_to_collection(**context):
       raise
   except Exception as e:
     logging.error(e)
+    log_file = context.get('task_instance').log_filepath
+    if log_file is not None:
+      message = \
+        'Error: {0}, Log: {1}'.format(e, log_file)
+    else:
+      message = \
+        'Error: {0}'.format(e)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise ValueError(e)
 
@@ -2278,12 +2405,19 @@ def run_cellranger_tool(**context):
       reaction='pass')
   except Exception as e:
     logging.error(e)
+    log_file = context.get('task_instance').log_filepath
+    if log_file is not None:
+      message = \
+        'Error: {0}, Log: {1}'.format(e, log_file)
+    else:
+      message = \
+        'Error: {0}'.format(e)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise ValueError(e)
 
@@ -2333,12 +2467,19 @@ def run_sc_read_trimmming_func(**context):
       singularity_image=singularity_image)
   except Exception as e:
     logging.error(e)
+    log_file = context.get('task_instance').log_filepath
+    if log_file is not None:
+      message = \
+        'Error: {0}, Log: {1}'.format(e, log_file)
+    else:
+      message = \
+        'Error: {0}'.format(e)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise ValueError(e)
 
@@ -2525,12 +2666,19 @@ def configure_cellranger_run_func(**context):
       reaction='pass')
   except Exception as e:
     logging.error(e)
+    log_file = context.get('task_instance').log_filepath
+    if log_file is not None:
+      message = \
+        'Error: {0}, Log: {1}'.format(e, log_file)
+    else:
+      message = \
+        'Error: {0}'.format(e)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise ValueError(e)
 
@@ -2795,12 +2943,19 @@ def fetch_analysis_info_and_branch_func(**context):
     return analysis_list                                                        # return analysis list for branching
   except Exception as e:
     logging.error(e)
+    log_file = context.get('task_instance').log_filepath
+    if log_file is not None:
+      message = \
+        'Error: {0}, Log: {1}'.format(e, log_file)
+    else:
+      message = \
+        'Error: {0}'.format(e)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise ValueError(e)
 
