@@ -205,7 +205,7 @@ def generate_cell_sorted_bam_func(**context):
     threads = \
       context['params'].get('threads', 1)
     samtools_mem = \
-      context['params'].get('samtools_mem', 6000)
+      context['params'].get('samtools_mem', '6000M')
     cellranger_output_dir = \
       ti.xcom_pull(
         task_ids=xcom_pull_task,
@@ -230,7 +230,7 @@ def generate_cell_sorted_bam_func(**context):
       dry_run=False,
       cram_out=False,
       index_output=True,
-      sort_params=['-m {0}M'.format(samtools_mem), '-t CB'])
+      sort_params=['-m{0}'.format(samtools_mem), '-tCB'])
   except Exception as e:
     logging.error(e)
     log_file = context.get('task_instance').log_filepath
