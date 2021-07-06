@@ -636,7 +636,7 @@ def _check_bam_index_and_copy(
           samtools_exe=samtools_exe,
           input_path=bam_file,
           threads=threads,
-          singuarity_image=singularity_image,
+          singularity_image=singularity_image,
           dry_run=dry_run)
     if not dry_run:
       check_file_path(bai_file)                                                 # check final bam index
@@ -963,7 +963,7 @@ def run_samtools_for_cellranger(**context):
           bam_file=bam_file,
           output_dir=temp_output_dir,
           output_prefix=sample_igf_id,
-          singuarity_image=SAMTOOLS_IMAGE,
+          singularity_image=SAMTOOLS_IMAGE,
           force=True)
     elif samtools_command == 'stats':
       temp_output,_,stats_metrics = \
@@ -973,7 +973,7 @@ def run_samtools_for_cellranger(**context):
           output_dir=temp_output_dir,
           output_prefix=sample_igf_id,
           threads=threads,
-          singuarity_image=SAMTOOLS_IMAGE,
+          singularity_image=SAMTOOLS_IMAGE,
           force=True)
       if load_metrics_to_cram and \
            len(stats_metrics) > 0:
@@ -1263,7 +1263,7 @@ def convert_bam_to_cram_func(**context):
       reference_file=genome_fasta,
       cram_path=cram_file,
       use_ephemeral_space=True,
-      singuarity_image=SAMTOOLS_IMAGE,
+      singularity_image=SAMTOOLS_IMAGE,
       threads=threads)
     au = \
       Analysis_collection_utils(
@@ -1285,7 +1285,7 @@ def convert_bam_to_cram_func(**context):
         index_bam_or_cram(\
           samtools_exe=SAMTOOLS_EXE,
           input_path=cram,
-          singuarity_image=SAMTOOLS_IMAGE,
+          singularity_image=SAMTOOLS_IMAGE,
           threads=threads)                                                    # index cram files
       final_output_list.append(cram)
       cram_index = '{0}.crai'.format(cram)                                    # cram index has suffix .crai
