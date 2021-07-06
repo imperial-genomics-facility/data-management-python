@@ -90,7 +90,7 @@ def run_velocyto_func(**context):
     analysis_description_xcom_key = \
       context['params'].get('analysis_description_xcom_key')
     cell_sorted_bam_name = \
-      context['params'].get('cellranger_bam_path', 'count/cellsorted_possorted_genome_bam.bam')
+      context['params'].get('cell_sorted_bam_name', 'count/cellsorted_possorted_genome_bam.bam')
     threads = \
       context['params'].get('threads', 1)
     samtools_memory = \
@@ -201,7 +201,7 @@ def generate_cell_sorted_bam_func(**context):
     cellranger_bam_path = \
       context['params'].get('cellranger_bam_path', 'count/possorted_genome_bam.bam')
     cellsorted_bam_path = \
-      context['params'].get('cellranger_bam_path', 'count/cellsorted_possorted_genome_bam.bam')
+      context['params'].get('cellsorted_bam_path', 'count/cellsorted_possorted_genome_bam.bam')
     threads = \
       context['params'].get('threads', 1)
     samtools_mem = \
