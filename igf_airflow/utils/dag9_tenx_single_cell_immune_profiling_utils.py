@@ -1465,6 +1465,8 @@ def run_singlecell_notebook_wrapper_func(**context):
       context['params'].get('analysis_name')
     analysis_name = analysis_name.upper()
     cell_marker_list = ALL_CELL_MARKER_LIST
+    s_genes = None
+    g2m_genes = None
     cellranger_output = \
       ti.xcom_pull(
         task_ids=cellranger_xcom_pull_task,
@@ -1494,8 +1496,29 @@ def run_singlecell_notebook_wrapper_func(**context):
       ti.xcom_pull(
         task_ids=analysis_description_xcom_pull_task,
         key=analysis_description_xcom_key)
+    if isinstance(analysis_description, list):
+      analysis_description = \
+        analysis_description[0]
     sample_igf_id = \
-      analysis_description[0].get('sample_igf_id')
+      analysis_description.get('sample_igf_id')
+    if analysis_description.get('cell_marker_list') is not None:
+      cell_marker_list = \
+        analysis_description.get('cell_marker_list')                            # reset cell marker list
+      check_file_path(cell_marker_list)                                         # check filepath
+    if analysis_description.get('s_genes') is not None:
+      s_genes = \
+        analysis_description.get('s_genes')
+      if not isinstance(s_genes, list):
+        raise TypeError(
+          'Expecting a list for s_genes and got {0}'.\
+            format(type(s_genes)))
+    if analysis_description.get('g2m_genes') is not None:
+      g2m_genes = \
+        analysis_description.get('g2m_genes')
+      if not isinstance(g2m_genes, list):
+        raise TypeError(
+          'Expecting a list for g2m_genes and got {0}'.\
+            format(type(g2m_genes)))
     #genome_build = \
     #  analysis_description[0].get('genome_build')
     sa = SampleAdaptor(**dbparams)
@@ -1506,13 +1529,15 @@ def run_singlecell_notebook_wrapper_func(**context):
     sa.close_session()
     tmp_dir = get_temp_dir(use_ephemeral_space=True)
     input_params = {
-      'DATE_TAG':get_date_stamp(),
-      'PROJECT_IGF_ID':project_igf_id,
-      'SAMPLE_IGF_ID':sample_igf_id,
-      'CELLRANGER_COUNT_DIR':cellranger_count_dir,
-      'CELLRANGER_VDJ_DIR':cellranger_vdj_dir,
-      'CELL_MARKER_LIST':cell_marker_list,
-      'GENOME_BUILD':genome_build}
+      'DATE_TAG': get_date_stamp(),
+      'PROJECT_IGF_ID': project_igf_id,
+      'SAMPLE_IGF_ID': sample_igf_id,
+      'CELLRANGER_COUNT_DIR': cellranger_count_dir,
+      'CELLRANGER_VDJ_DIR': cellranger_vdj_dir,
+      'CELL_MARKER_LIST': cell_marker_list,
+      'CUSTOM_S_GENES_LIST': s_genes,
+      'CUSTOM_G2M_GENES_LIST': g2m_genes,
+      'GENOME_BUILD': genome_build}
     container_bind_dir_list = [
       cellranger_output,
       tmp_dir,
