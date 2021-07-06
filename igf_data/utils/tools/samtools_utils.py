@@ -38,24 +38,24 @@ def _check_bam_file(bam_file):
     raise
 
 
-def _check_bam_index(samtools_exe,bam_file, singuarity_image=None, dry_run=False):
+def _check_bam_index(samtools_exe,bam_file, singularity_image=None, dry_run=False):
   '''
   An internal method for checking bam index files. It will generate a new index if its not found.
   
   :param samtools_exe: samtools executable path
   :param bam_file: A bam file path
-  :param singuarity_image: Singularity image path, default None
+  :param singularity_image: Singularity image path, default None
   :param dry_run: A toggle for returning the samtools command without actually running it, default False
   '''
   try:
-    if singuarity_image is None:
+    if singularity_image is None:
       check_file_path(samtools_exe)
     bam_index='{0}.bai'.format(bam_file)
     if not os.path.exists(bam_index):
       index_bam_or_cram(
         samtools_exe=samtools_exe,
         input_path=bam_file,
-        singuarity_image=singuarity_image,
+        singularity_image=singularity_image,
         dry_run=dry_run)
   except:
     raise
@@ -63,13 +63,13 @@ def _check_bam_index(samtools_exe,bam_file, singuarity_image=None, dry_run=False
 
 def index_bam_or_cram(
       samtools_exe, input_path, threads=1,
-      singuarity_image=None, dry_run=False):
+      singularity_image=None, dry_run=False):
   '''
   A method for running samtools index
 
   :param samtools_exe: samtools executable path
   :param input_path: Alignment filepath
-  :param singuarity_image: Singularity image path, default None
+  :param singularity_image: Singularity image path, default None
   :param threads: Number of threads to use for conversion, default 1
   :param dry_run: A toggle for returning the samtools command
                   without actually running it, default False
@@ -84,7 +84,7 @@ def index_bam_or_cram(
     index_cmd.append(quote(input_path))
     if dry_run:
         return index_cmd
-    if singuarity_image is None:
+    if singularity_image is None:
       subprocess.\
         check_call(
           ' '.join(index_cmd),
@@ -92,7 +92,7 @@ def index_bam_or_cram(
     else:
       bind_dir_list = [os.path.dirname(input_path)]
       execute_singuarity_cmd(
-        image_path=singuarity_image,
+        image_path=singularity_image,
         command_string=' '.join(index_cmd),
         bind_dir_list=bind_dir_list)
     return index_cmd
@@ -102,7 +102,7 @@ def index_bam_or_cram(
 
 def run_samtools_view(
       samtools_exe, input_file, output_file, reference_file=None, force=True,
-      cram_out=False, threads=1, samtools_params=None, singuarity_image=None,
+      cram_out=False, threads=1, samtools_params=None, singularity_image=None,
       index_output=True, dry_run=False, use_ephemeral_space=0):
   '''
   A function for running samtools view command
@@ -115,21 +115,21 @@ def run_samtools_view(
   :param threads: Number of threads to use for conversion, default 1
   :param samtools_params: List of samtools param, default None
   :param index_output: Index output file, default True
-  :param singuarity_image: Singularity image path, default None
+  :param singularity_image: Singularity image path, default None
   :param dry_run: A toggle for returning the samtools command without actually running it, default False
   :param use_ephemeral_space: A toggle for temp dir settings, default 0
   :returns: Samtools command as list
   '''
   try:
-    if singuarity_image is None:
+    if singularity_image is None:
       check_file_path(samtools_exe)
     else:
-      check_file_path(singuarity_image)
+      check_file_path(singularity_image)
     _check_bam_file(bam_file=input_file)                                        # check bam file
     if not dry_run:
       _check_bam_index(
         samtools_exe=samtools_exe,
-        singuarity_image=singuarity_image,
+        singularity_image=singularity_image,
         bam_file=input_file)                                                    # check bam index
 
     temp_dir = \
@@ -161,7 +161,7 @@ def run_samtools_view(
     view_cmd.append(quote(input_file))
     if dry_run:
       return view_cmd
-    if singuarity_image is None:
+    if singularity_image is None:
       subprocess.check_call(
         ' '.join(view_cmd),
         shell=True)
@@ -173,7 +173,7 @@ def run_samtools_view(
         bind_dir_list.append(
           os.path.dirname(reference_file))
       execute_singuarity_cmd(
-        image_path=singuarity_image,
+        image_path=singularity_image,
         command_string=' '.join(view_cmd),
         bind_dir_list=bind_dir_list)
     if cram_out:
@@ -187,7 +187,7 @@ def run_samtools_view(
       index_bam_or_cram(
         samtools_exe=samtools_exe,
         input_path=output_file,
-        singuarity_image=singuarity_image,
+        singularity_image=singularity_image,
         threads=threads)
     return view_cmd
   except:
@@ -196,7 +196,7 @@ def run_samtools_view(
 
 def convert_bam_to_cram(
       samtools_exe, bam_file, reference_file, cram_path, threads=1,
-      singuarity_image=None, force=False, dry_run=False, use_ephemeral_space=0):
+      singularity_image=None, force=False, dry_run=False, use_ephemeral_space=0):
   '''
   A function for converting bam files to cram using pysam utility
   
@@ -208,7 +208,7 @@ def convert_bam_to_cram(
   :param force: Output cram will be overwritten if force is True, default False
   :param dry_run: A toggle for returning the samtools command without actually running it, default False
   :param use_ephemeral_space: A toggle for temp dir settings, default 0
-  :param singuarity_image: Singularity image path, default None
+  :param singularity_image: Singularity image path, default None
   :returns: None
   :raises IOError: It raises IOError if no input or reference fasta file found or
                    output file already present and force is not True
@@ -222,7 +222,7 @@ def convert_bam_to_cram(
         input_file=bam_file,
         output_file=cram_path,
         reference_file=reference_file,
-        singuarity_image=singuarity_image,
+        singularity_image=singularity_image,
         force=force,
         cram_out=True,
         threads=threads,
@@ -237,7 +237,7 @@ def convert_bam_to_cram(
 def filter_bam_file(
       samtools_exe, input_bam, output_bam, samFlagInclude=None, reference_file=None,
       samFlagExclude=None, threads=1, mapq_threshold=20, cram_out=False,
-      singuarity_image=None, index_output=True, dry_run=False):
+      singularity_image=None, index_output=True, dry_run=False):
   '''
   A function for filtering bam file using samtools view
 
@@ -251,7 +251,7 @@ def filter_bam_file(
   :param mapq_threshold: Skip alignments with MAPQ smaller than this value, default None
   :param index_output: Index output bam, default True
   :param cram_out: Output cram file, default False
-  :param singuarity_image: Singularity image path, default None
+  :param singularity_image: Singularity image path, default None
   :param dry_run: A toggle for returning the samtools command without actually running it, default False
   :returns: Samtools command
   '''
@@ -278,7 +278,7 @@ def filter_bam_file(
         index_output=index_output,
         threads=threads,
         dry_run=dry_run,
-        singuarity_image=singuarity_image,
+        singularity_image=singularity_image,
         reference_file=reference_file,
         samtools_params=samtools_params)
     return view_cmd
@@ -288,7 +288,7 @@ def filter_bam_file(
 
 def run_bam_stats(
       samtools_exe, bam_file, output_dir, threads=1, force=False,
-      singuarity_image=None, output_prefix=None, dry_run=False):
+      singularity_image=None, output_prefix=None, dry_run=False):
   '''
   A method for generating samtools stats output
   
@@ -297,19 +297,19 @@ def run_bam_stats(
   :param output_dir: Bam stats output directory path
   :param output_prefix: Output file prefix, default None
   :param threads: Number of threads to use for conversion, default 1
-  :param singuarity_image: Singularity image path, default None
+  :param singularity_image: Singularity image path, default None
   :param force: Output flagstat file will be overwritten if force is True, default False
   :param dry_run: A toggle for returning the samtools command without actually running it, default False
   :returns: Output file path, list containing samtools command and a list containing the SN matrics of report
   '''
   try:
-    if singuarity_image is None:
+    if singularity_image is None:
       check_file_path(samtools_exe)
     _check_bam_file(bam_file=bam_file)
     if not dry_run:
       _check_bam_index(
         samtools_exe=samtools_exe,
-        singuarity_image=singuarity_image,
+        singularity_image=singularity_image,
         bam_file=bam_file)
     if output_prefix is None:
       output_prefix = os.path.basename(bam_file)
@@ -334,7 +334,7 @@ def run_bam_stats(
     if dry_run:
       return stats_cmd
 
-    if singuarity_image is None:
+    if singularity_image is None:
       with open(output_path,'w') as fp:
         with subprocess.Popen(stats_cmd, stdout=subprocess.PIPE) as proc:
           fp.write(proc.stdout.read().decode('utf-8'))                            # write bam stats output
@@ -344,7 +344,7 @@ def run_bam_stats(
         format(
           os.path.dirname(bam_file),
           os.path.dirname(output_path),
-          singuarity_image,
+          singularity_image,
           ' '.join(stats_cmd),
           output_path)
       subprocess.check_call(command,shell=True)
@@ -390,7 +390,7 @@ def _parse_samtools_stats_output(stats_file):
 
 def run_bam_flagstat(
       samtools_exe, bam_file, output_dir, threads=1, force=False,
-      singuarity_image=None, output_prefix=None, dry_run=False):
+      singularity_image=None, output_prefix=None, dry_run=False):
   '''
   A method for generating bam flagstat output
   
@@ -400,18 +400,18 @@ def run_bam_flagstat(
   :param output_prefix: Output file prefix, default None
   :param threads: Number of threads to use for conversion, default 1
   :param force: Output flagstat file will be overwritten if force is True, default False
-  :param singuarity_image: Singularity image path, default None
+  :param singularity_image: Singularity image path, default None
   :param dry_run: A toggle for returning the samtools command without actually running it, default False
   :returns: Output file path and a list containing samtools command
   '''
   try:
-    if singuarity_image is None:
+    if singularity_image is None:
       check_file_path(samtools_exe)
     _check_bam_file(bam_file=bam_file)                                          # check bam file
     if not dry_run:
       _check_bam_index(
         samtools_exe=samtools_exe,
-        singuarity_image=singuarity_image,
+        singularity_image=singularity_image,
         bam_file=bam_file)                                                      # generate bam index
     if output_prefix is None:
       output_prefix=os.path.basename(bam_file)
@@ -434,7 +434,7 @@ def run_bam_flagstat(
       quote(bam_file)]
     if dry_run:
       return flagstat_cmd
-    if singuarity_image is None:
+    if singularity_image is None:
       with open(output_path,'w') as fp:
         with subprocess.Popen(flagstat_cmd, stdout=subprocess.PIPE) as proc:
           fp.write(proc.stdout.read().decode('utf-8'))                            # write bam flagstat output
@@ -444,7 +444,7 @@ def run_bam_flagstat(
         format(
           os.path.dirname(bam_file),
           os.path.dirname(output_path),
-          singuarity_image,
+          singularity_image,
           ' '.join(flagstat_cmd),
           output_path)
       subprocess.check_call(command,shell=True)
@@ -455,7 +455,7 @@ def run_bam_flagstat(
 
 def run_bam_idxstat(
       samtools_exe, bam_file, output_dir, output_prefix=None,
-      singuarity_image=None, force=False, dry_run=False):
+      singularity_image=None, force=False, dry_run=False):
   '''
   A function for running samtools index stats generation
   
@@ -464,18 +464,18 @@ def run_bam_idxstat(
   :param output_dir: Bam idxstats output directory path
   :param output_prefix: Output file prefix, default None
   :param force: Output idxstats file will be overwritten if force is True, default False
-  :param singuarity_image: Singularity image path, default None
+  :param singularity_image: Singularity image path, default None
   :param dry_run: A toggle for returning the samtools command without actually running it, default False
   :returns: Output file path and a list containing samtools command
   '''
   try:
-    if singuarity_image is None:
+    if singularity_image is None:
       check_file_path(samtools_exe)
     _check_bam_file(bam_file=bam_file)                                          # check bam file
     if not dry_run:
       _check_bam_index(
         samtools_exe=samtools_exe,
-        singuarity_image=singuarity_image,
+        singularity_image=singularity_image,
         bam_file=bam_file)                                                      # generate bam index
     if output_prefix is None:
       output_prefix=os.path.basename(bam_file)
@@ -498,7 +498,7 @@ def run_bam_idxstat(
       quote(bam_file)]
     if dry_run:
       return idxstat_cmd
-    if singuarity_image is None:
+    if singularity_image is None:
       with open(output_path,'w') as fp:
         with subprocess.Popen(idxstat_cmd, stdout=subprocess.PIPE) as proc:
           fp.write(proc.stdout.read().decode('utf-8'))                            # write bam flagstat output
@@ -508,7 +508,7 @@ def run_bam_idxstat(
         format(
           os.path.dirname(bam_file),
           os.path.dirname(output_path),
-          singuarity_image,
+          singularity_image,
           ' '.join(idxstat_cmd),
           output_path)
       subprocess.check_call(command,shell=True)
@@ -519,7 +519,7 @@ def run_bam_idxstat(
 
 def run_sort_bam(
       samtools_exe, input_bam_path, output_bam_path, sort_by_name=False,
-      use_ephemeral_space=0, singuarity_image=None, threads=1, force=False,
+      use_ephemeral_space=0, singularity_image=None, threads=1, force=False,
       dry_run=False, cram_out=False, index_output=True, sort_params=None):
   '''
   A function for sorting input bam file and generate a output bam
@@ -532,14 +532,14 @@ def run_sort_bam(
   :param force: Output bam file will be overwritten if force is True, default False
   :param cram_out: Output cram file, default False
   :param index_output: Index output bam, default True
-  :param singuarity_image: Singularity image path, default None
+  :param singularity_image: Singularity image path, default None
   :param use_ephemeral_space: A toggle for temp dir settings, default 0
   :param dry_run: A toggle for returning the samtools command without actually running it, default False
   :param sort_params: A list of params for samtools sort, default None
   :return: None
   '''
   try:
-    if singuarity_image is None:
+    if singularity_image is None:
       check_file_path(samtools_exe)
     _check_bam_file(bam_file=input_bam_path)
     sort_cmd = [
@@ -559,7 +559,7 @@ def run_sort_bam(
         temp_dir,
         os.path.basename(output_bam_path))
     sort_cmd.extend(['-o',quote(temp_bam)])
-    if singuarity_image is None:
+    if singularity_image is None:
       sort_cmd.append('-T {0}'.format(temp_dir))
     else:
       sort_cmd.append('-T /tmp')
@@ -577,7 +577,7 @@ def run_sort_bam(
     sort_cmd.append(quote(input_bam_path))
     if dry_run:
       return sort_cmd
-    if singuarity_image is None:
+    if singularity_image is None:
       subprocess.check_call(' '.join(sort_cmd),shell=True)
     else:
       container_temp_dir = \
@@ -587,7 +587,7 @@ def run_sort_bam(
         temp_dir,
         '{0}:/tmp'.format(container_temp_dir)]
       execute_singuarity_cmd(
-        image_path=singuarity_image,
+        image_path=singularity_image,
         command_string=' '.join(sort_cmd),
         bind_dir_list=bind_dir_list)
       remove_dir(container_temp_dir)
@@ -604,14 +604,14 @@ def run_sort_bam(
       index_bam_or_cram(
         samtools_exe=samtools_exe,
         input_path=output_bam_path,
-        singuarity_image=singuarity_image,
+        singularity_image=singularity_image,
         threads=threads)
   except:
     raise
 
 
 def merge_multiple_bam(
-      samtools_exe, input_bam_list, output_bam_path, sorted_by_name=False, singuarity_image=None,
+      samtools_exe, input_bam_list, output_bam_path, sorted_by_name=False, singularity_image=None,
       use_ephemeral_space=0, threads=1, force=False, dry_run=False, index_output=True):
   '''
   A function for merging multiple input bams to a single output bam
@@ -623,13 +623,13 @@ def merge_multiple_bam(
   :param threads: Number of threads to use for merging, default 1
   :param force: Output bam file will be overwritten if force is True, default False
   :param index_output: Index output bam, default True
-  :param singuarity_image: Singularity image path, efault None
+  :param singularity_image: Singularity image path, efault None
   :param use_ephemeral_space: A toggle for temp dir settings, default 0
   :param dry_run: A toggle for returning the samtools command without actually running it, default False
   :return: samtools command
   '''
   try:
-    if singuarity_image is None:
+    if singularity_image is None:
       check_file_path(samtools_exe)
     check_file_path(input_bam_list)
     with open(input_bam_list,'r') as fp:
@@ -652,7 +652,7 @@ def merge_multiple_bam(
     merge_cmd.append(temp_bam)
     if dry_run:
       return merge_cmd
-    if singuarity_image is None:
+    if singularity_image is None:
       subprocess.check_call(merge_cmd)
     else:
       bind_dir_list = [
@@ -660,7 +660,7 @@ def merge_multiple_bam(
           for bam in input_bam_list]
       bind_dir_list.append(temp_dir)
       execute_singuarity_cmd(
-        image_path=singuarity_image,
+        image_path=singularity_image,
         command_string=' '.join(merge_cmd),
         bind_dir_list=bind_dir_list)                                            # run samtools merge
     copy_local_file(
@@ -674,7 +674,7 @@ def merge_multiple_bam(
       index_bam_or_cram(
         samtools_exe=samtools_exe,
         input_path=output_bam_path,
-        singuarity_image=singuarity_image,
+        singularity_image=singularity_image,
         threads=threads)
     return merge_cmd
   except:
