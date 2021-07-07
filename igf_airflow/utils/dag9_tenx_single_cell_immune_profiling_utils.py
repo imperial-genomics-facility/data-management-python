@@ -214,10 +214,10 @@ def generate_cell_sorted_bam_func(**context):
       os.path.join(cellranger_output_dir, cellranger_bam_path)
     output_bam_path = \
       os.path.join(cellranger_output_dir, cellsorted_bam_path)
-    if os.path.exists(output_bam_path):
-      raise IOError(
-        'File {0} already present. Check and remove it before restarting the job'.\
-          format(output_bam_path))
+    #if os.path.exists(output_bam_path):
+    #  raise IOError(
+    #    'File {0} already present. Check and remove it before restarting the job'.\
+    #      format(output_bam_path))
     run_sort_bam(
       samtools_exe=SAMTOOLS_EXE,
       singularity_image=SAMTOOLS_IMAGE,
@@ -226,7 +226,7 @@ def generate_cell_sorted_bam_func(**context):
       sort_by_name=False,
       use_ephemeral_space=1,
       threads=threads,
-      force=False,
+      force=True,
       dry_run=False,
       cram_out=False,
       index_output=False,
