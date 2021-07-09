@@ -92,7 +92,7 @@ def run_velocyto_func(**context):
     analysis_description_xcom_key = \
       context['params'].get('analysis_description_xcom_key')
     loom_output_key = \
-      context['params'].get('loom_output_key')
+      context['params'].get('loom_output_key', 'loom_output')
     cell_sorted_bam_name = \
       context['params'].get('cell_sorted_bam_name', 'count/cellsorted_possorted_genome_bam.bam')
     velocyto_metadata_table_file = \
@@ -200,6 +200,16 @@ def run_velocyto_func(**context):
     ti.xcom_push(
       key=loom_output_key,
       value=loom_output)
+    message = \
+      'Generated loom file for {0}, path: {1}'.\
+        format(sample_igf_id, loom_output)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=message,
+      reaction='pass')
   except Exception as e:
     logging.error(e)
     log_file = context.get('task_instance').log_filepath
