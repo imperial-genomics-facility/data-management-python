@@ -11,6 +11,7 @@ from igf_data.utils.fileutils import get_date_stamp
 from igf_data.utils.fileutils import get_datestamp_label
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.utils.singularity_run_wrapper import execute_singuarity_cmd
+from igf_data.utils.singularity_run_wrapper import singularity_run
 from igf_data.utils.analysis_fastq_fetch_utils import get_fastq_and_run_for_samples
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.utils.tools.reference_genome_utils import Reference_genome_utils
@@ -190,8 +191,6 @@ def run_velocyto_func(**context):
     commandline.extend([
       cellranger_output_dir,
       temp_gtf_path])
-    commandline = \
-      ' '.join(commandline)
     container_tmp_dir = \
       get_temp_dir(use_ephemeral_space=True)
     bind_dir_lists = [
@@ -199,9 +198,9 @@ def run_velocyto_func(**context):
       cellranger_output_dir,
       os.path.dirname(mask_file),
       os.path.dirname(temp_gtf_path)]
-    execute_singuarity_cmd(
+    singularity_run(
       image_path=SCANPY_NOTEBOOK_IMAGE,
-      command_string=commandline,
+      args_list=commandline,
       options=['--no-home','-C'],
       bind_dir_list=bind_dir_lists)
     loom_output = \
