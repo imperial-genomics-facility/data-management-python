@@ -1,10 +1,10 @@
 import os
 from spython.main import Client
-from igf_data.utils.fileutils import check_file_path,copy_local_file,get_temp_dir,remove_dir
+from igf_data.utils.fileutils import check_file_path, copy_local_file, get_temp_dir, remove_dir
 
 def singularity_run(
-      image_path,args_list,log_dir=None,bind_dir_list=(),
-      options=None,task_id=1,dry_run=False):
+      image_path, args_list, log_dir=None, bind_dir_list=(),
+      options=None, task_id=1, dry_run=False):
   '''
   A wrapper module for running singularity based containers
 
@@ -24,7 +24,6 @@ def singularity_run(
     for d in bind_dir_list:
       paths = d.split(':')
       check_file_path(paths[0])
-
     temp_dir = \
       get_temp_dir(use_ephemeral_space=False)
     temp_image_path = \
@@ -34,7 +33,7 @@ def singularity_run(
     copy_local_file(
       image_path,
       temp_image_path )                                                         # copy image to tmp dir
-    if not isinstance(args_list,list) and \
+    if not isinstance(args_list, list) and \
        len(args_list) > 0:
        raise ValueError('No args provided for singularity run')                 # safemode
     args = ' '.join(args_list)                                                  # flatten args
@@ -68,23 +67,24 @@ def singularity_run(
             log_dir,
             '{0}.log'.format(task_id))
         messages = response.get('message')
-        if isinstance(messages,list):
+        if isinstance(messages, list):
           messages = '\n'.join(messages)
         with open(log_file,'w') as fp:
           fp.write(messages)
         raise ValueError(
                 'Failed to run command for task id: {0}, log dir: {1}'.\
-                  format(task_id,log_file))
+                  format(task_id, log_file))
       remove_dir(temp_dir)                                                      # remove copied image after run
       return singularity_run_cmd
   except Exception as e:
     raise ValueError(
             'Failed to run image {0}, error: {1}'.\
-              format(image_path,e))
+              format(image_path, e))
 
 
-def execute_singuarity_cmd(image_path,command_string,log_dir=None,task_id=1,
-                           options=None,bind_dir_list=(),dry_run=False):
+def execute_singuarity_cmd(
+      image_path, command_string, log_dir=None, task_id=1,
+      options=None, bind_dir_list=(), dry_run=False):
   """
   A function for executing commands within Singularity container
 
@@ -108,7 +108,7 @@ def execute_singuarity_cmd(image_path,command_string,log_dir=None,task_id=1,
       bind_dir_list = None
     singularity_cmd = \
       'singularity exec --bind {0} {1} {2}'.\
-        format(bind_dir_list,image_path,command_string)
+        format(bind_dir_list, image_path, command_string)
     if dry_run:
       return singularity_cmd
     response = \
@@ -130,13 +130,13 @@ def execute_singuarity_cmd(image_path,command_string,log_dir=None,task_id=1,
           log_dir,
           '{0}.log'.format(task_id))
       message = response.get('message')
-      if isinstance(message,list):
+      if isinstance(message, list):
         message = '\n'.join(message)
-      with open(log_file,'w') as fp:
+      with open(log_file, 'w') as fp:
         fp.write(message)
       raise ValueError(
               'Failed to run command for task id: {0}, log dir: {1}'.\
-                format(task_id,log_file))
+                format(task_id, log_file))
     return singularity_cmd
   except Exception as e:
     raise ValueError('Failed to execute singularity cmd, error: {0}'.format(e))
