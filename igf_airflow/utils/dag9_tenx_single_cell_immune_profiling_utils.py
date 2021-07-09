@@ -1,4 +1,4 @@
-import os, logging, re, fnmatch, shutil, gzip
+import os, sys, logging, re, fnmatch, shutil, gzip
 import pandas as pd
 from copy import copy
 from airflow.models import Variable
@@ -80,6 +80,19 @@ VELOCYTO_EXE = 'velocyto'
 
 
 ## FUNCTION
+def load_loom_file_to_rds_func(**context):
+  try:
+    sys.exit(0)
+  except Exception as e:
+    raise ValueError(e)
+
+def run_scvelo_for_sc_5p_func(**context):
+  try:
+    sys.exit(0)
+  except Exception as e:
+    raise ValueError(e)
+
+
 def run_velocyto_func(**context):
   try:
     ti = context.get('ti')
