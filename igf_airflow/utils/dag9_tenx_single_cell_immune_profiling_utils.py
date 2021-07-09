@@ -1,4 +1,4 @@
-import os, sys, logging, re, fnmatch
+import os, logging, re, fnmatch, shutil, gzip
 import pandas as pd
 from copy import copy
 from airflow.models import Variable
@@ -44,7 +44,8 @@ GENE_REFFLAT_TYPE = 'GENE_REFFLAT'
 RIBOSOMAL_INTERVAL_TYPE = 'RIBOSOMAL_INTERVAL'
 ANALYSIS_CRAM_TYPE = 'ANALYSIS_CRAM'
 CELLRANGER_MULTI_TYPE = 'CELLRANGER_MULTI'
-PATTERNED_FLOWCELL_LIST = ['HISEQ4000','NEXTSEQ']
+MASK_TYPE = 'MASK_GTF'
+PATTERNED_FLOWCELL_LIST = ['HISEQ4000', 'NEXTSEQ']
 BOX_DIR_PREFIX = 'SecondaryAnalysis'
 SAMTOOLS_EXE = 'samtools'
 PICARD_JAR = '/picard/picard.jar'
@@ -77,6 +78,7 @@ CELLRANGER_EXE = Variable.get('cellranger_exe', default_var=None)
 CELLRANGER_JOB_TIMEOUT = Variable.get('cellranger_job_timeout', default_var=None)
 VELOCYTO_EXE = 'velocyto'
 
+
 ## FUNCTION
 def run_velocyto_func(**context):
   try:
@@ -89,13 +91,16 @@ def run_velocyto_func(**context):
       context['params'].get('analysis_description_xcom_pull_task')
     analysis_description_xcom_key = \
       context['params'].get('analysis_description_xcom_key')
+    loom_output_key = \
+      context['params'].get('loom_output_key')
     cell_sorted_bam_name = \
       context['params'].get('cell_sorted_bam_name', 'count/cellsorted_possorted_genome_bam.bam')
-    threads = \
-      context['params'].get('threads', 1)
-    samtools_memory = \
-      context['params'].get('samtools_memory', 6000)
-    sys.exit()                                                                  # FIX ME
+    velocyto_metadata_table_file = \
+      context['params'].get('metadatatable')
+    velocyto_logic = \
+      context['params'].get('logic', 'Default')
+    velocyto_dtype = \
+      context['params'].get('dtype', 'uint16')
     cellranger_output_dir = \
       ti.xcom_pull(
         task_ids=xcom_pull_task,
@@ -113,6 +118,25 @@ def run_velocyto_func(**context):
       ti.xcom_pull(
         task_ids=analysis_description_xcom_pull_task,
         key=analysis_description_xcom_key)
+    reference_path = None
+    gtf_path = None
+    for analysis_entry in analysis_description:
+      feature_type = analysis_entry.get('feature_type')
+      feature_type = feature_type.replace(' ','_').lower()
+      if feature_type == 'gene_expression':
+        reference_path = analysis_entry.get('reference')
+    if reference_path is None:
+      raise KeyError('Missing cellranger reference path')
+    gtf_path = \
+      os.path.join(reference_path, 'genes', 'genes.gtf.gz')
+    check_file_path(gtf_path)
+    gtf_tmp_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    temp_gtf_path = \
+      os.path.join(gtf_tmp_dir, 'genes.gtf')
+    with gzip.open(gtf_path, 'r') as f_in, open(temp_gtf_path, 'wb') as f_out:
+      shutil.copyfileobj(f_in, f_out)
+    check_file_path(temp_gtf_path)
     analysis_description = pd.DataFrame(analysis_description)
     analysis_description['feature_type'] = \
       analysis_description['feature_type'].\
@@ -136,31 +160,32 @@ def run_velocyto_func(**context):
       Reference_genome_utils(
         genome_tag=genome_build,
         dbsession_class=sa.get_session_class())
-    ref_genome.get_re()
     mask_file = \
       ref_genome._fetch_collection_files(
-        collection_type=None,
-        check_missing=True)
-    gtf_file = \
-      ref_genome._fetch_collection_files(
-        collection_type=None,
+        collection_type=MASK_TYPE,
         check_missing=True)
     commandline = [
       VELOCYTO_EXE,
       'run10x',
-      '--mask={0}'.format(mask_file),
-      '--samtools-memory={0}'.format(samtools_memory),
-      '--samtools-threads={0}'.format(threads),
+      '-l {0}'.format(velocyto_logic),
+      '-t {0}'.format(velocyto_dtype),
+      '--mask={0}'.format(mask_file)]
+    if velocyto_metadata_table_file is not None and \
+       os.path.exists(velocyto_metadata_table_file):
+      commandline.\
+        append('-s {0}'.format(velocyto_metadata_table_file))
+    commandline.extend([
       cellranger_output_dir,
-      gtf_file]
-    commandline = ' '.join(commandline)
+      temp_gtf_path])
+    commandline = \
+      ' '.join(commandline)
     container_tmp_dir = \
       get_temp_dir(use_ephemeral_space=True)
     bind_dir_lists = [
       '{0}:/tmp'.format(container_tmp_dir),
       cellranger_output_dir,
       os.path.dirname(mask_file),
-      os.path.dirname(gtf_file)]
+      os.path.dirname(temp_gtf_path)]
     execute_singuarity_cmd(
       image_path=SCANPY_NOTEBOOK_IMAGE,
       command_string=commandline,
@@ -168,10 +193,13 @@ def run_velocyto_func(**context):
       bind_dir_list=bind_dir_lists)
     loom_output = \
       os.path.join(
-        cellranger_output_dir,
-        'outs',
+        cellranger_count_dir,
+        'velocyto',
         '{0}.loom'.format(os.path.basename(cellranger_output_dir)))
     check_file_path(loom_output)
+    ti.xcom_push(
+      key=loom_output_key,
+      value=loom_output)
   except Exception as e:
     logging.error(e)
     log_file = context.get('task_instance').log_filepath
@@ -214,10 +242,6 @@ def generate_cell_sorted_bam_func(**context):
       os.path.join(cellranger_output_dir, cellranger_bam_path)
     output_bam_path = \
       os.path.join(cellranger_output_dir, cellsorted_bam_path)
-    #if os.path.exists(output_bam_path):
-    #  raise IOError(
-    #    'File {0} already present. Check and remove it before restarting the job'.\
-    #      format(output_bam_path))
     run_sort_bam(
       samtools_exe=SAMTOOLS_EXE,
       singularity_image=SAMTOOLS_IMAGE,
@@ -255,7 +279,7 @@ def create_and_update_qc_pages(**context):
     collection_type_list = \
       context['params'].get('collection_type_list')
     attribute_collection_file_type = \
-      context['params'].get('attribute_collection_file_type',[ANALYSIS_CRAM_TYPE,CELLRANGER_MULTI_TYPE])
+      context['params'].get('attribute_collection_file_type', [ANALYSIS_CRAM_TYPE, CELLRANGER_MULTI_TYPE])
     pipeline_seed_table = \
       context['params'].get('pipeline_seed_table','analysis')
     sample_id_label = \
