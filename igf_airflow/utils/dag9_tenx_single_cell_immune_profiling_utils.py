@@ -128,6 +128,13 @@ def run_velocyto_func(**context):
     check_file_path(cell_sorted_bam_path)
     if not os.path.exists(cellranger_outs_dir):
       os.symlink(cellranger_count_dir, cellranger_outs_dir)                     # create link for velocyto input path
+    loom_output = \
+      os.path.join(
+        cellranger_output_dir,
+        'velocyto',
+        '{0}.loom'.format(os.path.basename(cellranger_output_dir)))
+    if os.path.exists(loom_output):
+      os.remove(loom_output)                                                    # remove existing output file before re-run
     analysis_description = \
       ti.xcom_pull(
         task_ids=analysis_description_xcom_pull_task,
@@ -203,11 +210,6 @@ def run_velocyto_func(**context):
       args_list=commandline,
       options=['--no-home','-C'],
       bind_dir_list=bind_dir_lists)
-    loom_output = \
-      os.path.join(
-        cellranger_count_dir,
-        'velocyto',
-        '{0}.loom'.format(os.path.basename(cellranger_output_dir)))
     check_file_path(loom_output)
     ti.xcom_push(
       key=loom_output_key,
