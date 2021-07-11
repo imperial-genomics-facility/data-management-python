@@ -52,6 +52,7 @@ SAMTOOLS_EXE = 'samtools'
 PICARD_JAR = '/picard/picard.jar'
 DATABASE_CONFIG_FILE = Variable.get('test_database_config_file', default_var=None)
 SCANPY_SINGLE_SAMPLE_TEMPLATE= Variable.get('scanpy_single_sample_template', default_var=None)
+SCVELO_SINGLE_SAMPLE_TEMPLATE= Variable.get('scvelo_single_sample_template', default_var=None)
 SCANPY_NOTEBOOK_IMAGE = Variable.get('scanpy_notebook_image', default_var=None)
 SCIRPY_SINGLE_SAMPLE_TEMPLATE = Variable.get('scirpy_single_sample_template', default_var=None)
 SCIRPY_NOTEBOOK_IMAGE = Variable.get('scirpy_notebook_image', default_var=None)
@@ -83,14 +84,214 @@ VELOCYTO_EXE = 'velocyto'
 ## FUNCTION
 def load_loom_file_to_rds_func(**context):
   try:
-    sys.exit(0)
+    sys.exit()
   except Exception as e:
     raise ValueError(e)
 
 def run_scvelo_for_sc_5p_func(**context):
   try:
-    sys.exit(0)
+    ti = context.get('ti')
+    xcom_pull_task = \
+      context['params'].get('xcom_pull_task')
+    xcom_pull_files_key = \
+      context['params'].get('xcom_pull_files_key')
+    analysis_description_xcom_pull_task = \
+      context['params'].get('analysis_description_xcom_pull_task')
+    analysis_description_xcom_key = \
+      context['params'].get('analysis_description_xcom_key')
+    loom_file_key = \
+      context['params'].get('loom_file_key', 'loom_output')
+    loom_file_task = \
+      context['params'].get('loom_file_task', 'run_velocyto')
+    timeout = \
+      context['params'].get('timeout')
+    allow_errors = \
+      context['params'].get('allow_errors')
+    count_dir = \
+      context['params'].get('count_dir','count')
+    kernel_name = \
+      context['params'].get('kernel_name', 'python3')
+    count_dir = \
+      context['params'].get('count_dir', 'count')
+    vdj_dir = \
+      context['params'].get('vdj_dir', 'vdj')
+    cpu_threads = \
+      context['params'].get('cpu_threads', 8)
+    output_notebook_key = \
+      context['params'].get('output_notebook_key', 'scvelo_notebook')
+    cell_marker_list = ALL_CELL_MARKER_LIST
+    s_genes = None
+    g2m_genes = None
+    cell_marker_mode = ''
+    dag_run = context.get('dag_run')
+    if dag_run is None or \
+       dag_run.conf is None or \
+       dag_run.conf.get('analysis_id') is None:
+      raise ValueError('No analysis id found for collection')
+    analysis_id = \
+        dag_run.conf.get('analysis_id')
+    dbparams = \
+      read_dbconf_json(DATABASE_CONFIG_FILE)
+    aa = \
+      AnalysisAdaptor(**dbparams)
+    aa.start_session()
+    project_igf_id = \
+      aa.fetch_project_igf_id_for_analysis_id(
+        analysis_id=int(analysis_id))
+    aa.close_session()
+    cellranger_output = \
+      ti.xcom_pull(
+        task_ids=xcom_pull_task,
+        key=xcom_pull_files_key)
+    loom_file = \
+      ti.xcom_pull(
+        task_ids=loom_file_task,
+        key=loom_file_key)
+    cellranger_count_dir = \
+      os.path.join(cellranger_output, count_dir)
+    cellranger_vdj_dir = \
+      os.path.join(cellranger_output, vdj_dir)
+    analysis_description = \
+      ti.xcom_pull(
+        task_ids=analysis_description_xcom_pull_task,
+        key=analysis_description_xcom_key)
+    if isinstance(analysis_description, list):
+      analysis_description = \
+        analysis_description[0]
+    sample_igf_id = \
+      analysis_description.get('sample_igf_id')
+    if analysis_description.get('cell_marker_list') is not None:
+      cell_marker_list = \
+        analysis_description.get('cell_marker_list')                            # reset cell marker list
+      check_file_path(cell_marker_list)
+    if analysis_description.get('s_genes') is not None:
+      s_genes = \
+        analysis_description.get('s_genes')
+      if not isinstance(s_genes, list):
+        raise TypeError(
+          'Expecting a list for s_genes and got {0}'.\
+            format(type(s_genes)))
+    if analysis_description.get('g2m_genes') is not None:
+      g2m_genes = \
+        analysis_description.get('g2m_genes')
+      if not isinstance(g2m_genes, list):
+        raise TypeError(
+          'Expecting a list for g2m_genes and got {0}'.\
+            format(type(g2m_genes)))
+    if analysis_description.get('cell_marker_mode') is not None:
+      cell_marker_mode = \
+        analysis_description.get('cell_marker_mode')
+    sa = SampleAdaptor(**dbparams)
+    sa.start_session()
+    genome_build = \
+      sa.fetch_sample_species_name(
+        sample_igf_id=sample_igf_id)
+    sa.close_session()
+    tmp_dir = get_temp_dir(use_ephemeral_space=True)
+    container_bind_dir_list = [
+      cellranger_output,
+      tmp_dir,
+      os.path.dirname(cell_marker_list)]
+    scanpy_h5ad = os.path.join(tmp_dir,'scanpy.h5ad')
+    cellbrowser_dir = os.path.join(tmp_dir, 'cellbrowser_dir')
+    if not os.path.exists(cellbrowser_dir):
+      os.makedirs(cellbrowser_dir)
+    cellbrowser_html_dir = \
+      os.path.join(
+          tmp_dir,
+          'cellbrowser_html_{0}'.format(get_datestamp_label()))
+    if not os.path.exists(cellbrowser_html_dir):
+      os.makedirs(cellbrowser_html_dir)
+    input_params = {
+      'DATE_TAG': get_date_stamp(),
+      'PROJECT_IGF_ID': project_igf_id,
+      'SAMPLE_IGF_ID': sample_igf_id,
+      'CELLRANGER_COUNT_DIR': cellranger_count_dir,
+      'CELLRANGER_VDJ_DIR': cellranger_vdj_dir,
+      'CELL_MARKER_LIST': cell_marker_list,
+      'CUSTOM_S_GENES_LIST': s_genes,
+      'CUSTOM_G2M_GENES_LIST': g2m_genes,
+      'CELL_MARKER_MODE': cell_marker_mode,
+      'GENOME_BUILD': genome_build,
+      'SCANPY_H5AD': scanpy_h5ad,
+      'CELLBROWSER_DIR': cellbrowser_dir,
+      'CELLBROWSER_HTML_DIR': cellbrowser_html_dir}
+    nb1 = Notebook_runner(
+      template_ipynb_path=SCANPY_SINGLE_SAMPLE_TEMPLATE,
+      output_dir=tmp_dir,
+      input_param_map=input_params,
+      container_paths=container_bind_dir_list,
+      timeout=timeout,
+      kernel=kernel_name,
+      singularity_options=['--no-home','-C'],
+      allow_errors=allow_errors,
+      use_ephemeral_space=True,
+      singularity_image_path=SCANPY_NOTEBOOK_IMAGE)
+    output_scanpy_notebook_path, notebook_cmd = \
+      nb1.execute_notebook_in_singularity()
+    message = \
+      'Generated scanpy h5ad file for {0}, path: {1}'.\
+        format(sample_igf_id, output_scanpy_notebook_path)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=message,
+      reaction='pass')
+    input_params = {
+      'DATE_TAG': get_date_stamp(),
+      'PROJECT_IGF_ID': project_igf_id,
+      'SAMPLE_IGF_ID': sample_igf_id,
+      'CUSTOM_S_GENES_LIST': s_genes,
+      'CUSTOM_G2M_GENES_LIST': g2m_genes,
+      'VELOCYTO_LOOM': loom_file,
+      'SCANPY_H5AD': scanpy_h5ad,
+      'CPU_THREADS ': cpu_threads}
+    container_bind_dir_list = [
+      tmp_dir]
+    nb2 = Notebook_runner(
+      template_ipynb_path=SCVELO_SINGLE_SAMPLE_TEMPLATE,
+      output_dir=tmp_dir,
+      input_param_map=input_params,
+      container_paths=container_bind_dir_list,
+      timeout=timeout,
+      kernel=kernel_name,
+      singularity_options=['--no-home','-C'],
+      allow_errors=allow_errors,
+      use_ephemeral_space=True,
+      singularity_image_path=SCANPY_NOTEBOOK_IMAGE)
+    output_scvelo_notebook_path, notebook_cmd = \
+      nb2.execute_notebook_in_singularity()
+    ti.xcom_push(
+      key=output_notebook_key,
+      value=output_scvelo_notebook_path)
+    message = \
+      'Generated scvelo h5ad file for {0}, path: {1}'.\
+        format(sample_igf_id, output_scvelo_notebook_path)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=message,
+      reaction='pass')
   except Exception as e:
+    logging.error(e)
+    log_file = context.get('task_instance').log_filepath
+    if log_file is not None:
+      message = \
+        'Error: {0}, Log: {1}'.format(e, log_file)
+    else:
+      message = \
+        'Error: {0}'.format(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=message,
+      reaction='fail')
     raise ValueError(e)
 
 
