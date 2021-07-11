@@ -241,7 +241,7 @@ def run_scvelo_for_sc_5p_func(**context):
       'CUSTOM_G2M_GENES_LIST': g2m_genes,
       'VELOCYTO_LOOM': loom_file,
       'SCANPY_H5AD': scanpy_h5ad,
-      'CPU_THREADS ': cpu_threads}
+      'CPU_THREADS': int(cpu_threads)}
     container_bind_dir_list = [
       tmp_dir]
     nb2 = Notebook_runner(
