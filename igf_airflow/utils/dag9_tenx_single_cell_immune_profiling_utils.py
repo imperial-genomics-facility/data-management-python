@@ -243,7 +243,8 @@ def run_scvelo_for_sc_5p_func(**context):
       'SCANPY_H5AD': scanpy_h5ad,
       'CPU_THREADS': int(cpu_threads)}
     container_bind_dir_list = [
-      tmp_dir]
+      tmp_dir,
+      os.path.dirname(loom_file)]
     nb2 = Notebook_runner(
       template_ipynb_path=SCVELO_SINGLE_SAMPLE_TEMPLATE,
       output_dir=tmp_dir,
