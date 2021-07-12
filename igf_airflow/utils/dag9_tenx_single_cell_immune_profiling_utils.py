@@ -1827,8 +1827,17 @@ def run_singlecell_notebook_wrapper_func(**context):
         task_ids=analysis_description_xcom_pull_task,
         key=analysis_description_xcom_key)
     if isinstance(analysis_description, list):
+      analysis_description_df = \
+        pd.DataFrame(analysis_description)
+      analysis_description_df['feature_type'] = \
+        analysis_description_df['feature_type'].\
+          map(lambda x: x.lower().replace(' ','_').replace('-','_'))
+      gex_sample = \
+        analysis_description_df[analysis_description_df['feature_type']=='gene_expression']
+      if len(gex_sample.index) == 0:
+        raise ValueError('No gene expression entry found in analysis description')
       analysis_description = \
-        analysis_description[0]
+        gex_sample.to_dict(orient='records')[0]                                # resetting analysis_description
     sample_igf_id = \
       analysis_description.get('sample_igf_id')
     if analysis_description.get('cell_marker_list') is not None:
