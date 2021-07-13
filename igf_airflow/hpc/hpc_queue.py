@@ -15,7 +15,8 @@ def get_pbspro_job_count(job_name_prefix=''):
     with TemporaryFile() as tmp_file:
       subprocess.\
         check_call(
-          ['qstat','-t','-f','-F','json'],
+          'qstat -t -f -F json|grep -v BASH_FUNC_module',                       # this can fix or break pipeline as well
+          shell=True,
           stdout=tmp_file)
       tmp_file.seek(0)
       json_data = tmp_file.read()
