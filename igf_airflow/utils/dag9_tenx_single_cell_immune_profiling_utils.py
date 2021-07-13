@@ -2810,10 +2810,10 @@ def _get_fastq_and_run_cutadapt_trim(
           # trim R1
           if r1_length > 0:
             cutadapt_options_r1 = None
-            if len(cutadapt_options) >0 :
+            if len(cutadapt_options) > 0 :
               cutadapt_options_r1 = copy(cutadapt_options)
               cutadapt_options_r1.\
-                append('-l {0}'.format(r1_length))
+                append('-l {0}'.format(int(r1_length)))
             _ = \
               run_cutadapt(
                 read1_fastq_in=input_fastq_file,
@@ -2836,10 +2836,10 @@ def _get_fastq_and_run_cutadapt_trim(
           # trim R2
           if r2_length > 0:
             cutadapt_options_r2 = None
-            if len(cutadapt_options) >0 :
+            if len(cutadapt_options) > 0 :
               cutadapt_options_r2 = copy(cutadapt_options)
               cutadapt_options_r2.\
-                append('-l {0}'.format(r2_length))
+                append('-l {0}'.format(int(r2_length)))
             _ = \
               run_cutadapt(
                 read1_fastq_in=input_fastq_file,

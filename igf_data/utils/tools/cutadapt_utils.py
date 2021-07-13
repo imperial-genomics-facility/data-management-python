@@ -3,8 +3,8 @@ from igf_data.utils.fileutils import check_file_path,get_temp_dir
 from igf_data.utils.singularity_run_wrapper import execute_singuarity_cmd
 
 def run_cutadapt(
-      read1_fastq_in,read1_fastq_out,read2_fastq_in=None,read2_fastq_out=None,dry_run=False,
-      cutadapt_exe='cutadapt',singularity_image_path=None,cutadapt_options=('--cores=1',)):
+      read1_fastq_in, read1_fastq_out, read2_fastq_in=None, read2_fastq_out=None, dry_run=False,
+      cutadapt_exe='cutadapt', singularity_image_path=None, cutadapt_options=('--cores=1',)):
   try:
     check_file_path(read1_fastq_in)
     if read2_fastq_in is not None:
