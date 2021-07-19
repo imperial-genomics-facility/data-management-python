@@ -49,8 +49,9 @@ class Project_analysis:
 
   @staticmethod
   def _add_html_tag(
-        data_series, file_path_column='file_path', sample_igf_id_column='sample_igf_id',
-        remote_prefix='analysis'):
+        data_series, project_igf_id=None, file_path_column='file_path', 
+        sample_igf_id_column='sample_igf_id', remote_prefix='analysis',
+        ftp_prefix='/www/html/report/project/'):
     '''
     An internal static method for reformatting filepath with html code
 
@@ -58,6 +59,8 @@ class Project_analysis:
     :param sample_igf_id_column: A column name for sample igf id, default sample_igf_id
     :param file_path_column: A column name for file path, default file_path
     :param remote_prefix: A remote path prefix, default analysis
+    :param project_igf_id: Project id, default None
+    :param ftp_prefix: FTP prefix path for project, default '/www/html/report/project/'
     :returns: A pandas series
     '''
     try:
@@ -66,11 +69,17 @@ class Project_analysis:
         file_path = data_series.get(file_path_column)
         base_path = os.path.basename(file_path)
         sample_igf_id = data_series.get(sample_igf_id_column)
-        remote_path = \
-          os.path.join(
-            remote_prefix,
-            sample_igf_id,
-            base_path)
+        if project_igf_id is None:
+          remote_path = \
+            os.path.join(
+              remote_prefix,
+              sample_igf_id,
+              base_path)
+        else:
+          remote_path = \
+            os.path.relpath(
+              file_path,
+              os.path.join(ftp_prefix, project_igf_id))
         file_path = \
           '<a href=\"{0}\">{1}</a>'.\
             format(
@@ -235,6 +244,7 @@ class Project_analysis:
             apply(lambda x: \
               self._add_html_tag(
                 data_series=x,
+                project_igf_id=project_igf_id,
                 sample_igf_id_column=sample_igf_id_column,
                 file_path_column=file_path_column),
               axis=1,
