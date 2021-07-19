@@ -501,25 +501,25 @@ def create_and_update_qc_pages(**context):
     attribute_collection_file_type = \
       context['params'].get('attribute_collection_file_type', [ANALYSIS_CRAM_TYPE, CELLRANGER_MULTI_TYPE])
     pipeline_seed_table = \
-      context['params'].get('pipeline_seed_table','analysis')
+      context['params'].get('pipeline_seed_table', 'analysis')
     sample_id_label = \
-      context['params'].get('sample_id_label','sample_igf_id')
+      context['params'].get('sample_id_label', 'sample_igf_id')
     remote_analysis_dir = \
-      context['params'].get('remote_analysis_dir',os.path.join(FTP_PROJECT_PATH,'analysis'))
+      context['params'].get('remote_analysis_dir', os.path.join(FTP_PROJECT_PATH,'analysis'))
     pipeline_finished_status = \
-      context['params'].get('pipeline_finished_status','FINISHED')
+      context['params'].get('pipeline_finished_status', 'FINISHED')
     use_ephemeral_space = \
-      context['params'].get('use_ephemeral_space',False)
+      context['params'].get('use_ephemeral_space', False)
     analysis_data_json = \
-      context['params'].get('analysis_data_json','analysis_data.json')
+      context['params'].get('analysis_data_json', 'analysis_data.json')
     chart_data_json = \
-      context['params'].get('chart_data_json','analysis_chart_data.json')
+      context['params'].get('chart_data_json', 'analysis_chart_data.json')
     chart_data_csv = \
-      context['params'].get('chart_data_csv','analysis_chart_data.csv')
+      context['params'].get('chart_data_csv', 'analysis_chart_data.csv')
     status_data_json = \
-      context['params'].get('status_data_json','status_data.json')
+      context['params'].get('status_data_json', 'status_data.json')
     demultiplexing_pipeline_name = \
-      context['params'].get('demultiplexing_pipeline_name','DemultiplexIlluminaFastq')
+      context['params'].get('demultiplexing_pipeline_name', 'DemultiplexIlluminaFastq')
     dbparams = \
       read_dbconf_json(DATABASE_CONFIG_FILE)
     dag_run = context.get('dag_run')
@@ -538,8 +538,8 @@ def create_and_update_qc_pages(**context):
       aa.fetch_project_igf_id_for_analysis_id(
         analysis_id=int(analysis_id))                                           # fetch project id for analysis
     aa.close_session()
-    (temp_status_output,analysis_data_output_file,
-     chart_json_output_file,csv_output_file) = \
+    (temp_status_output, analysis_data_output_file,
+     chart_json_output_file, csv_output_file) = \
       _generate_status_and_analysis_page_data(
         project_igf_id=project_igf_id,
         db_session_class=aa.get_session_class(),
@@ -616,7 +616,7 @@ def create_and_update_qc_pages(**context):
 
 
 def _check_and_copy_remote_file(
-      remote_user,remote_host,source_file,remote_file):
+      remote_user, remote_host, source_file, remote_file):
     '''
     An internal static method for copying files to remote path
 
@@ -627,7 +627,7 @@ def _check_and_copy_remote_file(
     '''
     try:
       check_file_path(source_file)
-      remote_config = '{0}@{1}'.format(remote_user,remote_host)
+      remote_config = '{0}@{1}'.format(remote_user, remote_host)
       os.chmod(
         source_file,
         mode=0o754)
@@ -643,11 +643,11 @@ def _check_and_copy_remote_file(
 
 
 def _generate_status_and_analysis_page_data(
-      project_igf_id,db_session_class,collection_type_list,pipeline_name,
-      attribute_collection_file_type,pipeline_seed_table,sample_id_label,remote_analysis_dir,
-      pipeline_finished_status='FINISHED',use_ephemeral_space=False,analysis_data_json='analysis_data.json',
-      chart_data_json='analysis_chart_data.json',chart_data_csv='analysis_chart_data.csv',
-      status_data_json='status_data.json',demultiplexing_pipeline_name='DemultiplexIlluminaFastq'):
+      project_igf_id, db_session_class, collection_type_list, pipeline_name,
+      attribute_collection_file_type, pipeline_seed_table, sample_id_label, remote_analysis_dir,
+      pipeline_finished_status='FINISHED', use_ephemeral_space=False, analysis_data_json='analysis_data.json',
+      chart_data_json='analysis_chart_data.json', chart_data_csv='analysis_chart_data.csv',
+      status_data_json='status_data.json', demultiplexing_pipeline_name='DemultiplexIlluminaFastq'):
   """
   An internal function for gviz json data generation for status and analysis page
 
@@ -674,10 +674,10 @@ def _generate_status_and_analysis_page_data(
   """
   try:
     temp_dir = get_temp_dir(use_ephemeral_space=use_ephemeral_space)
-    analysis_data_output_file = os.path.join(temp_dir,analysis_data_json)
-    chart_json_output_file = os.path.join(temp_dir,chart_data_json)
-    csv_output_file = os.path.join(temp_dir,chart_data_csv)
-    temp_status_output = os.path.join(temp_dir,status_data_json)
+    analysis_data_output_file = os.path.join(temp_dir, analysis_data_json)
+    chart_json_output_file = os.path.join(temp_dir, chart_data_json)
+    csv_output_file = os.path.join(temp_dir, chart_data_csv)
+    temp_status_output = os.path.join(temp_dir, status_data_json)
     ps = \
       Project_status(
         igf_session_class=db_session_class,
@@ -707,7 +707,7 @@ def _generate_status_and_analysis_page_data(
     check_file_path(analysis_data_output_file)
     check_file_path(chart_json_output_file)
     check_file_path(csv_output_file)
-    return temp_status_output,analysis_data_output_file,chart_json_output_file,csv_output_file
+    return temp_status_output, analysis_data_output_file, chart_json_output_file, csv_output_file
   except Exception as e:
     raise ValueError(
             'Failed to generate data for analysis page, error: {0}'.\
@@ -785,7 +785,7 @@ def change_pipeline_status(**context):
       if not status:
         raise ValueError(
                 'Failed to update pipeline seed for analysis id {0} and type {1}'.\
-                  format(analysis_id,analysis_type))
+                  format(analysis_id, analysis_type))
   except Exception as e:
     logging.error(e)
     log_file = context.get('task_instance').log_filepath
