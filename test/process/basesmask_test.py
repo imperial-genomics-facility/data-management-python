@@ -12,11 +12,11 @@ class BasesMask_testA(unittest.TestCase):
     bases_mask_data=self.bases_mask_object
     bases_mask=bases_mask_data.calculate_bases_mask()
     pattern=re.compile('^y150n1,i8,i8,y150n1$', re.IGNORECASE)
-    self.assertRegexpMatches(bases_mask, pattern)
+    self.assertRegex(bases_mask, pattern)
 
 class BasesMask_testB(unittest.TestCase):
 
-  def setUp(self):   
+  def setUp(self):
     r_file='doc/data/Illumina/RunInfo.xml'
     s_file='doc/data/SampleSheet/HiSeq4000/SingleLaneSampleSheet2.csv'
     self.bases_mask_object=BasesMask(samplesheet_file=s_file, runinfo_file=r_file, read_offset=1, index_offset=0 )
@@ -25,7 +25,7 @@ class BasesMask_testB(unittest.TestCase):
     bases_mask_data=self.bases_mask_object
     bases_mask=bases_mask_data.calculate_bases_mask()
     pattern=re.compile('^y150n1,i8,n8,y150n1$', re.IGNORECASE)
-    self.assertRegexpMatches(bases_mask, pattern)
+    self.assertRegex(bases_mask, pattern)
 
 class BasesMask_testC(unittest.TestCase):
 
@@ -38,7 +38,7 @@ class BasesMask_testC(unittest.TestCase):
     bases_mask_data=self.bases_mask_object
     bases_mask=bases_mask_data.calculate_bases_mask()
     pattern=re.compile('^y150n1,i6n2,n8,y150n1$', re.IGNORECASE)
-    self.assertRegexpMatches(bases_mask, pattern)
+    self.assertRegex(bases_mask, pattern)
 
 class BasesMask_testD(unittest.TestCase):
 
@@ -51,7 +51,21 @@ class BasesMask_testD(unittest.TestCase):
     bases_mask_data=self.bases_mask_object
     bases_mask=bases_mask_data.calculate_bases_mask()
     pattern=re.compile('^y150n1,i8,y150n1$', re.IGNORECASE)
-    self.assertRegexpMatches(bases_mask, pattern)
+    self.assertRegex(bases_mask, pattern)
+
+
+class BasesMask_testE(unittest.TestCase):
+
+  def setUp(self):
+    r_file='doc/data/Illumina/RunInfo3.xml'
+    s_file='doc/data/SampleSheet/HiSeq4000/SampleSheet5.csv'
+    self.bases_mask_object=BasesMask(samplesheet_file=s_file, runinfo_file=r_file, read_offset=1, index_offset=0 )
+
+  def test_calculate_bases_mask_8(self):
+    bases_mask_data=self.bases_mask_object
+    bases_mask=bases_mask_data.calculate_bases_mask()
+    pattern=re.compile('^y75n1,i8n9,i8,y75n1$', re.IGNORECASE)
+    self.assertRegex(bases_mask, pattern)
 
 if __name__=='__main__':
   unittest.main()

@@ -53,24 +53,35 @@ class BasesMask:
       index_count = 0
       bases_mask_list = list()
       for read_id in (sorted(runinfo_reads_stats.keys())):
+        temp_index_offset = 0
         runinfo_read_length = int(runinfo_reads_stats[read_id][numcycle_label])
         # index
         if runinfo_reads_stats[read_id][isindexedread_label] == 'Y':
           index_count += 1
           # resetting the index_offset if its not provided
           if not index_offset and allowed_index_length < runinfo_read_length:
-            index_offset = int(runinfo_read_length)-int(allowed_index_length) 
-          real_index_count = int(runinfo_read_length - index_offset)
+            temp_index_offset = int(runinfo_read_length)-int(allowed_index_length)
+          if temp_index_offset > 0:
+            real_index_count = int(runinfo_read_length - temp_index_offset)     # use temp index offset
+          else:
+            real_index_count = int(runinfo_read_length - index_offset)          # use global index offset
           # compare index length with samplesheet
           if real_index_count != allowed_index_length: 
-            raise ValueError('Index length not matching in {0} and {1}, with offset {2}'.format(samplesheet_file,runinfo_file, index_offset))
+            raise ValueError(
+                    'Index length not matching in {0} and {1}, with offset {2} (temp: {3})'.\
+                      format(samplesheet_file,runinfo_file, index_offset, temp_index_offset))
           # calculate base mask for index
           if ( index_count > samplesheet_index_count ):
             # mask everything if this index is not required for demultiplexing  
             mask = 'n{0}'.format(runinfo_read_length)
           else:
             # format index
-            mask = 'i{0}n{1}'.format(real_index_count, index_offset) if index_offset else 'i{0}'.format(real_index_count)
+            if temp_index_offset > 0:
+              mask = 'i{0}n{1}'.format(real_index_count, temp_index_offset)     # use caculated offset for mask
+            elif index_offset:
+              mask = 'i{0}n{1}'.format(real_index_count, index_offset)          # use global offset for mask
+            else:
+              mask = 'i{0}'.format(real_index_count)                            # use raw counts
           bases_mask_list.append(mask)
         # read
         elif runinfo_reads_stats[read_id][isindexedread_label] == 'N':
