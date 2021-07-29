@@ -50,7 +50,7 @@ PATTERNED_FLOWCELL_LIST = ['HISEQ4000', 'NEXTSEQ']
 BOX_DIR_PREFIX = 'SecondaryAnalysis'
 SAMTOOLS_EXE = 'samtools'
 PICARD_JAR = '/picard/picard.jar'
-DATABASE_CONFIG_FILE = Variable.get('test_database_config_file', default_var=None)
+DATABASE_CONFIG_FILE = Variable.get('database_config_file', default_var=None)
 SCANPY_SINGLE_SAMPLE_TEMPLATE= Variable.get('scanpy_single_sample_template', default_var=None)
 SCVELO_SINGLE_SAMPLE_TEMPLATE= Variable.get('scvelo_single_sample_template', default_var=None)
 SCANPY_NOTEBOOK_IMAGE = Variable.get('scanpy_notebook_image', default_var=None)
