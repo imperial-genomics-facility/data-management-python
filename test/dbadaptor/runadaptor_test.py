@@ -35,7 +35,6 @@ class RunAdaptor_test1(unittest.TestCase):
     pl=PlatformAdaptor(**{'session':base.session})
     pl.store_platform_data(data=platform_data)
     pl.store_flowcell_barcode_rule(data=flowcell_rule_data)
- 
     project_data=[{'project_igf_id':'IGFP0001_test_22-8-2017_rna',
                    'project_name':'test_22-8-2017_rna',
                    'description':'Its project 1',
@@ -44,13 +43,11 @@ class RunAdaptor_test1(unittest.TestCase):
                  }]
     pa=ProjectAdaptor(**{'session':base.session})
     pa.store_project_and_attribute_data(data=project_data)
-    
     sample_data=[{'sample_igf_id':'IGF00001',
                   'project_igf_id':'IGFP0001_test_22-8-2017_rna',},
                 ]
     sa=SampleAdaptor(**{'session':base.session})
     sa.store_sample_and_attribute_data(data=sample_data)
-    
     seqrun_data=[{'seqrun_igf_id':'171003_M00001_0089_000000000-TEST',
                   'flowcell_id':'000000000-D0YLK',
                   'platform_igf_id':'M00001',
@@ -58,15 +55,12 @@ class RunAdaptor_test1(unittest.TestCase):
                 }]
     sra=SeqrunAdaptor(**{'session':base.session})
     sra.store_seqrun_and_attribute_data(data=seqrun_data)
-    
     experiment_data=[{'experiment_igf_id':'IGF00001_MISEQ',
                       'project_igf_id':'IGFP0001_test_22-8-2017_rna',
                       'library_name':'IGF00001',
                       'sample_igf_id':'IGF00001'}]
-    
     ea=ExperimentAdaptor(**{'session':base.session})
     ea.store_project_and_attribute_data(data=experiment_data)
-    
     run_data=[{'run_igf_id':'IGF00001_MISEQ_000000000-D0YLK_1',
                'experiment_igf_id':'IGF00001_MISEQ',
                'seqrun_igf_id':'171003_M00001_0089_000000000-TEST',
@@ -74,11 +68,11 @@ class RunAdaptor_test1(unittest.TestCase):
     ra=RunAdaptor(**{'session':base.session})
     ra.store_run_and_attribute_data(data=run_data)
     base.close_session()
-    
+
   def tearDown(self):
     Base.metadata.drop_all(self.engine)
     os.remove(self.dbname)
-    
+
   def test_fetch_sample_info_for_run(self):
     ra=RunAdaptor(**{'session_class':self.session_class})
     ra.start_session()

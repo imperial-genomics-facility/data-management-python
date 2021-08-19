@@ -1,5 +1,6 @@
 import os, unittest
 from igf_data.utils.analysis_fastq_fetch_utils import get_fastq_input_list
+from igf_data.utils.analysis_fastq_fetch_utils import get_fastq_and_run_for_samples
 from igf_data.igfdb.igfTables import Base, Pipeline
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.platformadaptor import PlatformAdaptor
@@ -16,169 +17,178 @@ from igf_data.utils.dbutils import read_json_data, read_dbconf_json
 class Analysis_fastq_fetch_utils_test1(unittest.TestCase):
   def setUp(self):
     self.dbconfig = 'data/dbconfig.json'
-    dbparam=read_dbconf_json(self.dbconfig)
+    dbparam = read_dbconf_json(self.dbconfig)
     base = BaseAdaptor(**dbparam)
     self.engine = base.engine
     self.dbname = dbparam['dbname']
     Base.metadata.create_all(self.engine)
     self.session_class = base.get_session_class()
     base.start_session()
-    platform_data = [{"platform_igf_id" : "M03291" ,
-                      "model_name" : "MISEQ" ,
-                      "vendor_name" : "ILLUMINA" ,
-                      "software_name" : "RTA" ,
-                      "software_version" : "RTA1.18.54"
-                     },
-                     {"platform_igf_id" : "NB501820",
-                      "model_name" : "NEXTSEQ",
-                      "vendor_name" : "ILLUMINA",
-                      "software_name" : "RTA",
-                      "software_version" : "RTA2"
-                     },
-                     {"platform_igf_id" : "K00345",
-                      "model_name" : "HISEQ4000",
-                      "vendor_name" : "ILLUMINA",
-                      "software_name" : "RTA",
-                      "software_version" : "RTA2"
-                     }
-                    ]
-    flowcell_rule_data = [{"platform_igf_id":"K00345",
-                           "flowcell_type":"HiSeq 3000/4000 SR",
-                           "index_1":"NO_CHANGE",
-                           "index_2":"NO_CHANGE"},
-                          {"platform_igf_id":"K00345",
-                           "flowcell_type":"HiSeq 3000/4000 PE",
-                           "index_1":"NO_CHANGE",
-                           "index_2":"REVCOMP"},
-                          {"platform_igf_id":"NB501820",
-                           "flowcell_type":"NEXTSEQ",
-                           "index_1":"NO_CHANGE",
-                           "index_2":"REVCOMP"},
-                          {"platform_igf_id":"M03291",
-                           "flowcell_type":"MISEQ",
-                           "index_1":"NO_CHANGE",
-                           "index_2":"NO_CHANGE"}
-                         ]
+    platform_data = [{
+      "platform_igf_id" : "M03291",
+      "model_name" : "MISEQ",
+      "vendor_name" : "ILLUMINA",
+      "software_name" : "RTA",
+      "software_version" : "RTA1.18.54"
+    },{
+      "platform_igf_id" : "NB501820",
+      "model_name" : "NEXTSEQ",
+      "vendor_name" : "ILLUMINA",
+      "software_name" : "RTA",
+      "software_version" : "RTA2"
+    },{
+      "platform_igf_id" : "K00345",
+      "model_name" : "HISEQ4000",
+      "vendor_name" : "ILLUMINA",
+      "software_name" : "RTA",
+      "software_version" : "RTA2"
+    }]
+    flowcell_rule_data = [{
+      "platform_igf_id":"K00345",
+      "flowcell_type":"HiSeq 3000/4000 SR",
+      "index_1":"NO_CHANGE",
+      "index_2":"NO_CHANGE"
+    },{
+      "platform_igf_id":"K00345",
+      "flowcell_type":"HiSeq 3000/4000 PE",
+      "index_1":"NO_CHANGE",
+      "index_2":"REVCOMP"
+    },{
+      "platform_igf_id":"NB501820",
+      "flowcell_type":"NEXTSEQ",
+      "index_1":"NO_CHANGE",
+      "index_2":"REVCOMP"
+    },{
+      "platform_igf_id":"M03291",
+      "flowcell_type":"MISEQ",
+      "index_1":"NO_CHANGE",
+      "index_2":"NO_CHANGE"
+    }]
     pl = PlatformAdaptor(**{'session':base.session})
     pl.store_platform_data(data=platform_data)
     pl.store_flowcell_barcode_rule(data=flowcell_rule_data)
-    seqrun_data = [{'seqrun_igf_id':'180416_M03291_0139_000000000-BRN47',
-                    'flowcell_id':'000000000-BRN47',
-                    'platform_igf_id':'M03291',
-                    'flowcell':'MISEQ',
-                   },
-                   {'seqrun_igf_id':'180416_NB03291_013_000000001-BRN47',
-                    'flowcell_id':'000000001-BRN47',
-                    'platform_igf_id':'NB501820',
-                    'flowcell':'NEXTSEQ',
-                   }
-                  ]
+    seqrun_data = [{
+      'seqrun_igf_id':'180416_M03291_0139_000000000-BRN47',
+      'flowcell_id':'000000000-BRN47',
+      'platform_igf_id':'M03291',
+      'flowcell':'MISEQ',
+    },{
+      'seqrun_igf_id':'180416_NB03291_013_000000001-BRN47',
+      'flowcell_id':'000000001-BRN47',
+      'platform_igf_id':'NB501820',
+      'flowcell':'NEXTSEQ',
+    }]
     sra = SeqrunAdaptor(**{'session':base.session})
     sra.store_seqrun_and_attribute_data(data=seqrun_data)
     project_data = [{'project_igf_id':'projectA'}]
     pa = ProjectAdaptor(**{'session':base.session})
     pa.store_project_and_attribute_data(data=project_data)
-    sample_data = [{'sample_igf_id':'sampleA',
-                    'project_igf_id':'projectA',
-                    'species_name':'HG38'},
-                   {'sample_igf_id':'sampleB',
-                    'project_igf_id':'projectA',
-                    'species_name':'UNKNOWN'},
-                  ]
-    sa=SampleAdaptor(**{'session':base.session})
+    sample_data = [{
+      'sample_igf_id':'sampleA',
+      'project_igf_id':'projectA',
+      'species_name':'HG38'
+    },{
+      'sample_igf_id':'sampleB',
+      'project_igf_id':'projectA',
+      'species_name':'UNKNOWN'
+    }]
+    sa = SampleAdaptor(**{'session':base.session})
     sa.store_sample_and_attribute_data(data=sample_data)
-    experiment_data = [{'project_igf_id':'projectA',
-                        'sample_igf_id':'sampleA',
-                        'experiment_igf_id':'sampleA_MISEQ',
-                        'library_name':'sampleA',
-                        'library_source':'TRANSCRIPTOMIC_SINGLE_CELL',
-                        'library_strategy':'RNA-SEQ',
-                        'experiment_type':'TENX-TRANSCRIPTOME-3P',
-                        'library_layout':'PAIRED',
-                        'platform_name':'MISEQ',
-                       },
-                       {'project_igf_id':'projectA',
-                        'sample_igf_id':'sampleA',
-                        'experiment_igf_id':'sampleA_NEXTSEQ',
-                        'library_name':'sampleA',
-                        'library_source':'UNKNOWN',
-                        'library_strategy':'RNA-SEQ',
-                        'experiment_type':'TENX-TRANSCRIPTOME-3P',
-                        'library_layout':'PAIRED',
-                        'platform_name':'NEXTSEQ',
-                       },
-                       {'project_igf_id':'projectA',
-                        'sample_igf_id':'sampleB',
-                        'experiment_igf_id':'sampleB_MISEQ',
-                        'library_name':'sampleB',
-                        'library_source':'TRANSCRIPTOMIC_SINGLE_CELL',
-                        'library_strategy':'RNA-SEQ',
-                        'experiment_type':'TENX-TRANSCRIPTOME-3P',
-                        'library_layout':'PAIRED',
-                        'platform_name':'MISEQ',
-                       },
-                      ]
+    experiment_data = [{
+      'project_igf_id':'projectA',
+      'sample_igf_id':'sampleA',
+      'experiment_igf_id':'sampleA_MISEQ',
+      'library_name':'sampleA',
+      'library_source':'TRANSCRIPTOMIC_SINGLE_CELL',
+      'library_strategy':'RNA-SEQ',
+      'experiment_type':'TENX-TRANSCRIPTOME-3P',
+      'library_layout':'PAIRED',
+      'platform_name':'MISEQ',
+    },{
+      'project_igf_id':'projectA',
+      'sample_igf_id':'sampleA',
+      'experiment_igf_id':'sampleA_NEXTSEQ',
+      'library_name':'sampleA',
+      'library_source':'UNKNOWN',
+      'library_strategy':'RNA-SEQ',
+      'experiment_type':'TENX-TRANSCRIPTOME-3P',
+      'library_layout':'PAIRED',
+      'platform_name':'NEXTSEQ',
+    },{
+      'project_igf_id':'projectA',
+      'sample_igf_id':'sampleB',
+      'experiment_igf_id':'sampleB_MISEQ',
+      'library_name':'sampleB',
+      'library_source':'TRANSCRIPTOMIC_SINGLE_CELL',
+      'library_strategy':'RNA-SEQ',
+      'experiment_type':'TENX-TRANSCRIPTOME-3P',
+      'library_layout':'PAIRED',
+      'platform_name':'MISEQ',
+    }]
     ea = ExperimentAdaptor(**{'session':base.session})
     ea.store_project_and_attribute_data(data=experiment_data)
-    run_data = [{'experiment_igf_id':'sampleA_MISEQ',
-                 'seqrun_igf_id':'180416_M03291_0139_000000000-BRN47',
-                 'run_igf_id':'sampleA_MISEQ_000000000-BRN47_1',
-                'lane_number':'1'
-                },
-                {'experiment_igf_id':'sampleA_NEXTSEQ',
-                 'seqrun_igf_id':'180416_NB03291_013_000000001-BRN47',
-                 'run_igf_id':'sampleA_NEXTSEQ_000000001-BRN47_2',
-                'lane_number':'2'
-                },
-                {'experiment_igf_id':'sampleB_MISEQ',
-                 'seqrun_igf_id':'180416_M03291_0139_000000000-BRN47',
-                 'run_igf_id':'sampleB_MISEQ_HVWN7BBXX_1',
-                 'lane_number':'1'
-                }
-               ]
+    run_data = [{
+      'experiment_igf_id':'sampleA_MISEQ',
+      'seqrun_igf_id':'180416_M03291_0139_000000000-BRN47',
+      'run_igf_id':'sampleA_MISEQ_000000000-BRN47_1',
+      'lane_number':'1'
+    },{
+      'experiment_igf_id':'sampleA_NEXTSEQ',
+      'seqrun_igf_id':'180416_NB03291_013_000000001-BRN47',
+      'run_igf_id':'sampleA_NEXTSEQ_000000001-BRN47_2',
+      'lane_number':'2'
+    },{
+      'experiment_igf_id':'sampleB_MISEQ',
+      'seqrun_igf_id':'180416_M03291_0139_000000000-BRN47',
+      'run_igf_id':'sampleB_MISEQ_HVWN7BBXX_1',
+      'lane_number':'1'
+    }]
     ra = RunAdaptor(**{'session':base.session})
     ra.store_run_and_attribute_data(data=run_data)
-    file_data = [{'file_path':'/path/sampleA_MISEQ_000000000-BRN47_1_R1.fastq.gz',
-                  'location':'HPC_PROJECT',
-                  'md5':'fd5a95c18ebb7145645e95ce08d729e4',
-                  'size':'1528121404',
-                 },
-                 {'file_path':'/path/sampleA_NEXTSEQ_000000001-BRN47_2_R1.fastq.gz',
-                  'location':'HPC_PROJECT',
-                  'md5':'fd5a95c18ebb7145645e95ce08d729e4',
-                  'size':'1528121404',
-                 },
-                 {'file_path':'/path/sampleB_MISEQ_HVWN7BBXX_1_R1.fastq.gz',
-                  'location':'HPC_PROJECT',
-                  'md5':'fd5a95c18ebb7145645e95ce08d729e4',
-                  'size':'1528121404',
-                 },
-                ]
+    file_data = [{
+      'file_path':'/path/sampleA_MISEQ_000000000-BRN47_1_R1.fastq.gz',
+      'location':'HPC_PROJECT',
+      'md5':'fd5a95c18ebb7145645e95ce08d729e4',
+      'size':'1528121404',
+    },{
+      'file_path':'/path/sampleA_NEXTSEQ_000000001-BRN47_2_R1.fastq.gz',
+      'location':'HPC_PROJECT',
+      'md5':'fd5a95c18ebb7145645e95ce08d729e4',
+      'size':'1528121404',
+    },{
+      'file_path':'/path/sampleB_MISEQ_HVWN7BBXX_1_R1.fastq.gz',
+      'location':'HPC_PROJECT',
+      'md5':'fd5a95c18ebb7145645e95ce08d729e4',
+      'size':'1528121404',
+    }]
     fa = FileAdaptor(**{'session':base.session})
     fa.store_file_and_attribute_data(data=file_data)
-    collection_data = [{'name':'sampleA_MISEQ_000000000-BRN47_1',
-                        'type':'demultiplexed_fastq',
-                        'table':'run'},
-                       {'name':'sampleA_NEXTSEQ_000000001-BRN47_2',
-                        'type':'demultiplexed_fastq',
-                        'table':'run'},
-                       {'name':'sampleB_MISEQ_HVWN7BBXX_1',
-                        'type':'demultiplexed_fastq',
-                        'table':'run'}
-                      ]
-    collection_files_data = [{'name':'sampleA_MISEQ_000000000-BRN47_1',
-                              'type':'demultiplexed_fastq',
-                              'file_path':'/path/sampleA_MISEQ_000000000-BRN47_1_R1.fastq.gz'
-                             },
-                             {'name':'sampleA_NEXTSEQ_000000001-BRN47_2',
-                              'type':'demultiplexed_fastq',
-                              'file_path':'/path/sampleA_NEXTSEQ_000000001-BRN47_2_R1.fastq.gz'
-                             },
-                             {'name':'sampleB_MISEQ_HVWN7BBXX_1',
-                              'type':'demultiplexed_fastq',
-                              'file_path':'/path/sampleB_MISEQ_HVWN7BBXX_1_R1.fastq.gz'
-                             }
-                            ]
+    collection_data = [{
+      'name':'sampleA_MISEQ_000000000-BRN47_1',
+      'type':'demultiplexed_fastq',
+      'table':'run'
+    },{
+      'name':'sampleA_NEXTSEQ_000000001-BRN47_2',
+      'type':'demultiplexed_fastq',
+      'table':'run'
+    },{
+      'name':'sampleB_MISEQ_HVWN7BBXX_1',
+      'type':'demultiplexed_fastq',
+      'table':'run'
+    }]
+    collection_files_data = [{
+      'name':'sampleA_MISEQ_000000000-BRN47_1',
+      'type':'demultiplexed_fastq',
+      'file_path':'/path/sampleA_MISEQ_000000000-BRN47_1_R1.fastq.gz'
+    },{
+      'name':'sampleA_NEXTSEQ_000000001-BRN47_2',
+      'type':'demultiplexed_fastq',
+      'file_path':'/path/sampleA_NEXTSEQ_000000001-BRN47_2_R1.fastq.gz'
+    },{
+      'name':'sampleB_MISEQ_HVWN7BBXX_1',
+      'type':'demultiplexed_fastq',
+      'file_path':'/path/sampleB_MISEQ_HVWN7BBXX_1_R1.fastq.gz'
+    }]
     ca = CollectionAdaptor(**{'session':base.session})
     ca.store_collection_and_attribute_data(data=collection_data)
     ca.create_collection_group(data=collection_files_data)
@@ -203,6 +213,171 @@ class Analysis_fastq_fetch_utils_test1(unittest.TestCase):
           combine_fastq_dir=True,
         )
     self.assertTrue('/path' in fq_list)
+
+class Analysis_fastq_fetch_utils_test2(unittest.TestCase):
+  def setUp(self):
+    self.dbconfig = 'data/dbconfig.json'
+    dbparam = read_dbconf_json(self.dbconfig)
+    base = BaseAdaptor(**dbparam)
+    self.engine = base.engine
+    self.dbname = dbparam['dbname']
+    Base.metadata.create_all(self.engine)
+    self.session_class = base.get_session_class()
+    base.start_session()
+    platform_data = [{
+      "platform_igf_id" : "K00345",
+      "model_name" : "HISEQ4000",
+      "vendor_name" : "ILLUMINA",
+      "software_name" : "RTA",
+      "software_version" : "RTA2"
+    }]
+    flowcell_rule_data = [{
+      "platform_igf_id":"K00345",
+      "flowcell_type":"HiSeq 3000/4000 SR",
+      "index_1":"NO_CHANGE",
+      "index_2":"NO_CHANGE"
+    },{
+      "platform_igf_id":"K00345",
+      "flowcell_type":"HiSeq 3000/4000 PE",
+      "index_1":"NO_CHANGE",
+      "index_2":"REVCOMP"
+    }]
+    pl = PlatformAdaptor(**{'session':base.session})
+    pl.store_platform_data(data=platform_data)
+    pl.store_flowcell_barcode_rule(data=flowcell_rule_data)
+    seqrun_data = [{
+      'seqrun_igf_id':'HISEQ_RUN_1',
+      'flowcell_id':'FLOWCELL1',
+      'platform_igf_id':'K00345',
+      'flowcell':"HiSeq 3000/4000 PE",
+    }]
+    sra = SeqrunAdaptor(**{'session':base.session})
+    sra.store_seqrun_and_attribute_data(data=seqrun_data)
+    project_data = [{'project_igf_id':'projectA'}]
+    pa = ProjectAdaptor(**{'session':base.session})
+    pa.store_project_and_attribute_data(data=project_data)
+    sample_data = [{
+      'sample_igf_id':'sampleA',
+      'project_igf_id':'projectA',
+      'species_name':'HG38'
+    },{
+      'sample_igf_id':'sampleB',
+      'project_igf_id':'projectA',
+      'species_name':'UNKNOWN'
+    }]
+    sa = SampleAdaptor(**{'session':base.session})
+    sa.store_sample_and_attribute_data(data=sample_data)
+    experiment_data = [{
+      'project_igf_id':'projectA',
+      'sample_igf_id':'sampleA',
+      'library_name':'sampleA',
+      'experiment_igf_id':'sampleA_EXP1',
+      'platform_name':'HISEQ4000',
+    },{
+      'project_igf_id':'projectA',
+      'sample_igf_id':'sampleB',
+      'library_name':'sampleB',
+      'experiment_igf_id':'sampleB_EXP1',
+      'platform_name':'HISEQ4000',
+    }]
+    ea = ExperimentAdaptor(**{'session':base.session})
+    ea.store_project_and_attribute_data(data=experiment_data)
+    run_data = [{
+      'experiment_igf_id':'sampleA_EXP1',
+      'seqrun_igf_id':'HISEQ_RUN_1',
+      'run_igf_id':'sampleA_EXP1_RUN1',
+      'lane_number':'1'
+    },{
+      'experiment_igf_id':'sampleA_EXP1',
+      'seqrun_igf_id':'HISEQ_RUN_1',
+      'run_igf_id':'sampleA_EXP1_RUN2',
+      'lane_number':'2',
+      'status':'FAILED'
+    },{
+      'experiment_igf_id':'sampleB_EXP1',
+      'seqrun_igf_id':'HISEQ_RUN_1',
+      'run_igf_id':'sampleB_EXP1_RUN1',
+      'lane_number':'1'
+    }]
+    ra = RunAdaptor(**{'session':base.session})
+    ra.store_run_and_attribute_data(data=run_data)
+    file_data = [
+      {'file_path':'/path/sampleA/sampleA_EXP1_RUN1/sampleA_L001_R1.fastq.gz'},
+      {'file_path':'/path/sampleA/sampleA_EXP1_RUN1/sampleA_L001_R2.fastq.gz'},
+      {'file_path':'/path/sampleA/sampleA_EXP1_RUN2/sampleA_L002_R1.fastq.gz'},
+      {'file_path':'/path/sampleA/sampleA_EXP1_RUN2/sampleA_L002_R2.fastq.gz'},
+      {'file_path':'/path/sampleB/sampleB_EXP1_RUN1/sampleB_L001_R1.fastq.gz'},
+      {'file_path':'/path/sampleB/sampleB_EXP1_RUN1/sampleB_L001_R2.fastq.gz'}
+    ]
+    fa = FileAdaptor(**{'session':base.session})
+    fa.store_file_and_attribute_data(data=file_data)
+    collection_data = [{
+      'name':'sampleA_EXP1_RUN1',
+      'type':'demultiplexed_fastq',
+      'table':'run'
+    },{
+      'name':'sampleA_EXP1_RUN2',
+      'type':'demultiplexed_fastq',
+      'table':'run'
+    },{
+      'name':'sampleB_EXP1_RUN1',
+      'type':'demultiplexed_fastq',
+      'table':'run'
+    }]
+    collection_files_data = [{
+      'name':'sampleA_EXP1_RUN1',
+      'type':'demultiplexed_fastq',
+      'file_path':'/path/sampleA/sampleA_EXP1_RUN1/sampleA_L001_R1.fastq.gz'
+    },{
+      'name':'sampleA_EXP1_RUN1',
+      'type':'demultiplexed_fastq',
+      'file_path':'/path/sampleA/sampleA_EXP1_RUN1/sampleA_L001_R2.fastq.gz'
+    },{
+      'name':'sampleA_EXP1_RUN2',
+      'type':'demultiplexed_fastq',
+      'file_path':'/path/sampleA/sampleA_EXP1_RUN2/sampleA_L002_R1.fastq.gz'
+    },{
+      'name':'sampleA_EXP1_RUN2',
+      'type':'demultiplexed_fastq',
+      'file_path':'/path/sampleA/sampleA_EXP1_RUN2/sampleA_L002_R2.fastq.gz'
+    },{
+      'name':'sampleB_EXP1_RUN1',
+      'type':'demultiplexed_fastq',
+      'file_path':'/path/sampleB/sampleB_EXP1_RUN1/sampleB_L001_R1.fastq.gz'
+    },{
+      'name':'sampleB_EXP1_RUN1',
+      'type':'demultiplexed_fastq',
+      'file_path':'/path/sampleB/sampleB_EXP1_RUN1/sampleB_L001_R2.fastq.gz'
+    }]
+    ca = CollectionAdaptor(**{'session':base.session})
+    ca.store_collection_and_attribute_data(data=collection_data)
+    ca.create_collection_group(data=collection_files_data)
+    base.close_session()
+
+  def tearDown(self):
+    Base.metadata.drop_all(self.engine)
+    if os.path.exists(self.dbname):
+      os.remove(self.dbname)
+
+  def test_get_fastq_and_run_for_samples(self):
+    fastq_info = \
+      get_fastq_and_run_for_samples(
+        dbconfig_file=self.dbconfig,
+        sample_igf_id_list=['sampleA'])
+    self.assertEqual(len(fastq_info),2)
+    fastq_info = \
+      get_fastq_and_run_for_samples(
+        dbconfig_file=self.dbconfig,
+        sample_igf_id_list=['sampleA'],
+        combine_fastq_dir=True)
+    self.assertEqual(len(fastq_info),1)
+    self.assertEqual(fastq_info[0].get('file_path'),'/path/sampleA/sampleA_EXP1_RUN1')
+    fastq_info = \
+      get_fastq_and_run_for_samples(
+        dbconfig_file=self.dbconfig,
+        sample_igf_id_list=['sampleA','sampleB'],
+        combine_fastq_dir=False)
+    self.assertEqual(len(fastq_info),4)
 
 if __name__ == '__main__':
   unittest.main()

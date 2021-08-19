@@ -15,8 +15,9 @@ class AnalysisAdaptor(BaseAdaptor):
     :param data: A dictionary or a dataframe. It sould have following columns
 
                   * project_igf_id / project_id
-                  * analysis_type: (RNA_DIFFERENTIAL_EXPRESSION/RNA_TIME_SERIES/CHIP_PEAK_CALL/SOMATIC_VARIANT_CALLING)
-                  * analysis_description
+                  * analysis_name: A string
+                  * analysis_type: A string
+                  * analysis_description: A json encoded string
 
     :param autosave: A toggle for autocommit, default True
     :returns: None
@@ -24,7 +25,6 @@ class AnalysisAdaptor(BaseAdaptor):
     try:
       if not isinstance(data, pd.DataFrame):
         data=pd.DataFrame(data)
-      
       if 'project_igf_id' in data.columns:
         project_map_function = \
           lambda x: \
@@ -43,8 +43,6 @@ class AnalysisAdaptor(BaseAdaptor):
           'project_igf_id',
           axis=1,
           inplace=True)
-        #data=new_data
-
       self.store_records(
         table=Analysis,
         data=data)
@@ -57,29 +55,48 @@ class AnalysisAdaptor(BaseAdaptor):
               'Failed to store analysis data, error: {0}'.format(e))
 
 
-  def fetch_analysis_records_project_igf_id(
-        self,project_igf_id='',output_mode='dataframe'):
-    '''
-    A method for fetching analysis records based on project_igf_id
+  def fetch_project_igf_id_for_analysis_id(self,analysis_id):
+    try:
+      session = self.session
+      query = \
+        session.\
+          query(Project.project_igf_id).\
+          join(Analysis,Project.project_id==Analysis.project_id).\
+          filter(Analysis.analysis_id==analysis_id)
+      result = \
+        self.fetch_records(
+          query=query,
+          output_mode='one_or_none')
+      if result is None or \
+         result.project_igf_id is None:
+        raise ValueError(
+                'No project id found for analysis {0}'.\
+                  format(analysis_id))
+      return result.project_igf_id
+    except Exception as e:
+      raise ValueError(
+              'Failed to fetch project id for abalysis {0},error: {1}'.\
+                format(analysis_id,e))
 
-    :param project_igf_id: default: null
-    :param output_mode:   dataframe / object, default: dataframe
+
+  def fetch_analysis_records_analysis_id(
+        self,analysis_id,output_mode='dataframe'):
+    '''
+    A method for fetching analysis records using the analysis_id
+
+    :param analysis_id: Analysis id form db
+    :param :param output_mode:  dataframe / object, default: dataframe
     :returns: Analysis record
     '''
     try:
       session = self.session
       query = \
         session.\
-          query(Project.project_igf_id,
-                Analysis.analysis_type,
-                Analysis.analysis_description).\
-          join(Analysis,
-               Project.project_id==Analysis.project_id)
-      if project_igf_id:
-        query = \
-          query.\
-            filter(Project.project_igf_id==project_igf_id)
-
+        query(
+          Analysis.analysis_name,
+          Analysis.analysis_type,
+          Analysis.analysis_description).\
+        filter(Analysis.analysis_id==analysis_id)
       results = \
         self.fetch_records(
           query=query,
@@ -89,5 +106,30 @@ class AnalysisAdaptor(BaseAdaptor):
       raise ValueError(
               'Failed to fetch analysis record, error: {0}'.format(e))
 
+  def fetch_analysis_records_project_igf_id(
+        self,project_igf_id,output_mode='dataframe'):
+    '''
+    A method for fetching analysis records based on project_igf_id
 
-
+    :param project_igf_id: A project_igf_id
+    :param output_mode:  dataframe / object, default: dataframe
+    :returns: Analysis record
+    '''
+    try:
+      session = self.session
+      query = \
+        session.\
+          query(Project.project_igf_id,
+                Analysis.analysis_name,
+                Analysis.analysis_type,
+                Analysis.analysis_description).\
+          join(Analysis,Project.project_id==Analysis.project_id).\
+          filter(Project.project_igf_id==project_igf_id)
+      results = \
+        self.fetch_records(
+          query=query,
+          output_mode=output_mode)
+      return results
+    except Exception as e:
+      raise ValueError(
+              'Failed to fetch analysis record, error: {0}'.format(e))

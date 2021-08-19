@@ -93,7 +93,6 @@ class IGF_asana:
              'notes':notes,
              'assignee':str(self.asana_user_id),
             })
-      print(results)
       task_id = results['gid']                                                  # fetching gid
       return task_id
     except:

@@ -190,6 +190,16 @@ class Config_genome_browser:
                   'refAuthority':'GRC',
                   'refVersion':38,
                   'speciesUcscName':'hg38'}
+      elif species_name.upper() == 'MM10':
+        ref_data={'chrname':4,
+                  'startPosition':136366473,
+                  'endPosition':136547301,
+                  'speciesCommonName':'Mouse',
+                  'ensemblSpecies':'mouse',
+                  'speciesTaxon':10090,
+                  'refAuthority':'GRC',
+                  'refVersion':10,
+                  'speciesUcscName':'mm10'}
       else:
         raise ValueError('No support for species {0}'.\
                          format(species_name))

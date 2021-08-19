@@ -32,7 +32,7 @@ class PipelineAdaptor(BaseAdaptor):
         self,pipeline_name,target_column_name='pipeline_name'):
     '''
     A method for fetching data for Pipeline table
-    
+
     :param pipeline_name: a name
     :param target_column_name: default pipeline_name
     :returns: Pipeline record
@@ -59,7 +59,7 @@ class PipelineAdaptor(BaseAdaptor):
         target_column_name=('pipeline_id', 'seed_id','seed_table')):
     '''
     A method for fetching unique pipeline seed using pipeline_id, seed_id and seed_table
-    
+
     :param pipeline_id: A pipeline db id
     :param seed_id: A seed entry db id
     :param seed_table: A seed table name
@@ -96,6 +96,7 @@ class PipelineAdaptor(BaseAdaptor):
 
       * seqrun - Entries from seqrun and platform tables
       * experiment - Entries from Project, Sample and Experiment tables
+
     '''
     try:
       if not isinstance(data, pd.Series):
@@ -232,6 +233,7 @@ class PipelineAdaptor(BaseAdaptor):
       raise ValueError(
               'Failed to fetch pipeline data, error: {0}'.format(e))
 
+
   def create_pipeline_seed(
         self,data,autosave=True,status_column='status',seeded_label='SEEDED',
         required_columns=('pipeline_id',
@@ -305,7 +307,7 @@ class PipelineAdaptor(BaseAdaptor):
     '''
     A method for updating the seed status in pipeline_seed table
 
-    :param data: dataframe or a hash, should contain following fields
+    :param data: dataframe or a dictionary, should contain following fields
 
       * pipeline_name / pipeline_id
       * seed_id
@@ -347,10 +349,67 @@ class PipelineAdaptor(BaseAdaptor):
               'Failed to update records, error: {0}'.format(e))
 
 
+  def create_or_update_pipeline_seed(
+        self,seed_id,pipeline_name,new_status,seed_table,
+        no_change_status=None,autosave=True):
+    try:
+      change_status = False
+      query = \
+        self.session.\
+          query(Pipeline.pipeline_id).\
+          filter(Pipeline.pipeline_name==pipeline_name)
+      pipeline_entry = \
+        self.fetch_records(
+          query=query,
+          output_mode='one_or_none')
+      if pipeline_entry is None:
+        raise ValueError(
+                'No pipeline entry found for {0}'.\
+                  format(pipeline_name))
+      pipeline_id = \
+        pipeline_entry.pipeline_id
+      query = \
+        self.session.\
+          query(Pipeline_seed).\
+          filter(Pipeline_seed.seed_id==seed_id).\
+          filter(Pipeline_seed.seed_table==seed_table).\
+          filter(Pipeline_seed.pipeline_id==pipeline_id)
+      pipeseed_entry = \
+        self.fetch_records(
+          query=query,
+          output_mode='one_or_none')
+      if pipeseed_entry is None:
+        pipeseed_data = [{
+            'seed_id':seed_id,
+            'seed_table':seed_table,
+            'pipeline_name':pipeline_name}]
+        self.create_pipeline_seed(
+          data=pipeseed_data,
+          seeded_label=new_status,
+          autosave=autosave)
+        change_status = True
+      else:
+        if pipeseed_entry.status != no_change_status:
+          pipeseed_data = [{
+            'seed_id':seed_id,
+            'seed_table':seed_table,
+            'pipeline_id':pipeline_id,
+            'status':new_status}]
+          self.update_pipeline_seed(
+            data=pipeseed_data,
+            autosave=autosave)
+          change_status = True
+      return change_status
+    except Exception as e:
+      raise ValueError(
+              'Failed to change seed for id {0}, pipeline {1}, error: {2}'.\
+                format(seed_id,pipeline_name,e))
+
+
   def seed_new_seqruns(self,pipeline_name,autosave=True,seed_table='seqrun'):
     '''
     A method for creating seed for new seqruns
-    
+
     :param pipeline_name: A pipeline name
     :param autosave: A toggle for autocommit, default True
     :param seed_table: Seed table name, default seqrun
@@ -402,7 +461,7 @@ class PipelineAdaptor(BaseAdaptor):
         seed_table='experiment'):
     '''
     A method for seeding new experiments for primary analysis
-    
+
     :param pipeline_name: Name of the analysis pipeline
     :param project_list: List of projects to consider for seeding analysis pipeline, default None
     :param library_source_list: List of library source to consider for analysis, default None

@@ -1,12 +1,13 @@
 import os,subprocess
 from shlex import quote
 import pandas as pd
-from igf_data.utils.fileutils import check_file_path, get_temp_dir
+from igf_data.utils.singularity_run_wrapper import execute_singuarity_cmd
+from igf_data.utils.fileutils import check_file_path,get_temp_dir
 
 class Picard_tools:
   '''
   A class for running picard tool
-  
+
   :param java_exe: Java executable path
   :param picard_jar: Picard path
   :param input_files: Input bam filepaths list
@@ -20,27 +21,29 @@ class Picard_tools:
   :param threads: Number of threads to run for java, default 1
   :param use_ephemeral_space: A toggle for temp dir setting, default 0
   :param patterned_flowcell: Toggle for marking the patterned flowcell, default False
+  :param singularity_image: Singularity image path, default None
   :param suported_commands: A list of supported picard commands
-  
-                           * CollectAlignmentSummaryMetrics
-                           * CollectGcBiasMetrics
-                           * QualityScoreDistribution
-                           * CollectRnaSeqMetrics
-                           * CollectBaseDistributionByCycle
-                           * MarkDuplicates
-                           * AddOrReplaceReadGroups
+
+    * CollectAlignmentSummaryMetrics
+    * CollectGcBiasMetrics
+    * QualityScoreDistribution
+    * CollectRnaSeqMetrics
+    * CollectBaseDistributionByCycle
+    * MarkDuplicates
+    * AddOrReplaceReadGroups
   '''
-  def __init__(self,java_exe,picard_jar,input_files,output_dir,ref_fasta,
-               picard_option=None,java_param='-Xmx4g',
-               strand_info='NONE',threads=1,output_prefix=None,use_ephemeral_space=0,
-               ref_flat_file=None,ribisomal_interval=None,patterned_flowcell=False,
-               suported_commands=('CollectAlignmentSummaryMetrics',
-                                  'CollectGcBiasMetrics',
-                                  'QualityScoreDistribution',
-                                  'CollectRnaSeqMetrics',
-                                  'CollectBaseDistributionByCycle',
-                                  'MarkDuplicates',
-                                  'AddOrReplaceReadGroups')):
+  def __init__(
+        self,java_exe,picard_jar,input_files,output_dir,ref_fasta,picard_option=None,
+        java_param='-Xmx4g',strand_info='NONE',threads=1,output_prefix=None,use_ephemeral_space=0,
+        ref_flat_file=None,ribisomal_interval=None,patterned_flowcell=False,singularity_image=None,
+        suported_commands=(
+          'CollectAlignmentSummaryMetrics',
+          'CollectGcBiasMetrics',
+          'QualityScoreDistribution',
+          'CollectRnaSeqMetrics',
+          'CollectBaseDistributionByCycle',
+          'MarkDuplicates',
+          'AddOrReplaceReadGroups')):
     self.java_exe = java_exe
     self.picard_jar = picard_jar
     self.java_param = java_param
@@ -56,11 +59,12 @@ class Picard_tools:
     self.threads = threads
     self.use_ephemeral_space = use_ephemeral_space
     self.patterned_flowcell = patterned_flowcell
+    self.singularity_image = singularity_image
 
   def _get_param_for_picard_command(self,command_name):
     '''
     An internal method for configuring run parameters for picard commands
-    
+
     :param command_name: A picard command name
     :returns: List of items to return
               * A dictionary of picard run parameter if command is supported or None
@@ -79,13 +83,11 @@ class Picard_tools:
             os.path.basename(input_list[0]))                                    # set output file prefix
         if output_prefix.endswith('.bam'):
           output_prefix = output_prefix.replace('.bam','')                      # remove .bam from filepath prefix
-
       else:
         output_prefix = \
           os.path.join(
             self.output_dir,
             self.output_prefix)
-
       output_file = \
         '{0}.{1}'.format(
           output_prefix,
@@ -103,7 +105,6 @@ class Picard_tools:
           raise ValueError(
                   'More than one input file found for picard command {0}'.\
                     format(command_name))
-
         output_file = \
           '{0}.{1}'.format(
             output_file,
@@ -114,13 +115,11 @@ class Picard_tools:
           'R':self.ref_fasta}]
         output_list = [output_file]
         metrics_list = [output_file]
-
       elif command_name=='CollectGcBiasMetrics':
         if len(input_list)>1:
           raise ValueError(
                   'More than one input file found for picard command {0}'.\
                     format(command_name))
-
         output_file = \
           '{0}.{1}'.format(
             output_file,
@@ -136,13 +135,11 @@ class Picard_tools:
           chart_file,
           metrics_file]
         metrics_list = [metrics_file]
-
       elif command_name=='QualityScoreDistribution':
         if len(input_list)>1:
           raise ValueError(
                   'More than one input file found for picard command {0}'.\
                     format(command_name))
-
         output_file = \
           '{0}.{1}'.format(
             output_file,
@@ -154,18 +151,15 @@ class Picard_tools:
         output_list = [
           output_file,
           chart_file]
-
       elif command_name=='CollectRnaSeqMetrics':
         if len(input_list)>1:
           raise ValueError(
                   'More than one input file found for picard command {0}'.\
                     format(command_name))
-
         if self.ref_flat_file is None:
           raise ValueError(
                   'Missing refFlat annotation file for command {0}'.\
                     format(command_name))
-
         check_file_path(file_path=self.ref_flat_file)                                # check refFlat file path
         output_file = \
           '{0}.{1}'.format(
@@ -181,18 +175,15 @@ class Picard_tools:
         if self.ribisomal_interval is not None:
           check_file_path(file_path=self.ribisomal_interval)
           param_dict.append({'RIBOSOMAL_INTERVALS':self.ribisomal_interval})
-
         output_list = [
           output_file,
           chart_file]
         metrics_list=[output_file]
-
       elif command_name=='CollectBaseDistributionByCycle':
         if len(input_list)>1:
           raise ValueError(
                   'More than one input file found for picard command {0}'.\
                     format(command_name))
-
         output_file = \
           '{0}.{1}'.format(
             output_file,
@@ -203,8 +194,7 @@ class Picard_tools:
           'CHART':chart_file}]
         output_list = [
           output_file,
-          chart_file,]
-
+          chart_file]
       elif command_name=='MarkDuplicates':
         output_file = \
           '{0}.{1}'.format(
@@ -215,20 +205,16 @@ class Picard_tools:
           'M':metrics_file}]
         if self.patterned_flowcell:
           param_dict.append({'OPTICAL_DUPLICATE_PIXEL_DISTANCE':'2500'})
-
         for file in input_list:
           param_dict.append({'I':file})
-
         output_list = [
           output_file,
           metrics_file]
         metrics_list=[metrics_file]
-
       elif command_name=='AddOrReplaceReadGroups':
         if len(input_list)>1:
           raise ValueError('More than one input file found for picard command {0}'.\
                            format(command_name))
-
         required_RG_params = [
           "RGID",
           "RGLB",
@@ -240,7 +226,6 @@ class Picard_tools:
           raise ValueError(
                   'Missing required options for picard cmd {0}:{1}'.\
                     format(command_name,required_RG_params))                    # check for required params
-
         output_file = \
           '{0}.{1}'.format(
             output_file,
@@ -249,7 +234,6 @@ class Picard_tools:
           'I':input_list[0],
           'O':output_file}]                                                     # not checking for other required inputs
         output_list=[output_file]
-
       return param_dict,output_list,metrics_list
     except:
       raise
@@ -332,45 +316,42 @@ class Picard_tools:
             data = \
               data.to_dict(orient='records')                                    # convert to list of dicts
             metrics_output_list.extend(data)                                    # append results
-
         except Exception as e:
           raise ValueError('Failed to parse file {0}, got error {1}'.\
                 format(file,e))
-
       return metrics_output_list
-    except:
-      raise
+    except Exception as e:
+      raise ValueError('Picard metrics: error: {0}'.format(e))
 
 
   def run_picard_command(self,command_name,dry_run=False):
     '''
     A method for running generic picard command
-    
+
     :param command_name: Picard command name
     :param dry_run: A toggle for returning picard command without the actual run, default False
     :returns: A list of output files from picard run and picard run command and optional picard metrics
     '''
     try:
-      check_file_path(file_path=self.java_exe)
-      check_file_path(file_path=self.picard_jar)
+      if self.singularity_image is None:
+        check_file_path(file_path=self.java_exe)
+        check_file_path(file_path=self.picard_jar)
       check_file_path(file_path=self.ref_fasta)
       if not isinstance(self.input_files, list) or \
          len(self.input_files)==0:
         raise ValueError('Missing input file list for picard run')
-
       for file in self.input_files:
         check_file_path(file_path=file)
-
       picard_temp_run_dir = \
         get_temp_dir(use_ephemeral_space=self.use_ephemeral_space)
-      command = \
-        [self.java_exe,
-         '-XX:ParallelGCThreads={0}'.\
-           format(self.threads),
-         self.java_param,
-         '-Djava.io.tmpdir={0}'.format(picard_temp_run_dir),
-         '-jar',
-         self.picard_jar,
+      command = [
+        self.java_exe,
+        '-XX:ParallelGCThreads={0}'.\
+          format(self.threads),
+        self.java_param,
+        '-Djava.io.tmpdir={0}'.format(picard_temp_run_dir),
+        '-jar',
+        self.picard_jar,
          quote(command_name)]
       if isinstance(self.picard_option,dict) and \
           len(self.picard_option)>0:
@@ -378,28 +359,58 @@ class Picard_tools:
           '{0}={1}'.format(quote(param),quote(val))
             for param,val in self.picard_option.items()]
         command.extend(picard_option)                                           # additional picard params
-
-      picard_run_param, output_file_list, metrics_list = \
-        self._get_param_for_picard_command(command_name=command_name)           # get picard params and output list
+      picard_run_param,output_file_list,metrics_list = \
+        self._get_param_for_picard_command(
+          command_name=command_name)                                            # get picard params and output list
       if isinstance(picard_run_param,list) and \
           len(picard_run_param)>0:
-        picard_option = \
-          ['{0}={1}'.format(quote(param), quote(str(val)))
+        picard_option = [
+          '{0}={1}'.format(quote(param),quote(str(val)))
             for param_dicts in picard_run_param
               for param,val in param_dicts.items()]
         command.extend(picard_option)                                           # main picard params
         if dry_run:
           return command,output_file_list
-
-        subprocess.check_call(' '.join(command),shell=True)                     # run picard command
+        if self.singularity_image is None:
+          subprocess.\
+            check_call(' '.join(command),shell=True)                            # run picard command
+        else:
+          bind_dir_list = [
+            os.path.dirname(f)
+              for f in self.input_files]
+          bind_dir_list.extend([
+            os.path.dirname(f)
+              for f in output_file_list])
+          bind_dir_list.extend([
+            os.path.dirname(f)
+              for f in metrics_list])
+          bind_dir_list.\
+            append(picard_temp_run_dir)
+          if self.ref_flat_file is not None:
+            bind_dir_list.\
+              append(os.path.dirname(self.ref_flat_file))
+          if self.ref_fasta is not None:
+            bind_dir_list.\
+              append(os.path.dirname(self.ref_fasta))
+          if self.ribisomal_interval is not None:
+            bind_dir_list.\
+              append(os.path.dirname(self.ribisomal_interval))
+          bind_dir_list = \
+            list(set(bind_dir_list))                                            # remove duplicates
+          _ = \
+            execute_singuarity_cmd(
+              image_path=self.singularity_image,
+              command_string=' '.join(command),
+              bind_dir_list=bind_dir_list)
         picard_metrics = \
-        self._parse_picard_metrics(\
-          picard_cmd=command_name,
-          metrics_list=metrics_list)                                            # parse picard metrics, if available
+          self._parse_picard_metrics(\
+            picard_cmd=command_name,
+            metrics_list=metrics_list)                                            # parse picard metrics, if available
         return output_file_list,command,picard_metrics
       else:
         raise ValueError('Picard command {0} not supported yet'.\
                          format(command_name))
-
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+              'Failed to run picard command {0}, error {1}'.\
+              format(command_name,e))

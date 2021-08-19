@@ -56,7 +56,7 @@ class SampleSheet:
         err.append("Missing I_5 index sequences for {0}".\
                    format(data_series['Sample_ID']))
 
-      single_cell_index_pattern=re.compile(r'^SI-[GN]A-[A-Z][0-9]+')
+      single_cell_index_pattern=re.compile(r'^SI-[GNT][ATN]-[A-Z][0-9]+')
       if re.search(single_cell_flag_pattern,data_series['Description']) and \
          not re.search(single_cell_index_pattern,data_series['index']):
         err.append("Required I_7 single cell indexes for 10X sample {0}".\
@@ -494,7 +494,7 @@ class SampleSheet:
             filtered_header_section.append(row)
         header_data[section]=filtered_header_section
       else:
-        raise valueError('type {} not supported'.format(type))
+        raise ValueError('type {} not supported'.format(type))
 
       # resetting the header
       self._header_data=header_data

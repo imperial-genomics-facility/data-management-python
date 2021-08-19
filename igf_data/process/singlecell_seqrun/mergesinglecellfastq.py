@@ -30,11 +30,14 @@ class MergeSingleCellFastq:
      * Original_Sample_Name: A sample name provided by user
      * Description: A single cell label, default 10X
   '''
-  def __init__(self, fastq_dir,samplesheet,platform_name,singlecell_tag='10X', 
-               sampleid_col='Sample_ID', samplename_col='Sample_Name',use_ephemeral_space=0,
-               orig_sampleid_col='Original_Sample_ID', description_col='Description', 
-               orig_samplename_col='Original_Sample_Name',project_col='Sample_Project',
-               lane_col='Lane', pseudo_lane_col='PseudoLane',force_overwrite=True):
+  def __init__(self, fastq_dir,samplesheet,platform_name,singlecell_tag='10X',
+    sampleid_col='Sample_ID', samplename_col='Sample_Name',use_ephemeral_space=0,
+    orig_sampleid_col='Original_Sample_ID', description_col='Description',
+    orig_samplename_col='Original_Sample_Name',project_col='Sample_Project',
+    lane_col='Lane', pseudo_lane_col='PseudoLane',force_overwrite=True):
+    """
+    Add params
+    """
     self.fastq_dir = fastq_dir
     self.samplesheet = samplesheet
     self.platform_name = platform_name
@@ -107,7 +110,7 @@ class MergeSingleCellFastq:
             'sample_name':group_tag[2],
             'project_id':group_tag[3]})
       else:
-        raise ValueError('platform {0} not supported'.format(platform_name))
+        raise ValueError('platform {0} not supported'.format(self.platform_name))
       return sample_lane_data
     except:
       raise
@@ -116,13 +119,13 @@ class MergeSingleCellFastq:
   def _group_singlecell_fastq(sample_data,fastq_dir):
     '''
     A static method for grouping single cell fastq files
-    
+
     required params:
     sample_data: A list of sample entries from samplesheet
                 It should contain following keys for each row:
                 lane_id, sample_id, sample_name, project_id
     fastq_dir: A directory path containing fastq files
-    
+
     returns two dictionary of fastq group, one for single cell samples and 
     another for sample information
     '''
@@ -142,7 +145,7 @@ class MergeSingleCellFastq:
         samples_info[sample_id]['project_id'] = project_id
         sample_id_regex = re.compile('^{0}_\d$'.format(sample_id))              # regexp for sample id match
         file_name_regex = \
-          re.compile(r'^{0}_(\d)_S\d+_L00{1}_([R,I][1,2])_\d+\.fastq(\.gz)?$'.\
+          re.compile(r'^{0}_(\d)_S\d+_L00{1}_([R,I][1,2,3,4])_\d+\.fastq(\.gz)?$'.\
                      format(
                        sample_name,
                        sample_lane))                                            # regexp for fastq file match
@@ -151,7 +154,7 @@ class MergeSingleCellFastq:
             if fnmatch.fnmatch(file, "*.fastq.gz") and \
                not fnmatch.fnmatch(file, "Undetermined_*"):                     # skip undetermined reads
               if re.search(sample_id_regex,os.path.basename(root)) and \
-                 re.search(file_name_regex,file): 
+                 re.search(file_name_regex,file):
                 sm = re.match(file_name_regex,file)
                 if len(sm.groups())>=2:
                   fragment_id=sm.group(1)

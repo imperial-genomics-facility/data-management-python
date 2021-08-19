@@ -99,7 +99,7 @@ class Reset_samplesheet_md5:
            json_row[md5_field]!=samplesheet_md5:
           json_row[md5_field]=samplesheet_md5                                   # update json data with new md5
           create_new_file=True                                                  # create new json if md5 values are not matching
-          break;                                                                # stop file look up
+          break                                                                 # stop file look up
 
       if create_new_file:
         temp_dir=get_temp_dir()

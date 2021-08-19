@@ -14,7 +14,7 @@ def full_suite():
   from .process.moveBclFilesForDemultiplexing_test import MiSeqRunInfo
   from .process.moveBclFilesForDemultiplexing_test import Hiseq4000RunInfo as Hiseq4000RunInfo_moveBcl
   from .dbadaptor.pipelineadaptor_test import Pipelineadaptor_test1
-  from .dbadaptor.pipelineadaptor_test import Pipelineadaptor_test2,Pipelineadaptor_test3
+  from .dbadaptor.pipelineadaptor_test import Pipelineadaptor_test2,Pipelineadaptor_test3,Pipelineadaptor_test4
   from .utils.pipelineutils_test import Pipelineutils_test1,Pipelineutils_test2
   from .utils.platformutils_test import Platformutils_test1,Platformutils_test2
   from .dbadaptor.runadaptor_test import RunAdaptor_test1
@@ -24,9 +24,10 @@ def full_suite():
   from .process.samplesheet_test import TestValidateSampleSheet1,TestValidateSampleSheet2
   from .process.find_and_register_new_project_data_test import Find_and_register_project_data1
   from .dbadaptor.useradaptor_test import Useradaptor_test1
-  from .dbadaptor.sampleadaptor_test import Sampleadaptor_test1
+  from .dbadaptor.sampleadaptor_test import Sampleadaptor_test1,Sampleadaptor_test2,Sampleadaptor_test3,Sampleadaptor_test4
   from .process.processsinglecellsamplesheet_test import ProcessSingleCellSamplesheet_testA
   from .process.processsinglecellsamplesheet_test import ProcessSingleCellSamplesheet_testB
+  from .process.processsinglecellsamplesheet_test import ProcessSingleCellDualIndexSamplesheetA
   from .process.mergesinglecellfastq_test import MergeSingleCellFastq_testA
   from .utils.project_data_display_utils_test import Convert_project_data_gviz_data1,Add_seqrun_path_info1
   from .utils.projectutils_test import Projectutils_test1,Projectutils_test2
@@ -48,83 +49,127 @@ def full_suite():
   from .dbadaptor.platformadaptor_test import Platformadaptor_test1
   from .utils.metadata_validation_test import Validate_project_and_samplesheet_metadata_test1
   from .utils.metadata_validation_test import Validate_project_and_samplesheet_metadata_test2
-  from .utils.project_analysis_utils_test import Project_analysis_test1,Project_analysis_test2
+  from .utils.project_analysis_utils_test import Project_analysis_test1,Project_analysis_test2,Project_analysis_test3
   from .process.project_pooling_info_test import Project_pooling_info_test1
   from .utils.analysis_fastq_fetch_utils_test import Analysis_fastq_fetch_utils_test1
+  from .utils.analysis_fastq_fetch_utils_test import Analysis_fastq_fetch_utils_test2
   from .process.reformat_metadata_file_test import Reformat_metadata_file_testA
   from .process.reformat_samplesheet_file_test import Reformat_samplesheet_file_testA
   from .utils.singularity_run_wrapper_test import Singularity_run_test1
   from .utils.jupyter_nbconvert_wrapper_test import Nbconvert_execute_test1
-  from .utils.jupyter_nbconvert_wrapper_test import Nbconvert_execute_test2
+  from .igf_airflow.calculate_seqrun_file_size_test import Calculate_seqrun_file_list_testA
+  from .igf_airflow.ongoing_seqrun_processing_test import Compare_existing_seqrun_filesA
+  from .igf_airflow.dag9_tenx_single_cell_immune_profiling_utils_test import Dag9_tenx_single_cell_immune_profiling_utilstestA
+  from .igf_airflow.dag9_tenx_single_cell_immune_profiling_utils_test import Dag9_tenx_single_cell_immune_profiling_utilstestB
+  from .igf_airflow.dag9_tenx_single_cell_immune_profiling_utils_test import Dag9_tenx_single_cell_immune_profiling_utilstestC
+  from .igf_airflow.dag9_tenx_single_cell_immune_profiling_utils_test import Dag9_tenx_single_cell_immune_profiling_utilstestD
+  from .igf_airflow.dag9_tenx_single_cell_immune_profiling_utils_test import Dag9_tenx_single_cell_immune_profiling_utilstestE
+  from .igf_airflow.dag9_tenx_single_cell_immune_profiling_utils_test import Dag9_tenx_single_cell_immune_profiling_utilstestF
+  from .igf_airflow.dag9_tenx_single_cell_immune_profiling_utils_test import Dag9_tenx_single_cell_immune_profiling_utilstestG
+  from .igf_airflow.dag10_nextflow_atacseq_pipeline_utils_test import Dag10_nextflow_atacseq_pipeline_utils_testA
+  from .igf_airflow.dag10_nextflow_atacseq_pipeline_utils_test import Dag10_nextflow_atacseq_pipeline_utils_testB
+  from .utils.cellranger_count_utils_test import Cellranger_count_utils_testA
+  from .dbadaptor.analysisadaptor_test import Analysisadaptor_test1
+  from .dbadaptor.seqrunadaptor_test import SeqrunAdaptor_test1
+  from .utils.samplesheet_utils_test import SamplesheetUtils_testA
+  from .igf_nextflow.nextflow_config_formatter_test import Nextflow_config_formatter_testA
+  from .igf_nextflow.nextflow_design_test import Nextflow_design_testA
+  from .igf_nextflow.nextflow_runner_test import Nextflow_pre_run_setup_testA
 
   return unittest.TestSuite([
-      unittest.TestLoader().loadTestsFromTestCase(BasesMask_testA), 
-      unittest.TestLoader().loadTestsFromTestCase(BasesMask_testB),
-      unittest.TestLoader().loadTestsFromTestCase(BasesMask_testC),
-      unittest.TestLoader().loadTestsFromTestCase(BasesMask_testD),
-      unittest.TestLoader().loadTestsFromTestCase(CheckSequenceIndexBarcodes_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Collect_fastq_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Collect_fastq_test_sc1),
-      unittest.TestLoader().loadTestsFromTestCase(CollectionAdaptor_test1),
-      unittest.TestLoader().loadTestsFromTestCase(CollectionAdaptor_test2),
-      unittest.TestLoader().loadTestsFromTestCase(Dbutils_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Find_seqrun_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Flowcell_barcode_rule_test1),
-      unittest.TestLoader().loadTestsFromTestCase(MiSeqRunInfo),
-      unittest.TestLoader().loadTestsFromTestCase(Hiseq4000RunInfo_moveBcl),
-      unittest.TestLoader().loadTestsFromTestCase(Pipelineadaptor_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Pipelineadaptor_test2),
-      unittest.TestLoader().loadTestsFromTestCase(Pipelineadaptor_test3),
-      unittest.TestLoader().loadTestsFromTestCase(Pipelineutils_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Pipelineutils_test2),
-      unittest.TestLoader().loadTestsFromTestCase(Platformutils_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Platformutils_test2),
-      unittest.TestLoader().loadTestsFromTestCase(RunAdaptor_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Hiseq4000RunInfo_runinfo_xml),
-      unittest.TestLoader().loadTestsFromTestCase(Hiseq4000RunParam),
-      unittest.TestLoader().loadTestsFromTestCase(Hiseq4000SampleSheet),
-      unittest.TestLoader().loadTestsFromTestCase(TestValidateSampleSheet),
-      unittest.TestLoader().loadTestsFromTestCase(TestValidateSampleSheet1),
-      unittest.TestLoader().loadTestsFromTestCase(TestValidateSampleSheet2),
-      unittest.TestLoader().loadTestsFromTestCase(Find_and_register_project_data1),
-      unittest.TestLoader().loadTestsFromTestCase(Useradaptor_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Sampleadaptor_test1),
-      unittest.TestLoader().loadTestsFromTestCase(ProcessSingleCellSamplesheet_testA),
-      unittest.TestLoader().loadTestsFromTestCase(ProcessSingleCellSamplesheet_testB),
-      unittest.TestLoader().loadTestsFromTestCase(MergeSingleCellFastq_testA),
-      unittest.TestLoader().loadTestsFromTestCase(Convert_project_data_gviz_data1),
-      unittest.TestLoader().loadTestsFromTestCase(Add_seqrun_path_info1),
-      unittest.TestLoader().loadTestsFromTestCase(Projectutils_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Projectutils_test2),
-      unittest.TestLoader().loadTestsFromTestCase(Fileadaptor_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Reset_samplesheet_md5_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Modify_pipeline_seed_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Experiment_metadata_updator_test),
-      unittest.TestLoader().loadTestsFromTestCase(Projectadaptor_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Projectadaptor_test2),
-      unittest.TestLoader().loadTestsFromTestCase(Analysis_collection_utils_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Fileutils_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Pipeseedfactory_utils_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Reference_genome_utils_test1),
-      unittest.TestLoader().loadTestsFromTestCase(ExperimentAdaptor_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Picard_util_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Picard_util_test2),
-      unittest.TestLoader().loadTestsFromTestCase(Ppqt_util_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Samtools_util_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Samtools_util_test2),
-      unittest.TestLoader().loadTestsFromTestCase(Deeptools_util_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Baseadaptor_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Platformadaptor_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Validate_project_and_samplesheet_metadata_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Validate_project_and_samplesheet_metadata_test2),
-      unittest.TestLoader().loadTestsFromTestCase(Project_analysis_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Project_analysis_test2),
-      unittest.TestLoader().loadTestsFromTestCase(Project_pooling_info_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Analysis_fastq_fetch_utils_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Analysis_fastq_fetch_utils_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Reformat_metadata_file_testA),
-      unittest.TestLoader().loadTestsFromTestCase(Reformat_samplesheet_file_testA),
-      unittest.TestLoader().loadTestsFromTestCase(Singularity_run_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Nbconvert_execute_test1),
-      unittest.TestLoader().loadTestsFromTestCase(Nbconvert_execute_test2),
+    unittest.TestLoader().loadTestsFromTestCase(t)
+      for t in [
+        BasesMask_testA, 
+        BasesMask_testB,
+        BasesMask_testC,
+        BasesMask_testD,
+        CheckSequenceIndexBarcodes_test1,
+        Collect_fastq_test1,
+        Collect_fastq_test_sc1,
+        CollectionAdaptor_test1,
+        CollectionAdaptor_test2,
+        Dbutils_test1,
+        Find_seqrun_test1,
+        Flowcell_barcode_rule_test1,
+        MiSeqRunInfo,
+        Hiseq4000RunInfo_moveBcl,
+        Pipelineadaptor_test1,
+        Pipelineadaptor_test2,
+        Pipelineadaptor_test3,
+        Pipelineadaptor_test4,
+        Pipelineutils_test1,
+        Pipelineutils_test2,
+        Platformutils_test1,
+        Platformutils_test2,
+        RunAdaptor_test1,
+        Hiseq4000RunInfo_runinfo_xml,
+        Hiseq4000RunParam,
+        Hiseq4000SampleSheet,
+        TestValidateSampleSheet,
+        TestValidateSampleSheet1,
+        TestValidateSampleSheet2,
+        Find_and_register_project_data1,
+        Useradaptor_test1,
+        Sampleadaptor_test1,
+        Sampleadaptor_test2,
+        Sampleadaptor_test3,
+        Sampleadaptor_test4,
+        ProcessSingleCellSamplesheet_testA,
+        ProcessSingleCellSamplesheet_testB,
+        ProcessSingleCellDualIndexSamplesheetA,
+        MergeSingleCellFastq_testA,
+        Convert_project_data_gviz_data1,
+        Add_seqrun_path_info1,
+        Projectutils_test1,
+        Projectutils_test2,
+        Fileadaptor_test1,
+        Reset_samplesheet_md5_test1,
+        Modify_pipeline_seed_test1,
+        Experiment_metadata_updator_test,
+        Projectadaptor_test1,
+        Projectadaptor_test2,
+        Analysis_collection_utils_test1,
+        Fileutils_test1,
+        Pipeseedfactory_utils_test1,
+        Reference_genome_utils_test1,
+        ExperimentAdaptor_test1,
+        Picard_util_test1,
+        Picard_util_test2,
+        Ppqt_util_test1,
+        Samtools_util_test1,
+        Samtools_util_test2,
+        Deeptools_util_test1,
+        Baseadaptor_test1,
+        Platformadaptor_test1,
+        Validate_project_and_samplesheet_metadata_test1,
+        Validate_project_and_samplesheet_metadata_test2,
+        Project_analysis_test1,
+        Project_analysis_test2,
+        Project_analysis_test3,
+        Project_pooling_info_test1,
+        Analysis_fastq_fetch_utils_test1,
+        Analysis_fastq_fetch_utils_test2,
+        Reformat_metadata_file_testA,
+        Reformat_samplesheet_file_testA,
+        Singularity_run_test1,
+        Nbconvert_execute_test1,
+        Calculate_seqrun_file_list_testA,
+        Compare_existing_seqrun_filesA,
+        Dag9_tenx_single_cell_immune_profiling_utilstestA,
+        Dag9_tenx_single_cell_immune_profiling_utilstestB,
+        Dag9_tenx_single_cell_immune_profiling_utilstestC,
+        Dag9_tenx_single_cell_immune_profiling_utilstestD,
+        Dag9_tenx_single_cell_immune_profiling_utilstestE,
+        Dag9_tenx_single_cell_immune_profiling_utilstestF,
+        Dag9_tenx_single_cell_immune_profiling_utilstestG,
+        Cellranger_count_utils_testA,
+        Analysisadaptor_test1,
+        SeqrunAdaptor_test1,
+        SamplesheetUtils_testA,
+        Nextflow_config_formatter_testA,
+        Nextflow_design_testA,
+        Nextflow_pre_run_setup_testA,
+        Dag10_nextflow_atacseq_pipeline_utils_testA,
+        Dag10_nextflow_atacseq_pipeline_utils_testB
+      ]
     ])

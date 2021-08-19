@@ -29,7 +29,7 @@ class PipeseedFactory(IGFBaseJobFactory):
   def run(self):
     '''
     Run method for the seed job factory class of the all pipelines
-    
+
     :param igf_session_class: A database session class
     :param pipeline_name: Name of the pipeline
     :param seed_id_label: A text label for the seed_id, default seed_id
@@ -41,11 +41,11 @@ class PipeseedFactory(IGFBaseJobFactory):
     :param seed_status_label: A text label for the pipeline_seed status column name, default status
     :param experiment_id_label: A text label for the experiment_id, default experiment_id
     :param pipeseed_mode: A text label for pipeline mode, default demultiplexing
-                          Allowed values are 
-                             
-                          *   demultiplexing
-                          *   alignment
-                             
+      Allowed values are
+
+        *   demultiplexing
+        *   alignment
+
     :returns: A list of dictionary containing the seqrun ids or experiment_igf_ids seed for analysis
     '''
     try:

@@ -27,7 +27,7 @@ class RunPicard(IGFBaseProcess):
   def run(self):
     '''
     A method for running picard commands
-    
+
     :param project_igf_id: A project igf id
     :param sample_igf_id: A sample igf id
     :param experiment_igf_id: A experiment igf id

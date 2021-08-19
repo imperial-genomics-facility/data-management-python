@@ -2,7 +2,7 @@
 import os, subprocess,re
 from shutil import copytree,copy2,move
 from shlex import quote
-from igf_data.utils.fileutils import get_temp_dir,remove_dir
+from igf_data.utils.fileutils import get_temp_dir,remove_dir,copy_local_file,check_file_path
 from ehive.runnable.IGFBaseProcess import IGFBaseProcess
 from igf_data.illumina.samplesheet import SampleSheet
 from igf_data.process.moveBclFilesForDemultiplexing import moveBclFilesForDemultiplexing
@@ -151,7 +151,8 @@ class RunBcl2Fastq(IGFBaseProcess):
                            if i.startswith('y') and re.match(read_pattern,i)
                              if int(re.match(read_pattern,i).group(1)) < 22 ]   # hack for checking if reads are lower than the Illumina threasholds
         if len(read_values) > 0 and \
-            min(read_values) > 5:
+            min(read_values) > 5 and \
+            project_type!=singlecell_tag:
           bcl2fastq_cmd.\
             append("--mask-short-adapter-reads={0}".\
                    format(quote(str(min(read_values)))))
@@ -179,15 +180,39 @@ class RunBcl2Fastq(IGFBaseProcess):
           message=message,
           reaction='pass')
       subprocess.check_call(' '.join(bcl2fastq_cmd),shell=True)                 # run bcl2fastq
-
-      copytree(output_temp_dir,output_fastq_dir)                                # copy output from TMPDIR
-      copy2(\
+      if os.path.exists(output_fastq_dir):
+        remove_dir(output_fastq_dir)
+      copy_local_file(output_temp_dir,output_fastq_dir)                                # copy output from TMPDIR
+      copy_local_file(\
         samplesheet_file,
         os.path.join(\
           output_fastq_dir,
           samplesheet_filename))                                                # add samplesheet to output dir
-      move(report_dir,output_fastq_dir)                                         # move report directory to project dir
-      move(stats_dir,output_fastq_dir)                                          # move stats directory to project dir
+      copy_local_file(
+        report_dir,
+        os.path.join(output_fastq_dir,"Reports"))                                        # move report directory to project dir
+      check_file_path(
+        os.path.join(
+          output_fastq_dir,
+          'Reports',
+          'html',
+          flowcell_id,
+          'all',
+          'all',
+          'all',
+          'laneBarcode.html'
+        )
+      )
+      copy_local_file(
+        stats_dir,
+        os.path.join(output_fastq_dir,'Stats'))                                          # move stats directory to project dir
+      check_file_path(
+        os.path.join(
+          output_fastq_dir,
+          'Stats',
+          'Stats.json'
+        )
+      )
       self.param('dataflow_params',
                  {'fastq_dir':output_fastq_dir,
                   'bcl2fq_project_type':project_type})                          # set dataflow params

@@ -19,11 +19,11 @@ class SeqrunAdaptor(BaseAdaptor):
     (seqrun_data, seqrun_attr_data) = \
       self.divide_data_to_table_and_attribute(data=data)
 
-    try:                                                                                 
+    try:
       self.store_seqrun_data(data=seqrun_data)                                                # store run
       if len(seqrun_attr_data.index)>0:                                                     # check if any attribute exists
         self.store_seqrun_attributes(data=seqrun_attr_data)                                   # store run attributes
-     
+
       if autosave:
         self.commit_session()                                                                 # save changes to database
     except Exception as e:
@@ -156,7 +156,7 @@ class SeqrunAdaptor(BaseAdaptor):
         self.rollback_session()
       raise ValueError(
               'Failed to store seqrun attribute, error: {0}'.format(e))
-      
+
 
   def store_seqrun_stats_data(self,data,seqrun_id='',autosave=True):
     '''
@@ -203,13 +203,13 @@ class SeqrunAdaptor(BaseAdaptor):
         self.rollback_session()
       raise ValueError(
               'Failed to store seqrun stats data, error: {0}'.format(e))
-      
+
 
   def fetch_seqrun_records_igf_id(
         self,seqrun_igf_id,target_column_name='seqrun_igf_id'):
     '''
     A method for fetching data for Seqrun table
-    
+
     :param seqrun_igf_id: an igf id
     :param target_column_name: a column name in the Seqrun table, default seqrun_igf_id
     :returns: Seqrun record as oblect
@@ -230,12 +230,33 @@ class SeqrunAdaptor(BaseAdaptor):
       raise ValueError(
               'Failed to fetch seqrun if, error: {0}'.format(e))
 
+  def fetch_platform_info_for_seqrun(self,seqrun_igf_id):
+    '''
+    A method for fetching platform info for seqrun
+
+    :param seqrun_igf_id: Seqrun igf id for platform name lookup
+    :returns: A string containing platform name or None
+    '''
+    try:
+      query = \
+        self.session.\
+        query(Platform.model_name).\
+        join(Seqrun,Seqrun.platform_id==Platform.platform_id).\
+        filter(Seqrun.seqrun_igf_id==seqrun_igf_id)
+      platform_name = \
+        self.fetch_records(query=query,output_mode='one_or_none')
+      if isinstance(platform_name,tuple):
+        platform_name = platform_name[0]
+      return platform_name
+    except Exception as e:
+      raise ValueError('Failed to fetch platform info for seqrun {0}'.\
+              format(seqrun_igf_id))
 
   def fetch_flowcell_barcode_rules_for_seqrun(
         self,seqrun_igf_id,flowcell_label='flowcell',output_mode='dataframe'):
     '''
     A method for fetching flowcell barcode rule for Seqrun
-    
+
     :param seqrun_igf_id: A seqrun igf id
     :param flowcell_label: Flowcell label, default 'flowcell'
     :param output_mode: Query output mode, default 'dataframe'

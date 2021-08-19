@@ -7,7 +7,7 @@ report_header_info:
     - Report date: '{{ date_stamp }}'
     - Created by: 'Imperial BRC Genomics Facility'
     - Help page: 'https://imperial-genomics-facility.github.io/igf-pipeline-help'
-    - Contact us: 'https://www.imperial.ac.uk/medicine/research-and-impact/facilities/genomics-facility/contact/'
+    - Contact us: 'https://www.imperial.ac.uk/medicine/research-and-impact/facilities/genomics-facility/contact-us/'
 
 
 module_order:

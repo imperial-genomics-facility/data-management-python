@@ -98,6 +98,7 @@ test/dbadaptor/data
 test/process/data
 test/utils/data
 migrations/alembictest.db
-
 *.sqlite
 condaenv.ybiha2u5.requirements.txt
+find_seqrun.db
+alembic.ini
