@@ -92,6 +92,23 @@ class moveBclFilesForDemultiplexing:
             bcl_files_list.\
               append(
                 'Data/Intensities/BaseCalls/L00{0}'.format(lane))
+      elif platform_model=='NovaSeq':
+        bcl_files_list = [
+          'Data/Intensities/s.locs',
+          'InterOp',
+          'RunInfo.xml',
+          'RunParameters.xml']
+        if len(lane_list):
+          # need to change the following lines if there are more than 9 lanes
+          for lane in lane_list:
+            bcl_files_list.\
+              append(
+                'Data/Intensities/BaseCalls/L00{0}'.format(lane))
+        else:
+          for lane in samplesheet_data.get_lane_count():
+            bcl_files_list.\
+              append(
+                'Data/Intensities/BaseCalls/L00{0}'.format(lane))
       elif platform_model=='NEXTSEQ':
         bcl_files_list = [
           'Data',
