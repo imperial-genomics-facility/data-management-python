@@ -605,14 +605,25 @@ def run_tile_demult_list_func(**context):
     flowcell_type = \
         runparameters_data.\
           get_hiseq_flowcell()
-    index2_rule = None
+    # check for nova workflow type
+    workflow_type = \
+      runparameters_data.\
+        get_nova_workflow_type()
     platform_name = None
+    index2_rule = None
+    if flowcell_type is None and \
+       workflow_type is not None:
+      flowcell_type = \
+        runparameters_data.\
+          get_novaseq_flowcell()
+      platform_name = 'NovaSeq'
+      index2_rule = None
     if flowcell_type is not None and \
        flowcell_type == 'HiSeq 3000/4000 PE':
       index2_rule = 'REVCOMP'
     if flowcell_type is not None and \
        flowcell_type.startswith('HiSeq 3000/4000'):
-      platform_name = 'HISEQ4000'                                       # FIX ME: No neet to add MiSeq now, change it for Nova
+      platform_name = 'HISEQ4000'                                       # FIX ME: No need to add MiSeq now, change it for Nova
     tmp_samplesheet_dir = get_temp_dir()
     file_list = \
       get_formatted_samplesheet_per_lane(

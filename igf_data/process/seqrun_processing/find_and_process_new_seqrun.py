@@ -248,47 +248,53 @@ def prepare_seqrun_for_db(seqrun_name, seqrun_path, session_class):
   :returns: A dictionary containing information to populate the seqrun table in database
   '''
   try:
-    runinfo_file=os.path.join(seqrun_path,'RunInfo.xml')
-    runinfo_data=RunInfo_xml(xml_file=runinfo_file)
-    platform_name=runinfo_data.get_platform_number()
-    reads_stats=runinfo_data.get_reads_stats()
-    flowcell_id=runinfo_data.get_flowcell_name()
-  
-    seqrun_data=dict()
-    seqrun_data['seqrun_igf_id']=seqrun_name
-    seqrun_data['platform_igf_id']=platform_name
-    seqrun_data['flowcell_id']=flowcell_id
-
-    read_count=1
-    index_count=1
+    runinfo_file = os.path.join(seqrun_path,'RunInfo.xml')
+    runinfo_data = RunInfo_xml(xml_file=runinfo_file)
+    platform_name = runinfo_data.get_platform_number()
+    reads_stats = runinfo_data.get_reads_stats()
+    flowcell_id = runinfo_data.get_flowcell_name()
+    seqrun_data = dict()
+    seqrun_data['seqrun_igf_id'] = seqrun_name
+    seqrun_data['platform_igf_id'] = platform_name
+    seqrun_data['flowcell_id'] = flowcell_id
+    read_count = 1
+    index_count = 1
     for read_id in sorted(reads_stats.keys()):
       if reads_stats[read_id]['isindexedread'] == 'Y':
         # its index
-        seqrun_data['index{0}'.format(index_count)]=reads_stats[read_id]['numcycles']
-        index_count+=1
+        seqrun_data['index{0}'.format(index_count)] = \
+          reads_stats[read_id]['numcycles']
+        index_count += 1
       elif  reads_stats[read_id]['isindexedread'] == 'N':
         # its read
-        seqrun_data['read{0}'.format(read_count)]=reads_stats[read_id]['numcycles']
-        read_count+=1
+        seqrun_data['read{0}'.format(read_count)] = \
+          reads_stats[read_id]['numcycles']
+        read_count += 1
       else:
-        raise ValueError('unknown value for isindexedread: {0}'.format(reads_stats[read_id]['isindexedread']))
+        raise ValueError(
+                'unknown value for isindexedread: {0}'.\
+                  format(reads_stats[read_id]['isindexedread']))
 
-    pl=PlatformAdaptor(**{'session_class':session_class})
+    pl = PlatformAdaptor(**{'session_class':session_class})
     pl.start_session()
-    pl_data=pl.fetch_platform_records_igf_id(platform_igf_id=platform_name)
+    pl_data = pl.fetch_platform_records_igf_id(platform_igf_id=platform_name)
     pl.close_session()
-
     if (pl_data.model_name=='HISEQ4000'):
-      runparameters_file=os.path.join(seqrun_path,'runParameters.xml')
-      runparameters_data=RunParameter_xml(xml_file=runparameters_file)
-      flowcell_type=runparameters_data.get_hiseq_flowcell()
+      runparameters_file = os.path.join(seqrun_path,'runParameters.xml')
+      runparameters_data = RunParameter_xml(xml_file=runparameters_file)
+      flowcell_type = runparameters_data.get_hiseq_flowcell()
       # add flowcell information for hiseq runs
-      seqrun_data['flowcell']=flowcell_type
-
+      seqrun_data['flowcell'] = flowcell_type
       if flowcell_type is None:
-        raise ValueError('unknown flowcell type for sequencing run model {0}'.format(pl_data.model_name))
+        raise ValueError(
+                'unknown flowcell type for sequencing run model {0}'.\
+                  format(pl_data.model_name))
+    elif (pl_data.model_name=='NovaSeq'):
+      runparameters_file = os.path.join(seqrun_path,'RunParameters.xml')
+      runparameters_data = RunParameter_xml(xml_file=runparameters_file)
+      flowcell_type = runparameters_data.get_novaseq_flowcell()
     else:
-      seqrun_data['flowcell']=pl_data.model_name  # adding flowcell info for remaining platforms
+      seqrun_data['flowcell'] = pl_data.model_name                              # adding flowcell info for remaining platforms
     return seqrun_data
   except:
     raise
