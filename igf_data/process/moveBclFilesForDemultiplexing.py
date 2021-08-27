@@ -92,7 +92,7 @@ class moveBclFilesForDemultiplexing:
             bcl_files_list.\
               append(
                 'Data/Intensities/BaseCalls/L00{0}'.format(lane))
-      elif platform_model=='NovaSeq':
+      elif platform_model=='NOVASEQ6000':
         bcl_files_list = [
           'Data/Intensities/s.locs',
           'InterOp',

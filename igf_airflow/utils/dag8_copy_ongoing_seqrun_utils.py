@@ -616,7 +616,7 @@ def run_tile_demult_list_func(**context):
       flowcell_type = \
         runparameters_data.\
           get_novaseq_flowcell()
-      platform_name = 'NovaSeq'
+      platform_name = 'NOVASEQ6000'
       index2_rule = None
     if flowcell_type is not None and \
        flowcell_type == 'HiSeq 3000/4000 PE':
