@@ -170,6 +170,7 @@ class moveBclTilesForDemultiplexing(moveBclFilesForDemultiplexing):
         raise ValueError(
                 'No file list found for run path {0}'.\
                   format(self.input_dir))
+      bcl_files_list = list(set(bcl_files_list))                                 # make the list unique
       for bcl_entity in bcl_files_list:
         bcl_entity = bcl_entity.lstrip('/')
         input_target = os.path.join(input_dir, bcl_entity)
