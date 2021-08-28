@@ -139,6 +139,7 @@ class moveBclTilesForDemultiplexing(moveBclFilesForDemultiplexing):
   :param samplesheet: Samplesheet filepath
   :param run_info_xml: RunInfo.xml file path
   :param platform_model: Platform model, default None
+  :param force: Force copy existing file, default False
   :param tiles_list: List of times to copy, default (1101,)
 
     obj = moveBclTilesForDemultiplexing(**kwargs)
@@ -146,8 +147,9 @@ class moveBclTilesForDemultiplexing(moveBclFilesForDemultiplexing):
 
   """
   def __init__(self, input_dir, output_dir, samplesheet, run_info_xml,
-               platform_model=None, tiles_list=(1101,)):
+               force=False, platform_model=None, tiles_list=(1101,)):
     self.tiles_list = list(tiles_list)
+    self.force = force
     super().__init__(
       input_dir,
       output_dir,
@@ -172,7 +174,11 @@ class moveBclTilesForDemultiplexing(moveBclFilesForDemultiplexing):
         bcl_entity = bcl_entity.lstrip('/')
         input_target = os.path.join(input_dir, bcl_entity)
         output_target = os.path.join(output_dir, bcl_entity)
-        copy_local_file(input_target, output_target, force=False)
+        if not os.path.exists(output_target) or \
+           input_target.endswith('*.csv') or \
+            (os.path.exists(output_target) and
+             os.path.getsize(input_target) != os.path.getsize(output_target)):
+          copy_local_file(input_target, output_target, force=self.force)             # skip existing cbcl file
       return final_tiles_list
     except Exception as e:
       raise ValueError(
