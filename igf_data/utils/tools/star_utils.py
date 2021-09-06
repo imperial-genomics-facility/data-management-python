@@ -145,27 +145,27 @@ class Star_utils:
       for file in os.listdir(temp_dir):
         if fnmatch.fnmatch(file, '*.bam'):
           source_path = os.path.join(temp_dir,file)
-          destinationa_path = os.path.join(self.output_dir,file)
+          destination_path = os.path.join(self.output_dir,file)
           copy_local_file(
             source_path=source_path,
-            destinationa_path=destinationa_path)                                # copying bams to output dir
+            destination_path=destination_path)                                # copying bams to output dir
           if re.match(genomic_bam_pattern,file):
-            genomic_bam=destinationa_path
+            genomic_bam=destination_path
 
           if re.match(transcriptomic_bam_pattern,file):
-            transcriptomic_bam = destinationa_path
+            transcriptomic_bam = destination_path
 
         if re.match(star_log_pattern,file):
           star_log_file = os.path.join(self.output_dir,file)
           copy_local_file(
             source_path=os.path.join(temp_dir,file),
-            destinationa_path=star_log_file)                                    # copy star log file
+            destination_path=star_log_file)                                    # copy star log file
 
         if re.match(star_count_pattern,file):
           star_gene_count_file = os.path.join(self.output_dir,file)
           copy_local_file(
             source_path=os.path.join(temp_dir,file),
-            destinationa_path=star_gene_count_file)                             # copy star gene count file
+            destination_path=star_gene_count_file)                             # copy star gene count file
 
       if genomic_bam == '' or \
          transcriptomic_bam == '' or \

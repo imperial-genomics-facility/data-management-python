@@ -109,7 +109,7 @@ class CopyAnalysisFilesToRemote(IGFBaseProcess):
         copy_remote_file(\
           source_path=os.path.join(temp_work_dir,
                                    os.path.basename(file)),
-          destinationa_path=dest_file_path,
+          destination_path=dest_file_path,
           destination_address='{0}@{1}'.format(remote_user,remote_host),
           force_update=force_overwrite
         )                                                                       # copy file to remote

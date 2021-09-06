@@ -88,7 +88,7 @@ class GATK_tools:
       subprocess.check_call(gatk_cmd,shell=True)                                # run gatk cmd
       copy_local_file(
         source_path=temp_output,
-        destinationa_path=output_table,
+        destination_path=output_table,
         force=force)                                                            # copy output file
       remove_dir(temp_dir)                                                      # remove temp dir
       return gatk_cmd
@@ -142,12 +142,12 @@ class GATK_tools:
       subprocess.check_call(gatk_cmd,shell=True)
       copy_local_file(
         source_path=temp_output,
-        destinationa_path=output_bam_path,
+        destination_path=output_bam_path,
         force=force)
       copy_local_file(
         source_path=temp_output.\
                       replace('ApplyBQSR.bam','ApplyBQSR.bai'),
-        destinationa_path=output_bam_path.\
+        destination_path=output_bam_path.\
                             replace('ApplyBQSR.bam','ApplyBQSR.bai'),
         force=force)
       remove_dir(temp_dir)
@@ -198,7 +198,7 @@ class GATK_tools:
       subprocess.check_call(gatk_cmd,shell=True)
       copy_local_file(
         source_path=temp_output,
-        destinationa_path=output_pdf_path,
+        destination_path=output_pdf_path,
         force=force)
       remove_dir(temp_dir)
       return gatk_cmd
@@ -252,7 +252,7 @@ class GATK_tools:
       subprocess.check_call(gatk_cmd,shell=True)
       copy_local_file(
         source_path=temp_output,
-        destinationa_path=output_vcf_path,
+        destination_path=output_vcf_path,
         force=force)
       remove_dir(temp_dir)
       return gatk_cmd

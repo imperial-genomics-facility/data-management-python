@@ -123,21 +123,21 @@ class Fastp_utils:
           output_fastq_list.append(output_file)
           copy_local_file(\
             source_path=os.path.join(temp_dir,out_file),
-            destinationa_path=output_file,
+            destination_path=output_file,
             force=force_overwrite)                                              # copy fastq file to output dir
 
         if re.match(html_pattern,out_file):
           output_html_file = output_file
           copy_local_file(\
             source_path=os.path.join(temp_dir,out_file),
-            destinationa_path=output_file,
+            destination_path=output_file,
             force=force_overwrite)                                              # copy html file to output dir
 
         if re.match(json_pattern,out_file):
           output_json_file = output_file
           copy_local_file(\
             source_path=os.path.join(temp_dir,out_file),
-            destinationa_path=output_file,
+            destination_path=output_file,
             force=force_overwrite)                                              # copy json file to output dir
 
       if len(output_fastq_list) == 0:

@@ -102,7 +102,7 @@ class UpdateProjectStatus(IGFBaseProcess):
                mode=0o754)
       copy_remote_file(\
         source_path=source_file,
-        destinationa_path=remote_file,
+        destination_path=remote_file,
         destination_address=remote_config)                                      # create dir and copy file to remote
     except:
       raise

@@ -642,7 +642,7 @@ def _check_and_copy_remote_file(
         mode=0o754)
       copy_remote_file(
         source_path=source_file,
-        destinationa_path=remote_file,
+        destination_path=remote_file,
         destination_address=remote_config,
         force_update=True)                                                      # create dir and copy file to remote
     except Exception as e:
@@ -2179,7 +2179,7 @@ def ftp_files_upload_for_analysis(**context):
       copy_remote_file(
         source_path=os.path.join(temp_work_dir,
                                  os.path.basename(file)),
-        destinationa_path=dest_file_path,
+        destination_path=dest_file_path,
         destination_address='{0}@{1}'.format(ftp_username,ftp_hostname),
         force_update=True)
       if os.path.isdir(file):

@@ -149,7 +149,7 @@ class Reset_samplesheet_md5:
                                                    value=new_json_file_md5,
                                                    autosave=False)              # update json file md5 in db, don't commit yet
                 move_file(source_path=new_json_path,
-                          destinationa_path=json_file_path,
+                          destination_path=json_file_path,
                           force=True)                                           # overwrite json file
                 base.commit_session()                                           # save changes in db
                 message='Setting new Samplesheet info for run {0}'.\

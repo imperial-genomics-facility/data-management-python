@@ -314,7 +314,7 @@ class Analysis_collection_utils:
             preprocess_path_name(input_path=final_path)                         # remove unexpected characters from file path
           copy_local_file(
             source_path=input_file,
-            destinationa_path=final_path,
+            destination_path=final_path,
             force=force)                                                        # move or overwrite file to destination dir
         output_path_list.append(final_path)                                     # add final path to the output list
         self.create_or_update_analysis_collection(

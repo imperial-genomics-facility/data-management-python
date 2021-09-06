@@ -9,7 +9,7 @@ from dateutil.parser import parse
 from tempfile import mkdtemp,gettempdir
 from shutil import rmtree, move, copy2,copytree
 
-def move_file(source_path,destinationa_path,cd_to_dest=False,force=False):
+def move_file(source_path,destination_path,cd_to_dest=False,force=False):
   '''
   A method for moving files to local disk
 
@@ -22,18 +22,18 @@ def move_file(source_path,destinationa_path,cd_to_dest=False,force=False):
     if not os.path.exists(source_path):
       raise IOError(
               'source file {0} not found'.format(source_path))
-    if os.path.exists(destinationa_path) and not force:
+    if os.path.exists(destination_path) and not force:
       raise IOError(
               'destination file {0} already present. set option "force" as True to overwrite it'.\
-                format(destinationa_path))
-    dir_path = os.path.dirname(destinationa_path)
+                format(destination_path))
+    dir_path = os.path.dirname(destination_path)
     if not os.path.exists(dir_path):
       os.makedirs(dir_path, mode=0o770)
     current_dir = os.getcwd()
     if cd_to_dest:
       os.chdir(dir_path)
-    move(source_path,destinationa_path,copy_function=copy2)
-    check_file_path(destinationa_path)
+    move(source_path,destination_path,copy_function=copy2)
+    check_file_path(destination_path)
     if cd_to_dest:
       os.chdir(current_dir)
   except Exception as e:
@@ -140,18 +140,18 @@ def list_remote_file_or_dirs(remote_server,remote_path,only_dirs=True,
               format(e))
 
 
-def copy_local_file(source_path,destinationa_path,cd_to_dest=True,force=False):
+def copy_local_file(source_path,destination_path,cd_to_dest=True,force=False):
   '''
   A method for copy files to local disk
 
   :param source_path: A source file path
-  :param destinationa_path: A destination file path, including the file name  ##FIX TYPO
+  :param destination_path: A destination file path, including the file name  ##FIX TYPO
   :param cd_to_dest: Change to destination dir before copy, default True
   :param force: Optional, set True to overwrite existing
                 destination file, default is False
   '''
   try:
-    destination_path = destinationa_path                                        # NEED TO FIX TYPO
+    destination_path = destination_path                                        # NEED TO FIX TYPO
     if not os.path.exists(source_path):
       raise IOError('source file {0} not found'.\
                     format(source_path))
@@ -184,7 +184,7 @@ def copy_local_file(source_path,destinationa_path,cd_to_dest=True,force=False):
 
 
 def copy_remote_file(
-      source_path,destinationa_path,source_address=None,destination_address=None,
+      source_path,destination_path,source_address=None,destination_address=None,
       copy_method='rsync',check_file=True, force_update=False,exclude_pattern_list=None):
     '''
     A method for copy files from or to remote location
@@ -213,16 +213,16 @@ def copy_remote_file(
         if destination_address is not None:
           dir_cmd = [
             'ssh',destination_address,'mkdir','-p',
-            os.path.dirname(destinationa_path)]
+            os.path.dirname(destination_path)]
           subprocess.check_call(dir_cmd)
-          destinationa_path = \
+          destination_path = \
             '{0}:{1}'.format(
               destination_address,
-              destinationa_path)
+              destination_path)
         else:
           dir_cmd = [
             'mkdir','-p',
-            os.path.dirname(destinationa_path)]
+            os.path.dirname(destination_path)]
           subprocess.check_call(dir_cmd)
         if copy_method == 'rsync':
           cmd = ['rsync']
@@ -235,7 +235,7 @@ def copy_remote_file(
                len(exclude_pattern_list)>0 ):
             for exclude_path in exclude_pattern_list:
               cmd.extend(['--exclude',quote(exclude_path)])                     # added support for exclude pattern
-          cmd.extend(['-r','-p','-e','ssh',source_path,destinationa_path])
+          cmd.extend(['-r','-p','-e','ssh',source_path,destination_path])
         else:
             raise ValueError('copy method {0} is not supported'.\
                              format(copy_method))

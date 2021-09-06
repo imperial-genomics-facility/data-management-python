@@ -121,7 +121,7 @@ class ProcessCellrangerCountOutput(IGFBaseProcess):
             new_bam_name)                                                       # get ne bam path
         move_file(
           source_path=bam_file,
-          destinationa_path=new_bam_name,
+          destination_path=new_bam_name,
           force=True)                                                           # move bam file
         bam_file = new_bam_name                                                 # update bam file path
 

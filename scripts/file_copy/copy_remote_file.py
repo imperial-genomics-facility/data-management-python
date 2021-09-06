@@ -21,7 +21,7 @@ if __name__=='__main__':
   try:
     copy_remote_file(
       source_path=source_path,
-      destinationa_path=dest_path,
+      destination_path=dest_path,
       source_address=source_address,
       destination_address=dest_address,
       copy_method='rsync',

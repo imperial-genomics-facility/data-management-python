@@ -102,11 +102,11 @@ class Ppqt_tools:
       check_file_path(tmp_pdf_file)
       copy_local_file(\
         source_path=tmp_spp_file,
-        destinationa_path=dest_spp_file,
+        destination_path=dest_spp_file,
         force=True)
       copy_local_file(\
         source_path=tmp_pdf_file,
-        destinationa_path=dest_pdf_file,
+        destination_path=dest_pdf_file,
         force=True)
       return dest_spp_file,dest_pdf_file
     except:

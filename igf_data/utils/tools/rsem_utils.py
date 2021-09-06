@@ -76,7 +76,7 @@ class RSEM_utils:
           rsem_output_list.append(os.path.join(output_dir,file))                # add output files to the list
           copy_local_file(
             source_path=os.path.join(temp_dir,file),
-            destinationa_path=os.path.join(output_dir,file),
+            destination_path=os.path.join(output_dir,file),
             force=force)                                                        # copy output files to work dir
 
       for root, _, files in os.walk(temp_dir):
@@ -85,7 +85,7 @@ class RSEM_utils:
             rsem_log_file = os.path.join(output_dir,file)
             copy_local_file(
               source_path=os.path.join(root,file),
-              destinationa_path=rsem_log_file,
+              destination_path=rsem_log_file,
               force=force)
 
       if len(rsem_output_list)==0 or \

@@ -65,7 +65,7 @@ class TransferAndCheckRemoteBclFile(IGFBaseProcess):
         source_address = '{0}@{1}'.format(seqrun_user,seqrun_server)            # get host username and address
         copy_remote_file(\
           source_path=source_file_path,
-          destinationa_path=destination_path, 
+          destination_path=destination_path, 
           source_address=source_address,
           check_file=False)                                                     # copy remote file
         if not os.path.exists(destination_path):

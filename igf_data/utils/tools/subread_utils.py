@@ -60,11 +60,11 @@ def run_featureCounts(featurecounts_exe,input_gtf,input_bams,output_file,thread=
 
     copy_local_file(
       source_path=temp_output,
-      destinationa_path=output_file,
+      destination_path=output_file,
       force=True)
     copy_local_file(
       source_path=temp_summary,
-      destinationa_path=summary_file,
+      destination_path=summary_file,
       force=True)
     remove_dir(temp_dir)
     return summary_file,featureCount_cmd

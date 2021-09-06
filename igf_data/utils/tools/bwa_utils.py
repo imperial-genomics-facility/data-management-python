@@ -133,7 +133,7 @@ class BWA_util:
               os.path.basename(temp_output_path))
           copy_local_file(
             source_path=temp_output_path,
-            destinationa_path=final_output_file)
+            destination_path=final_output_file)
       else:
         raise IOError('Alignment temp output missing')
 

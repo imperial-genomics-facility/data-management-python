@@ -180,7 +180,7 @@ def run_samtools_view(
       _check_cram_file(cram_path=temp_file)                                     # check cram output
     copy_local_file(
       source_path=temp_file,
-      destinationa_path=output_file,
+      destination_path=output_file,
       force=force)                                                              # move cram file to original path
     remove_dir(temp_dir)                                                        # remove temp directory
     if index_output:
@@ -593,7 +593,7 @@ def run_sort_bam(
       remove_dir(container_temp_dir)
     copy_local_file(
       source_path=temp_bam,
-      destinationa_path=output_bam_path,
+      destination_path=output_bam_path,
       force=force)                                                              # copy output bam
     remove_dir(temp_dir)                                                        # remove temp dir
     if cram_out:
@@ -665,7 +665,7 @@ def merge_multiple_bam(
         bind_dir_list=bind_dir_list)                                            # run samtools merge
     copy_local_file(
       source_path=temp_bam,
-      destinationa_path=output_bam_path,
+      destination_path=output_bam_path,
       force=force)                                                              # copy bamfile
     remove_dir(temp_dir)                                                        # remove temp dir
     _check_bam_file(output_bam_path)

@@ -130,7 +130,7 @@ class RunPicard(IGFBaseProcess):
             os.path.basename(source_path))                                      # get destination filepath
         move_file(
           source_path=source_path,
-          destinationa_path=dest_path,
+          destination_path=dest_path,
           force=True)                                                           # move files to work dir
         output_file_list.append(dest_path)
       remove_dir(temp_output_dir)

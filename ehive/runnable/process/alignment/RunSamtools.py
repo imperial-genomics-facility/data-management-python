@@ -264,7 +264,7 @@ class RunSamtools(IGFBaseProcess):
             os.path.basename(temp_output_bam))
         move_file(\
           source_path=temp_output_bam,
-          destinationa_path=dest_path,
+          destination_path=dest_path,
           force=True)
         index_bam_or_cram(\
           samtools_exe=samtools_exe,
@@ -286,7 +286,7 @@ class RunSamtools(IGFBaseProcess):
         if dest_path != temp_output:
           move_file(\
             source_path=temp_output,
-            destinationa_path=dest_path,
+            destination_path=dest_path,
             force=True)
         analysis_files.append(dest_path)
 

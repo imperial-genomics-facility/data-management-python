@@ -31,7 +31,7 @@ try:
 
   if copy_to_remoter:
     copy_remote_file(source_path=temp_file,
-                     destinationa_path=output_filepath,
+                     destination_path=output_filepath,
                      destination_address=remote_server)                         # copy json file to remote server
   else:
     shutil.copy2(temp_file, output_filepath)                                    # copy json file to local server

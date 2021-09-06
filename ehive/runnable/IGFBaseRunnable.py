@@ -275,15 +275,15 @@ class IGFBaseRunnable(eHive.BaseRunnable):
             format(input_file))
 
       temp_dir = get_temp_dir()                                                 # get temp dir
-      destinationa_path = \
+      destination_path = \
         os.path.join(
           temp_dir,
           os.path.basename(input_file))                                         # get destination file path
       copy_local_file(
         source_path=input_file,
-        destinationa_path=destinationa_path,
+        destination_path=destination_path,
         force=True)                                                             # copy file to temp dir
-      return destinationa_path
+      return destination_path
     except Exception as e:
       raise ValueError('Failed to copy file, error: {0}'.format(e))
 

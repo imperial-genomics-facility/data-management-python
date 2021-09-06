@@ -94,7 +94,7 @@ class CopyQCFileToRemote(IGFBaseProcess):
         mode=0o754)                                                             # set file permission
       copy_remote_file(
         source_path=os.path.join(temp_work_dir,remote_file_name),
-        destinationa_path=destination_outout_path,
+        destination_path=destination_outout_path,
         destination_address='{0}@{1}'.format(remote_user,remote_host),
         force_update=force_overwrite)                                           # copy file to remote
       if os.path.isdir(file):

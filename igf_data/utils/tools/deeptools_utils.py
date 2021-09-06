@@ -83,14 +83,14 @@ def run_plotCoverage(bam_files,output_raw_counts,plotcov_stdout,output_plot=None
 
     copy_local_file(
       source_path=temp_plotcov_stdout,
-      destinationa_path=plotcov_stdout)
+      destination_path=plotcov_stdout)
     copy_local_file(
       source_path=temp_output_raw_counts,
-      destinationa_path=output_raw_counts)
+      destination_path=output_raw_counts)
     if output_plot is not None:
       copy_local_file(
         source_path=temp_output_plot,
-        destinationa_path=output_plot)
+        destination_path=output_plot)
 
     remove_dir(temp_dir)                                                        # clean up temp dir
     plotcov_args.insert(0,'plotCoverage')                                       # fix for deeptools commandline
@@ -161,7 +161,7 @@ def run_bamCoverage(bam_files,output_file,blacklist_file=None,thread=1,dry_run=F
     bamCoverage_main(bamcov_args)                                               # generate bam coverage file
     copy_local_file(
       source_path=temp_output,
-      destinationa_path=output_file)                                            # copy output file
+      destination_path=output_file)                                            # copy output file
     remove_dir(temp_dir)                                                        # clean up temp dir
     bamcov_args.insert(0,'bamCoverage')                                        # fix for deeptools commandline
     return bamcov_args
@@ -236,14 +236,14 @@ def run_plotFingerprint(bam_files,output_raw_counts,output_matrics,output_plot=N
     plotFingerprint_main(plotFgCov_args)
     copy_local_file(
       source_path=temp_output_raw_counts,
-      destinationa_path=output_raw_counts)
+      destination_path=output_raw_counts)
     copy_local_file(
       source_path=temp_output_matrics,
-      destinationa_path=output_matrics)
+      destination_path=output_matrics)
     if output_plot is not None:
       copy_local_file(
         source_path=temp_output_plot,
-        destinationa_path=output_plot)
+        destination_path=output_plot)
     remove_dir(temp_dir)
     plotFgCov_args.insert(0,'plotFingerprint')                                  # fix for deeptools commandline
     return plotFgCov_args

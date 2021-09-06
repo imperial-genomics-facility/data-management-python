@@ -115,13 +115,13 @@ class Scanpy_tool:
           os.path.basename(self.features_tsv))
       copy_local_file(\
         source_path=self.matrix_file,
-        destinationa_path=local_matrix_file)
+        destination_path=local_matrix_file)
       copy_local_file(\
         source_path=self.barcode_tsv,
-        destinationa_path=local_barcode_tsv)
+        destination_path=local_barcode_tsv)
       copy_local_file(\
         source_path=self.features_tsv,
-        destinationa_path=local_features_tsv)
+        destination_path=local_features_tsv)
       adata = sc.read_10x_mtx(\
                 temp_input_dir,
                 var_names='gene_symbols',
@@ -437,7 +437,7 @@ class Scanpy_tool:
           adata.write_h5ad(filename=temp_h5ad)
           copy_local_file(\
             source_path=temp_h5ad,
-            destinationa_path=self.cellbrowser_h5ad,
+            destination_path=self.cellbrowser_h5ad,
             force=True)
         except Exception as e:
           raise ValueError('Failed to export Scanpy h5ad, error: {0}'.\

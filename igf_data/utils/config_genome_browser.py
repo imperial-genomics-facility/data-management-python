@@ -165,7 +165,7 @@ class Config_genome_browser:
 
         copy_local_file(
           source_path=temp_output,
-          destinationa_path=output_file,
+          destination_path=output_file,
           force=True)                                                           # copy output config file
     except:
       raise

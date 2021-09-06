@@ -1,5 +1,5 @@
 import os
-from igf_data.utils.fileutils import list_remote_file_or_dirs,copy_remote_file,check_file_path()
+from igf_data.utils.fileutils import list_remote_file_or_dirs,copy_remote_file,check_file_path
 from igf_data.process.seqrun_processing.find_and_process_new_seqrun import check_seqrun_dir_in_db
 
 class Sync_seqrun_data_from_remote:
@@ -43,7 +43,7 @@ class Sync_seqrun_data_from_remote:
           if len(new_seqruns)>0:
             copy_remote_file(\
               source_path=os.path.join(self.seqrun_path,seqrun),
-              destinationa_path=self.output_dir,
+              destination_path=self.output_dir,
               source_address=self.seqrun_server)                                # sync dirs if its still new
 
         except Exception as e:

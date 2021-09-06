@@ -223,7 +223,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
         os.chmod(reports[0], mode=0o774)                                        # added read permission for report html
         copy_remote_file(
           source_path=reports[0],
-          destinationa_path=remote_file_path,
+          destination_path=remote_file_path,
           destination_address='{0}@{1}'.format(remote_user,remote_host))       # copy file to remote
         remote_report_file = \
           os.path.join(\
@@ -253,7 +253,7 @@ class PrepareQcPageForRemote(IGFBaseProcess):
 
       copy_remote_file(\
         source_path=report_output_file,
-        destinationa_path=remote_file_path,
+        destination_path=remote_file_path,
         destination_address='{0}@{1}'.format(remote_user,remote_host))          # copy file to remote
       remote_qc_page = \
         os.path.join(\
