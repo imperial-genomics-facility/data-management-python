@@ -37,7 +37,7 @@ class moveBclFilesForDemultiplexing:
               'Failed to copy bcl file, error: {0}'\
                 .format(e))
 
-  def _generate_platform_specific_list(self,lane_list=()):
+  def _generate_platform_specific_list(self, lane_list=()):
     '''
     An internal function for getting list of files and directories specific for each platform
 
@@ -46,9 +46,9 @@ class moveBclFilesForDemultiplexing:
     '''
     try:
       lane_list = list(lane_list)
-      platform_model = self.platform_model
+      #platform_model = self.platform_model
       samplesheet_data = SampleSheet(infile=self.samplesheet)
-      if platform_model is None:
+      if self.platform_model is None:
         # set pattern for HiSeq platforms
         hiseq_pattern = re.compile('^HISEQ', re.IGNORECASE)
         nextseq_pattern = re.compile('^NEXTSEQ', re.IGNORECASE)
@@ -60,17 +60,17 @@ class moveBclFilesForDemultiplexing:
         platform_series = runinfo_data.get_platform_number()
         if (re.search(hiseq_pattern, platform_name)):
           if platform_series.startswith('K'):
-            platform_model = 'HISEQ4000'                                            # assign platform model for HISEQ4000
+            self.platform_model = 'HISEQ4000'                                            # assign platform model for HISEQ4000
           else:
-            platform_model = 'HISEQ2500'                                            # or may be its HISEQ2500
+            self.platform_model = 'HISEQ2500'                                            # or may be its HISEQ2500
             raise ValueError('no method of for hiseq 2500')
         elif(re.search(nextseq_pattern, platform_name)):
-          platform_model = 'NEXTSEQ'                                                # assign platform model for 'NEXTSEQ'
+          self.platform_model = 'NEXTSEQ'                                                # assign platform model for 'NEXTSEQ'
         elif(re.search(novaseq_pattern, platform_name)):
-          platform_model = 'NOVASEQ6000'
+          self.platform_model = 'NOVASEQ6000'
         elif(re.search(miseq_pattern, platform_name)):
           if platform_series.startswith('M'):
-            platform_model = 'MISEQ'
+            self.platform_model = 'MISEQ'
           else:
             raise ValueError(
                     'Platform series {0} is not MiSeq'.\
@@ -80,7 +80,7 @@ class moveBclFilesForDemultiplexing:
                   'Platform {0} not recognised'.\
                     format(platform_name))
       bcl_files_list = list()
-      if platform_model == 'HISEQ4000':
+      if self.platform_model == 'HISEQ4000':
         bcl_files_list = [
           'Data/Intensities/s.locs',
           'InterOp',
@@ -97,7 +97,7 @@ class moveBclFilesForDemultiplexing:
             bcl_files_list.\
               append(
                 'Data/Intensities/BaseCalls/L00{0}'.format(lane))
-      elif platform_model == 'NOVASEQ6000':
+      elif self.platform_model == 'NOVASEQ6000':
         bcl_files_list = [
           'Data/Intensities/s.locs',
           'InterOp',
@@ -114,13 +114,13 @@ class moveBclFilesForDemultiplexing:
             bcl_files_list.\
               append(
                 'Data/Intensities/BaseCalls/L00{0}'.format(lane))
-      elif platform_model == 'NEXTSEQ':
+      elif self.platform_model == 'NEXTSEQ':
         bcl_files_list = [
           'Data',
           'InterOp',
           'RunInfo.xml',
           'RunParameters.xml']
-      elif platform_model == 'MISEQ':
+      elif self.platform_model == 'MISEQ':
         bcl_files_list = [
           'Data',
           'InterOp',
@@ -189,6 +189,7 @@ class moveBclTilesForDemultiplexing(moveBclFilesForDemultiplexing):
               'Failed to copy bcl files for tiles, error: {0}'.\
                 format(e))
 
+
   def _generate_platform_specific_list(self):
     """
     An internal method for generating platform specific file list
@@ -196,6 +197,8 @@ class moveBclTilesForDemultiplexing(moveBclFilesForDemultiplexing):
     try:
       bcl_files_list = \
         super()._generate_platform_specific_list()
+      if self.platform_model is None:
+        self.platform_model = super().platform_model
       final_bcl_list = list()
       final_tiles_list = list()
       for entry in bcl_files_list:
