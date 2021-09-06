@@ -53,6 +53,7 @@ class moveBclFilesForDemultiplexing:
         hiseq_pattern = re.compile('^HISEQ', re.IGNORECASE)
         nextseq_pattern = re.compile('^NEXTSEQ', re.IGNORECASE)
         miseq_pattern = re.compile('^FASTQ Only', re.IGNORECASE)
+        novaseq_pattern = re.compile('^NOVASEQ', re.IGNORECASE)
         # read the samplesheet info
         platform_name = samplesheet_data.get_platform_name()
         runinfo_data = RunInfo_xml(xml_file=self.run_info_xml)
@@ -65,6 +66,8 @@ class moveBclFilesForDemultiplexing:
             raise ValueError('no method of for hiseq 2500')
         elif(re.search(nextseq_pattern, platform_name)):
           platform_model = 'NEXTSEQ'                                                # assign platform model for 'NEXTSEQ'
+        elif(re.search(novaseq_pattern, platform_name)):
+          platform_model = 'NOVASEQ6000'
         elif(re.search(miseq_pattern, platform_name)):
           if platform_series.startswith('M'):
             platform_model = 'MISEQ'
