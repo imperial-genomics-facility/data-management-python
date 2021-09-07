@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 class RunInfo_xml:
   '''
   A class for reading runinfo xml file from illumina sequencing runs
-  
+
   :param xml_file: A runinfo xml file
   '''
   def __init__(self, xml_file):
@@ -16,7 +16,7 @@ class RunInfo_xml:
                       tags=('isindexedread','numcycles')):
     '''
     A method for getting read and index stats from the RunInfo.xml file
-    
+
     :param root_tag: Root tag for xml file, default read
     :param number_tag: Number tag for xml file, default number
     :param tags: List of tags for xml lookup, default ['isindexedread','numcycles']
@@ -43,7 +43,7 @@ class RunInfo_xml:
   def get_platform_number(self):
     '''
     Function for fetching the instrument series number
-    '''           
+    '''
     series_number=None
     soup=self._soup
     series_number=soup.instrument.contents[0]
