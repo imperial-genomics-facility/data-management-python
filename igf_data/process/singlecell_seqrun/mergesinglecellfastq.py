@@ -98,7 +98,8 @@ class MergeSingleCellFastq:
             'sample_id':group_tag[1],
             'sample_name':group_tag[2],
             'project_id':group_tag[3]})
-      elif self.platform_name=='HISEQ4000':                                     # check for hiseq4k
+      elif self.platform_name=='HISEQ4000' or \
+           self.platform_name=='NOVASEQ6000':                                     # check for hiseq4k
         for group_tag,_ in pd.DataFrame(samplesheet_data._data).\
                               groupby([self.lane_col,
                                        self.orig_sampleid_col,
