@@ -2656,7 +2656,7 @@ def run_cellranger_tool(**context):
         library_csv=library_csv,
         sample_id=sample_id,
         output_dir=output_dir,
-        use_ephemeral_space=False,
+        use_ephemeral_space=True,
         job_timeout=job_timeout,
         cellranger_options=cellranger_options)
     ti.xcom_push(
