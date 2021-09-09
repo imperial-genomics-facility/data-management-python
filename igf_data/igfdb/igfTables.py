@@ -4,12 +4,13 @@ from sqlalchemy.sql.functions import current_timestamp
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.dialects.mysql import INTEGER
-from sqlalchemy import Table, Column, String, Enum, TIMESTAMP, TEXT, ForeignKey, text, DATE, create_engine, ForeignKeyConstraint, UniqueConstraint
+from sqlalchemy import Column, String, Enum, TIMESTAMP, TEXT, ForeignKey, UniqueConstraint
 
 
 Base = declarative_base()
 
 class Project(Base):
+
   '''
   A table for loading project information
 
@@ -48,6 +49,9 @@ class Project(Base):
   project_attribute = relationship('Project_attribute', backref="project")
 
   def __repr__(self):
+    '''
+    Display Project entry
+    '''
     return \
       "Project(project_id = '{self.project_id}', " \
       "project_igf_id = '{self.project_igf_id}'," \
@@ -59,6 +63,7 @@ class Project(Base):
 
 
 class User(Base):
+
   '''
   A table for loading user information
 
@@ -69,13 +74,13 @@ class User(Base):
   :param username: A required string as IGF username, allowed length 20
   :param hpc_username: An optional string as Imperial College's HPC login name, allowed length 20
   :param twitter_user: An optional string as twitter user name, allowed length 20
-  :param category: An optional enum list as user category, default NON_HPC_USER, allowed values are 
+  :param category: An optional enum list as user category, default NON_HPC_USER, allowed values are
 
     * HPC_USER
     * NON_HPC_USER
     * EXTERNAL
 
-  :param status: An optional enum list as user status, default is ACTIVE, allowed values are 
+  :param status: An optional enum list as user status, default is ACTIVE, allowed values are
 
     * ACTIVE
     * BLOCKED
@@ -110,6 +115,9 @@ class User(Base):
   projectuser = relationship('ProjectUser', backref="user")
 
   def __repr__(self):
+    '''
+    Display User entry
+    '''
     return \
       "User(user_id = '{self.user_id}'," \
       "user_igf_id = '{self.user_igf_id}'," \
@@ -128,6 +136,7 @@ class User(Base):
 
 
 class ProjectUser(Base):
+
   '''
   A table for linking users to the projects
 
@@ -148,6 +157,9 @@ class ProjectUser(Base):
   data_authority = Column(Enum('T'))
 
   def __repr__(self):
+    '''
+    Display ProjectUser entry
+    '''
     return \
       "ProjectUser(project_user_id = '{self.project_user_id}'," \
       "project_id = '{self.project_id}'," \
@@ -156,6 +168,7 @@ class ProjectUser(Base):
 
 
 class Sample(Base):
+
   '''
   A table for loading sample information
 
@@ -168,20 +181,20 @@ class Sample(Base):
   :param donor_anonymized_id: An optional string as anonymous donor name
   :param description: An optional string as sample description
   :param phenotype: An optional string as sample phenotype information
-  :param sex: An optional enum list to specify sample sex, default UNKNOWN, allowed values are 
+  :param sex: An optional enum list to specify sample sex, default UNKNOWN, allowed values are
 
     * FEMALE
     * MALE
     * MIXED
     * UNKNOWN
 
-  :param status: An optional enum list to specify sample status, default ACTIVE, allowed values are 
+  :param status: An optional enum list to specify sample status, default ACTIVE, allowed values are
 
     * ACTIVE
     * FAILED
     * WITHDRAWS
 
-  :param biomaterial_type: An optional enum list as sample biomaterial type, default UNKNOWN, allowed values are 
+  :param biomaterial_type: An optional enum list as sample biomaterial type, default UNKNOWN, allowed values are
 
     * PRIMARY_TISSUE
     * PRIMARY_CELL
@@ -222,6 +235,9 @@ class Sample(Base):
   sample_attribute = relationship('Sample_attribute', backref="sample")
 
   def __repr__(self):
+    '''
+    Display Sample entry
+    '''
     return \
       "Sample(sample_id = '{self.sample_id}'," \
       "sample_igf_id = '{self.sample_igf_id}'," \
@@ -243,13 +259,14 @@ class Sample(Base):
 
 
 class Platform(Base):
+
   '''
   A table for loading sequencing platform information
 
   :param platform_id: An integer id for platform table
   :param platform_igf_id: A required string as platform id specific to IGF team, allowed length 10
-  :param model_name: A required enum list to specify platform model, allowed values are 
-  
+  :param model_name: A required enum list to specify platform model, allowed values are
+
     * HISEQ2500
     * HISEQ4000
     * MISEQ
@@ -290,6 +307,9 @@ class Platform(Base):
   flowcell_rule = relationship('Flowcell_barcode_rule', backref="platform")
 
   def __repr__(self):
+    '''
+    Display Platform entry
+    '''
     return \
       "Platform(platform_id = '{self.platform_id}'," \
       "platform_igf_id = '{self.platform_igf_id}'," \
@@ -301,19 +321,20 @@ class Platform(Base):
 
 
 class Flowcell_barcode_rule(Base):
+
   '''
   A table for loading flowcell specific barcode rules information
 
   :param flowcell_rule_id: An integer id for flowcell_barcode_rule table
   :param platform_id: An integer id for platform table (foreign key)
   :param flowcell_type: A required string as flowcell type name, allowed length 50
-  :param index_1: An optional enum list as index_1 specific rule, default UNKNOWN, allowed values are 
+  :param index_1: An optional enum list as index_1 specific rule, default UNKNOWN, allowed values are
 
     * NO_CHANGE
     * REVCOMP
     * UNKNOWN
 
-  :param index_2: An optional enum list as index_2 specific rule, default UNKNOWN, allowed values are 
+  :param index_2: An optional enum list as index_2 specific rule, default UNKNOWN, allowed values are
 
     * NO_CHANGE
     * REVCOMP
@@ -330,6 +351,9 @@ class Flowcell_barcode_rule(Base):
   index_2 = Column(Enum('NO_CHANGE','REVCOMP','UNKNOWN'), nullable=False, server_default='UNKNOWN')
 
   def __repr__(self):
+    '''
+    Display Flowcell_barcode_rule entry
+    '''
     return \
       "Flowcell_barcode_rule(flowcell_rule_id  = '{self.flowcell_rule_id}'," \
       "platform_id = '{self.platform_id}'," \
@@ -339,6 +363,7 @@ class Flowcell_barcode_rule(Base):
 
 
 class Seqrun(Base):
+
   '''
   A table for loading sequencing run information
 
@@ -366,6 +391,9 @@ class Seqrun(Base):
   seqrun_attribute = relationship('Seqrun_attribute', backref='seqrun')
 
   def __repr__(self):
+    '''
+    Display Seqrun entry
+    '''
     return \
       "Seqrun(seqrun_id = '{self.seqrun_id}'," \
       "seqrun_igf_id = '{self.seqrun_igf_id}'," \
@@ -376,6 +404,7 @@ class Seqrun(Base):
 
 
 class Seqrun_stats(Base):
+
   '''
   A table for loading sequencing stats information
 
@@ -402,6 +431,9 @@ class Seqrun_stats(Base):
   undetermined_fastqc = Column(JSONType)
 
   def __repr__(self):
+    '''
+    Display Seqrun_stats entry
+    '''
     return \
       "Seqrun_stats(seqrun_stats_id = '{self.seqrun_stats_id}'," \
       "seqrun_id = '{self.seqrun_id}'," \
@@ -413,6 +445,7 @@ class Seqrun_stats(Base):
 
 
 class Experiment(Base):
+
   '''
   A table for loading experiment (unique combination of sample, library and platform) information.
 
@@ -421,7 +454,7 @@ class Experiment(Base):
   :param project_id: A required integer id from project table (foreign key)
   :param sample_id: A required integer id from sample table (foreign key)
   :param library_name: A required string to specify library name, allowed length 50
-  :param library_source: An optional enum list to specify library source information, default is UNKNOWN, allowed values are 
+  :param library_source: An optional enum list to specify library source information, default is UNKNOWN, allowed values are
 
     * GENOMIC
     * TRANSCRIPTOMIC
@@ -433,7 +466,7 @@ class Experiment(Base):
     * VIRAL_RNA
     * UNKNOWN
 
-  :param library_strategy: An optional enum list to specify library strategy information, default is UNKNOWN, allowed values are 
+  :param library_strategy: An optional enum list to specify library strategy information, default is UNKNOWN, allowed values are
 
     * WGS
     * WXS
@@ -549,25 +582,26 @@ class Experiment(Base):
     * DROP-SEQ-TRANSCRIPTOME
     * UNKNOWN
 
-  :param library_layout: An optional enum list to specify library layout, default is UNONWN, allowed values are 
+  :param library_layout: An optional enum list to specify library layout, default is UNONWN, allowed values are
 
     * SINGLE
     * PAIRED
     * UNKNOWN
 
-  :param status: An optional enum list to specify experiment status, default is ACTIVE, allowed values are 
+  :param status: An optional enum list to specify experiment status, default is ACTIVE, allowed values are
 
     * ACTIVE
     * FAILED
     * WITHDRAWN
 
   :param date_created: An optional timestamp column to record entry creation or modification time, default current timestamp
-  :param platform_name: An optional enum list to specify platform model, default is UNKNOWN, allowed values are 
+  :param platform_name: An optional enum list to specify platform model, default is UNKNOWN, allowed values are
 
     * HISEQ250
     * HISEQ4000
     * MISEQ
     * NEXTSEQ
+    * NOVASEQ6000
     * NANOPORE_MINION
     * DNBSEQ-G400
     * DNBSEQ-G50
@@ -587,9 +621,9 @@ class Experiment(Base):
   library_name = Column(String(50), nullable=False)
   library_source = Column(Enum('GENOMIC', 'TRANSCRIPTOMIC' ,'GENOMIC_SINGLE_CELL', 'METAGENOMIC', 'METATRANSCRIPTOMIC',
                                'TRANSCRIPTOMIC_SINGLE_CELL', 'SYNTHETIC', 'VIRAL_RNA', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
-  library_strategy = Column(Enum('WGS', 'WXS', 'WGA', 'RNA-SEQ', 'CHIP-SEQ', 'ATAC-SEQ', 'MIRNA-SEQ', 'NCRNA-SEQ', 
+  library_strategy = Column(Enum('WGS', 'WXS', 'WGA', 'RNA-SEQ', 'CHIP-SEQ', 'ATAC-SEQ', 'MIRNA-SEQ', 'NCRNA-SEQ',
                                  'FL-CDNA', 'EST', 'HI-C', 'DNASE-SEQ', 'WCS', 'RAD-SEQ', 'CLONE', 'POOLCLONE',
-                                 'AMPLICON', 'CLONEEND', 'FINISHING', 'MNASE-SEQ', 'DNASE-HYPERSENSITIVITY', 'BISULFITE-SEQ', 
+                                 'AMPLICON', 'CLONEEND', 'FINISHING', 'MNASE-SEQ', 'DNASE-HYPERSENSITIVITY', 'BISULFITE-SEQ',
                                  'CTS', 'MRE-SEQ', 'MEDIP-SEQ', 'MBD-SEQ', 'TN-SEQ', 'VALIDATION', 'FAIRE-SEQ', 'SELEX',
                                  'RIP-SEQ', 'CHIA-PET', 'SYNTHETIC-LONG-READ', 'TARGETED-CAPTURE', 'TETHERED', 'NOME-SEQ',
                                  'CHIRP SEQ', '4-C-SEQ', '5-C-SEQ', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
@@ -614,6 +648,9 @@ class Experiment(Base):
   experiment_attribute = relationship('Experiment_attribute', backref='experiment')
 
   def __repr__(self):
+    '''
+    Display Experiment entry
+    '''
     return \
       "Experiment(experiment_id = '{self.experiment_id}'," \
       "experiment_igf_id = '{self.experiment_igf_id}'," \
@@ -630,6 +667,7 @@ class Experiment(Base):
 
 
 class Run(Base):
+
   '''
   A table for loading run (unique combination of experiment, sequencing flowcell and lane) information
 
@@ -663,6 +701,9 @@ class Run(Base):
   run_attribute = relationship('Run_attribute', backref='run')
 
   def __repr__(self):
+    '''
+    Display Run entry
+    '''
     return \
       "Run(run_id = '{self.run_id}'," \
       "experiment_id = '{self.experiment_id}'," \
@@ -674,6 +715,7 @@ class Run(Base):
 
 
 class Analysis(Base):
+
   '''
   A table for loading analysis design information
 
@@ -694,6 +736,9 @@ class Analysis(Base):
   analysis_description = Column(JSONType)
 
   def __repr__(self):
+    '''
+    Display Analysis entry
+    '''
     return \
       "Analysis(analysis_id = '{self.analysis_id}'," \
       "project_id = '{self.project_id}'," \
@@ -703,6 +748,7 @@ class Analysis(Base):
 
 
 class Collection(Base):
+
   '''
   A table for loading collection information
 
@@ -727,6 +773,9 @@ class Collection(Base):
   collection_attribute = relationship('Collection_attribute', backref='collection')
 
   def __repr__(self):
+    '''
+    Display Collection entry
+    '''
     return \
       "Collection(collection_id = '{self.collection_id}'," \
       "name = '{self.name}'," \
@@ -736,12 +785,13 @@ class Collection(Base):
 
 
 class File(Base):
+
   '''
   A table for loading file information
 
   :param file_id: An integer id for file table
   :param file_path: A required string to specify file path information, allowed length 500
-  :param location: An optional enum list to specify storage location, default UNKNOWN, allowed values are 
+  :param location: An optional enum list to specify storage location, default UNKNOWN, allowed values are
 
     * ORWELL
     * HPC_PROJECT
@@ -749,7 +799,7 @@ class File(Base):
     * IRODS
     * UNKNOWN
 
-  :param status: An optional enum list to specify experiment status, default is ACTIVE, allowed values are 
+  :param status: An optional enum list to specify experiment status, default is ACTIVE, allowed values are
 
     * ACTIVE
     * FAILED
@@ -777,6 +827,9 @@ class File(Base):
   file_attribute = relationship('File_attribute', backref='file')
 
   def __repr__(self):
+    '''
+    Display File entry
+    '''
     return \
       "File(file_id = '{self.file_id}'," \
       "file_path = '{self.file_path}'," \
@@ -789,6 +842,7 @@ class File(Base):
 
 
 class Collection_group(Base):
+
   '''
   A table for linking files to the collection entries
 
@@ -806,6 +860,9 @@ class Collection_group(Base):
   file_id = Column(INTEGER(unsigned=True), ForeignKey('file.file_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
 
   def __repr__(self):
+    '''
+    Display Collection_group entry
+    '''
     return \
       "Collection_group(collection_group_id = '{self.collection_group_id}'," \
       "collection_id = '{self.collection_id}'," \
@@ -813,6 +870,7 @@ class Collection_group(Base):
 
 
 class Pipeline(Base):
+
   '''
   A table for loading pipeline information
 
@@ -821,15 +879,15 @@ class Pipeline(Base):
   :param pipeline_db: A required string to specify pipeline database url, allowed length 200
   :param pipeline_init_conf: An optional json field to specify initial pipeline configuration
   :param pipeline_run_conf: An optional json field to specify modified pipeline configuration
-  :param pipeline_type: An optional enum list to specify pipeline type, default EHIVE, allowed values are 
+  :param pipeline_type: An optional enum list to specify pipeline type, default EHIVE, allowed values are
 
     * EHIVE
     * UNKNOWN
     * AIRFLOW
     * NEXTFLOW
 
-  :param is_active: An optional enum list to specify the status of pipeline, default Y,
-                     allowed values are Y and N
+  :param is_active: An optional enum list to specify the status of pipeline, default Y
+                    allowed values are Y and N
   :param date_stamp: An optional timestamp column to record file creation or modification time, default current timestamp
   '''
   __tablename__ = 'pipeline'
@@ -842,12 +900,15 @@ class Pipeline(Base):
   pipeline_db = Column(String(200), nullable=False)
   pipeline_init_conf = Column(JSONType)
   pipeline_run_conf = Column(JSONType)
-  pipeline_type = Column(Enum('EHIVE','AIRFLOW','NEXTFLOW','UNKNOWN'), nullable=False, server_default='EHIVE')
+  pipeline_type = Column(Enum('EHIVE', 'AIRFLOW', 'NEXTFLOW', 'UNKNOWN'), nullable=False, server_default='EHIVE')
   is_active = Column(Enum('Y', 'N'), nullable=False, server_default='Y')
   date_stamp = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
   pipeline_seed = relationship('Pipeline_seed', backref='pipeline')
 
   def __repr__(self):
+    '''
+    Display Pipeline entry
+    '''
     return \
       "Pipeline(pipeline_id = '{self.pipeline_id}'," \
       "pipeline_name = '{self.pipeline_name}'," \
@@ -860,6 +921,7 @@ class Pipeline(Base):
 
 
 class Pipeline_seed(Base):
+
   '''
   A table for loading pipeline seed information
 
@@ -869,7 +931,7 @@ class Pipeline_seed(Base):
                       allowed values project, sample, experiment, run, file, seqrun, collection and unknown
   :param pipeline_id: An integer id from pipeline table (foreign key)
   :param status: An optional enum list to specify the status of pipeline, default UNKNOWN,
-                  allowed values are 
+                  allowed values are
 
     * SEEDED
     * RUNNING
@@ -892,6 +954,9 @@ class Pipeline_seed(Base):
   date_stamp = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
 
   def __repr__(self):
+    '''
+    Display Pipeline_seed entry
+    '''
     return \
       "Pipeline_seed(pipeline_seed_id = '{self.pipeline_seed_id}'," \
       "seed_id = '{self.seed_id}'," \
@@ -901,6 +966,7 @@ class Pipeline_seed(Base):
       "date_stamp = '{self.date_stamp}')".format(self=self)
 
 class History(Base):
+
   '''
   A table for loading history information
 
@@ -941,6 +1007,9 @@ class History(Base):
   message = Column(TEXT())
 
   def __repr__(self):
+    '''
+    Display History entry
+    '''
     return \
       "History(log_id = '{self.log_id}'," \
       "log_type = '{self.log_type}'," \
@@ -950,6 +1019,7 @@ class History(Base):
 
 
 class Project_attribute(Base):
+
   '''
   A table for loading project attributes
 
@@ -969,6 +1039,9 @@ class Project_attribute(Base):
   project_id = Column(INTEGER(unsigned=True), ForeignKey('project.project_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
 
   def __repr__(self):
+    '''
+    Display Project_attribute entry
+    '''
     return \
       "Project_attribute(project_attribute_id = '{self.project_attribute_id}'," \
       "attribute_name = '{self.attribute_name}'," \
@@ -977,6 +1050,7 @@ class Project_attribute(Base):
 
 
 class Experiment_attribute(Base):
+
   '''
   A table for loading experiment attributes
 
@@ -996,6 +1070,9 @@ class Experiment_attribute(Base):
   experiment_id = Column(INTEGER(unsigned=True), ForeignKey('experiment.experiment_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
 
   def __repr__(self):
+    '''
+    Display Experiment_attribute entry
+    '''
     return \
       "Experiment_attribute(experiment_attribute_id = '{self.experiment_attribute_id}'," \
       "attribute_name = '{self.attribute_name}'," \
@@ -1004,6 +1081,7 @@ class Experiment_attribute(Base):
 
 
 class Collection_attribute(Base):
+
   '''
   A table for loading collection attributes
 
@@ -1023,6 +1101,9 @@ class Collection_attribute(Base):
   collection_id = Column(INTEGER(unsigned=True), ForeignKey('collection.collection_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
 
   def __repr__(self):
+    '''
+    Display Collection_attribute entry
+    '''
     return \
       "Collection_attribute(collection_attribute_id = '{self.collection_attribute_id}'," \
       "attribute_name = '{self.attribute_name}'," \
@@ -1031,6 +1112,7 @@ class Collection_attribute(Base):
 
 
 class Sample_attribute(Base):
+
   '''
   A table for loading sample attributes
 
@@ -1050,6 +1132,9 @@ class Sample_attribute(Base):
   sample_id = Column(INTEGER(unsigned=True), ForeignKey('sample.sample_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
 
   def __repr__(self):
+    '''
+    Display Sample_attribute entry
+    '''
     return \
       "Sample_attribute(sample_attribute_id = '{self.sample_attribute_id}'," \
       "attribute_name = '{self.attribute_name}'," \
@@ -1058,6 +1143,7 @@ class Sample_attribute(Base):
 
 
 class Seqrun_attribute(Base):
+
   '''
   A table for loading seqrun attributes
 
@@ -1077,6 +1163,7 @@ class Seqrun_attribute(Base):
 
 
 class Run_attribute(Base):
+
   '''
   A table for loading run attributes
 
@@ -1096,6 +1183,9 @@ class Run_attribute(Base):
   run_id = Column(INTEGER(unsigned=True), ForeignKey('run.run_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
 
   def __repr__(self):
+    '''
+    Display Run_attribute entry
+    '''
     return \
       "Run_attribute(run_attribute_id = '{self.run_attribute_id}'," \
       "attribute_name = '{self.attribute_name}'," \
@@ -1104,6 +1194,7 @@ class Run_attribute(Base):
 
 
 class File_attribute(Base):
+
   '''
   A table for loading file attributes
 
@@ -1123,6 +1214,9 @@ class File_attribute(Base):
   file_id = Column(INTEGER(unsigned=True), ForeignKey('file.file_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
 
   def __repr__(self):
+    '''
+    Display File_attribute entry
+    '''
     return \
       "File_attribute(file_attribute_id = '{self.file_attribute_id}'," \
       "attribute_name = '{self.attribute_name}'," \

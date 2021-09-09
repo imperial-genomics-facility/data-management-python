@@ -1,12 +1,10 @@
-import os, eHive, json
-from datetime import datetime
+import os, eHive, json, logging
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.task_tracking.igf_slack import IGF_slack
 from igf_data.task_tracking.igf_asana import IGF_asana
 from igf_data.task_tracking.igf_ms_team import IGF_ms_team
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.utils.fileutils import get_datestamp_label,get_temp_dir,copy_local_file
-from numpy import isin
 
 
 class IGFBaseRunnable(eHive.BaseRunnable):
@@ -14,17 +12,16 @@ class IGFBaseRunnable(eHive.BaseRunnable):
   Base runnable class for IGF pipelines
   '''
   def param_defaults(self):
-    return { 'log_slack':True,
-             'log_asana':True,
-             'log_ms_team':True,
-             'sub_tasks':list()
-           }
+    return { 'log_slack': True,
+             'log_asana': True,
+             'log_ms_team': True,
+             'sub_tasks': list()}
 
 
   def fetch_input(self):
     '''
     Fetch input method for base runnable
-    
+
     :param dbconfig: A database configuration json file
     :param log_slack: A toggle for writing logs to slack
     :param log_asana: A toggle for writing logs to asana 
@@ -51,7 +48,7 @@ class IGFBaseRunnable(eHive.BaseRunnable):
   def write_output(self):
     pass
 
-  def post_image_to_team(self,image_path,message='',reaction=''):
+  def post_image_to_team(self, image_path, message='', reaction=''):
     '''
     A method for posting image to MS team
 
@@ -71,10 +68,9 @@ class IGFBaseRunnable(eHive.BaseRunnable):
     except Exception as e:
       print('Error while posting image to MS Teams channel, error:{0}'.\
         format(e))
-      pass
 
 
-  def post_message_to_ms_team(self,message,reaction=''):
+  def post_message_to_ms_team(self, message, reaction=''):
     '''
     A method for posting message to MS Teams
 
@@ -92,9 +88,8 @@ class IGFBaseRunnable(eHive.BaseRunnable):
     except Exception as e:
       print('Error while posting message to MS Teams channel, error:{0}'.\
         format(e))
-      pass
 
-  def post_message_to_slack(self,message,reaction=''):
+  def post_message_to_slack(self, message, reaction=''):
     '''
     A method for posing message to slack channel
 
@@ -104,16 +99,17 @@ class IGFBaseRunnable(eHive.BaseRunnable):
     try:
       if self.param('log_slack'):
         igf_slack = self.param_required('igf_slack')
-        igf_slack.post_message_to_channel(message,reaction)
+        igf_slack.post_message_to_channel(message, reaction)
     except Exception as e:
-      print('Failed to send message to slack,error: {0}'.format(e))
-      pass
+      message = 'Failed to send message to slack,error: {0}'.format(e)
+      print(message)
+      logging.error(message)
 
 
-  def post_file_to_slack(self,filepath,message):
+  def post_file_to_slack(self, filepath, message):
     '''
     A method for posting message to slack channel
-    
+
     :param filepath: A filepath
     :param message: A message text
     '''
@@ -122,15 +118,17 @@ class IGFBaseRunnable(eHive.BaseRunnable):
         igf_slack = self.param_required('igf_slack')
         igf_slack.post_file_to_channel(message=message,filepath=filepath)
     except Exception as e:
-      print('Failed to send file to slack,error: {0}'.format(e))
-      pass
+      message = 'Failed to send file to slack,error: {0}'.format(e)
+      print(message)
+      logging.error(message)
 
 
-  def upload_file_to_asana_task(self,task_name,filepath,remote_filename=None,
-                                comment=None):
+  def upload_file_to_asana_task(
+        self, task_name, filepath, remote_filename=None,
+        comment=None):
     '''
     A base method for uploading file to the asana task
-    
+
     :param task_name: A asana task name
     :param filepath: A filepath
     :param remote_filename: Name of the uploaded file, default None
@@ -151,14 +149,15 @@ class IGFBaseRunnable(eHive.BaseRunnable):
           remote_filename=remote_filename,
           comment=comment)
     except Exception as e:
-      print('Failed to send message to asana, error: {0}'.format(e))
-      pass
+      message = 'Failed to send message to asana, error: {0}'.format(e)
+      print(message)
+      logging.error(message)
 
 
-  def comment_asana_task(self,task_name, comment):
+  def comment_asana_task(self, task_name, comment):
     '''
     A base method for commenting asana task
-    
+
     :param task_name: A task name
     :param comment: A text comment
     :returns: response code asana update
@@ -179,14 +178,15 @@ class IGFBaseRunnable(eHive.BaseRunnable):
               comment=comment)
       return res
     except Exception as e:
-      print('Failed to send comment to asana, error: {0}'.format(e))
-      pass
+      message = 'Failed to send comment to asana, error: {0}'.format(e)
+      print(message)
+      logging.error(message)
 
 
-  def add_asana_notes(self,task_name,notes):
+  def add_asana_notes(self, task_name, notes):
     '''
     A base method for adding asana notes
-    
+
     :param task_name: A task name
     :param notes: A set of text notes
     :returns: response code asana update
@@ -194,27 +194,24 @@ class IGFBaseRunnable(eHive.BaseRunnable):
     try:
       res = None
       if self.param('log_asana'):
-        try:
-          asana_config = self.param_required('asana_config')
-          asana_project_id = self.param_required('asana_project_id')
-          igf_asana = \
-            IGF_asana(\
-              asana_config=asana_config,
-              asana_project_id=str(asana_project_id))
-          res=igf_asana.add_notes_for_task(task_name, notes)
-        except:
-          pass
-
+        asana_config = self.param_required('asana_config')
+        asana_project_id = self.param_required('asana_project_id')
+        igf_asana = \
+          IGF_asana(
+            asana_config=asana_config,
+            asana_project_id=str(asana_project_id))
+        res = igf_asana.add_notes_for_task(task_name, notes)
       return res
     except Exception as e:
-      print('Failed to send notes to asana, error: {0}'.format(e))
-      pass
+      message = 'Failed to send notes to asana, error: {0}'.format(e)
+      print(message)
+      logging.error(message)
 
 
   def get_job_id(self):
     '''
     A method for fetching job process id
-    ''' 
+    '''
     job_pid = os.getpid()
     return job_pid
 
@@ -225,7 +222,7 @@ class IGFBaseRunnable(eHive.BaseRunnable):
     '''
     class_name = self.__class__.__name__
     job_id = self.get_job_id()
-    job_name = '{0}_{1}'.format(class_name,job_id)
+    job_name = '{0}_{1}'.format(class_name, job_id)
     return job_name
 
 
@@ -242,29 +239,28 @@ class IGFBaseRunnable(eHive.BaseRunnable):
         'Failed to get datestamp, error: {0}'.format(e))
 
 
-  def get_job_work_dir(self,work_dir):
+  def get_job_work_dir(self, work_dir):
     '''
     A method for getting a job specific work directory
-    
+
     :param work_dir: A work directory path
     :returns: A new job specific directory under the work dir
     '''
     try:
       job_name = self.job_name()
       datestamp = self.get_datestamp()
-      work_dir = os.path.join(work_dir,job_name,datestamp)                      # get work directory name
+      work_dir = os.path.join(work_dir, job_name, datestamp)                    # get work directory name
       if not os.path.exists(work_dir):
-        os.makedirs(work_dir,mode=0o770)                                        # create work directory
-
+        os.makedirs(work_dir, mode=0o770)                                       # create work directory
       return work_dir
     except Exception as e:
       raise ValueError('Failed to get work dir, error: {0}'.format(e))
 
 
-  def copy_input_file_to_temp(self,input_file):
+  def copy_input_file_to_temp(self, input_file):
     '''
     A method for copying input file to temp diretory
-    
+
     :param input_file: A input file path
     :returns: A temp file path
     '''
@@ -288,11 +284,11 @@ class IGFBaseRunnable(eHive.BaseRunnable):
       raise ValueError('Failed to copy file, error: {0}'.format(e))
 
 
-  def format_tool_options(self,option,separator=None):
+  def format_tool_options(self, option, separator=None):
     '''
-    A method for formatting tool options before running commands tools via 
+    A method for formatting tool options before running commands tools 
     subprocess module
-    
+
     :param option: A dictionary or json text as string
     :param separator: A character to use as separator, default is None
     :returns: a formatted list
@@ -301,13 +297,11 @@ class IGFBaseRunnable(eHive.BaseRunnable):
       option_list = list()
       if isinstance(option, str):
         option = \
-          json.loads(option.replace('\'','"'))                                  # replace ' with " and convert to json dict
-        
+          json.loads(option.replace('\'', '"'))                                 # replace ' with " and convert to json dict
       if not isinstance(option, dict):
         raise ValueError(
           'expecting param options as dictionary, got {0}'.\
             format(type(option)))
-        
       option_list = \
         [[param,value] if value else [param]
           for param, value in option.items()]                                   # remove empty values
@@ -319,10 +313,8 @@ class IGFBaseRunnable(eHive.BaseRunnable):
           raise AttributeError(
             'Expectian a string for param separator, got: {0}'.\
               format(type(separator)))
-
         option_list = \
           [separator.join(row) for row in option_list]                          # use separator string to combine params
-
       option_list = \
         list(map(lambda x: str(x),option_list))                                 # convert lists values to string
       return option_list

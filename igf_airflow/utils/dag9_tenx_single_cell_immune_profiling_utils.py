@@ -1,4 +1,4 @@
-import os, sys, logging, re, fnmatch, shutil, gzip
+import os, logging, re, fnmatch, shutil, gzip
 import pandas as pd
 from copy import copy
 from airflow.models import Variable

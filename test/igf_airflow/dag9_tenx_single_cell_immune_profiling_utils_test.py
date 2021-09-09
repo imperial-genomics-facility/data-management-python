@@ -2,14 +2,11 @@ import unittest,os
 import pandas as pd
 from collections import defaultdict
 from igf_data.utils.fileutils import get_temp_dir,remove_dir
-import sqlalchemy
-from sqlalchemy import create_engine
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
-from igf_data.igfdb.igfTables import Base,File,Collection,Collection_group
-from igf_data.utils.tools.reference_genome_utils import Reference_genome_utils
+from igf_data.igfdb.igfTables import Base
 from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _validate_analysis_description
 from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _fetch_formatted_analysis_description
 from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _add_reference_genome_path_for_analysis
@@ -265,31 +262,31 @@ class Dag9_tenx_single_cell_immune_profiling_utilstestC(unittest.TestCase):
   def test_create_library_csv_for_cellranger_multi(self):
     analysis_info = {
       'antibody_capture': {
-        'sample_igf_id': 'IGF003', 
-        'sample_name': 'IGF003-FB', 
-        'run_count': 1, 
+        'sample_igf_id': 'IGF003',
+        'sample_name': 'IGF003-FB',
+        'run_count': 1,
         'runs': {
           '0': {
-            'run_igf_id': 'run3', 
-            'fastq_dir': '/path/IGF003/run3', 
-            'output_path': '/tmp/tempox6tw1kv/antibody_capture/IGF003/run3'}}}, 
+            'run_igf_id': 'run3',
+            'fastq_dir': '/path/IGF003/run3',
+            'output_path': '/tmp/tempox6tw1kv/antibody_capture/IGF003/run3'}}},
       'gene_expression': {
-        'sample_igf_id': 'IGF001', 
-        'sample_name': 'IGF001-GEX', 
-        'run_count': 1, 
+        'sample_igf_id': 'IGF001',
+        'sample_name': 'IGF001-GEX',
+        'run_count': 1,
         'runs': {
           '0': {
-            'run_igf_id': 'run1', 
-            'fastq_dir': '/path/IGF001/run1', 
-            'output_path': '/tmp/tempox6tw1kv/gene_expression/IGF001/run1'}}}, 
+            'run_igf_id': 'run1',
+            'fastq_dir': '/path/IGF001/run1',
+            'output_path': '/tmp/tempox6tw1kv/gene_expression/IGF001/run1'}}},
       'vdj': {
-        'sample_igf_id': 'IGF002', 
-        'sample_name': 'IGF002-VDJ', 
-        'run_count': 1, 
+        'sample_igf_id': 'IGF002',
+        'sample_name': 'IGF002-VDJ',
+        'run_count': 1,
         'runs': {
           '0': {
-            'run_igf_id': 'run2', 
-            'fastq_dir': '/path/IGF002/run2', 
+            'run_igf_id': 'run2',
+            'fastq_dir': '/path/IGF002/run2',
             'output_path': '/tmp/tempox6tw1kv/vdj/IGF002/run2'}}}}
     analysis_description = [{
       'sample_igf_id':'IGF001',

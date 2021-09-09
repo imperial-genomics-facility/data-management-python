@@ -1,5 +1,4 @@
 import pandas as pd
-from sqlalchemy.sql import column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.igfTables import Project, ProjectUser, Project_attribute, User, Sample
 
@@ -34,13 +33,12 @@ class ProjectAdaptor(BaseAdaptor):
 
 
   def divide_data_to_table_and_attribute(
-        self, data, required_column='project_igf_id',table_columns=None,
-        attribute_name_column='attribute_name',attribute_value_column='attribute_value'):
+        self, data, required_column='project_igf_id', attribute_name_column='attribute_name',
+        attribute_value_column='attribute_value'):
     '''
     A method for separating data for Project and Project_attribute tables
 
     :param data: A list of dictionaries or a pandas dataframe
-    :param table_columns: List of table column names, default None
     :param required_column: Name of the required column, default project_igf_id
     :param attribute_name_column: Value for attribute name column, default attribute_name
     :param attribute_value_column: Valye for attribute value column, default attribute_value
@@ -49,7 +47,6 @@ class ProjectAdaptor(BaseAdaptor):
     try:
       if not isinstance(data, pd.DataFrame):
         data = pd.DataFrame(data)
-
       project_columns = \
         self.get_table_columns(
           table_name=Project,
@@ -70,7 +67,7 @@ class ProjectAdaptor(BaseAdaptor):
                 format(e))
 
 
-  def store_project_data(self,data,autosave=False):
+  def store_project_data(self, data, autosave=False):
     '''
     Load data to Project table
 
@@ -91,7 +88,7 @@ class ProjectAdaptor(BaseAdaptor):
               "Failed to store project data, error: {0}".format(e))
 
 
-  def store_project_attributes(self,data,project_id='',autosave=False):
+  def store_project_attributes(self, data, project_id='', autosave=False):
     '''
     A method for storing data to Project_attribute table
 
@@ -117,7 +114,7 @@ class ProjectAdaptor(BaseAdaptor):
             map_function,
             axis=1,
             result_type=None)                                                   # map foreign key id
-        #data = new_data                                                        # overwrite data   
+        #data = new_data                                                        # overwrite data
         data.drop(
           'project_igf_id',
           axis=1,
@@ -137,11 +134,11 @@ class ProjectAdaptor(BaseAdaptor):
 
 
   def assign_user_to_project(
-        self,data,required_project_column='project_igf_id',required_user_column='email_id', 
-        data_authority_column='data_authority',autosave=True):
+        self, data, required_project_column='project_igf_id', required_user_column='email_id',
+        data_authority_column='data_authority', autosave=True):
     '''
     Load data to ProjectUser table
-    
+
     :param data: A list of dictionaries, each containing 'project_igf_id' and 'user_igf_id' as key
                  with relevent igf ids as the values. An optional key 'data_authority' with
                  boolean value can be provided to set the user as the data authority of the project
@@ -204,10 +201,11 @@ class ProjectAdaptor(BaseAdaptor):
                 format(e))
 
 
-  def check_project_records_igf_id(self,project_igf_id,target_column_name='project_igf_id'):
+  def check_project_records_igf_id(
+        self, project_igf_id, target_column_name='project_igf_id'):
     '''
     A method for checking existing data for Project table
-    
+
     :param project_igf_id: Project igf id name
     :param target_column_name: Name of the project id column, default project_igf_id
     :returns: True if the file is present in db or False if its not
@@ -215,9 +213,8 @@ class ProjectAdaptor(BaseAdaptor):
     try:
       project_check = False
       column = [
-        column
-          for column in Project.__table__.columns \
-            if column.key == target_column_name][0]
+        c for c in Project.__table__.columns \
+          if c.key == target_column_name][0]
       project_obj = \
         self.fetch_records_by_column(
           table=Project,
@@ -232,35 +229,34 @@ class ProjectAdaptor(BaseAdaptor):
               "Failed to check project records, error: {0}".format(e))
 
 
-  def fetch_project_records_igf_id(self,project_igf_id,target_column_name='project_igf_id'):
+  def fetch_project_records_igf_id(self, project_igf_id, target_column_name='project_igf_id'):
     '''
     A method for fetching data for Project table
-    
+
     :param project_igf_id: an igf id
     :param output_mode: dataframe / object / one
     :returns: Records from project table
     '''
     try:
       column = [
-        column
-          for column in Project.__table__.columns \
-            if column.key == target_column_name][0]
+        c for c in Project.__table__.columns \
+          if c.key == target_column_name][0]
       project = \
         self.fetch_records_by_column(
           table=Project,
           column_name=column,
           column_id=project_igf_id,
           output_mode='one')
-      return project  
+      return project
     except Exception as e:
       raise ValueError(
               "Failed to fetch project record, error: {0}".format(e))
 
 
-  def get_project_user_info(self,output_mode='dataframe',project_igf_id=''):
+  def get_project_user_info(self, output_mode='dataframe', project_igf_id=''):
     '''
     A method for fetching information from Project, User and ProjectUser table 
-    
+
     :param project_igf_id: a project igf id
     :param output_mode   : dataframe / object
     :returns: Records for project user
@@ -294,10 +290,10 @@ class ProjectAdaptor(BaseAdaptor):
               "Failed to get project user info, error: {0}".format(e))
 
 
-  def check_existing_project_user(self,project_igf_id,email_id):
+  def check_existing_project_user(self, project_igf_id, email_id):
     '''
     A method for checking existing project use info in database
-    
+
     :param project_igf_id: A project_igf_id
     :param email_id: An email_id
     :returns: True if the file is present in db or False if its not
@@ -328,10 +324,10 @@ class ProjectAdaptor(BaseAdaptor):
               "Failed to check existing project user, error: {0}".format(e))
 
 
-  def check_data_authority_for_project(self,project_igf_id):
+  def check_data_authority_for_project(self, project_igf_id):
     '''
     A method for checking user data authority for existing projects
-    
+
     :param project_igf_id: An unique project igf id
     :returns: True if data authority exists for project or false
     '''
@@ -357,10 +353,10 @@ class ProjectAdaptor(BaseAdaptor):
               "Failed to check data authority record, error: {0}".format(e))
 
 
-  def fetch_data_authority_for_project(self,project_igf_id):
+  def fetch_data_authority_for_project(self, project_igf_id):
     '''
     A method for fetching user data authority for existing projects
-    
+
     :param project_igf_id: An unique project igf id
     :returns: A user object or None, if no entry found
     '''
@@ -387,7 +383,7 @@ class ProjectAdaptor(BaseAdaptor):
              "Failed to fetch data authority for project,error: {0}".format(e))
 
 
-  def check_project_attributes(self,project_igf_id,attribute_name): 
+  def check_project_attributes(self, project_igf_id, attribute_name): 
     '''
     A method for checking existing project attribute in database
 
@@ -416,11 +412,11 @@ class ProjectAdaptor(BaseAdaptor):
       raise ValueError(
               "Failed to check project attribute records, error: {0}".format(e))
 
-  def get_project_attributes(self,project_igf_id,linked_column_name='project_id',
+  def get_project_attributes(self, project_igf_id, linked_column_name='project_id',
                              attribute_name=''):
     '''
     A method for fetching entries from project attribute table
-    
+
     :param project_igf_id: A project_igf_id string
     :param attribute_name: An attribute name, default in None
     :param linked_column_name: A column name for linking attribute table
@@ -445,7 +441,7 @@ class ProjectAdaptor(BaseAdaptor):
               "Failed to get project attributes, error: {0}".format(e))
 
 
-  def fetch_project_samples(self,project_igf_id,only_active=True,
+  def fetch_project_samples(self, project_igf_id, only_active=True,
                             output_mode='object'):
     '''
     A method for fetching all the samples for a specific project
@@ -479,7 +475,7 @@ class ProjectAdaptor(BaseAdaptor):
   def count_project_samples(self,project_igf_id,only_active=True):
     '''
     A method for counting total number of samples for a project
-    
+
     :param project_igf_id: A project id
     :param only_active: Toggle for including only active projects, default is True
     :returns: A int sample count
@@ -518,17 +514,10 @@ class ProjectAdaptor(BaseAdaptor):
               format(e))
 
 
-  def project_experiments(self, format='dataframe', project_igf_id=''):
-    pass
-
-  
 if __name__=='__main__':
   import os
   from igf_data.igfdb.igfTables import Base
-  from sqlalchemy import create_engine
-  from igf_data.utils.dbutils import read_dbconf_json
-  from igf_data.igfdb.baseadaptor import BaseAdaptor
-  
+
   if os.path.exists('adapter_test.sqlite'):
     os.remove('adapter_test.sqlite')
   dbparam = {'dbname':'adapter_test.sqlite','driver':'sqlite'}
@@ -554,7 +543,3 @@ if __name__=='__main__':
   pa.store_project_data(p_df,autosave=True)
   pa.store_project_attributes(pa_df,autosave=True)
   base.close_session()
-
-
-
-
