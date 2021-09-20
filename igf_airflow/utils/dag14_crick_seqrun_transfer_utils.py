@@ -53,7 +53,8 @@ def transfer_seqrun_tar_from_crick_ftp(
               format(ftp_conf.get('username'), f),
             fp.write)
         logging.warn('downloaded tar {0}'.format(seqrun_tar_file))
-    ftps.close()
+        ftps.close()
+        break
   except Exception as e:
     logging.error(e)
     raise ValueError('Error: {0}'.format(e))
