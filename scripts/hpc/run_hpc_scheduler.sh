@@ -1,5 +1,4 @@
 #!/bin/bash
-#PBS -q pqcgi
 #PBS -N airflow-scheduler
 #PBS -o /dev/null
 #PBS -e /dev/null
