@@ -39,6 +39,7 @@ def transfer_seqrun_tar_from_crick_ftp(
     seqrun_tar_file = \
         '{0}.tar.gz'.format(seqrun_id)
     for f in ftp_files:
+      logging.warn('found run {0}'.format(f))
       if f == seqrun_tar_file:
         seqrun_tmp_file = \
           os.path.join(seqrun_base_dir, seqrun_tar_file)
@@ -47,7 +48,7 @@ def transfer_seqrun_tar_from_crick_ftp(
             'RETR /users/{0}/runs/{1}'.\
               format(ftp_conf.get('username'), f),
             fp.write)
-        logging.info('downloaded tar {0}'.format(seqrun_tar_file))
+        logging.warn('downloaded tar {0}'.format(seqrun_tar_file))
     ftps.close()
   except Exception as e:
     logging.error(e)
