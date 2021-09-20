@@ -28,7 +28,7 @@ def transfer_seqrun_tar_from_crick_ftp(
       seqrun_id=seqrun_id,
       seqrun_base_dir=seqrun_base_dir)
     ftp_conf = \
-        read_json_data(ftp_conf_file)
+        read_json_data(ftp_conf_file)[0]
     ftps = FTP_TLS()
     ftps.connect(ftp_host)
     ftps.login(
