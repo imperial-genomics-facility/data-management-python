@@ -7,8 +7,8 @@ from igf_data.utils.fileutils import remove_dir
 from igf_data.utils.fileutils import check_file_path
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
 
-SLACK_CONF = Variable.get('analysis_slack_conf', default_var=None)
-MS_TEAMS_CONF = Variable.get('analysis_ms_teams_conf', default_var=None)
+SLACK_CONF = Variable.get('slack_conf', default_var=None)
+MS_TEAMS_CONF = Variable.get('ms_teams_conf', default_var=None)
 FTP_SEQRUN_SERVER = Variable.get('crick_ftp_seqrun_hostname', default_var=None)
 FTP_CONFIG_FILE = Variable.get('crick_ftp_config_file', default_var=None)
 SEQRUN_BASE_PATH = Variable.get('seqrun_base_path', default_var=None)
