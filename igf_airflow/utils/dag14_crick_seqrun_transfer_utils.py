@@ -24,6 +24,9 @@ def warn_exisitng_seqrun_paths(seqrun_id, seqrun_base_dir):
 def transfer_seqrun_tar_from_crick_ftp(
       ftp_host, ftp_conf_file, seqrun_id, seqrun_base_dir):
   try:
+    if seqrun_id is None or \
+       seqrun_id == "":
+      raise ValueError('Missing valid seqrun id')
     warn_exisitng_seqrun_paths(
       seqrun_id=seqrun_id,
       seqrun_base_dir=seqrun_base_dir)
