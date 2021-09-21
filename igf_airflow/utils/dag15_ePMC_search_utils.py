@@ -16,8 +16,20 @@ def update_wiki_publication_page_func(**context):
     all_data = \
       search_epmc_for_keyword(
         search_term="\"Imperial BRC Genomics Facility\"")
+    columns = [
+      'title',
+      'authorString',
+      'journalTitle',
+      'firstPublicationDate',
+      'firstIndexDate',
+      'doi']
+    all_df = \
+      pd.DataFrame(all_data)[columns]
+    all_df['doi'] = \
+      all_df['doi'].\
+        map(lambda x: 'https://doi.org/{0}'.format(x))
     html_data = \
-      pd.DataFrame(all_data).\
+      all_df.\
         to_html(index=False)
     update_confluence_page(
       confluence_conf_file=CONFLUENCE_CONFIG_FILE,
