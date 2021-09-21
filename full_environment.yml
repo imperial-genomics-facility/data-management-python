@@ -47,3 +47,4 @@ dependencies:
     - cellbrowser==0.7.7
     - spython
     - request
+    - atlassian-python-api==3.14.0
