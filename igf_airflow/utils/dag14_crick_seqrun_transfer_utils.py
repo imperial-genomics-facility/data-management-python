@@ -72,16 +72,16 @@ def _extract_seqrun_tar(tar_file, seqrun_id, seqrun_base_path):
         seqrun_base_path,
         'temp_{0}'.format(seqrun_id))
     if os.path.exists(temp_dir):
+      dir_permission_cmd1 = \
+        "find {0} -type d -exec chmod 700 {} \;".format(temp_dir)
+      subprocess.\
+        check_call(
+          dir_permission_cmd1,
+          shell=True)
       remove_dir(temp_dir)
-    os.makedirs(temp_dir)
+    os.makedirs(temp_dir, exist_ok=False)
     untar_command = \
-      """tar \
-        --no-same-owner \
-        --no-same-permissions \
-        --owner=igf \
-        -C {0} \
-        -xzf {1}
-      """.format(temp_dir, tar_file)
+      "tar --no-same-owner --no-same-permissions --owner=igf -C {0} -xzf {1}".format(temp_dir, tar_file)
     subprocess.\
       check_call(
         untar_command, shell=True)
@@ -200,11 +200,15 @@ def transfer_seqrun_tar_from_crick_ftp(
         ftps.nlst('/users/{0}/runs'.format(ftp_conf.get('username')))
     seqrun_tar_file = \
         '{0}.tar.gz'.format(seqrun_id)
+    ftp_file_size = 0
+    seqrun_tmp_file = None
     for f in ftp_files:
       logging.warn('found run {0}'.format(f))
       if f == seqrun_tar_file:
         seqrun_tmp_file = \
           os.path.join(seqrun_base_dir, seqrun_tar_file)
+        ftp_file_size = \
+          int(ftps.size('/users/{0}/runs/{1}'.format(ftp_conf.get('username'), f)))
         with open(seqrun_tmp_file, 'wb') as fp:
           ftps.retrbinary(
             'RETR /users/{0}/runs/{1}'.\
@@ -213,6 +217,12 @@ def transfer_seqrun_tar_from_crick_ftp(
         logging.warn('downloaded tar {0}'.format(seqrun_tar_file))
         ftps.close()
         break
+    if seqrun_tmp_file is None:
+      raise ValueError('No tar file found')
+    file_size = \
+      os.stat(seqrun_tmp_file).st_size
+    if file_size != ftp_file_size:
+      raise ValueError('FTP file size and local file size are not same')
   except Exception as e:
     logging.error(e)
     raise ValueError('Error: {0}'.format(e))
