@@ -72,12 +72,7 @@ def _extract_seqrun_tar(tar_file, seqrun_id, seqrun_base_path):
         seqrun_base_path,
         'temp_{0}'.format(seqrun_id))
     if os.path.exists(temp_dir):
-      dir_permission_cmd1 = \
-        "find {0} -type d -exec chmod 700 {} \;".format(temp_dir)
-      subprocess.\
-        check_call(
-          dir_permission_cmd1,
-          shell=True)
+      _change_temp_dir_permissions(temp_dir)
       remove_dir(temp_dir)
     os.makedirs(temp_dir, exist_ok=False)
     untar_command = \
@@ -85,6 +80,28 @@ def _extract_seqrun_tar(tar_file, seqrun_id, seqrun_base_path):
     subprocess.\
       check_call(
         untar_command, shell=True)
+    _change_temp_dir_permissions(temp_dir)
+    source_path = \
+      os.path.join(
+        temp_dir,
+        'camp',
+        'stp',
+        'sequencing',
+        'inputs',
+        'instruments',
+        'sequencers',
+        seqrun_id)
+    check_file_path(source_path)
+    move(
+      src=source_path,
+      dst=output_seqrun_dir)
+    return output_seqrun_dir
+  except Exception as e:
+    raise ValueError(e)
+
+
+def _change_temp_dir_permissions(temp_dir):
+  try:
     dir_permission_cmd1 = \
       "find {0} -type d -exec chmod 700 {} \;".format(temp_dir)
     subprocess.\
@@ -103,21 +120,6 @@ def _extract_seqrun_tar(tar_file, seqrun_id, seqrun_base_path):
       check_call(
         chmod_cmd2,
         shell=True)
-    source_path = \
-      os.path.join(
-        temp_dir,
-        'camp',
-        'stp',
-        'sequencing',
-        'inputs',
-        'instruments',
-        'sequencers',
-        seqrun_id)
-    check_file_path(source_path)
-    move(
-      src=source_path,
-      dst=output_seqrun_dir)
-    return output_seqrun_dir
   except Exception as e:
     raise ValueError(e)
 
