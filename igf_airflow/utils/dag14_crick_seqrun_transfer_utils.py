@@ -161,7 +161,7 @@ def check_and_transfer_run_func(**context):
       reaction='fail')
 
 
-def warn_exisitng_seqrun_paths(seqrun_id, seqrun_base_dir):
+def warn_exisitng_seqrun_paths(seqrun_id, seqrun_base_dir, clean_up_tar=False):
   try:
       seqrun_path = \
         os.path.join(seqrun_base_dir, seqrun_id)
@@ -172,9 +172,13 @@ def warn_exisitng_seqrun_paths(seqrun_id, seqrun_base_dir):
                 'Directory for seqrun {0} already present'.\
                   format(seqrun_id))
       if os.path.exists(seqrun_tar_file):
-        raise ValueError(
-                'tar file for seqrun {0} already present'.\
-                  format(seqrun_id))
+        if not clean_up_tar:
+          raise ValueError(
+                  'tar file for seqrun {0} already present'.\
+                    format(seqrun_id))
+        else:
+          logging.warn('removing tar {0}'.format(seqrun_tar_file))
+          os.remove(seqrun_tar_file)
   except Exception as e:
     logging.error(e)
     raise ValueError('Error: {0}'.format(e))
@@ -189,7 +193,8 @@ def transfer_seqrun_tar_from_crick_ftp(
     logging.warn('Seqrun: {0}'.format(seqrun_id))
     warn_exisitng_seqrun_paths(
       seqrun_id=seqrun_id,
-      seqrun_base_dir=seqrun_base_dir)
+      seqrun_base_dir=seqrun_base_dir,
+      clean_up_tar=True)
     ftp_conf = \
         read_json_data(ftp_conf_file)[0]
     ftps = FTP_TLS()
@@ -198,9 +203,9 @@ def transfer_seqrun_tar_from_crick_ftp(
       ftp_conf.get('username'),
       ftp_conf.get('password'))
     ftp_files = \
-        ftps.nlst('/users/{0}/runs'.format(ftp_conf.get('username')))
+      ftps.nlst('/users/{0}/runs'.format(ftp_conf.get('username')))
     seqrun_tar_file = \
-        '{0}.tar.gz'.format(seqrun_id)
+      '{0}.tar.gz'.format(seqrun_id)
     ftp_file_size = 0
     seqrun_tmp_file = None
     for f in ftp_files:
@@ -216,7 +221,7 @@ def transfer_seqrun_tar_from_crick_ftp(
               format(ftp_conf.get('username'), f),
             fp.write)
         logging.warn('downloaded tar {0}'.format(seqrun_tar_file))
-        ftps.close()
+        #ftps.close()
         break
     if seqrun_tmp_file is None:
       raise ValueError('No tar file found')
