@@ -124,7 +124,7 @@ def check_and_transfer_run_func(**context):
     SLACK_CONF = Variable.get('slack_conf', default_var=None)
     MS_TEAMS_CONF = Variable.get('ms_teams_conf', default_var=None)
     FTP_SEQRUN_SERVER = Variable.get('crick_ftp_seqrun_hostname', default_var=None)
-    FTP_CONFIG_FILE = Variable.get('crick_ftp_config_file', default_var=None)
+    FTP_CONFIG_FILE = Variable.get('crick_ftp_config_file_wells', default_var=None)
     HPC_SEQRUN_BASE_PATH = Variable.get('hpc_seqrun_path', default_var=None)
     dag_run = context.get('dag_run')
     if dag_run is not None and \
