@@ -2,8 +2,8 @@ import os, logging, subprocess
 from shutil import move
 from ftplib import FTP_TLS
 from airflow.models import Variable
-from igf_data.utils.fileutils import read_json_data
-from igf_data.utils.fileutils import remove_dir
+from igf_data.utils.fileutils import get_temp_dir, read_json_data
+from igf_data.utils.fileutils import remove_dir, copy_local_file
 from igf_data.utils.fileutils import check_file_path
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
 
@@ -196,7 +196,7 @@ def transfer_seqrun_tar_from_crick_ftp(
       seqrun_base_dir=seqrun_base_dir,
       clean_up_tar=True)
     ftp_conf = \
-        read_json_data(ftp_conf_file)[0]
+      read_json_data(ftp_conf_file)[0]
     ftps = FTP_TLS()
     ftps.connect(ftp_host)
     ftps.login(
@@ -206,29 +206,42 @@ def transfer_seqrun_tar_from_crick_ftp(
       ftps.nlst('/users/{0}/runs'.format(ftp_conf.get('username')))
     seqrun_tar_file = \
       '{0}.tar.gz'.format(seqrun_id)
+    seqrun_tar_file_path = \
+      os.path.join(seqrun_base_dir, seqrun_tar_file)
+    temp_dir = \
+      get_temp_dir(use_ephemeral_space=False)
+    temp_seqrun_tar_file = \
+      os.path.join(
+        temp_dir,
+        '{0}.tar.gz'.format(seqrun_id))
     ftp_file_size = 0
     seqrun_tmp_file = None
+    counter = 0
     for f in ftp_files:
       logging.warn('found run {0}'.format(f))
       if f == seqrun_tar_file:
-        seqrun_tmp_file = \
-          os.path.join(seqrun_base_dir, seqrun_tar_file)
+        counter += 1
         ftp_file_size = \
           int(ftps.size('/users/{0}/runs/{1}'.format(ftp_conf.get('username'), f)))
-        with open(seqrun_tmp_file, 'wb') as fp:
+        with open(temp_seqrun_tar_file, 'wb') as fp:
           ftps.retrbinary(
             'RETR /users/{0}/runs/{1}'.\
               format(ftp_conf.get('username'), f),
             fp.write)
-        logging.warn('downloaded tar {0}'.format(seqrun_tar_file))
+        logging.warn('downloaded tar {0}'.format(temp_seqrun_tar_file))
         #ftps.close()
         break
-    if seqrun_tmp_file is None:
-      raise ValueError('No tar file found')
-    file_size = \
-      os.stat(seqrun_tmp_file).st_size
-    if file_size != ftp_file_size:
-      raise ValueError('FTP file size and local file size are not same')
+    if counter == 0:
+      raise ValueError('No tar file found for run {0}'.format(seqrun_id))
+    else:
+      copy_local_file(
+        temp_seqrun_tar_file,
+        seqrun_tar_file_path)
+      logging.warn('Copied tar to {0}'.format(seqrun_tar_file_path))
+      file_size = \
+        os.stat(seqrun_tmp_file).st_size
+      if file_size != ftp_file_size:
+        raise ValueError('FTP file size and local file size are not same')
   except Exception as e:
     logging.error(e)
     raise ValueError('Error: {0}'.format(e))
