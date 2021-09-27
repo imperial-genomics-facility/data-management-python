@@ -98,7 +98,7 @@ def _extract_seqrun_tar(tar_file, seqrun_id, seqrun_base_path):
 def _change_temp_dir_permissions(temp_dir):
   try:
     dir_permission_cmd1 = \
-      "find {0} -type d -exec chmod 700 {} \;".format(temp_dir)
+      "find {0} -type d -exec chmod 700 \{\} \;".format(temp_dir)
     subprocess.\
       check_call(
         dir_permission_cmd1,
