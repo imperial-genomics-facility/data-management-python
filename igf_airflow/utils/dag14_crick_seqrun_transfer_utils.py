@@ -238,14 +238,13 @@ def transfer_seqrun_tar_from_crick_ftp(
         temp_dir,
         '{0}.tar.gz'.format(seqrun_id))
     ftp_file_size = 0
-    seqrun_tmp_file = None
     counter = 0
     for f in ftp_files:
       logging.warn('found run {0}'.format(f))
       if f == seqrun_tar_file:
         counter += 1
-        #ftp_file_size = \
-        #  int(ftps.size('/users/{0}/runs/{1}'.format(ftp_conf.get('username'), f)))
+        ftp_file_size = \
+          int(ftps.size('/users/{0}/runs/{1}'.format(ftp_conf.get('username'), f)))
         #with open(temp_seqrun_tar_file, 'wb') as fp:
         #  ftps.retrbinary(
         #    'RETR /users/{0}/runs/{1}'.\
@@ -270,6 +269,10 @@ def transfer_seqrun_tar_from_crick_ftp(
         logging.warn('downloaded tar {0}'.format(temp_seqrun_tar_file))
         ftps.close()
         break
+    file_size = \
+      os.stat(temp_seqrun_tar_file).st_size
+    if file_size != ftp_file_size:
+      raise ValueError('FTP file size and local file size are not same')
     if counter == 0:
       raise ValueError('No tar file found for run {0}'.format(seqrun_id))
     else:
@@ -277,10 +280,6 @@ def transfer_seqrun_tar_from_crick_ftp(
         temp_seqrun_tar_file,
         seqrun_tar_file_path)
       logging.warn('Copied tar to {0}'.format(seqrun_tar_file_path))
-      file_size = \
-        os.stat(seqrun_tmp_file).st_size
-      if file_size != ftp_file_size:
-        raise ValueError('FTP file size and local file size are not same')
   except Exception as e:
     logging.error(e)
     raise ValueError('Error: {0}'.format(e))
