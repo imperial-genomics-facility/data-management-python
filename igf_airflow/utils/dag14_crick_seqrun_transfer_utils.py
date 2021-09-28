@@ -1,6 +1,6 @@
-import os, logging, subprocess
+import os, logging, subprocess, sys, threading
 from shutil import move
-from ftplib import FTP_TLS
+from ftplib import FTP_TLS, error_temp
 from airflow.models import Variable
 from igf_data.utils.fileutils import get_temp_dir, read_json_data
 from igf_data.utils.fileutils import remove_dir, copy_local_file
@@ -184,6 +184,29 @@ def warn_exisitng_seqrun_paths(seqrun_id, seqrun_base_dir, clean_up_tar=False):
     raise ValueError('Error: {0}'.format(e))
 
 
+def background_handle(ftps, remote_path, local_path):
+  try:
+    total_size = ftps.size(remote_path)
+    file_to_write = open(local_path, 'wb')
+    sock = ftps.transfercmd('RETR ' + remote_path)
+    while True:
+        block = sock.recv(1024*1024)
+        if not block:
+            file_to_write.close()
+            break
+        file_to_write.write(block)
+        sizeWritten = file_to_write.tell()
+        bar_len = 100
+        percent = round(100 * sizeWritten / total_size, 1)
+        filled_len = int(percent)
+        bar = '=' * filled_len + '-' * (bar_len - filled_len)
+        sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percent, '%', ''))
+        sys.stdout.flush()
+    sock.close()
+  except Exception as e:
+    raise ValueError(e)
+
+
 def transfer_seqrun_tar_from_crick_ftp(
       ftp_host, ftp_conf_file, seqrun_id, seqrun_base_dir):
   try:
@@ -197,7 +220,7 @@ def transfer_seqrun_tar_from_crick_ftp(
       clean_up_tar=True)
     ftp_conf = \
       read_json_data(ftp_conf_file)[0]
-    ftps = FTP_TLS()
+    ftps = FTP_TLS(timeout=600)
     ftps.connect(ftp_host)
     ftps.login(
       ftp_conf.get('username'),
@@ -221,15 +244,31 @@ def transfer_seqrun_tar_from_crick_ftp(
       logging.warn('found run {0}'.format(f))
       if f == seqrun_tar_file:
         counter += 1
-        ftp_file_size = \
-          int(ftps.size('/users/{0}/runs/{1}'.format(ftp_conf.get('username'), f)))
-        with open(temp_seqrun_tar_file, 'wb') as fp:
-          ftps.retrbinary(
-            'RETR /users/{0}/runs/{1}'.\
-              format(ftp_conf.get('username'), f),
-            fp.write)
+        #ftp_file_size = \
+        #  int(ftps.size('/users/{0}/runs/{1}'.format(ftp_conf.get('username'), f)))
+        #with open(temp_seqrun_tar_file, 'wb') as fp:
+        #  ftps.retrbinary(
+        #    'RETR /users/{0}/runs/{1}'.\
+        #      format(ftp_conf.get('username'), f),
+        #    fp.write)
+        t = \
+          threading.\
+            Thread(
+              target=background_handle,
+              args=(
+                ftps,
+                '/users/{0}/runs/{1}'.format(ftp_conf.get('username'), f),
+                temp_seqrun_tar_file))
+        t.start()
+        while t.is_alive():
+          t.join(400)
+          try:
+            ftps.voidcmd('NOOP')
+          except error_temp as e:
+            logging.warn(e)
+            pass
         logging.warn('downloaded tar {0}'.format(temp_seqrun_tar_file))
-        #ftps.close()
+        ftps.close()
         break
     if counter == 0:
       raise ValueError('No tar file found for run {0}'.format(seqrun_id))
