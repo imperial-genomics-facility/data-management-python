@@ -65,15 +65,18 @@ def _extract_seqrun_tar(tar_file, seqrun_id, seqrun_base_path):
               'Dir {0} already present, remove it before re-run'.\
                 format(output_seqrun_dir))
     temp_dir = \
-      os.path.join(
-        seqrun_base_path,
-        'temp_{0}'.format(seqrun_id))
+      get_temp_dir(use_ephemeral_space=False)
+    #temp_dir = \
+    #  os.path.join(
+    #    seqrun_base_path,
+    #    'temp_{0}'.format(seqrun_id))
     if os.path.exists(temp_dir):
       _change_temp_dir_permissions(temp_dir)
       remove_dir(temp_dir)
     os.makedirs(temp_dir, exist_ok=False)
-    base_path = \
+    base_run_path = \
       os.path.join(
+        temp_dir,
         'camp',
         'stp',
         'sequencing',
@@ -81,42 +84,70 @@ def _extract_seqrun_tar(tar_file, seqrun_id, seqrun_base_path):
         'instruments',
         'sequencers',
         seqrun_id)
-    bcl_path = \
-      os.path.join(base_path, 'Data')
     untar_command = \
-      "tar --no-same-owner --no-same-permissions --owner=igf -C {0} -xzf {1} {2}".format(temp_dir, tar_file, bcl_path.lstrip('/'))
+      "tar --no-same-owner --no-same-permissions --owner=igf -C {0} -xzf {1}".\
+        format(temp_dir, tar_file)
     subprocess.\
       check_call(
         untar_command, shell=True)
     _change_temp_dir_permissions(temp_dir)
-    interop_path = \
-      os.path.join(base_path, 'InterOp')
-    untar_command = \
-      "tar --no-same-owner --no-same-permissions --owner=igf -C {0} -xzf {1} {2}".format(temp_dir, tar_file, interop_path.lstrip('/'))
-    subprocess.\
-      check_call(
-        untar_command, shell=True)
-    _change_temp_dir_permissions(temp_dir)
-    run_info_path = \
-      os.path.join(base_path, 'RunInfo.xml')
-    untar_command = \
-      "tar --no-same-owner --no-same-permissions --owner=igf -C {0} -xzf {1} {2}".format(temp_dir, tar_file, run_info_path.lstrip('/'))
-    subprocess.\
-      check_call(
-        untar_command, shell=True)
-    _change_temp_dir_permissions(temp_dir)
-    run_parameter_path = \
-      os.path.join(base_path, 'runParameters.xml')
-    untar_command = \
-      "tar --no-same-owner --no-same-permissions --owner=igf -C {0} -xzf {1} {2}".format(temp_dir, tar_file, run_parameter_path.lstrip('/'))
-    subprocess.\
-      check_call(
-        untar_command, shell=True)
-    _change_temp_dir_permissions(temp_dir)
-    check_file_path(base_path)
-    move(
-      src=base_path,
-      dst=output_seqrun_dir)
+    #bcl_path = \
+    #  os.path.join(base_path, 'Data')
+    #untar_command = \
+    #  "tar --no-same-owner --no-same-permissions --owner=igf -C {0} -xzf {1} {2}".\
+    #    format(temp_dir, tar_file, bcl_path.lstrip('/'))
+    #subprocess.\
+    #  check_call(
+    #    untar_command, shell=True)
+    #_change_temp_dir_permissions(temp_dir)
+    #interop_path = \
+    #  os.path.join(base_path, 'InterOp')
+    #untar_command = \
+    #  "tar --no-same-owner --no-same-permissions --owner=igf -C {0} -xzf {1} {2}".\
+    #    format(temp_dir, tar_file, interop_path.lstrip('/'))
+    #subprocess.\
+    #  check_call(
+    #    untar_command, shell=True)
+    #_change_temp_dir_permissions(temp_dir)
+    #run_info_path = \
+    #  os.path.join(base_path, 'RunInfo.xml')
+    #untar_command = \
+    #  "tar --no-same-owner --no-same-permissions --owner=igf -C {0} -xzf {1} {2}".\
+    #    format(temp_dir, tar_file, run_info_path.lstrip('/'))
+    #subprocess.\
+    #  check_call(
+    #    untar_command, shell=True)
+    #_change_temp_dir_permissions(temp_dir)
+    #run_parameter_path = \
+    #  os.path.join(base_path, 'runParameters.xml')
+    #untar_command = \
+    #  "tar --no-same-owner --no-same-permissions --owner=igf -C {0} -xzf {1} {2}".\
+    #    format(temp_dir, tar_file, run_parameter_path.lstrip('/'))
+    #subprocess.\
+    #  check_call(
+    #    untar_command, shell=True)
+    #_change_temp_dir_permissions(temp_dir)
+    #check_file_path(base_path)
+    #rta_complete_path = \
+    #  os.path.join(base_path, 'RTAComplete.txt')
+    #untar_command = \
+    #  "tar --no-same-owner --no-same-permissions --owner=igf -C {0} -xzf {1} {2}".\
+    #    format(temp_dir, tar_file, rta_complete_path.lstrip('/'))
+    #subprocess.\
+    #  check_call(
+    #    untar_command, shell=True)
+    #_change_temp_dir_permissions(temp_dir)
+    if not os.path.exists(base_run_path):
+      raise IOError(
+              'Path {0} not found. List of files under temp dir: {1}'.\
+                format(base_run_path, os.listdir(temp_dir)))
+    logging.warn('Run extracted, seqrun_id: {0}, path: {1}'.\
+      format(seqrun_id, base_run_path))
+    copy_local_file(
+      base_run_path,
+      output_seqrun_dir)
+    logging.warn('Run copied, seqrun_id: {0}, path: {1}'.\
+      format(seqrun_id, output_seqrun_dir))
     return output_seqrun_dir
   except Exception as e:
     raise ValueError(e)
