@@ -1,4 +1,5 @@
-import os, logging, subprocess, sys, threading
+import os, logging, subprocess, sys
+from threading import Thread
 from shutil import move
 from ftplib import FTP_TLS, error_temp
 from airflow.models import Variable
@@ -49,6 +50,7 @@ def extract_tar_file_func(**context):
       dag_id=context['task'].dag_id,
       comment=message,
       reaction='fail')
+    raise
 
 
 def _extract_seqrun_tar(tar_file, seqrun_id, seqrun_base_path):
@@ -70,15 +72,8 @@ def _extract_seqrun_tar(tar_file, seqrun_id, seqrun_base_path):
       _change_temp_dir_permissions(temp_dir)
       remove_dir(temp_dir)
     os.makedirs(temp_dir, exist_ok=False)
-    untar_command = \
-      "tar --no-same-owner --no-same-permissions --owner=igf -C {0} -xzf {1}".format(temp_dir, tar_file)
-    subprocess.\
-      check_call(
-        untar_command, shell=True)
-    _change_temp_dir_permissions(temp_dir)
-    source_path = \
+    base_path = \
       os.path.join(
-        temp_dir,
         'camp',
         'stp',
         'sequencing',
@@ -86,9 +81,41 @@ def _extract_seqrun_tar(tar_file, seqrun_id, seqrun_base_path):
         'instruments',
         'sequencers',
         seqrun_id)
-    check_file_path(source_path)
+    bcl_path = \
+      os.path.join(base_path, 'Data')
+    untar_command = \
+      "tar --no-same-owner --no-same-permissions --owner=igf -C {0} -xzf {1} {2}".format(temp_dir, tar_file, bcl_path.lstrip('/'))
+    subprocess.\
+      check_call(
+        untar_command, shell=True)
+    _change_temp_dir_permissions(temp_dir)
+    interop_path = \
+      os.path.join(base_path, 'InterOp')
+    untar_command = \
+      "tar --no-same-owner --no-same-permissions --owner=igf -C {0} -xzf {1} {2}".format(temp_dir, tar_file, interop_path.lstrip('/'))
+    subprocess.\
+      check_call(
+        untar_command, shell=True)
+    _change_temp_dir_permissions(temp_dir)
+    run_info_path = \
+      os.path.join(base_path, 'RunInfo.xml')
+    untar_command = \
+      "tar --no-same-owner --no-same-permissions --owner=igf -C {0} -xzf {1} {2}".format(temp_dir, tar_file, run_info_path.lstrip('/'))
+    subprocess.\
+      check_call(
+        untar_command, shell=True)
+    _change_temp_dir_permissions(temp_dir)
+    run_parameter_path = \
+      os.path.join(base_path, 'runParameters.xml')
+    untar_command = \
+      "tar --no-same-owner --no-same-permissions --owner=igf -C {0} -xzf {1} {2}".format(temp_dir, tar_file, run_parameter_path.lstrip('/'))
+    subprocess.\
+      check_call(
+        untar_command, shell=True)
+    _change_temp_dir_permissions(temp_dir)
+    check_file_path(base_path)
     move(
-      src=source_path,
+      src=base_path,
       dst=output_seqrun_dir)
     return output_seqrun_dir
   except Exception as e:
@@ -159,14 +186,19 @@ def check_and_transfer_run_func(**context):
       dag_id=context['task'].dag_id,
       comment=message,
       reaction='fail')
+    raise
 
 
 def warn_exisitng_seqrun_paths(seqrun_id, seqrun_base_dir, clean_up_tar=False):
   try:
       seqrun_path = \
-        os.path.join(seqrun_base_dir, seqrun_id)
+        os.path.join(
+          seqrun_base_dir,
+          seqrun_id)
       seqrun_tar_file = \
-        os.path.join(seqrun_base_dir, '{0}.tar.gz'.format(seqrun_id))
+        os.path.join(
+          seqrun_base_dir,
+          '{0}.tar.gz'.format(seqrun_id))
       if os.path.exists(seqrun_path):
         raise ValueError(
                 'Directory for seqrun {0} already present'.\
@@ -180,8 +212,8 @@ def warn_exisitng_seqrun_paths(seqrun_id, seqrun_base_dir, clean_up_tar=False):
           logging.warn('removing tar {0}'.format(seqrun_tar_file))
           os.remove(seqrun_tar_file)
   except Exception as e:
-    logging.error(e)
-    raise ValueError('Error: {0}'.format(e))
+    raise ValueError('Error, tar or dir exists: {0}: {1}'.\
+            format(seqrun_id, e))
 
 
 def background_handle(ftps, remote_path, local_path):
@@ -190,25 +222,27 @@ def background_handle(ftps, remote_path, local_path):
     file_to_write = open(local_path, 'wb')
     sock = ftps.transfercmd('RETR ' + remote_path)
     while True:
-        block = sock.recv(1024*1024)
-        if not block:
-            file_to_write.close()
-            break
-        file_to_write.write(block)
-        sizeWritten = file_to_write.tell()
-        bar_len = 100
-        percent = round(100 * sizeWritten / total_size, 1)
-        filled_len = int(percent)
-        bar = '=' * filled_len + '-' * (bar_len - filled_len)
-        sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percent, '%', ''))
-        sys.stdout.flush()
+      block = sock.recv(1024*1024)
+      if not block:
+        break
+      file_to_write.write(block)
+      sizeWritten = file_to_write.tell()
+      bar_len = 100
+      percent = round(100 * sizeWritten / total_size, 1)
+      filled_len = int(percent)
+      bar = '=' * filled_len + '-' * (bar_len - filled_len)
+      sys.stdout.write('[%s] %s%s ...%s\r' % (bar, percent, '%', ''))
+      sys.stdout.flush()
     sock.close()
+    logging.warn(
+      'Closing file {0}'.format(local_path))
+    file_to_write.close()
   except Exception as e:
     raise ValueError(e)
 
 
 def transfer_seqrun_tar_from_crick_ftp(
-      ftp_host, ftp_conf_file, seqrun_id, seqrun_base_dir):
+      ftp_host, ftp_conf_file, seqrun_id, seqrun_base_dir, ftp_timeout=600):
   try:
     if seqrun_id is None or \
        seqrun_id == "":
@@ -217,10 +251,10 @@ def transfer_seqrun_tar_from_crick_ftp(
     warn_exisitng_seqrun_paths(
       seqrun_id=seqrun_id,
       seqrun_base_dir=seqrun_base_dir,
-      clean_up_tar=True)
+      clean_up_tar=False)
     ftp_conf = \
       read_json_data(ftp_conf_file)[0]
-    ftps = FTP_TLS(timeout=600)
+    ftps = FTP_TLS(timeout=ftp_timeout)
     ftps.connect(ftp_host)
     ftps.login(
       ftp_conf.get('username'),
@@ -235,51 +269,44 @@ def transfer_seqrun_tar_from_crick_ftp(
       get_temp_dir(use_ephemeral_space=False)
     temp_seqrun_tar_file = \
       os.path.join(
-        temp_dir,
-        '{0}.tar.gz'.format(seqrun_id))
-    ftp_file_size = 0
-    counter = 0
-    for f in ftp_files:
-      logging.warn('found run {0}'.format(f))
-      if f == seqrun_tar_file:
-        counter += 1
-        ftp_file_size = \
-          int(ftps.size('/users/{0}/runs/{1}'.format(ftp_conf.get('username'), f)))
-        #with open(temp_seqrun_tar_file, 'wb') as fp:
-        #  ftps.retrbinary(
-        #    'RETR /users/{0}/runs/{1}'.\
-        #      format(ftp_conf.get('username'), f),
-        #    fp.write)
-        t = \
-          threading.\
-            Thread(
-              target=background_handle,
-              args=(
-                ftps,
-                '/users/{0}/runs/{1}'.format(ftp_conf.get('username'), f),
-                temp_seqrun_tar_file))
-        t.start()
-        while t.is_alive():
-          t.join(400)
-          try:
-            ftps.voidcmd('NOOP')
-          except error_temp as e:
-            logging.warn(e)
-            pass
-        logging.warn('downloaded tar {0}'.format(temp_seqrun_tar_file))
-        ftps.close()
-        break
+        temp_dir, seqrun_tar_file)
+    if seqrun_tar_file not in ftp_files:
+      raise ValueError(
+              'Run {0} not found on FTP'.\
+                format(seqrun_tar_file))
+    remote_file_path = \
+      '/users/{0}/runs/{1}'.format(
+        ftp_conf.get('username'),
+        seqrun_tar_file)
+    ftp_file_size = \
+      int(ftps.size(remote_file_path))
+    t = \
+      Thread(
+        target=background_handle,
+          args=(
+            ftps,
+            remote_file_path,
+            temp_seqrun_tar_file))
+    t.start()
+    while t.is_alive():
+      t.join(400)
+      try:
+        ftps.voidcmd('NOOP')
+      except error_temp as e:
+        logging.warn(e)
+    logging.warn('downloaded tar {0}'.format(temp_seqrun_tar_file))
     file_size = \
       os.stat(temp_seqrun_tar_file).st_size
-    if file_size != ftp_file_size:
-      raise ValueError('FTP file size and local file size are not same')
-    if counter == 0:
-      raise ValueError('No tar file found for run {0}'.format(seqrun_id))
+    if int(file_size) != int(ftp_file_size):
+      raise ValueError(
+              'FTP file size {0} and local file size {1} are not same'.\
+                format(ftp_file_size, file_size))
     else:
       copy_local_file(
         temp_seqrun_tar_file,
         seqrun_tar_file_path)
       logging.warn('Copied tar to {0}'.format(seqrun_tar_file_path))
   except Exception as e:
-    logging.error(e)
-    raise ValueError('Error: {0}'.format(e))
+    raise ValueError(
+            'Failed to download FTP file for run {0}: error: {1}'.\
+              format(seqrun_id, e))
