@@ -83,7 +83,7 @@ def validate_md5_chunk_func(**context):
     raise
 
 
-def _split_md5_file(md5_file, trim_path, temp_dir, split_count=20):
+def _split_md5_file(md5_file, trim_path, temp_dir, split_count=50):
   try:
     df = \
       pd.read_csv(
@@ -128,6 +128,8 @@ def _split_md5_file(md5_file, trim_path, temp_dir, split_count=20):
 def find_and_split_md5_func(**context):
   try:
     ti = context.get('ti')
+    split_count = \
+      context['params'].get('split_count')
     dag_run = context.get('dag_run')
     if dag_run is not None and \
        dag_run.conf is not None and \
@@ -158,9 +160,9 @@ def find_and_split_md5_func(**context):
           md5_file=md5_file,
           trim_path=trim_path,
           temp_dir=temp_dir,
-          split_count=20)
+          split_count=split_count)
       ti.xcom_push(key='md5_file_chunk', value=md5_file_chunks)
-      return ['md5_validate_chunk_{0}'.format(i) for i in range(0, 21)]
+      return ['md5_validate_chunk_{0}'.format(i) for i in range(0, split_count)]
     else:
       raise ValueError('seqrun id not found in dag_run.conf')
   except Exception as e:
