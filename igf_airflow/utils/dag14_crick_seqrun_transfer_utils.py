@@ -1,14 +1,23 @@
-import os, logging, subprocess, sys
+import os
+import sys
+import logging
+import subprocess
 from threading import Thread
-from typing import IO
 import pandas as pd
-from ftplib import FTP_TLS, error_temp
+from ftplib import FTP_TLS
+from ftplib import error_temp
 from airflow.models import Variable
-from igf_data.utils.fileutils import get_temp_dir, read_json_data
-from igf_data.utils.fileutils import remove_dir, copy_local_file
-from igf_data.utils.fileutils import list_remote_file_or_dirs, copy_remote_file
+from igf_data.utils.fileutils import get_temp_dir
+from igf_data.utils.fileutils import read_json_data
+from igf_data.utils.fileutils import remove_dir
+from igf_data.utils.fileutils import copy_local_file
+from igf_data.utils.fileutils import get_date_stamp
+from igf_data.utils.fileutils import list_remote_file_or_dirs
+from igf_data.utils.fileutils import copy_remote_file
 from igf_data.utils.fileutils import check_file_path
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
+from igf_data.utils.jupyter_nbconvert_wrapper import Notebook_runner
+from igf_data.utils.box_upload import upload_file_or_dir_to_box
 
 
 SLACK_CONF = Variable.get('slack_conf', default_var=None)
@@ -19,6 +28,157 @@ FTP_CONFIG_FILE = Variable.get('crick_ftp_config_file_wells', default_var=None)
 SEQRUN_SERVER = Variable.get('seqrun_server', default_var=None)
 REMOTE_SEQRUN_BASE_PATH = '/home/igf/seqrun/test_dir' #Variable.get('seqrun_base_path', default_var=None)
 SEQRUN_SERVER_USER = Variable.get('seqrun_server_user', default_var=None)
+INTEROP_DUMPTEXT_EXE = Variable.get('interop_dumptext_exe', default_var=None)
+INTEROP_NOTEBOOK_IMAGE_PATH = Variable.get('interop_notebook_image_path', default_var=None)
+INTEROP_NOTEBOOK_TEMPLATE = Variable.get('interop_notebook_template', default_var=None)
+SEQRUN_ML_NOTEBOOK_TEMPLATE = Variable.get('seqrun_ml_notebook_template', default_var=None)
+SEQRUN_TRAINING_DATA_CSV = Variable.get('seqrun_training_data_csv', default_var=None)
+BOX_DIR_PREFIX = Variable.get('box_dir_prefix_for_seqrun_report', default_var=None)
+BOX_USERNAME = Variable.get('box_username', default_var=None)
+BOX_CONFIG_FILE  = Variable.get('box_config_file', default_var=None)
+
+
+def generate_interop_report_func(**context):
+  try:
+    ti = context.get('ti')
+    dag_run = context.get('dag_run')
+    seqrun_id = None
+    runinfo_path = None
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('seqrun_id') is not None:
+      seqrun_id = \
+        dag_run.conf.get('seqrun_id')
+      runinfo_path = \
+        os.path.join(
+          HPC_SEQRUN_BASE_PATH,
+          seqrun_id,
+          'RunInfo.xml')
+    else:
+      raise ValueError('seqrun id not found in dag_run.conf')
+    interop_dump_xcom_task = \
+      context['params'].get('interop_dump_xcom_task')
+    timeout = \
+      context['params'].get('timeout')
+    kernel_name = \
+      context['params'].get('kernel_name')
+    interop_dump_path = \
+      ti.xcom_pull(task_ids=interop_dump_xcom_task)
+    check_file_path(interop_dump_path)
+    temp_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    input_params = {
+      'DATE_TAG': get_date_stamp(),
+      'SEQRUN_IGF_ID': seqrun_id,
+      'RUNINFO_XML_PATH': runinfo_path,
+      'INTEROP_DUMP_PATH': interop_dump_path}
+    container_bind_dir_list = [
+      os.path.dirname(interop_dump_path),
+      os.path.dirname(runinfo_path)]
+    nb = \
+      Notebook_runner(
+        template_ipynb_path=INTEROP_NOTEBOOK_TEMPLATE,
+        output_dir=temp_dir,
+        input_param_map=input_params,
+        container_paths=container_bind_dir_list,
+        timeout=timeout,
+        kernel=kernel_name,
+        use_ephemeral_space=True,
+        singularity_options=['--no-home','-C'],
+        allow_errors=False,
+        singularity_image_path=INTEROP_NOTEBOOK_IMAGE_PATH)
+    output_notebook_path, _ = \
+      nb.execute_notebook_in_singularity()
+    box_dir = \
+      os.path.join(BOX_DIR_PREFIX, seqrun_id)
+    upload_file_or_dir_to_box(
+      box_config_file=BOX_CONFIG_FILE,
+      file_path=output_notebook_path,
+      upload_dir=box_dir,
+      box_username=BOX_USERNAME)
+    input_params = {
+      'SEQRUN_IGF_ID': seqrun_id,
+      'RUNINFO_XML_PATH': runinfo_path,
+      'INTEROP_DUMP_PATH': interop_dump_path,
+      'SEQRUN_TRAINING_DATA': SEQRUN_TRAINING_DATA_CSV}
+    container_bind_dir_list = [
+      os.path.dirname(interop_dump_path),
+      os.path.dirname(runinfo_path),
+      os.path.dirname(SEQRUN_TRAINING_DATA_CSV) ]
+    nb = \
+      Notebook_runner(
+        template_ipynb_path=SEQRUN_ML_NOTEBOOK_TEMPLATE,
+        output_dir=temp_dir,
+        input_param_map=input_params,
+        container_paths=container_bind_dir_list,
+        timeout=timeout,
+        kernel=kernel_name,
+        use_ephemeral_space=True,
+        singularity_options=['--no-home','-C'],
+        allow_errors=False,
+        singularity_image_path=INTEROP_NOTEBOOK_IMAGE_PATH)
+    output_notebook_path, _ = \
+      nb.execute_notebook_in_singularity()
+    upload_file_or_dir_to_box(
+      box_config_file=BOX_CONFIG_FILE,
+      file_path=output_notebook_path,
+      upload_dir=box_dir,
+      box_username=BOX_USERNAME)
+  except Exception as e:
+    logging.error(e)
+    message = \
+      'Failed to generate InterOp report, error: {0}'.\
+        format(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=message,
+      reaction='fail')
+    raise
+
+
+def run_interop_dump_func(**context):
+  try:
+    seqrun_dir = None
+    dag_run = context.get('dag_run')
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('seqrun_id') is not None:
+      seqrun_id = \
+        dag_run.conf.get('seqrun_id')
+      seqrun_dir = \
+        os.path.join(
+          HPC_SEQRUN_BASE_PATH, seqrun_id)
+    else:
+      raise ValueError('seqrun id not found in dag_run.conf')
+    temp_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    dump_file = \
+      os.path.join(
+        temp_dir,
+        '{0}_interop_dump.csv'.format(seqrun_id))
+    check_file_path(INTEROP_DUMPTEXT_EXE)
+    cmd = [
+      INTEROP_DUMPTEXT_EXE, seqrun_dir, '>', dump_file]
+    cmd = ' '.join(cmd)
+    subprocess.\
+      check_call(cmd, shell=True)
+    return dump_file
+  except Exception as e:
+    logging.error(e)
+    message = \
+      'Failed to generate InterOp dump, error: {0}'.\
+        format(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=message,
+      reaction='fail')
+    raise
 
 def copy_run_file_to_remote_func(**context):
   try:
