@@ -97,23 +97,27 @@ def _split_md5_file(md5_file, trim_path, temp_dir, split_count=50):
     lines_per_split = \
       int(max_lines / split_count) + 1
     chunk_file_dict = dict()
-    if not trim_path.endswith('/'):
-      trim_path = \
-        '{0}/'.format(trim_path)
     df['file_path'] = \
       df['file_path'].\
         str.\
-          replace(trim_path, '')
+          replace(trim_path, '').\
+          lstrip('/')
     while start < max_lines:
       chunk_file = \
         os.path.join(
           temp_dir,
-          '{0}_{1}'.format(md5_file, counter))
+          '{0}_{1}'.format(
+            os.path.basename(md5_file),
+            counter))
       finish = start + lines_per_split
       if finish > max_lines:
         finish = max_lines
       df.iloc[start:finish].\
-        to_csv(chunk_file, sep="\t", index=False, header=False)
+        to_csv(
+          chunk_file,
+          sep="\t",
+          index=False,
+          header=False)
       chunk_file_dict.\
         update({counter: chunk_file})
       start = finish
