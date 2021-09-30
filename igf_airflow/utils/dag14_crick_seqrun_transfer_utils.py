@@ -17,9 +17,88 @@ HPC_SEQRUN_BASE_PATH = Variable.get('hpc_seqrun_path', default_var=None)
 FTP_SEQRUN_SERVER = Variable.get('crick_ftp_seqrun_hostname', default_var=None)
 FTP_CONFIG_FILE = Variable.get('crick_ftp_config_file_wells', default_var=None)
 SEQRUN_SERVER = Variable.get('seqrun_server', default_var=None)
-REMOTE_SEQRUN_BASE_PATH = Variable.get('seqrun_base_path', default_var=None)
+REMOTE_SEQRUN_BASE_PATH = '/home/igf/seqrun/test_dir' #Variable.get('seqrun_base_path', default_var=None)
 SEQRUN_SERVER_USER = Variable.get('seqrun_server_user', default_var=None)
 
+def copy_run_file_to_remote_func(**context):
+  try:
+    ti = context.get('ti')
+    xcom_task = \
+      context['params'].get('xcom_task')
+    xcom_key = \
+      context['params'].get('xcom_key')
+    if xcom_key is not None and \
+       xcom_key == 'bcl_files':
+      lane_id = \
+        context['params'].get('lane_id')
+      if lane_id is None:
+        raise ValueError('No lane id found for bcl file copy')
+      xcom_data = \
+        ti.xcom_pull(
+          task_ids=xcom_task, key=xcom_key)
+      if xcom_data is None or \
+         (xcom_data is not None and not isinstance(xcom_data, dict)):
+        raise ValueError('xcom data is not correctly formatted')
+      if xcom_data is not None and \
+         isinstance(xcom_data, dict) and \
+         lane_id not in xcom_data.keys():
+        raise ValueError(
+                'No xcom entry for lane {0} found'.\
+                  format(lane_id))
+      xcom_data_for_lane = \
+        xcom_data.get(lane_id)
+      if isinstance(xcom_data_for_lane, dict) or \
+         'local_bcl_path' in xcom_data_for_lane.keys() or \
+         xcom_data_for_lane.get('local_bcl_path') is None or \
+         'remote_bcl_path' in xcom_data_for_lane.keys() or \
+         xcom_data_for_lane.get('remote_bcl_path') is None:
+        raise ValueError('Local or remote bcl file path not found')
+      local_bcl_path = \
+        xcom_data_for_lane.get('local_bcl_path')
+      remote_bcl_path = \
+        xcom_data_for_lane.get('remote_bcl_path')
+      copy_remote_file(
+        source_path=local_bcl_path,
+        destination_path=remote_bcl_path,
+        destination_address='{0}@{1}'.format(SEQRUN_SERVER_USER, SEQRUN_SERVER))
+    elif xcom_key is not None and \
+       xcom_key == 'additional_files':
+      xcom_data = \
+        ti.xcom_pull(
+          task_ids=xcom_task, key=xcom_key)
+      if xcom_data is None or \
+         (xcom_data is not None and not isinstance(xcom_data, dict)):
+        raise ValueError('xcom data is not correctly formatted')
+      if xcom_data is not None and \
+         isinstance(xcom_data, dict) and \
+         len(xcom_data.keys())==0:
+        raise ValueError('No xcom entry for additional files found')
+      for f in xcom_data.keys():
+        local_file_path = \
+          xcom_data[f].get('local_file_path')
+        remote_file_path = \
+          xcom_data[f].get('remote_file_path')
+        if local_file_path is None or \
+           remote_file_path is None:
+          raise ValueError(
+                  'Local or remote file not found for {0}'.format(f))
+        copy_remote_file(
+          source_path=local_file_path,
+          destination_path=remote_file_path,
+          destination_address='{0}@{1}'.format(SEQRUN_SERVER_USER, SEQRUN_SERVER))
+  except Exception as e:
+    logging.error(e)
+    message = \
+      'Failed to copy bcl file to remote, error: {0}'.\
+        format(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=message,
+      reaction='fail')
+    raise
 
 def check_and_divide_run_for_remote_copy_func(**context):
   try:
@@ -58,7 +137,7 @@ def check_and_divide_run_for_remote_copy_func(**context):
           seqrun_dir,
           'Data',
           'Intensities',
-          'Basescall',
+          'BaseCalls',
           'L00{0}'.format(i))
       remote_bcl_path = \
         os.path.join(
@@ -79,7 +158,8 @@ def check_and_divide_run_for_remote_copy_func(**context):
         'InterOp',
         'Logs',
         'Recipe',
-        'RTAComplete.txt']
+        'RTAComplete.txt',
+        'Data/Intensities/s.locs']
       xcom_additional_files_dict = dict()
       for f in additional_files:
         local_file_path = \
