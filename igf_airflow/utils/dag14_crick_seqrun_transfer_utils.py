@@ -16,6 +16,18 @@ FTP_CONFIG_FILE = Variable.get('crick_ftp_config_file_wells', default_var=None)
 
 def validate_md5_chunk_func(**context):
   try:
+    seqrun_dir = None
+    dag_run = context.get('dag_run')
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('seqrun_id') is not None:
+      seqrun_id = \
+        dag_run.conf.get('seqrun_id')
+      seqrun_dir = \
+        os.path.join(
+          HPC_SEQRUN_BASE_PATH, seqrun_id)
+    else:
+      raise ValueError('seqrun id not found in dag_run.conf')
     chunk_id = \
       context['params'].get('chunk_id')
     xcom_task = \
@@ -37,7 +49,8 @@ def validate_md5_chunk_func(**context):
         get(int(chunk_id))
     check_file_path(md5_file_chunk)
     cmd = \
-      "md5sum -c {0}".format(md5_file_chunk)
+      "cd {0}; md5sum -c {1}".\
+        format(seqrun_dir, md5_file_chunk)
     temp_dir = \
       get_temp_dir(use_ephemeral_space=True)
     error_file = \
