@@ -1,18 +1,124 @@
 import os, logging, subprocess, sys
 from threading import Thread
+from typing import IO
 import pandas as pd
 from ftplib import FTP_TLS, error_temp
 from airflow.models import Variable
 from igf_data.utils.fileutils import get_temp_dir, read_json_data
 from igf_data.utils.fileutils import remove_dir, copy_local_file
+from igf_data.utils.fileutils import list_remote_file_or_dirs, copy_remote_file
 from igf_data.utils.fileutils import check_file_path
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
+
 
 SLACK_CONF = Variable.get('slack_conf', default_var=None)
 MS_TEAMS_CONF = Variable.get('ms_teams_conf', default_var=None)
 HPC_SEQRUN_BASE_PATH = Variable.get('hpc_seqrun_path', default_var=None)
 FTP_SEQRUN_SERVER = Variable.get('crick_ftp_seqrun_hostname', default_var=None)
 FTP_CONFIG_FILE = Variable.get('crick_ftp_config_file_wells', default_var=None)
+SEQRUN_SERVER = Variable.get('seqrun_server', default_var=None)
+REMOTE_SEQRUN_BASE_PATH = Variable.get('seqrun_base_path', default_var=None)
+SEQRUN_SERVER_USER = Variable.get('seqrun_server_user', default_var=None)
+
+
+def check_and_divide_run_for_remote_copy_func(**context):
+  try:
+    ti = context.get('ti')
+    seqrun_dir = None
+    remote_seqrun_dir = None
+    dag_run = context.get('dag_run')
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('seqrun_id') is not None:
+      seqrun_id = \
+        dag_run.conf.get('seqrun_id')
+      seqrun_dir = \
+        os.path.join(
+          HPC_SEQRUN_BASE_PATH, seqrun_id)
+      remote_seqrun_dir = \
+        os.path.join(
+          REMOTE_SEQRUN_BASE_PATH, seqrun_id)
+    else:
+      raise ValueError('seqrun id not found in dag_run.conf')
+    # check for remote run dir and exit
+    all_seqrun_ids = \
+      list_remote_file_or_dirs(
+        remote_server=SEQRUN_SERVER,
+        remote_path=REMOTE_SEQRUN_BASE_PATH,
+        user_name=SEQRUN_SERVER_USER,
+        only_dirs=True)
+    if seqrun_id in all_seqrun_ids:
+      raise IOError(
+              'Seqrun {0} already present on the rempote server {1}, path {2}, remove it before copy'.\
+                format(seqrun_id, SEQRUN_SERVER, REMOTE_SEQRUN_BASE_PATH))
+    xcom_bcl_dict = dict()
+    for i in range(1, 9):
+      local_bcl_path = \
+        os.path.join(
+          seqrun_dir,
+          'Data',
+          'Intensities',
+          'Basescall',
+          'L00{0}'.format(i))
+      remote_bcl_path = \
+        os.path.join(
+          remote_seqrun_dir,
+          'Data',
+          'Intensities',
+          'Basescall',
+          'L00{0}'.format(i))
+      check_file_path(local_bcl_path)
+      xcom_bcl_dict.\
+        update({
+          i: {
+            'local_bcl_path': local_bcl_path,
+            'remote_bcl_path': remote_bcl_path}})
+      additional_files = [
+        'RunInfo.xml',
+        'runParameters.xml',
+        'InterOp',
+        'Logs',
+        'Recipe',
+        'RTAComplete.txt']
+      xcom_additional_files_dict = dict()
+      for f in additional_files:
+        local_file_path = \
+          os.path.join(
+            seqrun_dir, f)
+        remote_file_path = \
+          os.path.join(
+            remote_seqrun_dir, f)
+        check_file_path(local_file_path)
+        xcom_additional_files_dict.\
+          update({
+            f: {
+              'local_file_path': local_file_path,
+              'remote_file_path': remote_file_path}})
+      ti.xcom_push(
+        key='bcl_files',
+        value=xcom_bcl_dict)
+      ti.xcom_push(
+        key='additional_files',
+        value=xcom_additional_files_dict)
+      task_list = [
+        'copy_bcl_to_remote_for_lane{0}'.format(i)
+          for i in range(1,9)]
+      task_list.\
+        append('copy_additional_files')
+      return task_list
+  except Exception as e:
+    logging.error(e)
+    message = \
+      'Failed remote copy decide branch, error: {0}'.\
+        format(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=message,
+      reaction='fail')
+    raise
 
 def validate_md5_chunk_func(**context):
   try:
