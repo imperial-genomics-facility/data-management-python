@@ -113,7 +113,7 @@ def _split_md5_file(md5_file, trim_path, temp_dir, split_count=50):
       if finish > max_lines:
         finish = max_lines
       df.iloc[start:finish].\
-        to_csv(chunk_file, index=False, header=False)
+        to_csv(chunk_file, sep="\t", index=False, header=False)
       chunk_file_dict.\
         update({counter: chunk_file})
       start = finish
