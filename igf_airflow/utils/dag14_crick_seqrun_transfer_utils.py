@@ -152,40 +152,40 @@ def check_and_divide_run_for_remote_copy_func(**context):
           i: {
             'local_bcl_path': local_bcl_path,
             'remote_bcl_path': remote_bcl_path}})
-      additional_files = [
-        'RunInfo.xml',
-        'runParameters.xml',
-        'InterOp',
-        'Logs',
-        'Recipe',
-        'RTAComplete.txt',
-        'Data/Intensities/s.locs']
-      xcom_additional_files_dict = dict()
-      for f in additional_files:
-        local_file_path = \
-          os.path.join(
-            seqrun_dir, f)
-        remote_file_path = \
-          os.path.join(
-            remote_seqrun_dir, f)
-        check_file_path(local_file_path)
-        xcom_additional_files_dict.\
-          update({
-            f: {
-              'local_file_path': local_file_path,
-              'remote_file_path': remote_file_path}})
-      ti.xcom_push(
-        key='bcl_files',
-        value=xcom_bcl_dict)
-      ti.xcom_push(
-        key='additional_files',
-        value=xcom_additional_files_dict)
-      task_list = [
-        'copy_bcl_to_remote_for_lane{0}'.format(i)
-          for i in range(1,9)]
-      task_list.\
-        append('copy_additional_files')
-      return task_list
+    additional_files = [
+      'RunInfo.xml',
+      'runParameters.xml',
+      'InterOp',
+      'Logs',
+      'Recipe',
+      'RTAComplete.txt',
+      'Data/Intensities/s.locs']
+    xcom_additional_files_dict = dict()
+    for f in additional_files:
+      local_file_path = \
+        os.path.join(
+          seqrun_dir, f)
+      remote_file_path = \
+        os.path.join(
+          remote_seqrun_dir, f)
+      check_file_path(local_file_path)
+      xcom_additional_files_dict.\
+        update({
+          f: {
+            'local_file_path': local_file_path,
+            'remote_file_path': remote_file_path}})
+    ti.xcom_push(
+      key='bcl_files',
+      value=xcom_bcl_dict)
+    ti.xcom_push(
+      key='additional_files',
+      value=xcom_additional_files_dict)
+    task_list = [
+      'copy_bcl_to_remote_for_lane{0}'.format(i)
+        for i in range(1,9)]
+    task_list.\
+      append('copy_additional_files')
+    return task_list
   except Exception as e:
     logging.error(e)
     message = \
