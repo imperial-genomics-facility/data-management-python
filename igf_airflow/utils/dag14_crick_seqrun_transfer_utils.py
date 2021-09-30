@@ -48,9 +48,9 @@ def copy_run_file_to_remote_func(**context):
       xcom_data_for_lane = \
         xcom_data.get(lane_id)
       if isinstance(xcom_data_for_lane, dict) or \
-         'local_bcl_path' in xcom_data_for_lane.keys() or \
+         'local_bcl_path' not in xcom_data_for_lane.keys() or \
          xcom_data_for_lane.get('local_bcl_path') is None or \
-         'remote_bcl_path' in xcom_data_for_lane.keys() or \
+         'remote_bcl_path' not in xcom_data_for_lane.keys() or \
          xcom_data_for_lane.get('remote_bcl_path') is None:
         raise ValueError('Local or remote bcl file path not found')
       local_bcl_path = \
