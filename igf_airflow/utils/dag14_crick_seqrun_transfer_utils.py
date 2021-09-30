@@ -100,7 +100,10 @@ def _split_md5_file(md5_file, trim_path, temp_dir, split_count=50):
     df['file_path'] = \
       df['file_path'].\
         str.\
-          replace(trim_path, '').\
+          replace(trim_path, '')
+    df['file_path'] = \
+      df['file_path'].\
+        str.\
           lstrip('/')
     while start < max_lines:
       chunk_file = \
