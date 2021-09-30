@@ -47,7 +47,7 @@ def copy_run_file_to_remote_func(**context):
                   format(lane_id))
       xcom_data_for_lane = \
         xcom_data.get(lane_id)
-      if isinstance(xcom_data_for_lane, dict) or \
+      if not isinstance(xcom_data_for_lane, dict) or \
          'local_bcl_path' not in xcom_data_for_lane.keys() or \
          xcom_data_for_lane.get('local_bcl_path') is None or \
          'remote_bcl_path' not in xcom_data_for_lane.keys() or \
