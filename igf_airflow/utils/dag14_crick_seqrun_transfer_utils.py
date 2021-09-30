@@ -1,6 +1,6 @@
 import os, logging, subprocess, sys
 from threading import Thread
-from shutil import move
+import pandas as pd
 from ftplib import FTP_TLS, error_temp
 from airflow.models import Variable
 from igf_data.utils.fileutils import get_temp_dir, read_json_data
@@ -8,11 +8,165 @@ from igf_data.utils.fileutils import remove_dir, copy_local_file
 from igf_data.utils.fileutils import check_file_path
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
 
+SLACK_CONF = Variable.get('slack_conf', default_var=None)
+MS_TEAMS_CONF = Variable.get('ms_teams_conf', default_var=None)
+HPC_SEQRUN_BASE_PATH = Variable.get('hpc_seqrun_path', default_var=None)
+FTP_SEQRUN_SERVER = Variable.get('crick_ftp_seqrun_hostname', default_var=None)
+FTP_CONFIG_FILE = Variable.get('crick_ftp_config_file_wells', default_var=None)
+
+def validate_md5_chunk_func(**context):
+  try:
+    chunk_id = \
+      context['params'].get('chunk_id')
+    xcom_task = \
+      context['params'].get('xcom_task')
+    xcom_key = \
+      context['params'].get('xcom_key')
+    ti = \
+      context.get('ti')
+    md5_chunk_dict = \
+      ti.xcom_pull(
+        task_ids=xcom_task,
+        key=xcom_key)
+    if int(chunk_id) not in md5_chunk_dict.keys():
+      raise ValueError(
+              'Missing chunk id {0} in the md5 chunks {1}'.\
+                format(chunk_id, md5_chunk_dict))
+    md5_file_chunk = \
+      md5_chunk_dict.\
+        get(int(chunk_id))
+    check_file_path(md5_file_chunk)
+    cmd = \
+      "md5sum -c {0}".format(md5_file_chunk)
+    temp_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    error_file = \
+      os.path.join(
+        temp_dir,
+        '{0}.err'.format(os.path.basename(md5_file_chunk)))
+    try:
+      with open(error_file, 'w') as fp:
+        _ = \
+          subprocess.\
+            check_call(
+              cmd,
+              stderr=fp,
+              shell=True)
+    except Exception as e:
+      raise ValueError(
+              'Error in md5: {0}, log: {1}'.format(e, error_file))
+  except Exception as e:
+    logging.error(e)
+    message = \
+      'Failed md5 validation, error: {0}'.\
+        format(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=message,
+      reaction='fail')
+    raise
+
+
+def _split_md5_file(md5_file, trim_path, temp_dir, split_count=20):
+  try:
+    df = \
+      pd.read_csv(
+        md5_file,
+        sep='\s+',
+        header=None,
+        names=['md5', 'file_path'])
+    start = 0
+    counter = 0
+    max_lines = len(df.index)
+    lines_per_split = \
+      int(max_lines / split_count) + 1
+    chunk_file_dict = dict()
+    if not trim_path.endswith('/'):
+      trim_path = \
+        '{0}/'.format(trim_path)
+    df['file_path'] = \
+      df['file_path'].\
+        str.\
+          replace(trim_path, '')
+    while start < max_lines:
+      chunk_file = \
+        os.path.join(
+          temp_dir,
+          '{0}_{1}'.format(md5_file, counter))
+      finish = start + lines_per_split
+      if finish > max_lines:
+        finish = max_lines
+      df.iloc[start:finish].\
+        to_csv(chunk_file, index=False, header=False)
+      chunk_file_dict.\
+        update({counter: chunk_file})
+      start = finish
+      counter += 1
+    return chunk_file_dict
+  except Exception as e:
+    raise ValueError(
+            'Failed to split md5 file {0}, error: {1}'.\
+              format(md5_file, e))
+
+
+def find_and_split_md5_func(**context):
+  try:
+    ti = context.get('ti')
+    dag_run = context.get('dag_run')
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('seqrun_id') is not None:
+      seqrun_id = \
+        dag_run.conf.get('seqrun_id')
+      seqrun_dir = \
+        os.path.join(
+          HPC_SEQRUN_BASE_PATH, seqrun_id)
+      md5_file = \
+        os.path.join(
+          seqrun_dir,
+          '{0}.md5'.format(seqrun_id))
+      check_file_path(md5_file)
+      temp_dir = \
+        get_temp_dir(use_ephemeral_space=True)
+      trim_path = \
+        os.path.join(
+          'camp',
+          'stp',
+          'sequencing',
+          'inputs',
+          'instruments',
+          'sequencers',
+          seqrun_id)
+      md5_file_chunks = \
+        _split_md5_file(
+          md5_file=md5_file,
+          trim_path=trim_path,
+          temp_dir=temp_dir,
+          split_count=20)
+      ti.xcom_push(key='md5_file_chunk', value=md5_file_chunks)
+      return ['md5_validate_chunk_{0}'.format(i) for i in range(0, 21)]
+    else:
+      raise ValueError('seqrun id not found in dag_run.conf')
+  except Exception as e:
+    logging.error(e)
+    message = \
+      'Failed md5 split, error: {0}'.\
+        format(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=message,
+      reaction='fail')
+    raise
+
+
 def extract_tar_file_func(**context):
   try:
-    SLACK_CONF = Variable.get('slack_conf', default_var=None)
-    MS_TEAMS_CONF = Variable.get('ms_teams_conf', default_var=None)
-    HPC_SEQRUN_BASE_PATH = Variable.get('hpc_seqrun_path', default_var=None)
     dag_run = context.get('dag_run')
     if dag_run is not None and \
        dag_run.conf is not None and \
@@ -38,6 +192,8 @@ def extract_tar_file_func(**context):
         dag_id=context['task'].dag_id,
         comment=message,
         reaction='pass')
+    else:
+      raise ValueError('seqrun id not found in dag_run.conf')
   except Exception as e:
     logging.error(e)
     message = \
@@ -66,10 +222,6 @@ def _extract_seqrun_tar(tar_file, seqrun_id, seqrun_base_path):
                 format(output_seqrun_dir))
     temp_dir = \
       get_temp_dir(use_ephemeral_space=False)
-    #temp_dir = \
-    #  os.path.join(
-    #    seqrun_base_path,
-    #    'temp_{0}'.format(seqrun_id))
     if os.path.exists(temp_dir):
       _change_temp_dir_permissions(temp_dir)
       remove_dir(temp_dir)
@@ -91,52 +243,6 @@ def _extract_seqrun_tar(tar_file, seqrun_id, seqrun_base_path):
       check_call(
         untar_command, shell=True)
     _change_temp_dir_permissions(temp_dir)
-    #bcl_path = \
-    #  os.path.join(base_path, 'Data')
-    #untar_command = \
-    #  "tar --no-same-owner --no-same-permissions --owner=igf -C {0} -xzf {1} {2}".\
-    #    format(temp_dir, tar_file, bcl_path.lstrip('/'))
-    #subprocess.\
-    #  check_call(
-    #    untar_command, shell=True)
-    #_change_temp_dir_permissions(temp_dir)
-    #interop_path = \
-    #  os.path.join(base_path, 'InterOp')
-    #untar_command = \
-    #  "tar --no-same-owner --no-same-permissions --owner=igf -C {0} -xzf {1} {2}".\
-    #    format(temp_dir, tar_file, interop_path.lstrip('/'))
-    #subprocess.\
-    #  check_call(
-    #    untar_command, shell=True)
-    #_change_temp_dir_permissions(temp_dir)
-    #run_info_path = \
-    #  os.path.join(base_path, 'RunInfo.xml')
-    #untar_command = \
-    #  "tar --no-same-owner --no-same-permissions --owner=igf -C {0} -xzf {1} {2}".\
-    #    format(temp_dir, tar_file, run_info_path.lstrip('/'))
-    #subprocess.\
-    #  check_call(
-    #    untar_command, shell=True)
-    #_change_temp_dir_permissions(temp_dir)
-    #run_parameter_path = \
-    #  os.path.join(base_path, 'runParameters.xml')
-    #untar_command = \
-    #  "tar --no-same-owner --no-same-permissions --owner=igf -C {0} -xzf {1} {2}".\
-    #    format(temp_dir, tar_file, run_parameter_path.lstrip('/'))
-    #subprocess.\
-    #  check_call(
-    #    untar_command, shell=True)
-    #_change_temp_dir_permissions(temp_dir)
-    #check_file_path(base_path)
-    #rta_complete_path = \
-    #  os.path.join(base_path, 'RTAComplete.txt')
-    #untar_command = \
-    #  "tar --no-same-owner --no-same-permissions --owner=igf -C {0} -xzf {1} {2}".\
-    #    format(temp_dir, tar_file, rta_complete_path.lstrip('/'))
-    #subprocess.\
-    #  check_call(
-    #    untar_command, shell=True)
-    #_change_temp_dir_permissions(temp_dir)
     if not os.path.exists(base_run_path):
       raise IOError(
               'Path {0} not found. List of files under temp dir: {1}'.\
@@ -179,11 +285,6 @@ def _change_temp_dir_permissions(temp_dir):
 
 def check_and_transfer_run_func(**context):
   try:
-    SLACK_CONF = Variable.get('slack_conf', default_var=None)
-    MS_TEAMS_CONF = Variable.get('ms_teams_conf', default_var=None)
-    FTP_SEQRUN_SERVER = Variable.get('crick_ftp_seqrun_hostname', default_var=None)
-    FTP_CONFIG_FILE = Variable.get('crick_ftp_config_file_wells', default_var=None)
-    HPC_SEQRUN_BASE_PATH = Variable.get('hpc_seqrun_path', default_var=None)
     dag_run = context.get('dag_run')
     if dag_run is not None and \
        dag_run.conf is not None and \
@@ -205,6 +306,8 @@ def check_and_transfer_run_func(**context):
         dag_id=context['task'].dag_id,
         comment=message,
         reaction='pass')
+    else:
+      raise ValueError('seqrun id not found in dag_run.conf')
   except Exception as e:
     logging.error(e)
     message = \
