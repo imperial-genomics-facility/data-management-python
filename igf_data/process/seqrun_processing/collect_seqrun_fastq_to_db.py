@@ -644,6 +644,7 @@ class Collect_seqrun_fastq_to_db:
           run_data[run_data['EXISTS']==False]                                   # filter existing runs
         existing_run_data = \
           run_data[run_data['EXISTS']==True]                                    # get existing runs
+        formatted_existing_run_data = list()
         if existing_run_data.index.size > 0:
           if 'R1_READ_COUNT' not in existing_run_data.columns or \
              'R2_READ_COUNT' not in existing_run_data.columns:
@@ -657,7 +658,6 @@ class Collect_seqrun_fastq_to_db:
           existing_run_data = \
             existing_run_data.\
               to_dict(orient='records')
-          formatted_existing_run_data = list()
           for entry in existing_run_data:
             row = dict()
             for col in existing_data_columns:
