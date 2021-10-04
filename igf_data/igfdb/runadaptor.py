@@ -381,8 +381,8 @@ class RunAdaptor(BaseAdaptor):
         run_id = run_data.get('run_id')
         query = \
           self.session.\
-            query(RunAdaptor).\
-            filter(RunAdaptor.run_id==run_id)                                   # define base query
+            query(Run_attribute).\
+            filter(Run_attribute.run_id==run_id)                                   # define base query
         query.update(run_data)
       if autosave:
         self.commit_session()

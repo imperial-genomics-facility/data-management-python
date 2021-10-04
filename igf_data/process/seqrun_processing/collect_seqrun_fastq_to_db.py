@@ -659,10 +659,14 @@ class Collect_seqrun_fastq_to_db:
             existing_run_data.\
               to_dict(orient='records')
           for entry in existing_run_data:
-            row = dict()
+            row = {
+              'run_igf_id': entry.get('run_igf_id')}
             for col in existing_data_columns:
-              row.\
-                update({col: entry.get(col)})
+              if col != 'run_igf_id' and \
+                 entry.get(col) is not None:
+                row.\
+                  update({
+                    col: entry.get(col)})
             formatted_existing_run_data.\
               append(formatted_existing_run_data)
         run_data.\
@@ -673,7 +677,7 @@ class Collect_seqrun_fastq_to_db:
         run_data = \
           run_data[pd.isnull(run_data['run_igf_id'])==False]                    # filter run with null values
       # get collection data
-      collection_columns = ['name','type','table']
+      collection_columns = ['name', 'type', 'table']
       collection_data = \
         dataframe.\
           loc[:,dataframe.columns.intersection(collection_columns)]
