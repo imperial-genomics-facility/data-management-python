@@ -715,7 +715,7 @@ class Collect_seqrun_fastq_to_db:
           autosave=False)
         base.session.flush()
       # update run_adapter records
-      if formatted_existing_run_data.index.size > 0:
+      if len(formatted_existing_run_data) > 0:
         ra = RunAdaptor(**{'session':base.session})
         ra.update_run_attribute_records_by_igfid(
           formatted_existing_run_data,
