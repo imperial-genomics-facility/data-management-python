@@ -343,3 +343,49 @@ class RunAdaptor(BaseAdaptor):
     except Exception as e:
       raise ValueError(
               'Failed to fetch flowcell and lane, error: {0}'.format(e))
+
+
+  def update_run_attribute_records_by_igfid(self, update_data, autosave=True):
+    try:
+      if not isinstance(update_data, list):
+        raise ValueError(
+                'Expecting a list of dictionary and got {0}'.\
+                  format(type(update_data)))
+      update_data = pd.DataFrame(update_data)
+      if 'run_igf_id' not in update_data.columns or \
+         'attribute_name' not in update_data.columns or \
+         'attribute_value' not in update_data.columns:
+        raise ValueError('Missing required column from update data')
+      run_map_function = \
+        lambda x: \
+          self.map_foreign_table_and_store_attribute(
+            data=x,
+            lookup_table=Run,
+            lookup_column_name='run_igf_id',
+            target_column_name='run_id')
+      update_data = \
+        update_data.\
+          apply(
+            run_map_function,
+            axis=1,
+            result_type=None)
+      update_data.\
+        drop(
+          'run_igf_id',
+          axis=1,
+          inplace=True)
+      update_data = \
+        update_data.\
+          to_csv(orient='records')
+      for run_data in update_data:
+        run_id = run_data.get('run_id')
+        query = \
+          self.session.\
+            query(RunAdaptor).\
+            filter(RunAdaptor.run_id==run_id)                                   # define base query
+        query.update(run_data)
+      if autosave:
+        self.commit_session()
+    except Exception as e:
+      self.rollback_session()
+      raise ValueError('Failed to update run attribute records, error: {0}'.format(e))

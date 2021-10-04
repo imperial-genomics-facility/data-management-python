@@ -1,6 +1,7 @@
 import unittest, json, os, shutil
+from numpy.core.records import record
 from sqlalchemy import create_engine
-from igf_data.igfdb.igfTables import Base
+from igf_data.igfdb.igfTables import Base, Run, Run_attribute
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.igfdb.sampleadaptor import SampleAdaptor
@@ -64,7 +65,8 @@ class RunAdaptor_test1(unittest.TestCase):
     run_data=[{'run_igf_id':'IGF00001_MISEQ_000000000-D0YLK_1',
                'experiment_igf_id':'IGF00001_MISEQ',
                'seqrun_igf_id':'171003_M00001_0089_000000000-TEST',
-               'lane_number':'1'}]
+               'lane_number':'1',
+               'R1_READ_COUNT': 1000}]
     ra=RunAdaptor(**{'session':base.session})
     ra.store_run_and_attribute_data(data=run_data)
     base.close_session()
@@ -88,6 +90,41 @@ class RunAdaptor_test1(unittest.TestCase):
     ra.close_session()
     self.assertEqual(flowcell_id,'000000000-D0YLK')
     self.assertEqual(int(lane_number),1)
+
+  def test_update_run_attribute_records_by_igfid(self):
+    ra=RunAdaptor(**{'session_class':self.session_class})
+    ra.start_session()
+    query = \
+      ra.session.\
+      query(
+        Run_attribute.attribute_name,
+        Run_attribute.attribute_value,
+        Run.run_igf_id).\
+      join(Run, Run.run_id==Run_attribute.run_id).\
+      filter(Run.run_igf_id=='IGF00001_MISEQ_000000000-D0YLK_1')
+    record = \
+      ra.fetch_records(query=query)
+    record = \
+      record[(
+        record['attribute_name']=='R1_READ_COUNT')&(
+        record['run_igf_id']=='IGF00001_MISEQ_000000000-D0YLK_1')]
+    self.assertEqual(record.index.size, 1)
+    self.assertEqual(record.values[0], 1000)
+    update_data = [{
+      'run_igf_id': 'IGF00001_MISEQ_000000000-D0YLK_1',
+      'attribute_name': 'R1_READ_COUNT',
+      'attribute_value': 2000}]
+    ra.update_run_attribute_records_by_igfid(
+      update_data=update_data,
+      autosave=True)
+    record = \
+      ra.fetch_records(query=query)
+    record = \
+      record[(
+        record['attribute_name']=='R1_READ_COUNT')&(
+        record['run_igf_id']=='IGF00001_MISEQ_000000000-D0YLK_1')]
+    self.assertEqual(record.index.size, 1)
+    self.assertEqual(record.values[0], 2000)
 
 if __name__=='__main__':
   unittest.main()

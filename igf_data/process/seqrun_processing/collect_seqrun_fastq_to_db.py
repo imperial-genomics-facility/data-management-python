@@ -642,6 +642,29 @@ class Collect_seqrun_fastq_to_db:
               axis=1)
         run_data = \
           run_data[run_data['EXISTS']==False]                                   # filter existing runs
+        existing_run_data = \
+          run_data[run_data['EXISTS']==True]                                    # get existing runs
+        if existing_run_data.index.size > 0:
+          if 'R1_READ_COUNT' not in existing_run_data.columns or \
+             'R2_READ_COUNT' not in existing_run_data.columns:
+            raise ValueError('Missing required columns for run_attribute update')
+          existing_data_columns = [
+            'run_igf_id',
+            'R1_READ_COUNT',
+            'R2_READ_COUNT']
+          existing_run_data = \
+            existing_run_data[existing_data_columns]                            # keep only required data
+          existing_run_data = \
+            existing_run_data.\
+              to_dict(orient='records')
+          formatted_existing_run_data = list()
+          for entry in existing_run_data:
+            row = dict()
+            for col in existing_data_columns:
+              row.\
+                update({col: entry.get(col)})
+            formatted_existing_run_data.\
+              append(formatted_existing_run_data)
         run_data.\
           drop(
             'EXISTS',
@@ -689,6 +712,13 @@ class Collect_seqrun_fastq_to_db:
         ra = RunAdaptor(**{'session':base.session})
         ra.store_run_and_attribute_data(
           data=run_data,
+          autosave=False)
+        base.session.flush()
+      # update run_adapter records
+      if formatted_existing_run_data.index.size > 0:
+        ra = RunAdaptor(**{'session':base.session})
+        ra.update_run_attribute_records_by_igfid(
+          formatted_existing_run_data,
           autosave=False)
         base.session.flush()
       # store file to db
