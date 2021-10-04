@@ -376,7 +376,7 @@ class RunAdaptor(BaseAdaptor):
           inplace=True)
       update_data = \
         update_data.\
-          to_csv(orient='records')
+          to_dict(orient='records')
       for run_data in update_data:
         run_id = run_data.get('run_id')
         query = \
