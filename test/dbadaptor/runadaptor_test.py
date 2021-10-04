@@ -109,7 +109,7 @@ class RunAdaptor_test1(unittest.TestCase):
         record['attribute_name']=='R1_READ_COUNT')&(
         record['run_igf_id']=='IGF00001_MISEQ_000000000-D0YLK_1')]
     self.assertEqual(record.index.size, 1)
-    self.assertEqual(record.values[0], 1000)
+    self.assertEqual(record['attribute_value'].values[0], 1000)
     update_data = [{
       'run_igf_id': 'IGF00001_MISEQ_000000000-D0YLK_1',
       'attribute_name': 'R1_READ_COUNT',
@@ -124,7 +124,7 @@ class RunAdaptor_test1(unittest.TestCase):
         record['attribute_name']=='R1_READ_COUNT')&(
         record['run_igf_id']=='IGF00001_MISEQ_000000000-D0YLK_1')]
     self.assertEqual(record.index.size, 1)
-    self.assertEqual(record.values[0], 2000)
+    self.assertEqual(record['attribute_value'].values[0], 2000)
 
 if __name__=='__main__':
   unittest.main()
