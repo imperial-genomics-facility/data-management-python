@@ -55,29 +55,51 @@ def run_cellranger_multi(
             'Failed cellranger run: error: {0}'.format(e))
 
 
-def _check_cellranger_multi_output(cellranger_output,library_csv):
+def _check_cellranger_multi_output(cellranger_output, library_csv, sample_id):
   try:
+    #file_check_dict = {
+    #  'gene_expression':[
+    #    'web_summary.html',
+    #    'count/filtered_feature_bc_matrix.h5',
+    #    'count/possorted_genome_bam.bam',
+    #    'count/cloupe.cloupe'],
+    #  'vdj':[
+    #    'web_summary.html',
+    #    'vdj/filtered_contig_annotations.csv',
+    #    'vdj/vloupe.vloupe'],
+    #  'vdj-b':[
+    #    'web_summary.html',
+    #    'vdj_b/filtered_contig_annotations.csv',
+    #    'vdj_b/vloupe.vloupe'],
+    #  'vdj-t':[
+    #    'web_summary.html',
+    #    'vdj_t/filtered_contig_annotations.csv',
+    #    'vdj_t/vloupe.vloupe'],
+    #  'antibody_capture':['web_summary.html'],
+    #  'antigen_capture':['web_summary.html'],
+    #  'crisper_guide_capture':['web_summary.html']}
     file_check_dict = {
-      'gene_expression':[
-        'web_summary.html',
-        'count/filtered_feature_bc_matrix.h5',
-        'count/possorted_genome_bam.bam',
-        'count/cloupe.cloupe'],
-      'vdj':[
-        'web_summary.html',
-        'vdj/filtered_contig_annotations.csv',
-        'vdj/vloupe.vloupe'],
-      'vdj-b':[
-        'web_summary.html',
-        'vdj_b/filtered_contig_annotations.csv',
-        'vdj_b/vloupe.vloupe'],
-      'vdj-t':[
-        'web_summary.html',
-        'vdj_t/filtered_contig_annotations.csv',
-        'vdj_t/vloupe.vloupe'],
-      'antibody_capture':['web_summary.html'],
-      'antigen_capture':['web_summary.html'],
-      'crisper_guide_capture':['web_summary.html']}
+      'gene_expression': [
+        'per_sample_outs/{0}/web_summary.html'.format(sample_id),
+        'per_sample_outs/{0}/metrics_summary.csv'.format(sample_id),
+        'per_sample_outs/{0}/count/sample_feature_bc_matrix.h5'.format(sample_id),
+        'per_sample_outs/{0}/count/sample_alignments.bam'.format(sample_id),
+        'per_sample_outs/{0}/count/cloupe.cloupe'.format(sample_id)],
+      'vdj': [
+        'per_sample_outs/{0}/web_summary.html'.format(sample_id),
+        'per_sample_outs/{0}/vdj/filtered_contig_annotations.csv'.format(sample_id),
+        'per_sample_outs/{0}/vdj/vloupe.vloupe'.format(sample_id)],
+      'vdj-b': [
+        'per_sample_outs/{0}/web_summary.html'.format(sample_id),
+        'per_sample_outs/{0}/vdj_b/filtered_contig_annotations.csv'.format(sample_id),
+        'per_sample_outs/{0}/vdj_b/vloupe.vloupe'.format(sample_id)],
+      'vdj-t': [
+        'per_sample_outs/{0}/web_summary.html'.format(sample_id),
+        'per_sample_outs/{0}/vdj_t/filtered_contig_annotations.csv'.format(sample_id),
+        'per_sample_outs/{0}/vdj_t/vloupe.vloupe'.format(sample_id)],
+      'antibody_capture': ['per_sample_outs/{0}/web_summary.html'.format(sample_id)],
+      'antigen_capture': ['per_sample_outs/{0}/web_summary.html'.format(sample_id)],
+      'crisper_guide_capture': ['per_sample_outs/{0}/web_summary.html'.format(sample_id)]}
     check_file_path(library_csv)
     data = list()
     columns = list()
