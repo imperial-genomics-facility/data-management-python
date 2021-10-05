@@ -65,6 +65,11 @@ def run_cellranger_multi(
     copy_local_file(
       cellranger_output,
       output_dir)
+    output_dir = \
+      os.path.join(
+        output_dir,
+        'per_sample_outs',
+        sample_id)
     return cmd, output_dir
   except Exception as e:
     raise ValueError(
