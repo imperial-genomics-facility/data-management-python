@@ -1792,9 +1792,9 @@ def run_singlecell_notebook_wrapper_func(**context):
     output_notebook_key = \
       context['params'].get('output_notebook_key')
     count_dir = \
-      context['params'].get('count_dir','count')
+      context['params'].get('count_dir', 'count')
     vdj_dir = \
-      context['params'].get('vdj_dir','vdj')
+      context['params'].get('vdj_dir', 'vdj')
     analysis_description_xcom_pull_task = \
       context['params'].get('analysis_description_xcom_pull_task')
     analysis_description_xcom_key = \
@@ -1813,9 +1813,9 @@ def run_singlecell_notebook_wrapper_func(**context):
         task_ids=cellranger_xcom_pull_task,
         key=cellranger_xcom_key)
     cellranger_count_dir = \
-      os.path.join(cellranger_output,count_dir)
+      os.path.join(cellranger_output, count_dir)
     cellranger_vdj_dir = \
-      os.path.join(cellranger_output,vdj_dir)
+      os.path.join(cellranger_output, vdj_dir)
     dag_run = context.get('dag_run')
     if dag_run is None or \
        dag_run.conf is None or \
@@ -1842,7 +1842,7 @@ def run_singlecell_notebook_wrapper_func(**context):
         pd.DataFrame(analysis_description)
       analysis_description_df['feature_type'] = \
         analysis_description_df['feature_type'].\
-          map(lambda x: x.lower().replace(' ','_').replace('-','_'))
+          map(lambda x: x.lower().replace(' ', '_').replace('-', '_'))
       gex_sample = \
         analysis_description_df[analysis_description_df['feature_type']=='gene_expression']
       if len(gex_sample.index) == 0:
@@ -1899,8 +1899,8 @@ def run_singlecell_notebook_wrapper_func(**context):
     if analysis_name == 'SCANPY':
       template_ipynb_path = SCANPY_SINGLE_SAMPLE_TEMPLATE
       singularity_image_path = SCANPY_NOTEBOOK_IMAGE
-      scanpy_h5ad = os.path.join(tmp_dir,'scanpy.h5ad')
-      cellbrowser_dir = os.path.join(tmp_dir,'cellbrowser_dir')
+      scanpy_h5ad = os.path.join(tmp_dir, 'scanpy.h5ad')
+      cellbrowser_dir = os.path.join(tmp_dir, 'cellbrowser_dir')
       if not os.path.exists(cellbrowser_dir):
         os.makedirs(cellbrowser_dir)
       cellbrowser_html_dir = \
@@ -1910,9 +1910,9 @@ def run_singlecell_notebook_wrapper_func(**context):
       if not os.path.exists(cellbrowser_html_dir):
         os.makedirs(cellbrowser_html_dir)
       input_params.update({
-        'SCANPY_H5AD':scanpy_h5ad,
-        'CELLBROWSER_DIR':cellbrowser_dir,
-        'CELLBROWSER_HTML_DIR':cellbrowser_html_dir})
+        'SCANPY_H5AD': scanpy_h5ad,
+        'CELLBROWSER_DIR': cellbrowser_dir,
+        'CELLBROWSER_HTML_DIR': cellbrowser_html_dir})
     elif analysis_name == 'SCIRPY':
       template_ipynb_path = SCIRPY_SINGLE_SAMPLE_TEMPLATE
       singularity_image_path = SCIRPY_NOTEBOOK_IMAGE
@@ -1920,7 +1920,9 @@ def run_singlecell_notebook_wrapper_func(**context):
       template_ipynb_path = SEURAT_SINGLE_SAMPLE_TEMPLATE
       singularity_image_path = SEURAT_NOTEBOOK_IMAGE
     else:
-      raise ValueError('Analysis name {0} not supported'.format(analysis_name))
+      raise ValueError(
+              'Analysis name {0} not supported'.\
+                format(analysis_name))
     nb = Notebook_runner(
       template_ipynb_path=template_ipynb_path,
       output_dir=tmp_dir,
@@ -1928,7 +1930,7 @@ def run_singlecell_notebook_wrapper_func(**context):
       container_paths=container_bind_dir_list,
       timeout=timeout,
       kernel=kernel_name,
-      singularity_options=['--no-home','-C'],
+      singularity_options=['--no-home', '-C'],
       allow_errors=allow_errors,
       use_ephemeral_space=True,
       singularity_image_path=singularity_image_path)
