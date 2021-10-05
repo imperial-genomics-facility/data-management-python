@@ -1,3 +1,6 @@
+from re import A
+
+from sqlalchemy.orm import eagerload
 from igf_data.task_tracking.igf_asana import IGF_asana
 from igf_data.task_tracking.igf_slack import IGF_slack
 from igf_data.task_tracking.igf_ms_team import IGF_ms_team
@@ -11,40 +14,49 @@ def send_log_to_channels(
       message = \
         'Dag id: {0}, Task id: {1}, Project: {2}, Comment: {3}'.\
           format(dag_id,task_id,project_id,comment)
-      igf_slack = IGF_slack(slack_conf)
-      igf_slack.\
-        post_message_to_channel(
-          message=message,
-          reaction=reaction)
+      try:
+        igf_slack = IGF_slack(slack_conf)
+        igf_slack.\
+          post_message_to_channel(
+            message=message,
+            reaction=reaction)
+      except Exception as e:
+        logging.warn('Failed to upload message to slack, error: {0}'.format(e))
     if asana_conf is not None and \
        asana_project_id is not None and \
        project_id is not None:
       message = \
         'Dag id: {0}, Task id: {1}, Comment: {2}'.\
           format(dag_id,task_id,comment)
-      igf_asana = \
-        IGF_asana(
-          asana_config=asana_conf,
-          asana_project_id=asana_project_id)
-      igf_asana.\
-        comment_asana_task(
-          task_name=project_id,
-          comment=message)
+      try:
+        igf_asana = \
+          IGF_asana(
+            asana_config=asana_conf,
+            asana_project_id=asana_project_id)
+        igf_asana.\
+          comment_asana_task(
+            task_name=project_id,
+            comment=message)
+      except Exception as e:
+        logging.warn('Failed to add comment to Asana, error: {0}'.format(e))
     if ms_teams_conf is not None:
-      message = \
-        '**Dag id**: `{0}`, **Task id**: `{1}`, **Project**: `{2}`, **Comment**: `{3}`'.\
-          format(dag_id,task_id,project_id,comment)
-      igf_ms = \
-        IGF_ms_team(
-          webhook_conf_file=ms_teams_conf)
-      igf_ms.\
-        post_message_to_team(
-          message=message,
-          reaction=reaction)
+      try:
+        message = \
+          '**Dag id**: `{0}`, **Task id**: `{1}`, **Project**: `{2}`, **Comment**: `{3}`'.\
+            format(dag_id,task_id,project_id,comment)
+        igf_ms = \
+          IGF_ms_team(
+            webhook_conf_file=ms_teams_conf)
+        igf_ms.\
+          post_message_to_team(
+            message=message,
+            reaction=reaction)
+      except Exception as e:
+        logging.warn('Failed to send message to MS Teams channel, error: {0}'.format(e))
     time.sleep(2)
   except Exception as e:
-    logging.error('Failed to log, error: {0}'.format(e))
-    pass
+    logging.warn('Failed to log, error: {0}'.format(e))
+
 
 def log_success(context):
   try:
@@ -66,8 +78,9 @@ def log_success(context):
       project_id=project_id,
       comment=comment,
       reaction='pass')
-  except:
-    pass
+  except Exception as e:
+    logging.warn('Faile to log success, error: {0}'.format(e))
+
 
 def log_failure(context):
   try:
@@ -88,8 +101,9 @@ def log_failure(context):
       project_id=project_id,
       comment=comment,
       reaction='fail')
-  except:
-    pass
+  except Exception as e:
+    logging.warn('Failed to log failure, error: {0}'.format(e))
+
 
 def log_sleep(context):
   try:
@@ -110,13 +124,14 @@ def log_sleep(context):
       project_id=project_id,
       comment=comment,
       reaction='sleep')
-  except:
-    pass
+  except Exception as e:
+    logging.warn('Failed to log sleep, error: {0}'.format(e))
 
 
 def post_image_to_channels(
-  image_file,remote_filename=None,slack_conf=None,asana_conf=None,ms_teams_conf=None,
-  task_id=None,dag_id=None,asana_project_id=None,project_id=None,comment=None,reaction=''):
+  image_file, remote_filename=None, slack_conf=None, asana_conf=None,
+  ms_teams_conf=None, task_id=None, dag_id=None, asana_project_id=None,
+  project_id=None, comment=None, reaction=''):
   try:
     if slack_conf is not None:
       message = \
@@ -157,5 +172,4 @@ def post_image_to_channels(
           reaction='')
     time.sleep(2)
   except Exception as e:
-    logging.error('Failed to upload image, error: {0}'.format(e))
-    pass
+    logging.warn('Failed to upload image, error: {0}'.format(e))
