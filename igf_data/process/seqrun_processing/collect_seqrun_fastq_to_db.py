@@ -628,6 +628,7 @@ class Collect_seqrun_fastq_to_db:
         dataframe.\
           loc[:,dataframe.columns.intersection(run_columns)]
       run_data = run_data.drop_duplicates()
+      formatted_existing_run_data = list()
       if run_data.index.size > 0:
         run_data['EXISTS'] = ''
         run_data = \
@@ -644,7 +645,6 @@ class Collect_seqrun_fastq_to_db:
           run_data[run_data['EXISTS']==False]                                   # filter existing runs
         existing_run_data = \
           run_data[run_data['EXISTS']==True]                                    # get existing runs
-        formatted_existing_run_data = list()
         if existing_run_data.index.size > 0:
           if 'R1_READ_COUNT' not in existing_run_data.columns or \
              'R2_READ_COUNT' not in existing_run_data.columns:
@@ -668,7 +668,7 @@ class Collect_seqrun_fastq_to_db:
                   update({
                     col: entry.get(col)})
             formatted_existing_run_data.\
-              append(formatted_existing_run_data)
+              append(row)
         run_data.\
           drop(
             'EXISTS',
@@ -706,33 +706,33 @@ class Collect_seqrun_fastq_to_db:
           collection_data[pd.isnull(collection_data['name'])==False]            # filter collection with null values
       # store experiment to db
       if exp_data.index.size > 0:
-        ea = ExperimentAdaptor(**{'session':base.session})
+        ea = ExperimentAdaptor(**{'session': base.session})
         ea.store_project_and_attribute_data(
           data=exp_data,
           autosave=False)
         base.session.flush()
       # store run to db
       if run_data.index.size > 0:
-        ra = RunAdaptor(**{'session':base.session})
+        ra = RunAdaptor(**{'session': base.session})
         ra.store_run_and_attribute_data(
           data=run_data,
           autosave=False)
         base.session.flush()
       # update run_adapter records
       if len(formatted_existing_run_data) > 0:
-        ra = RunAdaptor(**{'session':base.session})
+        ra = RunAdaptor(**{'session': base.session})
         ra.update_run_attribute_records_by_igfid(
           formatted_existing_run_data,
           autosave=False)
         base.session.flush()
       # store file to db
-      fa = FileAdaptor(**{'session':base.session})
+      fa = FileAdaptor(**{'session': base.session})
       fa.store_file_and_attribute_data(
         data=file_data,
         autosave=False)
       base.session.flush()
       # store collection to db
-      ca = CollectionAdaptor(**{'session':base.session})
+      ca = CollectionAdaptor(**{'session': base.session})
       if collection_data.index.size > 0:
         ca.store_collection_and_attribute_data(
           data=collection_data,
