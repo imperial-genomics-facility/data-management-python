@@ -824,19 +824,19 @@ def index_and_copy_bam_for_parallel_analysis(**context):
     xcom_pull_files_key = \
       context['params'].get('xcom_pull_files_key')
     cellranger_bam_path = \
-      context['params'].get('cellranger_bam_path','count/possorted_genome_bam.bam')
+      context['params'].get('cellranger_bam_path', 'count/sample_alignments.bam')
     cellranger_output_dir = \
       ti.xcom_pull(
         task_ids=xcom_pull_task,
         key=xcom_pull_files_key)
     bam_file = \
-      os.path.join(cellranger_output_dir,cellranger_bam_path)
+      os.path.join(cellranger_output_dir, cellranger_bam_path)
     output_temp_bams = \
       _check_bam_index_and_copy(
-      samtools_exe=SAMTOOLS_EXE,
-      singularity_image=SAMTOOLS_IMAGE,
-      bam_file=bam_file,
-      list_of_analysis=list_of_tasks)
+        samtools_exe=SAMTOOLS_EXE,
+        singularity_image=SAMTOOLS_IMAGE,
+        bam_file=bam_file,
+        list_of_analysis=list_of_tasks)
     for analysis_name,bam_file in output_temp_bams.items():                     # push temp bam paths to xcom
       ti.xcom_push(
         key=analysis_name,
