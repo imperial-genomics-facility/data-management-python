@@ -1465,7 +1465,7 @@ def convert_bam_to_cram_func(**context):
     cram_files_xcom_key = \
       context['params'].get('cram_files_xcom_key')
     cellranger_bam_path = \
-      context['params'].get('cellranger_bam_path','count/possorted_genome_bam.bam')
+      context['params'].get('cellranger_bam_path', 'count/sample_alignments.bam')
     analysis_description = \
       ti.xcom_pull(
         task_ids=analysis_description_xcom_pull_task,
@@ -2542,8 +2542,8 @@ def load_cellranger_metrices_to_collection(**context):
 
 
 def _build_collection_attribute_data_for_cellranger(
-      metrics_file,collection_name,collection_type,attribute_name='attribute_name',
-      attribute_value='attribute_value',attribute_prefix=None):
+      metrics_file, collection_name, collection_type, attribute_name='attribute_name',
+      attribute_value='attribute_value', attribute_prefix=None):
   """
   An internal function for building collection attribute data for cellranger
   metrics summary output
