@@ -313,7 +313,7 @@ def run_velocyto_func(**context):
     loom_output_key = \
       context['params'].get('loom_output_key', 'loom_output')
     cell_sorted_bam_name = \
-      context['params'].get('cell_sorted_bam_name', 'count/cellsorted_possorted_genome_bam.bam')
+      context['params'].get('cell_sorted_bam_name', 'count/cellsorted_sample_alignments.bam')
     velocyto_metadata_table_file = \
       context['params'].get('metadatatable')
     velocyto_logic = \
@@ -456,9 +456,9 @@ def generate_cell_sorted_bam_func(**context):
     xcom_pull_files_key = \
       context['params'].get('xcom_pull_files_key')
     cellranger_bam_path = \
-      context['params'].get('cellranger_bam_path', 'count/possorted_genome_bam.bam')
+      context['params'].get('cellranger_bam_path', 'count/sample_alignments.bam')
     cellsorted_bam_path = \
-      context['params'].get('cellsorted_bam_path', 'count/cellsorted_possorted_genome_bam.bam')
+      context['params'].get('cellsorted_bam_path', 'count/cellsorted_sample_alignments.bam')
     threads = \
       context['params'].get('threads', 1)
     samtools_mem = \
