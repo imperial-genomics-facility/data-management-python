@@ -304,7 +304,7 @@ def check_and_divide_run_for_remote_copy_func(**context):
           remote_seqrun_dir,
           'Data',
           'Intensities',
-          'Basescall')
+          'BaseCalls')
       check_file_path(local_bcl_path)
       xcom_bcl_dict.\
         update({
