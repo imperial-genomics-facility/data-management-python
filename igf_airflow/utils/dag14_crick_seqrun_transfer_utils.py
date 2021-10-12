@@ -26,7 +26,7 @@ HPC_SEQRUN_BASE_PATH = Variable.get('hpc_seqrun_path', default_var=None)
 FTP_SEQRUN_SERVER = Variable.get('crick_ftp_seqrun_hostname', default_var=None)
 FTP_CONFIG_FILE = Variable.get('crick_ftp_config_file_wells', default_var=None)
 SEQRUN_SERVER = Variable.get('seqrun_server', default_var=None)
-REMOTE_SEQRUN_BASE_PATH = '/home/igf/seqrun/test_dir' #Variable.get('seqrun_base_path', default_var=None)
+REMOTE_SEQRUN_BASE_PATH = Variable.get('seqrun_base_path', default_var=None)
 SEQRUN_SERVER_USER = Variable.get('seqrun_server_user', default_var=None)
 INTEROP_DUMPTEXT_EXE = Variable.get('interop_dumptext_exe', default_var=None)
 INTEROP_NOTEBOOK_IMAGE_PATH = Variable.get('interop_notebook_image_path', default_var=None)
@@ -304,8 +304,7 @@ def check_and_divide_run_for_remote_copy_func(**context):
           remote_seqrun_dir,
           'Data',
           'Intensities',
-          'Basescall',
-          'L00{0}'.format(i))
+          'Basescall')
       check_file_path(local_bcl_path)
       xcom_bcl_dict.\
         update({
