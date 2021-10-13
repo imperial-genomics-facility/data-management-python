@@ -6,6 +6,40 @@ from igf_data.task_tracking.igf_slack import IGF_slack
 from igf_data.task_tracking.igf_ms_team import IGF_ms_team
 import logging,time
 
+def send_mentions_to_channels(
+      comment, slack_conf=None, ms_teams_conf=None, aad_id=None,
+      name=None, email_id=None):
+    try:
+      if slack_conf is not None:
+        try:
+          igf_slack = IGF_slack(slack_conf)
+          igf_slack.\
+          post_message_to_channel(
+            message=comment,
+            mention_all_channel=True)
+        except Exception as e:
+          logging.warn(
+            'Failed slack channel mention, error: {0}'.format(e))
+      if ms_teams_conf is not None and \
+         aad_id is not None and \
+         name is not None and \
+         email_id is not None:
+        try:
+          igf_ms = \
+            IGF_ms_team(
+              webhook_conf_file=ms_teams_conf)
+          igf_ms.\
+            post_message_with_mention(
+              message=comment,
+              aad_id=aad_id,
+              name=name,
+              email_id=email_id)
+        except Exception as e:
+          logging.warn(
+            'Failed MS Teams channel mention, error: {0}'.format(e))
+    except Exception as e:
+      logging.warn('Failed to log, error: {0}'.format(e))
+
 def send_log_to_channels(
       slack_conf=None,asana_conf=None,ms_teams_conf=None,task_id=None,
       dag_id=None,asana_project_id=None,project_id=None,comment=None,reaction=''):
