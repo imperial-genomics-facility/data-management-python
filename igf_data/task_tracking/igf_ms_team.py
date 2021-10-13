@@ -12,6 +12,55 @@ class IGF_ms_team:
           format(webhook_conf_file,e))
     self.webhook_conf = webhook_conf
 
+  def post_message_with_mention(self, message, aad_id, name, email_id):
+    try:
+      webhook_url = self.webhook_conf.get('webhook_url')
+      json_data = {
+        "type": "message",
+        "attachments": [
+          {
+            "contentType": "application/vnd.microsoft.card.adaptive",
+            "content": {
+              "type": "AdaptiveCard",
+              "body": [
+                {
+                  "type": "TextBlock",
+                  "text": "Hi <at>{0}</at>. {1}".format(aad_id, message),
+                  "wrap": True,
+                  "width": "stretch"
+                }
+              ],
+              "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+              "version": "1.0",
+              "msteams": {
+                "entities": [
+                  {
+                    "type": "mention",
+                    "text": "<at>{0}</at>".format(aad_id),
+                    "mentioned": {
+                      "id": email_id,
+                      "name": name
+                    }
+                  }
+                ]
+              }
+            }
+          }]
+        }
+      r = \
+        requests.post(
+          url=webhook_url,
+          json=json_data)
+      if r.status_code != 200:
+        raise ValueError(
+          "Failed to post message to team, error code: {0},{1}".\
+            format(r.status_code,r.json()))
+      time.sleep(2)
+    except Exception as e:
+      raise ValueError(
+              'Failed to post message with mention, error: {0}'.format(e))
+
+
   def post_image_to_team(self,image_path,message='',reaction=''):
     '''
     A method for posting image file to MS team chanel
