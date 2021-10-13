@@ -1,5 +1,7 @@
 import os, json
 from slackclient import SlackClient
+# FIX FOR slackclient-2.9.3
+#from slack import WebClient
 
 class IGF_slack:
   '''
@@ -20,16 +22,18 @@ class IGF_slack:
     self.slack_config = slack_config
     self._read_and_set_slack_config()                                           # read config file and set parameters
     self.slackobject = SlackClient(self.slack_token)                            # create slackclient instance
+    # FIX FOR slackclient-2.9.3
+    #self.slackobject = WebClient(self.slack_token)
     self.slack_token = None                                                     # reset slack token 
 
-
-  def post_message_to_channel(self, message, reaction=':large_blue_circle:'):
+  def post_message_to_channel(
+        self, message, reaction='sleep',
+        mention_all_channel=False):
     '''
     A method for posting message to the slack channel
-    required params:
-    message: a text message
-    optional:
-    reaction: pass / fail / sleep
+    :param message: a text message
+    :param reaction: pass / fail / sleep
+    :param mention_all_channel: Mention all channel, default False
     '''
     try:
       if reaction.lower()=='pass':
@@ -37,12 +41,22 @@ class IGF_slack:
       elif reaction.lower()=='fail':
         reaction = ':red_circle:'
       elif reaction.lower()=='sleep':
-        reaction = ':zzz:'
-      message = '{0} {1}'.format(reaction, message)
+        reaction = ':large_blue_circle:'
+      if mention_all_channel:
+        message = \
+          '{0} Hey <!channel>, {2}'.format(reaction, message)
+      else:
+        message = \
+          '{0} {1}'.format(reaction, message)
       self.slackobject.api_call(
         "chat.postMessage",
         channel=self.slack_channel_id,
         text=message)
+      # FIX FOR slackclient-2.9.3
+      #res = \
+      #  self.slackobject.chat_postMessage(
+      #    channel=self.slack_channel_id,
+      #    text=message)
     except:
       raise
 
@@ -66,6 +80,11 @@ class IGF_slack:
           channels=self.slack_channel_id,
           initial_comment=message,
           file=open(os.path.join(filepath),'rb'))                               # share files in slack channel
+        # FIX FOR slackclient-2.9.3
+        #res = \
+        #  self.slackobject.files_upload(
+        #    channels=self.slack_channel_id,
+        #    file=filepath)
     except:
       raise
 
@@ -93,6 +112,13 @@ class IGF_slack:
         text=message,
         thread_ts=thread_id,
         is_im=True)
+      # FIX FOR slackclient-2.9.3
+      #res = \
+      #  self.slackobject.\
+      #    chat_postMessage(
+      #      channel=self.slack_channel_id,
+      #      text=message,
+      #      thread_ts=thread_id)
     except:
       raise
 
