@@ -16,6 +16,7 @@ from igf_data.utils.fileutils import list_remote_file_or_dirs
 from igf_data.utils.fileutils import copy_remote_file
 from igf_data.utils.fileutils import check_file_path
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
+from igf_airflow.logging.upload_log_msg import send_mentions_to_channels
 from igf_data.utils.jupyter_nbconvert_wrapper import Notebook_runner
 from igf_data.utils.box_upload import upload_file_or_dir_to_box
 
@@ -36,6 +37,29 @@ SEQRUN_TRAINING_DATA_CSV = Variable.get('seqrun_training_data_csv', default_var=
 BOX_DIR_PREFIX = Variable.get('box_dir_prefix_for_seqrun_report', default_var=None)
 BOX_USERNAME = Variable.get('box_username', default_var=None)
 BOX_CONFIG_FILE  = Variable.get('box_config_file', default_var=None)
+
+def send_message_to_channels_with_mention_func(**context):
+  try:
+    dag_run = context.get('dag_run')
+    seqrun_id = None
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('seqrun_id') is not None:
+      seqrun_id = \
+        dag_run.conf.get('seqrun_id')
+      message = \
+        'Downloaded run {0} from Crick and uploaded it to seqrun dir'.format(seqrun_id)
+      send_mentions_to_channels(
+        comment=message,
+        slack_conf=SLACK_CONF,
+        ms_teams_conf=MS_TEAMS_CONF,
+        aad_id='igf',
+        email_id='igf@email.com',
+        name='IGF')
+    else:
+      raise ValueError('Failed to get seqrun_id from dag_run.conf')
+  except Exception as e:
+    logging.warn('Failed to nitify channels, error: {0}'.format(e))
 
 
 def generate_interop_report_func(**context):
