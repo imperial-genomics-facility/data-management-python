@@ -653,6 +653,9 @@ class Collect_seqrun_fastq_to_db:
             'run_igf_id',
             'R1_READ_COUNT',
             'R2_READ_COUNT']
+          existing_data_columns = [
+            i for i in existing_data_columns
+              if i in existing_run_data.columns]                                # reset data columns
           existing_run_data = \
             existing_run_data[existing_data_columns]                            # keep only required data
           existing_run_data = \
