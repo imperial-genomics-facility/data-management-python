@@ -145,11 +145,11 @@ class RunBcl2Fastq(IGFBaseProcess):
       bcl2fastq_cmd.extend(bcl2fastq_param)                                     # add additional parameters
       if reset_mask_short_adapter_reads and \
          '--mask-short-adapter-reads' not in bcl2fastq_options:
-        read_pattern = re.compile(r'^y(\d+)n?\d?')
-        read_values = [int(re.match(read_pattern,i).group(1))
+        read_pattern = re.compile(r'(\S+)?y(\d+)')
+        read_values = [int(re.match(read_pattern, i).group(2))
                          for i in bases_mask.split(',')
-                           if i.startswith('y') and re.match(read_pattern,i)
-                             if int(re.match(read_pattern,i).group(1)) < 22 ]   # hack for checking if reads are lower than the Illumina threasholds
+                           if re.match(read_pattern, i)
+                             if int(re.match(read_pattern,i).group(2)) < 22 ]   # hack for checking if reads are lower than the Illumina threasholds
         if len(read_values) > 0 and \
             min(read_values) > 5 and \
             project_type!=singlecell_tag:
