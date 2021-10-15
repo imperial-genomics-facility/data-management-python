@@ -44,7 +44,7 @@ class IGF_slack:
         reaction = ':large_blue_circle:'
       if mention_all_channel:
         message = \
-          '{0} Hey <!channel>, {2}'.format(reaction, message)
+          '{0} Hey <!channel>, {1}'.format(reaction, message)
       else:
         message = \
           '{0} {1}'.format(reaction, message)
