@@ -54,8 +54,8 @@ def send_message_to_channels_with_mention_func(**context):
         slack_conf=SLACK_CONF,
         ms_teams_conf=MS_TEAMS_CONF,
         aad_id='igf',
-        email_id='igf@email.com',
-        name='IGF')
+        email_id='igf@ic.ac.uk',
+        name='Imperial BRC Genomics Facility')
     else:
       raise ValueError('Failed to get seqrun_id from dag_run.conf')
   except Exception as e:
