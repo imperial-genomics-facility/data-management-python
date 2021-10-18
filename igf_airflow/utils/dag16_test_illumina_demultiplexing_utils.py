@@ -216,9 +216,7 @@ def run_demultiplexing_func(**context):
         options=[
           '--barcode-mismatches 1',
           '--auto-set-to-zero-barcode-mismatches',
-          '--create-fastq-for-index-reads',
-          '--ignore-missing-bcls',
-          '--ignore-missing-filter'])
+          '--create-fastq-for-index-reads'])
       box_dir = \
         os.path.join(
           BOX_DIR_PREFIX,
