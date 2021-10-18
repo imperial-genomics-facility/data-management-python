@@ -239,7 +239,9 @@ def run_demultiplexing_func(**context):
           output_path,
           'laneBarcode_{0}.html'.format(lane_id))
       copy_local_file(
-        source_html_file, dest_source_html_file)
+        source_html_file,
+        dest_source_html_file,
+        force=True)
       upload_file_or_dir_to_box(
         box_config_file=BOX_CONFIG_FILE,
         file_path=dest_source_html_file,
@@ -255,7 +257,9 @@ def run_demultiplexing_func(**context):
           output_path,
           'Stats_{0}.json'.format(lane_id))
       copy_local_file(
-        stats_source_file, stats_dest_file)
+        stats_source_file,
+        stats_dest_file,
+        force=True)
       upload_file_or_dir_to_box(
         box_config_file=BOX_CONFIG_FILE,
         file_path=stats_dest_file,
@@ -266,7 +270,9 @@ def run_demultiplexing_func(**context):
           output_path,
           'SampleSheet_{0}.csv'.format(lane_id))
       copy_local_file(
-        samplesheet_file, samplesheet_dest_file)
+        samplesheet_file,
+        samplesheet_dest_file,
+        force=True)
       upload_file_or_dir_to_box(
         box_config_file=BOX_CONFIG_FILE,
         file_path=samplesheet_dest_file,
