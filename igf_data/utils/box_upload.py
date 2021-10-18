@@ -54,11 +54,13 @@ def upload_file_or_dir_to_box(
         os.path.join(
           upload_dir,
           os.path.basename(file_path))
+      if not target_path.startswith('/'):
+        target_path = '/{0}'.format(target_path)
       logging.warn('Box file path: {0}'.format(target_path))
       file_size = os.stat(file_path).st_size
       dirs = \
         [d for d in os.path.dirname(target_path).split('/')
-           if d != '']
+           if d != '' and d != '/']
       target_dir = '/'
       for d in dirs:
         target_dir = \
