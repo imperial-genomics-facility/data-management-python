@@ -61,12 +61,14 @@ def upload_file_or_dir_to_box(
       dirs = \
         [d for d in os.path.dirname(target_path).split('/')
            if d != '' and d != '/']
+      logging.warn(dirs)
       target_dir = '/'
       for d in dirs:
         target_dir = \
           os.path.join(target_dir, d)
+        logging.warn(target_dir, ftps.nlst(os.path.dirname(target_dir)))
         if d not in (ftps.nlst(os.path.dirname(target_dir))):
-          ftps.mkd(os.path.join(target_dir, d))
+          ftps.mkd(os.path.join(target_dir))
       if os.path.getsize(file_path) > box_size_limit:
         message = \
           'Failed to upload large file {0}, size {1}'.\
