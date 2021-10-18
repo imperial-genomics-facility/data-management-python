@@ -180,7 +180,7 @@ def run_demultiplexing_func(**context):
       samplesheet_file = \
         lane_records['samplesheet_file'].values[0]
       bases_mask = \
-        lane_records['lane_records'].values[0]
+        lane_records['bases_mask'].values[0]
       if samplesheet_file is None or \
          bases_mask is None:
         raise ValueError(
