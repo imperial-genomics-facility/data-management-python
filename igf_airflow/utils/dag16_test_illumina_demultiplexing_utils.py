@@ -222,7 +222,7 @@ def run_demultiplexing_func(**context):
       box_dir = \
         os.path.join(
           BOX_DIR_PREFIX,
-          run_dir,
+          seqrun_id,
           tag_id,
           'L00{0}'.format(lane_id))
       source_html_file = \
