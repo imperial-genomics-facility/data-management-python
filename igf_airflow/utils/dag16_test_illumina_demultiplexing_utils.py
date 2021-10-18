@@ -220,7 +220,6 @@ def run_demultiplexing_func(**context):
         os.path.join(
           BOX_DIR_PREFIX,
           run_dir,
-          'demult_reports',
           tag_id,
           lane_id)
       source_html_file = \
