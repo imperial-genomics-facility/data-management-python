@@ -120,6 +120,7 @@ def get_samplesheet_and_decide_flow_func(**context):
       dag_id=context['task'].dag_id,
       comment=message,
       reaction='fail')
+    raise
 
 
 def run_demultiplexing_func(**context):
@@ -170,10 +171,12 @@ def run_demultiplexing_func(**context):
       check_file_path(output_path)
       samplesheet_df = \
         pd.DataFrame(samplesheet_list)
-      if len(samplesheet_df[samplesheet_df['lane_id']==lane_id].index) == 0:
+      samplesheet_df['lane_id'] = \
+        samplesheet_df['lane_id'].astype(int)
+      if len(samplesheet_df[samplesheet_df['lane_id']==int(lane_id)].index) == 0:
         raise ValueError('No records for lane {0} found'.format(lane_id))
       lane_records = \
-        samplesheet_df[samplesheet_df['lane_id']==lane_id]
+        samplesheet_df[samplesheet_df['lane_id']==int(lane_id)]
       samplesheet_file = \
         lane_records['samplesheet_file'].values[0]
       bases_mask = \
@@ -283,6 +286,7 @@ def run_demultiplexing_func(**context):
       dag_id=context['task'].dag_id,
       comment=message,
       reaction='fail')
+    raise
 
 def prepare_merged_report_func(**context):
     pass
