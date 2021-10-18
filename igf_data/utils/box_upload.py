@@ -13,11 +13,9 @@ def upload_file_or_dir_to_box(
     ftps = FTP_TLS()
     ftps.connect(box_ftp_url)
     ftps.login(box_username,box_conf[0].get('box_external_pass'))
-    if upload_dir.startswith('/'):
-      target_dir = upload_dir
-    else:
-      target_dir = os.path.join('/',upload_dir)
     if os.path.isdir(file_path):
+      if not upload_dir.startswith('/'):
+        target_dir = os.path.join('/', upload_dir)
       too_large_files = [
         f for root,_,files in os.walk(file_path)
           for f in files
@@ -56,16 +54,17 @@ def upload_file_or_dir_to_box(
         os.path.join(
           upload_dir,
           os.path.basename(file_path))
+      logging.warn('Box file path: {0}'.format(target_path))
       file_size = os.stat(file_path).st_size
       dirs = \
         [d for d in os.path.dirname(target_path).split('/')
            if d != '']
       target_dir = '/'
       for d in dirs:
-        if d not in (ftps.nlst(os.path.dirname(target_dir))):
-          ftps.mkd(os.path.join(target_dir,d))
         target_dir = \
-          os.path.join(target_dir,d)
+          os.path.join(target_dir, d)
+        if d not in (ftps.nlst(os.path.dirname(target_dir))):
+          ftps.mkd(os.path.join(target_dir, d))
       if os.path.getsize(file_path) > box_size_limit:
         message = \
           'Failed to upload large file {0}, size {1}'.\
