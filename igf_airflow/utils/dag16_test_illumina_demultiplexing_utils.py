@@ -224,7 +224,7 @@ def run_demultiplexing_func(**context):
           BOX_DIR_PREFIX,
           run_dir,
           tag_id,
-          lane_id)
+          'L00{0}'.format(lane_id))
       source_html_file = \
         os.path.join(
           tmp_report_path,
