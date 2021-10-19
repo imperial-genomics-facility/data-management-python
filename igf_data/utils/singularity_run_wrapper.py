@@ -4,7 +4,7 @@ from igf_data.utils.fileutils import check_file_path, copy_local_file, get_temp_
 
 def singularity_run(
       image_path, args_list, log_dir=None, bind_dir_list=(),
-      options=None, task_id=1, dry_run=False):
+      singularity_options=None, options=None, task_id=1, dry_run=False):
   '''
   A wrapper module for running singularity based containers
 
@@ -13,7 +13,8 @@ def singularity_run(
   :param args_list: List of args for singulatiy run
   :param log_dir: Log dir path, default None
   :param task_id: Task id for renaming log, default 1
-  :params options: Additional list of options for singularity, default None
+  :params options: Additional list of options for run command, default None
+  :param singularity_options: List of singularity_options, default None
   :param dry_run: Return the singularity command without run, default False
   :returns: A response from container run and a string containing singularity command line
   '''
@@ -54,6 +55,7 @@ def singularity_run(
           bind=bind_dir_list,
           args=args,
           options=options,
+          singularity_options=singularity_options,
           return_result=True)
       return_code = \
         response.get('return_code')
