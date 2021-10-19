@@ -335,11 +335,13 @@ def prepare_merged_report_func(**context):
         os.path.join(temp_dir, '{0}_{1}.html'.format(seqrun_id, tag_id))
       samplesheet_files = list()
       samplesheet_files = [
-        f for f in os.listdir(output_path)
-          if f.startswith('SampleSheet_')]
+        os.path.join(output_path, f)
+          for f in os.listdir(output_path)
+            if f.startswith('SampleSheet_')]
       stats_files = [
-        f for f in os.listdir(output_path)
-          if f.startswith('Stats_')]
+        os.path.join(output_path, f)
+          for f in os.listdir(output_path)
+            if f.startswith('Stats_')]
       if not len(stats_files) > 0 or \
          len(stats_files) != len(samplesheet_files):
          raise ValueError(
