@@ -9,6 +9,7 @@ from igf_data.illumina.runparameters_xml import RunParameter_xml
 from igf_data.process.moveBclFilesForDemultiplexing import moveBclTilesForDemultiplexing
 from igf_data.utils.tools.bcl2fastq_utils import run_bcl2fastq
 from igf_data.utils.box_upload import upload_file_or_dir_to_box
+from igf_data.utils.singularity_run_wrapper import singularity_run
 
 
 SLACK_CONF = Variable.get('slack_conf', default_var=None)
@@ -20,6 +21,7 @@ BCL2FASTQ_IMAGE = Variable.get('bcl2fastq_image_path', default_var=None)
 BOX_DIR_PREFIX = Variable.get('box_dir_prefix_for_seqrun_report', default_var=None)
 BOX_USERNAME = Variable.get('box_username', default_var=None)
 BOX_CONFIG_FILE  = Variable.get('box_config_file', default_var=None)
+INTEROP_IMAGE = Variable.get('interop_notebook_image_path')
 
 def get_samplesheet_and_decide_flow_func(**context):
   try:
@@ -292,5 +294,111 @@ def run_demultiplexing_func(**context):
       reaction='fail')
     raise
 
+
 def prepare_merged_report_func(**context):
-    pass
+  try:
+    dag_run = context.get('dag_run')
+    ti = context.get('ti')
+    output_path_xcom_task = \
+      context['params'].get('output_path_xcom_task')
+    output_path_xcom_key = \
+      context['params'].get('output_path_xcom_key')
+    script_path = \
+      context['params'].get('script_path')
+    template_path = \
+      context['params'].get('template_path')
+    code_dir = \
+      context['params'].get('code_dir')
+    if dag_run is not None and \
+       dag_run.conf is not None:
+      seqrun_id = dag_run.conf.get('seqrun_id')
+      samplesheet_file_name = dag_run.conf.get('samplesheet_file_name')
+      flowcell_id = dag_run.conf.get('flowcell_id')
+      tag_id = dag_run.conf.get('tag_id')
+      if seqrun_id is None or \
+         flowcell_id is None or \
+         tag_id is None or \
+         samplesheet_file_name is None:
+        raise ValueError('Missing samplesheet, flowcell id, tag_id or seqrun id')
+      output_path = \
+        ti.xcom_pull(
+          key=output_path_xcom_key,
+          task_ids=output_path_xcom_task)
+      check_file_path(output_path)
+      temp_dir = \
+        get_temp_dir()
+      samplesheet_list = \
+        os.path.join(temp_dir, 'samplesheet_list')
+      stats_list = \
+        os.path.join(temp_dir, 'stats_list')
+      output_report_file = \
+        os.path.join(temp_dir, '{0}_{1}.html'.format(seqrun_id, tag_id))
+      samplesheet_files = list()
+      samplesheet_files = [
+        f for f in os.listdir(output_path)
+          if f.startswith('SampleSheet_')]
+      stats_files = [
+        f for f in os.listdir(output_path)
+          if f.startswith('Stats_')]
+      if not len(stats_files) > 0 or \
+         len(stats_files) != len(samplesheet_files):
+         raise ValueError(
+                 'SampleSheet or Stats file not found: {0}'.\
+                   format(output_path))
+      with open(samplesheet_list, 'w') as fp:
+        fp.write('\n'.join(samplesheet_files))
+      with open(stats_list, 'w') as fp:
+        fp.write('\n'.join(stats_files))
+      args_list = [
+        "python",
+        script_path,
+        "-i", seqrun_id,
+        "-j", stats_list,
+        "-s",  samplesheet_list,
+        "-o", output_report_file,
+        "-t", template_path]
+      bind_dir_list = [
+        temp_dir,
+        output_path,
+        code_dir]
+      options = [
+        "--no-home",
+        "-C",
+        "--env",
+        "PYTHONPATH={0}".format(code_dir)]
+      _ = \
+        singularity_run(
+          image_path=INTEROP_IMAGE,
+          args_list=args_list,
+          bind_dir_list=bind_dir_list,
+          options=options)
+      check_file_path(output_report_file)
+      box_dir = \
+        os.path.join(
+          BOX_DIR_PREFIX,
+          seqrun_id,
+          tag_id)
+      copy_local_file(
+        output_report_file,
+        os.path.join(output_path, '{0}_{1}.html'.format(seqrun_id, tag_id)),
+        force=True)
+      upload_file_or_dir_to_box(
+        box_config_file=BOX_CONFIG_FILE,
+        file_path=output_report_file,
+        upload_dir=box_dir,
+        box_username=BOX_USERNAME)
+    else:
+      raise ValueError('No dag_run.conf entry found')
+  except Exception as e:
+    logging.error(e)
+    message = \
+      'Failed merge report generation, error: {0}'.\
+        format(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=message,
+      reaction='fail')
+    raise
