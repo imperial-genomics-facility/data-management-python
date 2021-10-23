@@ -661,11 +661,12 @@ def create_star_index_func(**context):
         os.path.join(
           temp_dir,
           star_ref_dirname)
+      os.makedirs(genome_dir, exist_ok=True)
       star_cmd = [
         STAR_EXE,
         '--runThreadN', int(threads),
         '--runMode', 'genomeGenerate',
-        '-genomeDir', genome_dir,
+        '--genomeDir', genome_dir,
         '--genomeFastaFiles', fasta_file,
         '--sjdbGTFfile', gtf_file]
       if star_options is not None and \
