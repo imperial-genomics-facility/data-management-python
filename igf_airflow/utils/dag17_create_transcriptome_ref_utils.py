@@ -95,7 +95,7 @@ def filter_gtf_file_for_cellranger(gtf_file, skip_gtf_rows=5):
       map(lambda x: extract_gene_id_from_gtf(x))
     df = \
       df[df['gene_id'].isin(gene_id_list)]
-    df['gene_id'].\
+    df.\
       drop('gene_id', axis=1, inplace=True)
     temp_dir = get_temp_dir()
     filtered_gtf = \
