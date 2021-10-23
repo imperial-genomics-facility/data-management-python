@@ -215,7 +215,7 @@ def create_cellranger_ref_func(**context):
 
 def filter_rRNA_genes_in_gtf(x):
   try:
-    pattern = re.compile(r'.*gene_type \"rRNA\"')
+    pattern = re.compile(r'.*gene_type \"(rRNA|rRNA_pseudogene)\\"')
     if re.match(pattern, x):
         return 'rRNA'
     else:
@@ -237,6 +237,48 @@ def extract_gene_name_from_gtf_info(x):
   except Exception as e:
     raise ValueError(
             'Failed to extract gene name, error; {0}'.\
+              format(e))
+
+
+def prepare_ribosomal_interval_from_gtf_and_dict(
+      gtf_file, dict_file, ribosomal_interval, skip_gtf_rows=5):
+  try:
+    check_file_path(gtf_file)
+    check_file_path(dict_file)
+    temp_dir = \
+        get_temp_dir()
+    temp_file = \
+      os.path.join(
+        temp_dir,
+        '{0}_temp'.format(
+          os.path.basename(gtf_file)))
+    df = \
+        pd.read_csv(
+          gtf_file,
+          sep='\t',
+          header=None,
+          skiprows=skip_gtf_rows)
+    df['rRNA'] = \
+      df[8].\
+        map(lambda x: filter_rRNA_genes_in_gtf(x))                              # mark rRNA genes
+    df = \
+      df[df['rRNA']=='rRNA']                                                    # filter rRNA genes
+    df[8] = \
+      df[8].\
+        map(lambda x: extract_gene_name_from_gtf_info(x))
+    df.iloc[:,[0, 3, 4, 6, 8]].\
+      to_csv(
+        temp_file,
+        index=False,
+        sep='\t',
+        header=False)
+    with open(ribosomal_interval ,'wb') as ofp:
+      for i in (dict_file, temp_file):
+        with open(i, 'rb') as fp:
+          shutil.copyfileobj(fp, ofp)
+  except Exception as e:
+    raise ValueError(
+            'Failed to prepare ribosomal interval file, error: {0}'.\
               format(e))
 
 
@@ -274,11 +316,7 @@ def create_ribosomal_interval_func(**context):
       ribosomal_ref_name = \
         '{0}_{1}_ribosomal.interval'.\
             format(species_name, tag)
-      temp_ribosomal_file = \
-        os.path.join(
-          temp_dir,
-          'temp_{0}'.format(ribosomal_ref_name))
-      temp_merged_file_path = \
+      temp_ribosomal_interval_file_path = \
         os.path.join(
           temp_dir,
           ribosomal_ref_name)
@@ -290,32 +328,13 @@ def create_ribosomal_interval_func(**context):
         raise ValueError(
                 'Ribosomal file {0} already present, remove it before continuing'.\
                   format(target_ribisomal_file))
-      df = \
-        pd.read_csv(
-          gtf_file,
-          sep='\t',
-          header=None,
-          skiprows=skip_gtf_rows)
-      df['rRNA'] = \
-        df[8].\
-          map(lambda x: filter_rRNA_genes_in_gtf(x))
-      df = \
-        df[df['rRNA']=='rRNA']                                                  # filter rRNA genes
-      df[8] = \
-        df[8].\
-          map(lambda x: extract_gene_name_from_gtf_info(x))                     # extract gene names
-      df.iloc[:,[0, 3, 4, 6, 8]].\
-        to_csv(
-          temp_ribosomal_file,
-          index=False,
-          sep='\t',
-          header=False)
-      with open(temp_merged_file_path ,'wb') as ofp:
-        for i in (dict_file, temp_ribosomal_file):
-          with open(i, 'rb') as fp:
-            shutil.copyfileobj(fp, ofp)
+      prepare_ribosomal_interval_from_gtf_and_dict(
+        gtf_file=gtf_file,
+        dict_file=dict_file,
+        ribosomal_interval=temp_ribosomal_interval_file_path,
+        skip_gtf_rows=skip_gtf_rows)
       copy_local_file(
-        temp_merged_file_path,
+        temp_ribosomal_interval_file_path,
         target_ribisomal_file)
       ti.xcom_push(
         key=ribosomal_ref_xcom_key,
