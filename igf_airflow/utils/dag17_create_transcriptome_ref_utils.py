@@ -1,5 +1,5 @@
-import logging, os, requests, subprocess, re, shutil
 import pandas as pd
+import logging, os, requests, subprocess, re, shutil, gzip
 from airflow.models import Variable
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_data.utils.fileutils import check_file_path, get_temp_dir, copy_local_file
@@ -507,6 +507,38 @@ def create_rsem_index_func(**context):
     raise
 
 
+def unzip_file(gzip_file):
+  '''
+  Should move these functions to utils
+  '''
+  try:
+    if not gzip_file.endswith('.gz'):
+      raise IOError(
+              "File {0} doesn't have .gz extension".\
+                format(gzip_file))
+    check_file_path(gzip_file)
+    unzipped_file = \
+      gzip_file.replace('.gz', '')
+    unzipped_filename = \
+      os.path.basename(unzipped_file)
+    temp_dir = get_temp_dir()
+    temp_unzipped_file = \
+      os.path.join(
+        temp_dir,
+        unzipped_filename)
+    with gzip.open(gzip_file, 'rb') as fp:
+      with open(temp_unzipped_file, 'wb') as ofp:
+        shutil.copyfileobj(fp, ofp)
+    copy_local_file(
+      temp_unzipped_file,
+      unzipped_file)
+    return unzipped_file
+  except Exception as e:
+    raise ValueError(
+            'Failed to unzip file {0}, error: {1}'.\
+              format(gzip_file, e))
+
+
 def download_file(url, output_file):
   try:
     with requests.get(url, stream=True) as r:
@@ -539,9 +571,12 @@ def download_gtf_file_func(**context):
       download_file(
         url=gtf_url,
         output_file=temp_file_path)
+      unzipped_file = \
+        unzip_file(
+          gzip_file=temp_file_path)
       ti.xcom_push(
         key=gtf_xcom_key,
-        value=temp_file_path)
+        value=unzipped_file)
     else:
       raise ValueError('No dag_run.conf entry found')
   except Exception as e:
