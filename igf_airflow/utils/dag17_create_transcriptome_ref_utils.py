@@ -336,6 +336,24 @@ def create_ribosomal_interval_func(**context):
       reaction='fail')
     raise
 
+def create_genepred_to_refflat(genpred_file, refflat_file):
+  try:
+    check_file_path(genpred_file)
+    df = \
+      pd.read_csv(
+        genpred_file,
+        sep='\t',
+         header=None)
+    df.iloc[:,[11, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]].\
+      to_csv(
+        refflat_file,
+        index=False,
+        sep='\t',
+        header=False)
+  except Exception as e:
+    raise ValueError(
+            'Failed to convert genepred to refflat, error: {0}'.format(e))
+
 
 def create_reflat_index_func(**context):
   try:
@@ -393,17 +411,9 @@ def create_reflat_index_func(**context):
         check_call(
           ' '.join(gtf_to_genepred_cmd),
           shell=True)
-      df = \
-        pd.read_csv(
-          intermediate_temp_file,
-          sep='\t',
-          header=None)
-      df.iloc[:,[11, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]].\
-        to_csv(
-          temp_refflat_file,
-          index=False,
-          sep='\t',
-          header=False)
+      create_genepred_to_refflat(
+        genpred_file=intermediate_temp_file,
+        refflat_file=temp_refflat_file)
       copy_local_file(
         temp_refflat_file,
         target_refflat_file)
