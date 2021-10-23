@@ -1,11 +1,13 @@
 import pandas as pd
-import logging, os, requests, subprocess, re, shutil, gzip
 from airflow.models import Variable
+import logging, os, requests, subprocess, re, shutil, gzip
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_data.utils.fileutils import check_file_path, get_temp_dir, copy_local_file
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.utils.tools.reference_genome_utils import Reference_genome_utils
 from igf_data.igfdb.baseadaptor import BaseAdaptor
+from igf_data.igfdb.collectionadaptor import CollectionAdaptor
+from igf_data.igfdb.fileadaptor import FileAdaptor
 
 
 GENOME_FASTA_TYPE = 'GENOME_FASTA'
@@ -15,8 +17,9 @@ RIBOSOMAL_INTERVAL_TYPE = 'RIBOSOMAL_INTERVAL'
 DATABASE_CONFIG_FILE = Variable.get('database_config_file', default_var=None)
 SLACK_CONF = Variable.get('slack_conf', default_var=None)
 MS_TEAMS_CONF = Variable.get('ms_teams_conf', default_var=None)
+GTF_REF_PATH = Variable.get('gtf_ref_path', default_var=None)
 STAR_EXE = Variable.get('star_exe', default_var=None)
-STAR_REF_PATH = Variable.get('star_exe', default_var=None)
+STAR_REF_PATH = Variable.get('star_ref_path', default_var=None)
 RSEM_EXE_DIR = Variable.get('rsem_exe_dir', default_var=None)
 RSEM_REF_PATH = Variable.get('rsem_ref_path', default_var=None)
 BIGBED_REF_PATH = Variable.get('bigbed_ref_path', default_var=None)
@@ -25,6 +28,111 @@ REFFLAT_REF_PATH = Variable.get('refflat_ref_path', default_var=None)
 RIBOSOMAL_INTERVAL_REF_PATH = Variable.get('ribosomal_interval_ref_path', default_var=None)
 CELLRANGER_EXE = Variable.get('cellranger_exe', default_var=None)
 CELLRANGER_REF_PATH = Variable.get('cellranger_ref_path', default_var=None)
+
+def collect_files_to_db(collection_list, dbconfig_file):
+  try:
+    dbparams = \
+      read_dbconf_json(dbconfig_file)
+    ca = CollectionAdaptor(**dbparams)
+    ca.start_session()
+    fa = FileAdaptor(**{'session': ca.session})
+    try:
+      for entry in collection_list:
+        for collection_name, collection_type, file_path in entry:
+          collection_exists = \
+            ca.get_collection_files(
+              collection_name=collection_name,
+              collection_type=collection_type)
+          if collection_exists:
+            file_exists = \
+              fa.check_file_records_file_path(file_path)
+            if file_exists:
+              raise ValueError(
+                      'File {0} already present in db'.\
+                        format(file_path))
+            remove_data = [{
+              'name': collection_name,
+              'type': collection_type}]
+            ca.remove_collection_group_info(
+              data=remove_data,
+              autosave=False)
+          collection_data = {
+            'name': collection_name,
+            'type': collection_type,
+            'table': 'file',
+            'file_path': file_path}
+          ca.load_file_and_create_collection(
+            data=collection_data,
+            calculate_file_size_and_md5=False,
+            autosave=False)
+      ca.commit_session()
+      ca.close_session()
+    except:
+      ca.rollback_session()
+      ca.close_session()
+      raise
+  except Exception as e:
+    raise ValueError(
+            'Failed to collect files, error: {0}'.format(e))
+
+
+def add_refs_to_db_collection_func(**context):
+  try:
+    task_list = \
+      context['params'].get('task_list')
+    if task_list is None:
+      raise ValueError('No task list found')
+    dag_run = context.get('dag_run')
+    ti = context.get('ti')
+    if dag_run is not None and \
+       dag_run.conf is not None:
+      tag = dag_run.conf.get('tag')
+      species_name = dag_run.conf.get('species_name')
+      if tag is None or \
+         species_name is None:
+        raise ValueError('Tag or species_name not found')
+      collection_list = list()
+      for entry in task_list:
+        for xcom_task, xcom_key, collection_type in entry:
+          file_path = \
+            ti.xcom_pull(
+              task_ids=xcom_task,
+              key=xcom_key)
+          if file_path is None:
+            raise ValueError(
+                    'File path for xcom task {0} and key {1} not found'.\
+                      format(xcom_task, xcom_key))
+          collection_list.append([
+            species_name, collection_type, file_path])
+      collect_files_to_db(
+        collection_list=collection_list,
+        dbconfig_file=DATABASE_CONFIG_FILE)
+      message = \
+        'Finish ref genome building for {0} - {1}'.\
+          format(species_name, tag)
+      send_log_to_channels(
+        slack_conf=SLACK_CONF,
+        ms_teams_conf=MS_TEAMS_CONF,
+        task_id=context['task'].task_id,
+        dag_id=context['task'].dag_id,
+        comment=message,
+        reaction='pass')
+    else:
+      raise ValueError('No dag_run.conf entry found')
+  except Exception as e:
+    logging.error(e)
+    message = \
+      'DB collection building error: {0}'.\
+        format(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=message,
+      reaction='fail')
+    raise
+
 
 def filter_gtf_row_for_cellranger_ref(x):
   try:
@@ -605,8 +713,10 @@ def download_gtf_file_func(**context):
     if dag_run is not None and \
        dag_run.conf is not None:
       gtf_url = dag_run.conf.get('gtf_url')
-      if gtf_url is None:
-        raise ValueError('No url found for GTF')
+      species_name = dag_run.conf.get('gtf_url')
+      if gtf_url is None or \
+         species_name is None:
+        raise ValueError('No url or species info found for GTF')
       temp_dir = \
         get_temp_dir(use_ephemeral_space=True)
       filename = gtf_url.split('/')[-1]
@@ -618,9 +728,22 @@ def download_gtf_file_func(**context):
       unzipped_file = \
         unzip_file(
           gzip_file=temp_file_path)
+      target_gtf_path = \
+        os.path.join(
+          GTF_REF_PATH,
+          species_name,
+          os.path.basename(unzipped_file))
+      os.makedirs(
+        os.path.join(
+          GTF_REF_PATH,
+          species_name),
+        exist_ok=True)
+      copy_local_file(
+        unzipped_file,
+        target_gtf_path)
       ti.xcom_push(
         key=gtf_xcom_key,
-        value=unzipped_file)
+        value=target_gtf_path)
     else:
       raise ValueError('No dag_run.conf entry found')
   except Exception as e:
