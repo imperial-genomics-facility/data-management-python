@@ -26,7 +26,7 @@ RIBOSOMAL_INTERVAL_REF_PATH = Variable.get('ribosomal_interval_ref_path', defaul
 CELLRANGER_EXE = Variable.get('cellranger_exe', default_var=None)
 CELLRANGER_REF_PATH = Variable.get('cellranger_ref_path', default_var=None)
 
-def filter_gtf_for_cellranger_ref(x):
+def filter_gtf_row_for_cellranger_ref(x):
   try:
     gene_id = None
     biotype_pattern = \
@@ -69,26 +69,8 @@ def extract_gene_id_from_gtf(x):
               format(e))
 
 
-def create_cellranger_ref_func(**context):
+def filter_gtf_file_for_cellranger(gtf_file, skip_gtf_rows=5):
   try:
-    gtf_xcom_key = \
-      context['params'].get('gtf_xcom_key')
-    gtf_xcom_task = \
-      context['params'].get('gtf_xcom_task')
-    cellranger_ref_xcom_key = \
-      context['params'].get('cellranger_ref_xcom_key')
-    skip_gtf_rows = \
-      context['params'].get('skip_gtf_rows')
-    threads = \
-      context['params'].get('threads')
-    memory = \
-      context['params'].get('memory')
-    dag_run = context.get('dag_run')
-    ti = context.get('ti')
-    gtf_file = \
-      ti.xcom_pull(
-        task_ids=gtf_xcom_task,
-        key=gtf_xcom_key)
     check_file_path(gtf_file)
     df = \
       pd.read_csv(
@@ -102,7 +84,7 @@ def create_cellranger_ref_func(**context):
       df[df[2]=='transcript']
     transcripts_df['gene_id'] = \
       transcripts_df[8].\
-        map(lambda x: filter_gtf_for_cellranger_ref(x))
+        map(lambda x: filter_gtf_row_for_cellranger_ref(x))
     gene_id_list = \
       transcripts_df['gene_id'].\
       dropna().\
@@ -128,6 +110,39 @@ def create_cellranger_ref_func(**context):
         index=False,
         quotechar="'")
     check_file_path(filtered_gtf)
+    return filtered_gtf
+  except Exception as e:
+    raise ValueError(
+            'Failed to filter gtf file {0} for cellranger, error: {1}'.\
+              format(gtf_file, e))
+
+
+def create_cellranger_ref_func(**context):
+  try:
+    gtf_xcom_key = \
+      context['params'].get('gtf_xcom_key')
+    gtf_xcom_task = \
+      context['params'].get('gtf_xcom_task')
+    cellranger_ref_xcom_key = \
+      context['params'].get('cellranger_ref_xcom_key')
+    skip_gtf_rows = \
+      context['params'].get('skip_gtf_rows')
+    threads = \
+      context['params'].get('threads')
+    memory = \
+      context['params'].get('memory')
+    dag_run = context.get('dag_run')
+    ti = context.get('ti')
+    gtf_file = \
+      ti.xcom_pull(
+        task_ids=gtf_xcom_task,
+        key=gtf_xcom_key)
+    check_file_path(gtf_file)
+    filtered_gtf = \
+      filter_gtf_file_for_cellranger(
+        gtf_file=gtf_file,
+        skip_gtf_rows=skip_gtf_rows)
+    temp_dir = get_temp_dir()
     if dag_run is not None and \
        dag_run.conf is not None:
       tag = dag_run.conf.get('tag')
