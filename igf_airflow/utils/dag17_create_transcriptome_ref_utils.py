@@ -654,7 +654,7 @@ def create_rsem_index_func(**context):
         os.path.join(RSEM_REF_PATH, species_name))
       ti.xcom_push(
         key=rsem_ref_xcom_key,
-        value=target_ref_dir)
+        value=os.path.join(target_ref_dir, rsem_ref_name))
     else:
       raise ValueError('No dag_run.conf entry found')
   except Exception as e:
