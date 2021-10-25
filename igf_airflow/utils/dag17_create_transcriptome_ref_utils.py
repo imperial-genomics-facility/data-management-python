@@ -276,6 +276,11 @@ def create_cellranger_ref_func(**context):
           CELLRANGER_REF_PATH,
           species_name,
           cellranger_ref_name)
+      os.makedirs(
+        os.path.join(
+          CELLRANGER_REF_PATH,
+          species_name),
+        exist_ok=True)
       if os.path.exists(target_cellranger_ref):
         raise ValueError(
                 'Cellranger ref {0} already present'.\
@@ -612,6 +617,11 @@ def create_rsem_index_func(**context):
           RSEM_REF_PATH,
           species_name,
           rsem_ref_name)
+      os.makedirs(
+        os.path.join(
+          RSEM_REF_PATH,
+          species_name),
+          exist_ok=True)
       if os.path.exists(target_ref_dir):
         raise ValueError(
                 'RSEM REF {0} already present, remove it before continuing'.\
@@ -826,6 +836,11 @@ def create_star_index_func(**context):
           STAR_REF_PATH,
           species_name,
           star_ref_dirname)
+      os.makedirs(
+        os.path.join(
+          STAR_REF_PATH,
+          species_name),
+        exist_ok=True)
       if os.path.exists(star_target_dir):
         raise ValueError(
                 'Target STAR ref path {0} already present, remove it before continuing'.\
