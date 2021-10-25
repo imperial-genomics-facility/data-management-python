@@ -284,7 +284,7 @@ def create_cellranger_ref_func(**context):
       if os.path.exists(target_cellranger_ref):
         raise ValueError(
                 'Cellranger ref {0} already present'.\
-                  ormat(target_cellranger_ref))
+                  format(target_cellranger_ref))
       cellranger_command = [
         'cd', temp_dir,';',
         CELLRANGER_EXE,
@@ -304,7 +304,7 @@ def create_cellranger_ref_func(**context):
           shell=True)
       copy_local_file(
         os.path.join(temp_dir, cellranger_ref_name),
-        os.path.join(CELLRANGER_REF_PATH, species_name))
+        target_cellranger_ref)
       ti.xcom_push(
         key=cellranger_ref_xcom_key,
         value=target_cellranger_ref)
