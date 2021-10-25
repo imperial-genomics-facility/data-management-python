@@ -22,7 +22,6 @@ STAR_EXE = Variable.get('star_exe', default_var=None)
 STAR_REF_PATH = Variable.get('star_ref_path', default_var=None)
 RSEM_EXE_DIR = Variable.get('rsem_exe_dir', default_var=None)
 RSEM_REF_PATH = Variable.get('rsem_ref_path', default_var=None)
-BIGBED_REF_PATH = Variable.get('bigbed_ref_path', default_var=None)
 UCSC_EXE_DIR = Variable.get('ucsc_exe_dir', default_var=None)
 REFFLAT_REF_PATH = Variable.get('refflat_ref_path', default_var=None)
 RIBOSOMAL_INTERVAL_REF_PATH = Variable.get('ribosomal_interval_ref_path', default_var=None)
@@ -275,6 +274,7 @@ def create_cellranger_ref_func(**context):
       target_cellranger_ref = \
         os.path.join(
           CELLRANGER_REF_PATH,
+          species_name,
           cellranger_ref_name)
       if os.path.exists(target_cellranger_ref):
         raise ValueError(
@@ -300,7 +300,7 @@ def create_cellranger_ref_func(**context):
           shell=True)
       copy_local_file(
         os.path.join(temp_dir, cellranger_ref_name),
-        CELLRANGER_REF_PATH)
+        os.path.join(CELLRANGER_REF_PATH, species_name))
       ti.xcom_push(
         key=cellranger_ref_xcom_key,
         value=target_cellranger_ref)
@@ -431,6 +431,7 @@ def create_ribosomal_interval_func(**context):
       target_ribisomal_file = \
         os.path.join(
           RIBOSOMAL_INTERVAL_REF_PATH,
+          species_name,
           ribosomal_ref_name)
       if os.path.exists(target_ribisomal_file):
         raise ValueError(
@@ -516,6 +517,7 @@ def create_reflat_index_func(**context):
       target_refflat_file = \
         os.path.join(
           REFFLAT_REF_PATH,
+          species_name,
           refflat_ref_name)
       if os.path.exists(target_refflat_file):
         raise ValueError(
@@ -609,6 +611,7 @@ def create_rsem_index_func(**context):
       target_ref_dir = \
         os.path.join(
           RSEM_REF_PATH,
+          species_name,
           rsem_ref_name)
       if os.path.exists(target_ref_dir):
         raise ValueError(
@@ -638,7 +641,7 @@ def create_rsem_index_func(**context):
           shell=True)
       copy_local_file(
         temp_ref_dir,
-        RSEM_REF_PATH)
+        os.path.join(RSEM_REF_PATH, species_name))
       ti.xcom_push(
         key=rsem_ref_xcom_key,
         value=target_ref_dir)
@@ -713,7 +716,7 @@ def download_gtf_file_func(**context):
     if dag_run is not None and \
        dag_run.conf is not None:
       gtf_url = dag_run.conf.get('gtf_url')
-      species_name = dag_run.conf.get('gtf_url')
+      species_name = dag_run.conf.get('species_name')
       if gtf_url is None or \
          species_name is None:
         raise ValueError('No url or species info found for GTF')
@@ -733,11 +736,11 @@ def download_gtf_file_func(**context):
           GTF_REF_PATH,
           species_name,
           os.path.basename(unzipped_file))
-      os.makedirs(
-        os.path.join(
-          GTF_REF_PATH,
-          species_name),
-        exist_ok=True)
+      # os.makedirs(
+      #   os.path.join(
+      #     GTF_REF_PATH,
+      #     species_name),
+      #   exist_ok=True)
       copy_local_file(
         unzipped_file,
         target_gtf_path)
@@ -819,7 +822,10 @@ def create_star_index_func(**context):
         '{0}_{1}_star'.\
             format(species_name, tag)
       star_target_dir = \
-        os.path.join(STAR_REF_PATH, star_ref_dirname)
+        os.path.join(
+          STAR_REF_PATH,
+          species_name,
+          star_ref_dirname)
       if os.path.exists(star_target_dir):
         raise ValueError(
                 'Target STAR ref path {0} already present, remove it before continuing'.\
@@ -847,7 +853,7 @@ def create_star_index_func(**context):
           shell=True)
       copy_local_file(
         genome_dir,
-        STAR_REF_PATH)
+        os.path.join(STAR_REF_PATH, species_name))
       ti.xcom_push(
         key=star_ref_xcom_key,
         value=star_target_dir)
