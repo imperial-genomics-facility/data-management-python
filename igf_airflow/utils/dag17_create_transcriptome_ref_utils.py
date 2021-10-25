@@ -845,6 +845,8 @@ def create_star_index_func(**context):
       if star_options is not None and \
          isinstance(star_options, list) and \
          len(star_options) > 0:
+        star_options = [
+          str(s) for s in star_options]
         star_cmd.\
           extend(star_options)
       subprocess.\
