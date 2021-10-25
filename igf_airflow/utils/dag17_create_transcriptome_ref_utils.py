@@ -289,9 +289,8 @@ def create_cellranger_ref_func(**context):
         '--genome={0}'.format(cellranger_ref_name),
         '--fasta={0}'.format(fasta_file),
         '--genes={0}'.format(filtered_gtf),
-        '--disable-ui',
-        '--localcores', str(threads),
-        '--localmem', str(memory)]
+        '--memgb={0}'.format(memory),
+        '--nthreads={0}'.format(threads)]
       cellranger_command = \
         ' '.join(cellranger_command)
       subprocess.\
