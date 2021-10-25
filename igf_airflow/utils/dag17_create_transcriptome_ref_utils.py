@@ -290,8 +290,8 @@ def create_cellranger_ref_func(**context):
         '--fasta={0}'.format(fasta_file),
         '--genes={0}'.format(filtered_gtf),
         '--disable-ui',
-        '--localcores', threads,
-        '--localmem', memory]
+        '--localcores', str(threads),
+        '--localmem', str(memory)]
       cellranger_command = \
         ' '.join(cellranger_command)
       subprocess.\
@@ -624,7 +624,7 @@ def create_rsem_index_func(**context):
       check_file_path(rsem_exe)
       rsem_cmd = [
         rsem_exe,
-        '--num-threads', threads,
+        '--num-threads', str(threads),
         '--gtf', gtf_file]
       if rsem_options is not None and \
          isinstance(rsem_options, list) and \
@@ -632,9 +632,10 @@ def create_rsem_index_func(**context):
         rsem_cmd.\
           extend(rsem_options)
       rsem_cmd.\
-        extend([
-          fasta_file,
-          os.path.join(temp_ref_dir, rsem_ref_name)])
+        append(fasta_file)
+      rsem_cmd.\
+        append(
+          os.path.join(temp_ref_dir, rsem_ref_name))
       subprocess.\
         check_call(
           ' '.join(rsem_cmd),
@@ -837,7 +838,7 @@ def create_star_index_func(**context):
       os.makedirs(genome_dir, exist_ok=True)
       star_cmd = [
         STAR_EXE,
-        '--runThreadN', int(threads),
+        '--runThreadN', str(threads),
         '--runMode', 'genomeGenerate',
         '--genomeDir', genome_dir,
         '--genomeFastaFiles', fasta_file,
