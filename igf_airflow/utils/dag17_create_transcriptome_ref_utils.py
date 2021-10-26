@@ -651,7 +651,7 @@ def create_rsem_index_func(**context):
           shell=True)
       copy_local_file(
         temp_ref_dir,
-        os.path.join(RSEM_REF_PATH, species_name))
+        target_ref_dir)
       ti.xcom_push(
         key=rsem_ref_xcom_key,
         value=os.path.join(target_ref_dir, rsem_ref_name))
