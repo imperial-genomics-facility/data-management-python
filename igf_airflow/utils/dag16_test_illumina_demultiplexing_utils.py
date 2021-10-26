@@ -40,6 +40,8 @@ def get_samplesheet_and_decide_flow_func(**context):
     if dag_run is not None and \
        dag_run.conf is not None:
       seqrun_id = dag_run.conf.get('seqrun_id')
+      platform_name = dag_run.conf.get('platform_name')
+      index2_rule = dag_run.conf.get('index2_rule')
       samplesheet_file_name = dag_run.conf.get('samplesheet_file_name')
       if seqrun_id is None or \
          samplesheet_file_name is None:
@@ -59,30 +61,30 @@ def get_samplesheet_and_decide_flow_func(**context):
         os.path.join(run_dir, runinfo_xml_file_name)
       tmp_samplesheet_dir = \
         get_temp_dir(use_ephemeral_space=True)
-      runparameters_data = \
-        RunParameter_xml(xml_file=runParameters_path)
-      flowcell_type = \
-        runparameters_data.\
-          get_hiseq_flowcell()
-      # check for nova workflow type
-      workflow_type = \
-        runparameters_data.\
-          get_nova_workflow_type()
-      platform_name = None
-      index2_rule = None
-      if flowcell_type is None and \
-         workflow_type is not None:
+      if platform_name is None and \
+         index2_rule is None:
+        runparameters_data = \
+          RunParameter_xml(xml_file=runParameters_path)
         flowcell_type = \
           runparameters_data.\
-            get_novaseq_flowcell()
-        platform_name = 'NOVASEQ6000'
-        index2_rule = None
-      if flowcell_type is not None and \
-         flowcell_type == 'HiSeq 3000/4000 PE':
-        index2_rule = 'REVCOMP'
-      if flowcell_type is not None and \
-         flowcell_type.startswith('HiSeq 3000/4000'):
-        platform_name = 'HISEQ4000'
+            get_hiseq_flowcell()
+        # check for nova workflow type
+        workflow_type = \
+          runparameters_data.\
+            get_nova_workflow_type()
+        if flowcell_type is None and \
+           workflow_type is not None:
+          flowcell_type = \
+            runparameters_data.\
+              get_novaseq_flowcell()
+          platform_name = 'NOVASEQ6000'
+          index2_rule = None
+        if flowcell_type is not None and \
+           flowcell_type == 'HiSeq 3000/4000 PE':
+          index2_rule = 'REVCOMP'
+        if flowcell_type is not None and \
+           flowcell_type.startswith('HiSeq 3000/4000'):
+          platform_name = 'HISEQ4000'
       samplesheet_file_list = \
         get_formatted_samplesheet_per_lane(
           samplesheet_file=samplesheet_file,
