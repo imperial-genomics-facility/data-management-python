@@ -91,18 +91,17 @@ def add_refs_to_db_collection_func(**context):
          species_name is None:
         raise ValueError('Tag or species_name not found')
       collection_list = list()
-      for entry in task_list:
-        for xcom_task, xcom_key, collection_type in entry:
-          file_path = \
-            ti.xcom_pull(
-              task_ids=xcom_task,
-              key=xcom_key)
-          if file_path is None:
-            raise ValueError(
-                    'File path for xcom task {0} and key {1} not found'.\
-                      format(xcom_task, xcom_key))
-          collection_list.append([
-            species_name, collection_type, file_path])
+      for xcom_task, xcom_key, collection_type in task_list:
+        file_path = \
+          ti.xcom_pull(
+            task_ids=xcom_task,
+            key=xcom_key)
+        if file_path is None:
+          raise ValueError(
+                  'File path for xcom task {0} and key {1} not found'.\
+                    format(xcom_task, xcom_key))
+        collection_list.append([
+          species_name, collection_type, file_path])
       collect_files_to_db(
         collection_list=collection_list,
         dbconfig_file=DATABASE_CONFIG_FILE)
