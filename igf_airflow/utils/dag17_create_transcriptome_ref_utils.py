@@ -870,7 +870,7 @@ def create_star_index_func(**context):
           shell=True)
       copy_local_file(
         genome_dir,
-        os.path.join(STAR_REF_PATH, species_name))
+        star_target_dir)
       ti.xcom_push(
         key=star_ref_xcom_key,
         value=star_target_dir)
