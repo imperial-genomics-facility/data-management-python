@@ -37,11 +37,11 @@ def collect_files_to_db(collection_list, dbconfig_file):
     fa = FileAdaptor(**{'session': ca.session})
     try:
       for collection_name, collection_type, file_path in collection_list:
-        collection_exists = \
+        collection_grp_df = \
           ca.get_collection_files(
             collection_name=collection_name,
             collection_type=collection_type)
-        if collection_exists:
+        if len(collection_grp_df.index) > 0:
           file_exists = \
             fa.check_file_records_file_path(file_path)
           if file_exists:
@@ -54,11 +54,13 @@ def collect_files_to_db(collection_list, dbconfig_file):
           ca.remove_collection_group_info(
             data=remove_data,
             autosave=False)
-        collection_data = [{
-          'name': collection_name,
-          'type': collection_type,
-          'table': 'file',
-          'file_path': file_path}]
+        collection_data = \
+          pd.DataFrame([{
+            'name': collection_name,
+            'type': collection_type,
+            'table': 'file',
+            'location': 'HPC_PROJECT',
+            'file_path': file_path}])
         ca.load_file_and_create_collection(
           data=collection_data,
           calculate_file_size_and_md5=False,
