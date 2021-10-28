@@ -54,11 +54,11 @@ def collect_files_to_db(collection_list, dbconfig_file):
           ca.remove_collection_group_info(
             data=remove_data,
             autosave=False)
-        collection_data = {
+        collection_data = [{
           'name': collection_name,
           'type': collection_type,
           'table': 'file',
-          'file_path': file_path}
+          'file_path': file_path}]
         ca.load_file_and_create_collection(
           data=collection_data,
           calculate_file_size_and_md5=False,
