@@ -36,34 +36,33 @@ def collect_files_to_db(collection_list, dbconfig_file):
     ca.start_session()
     fa = FileAdaptor(**{'session': ca.session})
     try:
-      for entry in collection_list:
-        for collection_name, collection_type, file_path in entry:
-          collection_exists = \
-            ca.get_collection_files(
-              collection_name=collection_name,
-              collection_type=collection_type)
-          if collection_exists:
-            file_exists = \
-              fa.check_file_records_file_path(file_path)
-            if file_exists:
-              raise ValueError(
-                      'File {0} already present in db'.\
-                        format(file_path))
-            remove_data = [{
-              'name': collection_name,
-              'type': collection_type}]
-            ca.remove_collection_group_info(
-              data=remove_data,
-              autosave=False)
-          collection_data = {
+      for collection_name, collection_type, file_path in collection_list:
+        collection_exists = \
+          ca.get_collection_files(
+            collection_name=collection_name,
+            collection_type=collection_type)
+        if collection_exists:
+          file_exists = \
+            fa.check_file_records_file_path(file_path)
+          if file_exists:
+            raise ValueError(
+                    'File {0} already present in db'.\
+                      format(file_path))
+          remove_data = [{
             'name': collection_name,
-            'type': collection_type,
-            'table': 'file',
-            'file_path': file_path}
-          ca.load_file_and_create_collection(
-            data=collection_data,
-            calculate_file_size_and_md5=False,
+            'type': collection_type}]
+          ca.remove_collection_group_info(
+            data=remove_data,
             autosave=False)
+        collection_data = {
+          'name': collection_name,
+          'type': collection_type,
+          'table': 'file',
+          'file_path': file_path}
+        ca.load_file_and_create_collection(
+          data=collection_data,
+          calculate_file_size_and_md5=False,
+          autosave=False)
       ca.commit_session()
       ca.close_session()
     except:
