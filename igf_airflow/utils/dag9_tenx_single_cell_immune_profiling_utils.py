@@ -333,6 +333,19 @@ def run_velocyto_func(**context):
     check_file_path(cell_sorted_bam_path)
     if not os.path.exists(cellranger_outs_dir):
       os.symlink(cellranger_count_dir, cellranger_outs_dir)                     # create link for velocyto input path
+    old_matrix_dir = \
+      os.path.join(
+        cellranger_outs_dir,
+        'filtered_feature_bc_matrix')
+    new_matrix_dir = \
+      os.path.join(
+        cellranger_outs_dir,
+        'sample_feature_bc_matrix')
+    # fix for new cellranger multi layout
+    if not os.path.exists(old_matrix_dir):
+      os.symlink(
+        new_matrix_dir,
+        old_matrix_dir)
     loom_output = \
       os.path.join(
         cellranger_output_dir,
