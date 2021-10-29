@@ -346,6 +346,33 @@ def run_velocyto_func(**context):
       os.symlink(
         new_matrix_dir,
         old_matrix_dir)
+    old_bam_path = \
+      os.path.join(
+        cellranger_outs_dir,
+        'possorted_genome_bam.bam')
+    new_bam_path = \
+      os.path.join(
+        cellranger_outs_dir,
+        'sample_alignments.bam')
+    if not os.path.exists(old_bam_path):
+      os.symlink(
+        new_bam_path,
+        old_bam_path)
+      os.symlink(
+        '{0}.bai'.format(new_bam_path),
+        '{0}.bai'.format(old_bam_path))
+    old_cs_bam_path = \
+      os.path.join(
+        cellranger_outs_dir,
+        'cellsorted_possorted_genome_bam.bam')
+    new_cs_bam_path = \
+      os.path.join(
+        cellranger_outs_dir,
+        'cellsorted_sample_alignments.bam')
+    if not os.path.exists(old_cs_bam_path):
+      os.symlink(
+        new_cs_bam_path,
+        old_cs_bam_path)
     loom_output = \
       os.path.join(
         cellranger_output_dir,
@@ -360,14 +387,20 @@ def run_velocyto_func(**context):
     reference_path = None
     gtf_path = None
     for analysis_entry in analysis_description:
-      feature_type = analysis_entry.get('feature_type')
-      feature_type = feature_type.replace(' ','_').lower()
+      feature_type = \
+        analysis_entry.get('feature_type')
+      feature_type = \
+        feature_type.replace(' ','_').lower()
       if feature_type == 'gene_expression':
-        reference_path = analysis_entry.get('reference')
+        reference_path = \
+          analysis_entry.get('reference')
     if reference_path is None:
       raise KeyError('Missing cellranger reference path')
     gtf_path = \
-      os.path.join(reference_path, 'genes', 'genes.gtf.gz')
+      os.path.join(
+        reference_path,
+        'genes',
+        'genes.gtf.gz')
     check_file_path(gtf_path)
     gtf_tmp_dir = \
       get_temp_dir(use_ephemeral_space=True)
