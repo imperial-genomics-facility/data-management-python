@@ -2555,7 +2555,8 @@ def load_cellranger_metrices_to_collection(**context):
         collection_type=collection_type,
         attribute_name=attribute_name_key,
         attribute_value=attribute_value_key,
-        attribute_prefix=attribute_prefix)
+        attribute_prefix=attribute_prefix,
+        load_new_metrix_file=True)
     dbparams = \
       read_dbconf_json(DATABASE_CONFIG_FILE)
     ca = CollectionAdaptor(**dbparams)
@@ -2591,7 +2592,7 @@ def load_cellranger_metrices_to_collection(**context):
 
 def _build_collection_attribute_data_for_cellranger(
       metrics_file, collection_name, collection_type, attribute_name='attribute_name',
-      attribute_value='attribute_value', attribute_prefix=None):
+      attribute_value='attribute_value', attribute_prefix=None, load_new_metrix_file=True):
   """
   An internal function for building collection attribute data for cellranger
   metrics summary output
@@ -2602,16 +2603,27 @@ def _build_collection_attribute_data_for_cellranger(
   :param attribute_name: Attribute name, default attribute_name
   :param attribute_value: Attribute value, default attribute_value
   :param attribute_prefix: Optional string for attribute prefix, default None
+  :param load_new_metrix_file: Load new cellranger matrix file, default True
   :returns: A list of dictionary wiuth thecollection attribute data
   """
   try:
     check_file_path(metrics_file)
-    attribute_data = \
-      pd.read_csv(metrics_file).T.\
-        reset_index()
-    attribute_data.columns = [
-      attribute_name,
-      attribute_value]
+    if load_new_metrix_file:
+      attribute_data = \
+        pd.read_csv(metrics_file)
+      attribute_data = \
+        attribute_data[attribute_data['Library or Sample']=='Sample']
+      attribute_data = attribute_data[['Metric Name', 'Metric Value']]
+      attribute_data.columns = [
+        attribute_name,
+        attribute_value]
+    else:
+      attribute_data = \
+        pd.read_csv(metrics_file).T.\
+          reset_index()
+      attribute_data.columns = [
+        attribute_name,
+        attribute_value]
     if attribute_prefix is None:
       attribute_data[attribute_name] = \
         attribute_data[attribute_name].\

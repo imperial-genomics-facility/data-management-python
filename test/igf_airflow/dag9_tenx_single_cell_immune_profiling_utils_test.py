@@ -551,6 +551,48 @@ class Dag9_tenx_single_cell_immune_profiling_utilstestG(unittest.TestCase):
     with open(self.count_metrics_file,'w') as fp:
       for i in count_data:
         fp.write(i+'\n')
+    self.count_metrics_file2 = os.path.join(self.temp_dir,'count_metrics_summary2.csv')
+    new_count_data = \
+      pd.DataFrame([
+        {'Library or Sample': 'Library', 'Library Type': 'Gene Expression', 'Grouped By': 'Fastq ID', 'Group Name': 'mtl244', 'Metric Name': 'Number of reads', 'Metric Value': '72,302,879'},
+        {'Library or Sample': 'Library', 'Library Type': 'Gene Expression', 'Grouped By': 'Fastq ID', 'Group Name': 'mtl244', 'Metric Name': 'Number of short reads skipped', 'Metric Value': '0'},
+        {'Library or Sample': 'Library', 'Library Type': 'Gene Expression', 'Grouped By': 'Fastq ID', 'Group Name': 'mtl244', 'Metric Name': 'Q30 RNA read', 'Metric Value': '76.4%'},
+        {'Library or Sample': 'Library', 'Library Type': 'Gene Expression', 'Grouped By': 'Fastq ID', 'Group Name': 'mtl244', 'Metric Name': 'Q30 UMI', 'Metric Value': '98.8%'},
+        {'Library or Sample': 'Library', 'Library Type': 'Gene Expression', 'Grouped By': 'Fastq ID', 'Group Name': 'mtl244', 'Metric Name': 'Q30 barcodes', 'Metric Value': '98.8%'},
+        {'Library or Sample': 'Library', 'Library Type': 'Gene Expression', 'Grouped By': 'Fastq ID', 'Group Name': 'mtl244 (2)', 'Metric Name': 'Number of reads', 'Metric Value': '80,346,277'},
+        {'Library or Sample': 'Library', 'Library Type': 'Gene Expression', 'Grouped By': 'Fastq ID', 'Group Name': 'mtl244 (2)', 'Metric Name': 'Number of short reads skipped', 'Metric Value': '0'},
+        {'Library or Sample': 'Library', 'Library Type': 'Gene Expression', 'Grouped By': 'Fastq ID', 'Group Name': 'mtl244 (2)', 'Metric Name': 'Q30 RNA read', 'Metric Value': '76.1%'},
+        {'Library or Sample': 'Library', 'Library Type': 'Gene Expression', 'Grouped By': 'Fastq ID', 'Group Name': 'mtl244 (2)', 'Metric Name': 'Q30 UMI', 'Metric Value': '98.6%'},
+        {'Library or Sample': 'Library', 'Library Type': 'Gene Expression', 'Grouped By': 'Fastq ID', 'Group Name': 'mtl244 (2)', 'Metric Name': 'Q30 barcodes', 'Metric Value': '98.6%'},
+        {'Library or Sample': 'Library', 'Library Type': 'Gene Expression', 'Grouped By': 'Fastq ID', 'Group Name': 'mtl244 (3)', 'Metric Name': 'Number of reads', 'Metric Value': '80,446,377'},
+        {'Library or Sample': 'Library', 'Library Type': 'Gene Expression', 'Grouped By': 'Fastq ID', 'Group Name': 'mtl244 (3)', 'Metric Name': 'Number of short reads skipped', 'Metric Value': '0'},
+        {'Library or Sample': 'Library', 'Library Type': 'Gene Expression', 'Grouped By': 'Fastq ID', 'Group Name': 'mtl244 (3)', 'Metric Name': 'Q30 RNA read', 'Metric Value': '77.0%'},
+        {'Library or Sample': 'Library', 'Library Type': 'Gene Expression', 'Grouped By': 'Fastq ID', 'Group Name': 'mtl244 (3)', 'Metric Name': 'Q30 UMI', 'Metric Value': '98.7%'},
+        {'Library or Sample': 'Library', 'Library Type': 'Gene Expression', 'Grouped By': 'Fastq ID', 'Group Name': 'mtl244 (3)', 'Metric Name': 'Q30 barcodes', 'Metric Value': '98.7%'},
+        {'Library or Sample': 'Library', 'Library Type': 'Gene Expression', 'Grouped By': 'Fastq ID', 'Group Name': 'mtl244 (4)', 'Metric Name': 'Number of reads', 'Metric Value': '66,189,700'},
+        {'Library or Sample': 'Library', 'Library Type': 'Gene Expression', 'Grouped By': 'Fastq ID', 'Group Name': 'mtl244 (4)', 'Metric Name': 'Number of short reads skipped', 'Metric Value': '0'},
+        {'Library or Sample': 'Library', 'Library Type': 'Gene Expression', 'Grouped By': 'Fastq ID', 'Group Name': 'mtl244 (4)', 'Metric Name': 'Q30 RNA read', 'Metric Value': '76.0%'},
+        {'Library or Sample': 'Library', 'Library Type': 'Gene Expression', 'Grouped By': 'Fastq ID', 'Group Name': 'mtl244 (4)', 'Metric Name': 'Q30 UMI', 'Metric Value': '98.8%'},
+        {'Library or Sample': 'Library', 'Library Type': 'Gene Expression', 'Grouped By': 'Fastq ID', 'Group Name': 'mtl244 (4)', 'Metric Name': 'Q30 barcodes', 'Metric Value': '98.8%'},
+        {'Library or Sample': 'Library', 'Library Type': 'Gene Expression', 'Grouped By': 'Physical library ID', 'Group Name': 'GEX_1', 'Metric Name': 'Confidently mapped antisense', 'Metric Value': '1.49%'},
+        {'Library or Sample': 'Library', 'Library Type': 'Gene Expression', 'Grouped By': 'Physical library ID', 'Group Name': 'GEX_1', 'Metric Name': 'Confidently mapped to exonic regions', 'Metric Value': '56.78%'},
+        {'Library or Sample': 'Library', 'Library Type': 'Gene Expression', 'Grouped By': 'Physical library ID', 'Group Name': 'GEX_1', 'Metric Name': 'Confidently mapped to genome', 'Metric Value': '89.05%'},
+        {'Library or Sample': 'Library', 'Library Type': 'Gene Expression', 'Grouped By': 'Physical library ID', 'Group Name': 'GEX_1', 'Metric Name': 'Confidently mapped to intergenic regions', 'Metric Value': '8.96%'},
+        {'Library or Sample': 'Sample', 'Library Type': 'Gene Expression', 'Grouped By': '', 'Group Name': '', 'Metric Name': 'Cells', 'Metric Value': '5,313'},
+        {'Library or Sample': 'Sample', 'Library Type': 'Gene Expression', 'Grouped By': '', 'Group Name': '', 'Metric Name': 'Confidently mapped antisense', 'Metric Value': '1.49%'},
+        {'Library or Sample': 'Sample', 'Library Type': 'Gene Expression', 'Grouped By': '', 'Group Name': '', 'Metric Name': 'Confidently mapped to exonic regions', 'Metric Value': '58.70%'},
+        {'Library or Sample': 'Sample', 'Library Type': 'Gene Expression', 'Grouped By': '', 'Group Name': '', 'Metric Name': 'Confidently mapped to genome', 'Metric Value': '89.77%'},
+        {'Library or Sample': 'Sample', 'Library Type': 'Gene Expression', 'Grouped By': '', 'Group Name': '', 'Metric Name': 'Confidently mapped to intergenic regions', 'Metric Value': '5.68%'},
+        {'Library or Sample': 'Sample', 'Library Type': 'Gene Expression', 'Grouped By': '', 'Group Name': '', 'Metric Name': 'Confidently mapped to intronic regions', 'Metric Value': '25.39%'},
+        {'Library or Sample': 'Sample', 'Library Type': 'Gene Expression', 'Grouped By': '', 'Group Name': '', 'Metric Name': 'Confidently mapped to transcriptome', 'Metric Value': '55.63%'},
+        {'Library or Sample': 'Sample', 'Library Type': 'Gene Expression', 'Grouped By': '', 'Group Name': '', 'Metric Name': 'Mapped to genome', 'Metric Value': '95.07%'},
+        {'Library or Sample': 'Sample', 'Library Type': 'Gene Expression', 'Grouped By': '', 'Group Name': '', 'Metric Name': 'Median UMI counts per cell', 'Metric Value': '3,987'},
+        {'Library or Sample': 'Sample', 'Library Type': 'Gene Expression', 'Grouped By': '', 'Group Name': '', 'Metric Name': 'Median genes per cell', 'Metric Value': '1,350'},
+        {'Library or Sample': 'Sample', 'Library Type': 'Gene Expression', 'Grouped By': '', 'Group Name': '', 'Metric Name': 'Median reads per cell', 'Metric Value': '42,494'},
+        {'Library or Sample': 'Sample', 'Library Type': 'Gene Expression', 'Grouped By': '', 'Group Name': '', 'Metric Name': 'Number of reads assigned to the sample', 'Metric Value': '259,674,133'},
+        {'Library or Sample': 'Sample', 'Library Type': 'Gene Expression', 'Grouped By': '', 'Group Name': '', 'Metric Name': 'Total genes detected', 'Metric Value': '23,560'}])
+    new_count_data.\
+      to_csv(self.count_metrics_file2, index=False)
 
   def tearDown(self):
     remove_dir(self.temp_dir)
@@ -563,7 +605,8 @@ class Dag9_tenx_single_cell_immune_profiling_utilstestG(unittest.TestCase):
         collection_type='TEST',
         attribute_name='attribute_name',
         attribute_value='attribute_value',
-        attribute_prefix='VDJ_T')
+        attribute_prefix='VDJ_T',
+        load_new_metrix_file=False)
     gex_attribute_data = \
       _build_collection_attribute_data_for_cellranger(
         metrics_file=self.count_metrics_file,
@@ -571,7 +614,8 @@ class Dag9_tenx_single_cell_immune_profiling_utilstestG(unittest.TestCase):
         collection_type='TEST',
         attribute_name='attribute_name',
         attribute_value='attribute_value',
-        attribute_prefix='COUNT')
+        attribute_prefix='COUNT',
+        load_new_metrix_file=False)
     vdj_t_attribute_data = \
       pd.DataFrame(vdj_t_attribute_data)
     vdj_cell_count = \
@@ -586,6 +630,22 @@ class Dag9_tenx_single_cell_immune_profiling_utilstestG(unittest.TestCase):
         gex_attribute_data['attribute_name']=='COUNT_Estimated_Number_of_Cells']\
         ['attribute_value'].values[0]
     self.assertEqual(gex_cell_count,'5819')
+    gex_attribute_data = \
+      _build_collection_attribute_data_for_cellranger(
+        metrics_file=self.count_metrics_file2,
+        collection_name='TEST',
+        collection_type='TEST',
+        attribute_name='attribute_name',
+        attribute_value='attribute_value',
+        attribute_prefix='COUNT',
+        load_new_metrix_file=True)
+    gex_attribute_data = \
+      pd.DataFrame(gex_attribute_data)
+    gex_cell_count = \
+      gex_attribute_data[
+        gex_attribute_data['attribute_name']=='COUNT_Cells']\
+        ['attribute_value'].values[0]
+    self.assertEqual(gex_cell_count, '5313')
 
 if __name__=='__main__':
   unittest.main()
