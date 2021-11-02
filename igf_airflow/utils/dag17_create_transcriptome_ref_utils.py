@@ -209,13 +209,30 @@ def filter_gtf_file_for_cellranger(gtf_file, skip_gtf_rows=5):
       os.path.join(
         temp_dir,
         '{0}_filtered'.format(os.path.basename(gtf_file)))
+    temp_filtered_gtf = \
+      os.path.join(
+        temp_dir,
+        '{0}_filtered_temp'.format(os.path.basename(gtf_file)))
+    header_file = \
+      os.path.join(
+        temp_dir,
+        '{0}_header'.format(os.path.basename(gtf_file)))
+    with open(header_file, 'w') as ofp:
+      with open(gtf_file, 'r') as fp:
+        for line in fp:
+          if line.startswith('#'):
+            ofp.write(line)
     df.\
       to_csv(
-        filtered_gtf,
+        temp_filtered_gtf,
         sep='\t',
         header=False,
         index=False,
         quotechar="'")
+    with open(filtered_gtf, 'wb') as ofp:
+      for i in [header_file, temp_filtered_gtf]:
+        with open(i, 'rb') as fp:
+          shutil.copyfileobj(fp, ofp)
     check_file_path(filtered_gtf)
     return filtered_gtf
   except Exception as e:
