@@ -68,6 +68,7 @@ def full_suite():
   from .igf_airflow.dag9_tenx_single_cell_immune_profiling_utils_test import Dag9_tenx_single_cell_immune_profiling_utilstestG
   from .igf_airflow.dag10_nextflow_atacseq_pipeline_utils_test import Dag10_nextflow_atacseq_pipeline_utils_testA
   from .igf_airflow.dag10_nextflow_atacseq_pipeline_utils_test import Dag10_nextflow_atacseq_pipeline_utils_testB
+  from .igf_airflow.dag17_create_transcriptome_ref_utils_test import Dag17_create_transcriptome_ref_utils_test_utilstestA
   from .utils.cellranger_count_utils_test import Cellranger_count_utils_testA
   from .dbadaptor.analysisadaptor_test import Analysisadaptor_test1
   from .dbadaptor.seqrunadaptor_test import SeqrunAdaptor_test1
@@ -170,6 +171,7 @@ def full_suite():
         Nextflow_design_testA,
         Nextflow_pre_run_setup_testA,
         Dag10_nextflow_atacseq_pipeline_utils_testA,
-        Dag10_nextflow_atacseq_pipeline_utils_testB
+        Dag10_nextflow_atacseq_pipeline_utils_testB,
+        Dag17_create_transcriptome_ref_utils_test_utilstestA
       ]
     ])
