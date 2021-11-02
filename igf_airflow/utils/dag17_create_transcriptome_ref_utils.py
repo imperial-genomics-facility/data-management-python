@@ -148,7 +148,7 @@ def filter_gtf_row_for_cellranger_ref(x):
       re.compile(r".*tag \"PAR\"")
     gene_id_pattern = \
       re.compile(r'.*gene_id \"(\S+)\"')
-    if (re.match(gene_pattern, x) or \
+    if (re.match(gene_pattern, x) and \
         re.match(tx_pattern, x)):
       if re.match(gene_id_pattern, x):
         gene_id = \
