@@ -2,7 +2,7 @@ import pandas as pd
 from airflow.models import Variable
 import logging, os, requests, subprocess, re, shutil, gzip
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
-from igf_data.utils.fileutils import check_file_path, get_temp_dir, copy_local_file
+from igf_data.utils.fileutils import check_file_path, get_temp_dir, copy_local_file, get_datestamp_label
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.utils.tools.reference_genome_utils import Reference_genome_utils
 from igf_data.igfdb.baseadaptor import BaseAdaptor
@@ -302,12 +302,12 @@ def create_cellranger_ref_func(**context):
         raise ValueError(
                 'Cellranger ref {0} already present'.\
                   format(target_cellranger_ref))
+      datestamp_label = get_datestamp_label()
       cellranger_command = [
         'cd', temp_dir,';',
         CELLRANGER_EXE,
         'mkref',
-        '--ref-version={0}_{1}_{2}'.\
-          format(species_name, tag, cellranger_version),
+        '--ref-version={0}'.format(datestamp_label),
         '--genome={0}'.format(cellranger_ref_name),
         '--fasta={0}'.format(fasta_file),
         '--genes={0}'.format(filtered_gtf),
