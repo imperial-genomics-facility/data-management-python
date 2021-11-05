@@ -2,7 +2,7 @@ import logging, os
 import pandas as pd
 from airflow.models import Variable
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
-from igf_data.utils.fileutils import check_file_path, get_temp_dir, copy_local_file
+from igf_data.utils.fileutils import check_file_path, get_temp_dir, copy_local_file, copy_remote_file
 from igf_data.illumina.samplesheet import SampleSheet
 from igf_data.utils.samplesheet_utils import get_formatted_samplesheet_per_lane
 from igf_data.illumina.runparameters_xml import RunParameter_xml
@@ -22,6 +22,10 @@ BOX_DIR_PREFIX = Variable.get('box_dir_prefix_for_seqrun_report', default_var=No
 BOX_USERNAME = Variable.get('box_username', default_var=None)
 BOX_CONFIG_FILE  = Variable.get('box_config_file', default_var=None)
 INTEROP_IMAGE = Variable.get('interop_notebook_image_path')
+SEQRUN_SERVER = Variable.get('seqrun_server', default_var=None)
+REMOTE_SEQRUN_BASE_PATH = Variable.get('seqrun_base_path', default_var=None)
+SEQRUN_SERVER_USER = Variable.get('seqrun_server_user', default_var=None)
+
 
 def get_samplesheet_and_decide_flow_func(**context):
   try:
@@ -53,6 +57,21 @@ def get_samplesheet_and_decide_flow_func(**context):
       samplesheet_file = \
         os.path.join(run_dir, samplesheet_file_name)
       # checking if samplesheet is present
+      if not os.path.exists(samplesheet_file):
+        # copy samplesheet from remote dir
+        remote_samplesheet_file = \
+          os.path.join(
+            REMOTE_SEQRUN_BASE_PATH,
+            run_dir,
+            samplesheet_file_name)
+        logging.warn(
+          'copying samplesheet {0} from remote server'.\
+            format(samplesheet_file_name))
+        copy_remote_file(
+          source_path=remote_samplesheet_file,
+          destination_path=samplesheet_file,
+          source_address='{0}@{1}'.format(SEQRUN_SERVER_USER, SEQRUN_SERVER),
+          force_update=True)
       check_file_path(samplesheet_file)
       runParameters_path = \
         os.path.join(run_dir, runParameters_xml_file_name)
