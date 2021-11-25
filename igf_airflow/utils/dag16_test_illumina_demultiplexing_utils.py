@@ -62,7 +62,7 @@ def get_samplesheet_and_decide_flow_func(**context):
         remote_samplesheet_file = \
           os.path.join(
             REMOTE_SEQRUN_BASE_PATH,
-            run_dir,
+            seqrun_id,
             samplesheet_file_name)
         logging.warn(
           'copying samplesheet {0} from remote server'.\
