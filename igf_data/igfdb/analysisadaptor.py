@@ -14,10 +14,10 @@ class AnalysisAdaptor(BaseAdaptor):
 
     :param data: A dictionary or a dataframe. It sould have following columns
 
-                  * project_igf_id / project_id
-                  * analysis_name: A string
-                  * analysis_type: A string
-                  * analysis_description: A json encoded string
+      * project_igf_id / project_id
+      * analysis_name: A string
+      * analysis_type: A string
+      * analysis_description: A json encoded string
 
     :param autosave: A toggle for autocommit, default True
     :returns: None
@@ -133,3 +133,27 @@ class AnalysisAdaptor(BaseAdaptor):
     except Exception as e:
       raise ValueError(
               'Failed to fetch analysis record, error: {0}'.format(e))
+
+  def fetch_analysis_record_by_analysis_name_and_project_igf_id(
+        self, analysis_name, project_igf_id, output_mode='dataframe'):
+    try:
+      session = self.session
+      query = \
+        session.\
+          query(
+            Analysis.analysis_id,
+            Analysis.analysis_name,
+            Analysis.analysis_type,
+            Analysis.analysis_description).\
+          join(Analysis,Project.project_id==Analysis.project_id).\
+          filter(Project.project_igf_id==project_igf_id).\
+          filter(Analysis.analysis_name==analysis_name)
+      results = \
+        self.fetch_records(
+          query=query,
+          output_mode=output_mode)
+      return results
+    except Exception as e:
+      raise ValueError(
+              "Failed to fetch analysis for {0} and {1}, error: {2}".\
+                format(analysis_name, project_igf_id, e))
