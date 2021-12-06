@@ -144,6 +144,7 @@ class AnalysisAdaptor(BaseAdaptor):
             Analysis.analysis_id,
             Analysis.analysis_name,
             Analysis.analysis_type,
+            Project.project_igf_id,
             Analysis.analysis_description).\
           join(Analysis,Project.project_id==Analysis.project_id).\
           filter(Project.project_igf_id==project_igf_id).\

@@ -69,6 +69,9 @@ def full_suite():
   from .igf_airflow.dag10_nextflow_atacseq_pipeline_utils_test import Dag10_nextflow_atacseq_pipeline_utils_testA
   from .igf_airflow.dag10_nextflow_atacseq_pipeline_utils_test import Dag10_nextflow_atacseq_pipeline_utils_testB
   from .igf_airflow.dag17_create_transcriptome_ref_utils_test import Dag17_create_transcriptome_ref_utils_test_utilstestA
+  from .igf_airflow.dag18_upload_and_trigger_analysis_utils_test import Dag18_upload_and_trigger_analysis_utils_testA
+  from .igf_airflow.dag18_upload_and_trigger_analysis_utils_test import Dag18_upload_and_trigger_analysis_utils_testB
+  from .igf_airflow.dag18_upload_and_trigger_analysis_utils_test import Dag18_upload_and_trigger_analysis_utils_testC
   from .utils.cellranger_count_utils_test import Cellranger_count_utils_testA
   from .dbadaptor.analysisadaptor_test import Analysisadaptor_test1
   from .dbadaptor.seqrunadaptor_test import SeqrunAdaptor_test1
@@ -172,6 +175,9 @@ def full_suite():
         Nextflow_pre_run_setup_testA,
         Dag10_nextflow_atacseq_pipeline_utils_testA,
         Dag10_nextflow_atacseq_pipeline_utils_testB,
-        Dag17_create_transcriptome_ref_utils_test_utilstestA
+        Dag17_create_transcriptome_ref_utils_test_utilstestA,
+        Dag18_upload_and_trigger_analysis_utils_testA,
+        Dag18_upload_and_trigger_analysis_utils_testB,
+        Dag18_upload_and_trigger_analysis_utils_testC
       ]
     ])

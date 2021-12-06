@@ -27,10 +27,12 @@ def get_analysis_ids_from_csv(analysis_trigger_file):
     data = \
       pd.read_csv(
         analysis_trigger_file,
-        header=False,
+        header=None,
         sep=",")
-    data.columns = ["project_igf_id", "analysis_name"]
-    return data.to_csv(orient="records")
+    data.columns = [
+      "project_igf_id",
+      "analysis_name"]
+    return data.to_dict(orient="records")
   except Exception as e:
     raise ValueError(
             "Failed to get analysis id from {0}, error {1}".\
@@ -107,7 +109,8 @@ def find_analysis_to_trigger_dags_func(**context):
         reaction='fail')
     if len(updated_analysis_records) > 0:
       task_df = \
-        pd.DataFrame(updated_analysis_records)
+        pd.DataFrame(
+          updated_analysis_records)
       if "analysis_type" not in task_df.columns:
         raise KeyError("analysis_type coulmn not found in updated analysis records")
       for analysis_type, t_data in task_df.groupby("analysis_type"):
