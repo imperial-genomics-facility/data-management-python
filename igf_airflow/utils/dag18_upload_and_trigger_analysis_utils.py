@@ -21,6 +21,94 @@ ANALYSIS_TRIGGER_FILE = \
 ANALYSIS_LIST = \
     Variable.get("analysis_dag_list", default_var={})
 
+def send_log_and_reset_trigger_file_func(**context):
+  try:
+    ti = context.get('ti')
+    xcom_key = \
+      context['params'].get('xcom_key')
+    xcom_task = \
+      context['params'].get('xcom_task')
+    analysis_list = \
+      ti.xcom_pull(
+        task_ids=xcom_task,
+        key=xcom_key)
+    df = pd.DataFrame(analysis_list)
+    if len(df.index)>0:
+      analysis_counts = \
+        df.\
+          groupby("analysis_type").\
+          size().\
+          to_dict()
+      message = \
+        "Triggred following analysis: {0}".format(analysis_counts)
+      send_log_to_channels(
+        slack_conf=SLACK_CONF,
+        ms_teams_conf=MS_TEAMS_CONF,
+        task_id=context['task'].task_id,
+        dag_id=context['task'].dag_id,
+        comment=message,
+        reaction='pass')
+    # reset analysis_trigger_file
+    pd.DataFrame([]).to_csv(ANALYSIS_TRIGGER_FILE)
+  except Exception as e:
+    logging.error(e)
+    message = \
+      'analysis input finding error: {0}'.\
+        format(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=message,
+      reaction='fail')
+    raise
+
+
+def trigger_dag_func(context, dag_run_obj):
+    try:
+        ti = context.get('ti')
+        xcom_key = \
+            context['params'].get('xcom_key')
+        xcom_task = \
+            context['params'].get('xcom_task')
+        analysis_name = \
+            context['params'].get('analysis_name')
+        index = \
+            context['params'].get('index')
+        analysis_list = \
+            ti.xcom_pull(
+                task_ids=xcom_task,
+                key=xcom_key)
+        analysis_detail = \
+           get_dag_conf_for_analysis(
+               analysis_list=analysis_list,
+               analysis_name=analysis_name,
+               index=index)
+        dag_run_obj.payload = analysis_detail
+        return dag_run_obj
+        ## FIX for v2
+        # trigger_dag = \
+        #    TriggerDagRunOperator(
+        #        task_id="trigger_dag_{0}_{1}".format(analysis_name, index),
+        #        trigger_dag_id=analysis_name,
+        #        conf=analysis_detail)
+        #return trigger_dag.execute(context=context)
+    except Exception as e:
+        logging.error(e)
+        message = \
+        'analysis input finding error: {0}'.\
+            format(e)
+        send_log_to_channels(
+            slack_conf=SLACK_CONF,
+            ms_teams_conf=MS_TEAMS_CONF,
+            task_id=context['task'].task_id,
+            dag_id=context['task'].dag_id,
+            comment=message,
+            reaction='fail')
+        raise
+
+
 def get_dag_conf_for_analysis(analysis_list, analysis_name, index):
   try:
     df = pd.DataFrame(analysis_list)
