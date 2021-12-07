@@ -23,7 +23,7 @@ BOX_USERNAME = Variable.get('box_username', default_var=None)
 BOX_CONFIG_FILE  = Variable.get('box_config_file', default_var=None)
 INTEROP_IMAGE = Variable.get('interop_notebook_image_path')
 SEQRUN_SERVER = Variable.get('seqrun_server', default_var=None)
-REMOTE_SEQRUN_BASE_PATH = Variable.get('seqrun_base_path', default_var=None)
+SEQRUN_BASE_PATH = Variable.get('seqrun_base_path', default_var=None)
 SEQRUN_SERVER_USER = Variable.get('seqrun_server_user', default_var=None)
 
 
@@ -61,7 +61,7 @@ def get_samplesheet_and_decide_flow_func(**context):
         # copy samplesheet from remote dir
         remote_samplesheet_file = \
           os.path.join(
-            REMOTE_SEQRUN_BASE_PATH,
+            SEQRUN_BASE_PATH,
             seqrun_id,
             samplesheet_file_name)
         logging.warn(
