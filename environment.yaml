@@ -15,7 +15,7 @@ dependencies:
   - conda-forge::readline=8.1
   - conda-forge::sqlite=3.37.0=h9cd32fc_0
   - conda-forge::python=3.7.12
-  - conda-forge::r-base=3.5.1
+  - conda-forge::r-base=3.6.1
   - pip
   - pip:
     - aiohttp==3.8.1
