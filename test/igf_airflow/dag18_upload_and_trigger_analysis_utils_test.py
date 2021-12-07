@@ -13,6 +13,7 @@ from igf_airflow.utils.dag18_upload_and_trigger_analysis_utils import get_new_fi
 from igf_airflow.utils.dag18_upload_and_trigger_analysis_utils import get_analysis_ids_from_csv
 from igf_airflow.utils.dag18_upload_and_trigger_analysis_utils import fetch_analysis_records
 from igf_airflow.utils.dag18_upload_and_trigger_analysis_utils import parse_analysis_yaml_and_load_to_db
+from igf_airflow.utils.dag18_upload_and_trigger_analysis_utils import get_dag_conf_for_analysis
 
 
 class Dag18_upload_and_trigger_analysis_utils_testA(unittest.TestCase):
@@ -197,6 +198,75 @@ class Dag18_upload_and_trigger_analysis_utils_testC(unittest.TestCase):
     self.assertEqual(
       df[df['analysis_name']=='analysis_1']['analysis_type'].values[0],
       'tenx_single_cell_immune_profiling')
+
+  def test_get_dag_conf_for_analysis(self):
+    analysis_list = [{
+      "analysis_name":"analysis_1",
+      "analysis_id":1,
+      "analysis_type":"tenx_single_cell_immune_profiling",
+      "project_igf_id": "project_a",
+      "analysis_description": [{
+        "r1-length": 26,
+        "feature_type": "gene expression",
+        "genome_build": "HG38",
+        "reference": "HG38_gencode_v38_6.1.1",
+        "cell_annotation_csv": "PanglaoDB_markers_27_Mar_2020.tsv",
+        "sample_igf_id": "sample_a",
+        "cell_marker_mode": "VDJ" 
+      },{
+        "r1-length": 26,
+        "genome_build": "HG38",
+        "reference": "refdata-cellranger-vdj-GRCh38-alts-ensembl-5.0.0",
+        "feature_type": "vdj-t",
+        "sample_igf_id": "sample_b"
+      },{
+        "r1-length": 26,
+        "genome_build": "HG38",
+        "reference": "refdata-cellranger-vdj-GRCh38-alts-ensembl-5.0.0",
+        "feature_type": "vdj-b",
+        "sample_igf_id": "sample_c"
+      }]
+    },{
+      "analysis_name":"analysis_2",
+      "analysis_id":2,
+      "analysis_type":"tenx_single_cell_immune_profiling",
+      "project_igf_id": "project_a",
+      "analysis_description": [{
+        "r1-length": 26,
+        "feature_type": "gene expression",
+        "genome_build": "HG38",
+        "reference": "HG38_gencode_v38_6.1.1",
+        "cell_annotation_csv": "PanglaoDB_markers_27_Mar_2020.tsv",
+        "sample_igf_id": "sample_d",
+        "cell_marker_mode": "VDJ"
+      },{
+        "r1-length": 26,
+        "genome_build": "HG38",
+        "reference": "refdata-cellranger-vdj-GRCh38-alts-ensembl-5.0.0",
+        "feature_type": "vdj-t",
+        "sample_igf_id": "sample_e"
+      },{
+        "r1-length": 26,
+        "genome_build": "HG38",
+        "reference": "refdata-cellranger-vdj-GRCh38-alts-ensembl-5.0.0",
+        "feature_type": "vdj-b",
+        "sample_igf_id": "sample_f"
+      }]
+    }]
+    analysis_detail = \
+      get_dag_conf_for_analysis(
+        analysis_list,
+        analysis_name="analysis_1",
+        index=0)
+    self.assertTrue(isinstance(analysis_detail, dict))
+    self.assertTrue('analysis_id' in analysis_detail)
+    self.assertEqual(analysis_detail['analysis_id'], 1)
+    with self.assertRaises(Exception):
+      analysis_detail = \
+        get_dag_conf_for_analysis(
+          analysis_list,
+          analysis_name="analysis_1",
+          index=1)
 
 if __name__=='__main__':
   unittest.main()

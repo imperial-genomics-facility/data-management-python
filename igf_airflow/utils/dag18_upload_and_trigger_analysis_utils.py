@@ -21,6 +21,26 @@ ANALYSIS_TRIGGER_FILE = \
 ANALYSIS_LIST = \
     Variable.get("analysis_dag_list", default_var={})
 
+def get_dag_conf_for_analysis(analysis_list, analysis_name, index):
+  try:
+    df = pd.DataFrame(analysis_list)
+    filter_df = df[df['analysis_name']==analysis_name]
+    if index >= len(filter_df.index):
+      raise KeyError(
+              "Missing key {0} for analysis {1}".\
+                format(index, analysis_name))
+    if 'analysis_id' not in filter_df.columns:
+      raise KeyError("Missing key analysis_id in the analysis_list")
+    analysis_detail = \
+      filter_df.\
+        sort_values('analysis_id').\
+        to_dict(orient="records")[index]
+    return analysis_detail
+  except Exception as e:
+    raise ValueError(
+            "Failed to fetch analysis details for trigger, error: {0}".\
+              format(e))
+
 def get_analysis_ids_from_csv(analysis_trigger_file):
   try:
     check_file_path(analysis_trigger_file)
@@ -88,6 +108,9 @@ def find_analysis_to_trigger_dags_func(**context):
       context['params'].get('no_trigger_task')
     trigger_task_prefix = \
       context['params'].get('trigger_task_prefix')
+    xcom_key = \
+      context['params'].get('xcom_key')
+    ti = context.get('ti')
     task_list = [no_trigger_task]
     analysis_list = \
       get_analysis_ids_from_csv(
@@ -131,6 +154,9 @@ def find_analysis_to_trigger_dags_func(**context):
                   trigger_task_prefix,
                   analysis_type,
                   i))
+      ti.xcom_push(
+        key=xcom_key,
+        value=updated_analysis_records)                                         # xcom push only if analysis is present
     return task_list
   except Exception as e:
     logging.error(e)
