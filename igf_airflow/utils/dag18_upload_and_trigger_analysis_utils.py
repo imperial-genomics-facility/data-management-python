@@ -49,11 +49,11 @@ def send_log_and_reset_trigger_file_func(**context):
         comment=message,
         reaction='pass')
     # reset analysis_trigger_file
-    pd.DataFrame(
-      columns=[
-        "project_igf_id",
-        "analysis_name"]).\
-          to_csv(ANALYSIS_TRIGGER_FILE)
+    pd.DataFrame([]).\
+      to_csv(
+        ANALYSIS_TRIGGER_FILE,
+        header=False,
+        index=False)
   except Exception as e:
     logging.error(e)
     message = \
