@@ -77,7 +77,7 @@ class FileAdaptor(BaseAdaptor):
     :returns: None
     '''
     if not isinstance(data, pd.DataFrame):
-      data = pd.DataFrame(data)     
+      data = pd.DataFrame(data)
 
     try:
       self.store_records(

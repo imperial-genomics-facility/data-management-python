@@ -279,8 +279,18 @@ def parse_analysis_yaml_and_load_to_db(analysis_yaml_file, db_config_file):
         read_dbconf_json(db_config_file)
       aa = AnalysisAdaptor(**db_params)
       aa.start_session()
-      aa.store_analysis_data(df)
-      aa.close_session()
+      try:
+        aa.store_analysis_data(df, autosave=False)
+        fa = FileAdaptor(**{'session': aa.session})
+        fa.store_file_data(
+          data=[{'file_path': analysis_yaml_file}],
+          autosave=False)
+        aa.commit_session()
+        aa.close_session()
+      except:
+        aa.rollback_session()
+        aa.close_session()
+        raise
   except Exception as e:
     raise ValueError(
             "Failed to load analysis {0}, error: {1}".\
