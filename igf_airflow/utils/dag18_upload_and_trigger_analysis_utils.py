@@ -129,17 +129,25 @@ def get_dag_conf_for_analysis(analysis_list, analysis_name, index):
             "Failed to fetch analysis details for trigger, error: {0}".\
               format(e))
 
+
 def get_analysis_ids_from_csv(analysis_trigger_file):
   try:
     check_file_path(analysis_trigger_file)
-    data = \
-      pd.read_csv(
-        analysis_trigger_file,
-        header=None,
-        sep=",")
-    data.columns = [
-      "project_igf_id",
-      "analysis_name"]
+    if os.path.getsize(analysis_trigger_file) > 0:
+      data = \
+        pd.read_csv(
+          analysis_trigger_file,
+          header=None,
+          sep=",")
+      data.columns = [
+        "project_igf_id",
+        "analysis_name"]
+    else:
+      data = \
+        pd.DataFrame(
+          columns=[
+            "project_igf_id",
+            "analysis_name"])
     return data.to_dict(orient="records")
   except Exception as e:
     raise ValueError(
