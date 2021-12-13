@@ -311,7 +311,7 @@ def load_analysis_design_func(**context):
         task_ids=load_design_xcom_task,
         key=load_design_xcom_key)
     analysis_file = \
-      analysis_files.get(task_index)
+      analysis_files[task_index]
     if analysis_file is None:
       raise ValueError("No analysis file list found")
     check_file_path(analysis_file)
