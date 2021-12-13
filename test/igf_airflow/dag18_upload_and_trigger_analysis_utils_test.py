@@ -256,7 +256,7 @@ class Dag18_upload_and_trigger_analysis_utils_testC(unittest.TestCase):
     analysis_detail = \
       get_dag_conf_for_analysis(
         analysis_list,
-        analysis_name="analysis_1",
+        analysis_type="analysis_1",
         index=0)
     self.assertTrue(isinstance(analysis_detail, dict))
     self.assertTrue('analysis_id' in analysis_detail)

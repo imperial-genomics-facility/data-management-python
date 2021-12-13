@@ -87,7 +87,7 @@ def trigger_dag_func(context, dag_run_obj):
         analysis_detail = \
            get_dag_conf_for_analysis(
                analysis_list=analysis_list,
-               analysis_name=analysis_name,
+               analysis_type=analysis_name,
                index=index)
         dag_run_obj.payload = analysis_detail
         return dag_run_obj
@@ -113,14 +113,14 @@ def trigger_dag_func(context, dag_run_obj):
         raise
 
 
-def get_dag_conf_for_analysis(analysis_list, analysis_name, index):
+def get_dag_conf_for_analysis(analysis_list, analysis_type, index):
   try:
     df = pd.DataFrame(analysis_list)
-    filter_df = df[df['analysis_name']==analysis_name]
+    filter_df = df[df['analysis_type']==analysis_type]
     if index >= len(filter_df.index):
       raise KeyError(
               "Missing key {0} for analysis {1}".\
-                format(index, analysis_name))
+                format(index, analysis_type))
     if 'analysis_id' not in filter_df.columns:
       raise KeyError("Missing key analysis_id in the analysis_list")
     analysis_detail = \
