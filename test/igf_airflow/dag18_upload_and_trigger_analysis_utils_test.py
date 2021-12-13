@@ -265,8 +265,8 @@ class Dag18_upload_and_trigger_analysis_utils_testC(unittest.TestCase):
       analysis_detail = \
         get_dag_conf_for_analysis(
           analysis_list,
-          analysis_name="analysis_1",
-          index=1)
+          analysis_name="tenx_single_cell_immune_profiling",
+          index=2)
 
 if __name__=='__main__':
   unittest.main()
