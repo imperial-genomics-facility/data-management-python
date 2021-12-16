@@ -1,7 +1,7 @@
 import os, json
-from slackclient import SlackClient
+#from slackclient import SlackClient
 # FIX FOR slackclient-2.9.3
-#from slack import WebClient
+from slack import WebClient
 
 class IGF_slack:
   '''
@@ -21,9 +21,9 @@ class IGF_slack:
     self.slack_bot_id = None
     self.slack_config = slack_config
     self._read_and_set_slack_config()                                           # read config file and set parameters
-    self.slackobject = SlackClient(self.slack_token)                            # create slackclient instance
+    #self.slackobject = SlackClient(self.slack_token)                            # create slackclient instance
     # FIX FOR slackclient-2.9.3
-    #self.slackobject = WebClient(self.slack_token)
+    self.slackobject = WebClient(self.slack_token)
     self.slack_token = None                                                     # reset slack token 
 
   def post_message_to_channel(
