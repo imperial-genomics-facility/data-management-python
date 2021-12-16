@@ -1,7 +1,7 @@
 import os, json
-#from slackclient import SlackClient
+from slackclient import SlackClient
 # FIX FOR slackclient-2.9.3
-from slack import WebClient
+#from slack import WebClient
 
 class IGF_slack:
   '''
@@ -21,9 +21,9 @@ class IGF_slack:
     self.slack_bot_id = None
     self.slack_config = slack_config
     self._read_and_set_slack_config()                                           # read config file and set parameters
-    #self.slackobject = SlackClient(self.slack_token)                            # create slackclient instance
+    self.slackobject = SlackClient(self.slack_token)                            # create slackclient instance
     # FIX FOR slackclient-2.9.3
-    self.slackobject = WebClient(self.slack_token)
+    #self.slackobject = WebClient(self.slack_token)
     self.slack_token = None                                                     # reset slack token 
 
   def post_message_to_channel(
@@ -48,15 +48,15 @@ class IGF_slack:
       else:
         message = \
           '{0} {1}'.format(reaction, message)
-      self.slackobject.api_call(
-        "chat.postMessage",
-        channel=self.slack_channel_id,
-        text=message)
+      #self.slackobject.api_call(
+      #  "chat.postMessage",
+      #  channel=self.slack_channel_id,
+      #  text=message)
       # FIX FOR slackclient-2.9.3
-      #res = \
-      #  self.slackobject.chat_postMessage(
-      #    channel=self.slack_channel_id,
-      #    text=message)
+      res = \
+        self.slackobject.chat_postMessage(
+          channel=self.slack_channel_id,
+          text=message)
     except:
       raise
 
@@ -75,16 +75,16 @@ class IGF_slack:
         message = 'skipped uploading file {0}, size {1}'.\
         format(os.path.basename(filepath), os.stat(filepath).st_size)            # skip uploading files more than 5Mb in size
       else:
-        self.slackobject.api_call(
-          "files.upload",
-          channels=self.slack_channel_id,
-          initial_comment=message,
-          file=open(os.path.join(filepath),'rb'))                               # share files in slack channel
+        #self.slackobject.api_call(
+        #  "files.upload",
+        #  channels=self.slack_channel_id,
+        #  initial_comment=message,
+        #  file=open(os.path.join(filepath),'rb'))                               # share files in slack channel
         # FIX FOR slackclient-2.9.3
-        #res = \
-        #  self.slackobject.files_upload(
-        #    channels=self.slack_channel_id,
-        #    file=filepath)
+        res = \
+          self.slackobject.files_upload(
+            channels=self.slack_channel_id,
+            file=filepath)
     except:
       raise
 
@@ -106,19 +106,19 @@ class IGF_slack:
       elif reaction=='sleep':
         reaction = ':zzz:'
       message = '{0} {1}'.format(reaction, message)
-      self.slackobject.api_call(
-        "chat.postMessage",
-        channel=self.slack_channel_id,
-        text=message,
-        thread_ts=thread_id,
-        is_im=True)
+      #self.slackobject.api_call(
+      #  "chat.postMessage",
+      #  channel=self.slack_channel_id,
+      #  text=message,
+      #  thread_ts=thread_id,
+      #  is_im=True)
       # FIX FOR slackclient-2.9.3
-      #res = \
-      #  self.slackobject.\
-      #    chat_postMessage(
-      #      channel=self.slack_channel_id,
-      #      text=message,
-      #      thread_ts=thread_id)
+      res = \
+        self.slackobject.\
+          chat_postMessage(
+            channel=self.slack_channel_id,
+            text=message,
+            thread_ts=thread_id)
     except:
       raise
 
