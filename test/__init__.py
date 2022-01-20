@@ -20,8 +20,9 @@ def full_suite():
   from .dbadaptor.runadaptor_test import RunAdaptor_test1
   from .process.runinfo_xml_test import Hiseq4000RunInfo as Hiseq4000RunInfo_runinfo_xml
   from .process.runparameters_xml_test import Hiseq4000RunParam
-  from .process.samplesheet_test import Hiseq4000SampleSheet,TestValidateSampleSheet
-  from .process.samplesheet_test import TestValidateSampleSheet1,TestValidateSampleSheet2
+  from .process.samplesheet_test import Hiseq4000SampleSheet, TestValidateSampleSheet
+  from .process.samplesheet_test import SampleSheet_format_v2_test1
+  from .process.samplesheet_test import TestValidateSampleSheet1, TestValidateSampleSheet2
   from .process.find_and_register_new_project_data_test import Find_and_register_project_data1
   from .dbadaptor.useradaptor_test import Useradaptor_test1
   from .dbadaptor.sampleadaptor_test import Sampleadaptor_test1,Sampleadaptor_test2,Sampleadaptor_test3,Sampleadaptor_test4
@@ -109,6 +110,7 @@ def full_suite():
         Hiseq4000RunInfo_runinfo_xml,
         Hiseq4000RunParam,
         Hiseq4000SampleSheet,
+        SampleSheet_format_v2_test1,
         TestValidateSampleSheet,
         TestValidateSampleSheet1,
         TestValidateSampleSheet2,

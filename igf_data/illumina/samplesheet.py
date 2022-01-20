@@ -12,7 +12,7 @@ class SampleSheet:
   :param data_header_name: name of the data section, default Data
   '''
 
-  def __init__(self, infile, data_header_name='Data'):
+  def __init__(self, infile, data_header_name=('Data', 'BCLConvert_Data')):
     self.infile = infile
     self.data_header_name = data_header_name
     self._sample_data = self._read_samplesheet()                                # reading samplesheet data
@@ -22,6 +22,11 @@ class SampleSheet:
     self._data = raw_data
     self._reformat_project_and_description()
     self.index_columns = self._get_index_columns()                              # set index column values
+
+
+  @property
+  def samplesheet_version(self):
+    return self._samplesheet_version
 
 
   @staticmethod
@@ -41,7 +46,8 @@ class SampleSheet:
           r'^{0}$'.format(single_cell_flag),
           re.IGNORECASE)
       err = list()
-      if data_series['Sample_ID']==data_series['Sample_Name']:
+      if ('Sample_ID' in data_series and 'Sample_Name' in data_series) and \
+         data_series['Sample_ID']==data_series['Sample_Name']:
         err.append("Same sample id and sample names are not allowed, {0}".\
                    format(data_series['Sample_ID']))
       if ('I5_Index_ID' in data_series and data_series['I5_Index_ID'] != '') and \
@@ -72,7 +78,7 @@ class SampleSheet:
       raise
 
 
-  def validate_samplesheet_data(self,schema_json):
+  def validate_samplesheet_data(self, schema_json):
     '''
     A method for validation of samplesheet data
 
@@ -100,7 +106,7 @@ class SampleSheet:
             self._check_samplesheet_data_row(data_series=x),
           axis=1)                                                               # check for additional errors
       other_errors.dropna(inplace=True)
-      if len(other_errors)>0:
+      if len(other_errors) > 0:
         error_list.extend(
           [value for value in other_errors.to_dict().values()])                 # add other errors to the list
       return error_list
@@ -145,7 +151,7 @@ class SampleSheet:
   def _get_index_columns(self):
     '''
     An internal function for retrieving the index column names
-    
+
     :returns: A list of index column names
     '''
     try:
@@ -209,16 +215,16 @@ class SampleSheet:
     try:
       samplesheet_data = pd.DataFrame(self._data)
       samplesheet_columns = list(samplesheet_data.columns)
-      if 'Lane' in samplesheet_columns:
+      if lane_tag in samplesheet_columns:
         data_group = \
-          samplesheet_data.groupby(['Sample_Project','Lane'])                   # for hiseq
+          samplesheet_data.groupby([project_tag, lane_tag])                   # for hiseq
       else:
         data_group = \
-          samplesheet_data.groupby(['Sample_Project'])                          # for nextseq and miseq
+          samplesheet_data.groupby([project_tag])                          # for nextseq and miseq
       project_list = list()
       for project_lane, _ in data_group:
         if isinstance(project_lane, tuple):
-          project_lane = ' : '.join(project_lane)                                   # for hiseq samplesheet
+          project_lane = ' : '.join(project_lane)                               # for hiseq samplesheet
         project_list.append(project_lane)
       return project_list
     except:
@@ -306,6 +312,8 @@ class SampleSheet:
     '''
     try:
       lanes = list(lanes)
+      if self.get_platform_name() == 'NextSeq2000':
+        lanes = ['1',]
       data = self._data
       newdata = list()
       for row in data:
@@ -370,14 +378,17 @@ class SampleSheet:
       raise
 
 
-  def get_platform_name(self, section='Header', field='Application'):
+  def get_platform_name(self, section='Header'):
     '''
     Function for getting platform details from samplesheet header
 
     :param section: File section for lookup, default 'Header'
-    :param field: Field name for platform info, default 'Application'
     '''
     try:
+      if self.samplesheet_version == 'v1':
+        field = 'Application'
+      if self.samplesheet_version == 'v2':
+        field = 'InstrumentType'
       header_section_data = \
         self._header_data[section]
       pattern = \
@@ -427,28 +438,32 @@ class SampleSheet:
       raise
 
 
-  def check_sample_header(self, section, condition_key):
+  def check_sample_header(self, section, condition_key, return_values=False):
     '''
     Function for checking SampleSheet header
 
     :param section: A field name for header info check
     :param condition_key: A condition key for header info check
-    :returns: zero if its not present or number of occurrence of the term
+    :param return_values: Taggole for a list of return values instead of zero or match counts
+    :returns: zero if its not present or number of occurrence of the term, or list of matching items with return_values=True
     '''
     try:
       header_data = self._header_data
       if not condition_key or not section:
         raise ValueError(
                 'section and condition_key are required for sample header check')
-      exists = 0
+      exists = list()
       pattern = \
         re.compile(
           '^{}$'.format(condition_key),
           re.IGNORECASE)
       exists = \
-        len([row for row in header_data[section] \
-               if re.search(pattern, row.split(',')[0])])
-      return exists
+        [row for row in header_data[section] \
+               if re.search(pattern, row.split(',')[0])]
+      if return_values:
+        return exists
+      else:
+        return len(exists)
     except:
       raise
 
@@ -478,7 +493,7 @@ class SampleSheet:
         else:
           header_data[section].\
             append('{0},{1}'.\
-              format(condition_key,condition_value))
+              format(condition_key, condition_value))
       elif ( type.lower().strip() == 'remove' ):
         filtered_header_section = list()
         pattern = \
@@ -589,7 +604,15 @@ class SampleSheet:
     '''
     try:
       sample_data = self._sample_data
-      data = sample_data[self.data_header_name]
+      for entry in self.data_header_name:
+        if entry in sample_data:
+          data = sample_data[entry]
+          if entry == 'Data':
+            self._samplesheet_version = 'v1'
+          elif entry == 'BCLConvert_Data':
+            self._samplesheet_version = 'v2'
+          else:
+            self._samplesheet_version = 'unknown'
       data = deque(data)
       data_header = data.popleft()
       data_header = data_header.split(',')
@@ -620,11 +643,12 @@ class SampleSheet:
       with open(infile, 'r') as f:
         for i in f:
           row = i.rstrip('\n')
-          if row.startswith('['):
-            header = \
-              row.split(',')[0].strip('[').strip(']')
-          else:
-            sample_data[header].append(row)
+          if row != '':
+            if row.startswith('['):
+              header = \
+                row.split(',')[0].strip('[').strip(']')
+            else:
+              sample_data[header].append(row)
       return sample_data
     except:
       raise
