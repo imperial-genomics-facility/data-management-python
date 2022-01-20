@@ -14,7 +14,7 @@ class Hiseq4000SampleSheet(unittest.TestCase):
 
     existsB=samplesheet_data.check_sample_header(section='Header', condition_key='Application')
     self.assertTrue(existsB)
-   
+
   def test_get_lane_count(self):
     samplesheet_data=self.samplesheet_data
     count=samplesheet_data.get_lane_count()
@@ -30,7 +30,7 @@ class Hiseq4000SampleSheet(unittest.TestCase):
     samplesheet_data=self.samplesheet_data
     platform_name=samplesheet_data.get_platform_name()
     pattern=re.compile('hiseq', re.IGNORECASE)
-    self.assertRegexpMatches(platform_name, pattern)
+    self.assertRegex(platform_name, pattern)
 
   def test_get_project_and_lane(self):
     samplesheet_data=self.samplesheet_data
@@ -63,7 +63,7 @@ class Hiseq4000SampleSheet(unittest.TestCase):
     samplesheet_data=self.samplesheet_data
     existsA=samplesheet_data.check_sample_header(section='Settings', condition_key='Adapter')
     self.assertFalse(existsA)
- 
+
     # adding adapter info in the samplesheet header
     samplesheet_data.modify_sample_header(section='Settings', type='add', condition_key='Adapter', condition_value='AAAAAAAAAA') 
 
@@ -84,7 +84,7 @@ class TestValidateSampleSheet(unittest.TestCase):
     file='doc/data/SampleSheet/HiSeq4000/SampleSheet.csv'
     self.file=file
     self.samplesheet_data=SampleSheet(infile=self.file)
-  
+
   def test_validate_sample_id(self):
     data=[{"Description": "",
        "Sample_ID":"IGF1033 44",
