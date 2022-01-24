@@ -22,7 +22,9 @@ class SampleSheet:
     self._data = raw_data
     self._reformat_project_and_description()
     self.index_columns = self._get_index_columns()                              # set index column values
-
+    self.columns = ("Lane", "Sample_ID", "Sample_Name", "Sample_Plate",
+                    "Sample_Well", "I7_Index_ID", "index", "I5_Index_ID",
+                    "index2", "Sample_Project", "Description")
 
   @property
   def samplesheet_version(self):
@@ -109,6 +111,11 @@ class SampleSheet:
       if len(other_errors) > 0:
         error_list.extend(
           [value for value in other_errors.to_dict().values()])                 # add other errors to the list
+      for c in data.columns.tolist():
+        if c not in self.columns:
+          error_list.\
+            append('Unknown column {0} found on samplesheet'.\
+                     format(c))
       return error_list
     except:
       raise
