@@ -35,7 +35,7 @@ dependencies:
     - asana==0.10.3
     - async-timeout==4.0.1
     - asynctest==0.13.0
-    - atlassian-python-api==3.14.1
+    - atlassian-python-api==3.14.0
     - attrs==20.3.0
     - babel==2.9.1
     - bcrypt==3.2.0
@@ -68,6 +68,7 @@ dependencies:
     - docopt==0.6.2
     - docutils==0.16
     - email-validator==1.1.3
+    - flake8==3.9.2
     - flask==1.1.2
     - flask-appbuilder==3.3.4
     - flask-babel==2.0.0
@@ -122,6 +123,7 @@ dependencies:
     - prometheus-client==0.12.0
     - prompt-toolkit==3.0.22
     - psutil==5.8.0
+    - psycopg2-binary==2.8.5
     - pycparser==2.21
     - pygments==2.10.0
     - pyjwt==1.7.1
@@ -129,6 +131,7 @@ dependencies:
     - pynacl==1.4.0
     - pyparsing==2.4.7
     - pyrsistent==0.18.0
+    - pytest==6.2.4
     - python-daemon==2.3.0
     - python-dateutil==2.8.2
     - python-graphviz==0.18
@@ -164,6 +167,7 @@ dependencies:
     - text-unidecode==1.3
     - tomli==1.2.2
     - tornado==6.1
+    - tox==3.24.3
     - typing-extensions==3.10.0.2
     - unicodecsv==0.14.1
     - urllib3==1.26.7
