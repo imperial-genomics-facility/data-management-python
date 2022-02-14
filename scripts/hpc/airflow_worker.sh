@@ -9,5 +9,4 @@ airflow celery worker \
   --pid $TMPDIR/pid \
   --celery-hostname ${PBS_JOBID}-${job_name} \
   --queues ${job_queue} \
-  --skip-serve-logs \
-  --log-file ${AIRFLOW__CORE__BASE_LOG_FOLDER}
+  --skip-serve-logs
