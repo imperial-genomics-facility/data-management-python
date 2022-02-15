@@ -215,6 +215,7 @@ def copy_run_file_to_remote_func(**context):
        xcom_key == 'bcl_files':
       lane_id = \
         context['params'].get('lane_id')
+      lane_id = str(lane_id)
       if lane_id is None:
         raise ValueError('No lane id found for bcl file copy')
       xcom_data = \
