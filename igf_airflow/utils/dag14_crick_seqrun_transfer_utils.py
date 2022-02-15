@@ -409,6 +409,9 @@ def validate_md5_chunk_func(**context):
       ti.xcom_pull(
         task_ids=xcom_task,
         key=xcom_key)
+    md5_chunk_dict = {
+      int(k): v
+        for k,v in md5_chunk_dict.items()}
     if int(chunk_id) not in md5_chunk_dict.keys():
       raise ValueError(
               'Missing chunk id {0} in the md5 chunks {1}'.\
