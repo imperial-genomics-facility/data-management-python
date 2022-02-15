@@ -72,3 +72,24 @@ class RunInfo_xml:
     with open(xml_file, 'r') as fp:
       soup = BeautifulSoup(fp, "html5lib")
     self._soup = soup
+
+  def get_lane_count(self, lanecount_tag='lanecount'):
+    try:
+      lane_counts = \
+        self._soup.flowcelllayout.get("lanecount")
+      if isinstance(lane_counts, str):
+        lane_counts = int(lane_counts)
+      if lane_counts is None:
+        lane_counts = 0
+      return lane_counts
+    except Exception as e:
+      raise ValueError("Failed to get lane count, error: {0}".format(e))
+
+  def get_tiles_list(self, tag="tile"):
+    try:
+      tiles = list()
+      for r in self._soup.find_all(tag):
+        tiles.append(r.contents[0])
+      return tiles
+    except Exception as e:
+      raise ValueError("Failed to get tiles list, error: {0}".format(e))
