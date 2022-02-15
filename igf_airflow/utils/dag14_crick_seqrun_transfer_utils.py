@@ -349,9 +349,12 @@ def check_and_divide_run_for_remote_copy_func(**context):
       local_file_path = \
         os.path.join(
           seqrun_dir, f)
-      remote_file_path = \
-        os.path.join(
-          remote_seqrun_dir, f)
+      if f == 'InterOp':
+        remote_file_path = remote_seqrun_dir
+      else:
+        remote_file_path = \
+          os.path.join(
+            remote_seqrun_dir, f)
       check_file_path(local_file_path)
       xcom_additional_files_dict.\
         update({
