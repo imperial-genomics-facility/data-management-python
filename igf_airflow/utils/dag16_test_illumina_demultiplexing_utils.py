@@ -97,7 +97,7 @@ def get_samplesheet_and_decide_flow_func(**context):
             runparameters_data.\
               get_novaseq_flowcell()
           platform_name = 'NOVASEQ6000'
-          index2_rule = None
+          index2_rule = 'REVCOMP'
         if flowcell_type is not None and \
            flowcell_type == 'HiSeq 3000/4000 PE':
           index2_rule = 'REVCOMP'
