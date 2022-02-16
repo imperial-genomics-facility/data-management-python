@@ -577,7 +577,11 @@ class SampleSheet:
           file.write('[{}]\n'.format(header_key))
           header_data_section = '\n'.join(header_data[header_key])
           file.write('{}\n'.format(header_data_section))
-        file.write('[{}]\n'.format(self.data_header_name))
+        version = self.samplesheet_version
+        if version == 'v1':
+          file.write('[{}]\n'.format('Data'))
+        elif version == 'v2':
+          file.write('[{}]\n'.format('BCLConvert_Data'))
         file.write('{}\n'.format(','.join(data_header)))
         for row in data:
           data_row = list()
@@ -598,7 +602,7 @@ class SampleSheet:
       sample_data = self._sample_data
       header_data = dict()
       for keys in sample_data:
-        if keys != self.data_header_name:
+        if keys not in self.data_header_name:
           header_data[keys] = sample_data[keys]
       return header_data
     except:
