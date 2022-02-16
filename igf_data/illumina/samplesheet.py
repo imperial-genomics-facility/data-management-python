@@ -414,7 +414,7 @@ class SampleSheet:
       raise
 
 
-  def get_lane_count(self, lane_field='Lane', target_platform='HiSeq'):
+  def get_lane_count(self, lane_field='Lane', target_platforms=('HiSeq','NovaSeq')):
     '''
     Function for getting the lane information for HiSeq runs
     It will return 1 for both MiSeq and NextSeq runs
@@ -427,18 +427,22 @@ class SampleSheet:
       data = self._data
       platform_name = self.get_platform_name()
       lane = set()
-      pattern = \
-        re.compile(
-          '^{}'.format(target_platform),
-          re.IGNORECASE)
-      if re.search(pattern, platform_name):
-        for row in data:
-          if lane_field not in list(row.keys()):
-            raise ValueError(
-                    'lane field {0} not found for platform, {1}, sample sheet {2}'.\
-                      format(lane_field, target_platform, self.infile))
-          lane.add(row[lane_field])
-      else:
+      match_count = 0
+      for target_platform in target_platforms:
+        pattern = \
+          re.compile(
+            '^{}'.format(target_platform),
+            re.IGNORECASE)
+        if re.search(pattern, platform_name) and \
+           match_count == 0:
+          match_count += 1
+          for row in data:
+            if lane_field not in list(row.keys()):
+              raise ValueError(
+                      'lane field {0} not found for platform, {1}, sample sheet {2}'.\
+                        format(lane_field, target_platform, self.infile))
+            lane.add(row[lane_field])
+      if match_count == 0:
         lane.add(1)
       return list(lane)
     except:
