@@ -80,6 +80,7 @@ def full_suite():
   from .igf_nextflow.nextflow_config_formatter_test import Nextflow_config_formatter_testA
   from .igf_nextflow.nextflow_design_test import Nextflow_design_testA
   from .igf_nextflow.nextflow_runner_test import Nextflow_pre_run_setup_testA
+  from .igf_portal.test_metadata_utils import Metadata_dump_test
 
   return unittest.TestSuite([
     unittest.TestLoader().loadTestsFromTestCase(t)
@@ -180,6 +181,7 @@ def full_suite():
         Dag17_create_transcriptome_ref_utils_test_utilstestA,
         Dag18_upload_and_trigger_analysis_utils_testA,
         Dag18_upload_and_trigger_analysis_utils_testB,
-        Dag18_upload_and_trigger_analysis_utils_testC
+        Dag18_upload_and_trigger_analysis_utils_testC,
+        Metadata_dump_test
       ]
     ])
