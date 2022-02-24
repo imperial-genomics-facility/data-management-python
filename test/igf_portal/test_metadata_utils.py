@@ -1,4 +1,5 @@
 import unittest, json, os, shutil
+import pandas as pd
 from igf_data.utils.fileutils import get_temp_dir, remove_dir
 from igf_data.igfdb.igfTables import Base
 from igf_data.igfdb.baseadaptor import BaseAdaptor
@@ -9,6 +10,8 @@ from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
 from igf_data.igfdb.experimentadaptor import ExperimentAdaptor
 from igf_data.igfdb.runadaptor import RunAdaptor
 from igf_portal.metadata_utils import get_db_data_and_create_json_dump
+from igf_portal.metadata_utils import _create_json_for_metadata_upload
+from igf_portal.metadata_utils import _get_metadata_csv_files_from_metadata_dir
 
 class Metadata_dump_test(unittest.TestCase):
   def setUp(self):
@@ -107,6 +110,71 @@ class Metadata_dump_test(unittest.TestCase):
         for entry in project_data
           if entry.get('project_id')==sample_data[0].get('project_id')][0]
     self.assertEqual(project_record, 'IGFP0001_test_22-8-2017_rna')
+
+
+class Metadata_load_test(unittest.TestCase):
+  def setUp(self):
+    self.temp_dir = get_temp_dir()
+    formatted_dir = os.path.join(self.temp_dir, 'metadata', 'formatted_data')
+    raw_dir = os.path.join(self.temp_dir, 'metadata', 'raw_data')
+    os.makedirs(formatted_dir, exist_ok=True)
+    os.makedirs(raw_dir, exist_ok=True)
+    self.metadata_list = [
+      'formatted_data/project1_reformatted.csv',
+      'raw_data/project1.csv',
+      'raw_data/project1_SampleSheet.csv',
+      'formatted_data/project1_SampleSheet_reformatted.csv',
+      'formatted_data/project2_reformatted.csv',
+      'raw_data/project2.csv',
+      'raw_data/project2_SampleSheet.csv',
+      'formatted_data/project2_SampleSheet_reformatted.csv'
+      ]
+    metadata = pd.DataFrame([{'project_igf_id':'project', 'sample_igf_id':'sample1'}])
+    for entry in self.metadata_list:
+      path = os.path.join(self.temp_dir, 'metadata', entry)
+      metadata.to_csv(path, index=False)
+
+  def tearDown(self):
+    remove_dir(self.temp_dir)
+
+  def test_get_metadata_csv_files_from_metadata_dir(self):
+    final_metadata_dict = \
+      _get_metadata_csv_files_from_metadata_dir(
+        metadata_dir=self.temp_dir)
+    self.assertEqual(len(final_metadata_dict.keys()), 2)
+    self.assertTrue('project1' in final_metadata_dict)
+    self.assertTrue(isinstance(final_metadata_dict.get('project1'), dict))
+    self.assertTrue('raw_csv' in final_metadata_dict.get('project1'))
+    self.assertTrue('formatted_csv' in final_metadata_dict.get('project1'))
+    self.assertEqual(
+      final_metadata_dict.get('project1').get('raw_csv'),
+      os.path.join(self.temp_dir, 'metadata', 'raw_data/project1.csv'))
+    self.assertEqual(
+      final_metadata_dict.get('project2').get('formatted_csv'),
+      os.path.join(self.temp_dir, 'metadata', 'formatted_data/project2_reformatted.csv'))
+
+  def test_create_json_for_metadata_upload(self):
+    final_metadata_dict = \
+      _get_metadata_csv_files_from_metadata_dir(
+        metadata_dir=self.temp_dir)
+    project_list = list(final_metadata_dict.keys())
+    temp_json = \
+      _create_json_for_metadata_upload(
+        project_list=project_list,
+        metadata_dict=final_metadata_dict)
+    self.assertTrue(os.path.exists(temp_json))
+    with open(temp_json, 'r') as fp:
+      json_data = json.load(fp)
+    self.assertEqual(len(json_data), 2)
+    self.assertTrue('metadata_tag' in json_data[0])
+    self.assertTrue('raw_csv_data' in json_data[0])
+    self.assertTrue('formatted_csv_data' in json_data[0])
+    self.assertTrue(isinstance(json_data[0].get('formatted_csv_data'), list))
+    self.assertEqual(len(json_data[0].get('formatted_csv_data')), 1)
+    self.assertTrue('project_igf_id' in json_data[0].get('formatted_csv_data')[0])
+    self.assertEqual(json_data[0].get('formatted_csv_data')[0].get('project_igf_id'), 'project')
+    self.assertTrue('sample_igf_id' in json_data[0].get('formatted_csv_data')[0])
+    self.assertEqual(json_data[0].get('formatted_csv_data')[0].get('sample_igf_id'), 'sample1')
 
 if __name__=='__main__':
   unittest.main()

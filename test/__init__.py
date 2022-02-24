@@ -80,7 +80,7 @@ def full_suite():
   from .igf_nextflow.nextflow_config_formatter_test import Nextflow_config_formatter_testA
   from .igf_nextflow.nextflow_design_test import Nextflow_design_testA
   from .igf_nextflow.nextflow_runner_test import Nextflow_pre_run_setup_testA
-  from .igf_portal.test_metadata_utils import Metadata_dump_test
+  from .igf_portal.test_metadata_utils import Metadata_dump_test, Metadata_load_test
   from .process.find_and_process_new_project_data_from_portal_db_test import Find_and_register_new_project_data_from_portal_db_test1
 
   return unittest.TestSuite([
@@ -184,6 +184,7 @@ def full_suite():
         Dag18_upload_and_trigger_analysis_utils_testB,
         Dag18_upload_and_trigger_analysis_utils_testC,
         Metadata_dump_test,
+        Metadata_load_test,
         Find_and_register_new_project_data_from_portal_db_test1
       ]
     ])
