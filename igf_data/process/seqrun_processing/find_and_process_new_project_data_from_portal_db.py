@@ -107,20 +107,22 @@ class Find_and_register_new_project_data_from_portal_db:
 
   def _get_new_project_data_from_portal(self):
     try:
-      response = \
+      res = \
         get_data_from_portal(
           url_suffix="/api/v1/raw_metadata/download_ready_metadata",
           portal_config_file=self.portal_db_conf_file)
+      return res
     except Exception as e:
       raise ValueError(e)
 
 
   def _mark_portal_db_as_synced(self):
     try:
-      response = \
+      res = \
         get_data_from_portal(
           url_suffix="/api/v1/raw_metadata/mark_ready_metadata_as_synced",
           portal_config_file=self.portal_db_conf_file)
+      return res
     except Exception as e:
       raise ValueError(e)
 
