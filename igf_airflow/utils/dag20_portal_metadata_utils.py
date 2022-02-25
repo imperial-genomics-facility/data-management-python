@@ -46,7 +46,7 @@ def get_metadata_dump_from_pipeline_db_func(**context):
   except Exception as e:
     logging.error(e)
     message = \
-      'failed metadata dump, error: {0}'.\
+      'Failed metadata dump, error: {0}'.\
         format(e)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
