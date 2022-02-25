@@ -302,7 +302,7 @@ def get_temp_dir(work_dir=None, prefix='temp',use_ephemeral_space=False):
       use_ephemeral_space = True
     if work_dir is None:
       if use_ephemeral_space:
-        work_dir = os.environ.get('EPHEMERAL')
+        work_dir = os.environ.get('EPHEMERAL', '/tmp')
         if work_dir is None:
           raise ValueError(
                   'Env variable EPHEMERAL is not available, set use_ephemeral_space as False')
