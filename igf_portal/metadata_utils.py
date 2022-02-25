@@ -27,6 +27,7 @@ from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.utils.fileutils import get_temp_dir, copy_local_file, check_file_path
 from igf_portal.api_utils import upload_files_to_portal
+from igf_portal.api_utils import get_data_from_portal
 
 def get_db_data_and_create_json_dump(dbconfig_json, output_json_path):
   try:
@@ -267,3 +268,4 @@ def get_raw_metadata_from_lims_and_load_to_portal(metadata_dir, portal_conf_file
     raise ValueError(
             "Failed to load raw metadata to portal, error: {0}".\
               format(e))
+
