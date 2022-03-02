@@ -173,8 +173,7 @@ def _check_for_existing_raw_metadata_on_portal_db(project_list, portal_conf_file
     temp_list_file = \
       os.path.join(temp_dir, 'project_list.csv')
     with open(temp_list_file, 'w') as fp:
-      for p in project_list:
-        fp.write(p)
+      fp.writelines(project_list)
     res = \
       upload_files_to_portal(
         portal_config_file=portal_conf_file,
