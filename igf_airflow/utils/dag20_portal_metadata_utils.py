@@ -251,7 +251,7 @@ def create_raw_metadata_for_new_projects_func(**context):
     _, _ = \
       singularity_run(
         image_path=singularity_image_path,
-        path_bind=path_bind,
+        bind_dir_list=path_bind,
         args_list=run_args)
     ti.xcom_push(
       key=xcom_key,
