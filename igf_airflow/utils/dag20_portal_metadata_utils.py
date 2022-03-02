@@ -133,6 +133,7 @@ def copy_remote_file_to_hpc_func(**context):
       dag_id=context['task'].dag_id,
       comment=message,
       reaction='fail')
+    raise
 
 def _get_all_known_projects(db_conf_file):
   try:
@@ -183,6 +184,7 @@ def get_known_projects_func(**context):
       dag_id=context['task'].dag_id,
       comment=message,
       reaction='fail')
+    raise
 
 
 def create_raw_metadata_for_new_projects_func(**context):
@@ -266,6 +268,7 @@ def create_raw_metadata_for_new_projects_func(**context):
       dag_id=context['task'].dag_id,
       comment=message,
       reaction='fail')
+    raise
 
 
 def _reformat_metadata_files(input_dir):
@@ -344,6 +347,7 @@ def get_formatted_metadata_files_func(**context):
       dag_id=context['task'].dag_id,
       comment=message,
       reaction='fail')
+    raise
 
 
 def upload_raw_metadata_to_portal_func(**context):
@@ -373,4 +377,5 @@ def upload_raw_metadata_to_portal_func(**context):
       dag_id=context['task'].dag_id,
       comment=message,
       reaction='fail')
+    raise
 
