@@ -229,16 +229,19 @@ def create_raw_metadata_for_new_projects_func(**context):
         task_ids=known_projects_xcom_task,
         key=known_projects_xcom_key)
     check_file_path(project_list)
-    temp_dir = \
+    work_dir = \
       get_temp_dir(use_ephemeral_space=True)
+    temp_dir = get_temp_dir()
     path_bind = [
-      temp_dir,
+      '{0}:/tmp'.format(temp_dir),
+      work_dir,
       os.path.dirname(quota_xlsx),
       os.path.dirname(access_db),
       os.path.dirname(project_list)]
     run_args = [
       'spark-submit',
       '--master local[{0}]'.format(int(spark_threads)),
+      '--executor-memory 7G',
       '--py-files {0}'.format(spark_py_file),
       '{0} -a {1} -q {2} -o {3} -k {4} -j {5}'.\
         format(
@@ -259,7 +262,7 @@ def create_raw_metadata_for_new_projects_func(**context):
         options=options)
     ti.xcom_push(
       key=xcom_key,
-      value=temp_dir)
+      value=work_dir)
   except Exception as e:
     logging.error(e)
     message = \
