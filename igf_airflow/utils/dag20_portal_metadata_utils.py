@@ -248,11 +248,15 @@ def create_raw_metadata_for_new_projects_func(**context):
           temp_dir,
           project_list,
           ucanaccess_path)]
+    options = [
+      "--no-home",
+      "-C"]
     _, _ = \
       singularity_run(
         image_path=singularity_image_path,
         bind_dir_list=path_bind,
-        args_list=run_args)
+        args_list=run_args,
+        options=options)
     ti.xcom_push(
       key=xcom_key,
       value=temp_dir)
