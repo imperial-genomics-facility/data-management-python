@@ -1,4 +1,5 @@
 import os, re, json, logging
+from typing import Any
 import pandas as pd
 from igf_data.igfdb.igfTables import Project
 from igf_data.igfdb.igfTables import User
@@ -29,7 +30,7 @@ from igf_data.utils.fileutils import get_temp_dir, copy_local_file, check_file_p
 from igf_portal.api_utils import upload_files_to_portal
 from igf_portal.api_utils import get_data_from_portal
 
-def get_db_data_and_create_json_dump(dbconfig_json, output_json_path):
+def get_db_data_and_create_json_dump(dbconfig_json: str, output_json_path: str) -> None:
   try:
     dbparam = read_dbconf_json(dbconfig_json)
     base = BaseAdaptor(**dbparam)
@@ -119,7 +120,7 @@ def get_db_data_and_create_json_dump(dbconfig_json, output_json_path):
               format(e))
 
 
-def _get_metadata_csv_files_from_metadata_dir(metadata_dir):
+def _get_metadata_csv_files_from_metadata_dir(metadata_dir: str) -> dict:
   try:
     check_file_path(metadata_dir)
     samplesheet_pattern = \
@@ -166,7 +167,7 @@ def _get_metadata_csv_files_from_metadata_dir(metadata_dir):
               format(e))
 
 
-def _check_for_existing_raw_metadata_on_portal_db(project_list, portal_conf_file):
+def _check_for_existing_raw_metadata_on_portal_db(project_list: list, portal_conf_file: str) -> None:
   try:
     new_projects = list()
     temp_dir = get_temp_dir()
@@ -193,7 +194,7 @@ def _check_for_existing_raw_metadata_on_portal_db(project_list, portal_conf_file
               format(e))
 
 
-def _create_json_for_metadata_upload(project_list, metadata_dict):
+def _create_json_for_metadata_upload(project_list: list, metadata_dict: dict) -> str:
   try:
     temp_dir = get_temp_dir()
     temp_json = os.path.join(temp_dir, 'metadata.json')
@@ -229,7 +230,7 @@ def _create_json_for_metadata_upload(project_list, metadata_dict):
             "Failed to create json for raw metadata upload, error: {0}".\
               format(e))
 
-def _add_new_raw_metadata_to_portal(portal_conf_file, json_file):
+def _add_new_raw_metadata_to_portal(portal_conf_file: str, json_file: str) -> Any:
   try:
     check_file_path(json_file)
     res = \
@@ -244,12 +245,12 @@ def _add_new_raw_metadata_to_portal(portal_conf_file, json_file):
               format(e))
 
 
-def get_raw_metadata_from_lims_and_load_to_portal(metadata_dir, portal_conf_file):
+def get_raw_metadata_from_lims_and_load_to_portal(metadata_dir: str, portal_conf_file: str) -> None:
   try:
     final_metadata_dict = \
       _get_metadata_csv_files_from_metadata_dir(
         metadata_dir=metadata_dir)
-    project_list = final_metadata_dict.keys()
+    project_list = list(final_metadata_dict.keys())
     if len(project_list) > 0:
       new_projects = \
         _check_for_existing_raw_metadata_on_portal_db(
