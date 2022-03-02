@@ -251,7 +251,7 @@ def create_raw_metadata_for_new_projects_func(**context):
           spark_script_path,
           access_db,
           quota_xlsx,
-          temp_dir,
+          work_dir,
           project_list,
           ucanaccess_path)]
     options = [
