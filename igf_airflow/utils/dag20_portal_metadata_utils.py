@@ -257,7 +257,7 @@ def create_raw_metadata_for_new_projects_func(**context):
     options = [
       "--no-home",
       "-C"]
-    _, _ = \
+    _ = \
       singularity_run(
         image_path=singularity_image_path,
         bind_dir_list=path_bind,
