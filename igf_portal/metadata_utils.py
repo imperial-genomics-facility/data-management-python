@@ -187,6 +187,11 @@ def _check_for_existing_raw_metadata_on_portal_db(project_list: list, portal_con
        len(new_projects.split(',')) > 0:
       new_projects = \
         new_projects.split(',')
+    if isinstance(new_projects, str) and \
+       new_projects=='':
+      new_projects = list()
+    if new_projects is None:
+      new_projects = list()
     return new_projects
   except Exception as e:
     raise ValueError(
