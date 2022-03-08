@@ -261,6 +261,8 @@ def get_raw_metadata_from_lims_and_load_to_portal(metadata_dir: str, portal_conf
         _check_for_existing_raw_metadata_on_portal_db(
           project_list=project_list,
           portal_conf_file=portal_conf_file)
+      new_projects = \
+        [i for i in new_projects if i != '']
       if len(new_projects) > 0:
         json_file = \
           _create_json_for_metadata_upload(
