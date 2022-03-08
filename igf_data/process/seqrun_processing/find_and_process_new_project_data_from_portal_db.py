@@ -15,6 +15,7 @@ from igf_data.igfdb.useradaptor import UserAdaptor
 from igf_data.utils.fileutils import get_temp_dir, remove_dir
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 from igf_portal.api_utils import get_data_from_portal
+from io import StringIO
 
 
 class Find_and_register_new_project_data_from_portal_db:
@@ -142,6 +143,9 @@ class Find_and_register_new_project_data_from_portal_db:
     try:
       if isinstance(project_info_data, list):
         project_info_data = pd.DataFrame(project_info_data)
+      if isinstance(project_info_data, str):
+        csvStringIO = StringIO(project_info_data)
+        project_info_data = pd.read_csv(csvStringIO, header=0)
       base = \
         BaseAdaptor(**{'session_class':self.session_class})
       required_project_columns = \
