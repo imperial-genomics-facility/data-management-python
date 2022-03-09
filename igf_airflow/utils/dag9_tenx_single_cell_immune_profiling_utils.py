@@ -282,7 +282,8 @@ def run_scvelo_for_sc_5p_func(**context):
       reaction='pass')
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -477,7 +478,8 @@ def run_velocyto_func(**context):
       reaction='pass')
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -532,7 +534,8 @@ def generate_cell_sorted_bam_func(**context):
       sort_params=['-m{0}'.format(samtools_mem), '-tCB'])
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -653,7 +656,8 @@ def create_and_update_qc_pages(**context):
       remote_file=remote_csv_file_path)                                         # copy json data for analysis csv data
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -799,7 +803,8 @@ def clean_up_files(**context):
                 format(type(file_list)))
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -843,7 +848,8 @@ def change_pipeline_status(**context):
                   format(analysis_id, analysis_type))
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -890,7 +896,8 @@ def index_and_copy_bam_for_parallel_analysis(**context):
     return list_of_tasks
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -1084,7 +1091,8 @@ def run_multiqc_for_cellranger(**context):
       value=multiqc_data)
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -1307,7 +1315,8 @@ def run_samtools_for_cellranger(**context):
         value=temp_output)
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -1472,7 +1481,8 @@ def run_picard_for_cellranger(**context):
       reaction='pass')
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -1605,7 +1615,8 @@ def convert_bam_to_cram_func(**context):
       reaction='pass')
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -1681,7 +1692,8 @@ def upload_analysis_file_to_box(**context):
         skip_existing=False)
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -1705,8 +1717,8 @@ def task_branch_function(**context):
       context['params'].get('xcom_pull_task_id')
     analysis_info_xcom_key = \
       context['params'].get('analysis_info_xcom_key')
-    analysis_name = \
-      context['params'].get('analysis_name')
+    feature_name = \
+      context['params'].get('feature_name')
     task_prefix = \
       context['params'].get('task_prefix')
     analysis_info = \
@@ -1714,15 +1726,16 @@ def task_branch_function(**context):
         task_ids=xcom_pull_task_id,
         key=analysis_info_xcom_key)
     sample_info = \
-      analysis_info.get(analysis_name)
+      analysis_info.get(feature_name)
     run_list = sample_info.get('runs').keys()
     task_list = [
-      '{0}_{1}_{2}'.format(task_prefix,analysis_name,run_id)
+      '{0}_{1}_{2}'.format(task_prefix,feature_name,run_id)
         for run_id in run_list]
     return task_list
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -1803,7 +1816,8 @@ def load_analysis_files_func(**context):
       value=output_file_list)
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -2007,7 +2021,8 @@ def run_singlecell_notebook_wrapper_func(**context):
       reaction='pass')
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -2100,7 +2115,8 @@ def irods_files_upload_for_analysis(**context):
         file_tag=collection_name)
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -2267,7 +2283,8 @@ def ftp_files_upload_for_analysis(**context):
           raise
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -2402,7 +2419,8 @@ def load_cellranger_result_to_db_func(**context):
       value=output_html_file[0])
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -2471,7 +2489,8 @@ def decide_analysis_branch_func(**context):
     return task_list
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -2573,7 +2592,8 @@ def load_cellranger_metrices_to_collection(**context):
       raise
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -2737,7 +2757,8 @@ def run_cellranger_tool(**context):
       reaction='pass')
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -2763,8 +2784,8 @@ def run_sc_read_trimmming_func(**context):
       context['params'].get('analysis_info_xcom_key')
     analysis_description_xcom_key = \
       context['params'].get('analysis_description_xcom_key')
-    analysis_name = \
-      context['params'].get('analysis_name')
+    feature_name = \
+      context['params'].get('feature_name')
     run_id = \
       context['params'].get('run_id')
     r1_length = \
@@ -2788,7 +2809,7 @@ def run_sc_read_trimmming_func(**context):
         key=analysis_description_xcom_key)
     _get_fastq_and_run_cutadapt_trim(
       analysis_info=analysis_info,
-      analysis_name=analysis_name,
+      analysis_name=feature_name,
       analysis_description=analysis_description,
       run_id=run_id,
       r1_length=r1_length,
@@ -2799,7 +2820,8 @@ def run_sc_read_trimmming_func(**context):
       singularity_image=singularity_image)
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -2998,7 +3020,8 @@ def configure_cellranger_run_func(**context):
       reaction='pass')
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -3247,9 +3270,9 @@ def fetch_analysis_info_and_branch_func(**context):
         _fetch_formatted_analysis_description(
           analysis_description,
           fastq_list)
-      if len(messages) > 0:
-        raise ValueError('Analysis description formatting failed: {0}'.\
-                format(messages))
+      #if len(messages) > 0:
+      #  raise ValueError('Analysis description formatting failed: {0}'.\
+      #          format(messages))
       #
       # mark analysis_id as running,if its not already running
       #
@@ -3272,10 +3295,11 @@ def fetch_analysis_info_and_branch_func(**context):
           value=analysis_info)
       else:
         analysis_list = [no_analysis]                                           # reset analysis list with no_analysis
-    return analysis_list                                                        # return analysis list for branching
+    return analysis_list                                                    # return analysis list for branching
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -3396,8 +3420,8 @@ def _check_and_mark_analysis_seed(
       read_dbconf_json(database_config_file)
     pl = \
       PipelineAdaptor(**dbparam)
-    pl.start_session()
     try:
+      pl.start_session()
       status = \
         pl.create_or_update_pipeline_seed(
           seed_id=analysis_id,
@@ -3408,12 +3432,12 @@ def _check_and_mark_analysis_seed(
           autosave=False)
       pl.commit_session()
       pl.close_session()
+      return status
     except Exception as e:
       pl.rollback_session()
       pl.close_session()
       raise ValueError(
         'Failed to change seeds in db, error: {0}'.format(e))
-    return status
   except Exception as e:
     raise ValueError(e)
 
@@ -3567,6 +3591,7 @@ def _validate_analysis_description(
       set(
         [f.replace(' ','_').lower()
           for f in analysis_list])
+    analysis_list = list(analysis_list)
     sample_id_list = \
       list(
         df[sample_column].\
