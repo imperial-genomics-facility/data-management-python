@@ -1861,9 +1861,9 @@ def run_singlecell_notebook_wrapper_func(**context):
       context['params'].get('analysis_description_xcom_key')
     kernel_name = \
       context['params'].get('kernel_name')
-    analysis_name = \
-      context['params'].get('analysis_name')
-    analysis_name = analysis_name.upper()
+    sc_analysis_name = \
+      context['params'].get('sc_analysis_name')
+    sc_analysis_name = sc_analysis_name.upper()
     cell_marker_list = ALL_CELL_MARKER_LIST
     s_genes = None
     g2m_genes = None
@@ -1956,7 +1956,7 @@ def run_singlecell_notebook_wrapper_func(**context):
       cellranger_output,
       tmp_dir,
       os.path.dirname(cell_marker_list)]
-    if analysis_name == 'SCANPY':
+    if sc_analysis_name == 'SCANPY':
       template_ipynb_path = SCANPY_SINGLE_SAMPLE_TEMPLATE
       singularity_image_path = SCANPY_NOTEBOOK_IMAGE
       scanpy_h5ad = os.path.join(tmp_dir, 'scanpy.h5ad')
@@ -1973,16 +1973,16 @@ def run_singlecell_notebook_wrapper_func(**context):
         'SCANPY_H5AD': scanpy_h5ad,
         'CELLBROWSER_DIR': cellbrowser_dir,
         'CELLBROWSER_HTML_DIR': cellbrowser_html_dir})
-    elif analysis_name == 'SCIRPY':
+    elif sc_analysis_name == 'SCIRPY':
       template_ipynb_path = SCIRPY_SINGLE_SAMPLE_TEMPLATE
       singularity_image_path = SCIRPY_NOTEBOOK_IMAGE
-    elif analysis_name == 'SEURAT':
+    elif sc_analysis_name == 'SEURAT':
       template_ipynb_path = SEURAT_SINGLE_SAMPLE_TEMPLATE
       singularity_image_path = SEURAT_NOTEBOOK_IMAGE
     else:
       raise ValueError(
               'Analysis name {0} not supported'.\
-                format(analysis_name))
+                format(sc_analysis_name))
     nb = Notebook_runner(
       template_ipynb_path=template_ipynb_path,
       output_dir=tmp_dir,
@@ -1999,7 +1999,7 @@ def run_singlecell_notebook_wrapper_func(**context):
     ti.xcom_push(
       key=output_notebook_key,
       value=output_notebook_path)
-    if analysis_name == 'SCANPY':
+    if sc_analysis_name == 'SCANPY':
       ti.xcom_push(
         key=output_cellbrowser_key,
         value=cellbrowser_html_dir)
@@ -2008,7 +2008,7 @@ def run_singlecell_notebook_wrapper_func(**context):
         value=scanpy_h5ad)
     message = \
       'Generated notebook for analysis: {0}, command: {1}'.\
-        format(analysis_name,notebook_cmd)
+        format(sc_analysis_name,notebook_cmd)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
