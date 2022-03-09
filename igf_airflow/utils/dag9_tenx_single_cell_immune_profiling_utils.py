@@ -1515,7 +1515,7 @@ def convert_bam_to_cram_func(**context):
     threads = \
       context['params'].get('threads')
     analysis_name = \
-      context['params'].get('analysis_name')
+      context['params'].get('sc_analysis_name')
     collection_table = \
       context['params'].get('collection_table')
     cram_files_xcom_key = \
@@ -1764,7 +1764,7 @@ def load_analysis_files_func(**context):
     file_name_key = \
       context['params'].get('file_name_key')
     analysis_name = \
-      context['params'].get('analysis_name')
+      context['params'].get('sc_analysis_name')
     collection_type = \
       context['params'].get('collection_type')
     collection_table = \
@@ -2051,7 +2051,7 @@ def irods_files_upload_for_analysis(**context):
     collection_name_task = \
       context['params'].get('collection_name_task')
     analysis_name = \
-      context['params'].get('analysis_name')
+      context['params'].get('sc_analysis_name')
     dag_run = context.get('dag_run')
     if dag_run is None or \
        dag_run.conf is None or \
@@ -2313,7 +2313,7 @@ def load_cellranger_result_to_db_func(**context):
     analysis_description_xcom_key = \
       context['params'].get('analysis_description_xcom_key')
     analysis_name = \
-      context['params'].get('analysis_name')
+      context['params'].get('sc_analysis_name')
     collection_table = \
       context['params'].get('collection_table')
     collection_type = \
