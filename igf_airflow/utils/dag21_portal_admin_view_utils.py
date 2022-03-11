@@ -92,7 +92,7 @@ def get_seqrun_counts_func(**context):
     seqrun_stats_json = \
       os.path.join(temp_dir, 'seqrun_stats.json')
     with open(seqrun_stats_json, 'w') as fp:
-      json.dumps(seqrun_plot_data, fp)
+      json.dump(seqrun_plot_data, fp)
     ti.xcom_push(
       key=xcom_key,
       value=seqrun_stats_json)
