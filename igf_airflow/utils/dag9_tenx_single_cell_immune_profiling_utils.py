@@ -158,10 +158,10 @@ def run_scvelo_for_sc_5p_func(**context):
         analysis_description[0]
     sample_igf_id = \
       analysis_description.get('sample_igf_id')
-    if analysis_description.get('cell_marker_list') is not None or \
-       analysis_description.get('cell_marker_list') != "":
+    if analysis_description.get('cell_annotation_csv') is not None or \
+       analysis_description.get('cell_annotation_csv') != "":
       cell_marker_list = \
-        analysis_description.get('cell_marker_list')                            # reset cell marker list
+        analysis_description.get('cell_annotation_csv')                            # reset cell marker list
       check_file_path(cell_marker_list)
     if analysis_description.get('s_genes') is not None:
       s_genes = \
@@ -1869,7 +1869,7 @@ def run_singlecell_notebook_wrapper_func(**context):
     sc_analysis_name = \
       context['params'].get('sc_analysis_name')
     sc_analysis_name = sc_analysis_name.upper()
-    cell_marker_list = ALL_CELL_MARKER_LIST
+    cell_marker_list = None
     s_genes = None
     g2m_genes = None
     cell_marker_mode = ''
@@ -1916,9 +1916,10 @@ def run_singlecell_notebook_wrapper_func(**context):
         gex_sample.to_dict(orient='records')[0]                                # resetting analysis_description
     sample_igf_id = \
       analysis_description.get('sample_igf_id')
-    if analysis_description.get('cell_marker_list') is not None:
+    if analysis_description.get('cell_annotation_csv') is not None and \
+       analysis_description.get('cell_annotation_csv') != "":
       cell_marker_list = \
-        analysis_description.get('cell_marker_list')                            # reset cell marker list
+        analysis_description.get('cell_annotation_csv')                            # reset cell marker list
       check_file_path(cell_marker_list)                                         # check filepath
     if analysis_description.get('s_genes') is not None:
       s_genes = \
@@ -1959,8 +1960,11 @@ def run_singlecell_notebook_wrapper_func(**context):
       'GENOME_BUILD': genome_build}
     container_bind_dir_list = [
       cellranger_output,
-      tmp_dir,
-      os.path.dirname(cell_marker_list)]
+      tmp_dir]
+    if cell_marker_list is not None and \
+       cell_marker_list != "":
+      container_bind_dir_list.\
+        append(os.path.dirname(cell_marker_list))
     if sc_analysis_name == 'SCANPY':
       template_ipynb_path = SCANPY_SINGLE_SAMPLE_TEMPLATE
       singularity_image_path = SCANPY_NOTEBOOK_IMAGE
