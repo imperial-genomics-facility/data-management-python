@@ -1401,7 +1401,8 @@ def run_picard_for_cellranger(**context):
         ribosomal_interval_type=RIBOSOMAL_INTERVAL_TYPE)
     genome_fasta = ref_genome.get_genome_fasta()
     ref_flat_file = ref_genome.get_gene_reflat()
-    ribosomal_interval_file = ref_genome.get_ribosomal_interval()
+    ribosomal_interval_file = \
+      ref_genome.get_ribosomal_interval(check_missing=False)
     sa.start_session()
     sample_platform_records = \
       sa.fetch_seqrun_and_platform_list_for_sample_id(
