@@ -436,13 +436,15 @@ def run_velocyto_func(**context):
     mask_file = \
       ref_genome._fetch_collection_files(
         collection_type=MASK_TYPE,
-        check_missing=True)
+        check_missing=False)
     commandline = [
       VELOCYTO_EXE,
       'run10x',
       '-l {0}'.format(velocyto_logic),
-      '-t {0}'.format(velocyto_dtype),
-      '--mask={0}'.format(mask_file)]
+      '-t {0}'.format(velocyto_dtype)]
+    if mask_file is not None:
+      commandline.append([
+      '--mask={0}'.format(mask_file)])
     if velocyto_metadata_table_file is not None and \
        os.path.exists(velocyto_metadata_table_file):
       commandline.\
