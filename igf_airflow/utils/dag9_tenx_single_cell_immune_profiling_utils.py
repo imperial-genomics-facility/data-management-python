@@ -117,7 +117,7 @@ def run_scvelo_for_sc_5p_func(**context):
       context['params'].get('cpu_threads', 8)
     output_notebook_key = \
       context['params'].get('output_notebook_key', 'scvelo_notebook')
-    cell_marker_list = ALL_CELL_MARKER_LIST
+    cell_marker_list = None
     s_genes = None
     g2m_genes = None
     #cell_marker_mode = ''
@@ -158,7 +158,8 @@ def run_scvelo_for_sc_5p_func(**context):
         analysis_description[0]
     sample_igf_id = \
       analysis_description.get('sample_igf_id')
-    if analysis_description.get('cell_marker_list') is not None:
+    if analysis_description.get('cell_marker_list') is not None or \
+       analysis_description.get('cell_marker_list') != "":
       cell_marker_list = \
         analysis_description.get('cell_marker_list')                            # reset cell marker list
       check_file_path(cell_marker_list)
