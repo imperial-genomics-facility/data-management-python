@@ -117,7 +117,7 @@ def run_scvelo_for_sc_5p_func(**context):
       context['params'].get('cpu_threads', 8)
     output_notebook_key = \
       context['params'].get('output_notebook_key', 'scvelo_notebook')
-    cell_marker_list = None
+    cell_marker_list = ""
     s_genes = None
     g2m_genes = None
     #cell_marker_mode = ''
@@ -1870,7 +1870,7 @@ def run_singlecell_notebook_wrapper_func(**context):
     sc_analysis_name = \
       context['params'].get('sc_analysis_name')
     sc_analysis_name = sc_analysis_name.upper()
-    cell_marker_list = None
+    cell_marker_list = ""
     s_genes = None
     g2m_genes = None
     cell_marker_mode = ''
