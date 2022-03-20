@@ -158,11 +158,11 @@ def run_scvelo_for_sc_5p_func(**context):
         analysis_description[0]
     sample_igf_id = \
       analysis_description.get('sample_igf_id')
-    if analysis_description.get('cell_annotation_csv') is not None or \
-       analysis_description.get('cell_annotation_csv') != "":
-      cell_marker_list = \
-        analysis_description.get('cell_annotation_csv')                            # reset cell marker list
-      check_file_path(cell_marker_list)
+    #if analysis_description.get('cell_annotation_csv') is not None or \
+    #   analysis_description.get('cell_annotation_csv') != "":
+    #  cell_marker_list = \
+    #    analysis_description.get('cell_annotation_csv')                            # reset cell marker list
+    #  check_file_path(cell_marker_list)
     if analysis_description.get('s_genes') is not None:
       s_genes = \
         analysis_description.get('s_genes')
