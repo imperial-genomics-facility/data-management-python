@@ -180,12 +180,12 @@ def run_scvelo_for_sc_5p_func(**context):
     #if analysis_description.get('cell_marker_mode') is not None:
     #  cell_marker_mode = \
     #    analysis_description.get('cell_marker_mode')
-    #sa = SampleAdaptor(**dbparams)
-    #sa.start_session()
-    #genome_build = \
-    #  sa.fetch_sample_species_name(
-    #    sample_igf_id=sample_igf_id)
-    #sa.close_session()
+    sa = SampleAdaptor(**dbparams)
+    sa.start_session()
+    genome_build = \
+      sa.fetch_sample_species_name(
+        sample_igf_id=sample_igf_id)
+    sa.close_session()
     tmp_dir = get_temp_dir(use_ephemeral_space=True)
     scanpy_h5ad = \
       ti.xcom_pull(
@@ -250,6 +250,7 @@ def run_scvelo_for_sc_5p_func(**context):
       'CUSTOM_G2M_GENES_LIST': g2m_genes,
       'VELOCYTO_LOOM': loom_file,
       'SCANPY_H5AD': scanpy_h5ad,
+      'GENOME_BUILD': genome_build,
       'CPU_THREADS': int(cpu_threads)}
     container_bind_dir_list = [
       tmp_dir,
