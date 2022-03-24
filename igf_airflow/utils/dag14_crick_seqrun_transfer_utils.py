@@ -15,6 +15,7 @@ from igf_data.utils.fileutils import get_date_stamp
 from igf_data.utils.fileutils import list_remote_file_or_dirs
 from igf_data.utils.fileutils import copy_remote_file
 from igf_data.utils.fileutils import check_file_path
+from igf_data.utils.fileutils import get_date_stamp_for_file_name
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_airflow.logging.upload_log_msg import send_mentions_to_channels
 from igf_data.utils.jupyter_nbconvert_wrapper import Notebook_runner
@@ -575,6 +576,27 @@ def extract_tar_file_func(**context):
         os.path.join(
           HPC_SEQRUN_BASE_PATH,
           '{0}.tar.gz'.format(seqrun_id))
+      output_seqrun_dir = \
+        os.path.join(
+          HPC_SEQRUN_BASE_PATH,
+          seqrun_id)
+      if os.path.exists(output_seqrun_dir):
+        date_stamp = get_date_stamp_for_file_name()
+        new_seqrun_dir_name = \
+          os.path.join(
+            HPC_SEQRUN_BASE_PATH,
+            "{0}_{1}".format(seqrun_id, date_stamp))
+        os.rename(output_seqrun_dir, new_seqrun_dir_name)
+        message = \
+          'Moved run {0} to {1}'.\
+          format(output_seqrun_dir, new_seqrun_dir_name)
+        send_log_to_channels(
+          slack_conf=SLACK_CONF,
+          ms_teams_conf=MS_TEAMS_CONF,
+          task_id=context['task'].task_id,
+          dag_id=context['task'].dag_id,
+          comment=message,
+          reaction='pass')
       output_seqrun_dir = \
         _extract_seqrun_tar(
           tar_file=seqrun_tar_file,

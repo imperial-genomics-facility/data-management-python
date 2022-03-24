@@ -591,3 +591,21 @@ def get_date_stamp():
     return date_stamp
   except Exception as e:
     raise ValueError("Failed to get datestamp, error: {0}".format(e))
+
+
+def get_date_stamp_for_file_name() -> str:
+  '''
+  A method for generating datestamp for file name
+
+  :returns: A string of datestampe in 'YYYY_MM_DD_HH_MM' format
+  '''
+  try:
+    date_stamp = None
+    date_stamp = \
+      datetime.\
+        strftime(
+          datetime.now(),
+          '%Y_%b_%d_%H_%M')                                                     # date tag values
+    return date_stamp
+  except Exception as e:
+    raise ValueError("Failed to get datestamp, error: {0}".format(e))
