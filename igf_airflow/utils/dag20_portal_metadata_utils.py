@@ -8,6 +8,7 @@ from igf_data.utils.fileutils import copy_remote_file
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_portal.metadata_utils import get_db_data_and_create_json_dump
 from igf_portal.metadata_utils import get_raw_metadata_from_lims_and_load_to_portal
+from igf_portal.metadata_utils import _gzip_json_file
 from igf_portal.api_utils import upload_files_to_portal
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
@@ -72,9 +73,11 @@ def upload_metadata_to_portal_db_func(**context):
         task_ids=json_dump_xcom_task,
         key=json_dump_xcom_key)
     check_file_path(json_dump_file)
+    gzip_json_dump_file = \
+      _gzip_json_file(json_dump_file)
     upload_files_to_portal(
       portal_config_file=IGF_PORTAL_CONF,
-      file_path=json_dump_file,
+      file_path=gzip_json_dump_file,
       url_suffix=data_load_url)
     os.remove(json_dump_file)
   except Exception as e:
