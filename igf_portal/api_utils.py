@@ -119,4 +119,4 @@ def upload_files_to_portal(portal_config_file, file_path, url_suffix, verify=Fal
   except Exception as e:
     raise ValueError(
             "Failed to upload file {0} to portal, error: {1}".\
-              format(os.path.basename(file_path), e))
+              format(file_path, e))

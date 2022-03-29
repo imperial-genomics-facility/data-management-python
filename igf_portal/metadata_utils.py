@@ -201,7 +201,7 @@ def _check_for_existing_raw_metadata_on_portal_db(project_list: list, portal_con
 
 def _create_json_for_metadata_upload(project_list: list, metadata_dict: dict) -> str:
   try:
-    temp_dir = get_temp_dir()
+    temp_dir = get_temp_dir(use_ephemeral_space=True)
     temp_json = os.path.join(temp_dir, 'metadata.json')
     json_data = list()
     for project_id in project_list:
