@@ -1,4 +1,4 @@
-import os, re, json, logging
+import os, re, json, logging, gzip, shutil
 from typing import Any
 import pandas as pd
 from igf_data.igfdb.igfTables import Project
@@ -199,6 +199,26 @@ def _check_for_existing_raw_metadata_on_portal_db(project_list: list, portal_con
               format(e))
 
 
+def _gzip_json_file(json_file: str) -> str:
+  """
+  Gzip a json file
+
+  :param json_file: json file to gzip
+  :returns: gzipped json file
+  """
+  try:
+    check_file_path(json_file)
+    gzip_file = \
+      json_file + '.gz'
+    with open(json_file, 'rb') as f_in:
+      with gzip.open(gzip_file, 'wb') as f_out:
+        shutil.copyfileobj(f_in, f_out)
+    return gzip_file
+  except Exception as e:
+    raise ValueError(
+            "Failed to gzip json file, error: {0}".\
+              format(e))
+
 def _create_json_for_metadata_upload(project_list: list, metadata_dict: dict) -> str:
   try:
     temp_dir = get_temp_dir(use_ephemeral_space=True)
@@ -268,10 +288,12 @@ def get_raw_metadata_from_lims_and_load_to_portal(metadata_dir: str, portal_conf
           _create_json_for_metadata_upload(
             project_list=new_projects,
             metadata_dict=final_metadata_dict)
+        gzip_json_file = \
+          _gzip_json_file(json_file=json_file)
         res = \
           _add_new_raw_metadata_to_portal(
             portal_conf_file=portal_conf_file,
-            json_file=json_file)
+            json_file=gzip_json_file)
         logging.info(res)
   except Exception as e:
     raise ValueError(
