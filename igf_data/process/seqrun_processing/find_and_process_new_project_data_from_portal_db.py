@@ -732,7 +732,7 @@ class Find_and_register_new_project_data_from_portal_db:
                 'Missing required field password for non-hpc user {0}'.\
                   format(data[user_col]))
       username = data[user_col]
-      hpc_username = data[hpc_user_col]
+      hpc_username = None # data[hpc_user_col]
       password = data[password_col]
       check_cmd1 = ['iadmin', 'lu']
       check_cmd2 = ['grep', '-w', quote(username)]
@@ -752,7 +752,7 @@ class Find_and_register_new_project_data_from_portal_db:
                     format(check_cmd1,c_proc1.returncode))
       result = c_proc2.communicate()[0]
       result = result.decode('UTF-8')
-      if result != '' and pd.isnull(data[hpc_user_col]):                        # for non hpc users
+      if result != '' and hpc_username is None: #pd.isnull(data[hpc_user_col]):                        # for non hpc users
         if self.check_hpc_user:
           raise ValueError(
                   'Can not reset iRODS password for non hpc user {0} with check_hpc_user option'.\
