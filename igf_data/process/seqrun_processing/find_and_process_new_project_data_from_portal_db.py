@@ -221,6 +221,16 @@ class Find_and_register_new_project_data_from_portal_db:
       sample_data['sample_igf_id'] = \
         sample_data['sample_igf_id'].\
           map(lambda x: x.replace(' ',''))                                      # replace any white space from sample igf id
+      if 'taxon_id' in sample_data.columns:
+        sample_data['taxon_id'] = \
+          sample_data['taxon_id'].\
+            astype(str).str.replace('UNKNOWN', '0').\
+            fillna('0')                                                         # replace any unknown taxon id with 0
+        sample_data['taxon_id'] = \
+          sample_data['taxon_id'].\
+            astype(int)
+      else:
+        sample_data['taxon_id'] = 0
       if self.project_lookup_column not in project_data.columns:
         raise ValueError(
                 'Missing required column: {0}'.\
