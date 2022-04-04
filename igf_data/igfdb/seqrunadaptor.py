@@ -204,6 +204,27 @@ class SeqrunAdaptor(BaseAdaptor):
       raise ValueError(
               'Failed to store seqrun stats data, error: {0}'.format(e))
 
+  def check_seqrun_exists(self,seqrun_id):
+    '''
+    A method for checking if seqrun exists
+
+    :param seqrun_id: Seqrun id
+    :returns: True if seqrun exists, False otherwise
+    '''
+    try:
+      seqrun_entry = \
+        self.fetch_records_by_column(
+          table=Seqrun,
+          column_name=Seqrun.seqrun_igf_id,
+          column_id=seqrun_id,
+          output_mode='one_or_none')
+      if seqrun_entry is not None:
+        return True
+      else:
+        return False
+    except Exception as e:
+      raise ValueError(
+              'Failed to check seqrun exists, error: {0}'.format(e))
 
   def fetch_seqrun_records_igf_id(
         self,seqrun_igf_id,target_column_name='seqrun_igf_id'):
