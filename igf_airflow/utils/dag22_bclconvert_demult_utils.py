@@ -72,8 +72,7 @@ def _check_for_required_files(seqrun_path: str, file_list: list) -> bool:
       if not os.path.exists(file_path):
         return False
     return True
-  except Exception as e:
-    logging.error(e)
+  except:
     raise
 
 
