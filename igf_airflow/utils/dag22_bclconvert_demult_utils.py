@@ -72,8 +72,8 @@ def _check_for_required_files(seqrun_path: str, file_list: list) -> bool:
       if not os.path.exists(file_path):
         return False
     return True
-  except:
-    raise
+  except Exception as e:
+    raise IOError("Failed to get required files for seqrun {0}".format(seqrun_path))
 
 
 def _check_and_load_seqrun_to_db(
@@ -101,8 +101,10 @@ def _check_and_load_seqrun_to_db(
         data=seqrun_data,
         autosave=True)
     sra.close_session()
-  except:
-    raise
+  except Exception as e:
+    raise ValueError(
+            "Failed to load seqrun {0} to database, error: {1}".\
+            format(seqrun_id, e))
 
 
 def _check_and_seed_seqrun_pipeline(
@@ -121,7 +123,6 @@ def _check_and_seed_seqrun_pipeline(
       sra.fetch_seqrun_records_igf_id(
           seqrun_igf_id=seqrun_id)
     pa = PipelineAdaptor(**{'session': base.session})
-    pa.start_session()
     seed_status = \
       pa.create_or_update_pipeline_seed(
         seed_id=seqrun_entry.seqrun_id,
@@ -129,6 +130,9 @@ def _check_and_seed_seqrun_pipeline(
         new_status=seed_status,
         seed_table=seed_table,
         no_change_status=no_change_status)
+    base.close_session()
     return seed_status
-  except:
-    raise
+  except Exception as e:
+    raise ValueError(
+            "Faild to seed pipeline {0} for seqrun {1}, error: {2}".\
+            format(pipeline_name, seqrun_id, e))

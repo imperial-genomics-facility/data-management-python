@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <RunInfo Version="6">
-	<Run Id="220317_VH00504_46_AAAL32JHV" Number="2">
-		<Flowcell>AAAL32JHV</Flowcell>
-		<Instrument>VH00504</Instrument>
+	<Run Id="220317_VH004_46_AAAV" Number="2">
+		<Flowcell>AAAV</Flowcell>
+		<Instrument>VH004</Instrument>
 		<Date>2022-03-17T11:59:16Z</Date>
 		<Reads>
 			<Read Number="1" NumCycles="29" IsIndexedRead="N" IsReverseComplement="N"/>
