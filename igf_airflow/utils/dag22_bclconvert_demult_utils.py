@@ -51,7 +51,7 @@ def format_and_split_samplesheet_func(**context):
       samplesheet_dir = \
         get_temp_dir(use_ephemeral_space=True)
       formatted_samplesheets_list = \
-        _get_formatted_samplesheets_and_bases_mask(
+        _get_formatted_samplesheets(
           samplesheet_file=samplesheet_file,
           runinfo_xml_file=runinfo_xml_file,
           samplesheet_output_dir=samplesheet_dir,
@@ -70,7 +70,7 @@ def format_and_split_samplesheet_func(**context):
     raise
 
 
-def _get_formatted_samplesheets_and_bases_mask(
+def _get_formatted_samplesheets(
   samplesheet_file: str,
   runinfo_xml_file: str,
   samplesheet_output_dir: str,
@@ -92,7 +92,7 @@ def _get_formatted_samplesheets_and_bases_mask(
       ProcessSingleCellDualIndexSamplesheet(
         samplesheet_file=samplesheet_file,
         singlecell_dual_index_barcode_json=singlecell_dual_barcode_json,
-        platform='MiSeq',
+        platform='MISEQ',
         index2_rule='NOCHANGE')
     temp_sc_dual_conv_samplesheet_file = \
       os.path.join(temp_dir, 'sc_dual_index_samplesheet.csv')

@@ -1,11 +1,15 @@
 import unittest, os
+import pandas as pd
 from igf_data.igfdb.igfTables import Base, Seqrun
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.platformadaptor import PlatformAdaptor
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
+from igf_data.illumina.samplesheet import SampleSheet
 from igf_data.utils.dbutils import read_dbconf_json
+from igf_data.utils.fileutils import get_temp_dir, remove_dir
 from igf_airflow.utils.dag22_bclconvert_demult_utils import _check_and_load_seqrun_to_db
 from igf_airflow.utils.dag22_bclconvert_demult_utils import _check_and_seed_seqrun_pipeline
+from igf_airflow.utils.dag22_bclconvert_demult_utils import _get_formatted_samplesheets
 
 class Dag22_bclconvert_demult_utils_testA(unittest.TestCase):
   def setUp(self):
@@ -93,6 +97,67 @@ class Dag22_bclconvert_demult_utils_testA(unittest.TestCase):
     self.assertTrue(table_data.to_dict(orient='records')[0]['seqrun_igf_id'] == self.seqrun_id)
     base.close_session()
 
+
+class Dag22_bclconvert_demult_utils_testB(unittest.TestCase):
+  def setUp(self):
+    self.temp_dir = get_temp_dir()
+    self.input_dir = get_temp_dir()
+    sa = \
+      SampleSheet(\
+        'doc/data/SampleSheet/NextSeq/SampleSheet.csv')
+    sa_data = [{
+      'Lane': '1', 'Sample_ID': 'sampleA', 'Sample_Name': 'sampleA', 'Sample_Plate': '', 'Sample_Well': '', 'I7_Index_ID': '', 'index': 'AAAAAA', 'I5_Index_ID': '', 'index2': '', 'Sample_Project': 'projectA', 'Description': ''}, {
+      'Lane': '1', 'Sample_ID': 'sampleB', 'Sample_Name': 'sampleB', 'Sample_Plate': '', 'Sample_Well': '', 'I7_Index_ID': '', 'index': 'TTTTTTTT', 'I5_Index_ID': '', 'index2': 'TTTTTTTT', 'Sample_Project': 'projectA', 'Description': ''}, {
+      'Lane': '1', 'Sample_ID': 'sampleC', 'Sample_Name': 'sampleC', 'Sample_Plate': '', 'Sample_Well': '', 'I7_Index_ID': '', 'index': 'SI-TT-A5', 'I5_Index_ID': '', 'index2': '', 'Sample_Project': 'projectA', 'Description': '10X'}, {
+      'Lane': '1', 'Sample_ID': 'sampleD', 'Sample_Name': 'sampleD', 'Sample_Plate': '', 'Sample_Well': '', 'I7_Index_ID': '', 'index': 'SI-GA-A2', 'I5_Index_ID': '', 'index2': '', 'Sample_Project': 'projectA', 'Description': '10X'}, {
+      'Lane': '1', 'Sample_ID': 'sampleE', 'Sample_Name': 'sampleE', 'Sample_Plate': '', 'Sample_Well': '', 'I7_Index_ID': '', 'index': 'CCCCCC', 'I5_Index_ID': '', 'index2': 'CCCCCC', 'Sample_Project': 'projectB', 'Description': ''}, {
+      'Lane': '2', 'Sample_ID': 'sampleA', 'Sample_Name': 'sampleA', 'Sample_Plate': '', 'Sample_Well': '', 'I7_Index_ID': '', 'index': 'AAAAAA', 'I5_Index_ID': '', 'index2': '', 'Sample_Project': 'projectA', 'Description': ''}, {
+      'Lane': '2', 'Sample_ID': 'sampleB', 'Sample_Name': 'sampleB', 'Sample_Plate': '', 'Sample_Well': '', 'I7_Index_ID': '', 'index': 'TTTTTTTT', 'I5_Index_ID': '', 'index2': 'TTTTTTTT', 'Sample_Project': 'projectA', 'Description': ''}, {
+      'Lane': '2', 'Sample_ID': 'sampleC', 'Sample_Name': 'sampleC', 'Sample_Plate': '', 'Sample_Well': '', 'I7_Index_ID': '', 'index': 'SI-TT-A5', 'I5_Index_ID': '', 'index2': '', 'Sample_Project': 'projectA', 'Description': '10X'}, {
+      'Lane': '2', 'Sample_ID': 'sampleD', 'Sample_Name': 'sampleD', 'Sample_Plate': '', 'Sample_Well': '', 'I7_Index_ID': '', 'index': 'SI-GA-A2', 'I5_Index_ID': '', 'index2': '', 'Sample_Project': 'projectA', 'Description': '10X'}, {
+      'Lane': '2', 'Sample_ID': 'sampleE', 'Sample_Name': 'sampleE', 'Sample_Plate': '', 'Sample_Well': '', 'I7_Index_ID': '', 'index': 'CCCCCC', 'I5_Index_ID': '', 'index2': 'CCCCCC', 'Sample_Project': 'projectB', 'Description': ''}]
+    df = pd.DataFrame(sa_data)
+    sa._data = df.to_dict(orient='records')
+    sa._data_header = df.columns.tolist()
+    self.samplesheet_file = os.path.join(self.temp_dir, 'SampleSheet.csv')
+    sa.print_sampleSheet(self.samplesheet_file)
+    self.runinfo_xml_file = 'doc/data/Illumina/NextSeq2k/RunInfo.xml'
+
+
+  def tearDown(self):
+    remove_dir(self.temp_dir)
+    remove_dir(self.input_dir)
+
+
+  def test_get_formatted_samplesheets_and_bases_mask(self):
+    formatted_samplesheets_list = \
+      _get_formatted_samplesheets(
+        samplesheet_file=self.samplesheet_file,
+        samplesheet_output_dir=self.temp_dir,
+        runinfo_xml_file=self.runinfo_xml_file,
+        singlecell_barcode_json='data/singlecell_data/chromium-shared-sample-indexes-plate_20180301.json',
+        singlecell_dual_barcode_json='data/singlecell_data/chromium_dual_indexes_plate_TT_NT_20210209.json')
+    self.assertEqual(len(formatted_samplesheets_list), 10)
+    df = pd.DataFrame(formatted_samplesheets_list)
+    self.assertTrue('projectA' in df['project'].values.tolist())
+    self.assertTrue('projectB' in df['project'].values.tolist())
+    projectA = df[df['project'] == 'projectA']
+    self.assertTrue('1' in projectA['lane'].values.tolist())
+    projectA_lane1 = projectA[projectA['lane'] == '1']
+    self.assertEqual(len(projectA_lane1.index), 4)
+    self.assertTrue('8_10X' in projectA_lane1['index_group'].values.tolist())
+    self.assertTrue('20_NA' in projectA_lane1['index_group'].values.tolist())
+    projectA_lane1_20_NA = projectA_lane1[projectA_lane1['index_group'] == '20_NA']
+    sa = SampleSheet(projectA_lane1_20_NA['samplesheet_file'].values.tolist()[0])
+    self.assertEqual(len(pd.DataFrame(sa._data).index), 1)
+    self.assertEqual(pd.DataFrame(sa._data)['Sample_ID'].values.tolist()[0], 'sampleC')
+    self.assertEqual(pd.DataFrame(sa._data)['index'].values.tolist()[0], 'GTAGCCCTGT')
+    self.assertEqual(pd.DataFrame(sa._data)['index2'].values.tolist()[0], 'GAGCATCTAT')
+    projectA_lane1_8_10X = projectA_lane1[projectA_lane1['index_group'] == '8_10X']
+    sa = SampleSheet(projectA_lane1_8_10X['samplesheet_file'].values.tolist()[0])
+    self.assertEqual(len(pd.DataFrame(sa._data).index), 4)
+    self.assertTrue('sampleD_1' in pd.DataFrame(sa._data)['Sample_ID'].values.tolist())
+    self.assertTrue('TTTCATGA' in pd.DataFrame(sa._data)['index'].values.tolist())
 
 if __name__=='__main__':
   unittest.main()
