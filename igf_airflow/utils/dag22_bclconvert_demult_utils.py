@@ -262,7 +262,7 @@ def _calculate_bases_mask(
             append('Y{0}'.format(runinfo_read_length, read_offset))
     if len(bases_mask_list) < 2:
       raise ValueError("Missing bases mask values")
-    return ','.join(bases_mask_list)
+    return ';'.join(bases_mask_list)
   except:
     raise
 

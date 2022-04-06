@@ -181,7 +181,7 @@ class Dag22_bclconvert_demult_utils_testB(unittest.TestCase):
       _calculate_bases_mask(
         samplesheet_file=projectA_lane1_20_NA_samplesheet,
         runinfoxml_file=self.runinfo_xml_file)
-    self.assertEqual(bases_mask, 'Y29,I10,I10,Y91')
+    self.assertEqual(bases_mask, 'Y29;I10;I10;Y91')
     projectA_lane1_8_10X = \
       projectA_lane1[projectA_lane1['index_group'] == '8_10X']
     projectA_lane1_8_10X_samplesheet = \
@@ -190,7 +190,7 @@ class Dag22_bclconvert_demult_utils_testB(unittest.TestCase):
       _calculate_bases_mask(
         samplesheet_file=projectA_lane1_8_10X_samplesheet,
         runinfoxml_file=self.runinfo_xml_file)
-    self.assertEqual(bases_mask, 'Y29,I8N2,N10,Y91')
+    self.assertEqual(bases_mask, 'Y29;I8N2;N10;Y91')
 
 if __name__=='__main__':
   unittest.main()
