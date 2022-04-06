@@ -524,6 +524,50 @@ class SampleSheet:
     except:
       raise
 
+  def set_header_for_bclconvert_run(
+      self, bases_mask, min_trimmed_length=8, mask_short_read=8):
+    try:
+      bclconv_settings = {
+        'CreateFastqForIndexReads': 1,
+        'MinimumTrimmedReadLength': min_trimmed_length,
+        'FastqCompressionFormat': 'gzip',
+        'MaskShortReads': mask_short_read,
+        'OverrideCycles': bases_mask}
+      settings_section = None
+      if self.samplesheet_version == 'v1':
+        settings_section = 'Settings'
+      elif self.samplesheet_version == 'v2':
+        settings_section = 'BCLConvert_Settings'
+      header_data = self._header_data
+      new_settings_data = list()
+      settings_data = header_data.get(settings_section)
+      if settings_data is not None:
+        for s in settings_data:
+          s = s.split(',')
+          if s[0] != '' and s[1] != '':
+            if s[0] in bclconv_settings:
+              new_settings_data.\
+                append(
+                  '{0},{1}'.format(
+                    s[0],
+                    bclconv_settings.get(s[0])))
+              del bclconv_settings[s[0]]
+            else:
+              new_settings_data.\
+                append('{0},{1}'.format(s[0], s[1]))
+        for key, val in bclconv_settings.items():
+          new_settings_data.\
+            append('{0},{1}'.format(key, val))
+        header_data[settings_section] = new_settings_data
+      else:
+        new_settings_data = [
+          '{0},{1}'.format(key, val)
+            for key, val in bclconv_settings.items()]
+        header_data.\
+          update({settings_section: new_settings_data})
+    except Exception as e:
+      raise ValueError("Failed to set header for bclconvert run: {0}".format(e))
+
 
   def filter_sample_data(self, condition_key, condition_value, method='include',
                          lane_header='Lane', lane_default_val='1'):

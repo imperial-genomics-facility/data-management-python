@@ -269,6 +269,27 @@ class TestValidateSampleSheet2(unittest.TestCase):
   def test_samplesheet_version(self):
     self.assertEqual(self.samplesheet_data.samplesheet_version, 'v1')
 
+  def test_set_header_for_bclconvert_run(self):
+    header_data = \
+      self.samplesheet_data._header_data
+    self.assertTrue('Settings' in header_data)
+    self.samplesheet_data.\
+      set_header_for_bclconvert_run(bases_mask='Y101;I6N2;U28')
+    header_data = \
+      self.samplesheet_data._header_data
+    self.assertTrue('Settings' in header_data)
+    self.assertTrue('OverrideCycles,Y101;I6N2;U28' in header_data['Settings'])
+    del self.samplesheet_data._header_data['Settings']
+    header_data = \
+      self.samplesheet_data._header_data
+    self.assertTrue('Settings' not in header_data)
+    self.samplesheet_data.\
+      set_header_for_bclconvert_run(bases_mask='Y101;I6N2;U28')
+    header_data = \
+      self.samplesheet_data._header_data
+    self.assertTrue('Settings' in header_data)
+    self.assertTrue('OverrideCycles,Y101;I6N2;U28' in header_data['Settings'])
+
 class SampleSheet_format_v2_test1(unittest.TestCase):
   def setUp(self):
     self.file = 'data/samplesheet_v2/test1_SampleSheet.csv'
@@ -374,6 +395,28 @@ class SampleSheet_format_v2_test1(unittest.TestCase):
       self.samplesheet_data.\
         validate_samplesheet_data(
           schema_json='data/validation_schema/samplesheet_validation.json')
+
+  def test_set_header_for_bclconvert_run(self):
+    header_data = \
+      self.samplesheet_data._header_data
+    self.assertTrue('BCLConvert_Settings' in header_data)
+    self.assertTrue('OverrideCycles,U28;I8;Y91' in header_data['BCLConvert_Settings'])
+    self.samplesheet_data.\
+      set_header_for_bclconvert_run(bases_mask='Y101;I6N2;U28')
+    header_data = \
+      self.samplesheet_data._header_data
+    self.assertTrue('BCLConvert_Settings' in header_data)
+    self.assertTrue('OverrideCycles,Y101;I6N2;U28' in header_data['BCLConvert_Settings'])
+    del self.samplesheet_data._header_data['BCLConvert_Settings']
+    header_data = \
+      self.samplesheet_data._header_data
+    self.assertTrue('BCLConvert_Settings' not in header_data)
+    self.samplesheet_data.\
+      set_header_for_bclconvert_run(bases_mask='Y101;I6N2;U28')
+    header_data = \
+      self.samplesheet_data._header_data
+    self.assertTrue('BCLConvert_Settings' in header_data)
+    self.assertTrue('OverrideCycles,Y101;I6N2;U28' in header_data['BCLConvert_Settings'])
 
 if __name__ == '__main__':
   unittest.main()
