@@ -206,6 +206,67 @@ def _get_formatted_samplesheets(
             format(e))
 
 
+def _calculate_bases_mask(
+  samplesheet_file: str,
+  runinfoxml_file: str,
+  numcycle_label: str='numcycles',
+  isindexedread_label: str='isindexedread',
+  read_offset: int=1,
+  read_offset_cutoff: int=50) -> str:
+  try:
+    samplesheet_data = SampleSheet(infile=samplesheet_file)
+    index_length_stats = samplesheet_data.get_index_count()
+    samplesheet_index_length_list = list()
+    for index_name in index_length_stats.keys():
+      index_type = len(index_length_stats.get(index_name).keys())
+      if index_type > 1:
+        raise ValueError('column {0} has variable lengths'.format( index_type ))
+      index_length = list(index_length_stats.get(index_name).keys())[0]
+      samplesheet_index_length_list.\
+        append(index_length)
+    runinfo_data = RunInfo_xml(xml_file=runinfoxml_file)
+    runinfo_reads_stats = runinfo_data.get_reads_stats()
+    for read_id in (sorted(runinfo_reads_stats.keys())):
+      runinfo_read_length = int(runinfo_reads_stats[read_id][numcycle_label])
+      if runinfo_reads_stats[read_id][isindexedread_label] == 'N':
+        if int(runinfo_read_length) < read_offset_cutoff:
+          read_offset = 0
+    index_read_position = 0
+    bases_mask_list = list()
+    for read_id in (sorted(runinfo_reads_stats.keys())):
+      runinfo_read_length = int(runinfo_reads_stats[read_id][numcycle_label])
+      if runinfo_reads_stats[read_id][isindexedread_label] == 'Y':
+        samplesheet_index_length = \
+          samplesheet_index_length_list[index_read_position]
+        index_diff = \
+          int(runinfo_read_length) - int(samplesheet_index_length)
+        if samplesheet_index_length == 0:
+          bases_mask_list.\
+            append('N{0}'.format(runinfo_read_length))
+          if index_read_position == 0:
+            raise ValueError("Index 1 position can't be zero")
+        elif index_diff > 0 and \
+             samplesheet_index_length > 0:
+          bases_mask_list.\
+            append('I{0}N{1}'.format(samplesheet_index_length, index_diff))
+        elif index_diff == 0:
+          bases_mask_list.\
+            append('I{0}'.format(samplesheet_index_length, index_diff))
+        index_read_position += 1
+      else:
+        if int(read_offset) > 0:
+          bases_mask_list.\
+            append('Y{0}N{1}'.format(runinfo_read_length, read_offset))
+        else:
+          bases_mask_list.\
+            append('Y{0}'.format(runinfo_read_length, read_offset))
+    if len(bases_mask_list) < 2:
+      raise ValueError("Missing bases mask values")
+    return ','.join(bases_mask_list)
+  except:
+    raise
+
+
 def find_seqrun_func(**context):
   try:
     dag_run = context.get('dag_run')

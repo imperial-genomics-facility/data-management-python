@@ -10,6 +10,7 @@ from igf_data.utils.fileutils import get_temp_dir, remove_dir
 from igf_airflow.utils.dag22_bclconvert_demult_utils import _check_and_load_seqrun_to_db
 from igf_airflow.utils.dag22_bclconvert_demult_utils import _check_and_seed_seqrun_pipeline
 from igf_airflow.utils.dag22_bclconvert_demult_utils import _get_formatted_samplesheets
+from igf_airflow.utils.dag22_bclconvert_demult_utils import _calculate_bases_mask
 
 class Dag22_bclconvert_demult_utils_testA(unittest.TestCase):
   def setUp(self):
@@ -158,6 +159,38 @@ class Dag22_bclconvert_demult_utils_testB(unittest.TestCase):
     self.assertEqual(len(pd.DataFrame(sa._data).index), 4)
     self.assertTrue('sampleD_1' in pd.DataFrame(sa._data)['Sample_ID'].values.tolist())
     self.assertTrue('TTTCATGA' in pd.DataFrame(sa._data)['index'].values.tolist())
+
+  def test_calculate_bases_mask(self):
+    formatted_samplesheets_list = \
+      _get_formatted_samplesheets(
+        samplesheet_file=self.samplesheet_file,
+        samplesheet_output_dir=self.temp_dir,
+        runinfo_xml_file=self.runinfo_xml_file,
+        singlecell_barcode_json='data/singlecell_data/chromium-shared-sample-indexes-plate_20180301.json',
+        singlecell_dual_barcode_json='data/singlecell_data/chromium_dual_indexes_plate_TT_NT_20210209.json')
+    df = pd.DataFrame(formatted_samplesheets_list)
+    projectA = \
+      df[df['project'] == 'projectA']
+    projectA_lane1 = \
+      projectA[projectA['lane'] == '1']
+    projectA_lane1_20_NA = \
+      projectA_lane1[projectA_lane1['index_group'] == '20_NA']
+    projectA_lane1_20_NA_samplesheet = \
+      projectA_lane1_20_NA['samplesheet_file'].values.tolist()[0]
+    bases_mask = \
+      _calculate_bases_mask(
+        samplesheet_file=projectA_lane1_20_NA_samplesheet,
+        runinfoxml_file=self.runinfo_xml_file)
+    self.assertEqual(bases_mask, 'Y29,I10,I10,Y91')
+    projectA_lane1_8_10X = \
+      projectA_lane1[projectA_lane1['index_group'] == '8_10X']
+    projectA_lane1_8_10X_samplesheet = \
+      projectA_lane1_8_10X['samplesheet_file'].values.tolist()[0]
+    bases_mask = \
+      _calculate_bases_mask(
+        samplesheet_file=projectA_lane1_8_10X_samplesheet,
+        runinfoxml_file=self.runinfo_xml_file)
+    self.assertEqual(bases_mask, 'Y29,I8N2,N10,Y91')
 
 if __name__=='__main__':
   unittest.main()
