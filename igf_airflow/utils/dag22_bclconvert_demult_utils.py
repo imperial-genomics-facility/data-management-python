@@ -168,16 +168,31 @@ def _get_formatted_samplesheets(
                   lane_id,
                   ig,
                   desc_item)
+              ig_samplesheet_temp_path = \
+                os.path.join(
+                  temp_dir,
+                  samplesheet_name)
               ig_samplesheet_path = \
                 os.path.join(
                   samplesheet_output_dir,
                   samplesheet_name)
               ig_sa.\
+                print_sampleSheet(ig_samplesheet_temp_path)
+              bases_mask = \
+                _calculate_bases_mask(
+                  samplesheet_file=ig_samplesheet_temp_path,
+                  runinfoxml_file=runinfo_xml_file,
+                  read_offset_cutoff=29)
+              ig_final_sa = SampleSheet(ig_samplesheet_temp_path)
+              ig_final_sa.\
+                set_header_for_bclconvert_run(bases_mask=bases_mask)
+              ig_final_sa.\
                 print_sampleSheet(ig_samplesheet_path)
               formatted_samplesheets_list.\
                 append({
                   'project': project_name,
                   'lane': lane_id,
+                  'bases_mask': bases_mask,
                   'index_group': '{0}_{1}'.format(ig, desc_item),
                   'samplesheet_file': ig_samplesheet_path})
           else:
@@ -187,16 +202,31 @@ def _get_formatted_samplesheets(
                 project_name,
                 lane_id,
                 ig)
+            ig_samplesheet_temp_path = \
+                os.path.join(
+                  temp_dir,
+                  samplesheet_name)
             ig_samplesheet_path = \
                 os.path.join(
                   samplesheet_output_dir,
                   samplesheet_name)
             ig_sa.\
+              print_sampleSheet(ig_samplesheet_temp_path)
+            bases_mask = \
+              _calculate_bases_mask(
+                samplesheet_file=ig_samplesheet_temp_path,
+                runinfoxml_file=runinfo_xml_file,
+                read_offset_cutoff=29)
+            ig_final_sa = SampleSheet(ig_samplesheet_temp_path)
+            ig_final_sa.\
+              set_header_for_bclconvert_run(bases_mask=bases_mask)
+            ig_final_sa.\
               print_sampleSheet(ig_samplesheet_path)
             formatted_samplesheets_list.\
               append({
                 'project': project_name,
                 'lane': lane_id,
+                'bases_mask': bases_mask,
                 'index_group': ig,
                 'samplesheet_file': ig_samplesheet_path})
     return formatted_samplesheets_list
