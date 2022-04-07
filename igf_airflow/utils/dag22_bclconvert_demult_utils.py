@@ -32,11 +32,73 @@ SINGLECELL_DUAL_BARCODE_JSON = Variable.get('singlecell_dual_barcode_json', defa
 
 log = logging.getLogger(__name__)
 
+def trigger_lane_jobs(**context):
+  try:
+    ti = context['ti']
+    xcom_key = \
+      context['params'].get('xcom_key', 'formatted_samplesheets')
+    xcom_task = \
+      context['params'].get('xcom_task', 'format_and_split_samplesheet')
+    project_index_column = \
+      context['params'].get('project_index_column', 'project')
+    project_index = \
+      context['params'].get('project_index', 0)
+    lane_index_column = \
+      context['params'].get('lane_index_column', 'lane')
+    lane_task_prefix = \
+      context['params'].get('lane_task_prefix')
+    max_lanes = \
+      context['params'].get('max_lanes', 0)
+    formatted_samplesheets_list = \
+      ti.xcom_pull(task_ids=xcom_task, key=xcom_key)
+    if len(formatted_samplesheets_list) == 0:
+      raise ValueError(
+              "No samplesheet found for seqrun {0}".\
+              format(context['dag_run'].conf.get('seqrun_id')))
+    df = pd.DataFrame(formatted_samplesheets_list)
+    if project_index == 0 :
+      raise ValueError("Invalid projext index 0")
+    if project_index_column not in df.columns:
+      raise KeyError("Column {0} not found in samplesheet".\
+                     format(project_index_column))
+    if lane_index_column not in df.columns:
+      raise KeyError("Column {0} not found in samplesheet".\
+                      format(lane_index_column))
+    df[project_index_column] = df[project_index_column].astype(int)
+    project_df = df[df[project_index_column] == int(project_index)]
+    lane_counts = \
+      project_df[lane_index_column].\
+      drop_duplicates().\
+      values.tolist()
+    if len(lane_counts) == 0:
+      raise ValueError("No lane found for project {0}".\
+                      format(project_index))
+    if len(lane_counts) > max_lanes:
+      raise ValueError("Too many lanes {0} found for project {1}".\
+                      format(lane_counts, project_index))
+    task_list = [
+      '{0}_{1}'.format(lane_task_prefix, lane_count)
+        for lane_count in lane_counts]
+    return task_list
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
+
 def format_and_split_samplesheet_func(**context):
   try:
     ti = context['ti']
     xcom_key = \
       context['params'].get('xcom_key', 'formatted_samplesheets')
+    max_projects = \
+      context['params'].get('max_projects', 0)
     project_task_prefix = \
       context['params'].get('project_task_prefix', 'demult_start_project_')
     dag_run = context.get('dag_run')
@@ -68,6 +130,10 @@ def format_and_split_samplesheet_func(**context):
       project_indices = \
         pd.DataFrame(formatted_samplesheets_list)['project_index'].\
         drop_duplicates().values.tolist()
+      if len(project_indices) > max_projects:
+        raise ValueError(
+                "Too many projects {0}. Increase MAX_PROJECTS param from {1}".\
+                format(project_indices, max_projects))
       task_list = [
         '{0}{1}'.format(project_task_prefix,project_index)
           for project_index in project_indices]
