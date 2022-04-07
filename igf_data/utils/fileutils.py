@@ -248,19 +248,19 @@ def copy_remote_file(
         else:
             raise ValueError('copy method {0} is not supported'.\
                              format(copy_method))
-        proc = subprocess.Popen(cmd,stderr=subprocess.PIPE)
-        proc.wait()
-        if proc.returncode !=0:                                                 # fetching error message for non zero exits
-          _,errs = proc.communicate()
-          if proc.returncode == 255:
-            raise ValueError(\
-              '{0}:{1}'.\
-              format('Error while copying file to remote server ssh_exchange_identification',
-                     'Connection closed by remote host'))
-          else:
-            raise ValueError('Error while copying file to remote server {0}'.\
-                             format(errs.decode('utf8')))
-
+        subprocess.check_call(' '.join(cmd), shell=True)
+        #proc = subprocess.Popen(cmd,stderr=subprocess.PIPE)
+        #proc.wait()
+        #if proc.returncode !=0:                                                 # fetching error message for non zero exits
+        #  _,errs = proc.communicate()
+        #  if proc.returncode == 255:
+        #    raise ValueError(\
+        #      '{0}:{1}'.\
+        #      format('Error while copying file to remote server ssh_exchange_identification',
+        #             'Connection closed by remote host'))
+        #  else:
+        #    raise ValueError('Error while copying file to remote server {0}'.\
+        #                     format(errs.decode('utf8')))
     except Exception as e:
         raise ValueError("Failed to copy remote file, error: {0}".format(e))
 
