@@ -34,6 +34,9 @@ log = logging.getLogger(__name__)
 
 def format_and_split_samplesheet_func(**context):
   try:
+    ti = context['ti']
+    xcom_key = \
+      context['params'].get('xcom_key', None)
     dag_run = context.get('dag_run')
     task_list = ['mark_run_finished',]
     if dag_run is not None and \
@@ -57,6 +60,9 @@ def format_and_split_samplesheet_func(**context):
           samplesheet_output_dir=samplesheet_dir,
           singlecell_barcode_json=SINGLECELL_BARCODE_JSON,
           singlecell_dual_barcode_json=SINGLECELL_DUAL_BARCODE_JSON)
+      ti.xcom_push(
+        key=xcom_key,
+        value=formatted_samplesheets_list)
     return task_list
   except Exception as e:
     log.error(e)
@@ -132,8 +138,12 @@ def _get_formatted_samplesheets(
               'project_name': project_name.strip(),
               'lane': lane_id})
     # samplesheet group list
+    project_counter = 0
     for project_name, p_data in pd.DataFrame(formatted_project_and_lane).groupby('project_name'):
+      project_counter += 1
+      lane_counter = 0
       for lane_id, _ in p_data.groupby('lane'):
+        lane_counter += 1
         sa = SampleSheet(temp_sc_conv_samplesheet_file)
         sa.filter_sample_data(
           condition_key="Sample_Project",
@@ -144,6 +154,7 @@ def _get_formatted_samplesheets(
             condition_key="Lane",
             condition_value=lane_id,
             method="include")
+        ig_counter = 0
         for ig, ig_sa in sa.group_data_by_index_length().items():
           unfiltered_ig_data = deepcopy(ig_sa._data)
           if 'Description' in ig_sa._data_header:
@@ -154,6 +165,7 @@ def _get_formatted_samplesheets(
               drop_duplicates().\
               values.tolist()
             for desc_item in description_list:
+              ig_counter += 1
               ig_sa._data = deepcopy(unfiltered_ig_data)
               ig_sa.filter_sample_data(
                 condition_key="Description",
@@ -191,11 +203,15 @@ def _get_formatted_samplesheets(
               formatted_samplesheets_list.\
                 append({
                   'project': project_name,
+                  'project_index': project_counter,
                   'lane': lane_id,
+                  'lane_index': lane_counter,
                   'bases_mask': bases_mask,
                   'index_group': '{0}_{1}'.format(ig, desc_item),
+                  'index_group_index': ig_counter,
                   'samplesheet_file': ig_samplesheet_path})
           else:
+            ig_counter += 1
             samplesheet_name = \
               'SampleSheet_{0}_{1}_{2}.csv'.\
               format(
@@ -225,9 +241,12 @@ def _get_formatted_samplesheets(
             formatted_samplesheets_list.\
               append({
                 'project': project_name,
+                'project_index': project_counter,
                 'lane': lane_id,
+                'lane_index': lane_counter,
                 'bases_mask': bases_mask,
                 'index_group': ig,
+                'index_group_index': ig_counter,
                 'samplesheet_file': ig_samplesheet_path})
     return formatted_samplesheets_list
   except Exception as e:

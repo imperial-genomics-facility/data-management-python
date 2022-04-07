@@ -169,10 +169,16 @@ class Dag22_bclconvert_demult_utils_testB(unittest.TestCase):
         singlecell_barcode_json='data/singlecell_data/chromium-shared-sample-indexes-plate_20180301.json',
         singlecell_dual_barcode_json='data/singlecell_data/chromium_dual_indexes_plate_TT_NT_20210209.json')
     df = pd.DataFrame(formatted_samplesheets_list)
+    self.assertTrue('project_index' in df.columns.tolist())
+    self.assertTrue('lane_index' in df.columns.tolist())
+    self.assertTrue('index_group_index' in df.columns.tolist())
+    self.assertEqual(df['project_index'].max(), 2)
     projectA = \
       df[df['project'] == 'projectA']
+    self.assertEqual(projectA['lane_index'].max(), 2)
     projectA_lane1 = \
       projectA[projectA['lane'] == '1']
+    self.assertEqual(projectA_lane1['index_group_index'].max(), 4)
     projectA_lane1_20_NA = \
       projectA_lane1[projectA_lane1['index_group'] == '20_NA']
     projectA_lane1_20_NA_samplesheet = \
