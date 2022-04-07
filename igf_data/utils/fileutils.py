@@ -241,7 +241,7 @@ def copy_remote_file(
               cmd.extend(['--exclude',quote(exclude_path)])                     # added support for exclude pattern
           cmd.extend(['-r','-p','-e'])#,source_path,destination_path])
           if ssh_key_file is not None:
-            cmd.append('"ssh -i {0}"'.format(ssh_key_file))
+            cmd.append('\"ssh -i {0}\"'.format(ssh_key_file))
           else:
             cmd.append("ssh")
           cmd.extend([source_path, destination_path])
