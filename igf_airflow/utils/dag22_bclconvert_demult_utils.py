@@ -36,7 +36,9 @@ def format_and_split_samplesheet_func(**context):
   try:
     ti = context['ti']
     xcom_key = \
-      context['params'].get('xcom_key', None)
+      context['params'].get('xcom_key', 'formatted_samplesheets')
+    project_task_prefix = \
+      context['params'].get('project_task_prefix', 'demult_start_project_')
     dag_run = context.get('dag_run')
     task_list = ['mark_run_finished',]
     if dag_run is not None and \
@@ -63,6 +65,20 @@ def format_and_split_samplesheet_func(**context):
       ti.xcom_push(
         key=xcom_key,
         value=formatted_samplesheets_list)
+      project_indices = \
+        pd.DataFrame(formatted_samplesheets_list)['project_index'].\
+        drop_duplicates().values.tolist()
+      task_list = [
+        '{0}{1}'.format(project_task_prefix,project_index)
+          for project_index in project_indices]
+      if len(task_list) == 0:
+        log.warning(
+          "No project indices found in samplesheet {0}".\
+            format(samplesheet_file))
+        task_list = ['mark_run_finished']
+    else:
+      log.warning("No seqrun_id found in dag_run conf")
+      task_list = ['mark_run_finished']
     return task_list
   except Exception as e:
     log.error(e)
