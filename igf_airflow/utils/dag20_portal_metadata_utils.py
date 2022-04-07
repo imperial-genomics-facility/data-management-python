@@ -106,6 +106,8 @@ def copy_remote_file_to_hpc_func(**context):
       context['params'].get('source_address')
     source_path = \
       context['params'].get('source_path')
+    hpc_ssh_key_file = \
+      context['params'].get('hpc_ssh_key_file')
     temp_dir = \
       get_temp_dir(
         use_ephemeral_space=True)
@@ -117,6 +119,7 @@ def copy_remote_file_to_hpc_func(**context):
       source_path=source_path,
       destination_path=dest_path,
       source_address='{0}@{1}'.format(source_user, source_address),
+      ssh_key_file=hpc_ssh_key_file,
       destination_address=None,
       copy_method='rsync',
       check_file=True,

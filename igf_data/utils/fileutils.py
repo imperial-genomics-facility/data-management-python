@@ -184,7 +184,7 @@ def copy_local_file(source_path,destination_path,cd_to_dest=True,force=False):
 
 
 def copy_remote_file(
-      source_path,destination_path,source_address=None,destination_address=None,
+      source_path,destination_path,source_address=None,destination_address=None, ssh_key_file=None,
       copy_method='rsync',check_file=True, force_update=False,exclude_pattern_list=None):
     '''
     A method for copy files from or to remote location
@@ -193,6 +193,7 @@ def copy_remote_file(
     :param destination_path: A destination file path
     :param source_address: Address of the source server
     :param destination_address: Address of the destination server
+    :param ssh_key_file: A path to the ssh key file, default None
     :param copy_method: A nethod for copy files, default is 'rsync'
     :param check_file: Check file after transfer using checksum, default True
     :param force_update: Overwrite existing file or dir, default is False
@@ -211,9 +212,12 @@ def copy_remote_file(
                 source_address,
                 source_path)
         if destination_address is not None:
-          dir_cmd = [
-            'ssh',destination_address,'mkdir','-p',
-            os.path.dirname(destination_path)]
+          dir_cmd = ['ssh']
+          if ssh_key_file is not None:
+            dir_cmd.append('-i {0}'.format(ssh_key_file))
+          dir_cmd.extend([
+            destination_address,
+            'mkdir -p {0}'.format(os.path.dirname(destination_path))])
           subprocess.check_call(dir_cmd)
           destination_path = \
             '{0}:{1}'.format(
@@ -235,7 +239,10 @@ def copy_remote_file(
                len(exclude_pattern_list)>0 ):
             for exclude_path in exclude_pattern_list:
               cmd.extend(['--exclude',quote(exclude_path)])                     # added support for exclude pattern
-          cmd.extend(['-r','-p','-e','ssh',source_path,destination_path])
+          cmd.extend(['-r','-p','-e','ssh'])#,source_path,destination_path])
+          if ssh_key_file is not None:
+            cmd.append('-i {0}'.format(ssh_key_file))
+          cmd.extend([source_path, destination_path])
         else:
             raise ValueError('copy method {0} is not supported'.\
                              format(copy_method))

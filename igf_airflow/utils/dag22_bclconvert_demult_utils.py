@@ -32,6 +32,35 @@ SINGLECELL_DUAL_BARCODE_JSON = Variable.get('singlecell_dual_barcode_json', defa
 
 log = logging.getLogger(__name__)
 
+def trigger_ig_jobs(**context):
+  try:
+    ti = context['ti']
+    xcom_key = \
+      context['params'].get('xcom_key', 'formatted_samplesheets')
+    xcom_task = \
+      context['params'].get('xcom_task', 'format_and_split_samplesheet')
+    project_index_column = \
+      context['params'].get('project_index_column', 'project')
+    project_index = \
+      context['params'].get('project_index', 0)
+    lane_index_column = \
+      context['params'].get('lane_index_column', 'lane')
+    lane_task_prefix = \
+      context['params'].get('lane_task_prefix')
+    max_lanes = \
+      context['params'].get('max_lanes', 0)
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
+
 def trigger_lane_jobs(**context):
   try:
     ti = context['ti']
