@@ -244,7 +244,7 @@ def copy_remote_file(
             cmd.append('\"ssh -i {0}\"'.format(ssh_key_file))
           else:
             cmd.append("ssh")
-          cmd.extend([source_path, destination_path])
+          cmd.extend([quote(source_path), quote(destination_path)])
         else:
             raise ValueError('copy method {0} is not supported'.\
                              format(copy_method))
