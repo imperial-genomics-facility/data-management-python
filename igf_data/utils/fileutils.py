@@ -239,9 +239,11 @@ def copy_remote_file(
                len(exclude_pattern_list)>0 ):
             for exclude_path in exclude_pattern_list:
               cmd.extend(['--exclude',quote(exclude_path)])                     # added support for exclude pattern
-          cmd.extend(['-r','-p','-e','ssh'])#,source_path,destination_path])
+          cmd.extend(['-r','-p','-e'])#,source_path,destination_path])
           if ssh_key_file is not None:
-            cmd.append('-i {0}'.format(ssh_key_file))
+            cmd.append('"ssh -i {0}"'.format(ssh_key_file))
+          else:
+            cmd.append("ssh")
           cmd.extend([source_path, destination_path])
         else:
             raise ValueError('copy method {0} is not supported'.\
