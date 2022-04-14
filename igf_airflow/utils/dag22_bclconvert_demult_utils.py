@@ -1,4 +1,5 @@
 from csv import excel_tab
+from tabnanny import check
 import pandas as pd
 from copy import deepcopy
 import os, logging, subprocess
@@ -16,6 +17,7 @@ from igf_data.utils.fileutils import get_temp_dir
 from igf_data.utils.fileutils import copy_remote_file
 from igf_data.utils.fileutils import check_file_path
 from igf_data.utils.fileutils import read_json_data
+from igf_data.utils.fileutils import get_date_stamp
 from igf_data.utils.fileutils import get_date_stamp_for_file_name
 from igf_data.utils.singularity_run_wrapper import execute_singuarity_cmd
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
@@ -32,8 +34,95 @@ DATABASE_CONFIG_FILE = Variable.get('database_config_file', default_var=None)
 SINGLECELL_BARCODE_JSON = Variable.get('singlecell_barcode_json', default_var=None)
 SINGLECELL_DUAL_BARCODE_JSON = Variable.get('singlecell_dual_barcode_json', default_var=None)
 BCLCONVERT_IMAGE = Variable.get('bclconvert_image_path', default_var=None)
+INTEROP_NOTEBOOK_IMAGE = Variable.get('interop_notebook_image_path', default_var=None)
+BCLCONVERT_REPORT_TEMPLATE = Variable.get('bclconvert_report_template', default_var=None)
+BCLCONVERT_REPORT_LIBRARY = Variable.get("bclconvert_report_library", default_var=None)
 
 log = logging.getLogger(__name__)
+
+def generate_bclconvert_report(
+  seqrun_path: str,
+  image_path: str,
+  report_template: str,
+  bclconvert_report_library_path: str,
+  bclconvert_reports_path: str) \
+  -> str:
+  try:
+    check_file_path(seqrun_path)
+    check_file_path(image_path)
+    check_file_path(report_template)
+    check_file_path(bclconvert_reports_path)
+    check_file_path(bclconvert_report_library_path)
+    temp_run_dir = get_temp_dir()
+    interop_dir = os.path.join(seqrun_path, 'InterOp')
+    runinfo_xml = os.path.join(seqrun_path, 'RunInfo.xml')
+    check_file_path(runinfo_xml)
+    index_metric_bin = \
+      os.path.join(
+        bclconvert_reports_path,
+        'IndexMetricsOut.bin')
+    check_file_path(interop_dir)
+    check_file_path(index_metric_bin)
+    copy_local_file(
+      interop_dir,
+      os.path.join(temp_run_dir, 'InterOp'))
+    copy_local_file(
+      runinfo_xml,
+      os.path.join(temp_run_dir, 'RunInfo.xml'))
+    copy_local_file(
+      index_metric_bin,
+      os.path.join(
+        temp_run_dir,
+        'InterOp',
+        'IndexMetricsOut.bin'),
+      force=True)
+    input_params = {
+      'DATE_TAG': get_date_stamp(),
+      'SEQRUN_IGF_ID': os.path.basename(seqrun_path.strip('/')),
+      'REPORTS_DIR': bclconvert_reports_path,
+      'RUN_DIR': temp_run_dir}
+    container_bind_dir_list = [
+      temp_run_dir,
+      bclconvert_reports_path,
+      bclconvert_report_library_path]
+    temp_dir = get_temp_dir()
+    nb = \
+      Notebook_runner(
+        template_ipynb_path=report_template,
+        output_dir=temp_dir,
+        input_param_map=input_params,
+        container_paths=container_bind_dir_list,
+        kernel='python3',
+        use_ephemeral_space=True,
+        singularity_options=['--no-home','-C', "--env", "PYTHONPATH={0}".format(bclconvert_report_library_path)],
+        allow_errors=False,
+        singularity_image_path=image_path)
+    output_notebook_path, _ = \
+      nb.execute_notebook_in_singularity()
+    return output_notebook_path
+  except Exception as e:
+    raise ValueError(
+            "Failed to generate bclconvert report, error: {0}".format(e))
+
+
+def bclconvert_report_func(**context):
+  try:
+    xcom_key_for_reports = \
+      context['params'].get('xcom_key_for_reports', 'bclconvert_reports')
+    xcom_task_for_reports = \
+      context['params'].get('xcom_task_for_reports', None)
+    
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
 
 def bclconvert_singularity_wrapper(
       image_path: str,
@@ -112,6 +201,8 @@ def run_bclconvert_func(**context):
       context['params'].get('ig_index', 0)
     samplesheet_column = \
       context['params'].get('samplesheet_column', 'samplesheet_file')
+    xcom_key_for_reports = \
+      context['params'].get('xcom_key_for_reports', 'bclconvert_reports')
     bcl_num_conversion_threads = \
       context['params'].get('bcl_num_conversion_threads', '1')
     bcl_num_compression_threads = \
@@ -163,7 +254,7 @@ def run_bclconvert_func(**context):
     output_dir = \
       ig_df['output_dir'].values.tolist()[0]
     project_id = \
-      ig_df['project_column'].values.tolist()[0]
+      ig_df[project_column].values.tolist()[0]
     lane_id = \
       ig_df[lane_column].values.tolist()[0]
     ig_id = \
@@ -195,6 +286,18 @@ def run_bclconvert_func(**context):
           project_id,
           lane_id,
           ig_id)))
+    reports_dir = \
+      os.path.join(
+        output_dir,
+        '{0}_{1}_{2}'.format(
+          project_id,
+          lane_id,
+          ig_id),
+        'Reports')
+    check_file_path(reports_dir)
+    ti.xcom_push(
+      key=xcom_key_for_reports,
+      value=reports_dir)
     message = \
       'Finished demultiplexing project {0}, lane {1}, ig {2} - cmd: {3}'.\
       format(project_id, lane_id, ig_id, cmd)
