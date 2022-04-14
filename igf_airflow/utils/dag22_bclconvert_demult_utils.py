@@ -21,6 +21,8 @@ from igf_data.utils.singularity_run_wrapper import execute_singuarity_cmd
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
 from igf_data.igfdb.baseadaptor import BaseAdaptor
+from igf_data.utils.singularity_run_wrapper import execute_singuarity_cmd
+from igf_data.utils.jupyter_nbconvert_wrapper import Notebook_runner
 
 
 SLACK_CONF = Variable.get('slack_conf',default_var=None)
@@ -29,8 +31,191 @@ HPC_SEQRUN_BASE_PATH = Variable.get('hpc_seqrun_path', default_var=None)
 DATABASE_CONFIG_FILE = Variable.get('database_config_file', default_var=None)
 SINGLECELL_BARCODE_JSON = Variable.get('singlecell_barcode_json', default_var=None)
 SINGLECELL_DUAL_BARCODE_JSON = Variable.get('singlecell_dual_barcode_json', default_var=None)
+BCLCONVERT_IMAGE = Variable.get('bclconvert_image_path', default_var=None)
 
 log = logging.getLogger(__name__)
+
+def bclconvert_singularity_wrapper(
+      image_path: str,
+      input_dir: str,
+      output_dir: str,
+      samplesheet_file: str,
+      bcl_num_conversion_threads: int = 1,
+      bcl_num_compression_threads: int = 1,
+      bcl_num_decompression_threads: int = 1,
+      bcl_num_parallel_tiles: int = 1,
+      lane_id : int = 0,
+      tile_id_list: tuple = (),
+      dry_run: bool = False) \
+      -> str:
+  try:
+    check_file_path(image_path)
+    check_file_path(input_dir)
+    check_file_path(output_dir)
+    check_file_path(samplesheet_file)
+    temp_dir = get_temp_dir()
+    bclconvert_cmd = [
+      "bcl-convert",
+      "--bcl-input-directory", input_dir,
+      "--output-directory", output_dir,
+      "--sample-sheet", samplesheet_file,
+      "--bcl-num-conversion-threads", str(bcl_num_conversion_threads),
+      "--bcl-num-compression-threads", str(bcl_num_compression_threads),
+      "--bcl-num-decompression-threads", str(bcl_num_decompression_threads),
+      "--bcl-num-parallel-tiles", str(bcl_num_parallel_tiles),
+      "--bcl-sampleproject-subdirectories", "true",
+      "--strict-mode", "true"]
+    if lane_id > 0:
+      bclconvert_cmd.extend(["--bcl-only-lane", str(lane_id)])
+    if len(tile_id_list) > 0:
+      bclconvert_cmd.extend(["--tiles", ",".join(tile_id_list)])
+    bclconvert_cmd = \
+      ' '.join(bclconvert_cmd)
+    bind_paths = [
+      '{0}:/var/log'.format(temp_dir),
+      os.path.dirname(samplesheet_file),
+      input_dir,
+      output_dir]
+    cmd = execute_singuarity_cmd(
+      image_path=image_path,
+      command_string=bclconvert_cmd,
+      bind_dir_list=bind_paths,
+      dry_run=dry_run)
+    return cmd
+  except:
+    raise
+
+def run_bclconvert_func(**context):
+  try:
+    ti = context['ti']
+    xcom_key = \
+      context['params'].get('xcom_key', 'formatted_samplesheets')
+    xcom_task = \
+      context['params'].get('xcom_task', 'format_and_split_samplesheet')
+    project_index_column = \
+      context['params'].get('project_index_column', 'project_index')
+    project_index = \
+      context['params'].get('project_index', 0)
+    project_column = \
+      context['params'].get('project_column', 'project')
+    lane_index_column = \
+      context['params'].get('lane_index_column', 'lane_index')
+    lane_column = \
+      context['params'].get('lane_column', 'lane')
+    lane_index = \
+      context['params'].get('lane_index', 0)
+    ig_index_column = \
+      context['params'].get('ig_index_column', 'index_group_index')
+    index_group_column = \
+      context['params'].get('index_group_column', 'index_group')
+    ig_index = \
+      context['params'].get('ig_index', 0)
+    samplesheet_column = \
+      context['params'].get('samplesheet_column', 'samplesheet_file')
+    bcl_num_conversion_threads = \
+      context['params'].get('bcl_num_conversion_threads', '1')
+    bcl_num_compression_threads = \
+      context['params'].get('bcl_num_compression_threads', '1')
+    bcl_num_decompression_threads = \
+      context['params'].get('bcl_num_decompression_threads', '1')
+    bcl_num_parallel_tiles = \
+      context['params'].get('bcl_num_parallel_tiles', '1')
+    dag_run = context.get('dag_run')
+    seqrun_path = ''
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('seqrun_id') is not None:
+      seqrun_id = \
+        dag_run.conf.get('seqrun_id')
+      seqrun_path = \
+        os.path.join(HPC_SEQRUN_BASE_PATH, seqrun_id)
+    else:
+      raise IOError("Failed to get seqrun_id from dag_run")
+    if project_index == 0 or \
+       lane_index == 0 or \
+       ig_index == 0:
+      raise ValueError('project_index, lane_index or ig_index is not set')
+    if xcom_key is None or \
+       xcom_task is None:
+      raise ValueError('xcom_key or xcom_task is not set')
+    formatted_samplesheets_list = \
+      ti.xcom_pull(task_ids=xcom_task, key=xcom_key)
+    df = pd.DataFrame(formatted_samplesheets_list)
+    if project_index_column not in df.columns or \
+        lane_index_column not in df.columns or \
+        lane_column not in df.columns or \
+        ig_index_column not in df.columns or \
+        samplesheet_column not in df.columns:
+      raise KeyError(""""
+        project_index_column, lane_index_column, lane_column,
+        ig_index_column or samplesheet_column is not found""")
+    ig_df = \
+      df[
+        (df[project_index_column]==project_index) &
+        (df[lane_index_column]==lane_index) &
+        (df[ig_index_column]==ig_index)]
+    if len(ig_df.index) == 0:
+      raise ValueError(
+          "No samplesheet found for project {0}, lane {1}, ig {2}".\
+          format(project_index, lane_index, ig_index))
+    samplesheet_file = \
+      ig_df[samplesheet_column].values.tolist()[0]
+    output_dir = \
+      ig_df['output_dir'].values.tolist()[0]
+    project_id = \
+      ig_df['project_column'].values.tolist()[0]
+    lane_id = \
+      ig_df[lane_column].values.tolist()[0]
+    ig_id = \
+      ig_df[index_group_column].values.tolist()[0]
+    output_temp_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    demult_dir = \
+      os.path.join(
+        output_temp_dir,
+        '{0}_{1}_{2}'.format(project_id, lane_id, ig_id))
+    if not os.path.exists(demult_dir):
+      os.makedirs(demult_dir)
+    cmd = \
+      bclconvert_singularity_wrapper(
+        image_path=BCLCONVERT_IMAGE,
+        input_dir=seqrun_path,
+        output_dir=demult_dir,
+        samplesheet_file=samplesheet_file,
+        bcl_num_conversion_threads=int(bcl_num_conversion_threads),
+        bcl_num_compression_threads=int(bcl_num_compression_threads),
+        bcl_num_decompression_threads=int(bcl_num_decompression_threads),
+        bcl_num_parallel_tiles=int(bcl_num_parallel_tiles),
+        lane_id=int(lane_id))
+    copy_local_file(
+      demult_dir,
+      os.path.join(
+        output_dir,
+        '{0}_{1}_{2}'.format(
+          project_id,
+          lane_id,
+          ig_id)))
+    message = \
+      'Finished demultiplexing project {0}, lane {1}, ig {2} - cmd: {3}'.\
+      format(project_id, lane_id, ig_id, cmd)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=message,
+      reaction='pass')
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
 
 def trigger_ig_jobs(**context):
   try:
@@ -45,10 +230,57 @@ def trigger_ig_jobs(**context):
       context['params'].get('project_index', 0)
     lane_index_column = \
       context['params'].get('lane_index_column', 'lane')
-    lane_task_prefix = \
-      context['params'].get('lane_task_prefix')
-    max_lanes = \
-      context['params'].get('max_lanes', 0)
+    lane_index = \
+      context['params'].get('lane_index', 0)
+    ig_task_prefix = \
+      context['params'].get('ig_task_prefix')
+    max_index_groups = \
+      context['params'].get('max_index_groups')
+    ig_index_column = \
+      context['params'].get('ig_index_column', 'index_group_index')
+    formatted_samplesheets_list = \
+      ti.xcom_pull(task_ids=xcom_task, key=xcom_key)
+    if len(formatted_samplesheets_list) == 0:
+      raise ValueError(
+              "No samplesheet found for seqrun {0}".\
+              format(context['dag_run'].conf.get('seqrun_id')))
+    df = pd.DataFrame(formatted_samplesheets_list)
+    if project_index == 0 :
+      raise ValueError("Invalid projext index 0")
+    if project_index_column not in df.columns:
+      raise KeyError("Column {0} not found in samplesheet".\
+                     format(project_index_column))
+    if lane_index == 0 :
+      raise ValueError("Invalid lane index 0")
+    if lane_index_column not in df.columns:
+      raise KeyError("Column {0} not found in samplesheet".\
+                      format(lane_index_column))
+    if ig_index_column not in df.columns:
+      raise KeyError("Column {0} not found in samplesheet".\
+                      format(ig_index_column))
+    df[project_index_column] = df[project_index_column].astype(int)
+    df[lane_index_column] = df[lane_index_column].astype(int)
+    df[ig_index_column] = df[ig_index_column].astype(int)
+    project_df = df[df[project_index_column] == int(project_index)]
+    lane_df = project_df[project_df[lane_index_column] == int(lane_index)]
+    if len(lane_df.index) == 0:
+      raise ValueError("No samplesheet found for project {0}, lane {1}".\
+                       format(project_index, lane_index))
+    ig_counts = \
+      lane_df[ig_index_column].\
+      drop_duplicates().\
+      values.\
+      tolist()
+    if len(ig_counts) == 0:
+      raise ValueError("No index group found for project {0}, lane {1}".\
+                       format(project_index, lane_index))
+    if len(ig_counts) > max_index_groups:
+      raise ValueError("Too many index groups found for project {0}, lane {1}".\
+                       format(project_index, lane_index))
+    task_list = [
+      '{0}_{1}'.format(ig_task_prefix, ig)
+         for ig in ig_counts]
+    return task_list
   except Exception as e:
     log.error(e)
     send_log_to_channels(
@@ -309,6 +541,7 @@ def _get_formatted_samplesheets(
               ig_final_sa = SampleSheet(ig_samplesheet_temp_path)
               ig_final_sa.\
                 set_header_for_bclconvert_run(bases_mask=bases_mask)
+              temp_dir = get_temp_dir(use_ephemeral_space=True)
               ig_final_sa.\
                 print_sampleSheet(ig_samplesheet_path)
               formatted_samplesheets_list.\
@@ -320,7 +553,8 @@ def _get_formatted_samplesheets(
                   'bases_mask': bases_mask,
                   'index_group': '{0}_{1}'.format(ig, desc_item),
                   'index_group_index': ig_counter,
-                  'samplesheet_file': ig_samplesheet_path})
+                  'samplesheet_file': ig_samplesheet_path,
+                  'output_dir': temp_dir})
           else:
             ig_counter += 1
             samplesheet_name = \
@@ -349,6 +583,7 @@ def _get_formatted_samplesheets(
               set_header_for_bclconvert_run(bases_mask=bases_mask)
             ig_final_sa.\
               print_sampleSheet(ig_samplesheet_path)
+            temp_dir = get_temp_dir(use_ephemeral_space=True)
             formatted_samplesheets_list.\
               append({
                 'project': project_name,
@@ -358,7 +593,8 @@ def _get_formatted_samplesheets(
                 'bases_mask': bases_mask,
                 'index_group': ig,
                 'index_group_index': ig_counter,
-                'samplesheet_file': ig_samplesheet_path})
+                'samplesheet_file': ig_samplesheet_path,
+                'output_dir': temp_dir})
     return formatted_samplesheets_list
   except Exception as e:
     raise ValueError(
