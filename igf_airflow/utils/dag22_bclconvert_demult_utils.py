@@ -107,11 +107,22 @@ def generate_bclconvert_report(
 
 def bclconvert_report_func(**context):
   try:
+    ti = context['ti']
     xcom_key_for_reports = \
       context['params'].get('xcom_key_for_reports', 'bclconvert_reports')
     xcom_task_for_reports = \
       context['params'].get('xcom_task_for_reports', None)
-    
+    bclconvert_reports_path = \
+      ti.xcom_pull(
+        key=xcom_key_for_reports,
+        task_ids=xcom_task_for_reports)
+    report_file = \
+      generate_bclconvert_report(
+        seqrun_path=None,
+        image_path=INTEROP_NOTEBOOK_IMAGE,
+        report_template=BCLCONVERT_REPORT_TEMPLATE,
+        bclconvert_report_library_path=BCLCONVERT_REPORT_LIBRARY,
+        bclconvert_reports_path=bclconvert_reports_path)
   except Exception as e:
     log.error(e)
     send_log_to_channels(
@@ -755,7 +766,7 @@ def _calculate_bases_mask(
       else:
         if int(read_offset) > 0:
           bases_mask_list.\
-            append('Y{0}N{1}'.format(runinfo_read_length, read_offset))
+            append('Y{0}N{1}'.format(int(runinfo_read_length) - int(read_offset), read_offset))
         else:
           bases_mask_list.\
             append('Y{0}'.format(runinfo_read_length, read_offset))

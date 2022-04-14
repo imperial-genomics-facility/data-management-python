@@ -76,7 +76,7 @@ class Dag22_bclconvert_demult_utils_testA(unittest.TestCase):
     base = BaseAdaptor(**read_dbconf_json(self.dbconfig))
     pla = PipelineAdaptor(**{'session_class':base.session_class})
     pla.start_session()
-    pipeline_data = [{ 
+    pipeline_data = [{
       "pipeline_name" : "demultiplexing_fastq",
       "pipeline_db" : "sqlite:////data/bcl2fastq.db", 
       "pipeline_init_conf" : { "input_dir":"data/seqrun_dir/" , "output_dir" : "data"}, 
