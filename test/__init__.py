@@ -74,6 +74,9 @@ def full_suite():
   from .igf_airflow.dag18_upload_and_trigger_analysis_utils_test import Dag18_upload_and_trigger_analysis_utils_testB
   from .igf_airflow.dag18_upload_and_trigger_analysis_utils_test import Dag18_upload_and_trigger_analysis_utils_testC
   from .igf_airflow.dag22_bclconvert_demult_utils_test import Dag22_bclconvert_demult_utils_testA
+  from .igf_airflow.dag22_bclconvert_demult_utils_test import Dag22_bclconvert_demult_utils_testB
+  from .igf_airflow.dag22_bclconvert_demult_utils_test import Dag22_bclconvert_demult_utils_testC
+  from .igf_airflow.dag22_bclconvert_demult_utils_test import Dag22_bclconvert_demult_utils_testD
   from .utils.cellranger_count_utils_test import Cellranger_count_utils_testA
   from .dbadaptor.analysisadaptor_test import Analysisadaptor_test1
   from .dbadaptor.seqrunadaptor_test import SeqrunAdaptor_test1
@@ -187,6 +190,9 @@ def full_suite():
         Metadata_dump_test,
         Metadata_load_test,
         Find_and_register_new_project_data_from_portal_db_test1,
-        Dag22_bclconvert_demult_utils_testA
+        Dag22_bclconvert_demult_utils_testA,
+        Dag22_bclconvert_demult_utils_testB,
+        Dag22_bclconvert_demult_utils_testC,
+        Dag22_bclconvert_demult_utils_testD
       ]
     ])

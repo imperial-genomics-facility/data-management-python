@@ -45,7 +45,8 @@ def generate_bclconvert_report(
   image_path: str,
   report_template: str,
   bclconvert_report_library_path: str,
-  bclconvert_reports_path: str) \
+  bclconvert_reports_path: str,
+  dry_run: bool = False) \
   -> str:
   try:
     check_file_path(seqrun_path)
@@ -96,7 +97,8 @@ def generate_bclconvert_report(
         use_ephemeral_space=True,
         singularity_options=['--no-home','-C', "--env", "PYTHONPATH={0}".format(bclconvert_report_library_path)],
         allow_errors=False,
-        singularity_image_path=image_path)
+        singularity_image_path=image_path,
+        dry_run=dry_run)
     output_notebook_path, _ = \
       nb.execute_notebook_in_singularity()
     return output_notebook_path

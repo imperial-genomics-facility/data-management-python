@@ -11,6 +11,8 @@ from igf_airflow.utils.dag22_bclconvert_demult_utils import _check_and_load_seqr
 from igf_airflow.utils.dag22_bclconvert_demult_utils import _check_and_seed_seqrun_pipeline
 from igf_airflow.utils.dag22_bclconvert_demult_utils import _get_formatted_samplesheets
 from igf_airflow.utils.dag22_bclconvert_demult_utils import _calculate_bases_mask
+from igf_airflow.utils.dag22_bclconvert_demult_utils import bclconvert_singularity_wrapper
+from igf_airflow.utils.dag22_bclconvert_demult_utils import generate_bclconvert_report
 
 class Dag22_bclconvert_demult_utils_testA(unittest.TestCase):
   def setUp(self):
@@ -197,6 +199,103 @@ class Dag22_bclconvert_demult_utils_testB(unittest.TestCase):
         samplesheet_file=projectA_lane1_8_10X_samplesheet,
         runinfoxml_file=self.runinfo_xml_file)
     self.assertEqual(bases_mask, 'Y29;I8N2;N10;Y91')
+
+class Dag22_bclconvert_demult_utils_testC(unittest.TestCase):
+  def setUp(self):
+    self.temp_dir = get_temp_dir()
+    self.image_path = os.path.join(self.temp_dir, 'image.sif')
+    with open(self.image_path, 'w') as fp:
+      fp.write('A')
+    self.input_dir = os.path.join(self.temp_dir, 'input')
+    os.makedirs(self.input_dir)
+    self.output_dir = os.path.join(self.temp_dir, 'output')
+    os.makedirs(self.output_dir)
+    self.samplesheet_file = os.path.join(self.temp_dir, 'samplesheet.csv')
+    with open(self.samplesheet_file, 'w') as fp:
+      fp.write('A')
+
+  def tearDown(self):
+    remove_dir(self.temp_dir)
+
+  def test_bclconvert_singularity_wrapper(self):
+    cmd = \
+      bclconvert_singularity_wrapper(
+        image_path=self.image_path,
+        input_dir=self.input_dir,
+        output_dir=self.output_dir,
+        samplesheet_file=self.samplesheet_file,
+        lane_id=1,
+        dry_run=True)
+    self.assertTrue('bcl-convert' in cmd)
+    self.assertTrue('--sample-sheet {0}'.format(self.samplesheet_file) in cmd)
+    self.assertTrue('--output-directory {0}'.format(self.output_dir) in cmd)
+    self.assertTrue('--bcl-only-lane {0}'.format(1) in cmd)
+    self.assertTrue('--bcl-input-directory {0}'.format(self.input_dir) in cmd)
+    cmd = \
+      bclconvert_singularity_wrapper(
+        image_path=self.image_path,
+        input_dir=self.input_dir,
+        output_dir=self.output_dir,
+        samplesheet_file=self.samplesheet_file,
+        lane_id=1,
+        tile_id_list=('s_1_1102', 's_1_1103'),
+        dry_run=True)
+    self.assertTrue('--tiles s_1_1102,s_1_1103' in cmd)
+
+class Dag22_bclconvert_demult_utils_testD(unittest.TestCase):
+  def setUp(self):
+    self.seqrun_dir = get_temp_dir()
+    self.interop_dir = \
+      os.path.join(self.seqrun_dir, 'InterOp')
+    os.makedirs(self.interop_dir)
+    self.runinfo_xml = \
+      os.path.join(
+        self.seqrun_dir,
+        'RunInfo.xml')
+    with open(self.runinfo_xml, 'w') as fp:
+      fp.write('A')
+    self.reports_dir = get_temp_dir()
+    self.index_metrics_file = \
+      os.path.join(
+        self.reports_dir,
+        'IndexMetricsOut.bin')
+    with open(self.index_metrics_file, 'w') as fp:
+      fp.write('A')
+    self.image_path = \
+      os.path.join(
+        self.seqrun_dir,
+        'image.sif')
+    with open(self.image_path, 'w') as fp:
+      fp.write('A')
+    self.report_template = \
+      os.path.join(
+        self.seqrun_dir,
+        'template.ipynb')
+    with open(self.report_template, 'w') as fp:
+      fp.write('A')
+    self.bclconvert_report_library_path = \
+      get_temp_dir()
+
+
+  def tearDown(self):
+    remove_dir(self.seqrun_dir)
+    remove_dir(self.reports_dir)
+    remove_dir(self.bclconvert_report_library_path)
+
+
+  def test_generate_bclconvert_report(self):
+    report_file = \
+      generate_bclconvert_report(
+        seqrun_path=self.seqrun_dir,
+        image_path=self.image_path,
+        report_template=self.report_template,
+        bclconvert_report_library_path=self.bclconvert_report_library_path,
+        bclconvert_reports_path=self.reports_dir,
+        dry_run=True)
+    self.assertTrue(os.path.exists(report_file))
+    self.assertEqual(
+      os.path.basename(report_file),
+      os.path.basename(self.report_template))
 
 if __name__=='__main__':
   unittest.main()
