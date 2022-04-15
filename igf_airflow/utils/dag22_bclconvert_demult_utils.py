@@ -40,6 +40,53 @@ BCLCONVERT_REPORT_LIBRARY = Variable.get("bclconvert_report_library", default_va
 
 log = logging.getLogger(__name__)
 
+def get_sample_groups_for_bcl_convert_output(
+    bclconvert_output_path: str,
+    samplesheet_file: str,
+    max_samples: int = 20) \
+    -> list:
+  try:
+    sa = SampleSheet(samplesheet_file)
+    df = pd.DataFrame(sa._data)
+    sample_id_list = \
+      df['Sample_ID'].drop_duplicates().tolist()
+  except Exception as e:
+    raise ValueError(
+            "Failed to get sample groups for bcl convert output, error: {0}".\
+            format(e))
+def sample_known_qc_factory_func(**context):
+  try:
+    ti = context['ti']
+    samplesheet_file_suffix = \
+      context['params'].get("samplesheet_file_suffix", "Reports/SampleSheet.csv")
+    xcom_key_for_bclconvert_output = \
+      context['params'].get("xcom_key_for_bclconvert_output", "bclconvert_output")
+    xcom_task_for_bclconvert_output = \
+      context['params'].get("xcom_task_for_bclconvert_output")
+    max_samples = \
+      context['params'].get("max_samples", 0)
+    bclconvert_output_dir = \
+      ti.xcom_pull(
+        task_ids=xcom_task_for_bclconvert_output,
+        key=xcom_key_for_bclconvert_output)
+    if max_samples == 0:
+      raise ValueError("max_samples is not set")
+    samplesheet_path = \
+      os.path.join(
+        bclconvert_output_dir,
+        samplesheet_file_suffix)
+    
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
 def generate_bclconvert_report(
   seqrun_path: str,
   image_path: str,
@@ -125,6 +172,11 @@ def bclconvert_report_func(**context):
         report_template=BCLCONVERT_REPORT_TEMPLATE,
         bclconvert_report_library_path=BCLCONVERT_REPORT_LIBRARY,
         bclconvert_reports_path=bclconvert_reports_path)
+    copy_local_file(
+      report_file,
+      os.path.join(
+        bclconvert_reports_path,
+        os.path.basename(report_file)))
   except Exception as e:
     log.error(e)
     send_log_to_channels(
@@ -216,6 +268,8 @@ def run_bclconvert_func(**context):
       context['params'].get('samplesheet_column', 'samplesheet_file')
     xcom_key_for_reports = \
       context['params'].get('xcom_key_for_reports', 'bclconvert_reports')
+    xcom_key_for_output = \
+      context['params'].get('xcom_key_for_output', 'bclconvert_output')
     bcl_num_conversion_threads = \
       context['params'].get('bcl_num_conversion_threads', '1')
     bcl_num_compression_threads = \
@@ -291,26 +345,27 @@ def run_bclconvert_func(**context):
         bcl_num_decompression_threads=int(bcl_num_decompression_threads),
         bcl_num_parallel_tiles=int(bcl_num_parallel_tiles),
         lane_id=int(lane_id))
+    bclconvert_output_dir = \
+      os.path.join(
+        output_dir,
+        '{0}_{1}_{2}'.format(
+          project_id,
+          lane_id,
+          ig_id))
     copy_local_file(
       demult_dir,
-      os.path.join(
-        output_dir,
-        '{0}_{1}_{2}'.format(
-          project_id,
-          lane_id,
-          ig_id)))
+      bclconvert_output_dir)
     reports_dir = \
       os.path.join(
-        output_dir,
-        '{0}_{1}_{2}'.format(
-          project_id,
-          lane_id,
-          ig_id),
+        bclconvert_output_dir,
         'Reports')
     check_file_path(reports_dir)
     ti.xcom_push(
       key=xcom_key_for_reports,
       value=reports_dir)
+    ti.xcom_push(
+      key=xcom_key_for_output,
+      value=bclconvert_output_dir)
     message = \
       'Finished demultiplexing project {0}, lane {1}, ig {2} - cmd: {3}'.\
       format(project_id, lane_id, ig_id, cmd)
