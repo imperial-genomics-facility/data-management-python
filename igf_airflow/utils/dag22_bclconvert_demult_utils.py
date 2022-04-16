@@ -40,6 +40,32 @@ BCLCONVERT_REPORT_LIBRARY = Variable.get("bclconvert_report_library", default_va
 
 log = logging.getLogger(__name__)
 
+def get_jobs_per_worker(
+    max_workers: int,
+    total_jobs: int) \
+    -> dict:
+  try:
+    job_pos = 0
+    if total_jobs <= max_workers:
+      jobs_per_worker = 1
+    else:
+      jobs_per_worker = \
+        int(total_jobs / max_workers) + 1
+    jobs_per_worker_dict = dict()
+    for i in range(1, max_workers+1):
+      if job_pos < total_jobs:
+        new_job_pos = \
+          job_pos + jobs_per_worker
+        if new_job_pos > total_jobs:
+          new_job_pos = total_jobs
+        jobs_per_worker_dict.\
+          update({i: {'start': job_pos, 'end': new_job_pos}})
+        job_pos = new_job_pos
+    return jobs_per_worker_dict
+  except Exception as e:
+    raise ValueError("Faild to get jobs per worker, error: {0}".format(e))
+
+
 def get_sample_groups_for_bcl_convert_output(
     bclconvert_output_path: str,
     samplesheet_file: str,

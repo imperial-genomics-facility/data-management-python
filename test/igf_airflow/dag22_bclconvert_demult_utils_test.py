@@ -13,6 +13,7 @@ from igf_airflow.utils.dag22_bclconvert_demult_utils import _get_formatted_sampl
 from igf_airflow.utils.dag22_bclconvert_demult_utils import _calculate_bases_mask
 from igf_airflow.utils.dag22_bclconvert_demult_utils import bclconvert_singularity_wrapper
 from igf_airflow.utils.dag22_bclconvert_demult_utils import generate_bclconvert_report
+from igf_airflow.utils.dag22_bclconvert_demult_utils import get_jobs_per_worker
 
 class Dag22_bclconvert_demult_utils_testA(unittest.TestCase):
   def setUp(self):
@@ -296,6 +297,14 @@ class Dag22_bclconvert_demult_utils_testD(unittest.TestCase):
     self.assertEqual(
       os.path.basename(report_file),
       os.path.basename(self.report_template))
+
+  def test_get_jobs_per_worker(self):
+    jobs_dict = \
+      get_jobs_per_worker(
+        max_workers=2,
+        total_jobs=2)
+    print(jobs_dict)
+    self.assertEqual(len(jobs_dict), 2)
 
 if __name__=='__main__':
   unittest.main()
