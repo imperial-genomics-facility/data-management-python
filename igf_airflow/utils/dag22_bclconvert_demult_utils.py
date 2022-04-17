@@ -1,3 +1,4 @@
+from collections import defaultdict
 from csv import excel_tab
 from tabnanny import check
 import pandas as pd
@@ -43,27 +44,28 @@ log = logging.getLogger(__name__)
 def get_jobs_per_worker(
     max_workers: int,
     total_jobs: int) \
-    -> dict:
+    -> list:
   try:
-    job_pos = 0
-    if total_jobs <= max_workers:
-      jobs_per_worker = 1
-    else:
-      jobs_per_worker = \
-        int(total_jobs / max_workers) + 1
-    jobs_per_worker_dict = dict()
-    for i in range(1, max_workers+1):
-      if job_pos < total_jobs:
-        new_job_pos = \
-          job_pos + jobs_per_worker
-        if new_job_pos > total_jobs:
-          new_job_pos = total_jobs
-        jobs_per_worker_dict.\
-          update({i: {'start': job_pos, 'end': new_job_pos}})
-        job_pos = new_job_pos
-    return jobs_per_worker_dict
+    job_list = list()
+    job_counter = 0
+    if max_workers <= 0 or \
+       total_jobs <= 0:
+      raise ValueError("max_workers or total_jobs is not set")
+    while job_counter <= total_jobs:
+      for worker_index in range(1, max_workers + 1):
+        job_counter += 1
+        if job_counter <= total_jobs:
+          job_list.append({
+            'worker_index': worker_index,
+            'jobs': job_counter})
+    df = pd.DataFrame(job_list)
+    df['jobs'] = df['jobs'].astype('str')
+    grp_df = df.groupby('worker_index').agg({'jobs': ','.join}, axis=1)
+    grp_df = grp_df.reset_index()
+    grp_df['jobs'] = grp_df['jobs'].str.split(',')
+    return grp_df.to_dict(orient='records')
   except Exception as e:
-    raise ValueError("Faild to get jobs per worker, error: {0}".format(e))
+    raise ValueError("Failed to divide jobs per worker, error: {0}".format(e))
 
 
 def get_sample_groups_for_bcl_convert_output(

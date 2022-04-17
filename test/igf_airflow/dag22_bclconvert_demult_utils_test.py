@@ -299,12 +299,52 @@ class Dag22_bclconvert_demult_utils_testD(unittest.TestCase):
       os.path.basename(self.report_template))
 
   def test_get_jobs_per_worker(self):
-    jobs_dict = \
+    jobs_list = \
       get_jobs_per_worker(
         max_workers=2,
         total_jobs=2)
-    print(jobs_dict)
-    self.assertEqual(len(jobs_dict), 2)
+    self.assertEqual(len(jobs_list), 2)
+    self.assertTrue('worker_index' in jobs_list[0])
+    self.assertEqual(jobs_list[0]['worker_index'], 1)
+    self.assertTrue('jobs' in jobs_list[0])
+    self.assertEqual(len(jobs_list[0]['jobs']), 1)
+    self.assertTrue('1' in jobs_list[0]['jobs'])
+    jobs_list = \
+      get_jobs_per_worker(
+        max_workers=2,
+        total_jobs=10)
+    self.assertEqual(len(jobs_list), 2)
+    self.assertTrue('worker_index' in jobs_list[0])
+    self.assertEqual(jobs_list[0]['worker_index'], 1)
+    self.assertTrue('jobs' in jobs_list[0])
+    self.assertEqual(len(jobs_list[0]['jobs']), 5)
+    self.assertTrue('9' in jobs_list[0]['jobs'])
+    jobs_list = \
+      get_jobs_per_worker(
+        max_workers=3,
+        total_jobs=10)
+    self.assertEqual(len(jobs_list), 3)
+    self.assertTrue('worker_index' in jobs_list[0])
+    self.assertEqual(jobs_list[0]['worker_index'], 1)
+    self.assertTrue('jobs' in jobs_list[0])
+    self.assertEqual(len(jobs_list[0]['jobs']), 4)
+    self.assertTrue('10' in jobs_list[0]['jobs'])
+    self.assertEqual(len(jobs_list[1]['jobs']), 3)
+    self.assertTrue('8' in jobs_list[1]['jobs'])
+    self.assertEqual(len(jobs_list[2]['jobs']), 3)
+    self.assertTrue('9' in jobs_list[2]['jobs'])
+    with self.assertRaises(ValueError):
+      get_jobs_per_worker(
+        max_workers=0,
+        total_jobs=0)
+    with self.assertRaises(ValueError):
+      get_jobs_per_worker(
+        max_workers=0,
+        total_jobs=1)
+    with self.assertRaises(ValueError):
+      get_jobs_per_worker(
+        max_workers=1,
+        total_jobs=0)
 
 if __name__=='__main__':
   unittest.main()
