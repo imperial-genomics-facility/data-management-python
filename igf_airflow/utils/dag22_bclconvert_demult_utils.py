@@ -3,7 +3,10 @@ from csv import excel_tab
 from tabnanny import check
 import pandas as pd
 from copy import deepcopy
-import os, logging, subprocess
+import os
+import re
+import logging
+import subprocess
 from airflow.models import Variable
 from igf_data.illumina.runinfo_xml import RunInfo_xml
 from igf_data.illumina.runparameters_xml import RunParameter_xml
@@ -41,6 +44,79 @@ BCLCONVERT_REPORT_LIBRARY = Variable.get("bclconvert_report_library", default_va
 
 log = logging.getLogger(__name__)
 
+
+def calculate_fastq_md5_checksum_func(*context):
+  try:
+    ti = context['ti']
+    xcom_key_for_bclconvert_output = \
+      context['params'].\
+        get("xcom_key_for_bclconvert_output", "bclconvert_output")
+    xcom_task_for_bclconvert_output = \
+      context['params'].\
+        get("xcom_task_for_bclconvert_output")
+    xcom_key_for_sample_group = \
+      context['params'].\
+        get("xcom_key_for_sample_group", "sample_group")
+    xcom_task_for_sample_group = \
+      context['params'].\
+        get("xcom_task_for_sample_group")
+    samplesheet_file_suffix = \
+      context['params'].\
+        get("samplesheet_file_suffix", "Reports/SampleSheet.csv")
+    project_index = \
+      context['params'].\
+        get("project_index")
+    lane_index = \
+      context['params'].\
+        get("lane_index")
+    ig_index = \
+      context['params'].\
+        get("ig_index")
+    sample_id = \
+      context['params'].\
+        get("sample_id")
+    bclconvert_output_dir = \
+      ti.xcom_pull(
+        task_ids=xcom_task_for_bclconvert_output,
+        key=xcom_key_for_bclconvert_output)
+    sample_group = \
+      ti.xcom_pull(
+        task_ids=xcom_task_for_sample_group,
+        key=xcom_key_for_sample_group)
+    if sample_group is None or \
+       not isinstance(sample_group, list) or \
+       len(sample_group) == 0:
+      raise ValueError(
+              "sample_group is not a list")
+    df = pd.DataFrame(sample_group)
+    if 'worker_index' not in df.columns:
+      raise ValueError(
+              "missing worker_index in sample_group")
+    if 'sample_ids' not in df.columns:
+      raise ValueError(
+              "missing sample_ids in sample_group")
+    df['worker_index'] = \
+      df['worker_index'].astype(int)
+    sample_grp_df = \
+      df[df['worker_index']==int(sample_id)]
+    if len(sample_grp_df.index) == 0:
+      raise ValueError(
+              "Sample group {0} not found".\
+                format(sample_id))
+    samples_list = \
+      sample_grp_df['sample_ids'].values.tolist()
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
+
 def get_jobs_per_worker(
     max_workers: int,
     total_jobs: int) \
@@ -69,7 +145,6 @@ def get_jobs_per_worker(
 
 
 def get_sample_groups_for_bcl_convert_output(
-    bclconvert_output_path: str,
     samplesheet_file: str,
     max_samples: int = 20) \
     -> list:
@@ -78,21 +153,108 @@ def get_sample_groups_for_bcl_convert_output(
     df = pd.DataFrame(sa._data)
     sample_id_list = \
       df['Sample_ID'].drop_duplicates().tolist()
+    sample_groups = \
+      get_jobs_per_worker(
+        max_workers=max_samples,
+        total_jobs=len(sample_id_list))
+    sample_groups_list = list()
+    for s in sample_groups:
+      sample_ids = [
+        sample_id_list[int(i)-1]
+          for i in s.get('jobs')]
+      sample_groups_list.append({
+        'sample_ids': sample_ids,
+        'worker_index': s.get('worker_index')})
+    return sample_groups_list
   except Exception as e:
     raise ValueError(
             "Failed to get sample groups for bcl convert output, error: {0}".\
             format(e))
+
+
+def get_sample_id_and_fastq_path_for_sample_groups(
+    samplesheet_file: str,
+    lane_id: int,
+    bclconv_output_path: str,
+    sample_group: list) \
+    -> list:
+  try:
+    check_file_path(samplesheet_file)
+    check_file_path(bclconv_output_path)
+    ## TO Do the following
+    #  * get sample_lists for sample_index from sample_group
+    #  * get Sample_Project for each sample_ids (its fail safe)
+    #  * get fastq_path for each sample_id assuming following path
+    #      bclconv_output_path/Sample_Project/sample_id_S\d+_L\d+_[RIU][1-4]_001.fastq.gz
+    sa = SampleSheet(samplesheet_file)
+    samplesheet_df = pd.DataFrame(sa._data)
+    samplesheet_df = \
+      samplesheet_df[['Sample_ID', 'Sample_Project']].\
+      drop_duplicates()
+    formatted_sample_group = list()
+    for entry in sample_group:
+      worker_index = entry.get('worker_index')
+      new_sample_groups_list = list()
+      sample_groups_list = entry.get('sample_ids')
+      for sample_id in sample_groups_list:
+        fastq_file_regexp = \
+          r'{0}_S\d+_L00{1}_[RIU][1-4]_001.fastq.gz'.\
+          format(sample_id, lane_id)
+        filt_df = \
+          samplesheet_df[samplesheet_df['Sample_ID']==sample_id].fillna('')
+        if len(filt_df.index)==0:
+          raise ValueError("Sample_ID {0} not found in samplesheet file {1}".\
+                           format(sample_id, samplesheet_file))
+        sample_project = \
+          filt_df['Sample_Project'].values.tolist()[0]
+        base_fastq_path = \
+          os.path.join(
+            bclconv_output_path,
+            sample_project)
+        fastq_list_for_sample = list()
+        for file_name in os.listdir(base_fastq_path):
+          if re.search(fastq_file_regexp, file_name):
+            fastq_list_for_sample.\
+              append(
+                os.path.join(
+                  base_fastq_path,
+                  file_name))
+        new_sample_groups_list.\
+          append({
+            'sample_id': sample_id,
+            'sample_project': sample_project,
+            'fastq_list': fastq_list_for_sample})
+      formatted_sample_group.append({
+        'worker_index': worker_index,
+        'sample_ids': new_sample_groups_list})
+    return formatted_sample_group
+  except Exception as e:
+    raise ValueError("Failed to get sample fastq path for sample groups, error: {0}".format(e))
+
+
 def sample_known_qc_factory_func(**context):
   try:
     ti = context['ti']
     samplesheet_file_suffix = \
-      context['params'].get("samplesheet_file_suffix", "Reports/SampleSheet.csv")
+      context['params'].\
+        get("samplesheet_file_suffix", "Reports/SampleSheet.csv")
     xcom_key_for_bclconvert_output = \
-      context['params'].get("xcom_key_for_bclconvert_output", "bclconvert_output")
+      context['params'].\
+        get("xcom_key_for_bclconvert_output", "bclconvert_output")
     xcom_task_for_bclconvert_output = \
-      context['params'].get("xcom_task_for_bclconvert_output")
+      context['params'].\
+        get("xcom_task_for_bclconvert_output")
     max_samples = \
-      context['params'].get("max_samples", 0)
+      context['params'].\
+        get("max_samples", 0)
+    lane_index = \
+      context['params'].\
+        get("lane_index")
+    xcom_key_for_sample_group = \
+      context['params'].\
+        get("xcom_key_for_sample_group", "sample_group")
+    next_task_prefix = \
+      context['params'].get("next_task_prefix")
     bclconvert_output_dir = \
       ti.xcom_pull(
         task_ids=xcom_task_for_bclconvert_output,
@@ -103,7 +265,33 @@ def sample_known_qc_factory_func(**context):
       os.path.join(
         bclconvert_output_dir,
         samplesheet_file_suffix)
-    
+    sample_groups_list = \
+      get_sample_groups_for_bcl_convert_output(
+        samplesheet_file=samplesheet_path,
+        max_samples=max_samples)
+    sample_group_with_fastq_path = \
+      get_sample_id_and_fastq_path_for_sample_groups(
+        samplesheet_file=samplesheet_path,
+        lane_id=int(lane_index),
+        bclconv_output_path=bclconvert_output_dir,
+        sample_group=sample_groups_list)
+    df = pd.DataFrame(sample_group_with_fastq_path)
+    if 'worker_index' not in df.columns:
+      raise ValueError("worker_index is not set")
+    ti.xcom_push(
+      key=xcom_key_for_sample_group,
+      value=sample_group_with_fastq_path)
+    sample_id_list = \
+      df['worker_index'].\
+      drop_duplicates().\
+      values.tolist()
+    task_list = list()
+    for sample_id in sample_id_list:
+      task_list.append(
+        "{0}_{1}".format(
+          next_task_prefix,
+          sample_id))
+    return task_list
   except Exception as e:
     log.error(e)
     send_log_to_channels(

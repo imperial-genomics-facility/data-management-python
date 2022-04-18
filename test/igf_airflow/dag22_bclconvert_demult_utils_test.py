@@ -14,6 +14,8 @@ from igf_airflow.utils.dag22_bclconvert_demult_utils import _calculate_bases_mas
 from igf_airflow.utils.dag22_bclconvert_demult_utils import bclconvert_singularity_wrapper
 from igf_airflow.utils.dag22_bclconvert_demult_utils import generate_bclconvert_report
 from igf_airflow.utils.dag22_bclconvert_demult_utils import get_jobs_per_worker
+from igf_airflow.utils.dag22_bclconvert_demult_utils import get_sample_groups_for_bcl_convert_output
+from igf_airflow.utils.dag22_bclconvert_demult_utils import get_sample_id_and_fastq_path_for_sample_groups
 
 class Dag22_bclconvert_demult_utils_testA(unittest.TestCase):
   def setUp(self):
@@ -345,6 +347,121 @@ class Dag22_bclconvert_demult_utils_testD(unittest.TestCase):
       get_jobs_per_worker(
         max_workers=1,
         total_jobs=0)
+
+class Dag22_bclconvert_demult_utils_testE(unittest.TestCase):
+  def setUp(self):
+    self.bclconvert_output_path = get_temp_dir()
+    os.makedirs(
+      os.path.join(
+        self.bclconvert_output_path,
+        'Reports'))
+    os.makedirs(
+      os.path.join(
+        self.bclconvert_output_path,
+        'IGFQ0013_23-11-2021_10x'))
+    self.samplesheet_file = \
+      os.path.join(
+        self.bclconvert_output_path,
+        'Reports',
+        'SampleSheet.csv')
+    with open(self.samplesheet_file, 'w') as fp:
+      fp.write('[Header]\n')
+      fp.write('IEMFileVersion,4\n')
+      fp.write('[Data]\n')
+      fp.write('Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description\n')
+      fp.write('IGF001,sample1,,,SI-TT-A1,GTAACATGCG,,AGTGTTACCT,IGFQ0013_23-11-2021_10x,,,,\n')
+      fp.write('IGF002,sample2,,,SI-TT-A2,GTAACATGCG,,AGTGTTACCT,IGFQ0013_23-11-2021_10x,,,,\n')
+      fp.write('IGF003,sample3,,,SI-TT-A3,GTAACATGCG,,AGTGTTACCT,IGFQ0013_23-11-2021_10x,,,,\n')
+      fp.write('IGF004,sample4,,,SI-TT-A4,GTAACATGCG,,AGTGTTACCT,IGFQ0013_23-11-2021_10x,,,,\n')
+    # sample1
+    fastq_file_list = [
+      'IGF001_S1_L001_R1_001.fastq.gz',
+      'IGF001_S1_L001_R2_001.fastq.gz',
+      'IGF001_S1_L001_I1_001.fastq.gz',
+      'IGF001_S1_L001_I2_001.fastq.gz',
+      'IGF002_S2_L001_R1_001.fastq.gz',
+      'IGF002_S2_L001_R2_001.fastq.gz',
+      'IGF002_S2_L001_I1_001.fastq.gz',
+      'IGF002_S2_L001_I2_001.fastq.gz',
+      'IGF003_S3_L001_R1_001.fastq.gz',
+      'IGF003_S3_L001_R2_001.fastq.gz',
+      'IGF003_S3_L001_I1_001.fastq.gz',
+      'IGF003_S3_L001_I2_001.fastq.gz',
+      'IGF004_S4_L001_R1_001.fastq.gz',
+      'IGF004_S4_L001_R2_001.fastq.gz',
+      'IGF004_S4_L001_I1_001.fastq.gz',
+      'IGF004_S4_L001_I2_001.fastq.gz',
+      'IGF001_S1_L002_R1_001.fastq.gz',
+      'IGF001_S1_L002_R2_001.fastq.gz',
+      'IGF001_S1_L002_I1_001.fastq.gz',
+      'IGF001_S1_L002_I2_001.fastq.gz',
+      'IGF002_S2_L002_R1_001.fastq.gz',
+      'IGF002_S2_L002_R2_001.fastq.gz',
+      'IGF002_S2_L002_I1_001.fastq.gz',
+      'IGF002_S2_L002_I2_001.fastq.gz',
+      'IGF003_S3_L002_R1_001.fastq.gz',
+      'IGF003_S3_L002_R2_001.fastq.gz',
+      'IGF003_S3_L002_I1_001.fastq.gz',
+      'IGF003_S3_L002_I2_001.fastq.gz',
+      'IGF004_S4_L002_R1_001.fastq.gz',
+      'IGF004_S4_L002_R2_001.fastq.gz',
+      'IGF004_S4_L002_I1_001.fastq.gz',
+      'IGF004_S4_L002_I2_001.fastq.gz']
+    for fastq_file in fastq_file_list:
+      with open(
+        os.path.join(
+          self.bclconvert_output_path,
+          'IGFQ0013_23-11-2021_10x',
+          fastq_file),
+        'w') as fp:
+        fp.write('A')
+
+  def tearDown(self):
+    remove_dir(self.bclconvert_output_path)
+
+  def test_get_sample_groups_for_bcl_convert_output(self):
+    sample_group_list = \
+      get_sample_groups_for_bcl_convert_output(
+        samplesheet_file=self.samplesheet_file,
+        max_samples=2)
+    self.assertEqual(len(sample_group_list), 2)
+    self.assertTrue('worker_index' in sample_group_list[0])
+    self.assertEqual(sample_group_list[0]['worker_index'], 1)
+    self.assertTrue('sample_ids' in sample_group_list[0])
+    self.assertEqual(len(sample_group_list[0]['sample_ids']), 2)
+    self.assertTrue('IGF001' in sample_group_list[0]['sample_ids'])
+    self.assertEqual(len(sample_group_list[1]['sample_ids']), 2)
+    self.assertTrue('IGF004' in sample_group_list[1]['sample_ids'])
+
+  def test_get_sample_id_and_fastq_path_for_sample_groups(self):
+    formatted_sample_groups = \
+      get_sample_id_and_fastq_path_for_sample_groups(
+        samplesheet_file=self.samplesheet_file,
+        lane_id=2,
+        bclconv_output_path=self.bclconvert_output_path,
+        sample_group=[{
+          'worker_index': '1',
+          'sample_ids': ['IGF001', 'IGF002']}, {
+          'worker_index': '2',
+          'sample_ids': ['IGF003', 'IGF004']}]
+    )
+    self.assertEqual(len(formatted_sample_groups), 2)
+    self.assertTrue('worker_index' in formatted_sample_groups[0])
+    self.assertEqual(int(formatted_sample_groups[0]['worker_index']), 1)
+    self.assertTrue('sample_ids' in formatted_sample_groups[0])
+    self.assertEqual(len(formatted_sample_groups[0]['sample_ids']), 2)
+    df = pd.DataFrame(formatted_sample_groups[0]['sample_ids'])
+    df = df[df['sample_id']=='IGF001']
+    self.assertEqual(len(df), 1)
+    sample1_lane2_fastqs = df['fastq_list'].values.tolist()
+    self.assertEqual(len(sample1_lane2_fastqs[0]), 4)
+    self.assertTrue(
+      os.path.join(
+        self.bclconvert_output_path,
+        'IGFQ0013_23-11-2021_10x',
+        'IGF001_S1_L002_R1_001.fastq.gz') in sample1_lane2_fastqs[0])
+
+
 
 if __name__=='__main__':
   unittest.main()
