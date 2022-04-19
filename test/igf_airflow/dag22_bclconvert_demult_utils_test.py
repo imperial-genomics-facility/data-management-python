@@ -7,6 +7,7 @@ from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.illumina.samplesheet import SampleSheet
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.utils.fileutils import get_temp_dir, remove_dir
+from igf_data.utils.fileutils import calculate_file_checksum
 from igf_airflow.utils.dag22_bclconvert_demult_utils import _check_and_load_seqrun_to_db
 from igf_airflow.utils.dag22_bclconvert_demult_utils import _check_and_seed_seqrun_pipeline
 from igf_airflow.utils.dag22_bclconvert_demult_utils import _get_formatted_samplesheets
@@ -16,6 +17,8 @@ from igf_airflow.utils.dag22_bclconvert_demult_utils import generate_bclconvert_
 from igf_airflow.utils.dag22_bclconvert_demult_utils import get_jobs_per_worker
 from igf_airflow.utils.dag22_bclconvert_demult_utils import get_sample_groups_for_bcl_convert_output
 from igf_airflow.utils.dag22_bclconvert_demult_utils import get_sample_id_and_fastq_path_for_sample_groups
+from igf_airflow.utils.dag22_bclconvert_demult_utils import get_sample_info_from_sample_group
+from igf_airflow.utils.dag22_bclconvert_demult_utils import get_checksum_for_sample_group_fastq_files
 
 class Dag22_bclconvert_demult_utils_testA(unittest.TestCase):
   def setUp(self):
@@ -461,7 +464,71 @@ class Dag22_bclconvert_demult_utils_testE(unittest.TestCase):
         'IGFQ0013_23-11-2021_10x',
         'IGF001_S1_L002_R1_001.fastq.gz') in sample1_lane2_fastqs[0])
 
+  def test_get_sample_info_from_sample_group(self):
+    sample_group_list = \
+      get_sample_groups_for_bcl_convert_output(
+        samplesheet_file=self.samplesheet_file,
+        max_samples=2)
+    formatted_sample_groups = \
+      get_sample_id_and_fastq_path_for_sample_groups(
+        samplesheet_file=self.samplesheet_file,
+        lane_id=2,
+        bclconv_output_path=self.bclconvert_output_path,
+        sample_group=sample_group_list)
+    fastq_files_list = \
+      get_sample_info_from_sample_group(
+        worker_index=1,
+        sample_group=formatted_sample_groups)
+    self.assertEqual(len(fastq_files_list), 2)
+    self.assertTrue('sample_id' in fastq_files_list[0])
+    self.assertTrue('fastq_list' in fastq_files_list[0])
+    self.assertEqual(len(fastq_files_list[0]['fastq_list']), 4)
+    self.assertTrue(
+      os.path.join(
+        self.bclconvert_output_path,
+        'IGFQ0013_23-11-2021_10x',
+        'IGF001_S1_L002_R1_001.fastq.gz') in fastq_files_list[0]['fastq_list']
+    )
 
+  def test_get_checksum_for_sample_group_fastq_files(self):
+    sample_group_list = \
+      get_sample_groups_for_bcl_convert_output(
+        samplesheet_file=self.samplesheet_file,
+        max_samples=2)
+    formatted_sample_groups = \
+      get_sample_id_and_fastq_path_for_sample_groups(
+        samplesheet_file=self.samplesheet_file,
+        lane_id=2,
+        bclconv_output_path=self.bclconvert_output_path,
+        sample_group=sample_group_list)
+    fastq_files_list = \
+      get_sample_info_from_sample_group(
+        worker_index=1,
+        sample_group=formatted_sample_groups)
+    check_sum_sample_group = \
+      get_checksum_for_sample_group_fastq_files(
+        sample_group=fastq_files_list)
+    self.assertEqual(len(check_sum_sample_group), 2)
+    self.assertEqual('IGF001', check_sum_sample_group[0]['sample_id'])
+    self.assertTrue(
+      os.path.join(
+        self.bclconvert_output_path,
+        'IGFQ0013_23-11-2021_10x',
+        'IGF001_S1_L002_R1_001.fastq.gz') in check_sum_sample_group[0]['fastq_list']
+    )
+    sample1_r1_checksum = \
+      calculate_file_checksum(
+        os.path.join(
+          self.bclconvert_output_path,
+          'IGFQ0013_23-11-2021_10x',
+          'IGF001_S1_L002_R1_001.fastq.gz'))
+    sample1_r1_calculated_checksum = \
+      check_sum_sample_group[0]['fastq_list'][
+        os.path.join(
+          self.bclconvert_output_path,
+          'IGFQ0013_23-11-2021_10x',
+          'IGF001_S1_L002_R1_001.fastq.gz')]
+    self.assertEqual(sample1_r1_checksum, sample1_r1_calculated_checksum)
 
 if __name__=='__main__':
   unittest.main()

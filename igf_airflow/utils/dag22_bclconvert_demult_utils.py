@@ -23,6 +23,7 @@ from igf_data.utils.fileutils import check_file_path
 from igf_data.utils.fileutils import read_json_data
 from igf_data.utils.fileutils import get_date_stamp
 from igf_data.utils.fileutils import get_date_stamp_for_file_name
+from igf_data.utils.fileutils import calculate_file_checksum
 from igf_data.utils.singularity_run_wrapper import execute_singuarity_cmd
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
@@ -44,41 +45,73 @@ BCLCONVERT_REPORT_LIBRARY = Variable.get("bclconvert_report_library", default_va
 
 log = logging.getLogger(__name__)
 
+def get_sample_info_from_sample_group(
+    worker_index: int,
+    sample_group: list) \
+    -> list:
+  try:
+    if len(sample_group) == 0:
+      raise ValueError("sample_group is empty")
+    df = pd.DataFrame(sample_group)
+    if 'worker_index' not in df.columns or \
+       'sample_ids' not in df.columns:
+      raise KeyError("worker_index or sample_ids is not in sample_group")
+    df['worker_index'] = \
+      df['worker_index'].astype(int)
+    filt_df = df[df['worker_index'] == int(worker_index)]
+    if len(filt_df.index) == 0:
+      raise ValueError("worker_index {0} is not in sample_group".format(worker_index))
+    sample_ids = \
+      filt_df['sample_ids'].values.tolist()[0]
+    if len(sample_ids) == 0:
+      raise ValueError("sample_ids is empty")
+    fastq_files_list = list()
+    for entry in sample_ids:
+      sample_name = entry.get('sample_id')
+      fastq_list = entry.get('fastq_list')
+      fastq_files_list.append({
+        'sample_id': sample_name,
+        'fastq_list': fastq_list})
+    return fastq_files_list
+  except Exception as e:
+    raise ValueError("Failed to get sample info from sample group, error: {0}".format(e))
+
+def get_checksum_for_sample_group_fastq_files(
+    sample_group: list) \
+    -> list:
+  try:
+    if len(sample_group) == 0:
+      raise ValueError("sample_group is empty")
+    check_sum_sample_group = list()
+    for entry in sample_group:
+      sample_id = entry.get("sample_id")
+      fastq_list = entry.get("fastq_list")
+      fastq_dict = dict()
+      for fastq_file in fastq_list:
+        fastq_md5 = calculate_file_checksum(fastq_file)
+        fastq_dict.update({fastq_file: fastq_md5})
+      check_sum_sample_group.append({
+        'sample_id': sample_id,
+        'fastq_list': fastq_dict})
+    return check_sum_sample_group
+  except Exception as e:
+    raise ValueError("Failed to get checksum for sample group fastq files, error: {0}".format(e))
 
 def calculate_fastq_md5_checksum_func(*context):
   try:
     ti = context['ti']
-    xcom_key_for_bclconvert_output = \
-      context['params'].\
-        get("xcom_key_for_bclconvert_output", "bclconvert_output")
-    xcom_task_for_bclconvert_output = \
-      context['params'].\
-        get("xcom_task_for_bclconvert_output")
     xcom_key_for_sample_group = \
       context['params'].\
         get("xcom_key_for_sample_group", "sample_group")
     xcom_task_for_sample_group = \
       context['params'].\
         get("xcom_task_for_sample_group")
-    samplesheet_file_suffix = \
+    sample_group_id = \
       context['params'].\
-        get("samplesheet_file_suffix", "Reports/SampleSheet.csv")
-    project_index = \
+        get("sample_group_id")
+    xcom_key_for_checksum_sample_group = \
       context['params'].\
-        get("project_index")
-    lane_index = \
-      context['params'].\
-        get("lane_index")
-    ig_index = \
-      context['params'].\
-        get("ig_index")
-    sample_id = \
-      context['params'].\
-        get("sample_id")
-    bclconvert_output_dir = \
-      ti.xcom_pull(
-        task_ids=xcom_task_for_bclconvert_output,
-        key=xcom_key_for_bclconvert_output)
+        get("xcom_key_for_checksum_sample_group", "checksum_sample_group")
     sample_group = \
       ti.xcom_pull(
         task_ids=xcom_task_for_sample_group,
@@ -86,25 +119,14 @@ def calculate_fastq_md5_checksum_func(*context):
     if sample_group is None or \
        not isinstance(sample_group, list) or \
        len(sample_group) == 0:
-      raise ValueError(
-              "sample_group is not a list")
-    df = pd.DataFrame(sample_group)
-    if 'worker_index' not in df.columns:
-      raise ValueError(
-              "missing worker_index in sample_group")
-    if 'sample_ids' not in df.columns:
-      raise ValueError(
-              "missing sample_ids in sample_group")
-    df['worker_index'] = \
-      df['worker_index'].astype(int)
-    sample_grp_df = \
-      df[df['worker_index']==int(sample_id)]
-    if len(sample_grp_df.index) == 0:
-      raise ValueError(
-              "Sample group {0} not found".\
-                format(sample_id))
-    samples_list = \
-      sample_grp_df['sample_ids'].values.tolist()
+      raise ValueError("sample_group is not a list")
+    fastq_files_list = \
+      get_sample_info_from_sample_group(
+        worker_index=sample_group_id,
+        sample_group=sample_group)
+    sample_with_checksum_list = \
+      get_checksum_for_sample_group_fastq_files(
+        sample_group=fastq_files_list)
   except Exception as e:
     log.error(e)
     send_log_to_channels(
