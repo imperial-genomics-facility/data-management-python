@@ -1,9 +1,12 @@
-import unittest, os
+import unittest, os, json
 import pandas as pd
 from igf_data.igfdb.igfTables import Base, Seqrun
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.platformadaptor import PlatformAdaptor
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
+from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
+from igf_data.igfdb.sampleadaptor import SampleAdaptor
+from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.illumina.samplesheet import SampleSheet
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.utils.fileutils import get_temp_dir, remove_dir
@@ -19,6 +22,9 @@ from igf_airflow.utils.dag22_bclconvert_demult_utils import get_sample_groups_fo
 from igf_airflow.utils.dag22_bclconvert_demult_utils import get_sample_id_and_fastq_path_for_sample_groups
 from igf_airflow.utils.dag22_bclconvert_demult_utils import get_sample_info_from_sample_group
 from igf_airflow.utils.dag22_bclconvert_demult_utils import get_checksum_for_sample_group_fastq_files
+from igf_airflow.utils.dag22_bclconvert_demult_utils import get_flatform_name_and_flowcell_id_for_seqrun
+from igf_airflow.utils.dag22_bclconvert_demult_utils import get_project_id_samples_list_from_db
+from igf_airflow.utils.dag22_bclconvert_demult_utils import register_experiment_and_runs_to_db
 
 class Dag22_bclconvert_demult_utils_testA(unittest.TestCase):
   def setUp(self):
@@ -529,6 +535,154 @@ class Dag22_bclconvert_demult_utils_testE(unittest.TestCase):
           'IGFQ0013_23-11-2021_10x',
           'IGF001_S1_L002_R1_001.fastq.gz')]
     self.assertEqual(sample1_r1_checksum, sample1_r1_calculated_checksum)
+
+
+class Dag22_bclconvert_demult_utils_testF(unittest.TestCase):
+  def setUp(self):
+    self.dbconfig = 'data/dbconfig.json'
+    dbparam = None
+    with open(self.dbconfig, 'r') as json_data:
+      dbparam = json.load(json_data)
+    base = BaseAdaptor(**dbparam)
+    self.engine = base.engine
+    self.dbname = dbparam['dbname']
+    Base.metadata.create_all(self.engine)
+    self.session_class = base.session_class
+    base.start_session()
+    platform_data = [{
+      "platform_igf_id": "M00001" ,
+      "model_name": "MISEQ" ,
+      "vendor_name": "ILLUMINA" ,
+      "software_name": "RTA" ,
+      "software_version": "RTA1.18.54"
+    },{
+      "platform_igf_id": "H00001" ,
+      "model_name": "HISEQ4000" ,
+      "vendor_name": "ILLUMINA" ,
+      "software_name": "RTA" ,
+      "software_version": "RTA1.18.54"
+    }]
+    flowcell_rule_data = [{
+      "platform_igf_id": "M00001",
+      "flowcell_type": "MISEQ",
+      "index_1": "NO_CHANGE",
+      "index_2": "NO_CHANGE"
+    },{
+      "platform_igf_id": "H00001",
+      "flowcell_type": "Hiseq 3000/4000 PE",
+      "index_1": "NO_CHANGE",
+      "index_2": "REVCOMP"
+    }]
+    pl = PlatformAdaptor(**{'session':base.session})
+    pl.store_platform_data(data=platform_data)
+    pl.store_flowcell_barcode_rule(data=flowcell_rule_data)
+    seqrun_data = [{
+      'seqrun_igf_id':'171003_M00001_0089_000000000-TEST',
+      'flowcell_id':'000000000-D0YLK',
+      'platform_igf_id':'M00001',
+      'flowcell':'MISEQ',
+    },{
+      'seqrun_igf_id': '171003_H00001_0089_TEST',
+      'flowcell_id': 'TEST',
+      'platform_igf_id': 'H00001',
+      'flowcell': 'HISEQ 3000/4000 PE',
+    }]
+    sra = SeqrunAdaptor(**{'session': base.session})
+    sra.store_seqrun_and_attribute_data(data=seqrun_data)
+    base.close_session()
+
+  def tearDown(self):
+    Base.metadata.drop_all(self.engine)
+    if os.path.exists(self.dbname):
+      os.remove(self.dbname)
+
+  def test_get_flatform_name_and_flowcell_id_for_seqrun(self):
+    (platform_name, flowcell_id) = \
+      get_flatform_name_and_flowcell_id_for_seqrun(
+        seqrun_igf_id='171003_H00001_0089_TEST',
+        db_config_file=self.dbconfig)
+    self.assertEqual(platform_name, 'HISEQ4000')
+    self.assertEqual(flowcell_id, 'TEST')
+
+
+class Dag22_bclconvert_demult_utils_testG(unittest.TestCase):
+  def setUp(self):
+    self.dbconfig = 'data/dbconfig.json'
+    dbparam = None
+    with open(self.dbconfig, 'r') as json_data:
+      dbparam = json.load(json_data)
+    base = BaseAdaptor(**dbparam)
+    self.engine = base.engine
+    self.dbname = dbparam['dbname']
+    Base.metadata.create_all(self.engine)
+    self.session_class = base.session_class
+    base.start_session()
+    platform_data = [{
+      "platform_igf_id": "H00001" ,
+      "model_name": "HISEQ4000" ,
+      "vendor_name": "ILLUMINA" ,
+      "software_name": "RTA" ,
+      "software_version": "RTA1.18.54"
+    }]
+    flowcell_rule_data = [{
+      "platform_igf_id": "H00001",
+      "flowcell_type": "Hiseq 3000/4000 PE",
+      "index_1": "NO_CHANGE",
+      "index_2": "REVCOMP"
+    }]
+    pl = PlatformAdaptor(**{'session':base.session})
+    pl.store_platform_data(data=platform_data)
+    pl.store_flowcell_barcode_rule(data=flowcell_rule_data)
+    seqrun_data = [{
+      'seqrun_igf_id': '171003_H00001_0089_TEST',
+      'flowcell_id': 'TEST',
+      'platform_igf_id': 'H00001',
+      'flowcell': 'HISEQ 3000/4000 PE',
+    }]
+    sra = SeqrunAdaptor(**{'session': base.session})
+    sra.store_seqrun_and_attribute_data(data=seqrun_data)
+    project_data = [{
+      'project_igf_id':'IGFQ0013_23-11-2021_10x' }]
+    sample_data = [{
+      'sample_igf_id': 'IGF001', 'project_igf_id':'IGFQ0013_23-11-2021_10x' }, {
+      'sample_igf_id': 'IGF002', 'project_igf_id':'IGFQ0013_23-11-2021_10x' }, {
+      'sample_igf_id': 'IGF003', 'project_igf_id':'IGFQ0013_23-11-2021_10x' }, {
+      'sample_igf_id': 'IGF004', 'project_igf_id':'IGFQ0013_23-11-2021_10x' }]
+    pa = ProjectAdaptor(**{'session': base.session})
+    sa = SampleAdaptor(**{'session': base.session})
+    pa.store_project_and_attribute_data(data=project_data)
+    sa.store_sample_and_attribute_data(data=sample_data)
+    base.close_session()
+
+  def tearDown(self):
+    Base.metadata.drop_all(self.engine)
+    if os.path.exists(self.dbname):
+      os.remove(self.dbname)
+
+  def test_get_project_id_samples_list_from_db(self):
+    project_sample_dict = \
+      get_project_id_samples_list_from_db(
+        sample_igf_id_list=['IGF001', 'IGF002', 'IGF003', 'IGF004'],
+        db_config_file=self.dbconfig)
+    self.assertTrue('IGF001' in project_sample_dict)
+    self.assertEqual(project_sample_dict['IGF001'], 'IGFQ0013_23-11-2021_10x')
+
+  def test_register_experiment_and_runs_to_db(self):
+    sample_group_with_run_id = \
+      register_experiment_and_runs_to_db(
+        db_config_file=self.dbconfig,
+        seqrun_id='171003_H00001_0089_TEST',
+        lane_id=2,
+        index_group='20_10x',
+        sample_group=[{
+          'sample_id': 'IGF001' ,
+          'fastq_list': {
+            'IGF001_S1_R1_001.fastq.gz':'00000',
+            'IGF001_S1_R2_001.fastq.gz':'00001'
+          }
+        }]
+      )
+    print(sample_group_with_run_id)
 
 if __name__=='__main__':
   unittest.main()

@@ -7,6 +7,7 @@ import os
 import re
 import logging
 import subprocess
+from typing import Tuple
 from airflow.models import Variable
 from igf_data.illumina.runinfo_xml import RunInfo_xml
 from igf_data.illumina.runparameters_xml import RunParameter_xml
@@ -27,10 +28,13 @@ from igf_data.utils.fileutils import calculate_file_checksum
 from igf_data.utils.singularity_run_wrapper import execute_singuarity_cmd
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
+from igf_data.igfdb.sampleadaptor import SampleAdaptor
+from igf_data.igfdb.experimentadaptor import ExperimentAdaptor
+from igf_data.igfdb.runadaptor import RunAdaptor
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.utils.singularity_run_wrapper import execute_singuarity_cmd
 from igf_data.utils.jupyter_nbconvert_wrapper import Notebook_runner
-
+from igf_data.utils.seqrunutils import get_seqrun_date_from_igf_id
 
 SLACK_CONF = Variable.get('slack_conf',default_var=None)
 MS_TEAMS_CONF = Variable.get('ms_teams_conf',default_var=None)
@@ -44,6 +48,299 @@ BCLCONVERT_REPORT_TEMPLATE = Variable.get('bclconvert_report_template', default_
 BCLCONVERT_REPORT_LIBRARY = Variable.get("bclconvert_report_library", default_var=None)
 
 log = logging.getLogger(__name__)
+
+def get_flatform_name_and_flowcell_id_for_seqrun(
+      seqrun_igf_id: str,
+      db_config_file: str) -> Tuple[str, str]:
+    try:
+      check_file_path(db_config_file)
+      dbparams = read_dbconf_json(db_config_file)
+      sr = SeqrunAdaptor(**dbparams)
+      sr.start_session()
+      platform_name = \
+        sr.fetch_platform_info_for_seqrun(
+          seqrun_igf_id=seqrun_igf_id)
+      seqrun = \
+        sr.fetch_seqrun_records_igf_id(
+          seqrun_igf_id=seqrun_igf_id)
+      return platform_name, seqrun.flowcell_id
+    except Exception as e:
+      raise ValueError(
+              "Failed to get platform name and flowcell id for seqrun {0}, error: {1}".\
+              format(seqrun_igf_id, e))
+
+
+def get_project_id_samples_list_from_db(
+      sample_igf_id_list: list,
+      db_config_file: str) \
+      -> dict:
+    try:
+      check_file_path(db_config_file)
+      project_sample_dict = dict()
+      dbparams = read_dbconf_json(db_config_file)
+      sa = SampleAdaptor(**dbparams)
+      sa.start_session()
+      for sample_id in sample_igf_id_list:
+        project_id = \
+          sa.fetch_sample_project(sample_igf_id=sample_id)
+        if project_id is None:
+          raise ValueError(
+                  "Failed to get project id for sample {0}".\
+                  format(sample_id))
+        project_sample_dict.\
+          update({sample_id: project_id})
+      sa.close_session()
+      return project_sample_dict
+    except Exception as e:
+      raise ValueError(
+              "Failed to get project id and samples list from db, error: {0}".format(e))
+
+
+def register_experiment_and_runs_to_db(
+      db_config_file: str,
+      seqrun_id: str,
+      lane_id: int,
+      index_group: str,
+      sample_group: list) \
+      -> list:
+    try:
+      check_file_path(db_config_file)
+      (platform_name, flowcell_id) = \
+        get_flatform_name_and_flowcell_id_for_seqrun(
+          seqrun_igf_id=seqrun_id,
+          db_config_file=db_config_file)
+      seqrun_date = \
+        get_seqrun_date_from_igf_id(seqrun_id)
+      sample_group_with_run_id = list()
+      sample_id_list = list()
+      exp_data = list()
+      run_data = list()
+      ## LOOP 1
+      for entry in sample_group:
+        if 'sample_id' not in entry:
+          raise KeyError("Missing key sample_id")
+        sample_id = entry.get('sample_id')
+        sample_id_list.append(sample_id)
+      project_sample_dict = \
+        get_project_id_samples_list_from_db(
+          sample_igf_id_list=sample_id_list,
+          db_config_file=db_config_file)
+      ## LOOP 2
+      for entry in sample_group:
+        if 'sample_id' not in entry:
+          raise KeyError("Missing key sample_id")
+        sample_id = entry.get('sample_id')
+        project_id = project_sample_dict.get(sample_id)
+        if project_id is None:
+          raise ValueError(
+                  "Failed to get project id for sample {0}".\
+                  format(sample_id))
+        # set library id
+        library_id = sample_id
+        # calcaulate experiment id
+        experiment_id = \
+          '{0}_{1}'.format(
+            library_id,#
+            platform_name)
+        # calculate run id
+        run_igf_id = \
+          '{0}_{1}_{2}'.format(
+            experiment_id,
+            flowcell_id,
+            lane_id)
+        library_layout = 'SINGLE'
+        for fastq in entry.get('fastq_list'):
+          if fastq.endswith('_R2_001.fastq.gz'):
+            library_layout = 'PAIRED'
+        #sample_group_with_run_id.append({
+        #  'project_igf_id': project_id,
+        #  'sample_igf_id': sample_id,
+        #  'library_id': library_id,
+        #  'experiment_igf_id': experiment_id,
+        #  'run_igf_id': run_igf_id,
+        #  'library_layout': library_layout,
+        #  'lane_number': lane_id,
+        #  'fastq_list': entry.get('fastq_list')
+        #})
+        sample_group_with_run_id.append({
+          'collection_name': run_igf_id,
+          'dir_list': [
+            project_id,
+            'fastq',
+            seqrun_date,
+            flowcell_id,
+            lane_id,
+            index_group,
+            sample_id],
+          'file_list':[{
+            'file_name': file_name,
+            'md5': file_md5}
+              for file_name, file_md5 in entry.get('fastq_list').items()]
+          })
+        exp_data.append({
+          'project_igf_id': project_id,
+          'sample_igf_id': sample_id,
+          'library_name': library_id,
+          'experiment_igf_id': experiment_id,
+          'library_layout': library_layout
+        })
+        run_data.append({
+          'experiment_igf_id': experiment_id,
+          'run_igf_id': run_igf_id,
+          'lane_number': str(lane_id),
+          'seqrun_igf_id': seqrun_id
+        })
+      ## register exp and run data
+      filtered_exp_data = list()
+      filtered_run_data = list()
+      dbparams = read_dbconf_json(db_config_file)
+      base = BaseAdaptor(**dbparams)
+      base.start_session()
+      ea = \
+        ExperimentAdaptor(**{'session': base.session})
+      ra = \
+        RunAdaptor(**{'session': base.session})
+      for exp_entry in exp_data:
+        if 'experiment_igf_id' not in exp_entry:
+          raise KeyError("Missing key experiment_igf_id")
+        experiment_exists = \
+          ea.check_experiment_records_id(
+            exp_entry.get('experiment_igf_id'))
+        if not experiment_exists:
+          filtered_exp_data.append(exp_entry)
+      for run_entry in run_data:
+        if 'run_igf_id' not in run_entry:
+          raise KeyError("Missing key run_igf_id")
+        run_exists = \
+          ra.check_run_records_igf_id(
+            run_entry.get('run_igf_id'))
+        if not run_exists:
+          filtered_run_data.append(run_entry)
+      try:
+        if len(filtered_exp_data) > 0:
+          ea.store_project_and_attribute_data(
+            data=filtered_exp_data,
+            autosave=False)
+        base.session.flush()
+        if len(filtered_run_data) > 0:
+          ra.store_run_and_attribute_data(
+            data=filtered_run_data,
+            autosave=False)
+        base.session.flush()
+        base.session.commit()
+        base.close_session()
+      except:
+        base.session.rollback()
+        base.close_session()
+        raise
+      return sample_group_with_run_id
+    except Exception as e:
+      raise ValueError("Failed to register experiment and runs, error: {0}".format(e))
+
+
+def load_fastq_and_qc_to_db_func(**context):
+  try:
+    ti = context['ti']
+    xcom_key_for_checksum_sample_group = \
+      context['params'].\
+        get("xcom_key_for_checksum_sample_group", "checksum_sample_group")
+    xcom_task_for_checksum_sample_group = \
+      context['params'].\
+        get("xcom_task_for_checksum_sample_group")
+    lane_id = context['params'].get('lane_id')
+    xcom_key = \
+      context['params'].get('xcom_key', 'formatted_samplesheets')
+    xcom_task = \
+      context['params'].get('xcom_task', 'format_and_split_samplesheet')
+    project_index_column = \
+      context['params'].get('project_index_column', 'project_index')
+    project_index = \
+      context['params'].get('project_index', 0)
+    lane_index_column = \
+      context['params'].get('lane_index_column', 'lane_index')
+    lane_index = \
+      context['params'].get('lane_index', 0)
+    ig_index_column = \
+      context['params'].get('ig_index_column', 'index_group_index')
+    ig_index = \
+      context['params'].get('ig_index', 0)
+    index_group_column = \
+      context['params'].get('index_group_column', 'index_group')
+    formatted_samplesheets_list = \
+      ti.xcom_pull(task_ids=xcom_task, key=xcom_key)
+    df = pd.DataFrame(formatted_samplesheets_list)
+    if project_index_column not in df.columns or \
+        lane_index_column not in df.columns or \
+        ig_index_column not in df.columns:
+      raise KeyError(""""
+        project_index_column, lane_index_column or
+        ig_index_column is not found""")
+    ig_df = \
+      df[
+        (df[project_index_column]==project_index) &
+        (df[lane_index_column]==lane_index) &
+        (df[ig_index_column]==ig_index)]
+    if len(ig_df.index) == 0:
+      raise ValueError(
+          "No index group found for project {0}, lane {1}, ig {2}".\
+          format(project_index, lane_index, ig_index))
+    index_group = \
+      ig_df[index_group_column].values.tolist()[0]
+    checksum_sample_group = \
+      ti.xcom_pull(
+        task_ids=xcom_task_for_checksum_sample_group,
+        key=xcom_key_for_checksum_sample_group)
+    dag_run = context.get('dag_run')
+    if dag_run is None or \
+       dag_run.conf is None or \
+       dag_run.conf.get('seqrun_id') is None:
+      raise ValueError('Missing seqrun_id in dag_run.conf')
+    seqrun_id = dag_run.conf.get('seqrun_id')
+    ## To DO:
+    #  for each sample in the sample_group
+    #    * get sample_id
+    #    * get calculate experiment and run id
+    #    * get check library_layout based on R1 and R2 reads
+    #    * register experiment and run ids if they are not present
+    #    * load fastqs with the run id as collection name
+    #    * do these operations in batch mode
+    fastq_collection_list = \
+      register_experiment_and_runs_to_db(
+        db_config_file=DATABASE_CONFIG_FILE,
+        seqrun_id=seqrun_id,
+        lane_id=lane_id,
+        index_group=index_group,
+        sample_group=checksum_sample_group)
+    ## fastq_collection_list
+    #  * [{
+    #     'collection_name': '',
+    #     'dir_list': [
+    #       project_igf_id,
+    #       fastq,
+    #       run_date,
+    #       flowcell_id,
+    #       lane_id,
+    #       index_group_id,
+    #       sample_id],
+    #     'file_list': [{'file_name': fastq_files, 'md5': md5}] }]
+    load_fastq_for_flowcell_and_lane_to_db(
+      db_config_file=DATABASE_CONFIG_FILE,
+      collection_type='demultiplexed_fastq',
+      collection_table='run',
+      base_data_path='/parh/raw_data',
+      file_location='HPC_STORAGE',
+      collection_list=fastq_collection_list)
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
 
 def get_sample_info_from_sample_group(
     worker_index: int,
@@ -76,6 +373,7 @@ def get_sample_info_from_sample_group(
   except Exception as e:
     raise ValueError("Failed to get sample info from sample group, error: {0}".format(e))
 
+
 def get_checksum_for_sample_group_fastq_files(
     sample_group: list) \
     -> list:
@@ -96,6 +394,7 @@ def get_checksum_for_sample_group_fastq_files(
     return check_sum_sample_group
   except Exception as e:
     raise ValueError("Failed to get checksum for sample group fastq files, error: {0}".format(e))
+
 
 def calculate_fastq_md5_checksum_func(*context):
   try:
@@ -127,6 +426,9 @@ def calculate_fastq_md5_checksum_func(*context):
     sample_with_checksum_list = \
       get_checksum_for_sample_group_fastq_files(
         sample_group=fastq_files_list)
+    ti.xcom_push(
+      key=xcom_key_for_checksum_sample_group,
+      value=sample_with_checksum_list)
   except Exception as e:
     log.error(e)
     send_log_to_channels(

@@ -246,7 +246,7 @@ class SeqrunAdaptor(BaseAdaptor):
           column_name=column,
           column_id=seqrun_igf_id,
           output_mode='one')
-      return seqrun  
+      return seqrun
     except Exception as e:
       raise ValueError(
               'Failed to fetch seqrun if, error: {0}'.format(e))
