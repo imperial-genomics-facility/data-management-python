@@ -677,12 +677,20 @@ class Dag22_bclconvert_demult_utils_testG(unittest.TestCase):
         sample_group=[{
           'sample_id': 'IGF001' ,
           'fastq_list': {
-            'IGF001_S1_R1_001.fastq.gz':'00000',
-            'IGF001_S1_R2_001.fastq.gz':'00001'
+            '/path/IGF001_S1_R1_001.fastq.gz':'00000',
+            '/path/IGF001_S1_R2_001.fastq.gz':'00001'
           }
         }]
       )
-    print(sample_group_with_run_id)
+    self.assertEqual(len(sample_group_with_run_id), 1)
+    self.assertTrue('collection_name' in sample_group_with_run_id[0])
+    self.assertTrue('dir_list' in sample_group_with_run_id[0])
+    self.assertTrue('file_list' in sample_group_with_run_id[0])
+    self.assertTrue('IGF001' in sample_group_with_run_id[0].get('dir_list'))
+    self.assertEqual(len(sample_group_with_run_id[0].get('file_list')), 2)
+    self.assertTrue(
+      '/path/IGF001_S1_R2_001.fastq.gz' in \
+      pd.DataFrame(sample_group_with_run_id[0].get('file_list'))['file_name'].values.tolist())
 
 if __name__=='__main__':
   unittest.main()
