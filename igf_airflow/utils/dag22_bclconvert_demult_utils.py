@@ -5,6 +5,7 @@ import pandas as pd
 from copy import deepcopy
 import os
 import re
+import stat
 import logging
 import subprocess
 from typing import Tuple
@@ -20,6 +21,7 @@ from igf_data.utils.fileutils import copy_local_file
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.utils.fileutils import get_temp_dir
 from igf_data.utils.fileutils import copy_remote_file
+from igf_data.utils.fileutils import copy_local_file
 from igf_data.utils.fileutils import check_file_path
 from igf_data.utils.fileutils import read_json_data
 from igf_data.utils.fileutils import get_date_stamp
@@ -32,6 +34,8 @@ from igf_data.igfdb.sampleadaptor import SampleAdaptor
 from igf_data.igfdb.experimentadaptor import ExperimentAdaptor
 from igf_data.igfdb.runadaptor import RunAdaptor
 from igf_data.igfdb.baseadaptor import BaseAdaptor
+from igf_data.igfdb.collectionadaptor import CollectionAdaptor
+from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_data.utils.singularity_run_wrapper import execute_singuarity_cmd
 from igf_data.utils.jupyter_nbconvert_wrapper import Notebook_runner
 from igf_data.utils.seqrunutils import get_seqrun_date_from_igf_id
@@ -94,6 +98,229 @@ def get_project_id_samples_list_from_db(
     except Exception as e:
       raise ValueError(
               "Failed to get project id and samples list from db, error: {0}".format(e))
+
+
+def copy_or_replace_file_to_disk_and_change_permission(
+      source_path: str,
+      destination_path: str,
+      replace_existing_file: bool = False,
+      make_file_and_dir_read_only : bool = True) \
+      -> None:
+  try:
+    if os.path.exists(destination_path):
+      if not replace_existing_file:
+        raise ValueError(
+                "File {0} already exists. Set replace_existing_file to True".\
+                format(destination_path))
+      else:
+        # add write permission for user
+        os.chmod(destination_path, stat.S_IWUSR)
+        os.chmod(
+          os.path.dirname(destination_path),
+          stat.S_IWUSR |
+          stat.S_IXUSR)
+    copy_local_file(
+      source_path,
+      destination_path,
+      force=replace_existing_file)
+    if make_file_and_dir_read_only:
+      if os.path.isdir(destination_path):
+        # make dir read only
+        os.chmod(
+          destination_path,
+          stat.S_IRUSR |
+          stat.S_IRGRP |
+          stat.S_IXUSR |
+          stat.S_IXGRP)
+      elif os.path.isfile(destination_path):
+        # make file read only
+        os.chmod(
+          destination_path,
+          stat.S_IRUSR |
+          stat.S_IRGRP)
+        # make dir read only
+        os.chmod(
+          os.path.dirname(destination_path),
+          stat.S_IRUSR |
+          stat.S_IRGRP |
+          stat.S_IXUSR |
+          stat.S_IXGRP)
+  except Exception as e:
+    raise ValueError("Failed to copy file to new path, error: {0}".format(e))
+
+
+def load_data_raw_data_collection(
+      db_config_file: str,
+      collection_list: list,
+      collection_name_key: str = 'collection_name',
+      collection_type_key: str = 'collection_type',
+      collection_table_key: str = 'collection_table',
+      file_path_key: str = 'file_path',
+      md5_key: str = 'md5',
+      size_key: str = 'size',
+      location_key: str = 'location',
+      cleanup_existing_collection: bool = False) \
+      -> None:
+    try:
+      check_file_path(db_config_file)
+      dbparam = read_dbconf_json(db_config_file)
+      ca = CollectionAdaptor(**dbparam)
+      ca.start_session()
+      fa = FileAdaptor(**{'session': ca.session})
+      try:
+        collection_data_list = list()
+        for entry in collection_list:
+          if collection_name_key not in entry or \
+             collection_type_key not in entry or \
+             file_path_key not in entry:
+            raise KeyError("Missing key in collection entry")
+          collection_name = entry[collection_name_key]
+          collection_type = entry[collection_type_key]
+          collection_table = entry[collection_table_key]
+          file_path = entry[file_path_key]
+          md5 = entry.get(md5_key, None)
+          size = entry.get(size_key, None)
+          location = entry.get(location_key, None)
+          if not os.path.exists(file_path):
+            raise ValueError("File {0} does not exist".format(file_path))
+          collection_exists = \
+            ca.get_collection_files(
+              collection_name=collection_name,
+              collection_type=collection_type,
+              collection_table=collection_table)
+          if len(collection_exists.index) > 0 and \
+             cleanup_existing_collection:
+            remove_data = [{
+              "name": collection_name,
+              "type": collection_type }]
+            ca.remove_collection_group_info(
+              data=remove_data,
+              autosave=False)
+          file_exists = \
+            fa.check_file_records_file_path(
+              file_path=file_path)
+          if file_exists:
+            if cleanup_existing_collection:
+              fa.remove_file_data_for_file_path(
+                file_path=file_path,
+                remove_file=True,
+                autosave=False)
+            else:
+              raise ValueError(
+                "File {0} already exists in database".format(file_path))
+          collection_data = {
+            'name': collection_name,
+            'type': collection_type,
+            'table': collection_table,
+            'file_path': file_path}
+          if md5 is not None:
+            collection_data.update({'md5': md5})
+          if size is not None:
+            collection_data.update({'size': size})
+          if location is not None:
+            collection_data.update({'location': location})
+          collection_data_list.append(collection_data)
+        if len(collection_data_list) > 0:
+          ca.load_file_and_create_collection(
+            data=collection_data_list,
+            calculate_file_size_and_md5=False,
+            autosave=False)
+        ca.commit_session()
+        ca.close_session()
+      except:
+        ca.rollback_session()
+        ca.close_session()
+        raise
+    except Exception as e:
+      raise ValueError("Failed to load collection, error: {0}".format(e))
+
+
+def load_raw_files_to_db(
+      db_config_file: str,
+      collection_type: str,
+      collection_table: str,
+      base_data_path: str,
+      file_location: str,
+      replace_existing_file: bool,
+      cleanup_existing_collection: bool,
+      collection_list: list,
+      collection_name_key: str = 'collection_name',
+      dir_list_key: str = 'dir_list',
+      file_list_key: str = 'file_list') \
+      -> list:
+    try:
+      ## TO DO:
+      # * get collection name from list
+      # * get files from collection_list
+      # * get file size
+      # * calculate destination path
+      # * create dir and cd to dest path
+      # * replace existing file if true
+      # * copy file to destination path
+      # * change dir permission to read and execute for group
+      # * change file path permission to read only for group
+      # * build file collection
+      # * clean up collection if exists and cleanup_existing_collection is True
+      # * append file to collection if cleanup_existing_collection is False
+      # * return collected file list group [{'collection_name': '', file_list': []}]
+      check_file_path(db_config_file)
+      ## get collection name and file list from collection_list
+      file_collection_list = list()
+      for entry in collection_list:
+        if collection_name_key not in entry:
+          raise KeyError("{0} key not found in collection list".\
+                          format(collection_name_key))
+        if file_list_key not in entry:
+          raise KeyError("{0} key not found in collection list".\
+                          format(file_list_key))
+        if dir_list_key not in entry:
+          raise KeyError("{0} key not found in collection list".\
+                          format(dir_list_key))
+        collection_name = entry.get(collection_name_key)
+        file_list = entry.get(file_list_key)
+        dir_list = entry.get(dir_list_key)
+        if len(file_list) == 0:
+          raise ValueError("No files found in collection {0}".\
+                           format(collection_name))
+        for file_path, file_md5 in file_list.items():
+          check_file_path(file_path)
+          file_size = os.path.getsize(file_path)
+          ## get destination path
+          if len(dir_list) == 0:
+            destination_path = \
+              os.path.join(
+                base_data_path,
+                os.path.basename(file_path))
+          else:
+            destination_path = \
+              os.path.join(
+                base_data_path,
+                *dir_list,
+                os.path.basename(file_path))
+          ## add to collec list
+          file_collection_list.append({
+            'collection_name': collection_name,
+            'collection_type': collection_type,
+            'collection_table': collection_table,
+            'file_path': destination_path,
+            'md5': file_md5,
+            'location': file_location,
+            'size': file_size})
+          ## check existing path and copy file
+          ## TO DO
+          copy_or_replace_file_to_disk_and_change_permission(
+            source_path=file_path,
+            destination_path=destination_path,
+            replace_existing_file=replace_existing_file,
+            make_file_and_dir_read_only=True)
+      ## clean up existing collection and load data to db
+      # TO DO
+      load_data_raw_data_collection(
+        db_config_file=db_config_file,
+        collection_list=file_collection_list,
+        cleanup_existing_collection=cleanup_existing_collection)
+    except Exception as e:
+      raise ValueError("Failed to load raw files to db, error: {0}".format(e))
 
 
 def register_experiment_and_runs_to_db(
@@ -323,7 +550,7 @@ def load_fastq_and_qc_to_db_func(**context):
     #       index_group_id,
     #       sample_id],
     #     'file_list': [{'file_name': fastq_files, 'md5': md5}] }]
-    load_fastq_for_flowcell_and_lane_to_db(
+    load_raw_files_to_db(
       db_config_file=DATABASE_CONFIG_FILE,
       collection_type='demultiplexed_fastq',
       collection_table='run',

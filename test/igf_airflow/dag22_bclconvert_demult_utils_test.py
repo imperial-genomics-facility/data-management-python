@@ -8,6 +8,7 @@ from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
 from igf_data.igfdb.sampleadaptor import SampleAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.illumina.samplesheet import SampleSheet
+from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.utils.fileutils import get_temp_dir, remove_dir
 from igf_data.utils.fileutils import calculate_file_checksum
@@ -25,6 +26,7 @@ from igf_airflow.utils.dag22_bclconvert_demult_utils import get_checksum_for_sam
 from igf_airflow.utils.dag22_bclconvert_demult_utils import get_flatform_name_and_flowcell_id_for_seqrun
 from igf_airflow.utils.dag22_bclconvert_demult_utils import get_project_id_samples_list_from_db
 from igf_airflow.utils.dag22_bclconvert_demult_utils import register_experiment_and_runs_to_db
+from igf_airflow.utils.dag22_bclconvert_demult_utils import load_data_raw_data_collection
 
 class Dag22_bclconvert_demult_utils_testA(unittest.TestCase):
   def setUp(self):
@@ -691,6 +693,126 @@ class Dag22_bclconvert_demult_utils_testG(unittest.TestCase):
     self.assertTrue(
       '/path/IGF001_S1_R2_001.fastq.gz' in \
       pd.DataFrame(sample_group_with_run_id[0].get('file_list'))['file_name'].values.tolist())
+
+
+class Dag22_bclconvert_demult_utils_testH(unittest.TestCase):
+  def setUp(self):
+    self.dbconfig = 'data/dbconfig.json'
+    dbparam = None
+    with open(self.dbconfig, 'r') as json_data:
+      dbparam = json.load(json_data)
+    base = BaseAdaptor(**dbparam)
+    self.engine = base.engine
+    self.dbname = dbparam['dbname']
+    Base.metadata.create_all(self.engine)
+    self.session_class = base.session_class
+    self.temp_dir = get_temp_dir()
+    base.start_session()
+    ca = CollectionAdaptor(**{'session': base.session})
+    file_pathA = os.path.join(self.temp_dir, 'a.csv')
+    with open(file_pathA, 'w') as f:
+      f.write('a,b,c\n')
+    file_pathB = os.path.join(self.temp_dir, 'b.csv')
+    with open(file_pathB, 'w') as f:
+      f.write('a,b,c\n')
+    collection_list = [{
+      'name': 'a',
+      'type': 'csv',
+      'table': 'file',
+      'file_path': file_pathA
+    },
+    {
+      'name': 'b',
+      'type': 'csv',
+      'table': 'file',
+      'file_path': file_pathB
+    }]
+    ca.load_file_and_create_collection(
+      data=collection_list,
+      calculate_file_size_and_md5=True,
+      autosave=True)
+    base.close_session()
+
+
+  def tearDown(self):
+    Base.metadata.drop_all(self.engine)
+    if os.path.exists(self.dbname):
+      os.remove(self.dbname)
+    remove_dir(self.temp_dir)
+
+
+  def test_load_data_raw_data_collection(self):
+    file_pathA = os.path.join(self.temp_dir, 'a.csv')
+    with open(file_pathA, 'w') as f:
+      f.write('a,b,c,d\n')
+    file_pathB = os.path.join(self.temp_dir, 'b1.csv')
+    with open(file_pathB, 'w') as f:
+      f.write('a,b,c\n')
+    collection_list = [{
+      'collection_name': 'a',
+      'collection_type': 'csv',
+      'collection_table': 'file',
+      'file_path': file_pathA
+    },
+    {
+      'collection_name': 'b',
+      'collection_type': 'csv',
+      'collection_table': 'file',
+      'file_path': file_pathB
+    }]
+    with self.assertRaises(ValueError):
+      load_data_raw_data_collection(
+        collection_list=collection_list,
+        db_config_file=self.dbconfig)
+    load_data_raw_data_collection(
+      db_config_file=self.dbconfig,
+      collection_list=collection_list,
+      cleanup_existing_collection=True)
+    ca = \
+      CollectionAdaptor(**{
+        'session_class': self.session_class})
+    ca.start_session()
+    file_list = \
+      ca.get_collection_files(
+        collection_name='a',
+        collection_type='csv')
+    self.assertEqual(len(file_list.index), 1)
+    self.assertTrue(
+      os.path.join(self.temp_dir,'a.csv') in \
+      file_list['file_path'].values.tolist())
+    file_list = \
+      ca.get_collection_files(
+        collection_name='b',
+        collection_type='csv')
+    self.assertEqual(len(file_list.index), 1)
+    self.assertTrue(
+      os.path.join(self.temp_dir,'b1.csv') in \
+      file_list['file_path'].values.tolist())
+    file_pathA = os.path.join(self.temp_dir, 'a1.csv')
+    with open(file_pathA, 'w') as f:
+      f.write('a,b,c,d,e\n')
+    collection_list = [{
+      'collection_name': 'a',
+      'collection_type': 'csv',
+      'collection_table': 'file',
+      'file_path': file_pathA
+    }]
+    load_data_raw_data_collection(
+      db_config_file=self.dbconfig,
+      collection_list=collection_list,
+      cleanup_existing_collection=False)
+    file_list = \
+      ca.get_collection_files(
+        collection_name='a',
+        collection_type='csv')
+    self.assertEqual(len(file_list.index), 2)
+    self.assertTrue(
+      os.path.join(self.temp_dir,'a.csv') in \
+      file_list['file_path'].values.tolist())
+    self.assertTrue(
+      os.path.join(self.temp_dir,'a1.csv') in \
+      file_list['file_path'].values.tolist())
+
 
 if __name__=='__main__':
   unittest.main()
