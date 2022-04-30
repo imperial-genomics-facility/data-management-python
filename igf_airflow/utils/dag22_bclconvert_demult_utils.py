@@ -53,6 +53,14 @@ BCLCONVERT_REPORT_LIBRARY = Variable.get("bclconvert_report_library", default_va
 
 log = logging.getLogger(__name__)
 
+def fastqc_run_wrapper_func(**context):
+  try:
+    pass
+  except Exception as e:
+    raise ValueError(
+            "Failed to run fastqc run wrapper, error: {0}".\
+            format(e))
+  
 def get_flatform_name_and_flowcell_id_for_seqrun(
       seqrun_igf_id: str,
       db_config_file: str) -> Tuple[str, str]:
@@ -169,6 +177,51 @@ def load_data_raw_data_collection(
       fa = FileAdaptor(**{'session': ca.session})
       try:
         collection_data_list = list()
+        collection_df = pd.DataFrame(collection_list)
+        if collection_name_key not in collection_df.columns or \
+           collection_type_key not in collection_df.columns or \
+           file_path_key not in collection_df.columns:
+          raise KeyError("Missing key in collection entry")
+        collection_lookup_columns = [
+          collection_name_key,
+          collection_type_key]
+        unique_collections_list = \
+          collection_df[collection_lookup_columns].\
+          drop_duplicates().\
+          to_dict(orient='records')
+        for collection_entry in unique_collections_list:
+          collection_name = collection_entry[collection_name_key]
+          collection_type = collection_entry[collection_type_key]
+          collection_exists = \
+            ca.get_collection_files(
+              collection_name=collection_name,
+              collection_type=collection_type)
+          if len(collection_exists.index) > 0 and \
+             cleanup_existing_collection:
+            remove_data = [{
+              "name": collection_name,
+              "type": collection_type }]
+            ca.remove_collection_group_info(
+              data=remove_data,
+              autosave=False)
+        unique_files_list = \
+          collection_df[file_path_key].\
+          drop_duplicates().\
+          values.\
+          tolist()
+        for file_path in unique_files_list:
+          file_exists = \
+            fa.check_file_records_file_path(
+              file_path=file_path)
+          if file_exists:
+            if cleanup_existing_collection:
+              fa.remove_file_data_for_file_path(
+                file_path=file_path,
+                remove_file=False,
+                autosave=False)
+            else:
+              raise ValueError(
+                "File {0} already exists in database".format(file_path))
         for entry in collection_list:
           if collection_name_key not in entry or \
              collection_type_key not in entry or \
@@ -183,31 +236,6 @@ def load_data_raw_data_collection(
           location = entry.get(location_key, None)
           if not os.path.exists(file_path):
             raise ValueError("File {0} does not exist".format(file_path))
-          collection_exists = \
-            ca.get_collection_files(
-              collection_name=collection_name,
-              collection_type=collection_type,
-              collection_table=collection_table)
-          if len(collection_exists.index) > 0 and \
-             cleanup_existing_collection:
-            remove_data = [{
-              "name": collection_name,
-              "type": collection_type }]
-            ca.remove_collection_group_info(
-              data=remove_data,
-              autosave=False)
-          file_exists = \
-            fa.check_file_records_file_path(
-              file_path=file_path)
-          if file_exists:
-            if cleanup_existing_collection:
-              fa.remove_file_data_for_file_path(
-                file_path=file_path,
-                remove_file=True,
-                autosave=False)
-            else:
-              raise ValueError(
-                "File {0} already exists in database".format(file_path))
           collection_data = {
             'name': collection_name,
             'type': collection_type,
@@ -225,6 +253,8 @@ def load_data_raw_data_collection(
             data=collection_data_list,
             calculate_file_size_and_md5=False,
             autosave=False)
+        else:
+          raise ValueError("No collection data to load")
         ca.commit_session()
         ca.close_session()
       except:
@@ -319,6 +349,7 @@ def load_raw_files_to_db(
         db_config_file=db_config_file,
         collection_list=file_collection_list,
         cleanup_existing_collection=cleanup_existing_collection)
+      return file_collection_list
     except Exception as e:
       raise ValueError("Failed to load raw files to db, error: {0}".format(e))
 
@@ -550,13 +581,14 @@ def load_fastq_and_qc_to_db_func(**context):
     #       index_group_id,
     #       sample_id],
     #     'file_list': [{'file_name': fastq_files, 'md5': md5}] }]
-    load_raw_files_to_db(
-      db_config_file=DATABASE_CONFIG_FILE,
-      collection_type='demultiplexed_fastq',
-      collection_table='run',
-      base_data_path='/parh/raw_data',
-      file_location='HPC_STORAGE',
-      collection_list=fastq_collection_list)
+    file_collection_list = \
+      load_raw_files_to_db(
+        db_config_file=DATABASE_CONFIG_FILE,
+        collection_type='demultiplexed_fastq',
+        collection_table='run',
+        base_data_path= BASE_RAW_DATA_PATH,
+        file_location='HPC_STORAGE',
+        collection_list=fastq_collection_list)
   except Exception as e:
     log.error(e)
     send_log_to_channels(
