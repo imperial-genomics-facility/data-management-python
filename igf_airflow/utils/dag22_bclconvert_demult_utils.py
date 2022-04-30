@@ -50,17 +50,290 @@ BCLCONVERT_IMAGE = Variable.get('bclconvert_image_path', default_var=None)
 INTEROP_NOTEBOOK_IMAGE = Variable.get('interop_notebook_image_path', default_var=None)
 BCLCONVERT_REPORT_TEMPLATE = Variable.get('bclconvert_report_template', default_var=None)
 BCLCONVERT_REPORT_LIBRARY = Variable.get("bclconvert_report_library", default_var=None)
+HPC_BASE_RAW_DATA_PATH = Variable.get('hpc_base_raw_data_path', default_var=None)
+FASTQC_IMAGE_PATH = Variable.get('fastqc_image_path', default_var=None)
+FASTQSCREEN_IMAGE_PATH = Variable.get('fastqscreen_image_path', default_var=None)
+FASTQSCREEN_CONF_PATH = Variable.get('fastqscreen_conf_path', default_var=None)
 
 log = logging.getLogger(__name__)
 
-def fastqc_run_wrapper_func(**context):
+def run_fastqScreen(
+    fastqscreen_image_path: str,
+    fastq_path: str,
+    output_dir: str,
+    fastqscreen_exe: str,
+    fastqscreen_conf: str,
+    fastqscreen_options: tuple = (
+      '--aligner bowtie2',
+      '--force',
+      '--quiet',
+      '--subset 100000',
+      '--threads 1')) \
+    -> list:
   try:
-    pass
+    check_file_path(fastqscreen_image_path)
+    check_file_path(fastq_path)
+    check_file_path(output_dir)
+    check_file_path(fastqscreen_conf)
+    temp_dir = get_temp_dir()
+    fastqscreen_cmd = [
+      fastqscreen_exe,
+      '-conf', fastqscreen_conf,
+      '--outdir', temp_dir]
+    fastqscreen_cmd.extend(fastqscreen_options)
+    fastqscreen_cmd.append(fastq_path)
+    bind_dir_list = [
+      temp_dir,
+      os.path.dirname(fastq_path),
+      os.path.dirname(fastqscreen_conf)]
+    execute_singuarity_cmd(
+      image_path=fastqscreen_image_path,
+      command_string=' '.join(fastqscreen_cmd),
+      bind_dir=bind_dir_list)
+    output_file_list = list()
+    for file_path in os.listdir(temp_dir):
+      if file_path.endswith('.txt') or \
+         file_path.endswith('.html'):
+        source_path = \
+          os.path.join(temp_dir, file_path)
+        dest_path = \
+          os.path.join(output_dir, file_path)
+        copy_local_file(source_path, dest_path, force=True)
+        output_file_list.append(dest_path)
+    return output_file_list
   except Exception as e:
-    raise ValueError(
-            "Failed to run fastqc run wrapper, error: {0}".\
-            format(e))
-  
+    raise ValueError("Failed to run fastqscreen, error: {0}".format(e))
+
+
+def run_fastqc(
+    fastqc_image_path: str,
+    fastq_path: str,
+    output_dir: str,
+    fastqc_exe: str = 'fastqc',
+    fastqc_options: tuple = ('-q', '--noextract', '-ffastq', '-k7', '-t1')) \
+    -> list:
+  try:
+    check_file_path(fastq_path)
+    check_file_path(output_dir)
+    check_file_path(fastqc_image_path)
+    temp_dir = get_temp_dir()
+    if isinstance(fastqc_options, tuple):
+      fastqc_options = list(fastqc_options)
+    fastqc_cmd = [
+      fastqc_exe,
+      '-o', temp_dir,
+      '-d', temp_dir]
+    fastqc_cmd.extend(fastqc_options)                                           # add additional parameters
+    fastqc_cmd.append(fastq_path)
+    bind_dir_list = [
+      temp_dir,
+      os.path.dirname(fastq_path)]
+    execute_singuarity_cmd(
+      image_path=fastqc_image_path,
+      command_string=' '.join(fastqc_cmd),
+      bind_dir=bind_dir_list)
+    fastqc_zip = list()
+    fastqc_html = list()
+    for files in os.listdir(temp_dir):
+      if files.endswith('.zip'):
+        fastqc_zip.append(os.path.join(temp_dir, files))
+      elif files.endswith('.html'):
+        fastqc_html.append(os.path.join(temp_dir, files))
+    if len(fastqc_html) == 0:
+      raise ValueError("No fastqc html report found")
+    output_file_list = list()
+    for html_file in fastqc_html:
+      dest_file = \
+        os.path.join(
+          output_dir,
+          os.path.basename(html_file))
+      copy_local_file(
+        src_file=html_file,
+        dest_file=dest_file)
+      output_file_list.append(dest_file)
+    for zip_file in fastqc_zip:
+      dest_file = \
+        os.path.join(
+          output_dir,
+          os.path.basename(zip_file))
+      copy_local_file(
+        src_file=zip_file,
+        dest_file=dest_file)
+      output_file_list.append(dest_file)
+    return output_file_list
+  except Exception as e:
+    raise ValueError("Failed to run fastqc for {0}".format(fastq_path))
+
+def fastqscreen_run_wrapper_for_known_samples_func(**context):
+  try:
+    ti = context['ti']
+    xcom_key_for_bclconvert_output = \
+      context['params'].\
+        get("xcom_key_for_bclconvert_output", "bclconvert_output")
+    xcom_task_for_bclconvert_output = \
+      context['params'].\
+        get("xcom_task_for_bclconvert_output")
+    xcom_key_for_collection_group = \
+      context['params'].\
+        get("xcom_key_for_collection_group", "collection_group")
+    xcom_task_for_collection_group = \
+      context['params'].\
+        get("xcom_task_for_collection_group")
+    fastqscreen_collection_type = 'FASTQSCREEN_HTML_REPORT'
+    collection_table = 'run'
+    bclconvert_output = \
+      ti.xcom_pull(
+        task_ids=xcom_task_for_bclconvert_output,
+        key=xcom_key_for_bclconvert_output)
+    collection_group = \
+      ti.xcom_pull(
+        task_ids=xcom_task_for_collection_group,
+        key=xcom_key_for_collection_group)
+    fastqscreen_temp_output_path = \
+      os.path.join(bclconvert_output, 'fastqscreen_dir')
+    os.makedirs(fastqscreen_temp_output_path, exist_ok=True)
+    fastqscreen_collection_list = list()
+    work_dir = get_temp_dir(use_ephemeral_space=True)
+    for entry in collection_group:
+      collection_name = entry.get('collection_name')
+      dir_list = entry.get('dir_list')
+      file_list = entry.get('file_list')
+      ## RUN FASTQACREEN for the file
+      fastq_output_dict = dict()
+      for fastq_file in file_list.keys():
+        output_fastqc_list = \
+          run_fastqScreen(
+            fastqscreen_image_path=FASTQSCREEN_IMAGE_PATH,
+            fastqscreen_conf=FASTQSCREEN_CONF_PATH,
+            fastq_path=fastq_file,
+            output_dir=work_dir)
+        for file_entry in output_fastqc_list:
+          dest_path = \
+            os.path.join(
+              fastqscreen_temp_output_path,
+              os.path.basename(file_entry))
+          copy_local_file(
+            file_entry,
+            dest_path, force=True)
+          if file_entry.endswith('.html'):
+            fastq_output_dict.append({
+              file_entry: calculate_file_checksum(file_entry)})
+      ## LOAD FASTQC REPORT TO DB
+      dir_list = [
+        f if f != 'fastq' else 'fastqscreen'
+          for f in dir_list]
+      fastqscreen_collection_list.append({
+        'collection_name': collection_name,
+        'dir_list': dir_list,
+        'file_list': fastq_output_dict})
+    file_collection_list = \
+      load_raw_files_to_db_and_disk(
+        db_config_file=DATABASE_CONFIG_FILE,
+        collection_type=fastqscreen_collection_type,
+        collection_table=collection_table,
+        base_data_path= HPC_BASE_RAW_DATA_PATH,
+        file_location='HPC_STORAGE',
+        collection_list=fastqscreen_collection_list)
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
+
+def fastqc_run_wrapper_for_known_samples_func(**context):
+  try:
+    # TO DO
+    # * get fastq file and sample name from xcom
+    # * get fastqc temp output path from xcom
+    # * get fastqc image
+    # * run fastqc
+    # * collect report per sample
+    # * load report to disk and db
+    # * copy fastqc results to temp output path
+    ti = context['ti']
+    xcom_key_for_bclconvert_output = \
+      context['params'].\
+        get("xcom_key_for_bclconvert_output", "bclconvert_output")
+    xcom_task_for_bclconvert_output = \
+      context['params'].\
+        get("xcom_task_for_bclconvert_output")
+    xcom_key_for_collection_group = \
+      context['params'].\
+        get("xcom_key_for_collection_group", "collection_group")
+    xcom_task_for_collection_group = \
+      context['params'].\
+        get("xcom_task_for_collection_group")
+    fastqc_collection_type = 'FASTQC_HTML_REPORT'
+    collection_table = 'run'
+    bclconvert_output = \
+      ti.xcom_pull(
+        task_ids=xcom_task_for_bclconvert_output,
+        key=xcom_key_for_bclconvert_output)
+    collection_group = \
+      ti.xcom_pull(
+        task_ids=xcom_task_for_collection_group,
+        key=xcom_key_for_collection_group)
+    fastqc_temp_output_path = \
+      os.path.join(bclconvert_output, 'fastqc_dir')
+    os.makedirs(fastqc_temp_output_path, exist_ok=True)
+    fastqc_collection_list = list()
+    work_dir = get_temp_dir(use_ephemeral_space=True)
+    for entry in collection_group:
+      collection_name = entry.get('collection_name')
+      dir_list = entry.get('dir_list')
+      file_list = entry.get('file_list')
+      ## RUN FASTQC for the file
+      fastq_output_dict = dict()
+      for fastq_file in file_list.keys():
+        output_fastqc_list = \
+          run_fastqc(
+            fastqc_image_path=FASTQC_IMAGE_PATH,
+            fastq_path=fastq_file,
+            output_dir=work_dir)
+        for file_entry in output_fastqc_list:
+          dest_path = \
+            os.path.join(
+              fastqc_temp_output_path,
+              os.path.basename(file_entry))
+          copy_local_file(
+            file_entry,
+            dest_path, force=True)
+          if file_entry.endswith('.html'):
+            fastq_output_dict.append({
+              file_entry: calculate_file_checksum(file_entry)})
+      ## LOAD FASTQC REPORT TO DB
+      dir_list = [
+        f if f != 'fastq' else 'fastqc'
+          for f in dir_list]
+      fastqc_collection_list.append({
+        'collection_name': collection_name,
+        'dir_list': dir_list,
+        'file_list': fastq_output_dict})
+    file_collection_list = \
+      load_raw_files_to_db_and_disk(
+        db_config_file=DATABASE_CONFIG_FILE,
+        collection_type=fastqc_collection_type,
+        collection_table=collection_table,
+        base_data_path= HPC_BASE_RAW_DATA_PATH,
+        file_location='HPC_STORAGE',
+        collection_list=fastqc_collection_list)
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
 def get_flatform_name_and_flowcell_id_for_seqrun(
       seqrun_igf_id: str,
       db_config_file: str) -> Tuple[str, str]:
@@ -265,7 +538,7 @@ def load_data_raw_data_collection(
       raise ValueError("Failed to load collection, error: {0}".format(e))
 
 
-def load_raw_files_to_db(
+def load_raw_files_to_db_and_disk(
       db_config_file: str,
       collection_type: str,
       collection_table: str,
@@ -505,11 +778,14 @@ def load_fastq_and_qc_to_db_func(**context):
     xcom_task_for_checksum_sample_group = \
       context['params'].\
         get("xcom_task_for_checksum_sample_group")
-    lane_id = context['params'].get('lane_id')
+    #lane_id = context['params'].get('lane_id')
     xcom_key = \
       context['params'].get('xcom_key', 'formatted_samplesheets')
     xcom_task = \
       context['params'].get('xcom_task', 'format_and_split_samplesheet')
+    xcom_key_for_collection_group = \
+      context['params'].\
+        get("xcom_key_for_collection_group", "collection_group")
     project_index_column = \
       context['params'].get('project_index_column', 'project_index')
     project_index = \
@@ -548,6 +824,8 @@ def load_fastq_and_qc_to_db_func(**context):
       ti.xcom_pull(
         task_ids=xcom_task_for_checksum_sample_group,
         key=xcom_key_for_checksum_sample_group)
+    ## TO DO: fix lane_id
+    lane_id = lane_index
     dag_run = context.get('dag_run')
     if dag_run is None or \
        dag_run.conf is None or \
@@ -582,13 +860,16 @@ def load_fastq_and_qc_to_db_func(**context):
     #       sample_id],
     #     'file_list': [{'file_name': fastq_files, 'md5': md5}] }]
     file_collection_list = \
-      load_raw_files_to_db(
+      load_raw_files_to_db_and_disk(
         db_config_file=DATABASE_CONFIG_FILE,
         collection_type='demultiplexed_fastq',
         collection_table='run',
-        base_data_path= BASE_RAW_DATA_PATH,
+        base_data_path= HPC_BASE_RAW_DATA_PATH,
         file_location='HPC_STORAGE',
         collection_list=fastq_collection_list)
+    ti.xcom_push(
+      key=xcom_key_for_collection_group,
+      value=fastq_collection_list)
   except Exception as e:
     log.error(e)
     send_log_to_channels(
