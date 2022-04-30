@@ -27,6 +27,7 @@ from igf_airflow.utils.dag22_bclconvert_demult_utils import get_flatform_name_an
 from igf_airflow.utils.dag22_bclconvert_demult_utils import get_project_id_samples_list_from_db
 from igf_airflow.utils.dag22_bclconvert_demult_utils import register_experiment_and_runs_to_db
 from igf_airflow.utils.dag22_bclconvert_demult_utils import load_data_raw_data_collection
+from igf_airflow.utils.dag22_bclconvert_demult_utils import copy_or_replace_file_to_disk_and_change_permission
 
 class Dag22_bclconvert_demult_utils_testA(unittest.TestCase):
   def setUp(self):
@@ -813,6 +814,29 @@ class Dag22_bclconvert_demult_utils_testH(unittest.TestCase):
       os.path.join(self.temp_dir,'a1.csv') in \
       file_list['file_path'].values.tolist())
 
+  def test_copy_or_replace_file_to_disk_and_change_permission(self):
+    source_file = os.path.join(self.temp_dir, 'source', 'source.txt')
+    os.makedirs(os.path.dirname(source_file))
+    with open(source_file, 'w') as f:
+      f.write('source')
+    dest_file = os.path.join(self.temp_dir, 'dest', 'dest.txt')
+    copy_or_replace_file_to_disk_and_change_permission(
+      source_path=source_file,
+      destination_path=dest_file,
+      replace_existing_file=True,
+      make_file_and_dir_read_only=True)
+    self.assertTrue(os.path.exists(dest_file))
+    with self.assertRaises(PermissionError):
+      os.remove(dest_file)
+    copy_or_replace_file_to_disk_and_change_permission(
+      source_path=source_file,
+      destination_path=dest_file,
+      replace_existing_file=True,
+      make_file_and_dir_read_only=True)
+    self.assertTrue(os.path.exists(dest_file))
+    os.chmod(os.path.dirname(dest_file), 0o777)
+    os.chmod(dest_file, 0o777)
+    remove_dir(os.path.dirname(dest_file))
 
 if __name__=='__main__':
   unittest.main()
