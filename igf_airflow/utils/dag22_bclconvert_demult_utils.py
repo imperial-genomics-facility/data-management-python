@@ -1476,11 +1476,11 @@ def trigger_ig_jobs(**context):
     xcom_task = \
       context['params'].get('xcom_task', 'format_and_split_samplesheet')
     project_index_column = \
-      context['params'].get('project_index_column', 'project')
+      context['params'].get('project_index_column', 'project_index')
     project_index = \
       context['params'].get('project_index', 0)
     lane_index_column = \
-      context['params'].get('lane_index_column', 'lane')
+      context['params'].get('lane_index_column', 'lane_index')
     lane_index = \
       context['params'].get('lane_index', 0)
     ig_task_prefix = \
@@ -1525,11 +1525,11 @@ def trigger_ig_jobs(**context):
     if len(ig_counts) == 0:
       raise ValueError("No index group found for project {0}, lane {1}".\
                        format(project_index, lane_index))
-    if len(ig_counts) > max_index_groups:
+    if len(ig_counts) > int(max_index_groups):
       raise ValueError("Too many index groups found for project {0}, lane {1}".\
                        format(project_index, lane_index))
     task_list = [
-      '{0}_{1}'.format(ig_task_prefix, ig)
+      '{0}{1}'.format(ig_task_prefix, ig)
          for ig in ig_counts]
     return task_list
   except Exception as e:
