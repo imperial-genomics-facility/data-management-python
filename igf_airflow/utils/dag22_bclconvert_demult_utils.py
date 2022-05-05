@@ -1310,7 +1310,7 @@ def bclconvert_singularity_wrapper(
       '{0}:/var/log'.format(temp_dir),
       os.path.dirname(samplesheet_file),
       input_dir,
-      output_dir]
+      os.path.dirname(output_dir)]
     cmd = execute_singuarity_cmd(
       image_path=image_path,
       command_string=bclconvert_cmd,
