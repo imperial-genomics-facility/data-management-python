@@ -1285,7 +1285,8 @@ def bclconvert_singularity_wrapper(
   try:
     check_file_path(image_path)
     check_file_path(input_dir)
-    check_file_path(output_dir)
+    if os.path.exists(output_dir):
+      raise ValueError(f"Output directory {output_dir} already exists")
     check_file_path(samplesheet_file)
     temp_dir = get_temp_dir()
     bclconvert_cmd = [
@@ -1412,8 +1413,6 @@ def run_bclconvert_func(**context):
       os.path.join(
         output_temp_dir,
         '{0}_{1}_{2}'.format(project_id, lane_id, ig_id))
-    if not os.path.exists(demult_dir):
-      os.makedirs(demult_dir)
     cmd = \
       bclconvert_singularity_wrapper(
         image_path=BCLCONVERT_IMAGE,
