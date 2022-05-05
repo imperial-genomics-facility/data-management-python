@@ -1552,11 +1552,11 @@ def trigger_lane_jobs(**context):
     xcom_task = \
       context['params'].get('xcom_task', 'format_and_split_samplesheet')
     project_index_column = \
-      context['params'].get('project_index_column', 'project')
+      context['params'].get('project_index_column', 'project_index')
     project_index = \
       context['params'].get('project_index', 0)
     lane_index_column = \
-      context['params'].get('lane_index_column', 'lane')
+      context['params'].get('lane_index_column', 'lane_index')
     lane_task_prefix = \
       context['params'].get('lane_task_prefix')
     max_lanes = \
@@ -1585,11 +1585,11 @@ def trigger_lane_jobs(**context):
     if len(lane_counts) == 0:
       raise ValueError("No lane found for project {0}".\
                       format(project_index))
-    if len(lane_counts) > max_lanes:
+    if len(lane_counts) > int(max_lanes):
       raise ValueError("Too many lanes {0} found for project {1}".\
                       format(lane_counts, project_index))
     task_list = [
-      '{0}_{1}'.format(lane_task_prefix, lane_count)
+      '{0}{1}'.format(lane_task_prefix, lane_count)
         for lane_count in lane_counts]
     return task_list
   except Exception as e:
