@@ -1245,9 +1245,20 @@ def bclconvert_report_func(**context):
       ti.xcom_pull(
         key=xcom_key_for_reports,
         task_ids=xcom_task_for_reports)
+    dag_run = context.get('dag_run')
+    seqrun_path = None
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('seqrun_id') is not None:
+      seqrun_id = \
+        dag_run.conf.get('seqrun_id')
+      seqrun_path = \
+        os.path.join(HPC_SEQRUN_BASE_PATH, seqrun_id)
+    else:
+      raise IOError("Failed to get seqrun_id from dag_run")
     report_file = \
       generate_bclconvert_report(
-        seqrun_path=None,
+        seqrun_path=seqrun_path,
         image_path=INTEROP_NOTEBOOK_IMAGE,
         report_template=BCLCONVERT_REPORT_TEMPLATE,
         bclconvert_report_library_path=BCLCONVERT_REPORT_LIBRARY,
