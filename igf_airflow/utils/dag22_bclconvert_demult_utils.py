@@ -1107,7 +1107,7 @@ def sample_known_qc_factory_func(**context):
         get("xcom_key_for_bclconvert_output", "bclconvert_output")
     xcom_task_for_bclconvert_output = \
       context['params'].\
-        get("xcom_task_for_bclconvert_output")
+        get("xcom_task_for_bclconvert_output", None)
     max_samples = \
       context['params'].\
         get("max_samples", 0)
@@ -1123,6 +1123,9 @@ def sample_known_qc_factory_func(**context):
       ti.xcom_pull(
         task_ids=xcom_task_for_bclconvert_output,
         key=xcom_key_for_bclconvert_output)
+    if bclconvert_output_dir is None:
+      raise ValueError(
+              f"Failed to get bcl convert output dir for task {xcom_task_for_bclconvert_output}")
     if max_samples == 0:
       raise ValueError("max_samples is not set")
     samplesheet_path = \
