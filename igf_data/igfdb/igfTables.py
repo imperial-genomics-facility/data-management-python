@@ -606,6 +606,8 @@ class Experiment(Base):
     * DNBSEQ-G400
     * DNBSEQ-G50
     * DNBSEQ-T7
+    * NEXTSEQ2000
+    * SEQUEL2
     * UNKNOWN
   '''
   __tablename__ = 'experiment'
@@ -642,7 +644,7 @@ class Experiment(Base):
   status = Column(Enum('ACTIVE', 'FAILED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
   date_created = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
   platform_name = Column(Enum('HISEQ2500', 'HISEQ4000', 'MISEQ', 'NEXTSEQ', 'NANOPORE_MINION', 'NOVASEQ6000',
-                              'DNBSEQ-G400', 'DNBSEQ-G50', 'DNBSEQ-T7',
+                              'DNBSEQ-G400', 'DNBSEQ-G50', 'DNBSEQ-T7', 'NEXTSEQ2000', 'SEQUEL2',
                               'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   experiment = relationship('Run', backref='experiment')
   experiment_attribute = relationship('Experiment_attribute', backref='experiment')
