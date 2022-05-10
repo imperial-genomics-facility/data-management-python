@@ -880,7 +880,7 @@ def load_fastq_and_qc_to_db_func(**context):
         collection_type='demultiplexed_fastq',
         collection_table='run',
         base_data_path= HPC_BASE_RAW_DATA_PATH,
-        file_location='HPC_STORAGE',
+        file_location='HPC_PROJECT',
         collection_list=fastq_collection_list,
         replace_existing_file=True,
         cleanup_existing_collection=True)
