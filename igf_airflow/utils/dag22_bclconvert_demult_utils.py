@@ -800,6 +800,10 @@ def load_fastq_and_qc_to_db_func(**context):
       context['params'].get('ig_index', 0)
     index_group_column = \
       context['params'].get('index_group_column', 'index_group')
+    if project_index == 0 or \
+       lane_index == 0 or \
+       ig_index == 0:
+      raise ValueError("project_index, lane_index or ig_index is not set")
     formatted_samplesheets_list = \
       ti.xcom_pull(task_ids=xcom_task, key=xcom_key)
     df = pd.DataFrame(formatted_samplesheets_list)
