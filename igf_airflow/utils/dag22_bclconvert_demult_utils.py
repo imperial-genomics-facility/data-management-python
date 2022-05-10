@@ -400,6 +400,11 @@ def copy_or_replace_file_to_disk_and_change_permission(
           os.path.dirname(destination_path),
           stat.S_IWUSR |
           stat.S_IXUSR)
+    if os.path.exists(os.path.dirname(destination_path)):
+      os.chmod(
+          os.path.dirname(destination_path),
+          stat.S_IWUSR |
+          stat.S_IXUSR)
     copy_local_file(
       source_path,
       destination_path,
