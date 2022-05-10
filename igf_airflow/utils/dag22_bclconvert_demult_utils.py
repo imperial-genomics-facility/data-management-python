@@ -599,6 +599,8 @@ def load_raw_files_to_db_and_disk(
                 base_data_path,
                 os.path.basename(file_path))
           else:
+            dir_list = [
+              str(f) for f in dir_list]
             destination_path = \
               os.path.join(
                 base_data_path,
@@ -855,7 +857,6 @@ def load_fastq_and_qc_to_db_func(**context):
         lane_id=lane_id,
         index_group=index_group,
         sample_group=checksum_sample_group)
-    log.warn(fastq_collection_list)
     ## fastq_collection_list
     #  * [{
     #     'collection_name': '',
