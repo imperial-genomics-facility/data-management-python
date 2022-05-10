@@ -585,7 +585,9 @@ def load_raw_files_to_db_and_disk(
         if len(file_list) == 0:
           raise ValueError("No files found in collection {0}".\
                            format(collection_name))
-        for file_path, file_md5 in file_list.items():
+        for file_list_entry in file_list:
+          file_path = file_list_entry.get('file_path')
+          file_md5 = file_list_entry.get('md5')
           check_file_path(file_path)
           file_size = os.path.getsize(file_path)
           ## get destination path
@@ -704,7 +706,7 @@ def register_experiment_and_runs_to_db(
             index_group,
             sample_id],
           'file_list':[{
-            'file_name': file_name,
+            'file_path': file_name,
             'md5': file_md5}
               for file_name, file_md5 in entry.get('fastq_list').items()]
           })
@@ -851,6 +853,7 @@ def load_fastq_and_qc_to_db_func(**context):
         lane_id=lane_id,
         index_group=index_group,
         sample_group=checksum_sample_group)
+    log.warn(fastq_collection_list)
     ## fastq_collection_list
     #  * [{
     #     'collection_name': '',
