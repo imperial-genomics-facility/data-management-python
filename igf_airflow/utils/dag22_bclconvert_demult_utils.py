@@ -936,7 +936,7 @@ def get_checksum_for_sample_group_fastq_files(
     raise ValueError("Failed to get checksum for sample group fastq files, error: {0}".format(e))
 
 
-def calculate_fastq_md5_checksum_func(*context):
+def calculate_fastq_md5_checksum_func(**context):
   try:
     ti = context['ti']
     xcom_key_for_sample_group = \
