@@ -582,6 +582,8 @@ def load_raw_files_to_db_and_disk(
         collection_name = entry.get(collection_name_key)
         file_list = entry.get(file_list_key)
         dir_list = entry.get(dir_list_key)
+        if not isinstance(dir_list, list):
+          raise TypeError("dir_list must be a list")
         if len(file_list) == 0:
           raise ValueError("No files found in collection {0}".\
                            format(collection_name))
@@ -702,7 +704,7 @@ def register_experiment_and_runs_to_db(
             'fastq',
             seqrun_date,
             flowcell_id,
-            lane_id,
+            str(lane_id),
             index_group,
             sample_id],
           'file_list':[{
