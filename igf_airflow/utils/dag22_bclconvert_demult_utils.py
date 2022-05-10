@@ -870,7 +870,9 @@ def load_fastq_and_qc_to_db_func(**context):
         collection_table='run',
         base_data_path= HPC_BASE_RAW_DATA_PATH,
         file_location='HPC_STORAGE',
-        collection_list=fastq_collection_list)
+        collection_list=fastq_collection_list,
+        replace_existing_file=True,
+        cleanup_existing_collection=True)
     ti.xcom_push(
       key=xcom_key_for_collection_group,
       value=fastq_collection_list)
