@@ -27,6 +27,7 @@ MS_TEAMS_CONF = Variable.get('ms_teams_conf', default_var=None)
 HPC_SEQRUN_BASE_PATH = Variable.get('hpc_seqrun_path', default_var=None)
 FTP_SEQRUN_SERVER = Variable.get('crick_ftp_seqrun_hostname', default_var=None)
 FTP_CONFIG_FILE = Variable.get('crick_ftp_config_file_wells', default_var=None)
+HPC_SSH_KEY_FILE = Variable.get('hpc_ssh_key_file', default_var=None)
 SEQRUN_SERVER = Variable.get('seqrun_server', default_var=None)
 REMOTE_SEQRUN_BASE_PATH = Variable.get('seqrun_base_path', default_var=None)
 SEQRUN_SERVER_USER = Variable.get('seqrun_server_user', default_var=None)
@@ -246,6 +247,7 @@ def copy_run_file_to_remote_func(**context):
       copy_remote_file(
         source_path=local_bcl_path,
         destination_path=remote_bcl_path,
+        ssh_key_file=HPC_SSH_KEY_FILE,
         destination_address='{0}@{1}'.format(SEQRUN_SERVER_USER, SEQRUN_SERVER))
     elif xcom_key is not None and \
        xcom_key == 'additional_files':
@@ -271,6 +273,7 @@ def copy_run_file_to_remote_func(**context):
         copy_remote_file(
           source_path=local_file_path,
           destination_path=remote_file_path,
+          ssh_key_file=HPC_SSH_KEY_FILE,
           destination_address='{0}@{1}'.format(SEQRUN_SERVER_USER, SEQRUN_SERVER))
   except Exception as e:
     logging.error(e)

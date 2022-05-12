@@ -67,6 +67,7 @@ ASANA_CONF = Variable.get('asana_conf', default_var=None)
 ASANA_PROJECT = Variable.get('asana_analysis_project', default_var=None)
 BOX_USERNAME = Variable.get('box_username', default_var=None)
 BOX_CONFIG_FILE = Variable.get('box_config_file', default_var=None)
+HPC_SSH_KEY_FILE = Variable.get('hpc_ssh_key_file', default_var=None)
 FTP_HOSTNAME = Variable.get('ftp_hostname', default_var=None)
 FTP_USERNAME = Variable.get('ftp_username', default_var=None)
 FTP_PROJECT_PATH = Variable.get('ftp_project_path', default_var=None)
@@ -643,21 +644,25 @@ def create_and_update_qc_pages(**context):
     _check_and_copy_remote_file(
       remote_user=FTP_USERNAME,
       remote_host=FTP_HOSTNAME,
+      ssh_key_file=HPC_SSH_KEY_FILE,
       source_file=temp_status_output,
       remote_file=remote_status_json_path)                                      # copy json data for status page
     _check_and_copy_remote_file(
       remote_user=FTP_USERNAME,
       remote_host=FTP_HOSTNAME,
+      ssh_key_file=HPC_SSH_KEY_FILE,
       source_file=analysis_data_output_file,
       remote_file=remote_analysis_json_path)                                    # copy json data for analysis page
     _check_and_copy_remote_file(
       remote_user=FTP_USERNAME,
       remote_host=FTP_HOSTNAME,
+      ssh_key_file=HPC_SSH_KEY_FILE,
       source_file=chart_json_output_file,
       remote_file=remote_chart_file_path)                                       # copy json data for analysis charts
     _check_and_copy_remote_file(
       remote_user=FTP_USERNAME,
       remote_host=FTP_HOSTNAME,
+      ssh_key_file=HPC_SSH_KEY_FILE,
       source_file=csv_output_file,
       remote_file=remote_csv_file_path)                                         # copy json data for analysis csv data
   except Exception as e:
@@ -681,7 +686,7 @@ def create_and_update_qc_pages(**context):
 
 
 def _check_and_copy_remote_file(
-      remote_user, remote_host, source_file, remote_file):
+      remote_user, remote_host, source_file, remote_file, ssh_key_file=None):
     '''
     An internal static method for copying files to remote path
 
@@ -700,6 +705,7 @@ def _check_and_copy_remote_file(
         source_path=source_file,
         destination_path=remote_file,
         destination_address=remote_config,
+        ssh_key_file=ssh_key_file,
         force_update=True)                                                      # create dir and copy file to remote
     except Exception as e:
       raise ValueError(
@@ -2256,6 +2262,7 @@ def ftp_files_upload_for_analysis(**context):
                                  os.path.basename(file)),
         destination_path=dest_file_path,
         destination_address='{0}@{1}'.format(ftp_username,ftp_hostname),
+        ssh_key_file=HPC_SSH_KEY_FILE,
         force_update=True)
       if os.path.isdir(file):
         dest_file_path = \
