@@ -463,6 +463,7 @@ def run_velocyto_func(**context):
       '{0}:/tmp'.format(container_tmp_dir),
       cellranger_output_dir,
       os.path.dirname(temp_gtf_path)]
+    logging.warn(bind_dir_lists)
     if mask_file is not None:
       bind_dir_lists.\
         append(os.path.dirname(mask_file))
