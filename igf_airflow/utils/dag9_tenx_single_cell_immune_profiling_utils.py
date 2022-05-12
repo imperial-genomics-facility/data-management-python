@@ -448,8 +448,7 @@ def run_velocyto_func(**context):
       '-l {0}'.format(velocyto_logic),
       '-t {0}'.format(velocyto_dtype)]
     if mask_file is not None:
-      commandline.append([
-      '--mask={0}'.format(mask_file)])
+      commandline.append('--mask={0}'.format(mask_file))
     if velocyto_metadata_table_file is not None and \
        os.path.exists(velocyto_metadata_table_file):
       commandline.\
@@ -463,7 +462,6 @@ def run_velocyto_func(**context):
       '{0}:/tmp'.format(container_tmp_dir),
       cellranger_output_dir,
       os.path.dirname(temp_gtf_path)]
-    logging.warn(bind_dir_lists)
     if mask_file is not None:
       bind_dir_lists.\
         append(os.path.dirname(mask_file))
