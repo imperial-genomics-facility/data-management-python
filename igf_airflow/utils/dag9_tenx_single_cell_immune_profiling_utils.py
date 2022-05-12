@@ -440,6 +440,8 @@ def run_velocyto_func(**context):
       ref_genome._fetch_collection_files(
         collection_type=MASK_TYPE,
         check_missing=False)
+    if isinstance(mask_file, list):
+      mask_file = mask_file[0]
     commandline = [
       VELOCYTO_EXE,
       'run10x',
