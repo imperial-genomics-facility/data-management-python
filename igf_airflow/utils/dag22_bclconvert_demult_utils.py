@@ -200,7 +200,8 @@ def fastqscreen_run_wrapper_for_known_samples_func(**context):
       file_list = entry.get('file_list')
       ## RUN FASTQACREEN for the file
       fastq_output_dict = dict()
-      for fastq_file in file_list.keys():
+      for fastq_file_entry in file_list:
+        fastq_file = fastq_file_entry.get('file_path')
         output_fastqc_list = \
           run_fastqScreen(
             fastqscreen_image_path=FASTQSCREEN_IMAGE_PATH,
@@ -217,7 +218,8 @@ def fastqscreen_run_wrapper_for_known_samples_func(**context):
             dest_path, force=True)
           if file_entry.endswith('.html'):
             fastq_output_dict.append({
-              file_entry: calculate_file_checksum(file_entry)})
+              'file_path': file_entry,
+              'md5': calculate_file_checksum(file_entry)})
       ## LOAD FASTQC REPORT TO DB
       dir_list = [
         f if f != 'fastq' else 'fastqscreen'
@@ -290,7 +292,8 @@ def fastqc_run_wrapper_for_known_samples_func(**context):
       file_list = entry.get('file_list')
       ## RUN FASTQC for the file
       fastq_output_dict = dict()
-      for fastq_file in file_list.keys():
+      for fastq_file_entry in file_list:
+        fastq_file = fastq_file_entry.get('file_path')
         output_fastqc_list = \
           run_fastqc(
             fastqc_image_path=FASTQC_IMAGE_PATH,
@@ -306,7 +309,8 @@ def fastqc_run_wrapper_for_known_samples_func(**context):
             dest_path, force=True)
           if file_entry.endswith('.html'):
             fastq_output_dict.append({
-              file_entry: calculate_file_checksum(file_entry)})
+              'file_path': file_entry,
+              'md5': calculate_file_checksum(file_entry)})
       ## LOAD FASTQC REPORT TO DB
       dir_list = [
         f if f != 'fastq' else 'fastqc'
