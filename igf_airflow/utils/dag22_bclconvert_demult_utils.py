@@ -61,8 +61,8 @@ def run_fastqScreen(
     fastqscreen_image_path: str,
     fastq_path: str,
     output_dir: str,
-    fastqscreen_exe: str,
     fastqscreen_conf: str,
+    fastqscreen_exe: str = 'fastq_screen',
     fastqscreen_options: tuple = (
       '--aligner bowtie2',
       '--force',
