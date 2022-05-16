@@ -89,7 +89,7 @@ def run_fastqScreen(
     execute_singuarity_cmd(
       image_path=fastqscreen_image_path,
       command_string=' '.join(fastqscreen_cmd),
-      bind_dir=bind_dir_list)
+      bind_dir_list=bind_dir_list)
     output_file_list = list()
     for file_path in os.listdir(temp_dir):
       if file_path.endswith('.txt') or \
@@ -131,7 +131,7 @@ def run_fastqc(
     execute_singuarity_cmd(
       image_path=fastqc_image_path,
       command_string=' '.join(fastqc_cmd),
-      bind_dir=bind_dir_list)
+      bind_dir_list=bind_dir_list)
     fastqc_zip = list()
     fastqc_html = list()
     for files in os.listdir(temp_dir):
