@@ -644,7 +644,7 @@ def _extract_seqrun_tar(tar_file, seqrun_id, seqrun_base_path):
               'Dir {0} already present, remove it before re-run'.\
                 format(output_seqrun_dir))
     temp_dir = \
-      get_temp_dir(use_ephemeral_space=False)
+      get_temp_dir(use_ephemeral_space=True)
     if os.path.exists(temp_dir):
       _change_temp_dir_permissions(temp_dir)
       remove_dir(temp_dir)
