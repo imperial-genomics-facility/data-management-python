@@ -19,7 +19,7 @@ def get_request(url, headers=None, verify=False):
   except Exception as e:
     raise ValueError(e)
 
-def post_request(url,  data, headers=None, verify=False, file_attachment=None):
+def post_request(url,  data, headers=None, verify=False, file_attachment=None, jsonify=True):
   try:
     files = None
     if file_attachment is not None:
@@ -38,7 +38,8 @@ def post_request(url,  data, headers=None, verify=False, file_attachment=None):
       raise ValueError(
               "Failed post request, got status: {0}".\
                 format(res.status_code))
-    res = res.json()
+    if jsonify:
+      res = res.json()
     return res
   except Exception as e:
     raise
@@ -94,7 +95,7 @@ def get_data_from_portal(portal_config_file, url_suffix, verify=False):
     raise ValueError(e)
 
 
-def upload_files_to_portal(portal_config_file, file_path, url_suffix, verify=False):
+def upload_files_to_portal(portal_config_file, file_path, url_suffix, verify=False, jsonify=True):
   try:
     check_file_path(file_path)
     portal_config = read_json_data(portal_config_file)
@@ -114,7 +115,8 @@ def upload_files_to_portal(portal_config_file, file_path, url_suffix, verify=Fal
         data=None,
         headers={"accept": "application/json", "Authorization": "Bearer {0}".format(token)},
         file_attachment=file_path,
-        verify=verify)
+        verify=verify,
+        jsonify=jsonify)
     return res
   except Exception as e:
     raise ValueError(
