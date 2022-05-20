@@ -22,6 +22,7 @@ BOX_DIR_PREFIX = Variable.get('box_dir_prefix_for_seqrun_report', default_var=No
 BOX_USERNAME = Variable.get('box_username', default_var=None)
 BOX_CONFIG_FILE  = Variable.get('box_config_file', default_var=None)
 INTEROP_IMAGE = Variable.get('interop_notebook_image_path')
+HPC_SSH_KEY_FILE = Variable.get('hpc_ssh_key_file', default_var=None)
 SEQRUN_SERVER = Variable.get('seqrun_server', default_var=None)
 SEQRUN_BASE_PATH = Variable.get('seqrun_base_path', default_var=None)
 SEQRUN_SERVER_USER = Variable.get('seqrun_server_user', default_var=None)
@@ -71,7 +72,8 @@ def get_samplesheet_and_decide_flow_func(**context):
           source_path=remote_samplesheet_file,
           destination_path=samplesheet_file,
           source_address='{0}@{1}'.format(SEQRUN_SERVER_USER, SEQRUN_SERVER),
-          force_update=True)
+          force_update=True,
+          ssh_key_file=HPC_SSH_KEY_FILE)
       check_file_path(samplesheet_file)
       runParameters_path = \
         os.path.join(run_dir, runParameters_xml_file_name)
