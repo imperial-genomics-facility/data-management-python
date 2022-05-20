@@ -113,7 +113,7 @@ def get_samplesheet_from_portal_func(**context):
     seqrun_id_json = \
       os.path.join(temp_dir, 'seqrun_id.json')
     with open(seqrun_id_json, 'w') as fp:
-      json.dumps({'seqrun_id': seqrun_id}, fp)
+      json.dump({'seqrun_id': seqrun_id}, fp)
     res = \
       upload_files_to_portal(
         url_suffix="/api/v1/raw_seqrun/search_run_samplesheet",
