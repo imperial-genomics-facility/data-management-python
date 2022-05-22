@@ -1,11 +1,19 @@
 import os
 import json
 import logging
+import pandas as pd
 from typing import Tuple
 from airflow.models import Variable
 from igf_data.utils.fileutils import get_temp_dir
+from igf_data.utils.dbutils import read_dbconf_json
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_portal.api_utils import upload_files_to_portal
+from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
+from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
+from igf_data.illumina.samplesheet import SampleSheet
+from igf_airflow.utils.dag22_bclconvert_demult_utils import _check_and_seed_seqrun_pipeline
+from igf_data.process.singlecell_seqrun.processsinglecellsamplesheet import ProcessSingleCellSamplesheet
+from igf_data.process.singlecell_seqrun.processsinglecellsamplesheet import ProcessSingleCellDualIndexSamplesheet
 
 SLACK_CONF = Variable.get('slack_conf',default_var=None)
 MS_TEAMS_CONF = Variable.get('ms_teams_conf',default_var=None)
@@ -65,10 +73,78 @@ def bcl_convert_run_func(**context):
       reaction='fail')
     raise
 
+def _format_samplesheet_per_index_group(
+  samplesheet_file: str,
+  singlecell_barcode_json: str,
+  singlecell_dual_barcode_json: str,
+  platform: str,
+  single_cell_tag: str = '10X',
+  index2_rule: str = 'NO_CHANGE',
+  override_cycles: str = '') -> dict:
+  try:
+    tmp_dir = get_temp_dir()
+    tmp_samplesheet1 = \
+      os.path.join(
+        tmp_dir,
+        os.path.basename(f'temp1_{samplesheet_file}'))
+    sc_dual_process = \
+      ProcessSingleCellDualIndexSamplesheet(
+        samplesheet_file=samplesheet_file,
+        singlecell_dual_index_barcode_json=singlecell_dual_barcode_json,
+        platform=platform,
+        index2_rule=index2_rule)
+    sc_dual_process.\
+      modify_samplesheet_for_sc_dual_barcode(
+        output_samplesheet=tmp_samplesheet1)
+    tmp_samplesheet2 = \
+      os.path.join(
+        tmp_dir,
+        os.path.basename(f'temp2_{samplesheet_file}'))
+    sc_data = \
+      ProcessSingleCellSamplesheet(
+        tmp_samplesheet1,
+        singlecell_barcode_json,
+        single_cell_tag)
+    sc_data.\
+      change_singlecell_barcodes(
+        tmp_samplesheet2)
+    # group by index
+    sa = SampleSheet(tmp_samplesheet2)
+    df = pd.DataFrame(sa._data)
+    if 'Lane' in df.columns:
+      pass
+    else:
+      pass
+  except Exception as e:
+    raise ValueError(f"Failed to format samplesheet per index group, error: {e}")
+
 
 def get_formatted_samplesheets_func(**context):
   try:
-    pass
+    ti = context.get('ti')
+    samplesheet_xcom_key = \
+      context['params'].get('samplesheet_xcom_key', 'samplesheet_data')
+    samplesheet_xcom_task = \
+      context['params'].get('samplesheet_xcom_task', 'get_samplesheet_from_portal')
+    samplesheet_tag = \
+      context['params'].get('samplesheet_tag', 'samplesheet_tag')
+    samplesheet_file = \
+      context['params'].get('samplesheet_file', 'samplesheet_file')
+    samplesheet_data = \
+      ti.xcom_pull(
+        task_ids=samplesheet_xcom_task,
+        key=samplesheet_xcom_key)
+    if not isinstance(samplesheet_data, dict) or \
+       samplesheet_tag not in samplesheet_data or \
+       samplesheet_file not in samplesheet_data:
+      raise ValueError(
+        'samplesheet_data is not in the correct format')
+    samplesheet_tag_name = samplesheet_data.get(samplesheet_tag)
+    samplesheet_file_path = samplesheet_data.get(samplesheet_file)
+    # TO Do following
+    # * get index 2 rule from db
+    # * split samplesheet per index group
+    # * create a merged version of samplesheet
   except Exception as e:
     log.error(e)
     send_log_to_channels(
@@ -83,7 +159,32 @@ def get_formatted_samplesheets_func(**context):
 
 def mark_seqrun_status_func(**context):
   try:
-    pass
+    dag_run = context.get('dag_run')
+    next_task = context['params'].get('next_task')
+    last_task = context['params'].get('last_task')
+    seed_status = context['params'].get('seed_status')
+    no_change_status = context['params'].get('no_change_status')
+    seed_table = context['params'].get('seed_table')
+    seqrun_id = None
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('seqrun_id') is not None:
+      seqrun_id = \
+        dag_run.conf.get('seqrun_id')
+    if seqrun_id is None:
+      raise ValueError('seqrun_id is not found in dag_run.conf')
+    status = \
+      _check_and_seed_seqrun_pipeline(
+        seqrun_id=seqrun_id,
+        pipeline_name=context['task'].dag_id,
+        dbconf_json_path=DATABASE_CONFIG_FILE,
+        seed_status=seed_status,
+        seed_table=seed_table,
+        no_change_status=no_change_status)
+    if status:
+      return [next_task]
+    else:
+      return [last_task]
   except Exception as e:
     log.error(e)
     send_log_to_channels(
@@ -99,6 +200,12 @@ def mark_seqrun_status_func(**context):
 def get_samplesheet_from_portal_func(**context):
   try:
     ti = context.get('ti')
+    samplesheet_xcom_key = \
+      context['params'].get('samplesheet_xcom_key', 'samplesheet_data')
+    samplesheet_tag = \
+      context['params'].get('samplesheet_tag', 'samplesheet_tag')
+    samplesheet_file = \
+      context['params'].get('samplesheet_file', 'samplesheet_file')
     dag_run = context.get('dag_run')
     seqrun_id = None
     if dag_run is not None and \
@@ -140,8 +247,8 @@ def get_samplesheet_from_portal_func(**context):
     if samplesheet_tag is None:
       raise ValueError(f"Failed to get samplesheet from portal")
     ti.xcom_push(
-      key='samplesheet_data',
-      value={'samplesheet_tag': samplesheet_tag, 'samplesheet_file': samplesheet_file})
+      key=samplesheet_xcom_key,
+      value={samplesheet_tag: samplesheet_tag, samplesheet_file: samplesheet_file})
   except Exception as e:
     log.error(e)
     send_log_to_channels(

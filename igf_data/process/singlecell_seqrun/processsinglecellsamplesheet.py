@@ -21,6 +21,7 @@ class ProcessSingleCellDualIndexSamplesheet:
                           (('HISEQ4000', 'index2_workflow_b(i5)'),
                            ('NEXTSEQ', 'index2_workflow_b(i5)'),
                            ('NOVASEQ6000', 'index2_workflow_a(i5)'),
+                           ('NEXTSEQ2000', 'index2_workflow_a(i5)'),
                            ('MISEQ', 'index2_workflow_a(i5)'))
   '''
   def __init__(
@@ -30,6 +31,7 @@ class ProcessSingleCellDualIndexSamplesheet:
     workflow_group=(('HISEQ4000', 'index2_workflow_b(i5)'),
                     ('NEXTSEQ', 'index2_workflow_b(i5)'),
                     ('NOVASEQ6000', 'index2_workflow_a(i5)'),
+                    ('NEXTSEQ2000', 'index2_workflow_a(i5)'),
                     ('MISEQ', 'index2_workflow_a(i5)'))):
     self.samplesheet_file = samplesheet_file
     self.singlecell_barcodes = \
