@@ -5,12 +5,14 @@ import pandas as pd
 from typing import Tuple
 from airflow.models import Variable
 from igf_data.utils.fileutils import get_temp_dir
+from igf_data.utils.fileutils import check_file_path
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_portal.api_utils import upload_files_to_portal
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
 from igf_data.illumina.samplesheet import SampleSheet
+from igf_data.utils.sequtils import rev_comp
 from igf_airflow.utils.dag22_bclconvert_demult_utils import _check_and_seed_seqrun_pipeline
 from igf_data.process.singlecell_seqrun.processsinglecellsamplesheet import ProcessSingleCellSamplesheet
 from igf_data.process.singlecell_seqrun.processsinglecellsamplesheet import ProcessSingleCellDualIndexSamplesheet
@@ -78,10 +80,18 @@ def _format_samplesheet_per_index_group(
   singlecell_barcode_json: str,
   singlecell_dual_barcode_json: str,
   platform: str,
-  single_cell_tag: str = '10X',
-  index2_rule: str = 'NO_CHANGE',
-  override_cycles: str = '') -> dict:
+  output_dir: str,
+  singlecell_tag: str = '10X',
+  index_column: str = 'index',
+  index2_column: str = 'index2',
+  lane_column: str = 'Lane',
+  description_column: str = 'Description',
+  index2_rule: str = 'NO_CHANGE') -> dict:
   try:
+    check_file_path(samplesheet_file)
+    check_file_path(singlecell_barcode_json)
+    check_file_path(singlecell_dual_barcode_json)
+    check_file_path(output_dir)
     tmp_dir = get_temp_dir()
     tmp_samplesheet1 = \
       os.path.join(
@@ -92,7 +102,8 @@ def _format_samplesheet_per_index_group(
         samplesheet_file=samplesheet_file,
         singlecell_dual_index_barcode_json=singlecell_dual_barcode_json,
         platform=platform,
-        index2_rule=index2_rule)
+        index2_rule=index2_rule,
+        singlecell_tag=singlecell_tag)
     sc_dual_process.\
       modify_samplesheet_for_sc_dual_barcode(
         output_samplesheet=tmp_samplesheet1)
@@ -102,19 +113,147 @@ def _format_samplesheet_per_index_group(
         os.path.basename(f'temp2_{samplesheet_file}'))
     sc_data = \
       ProcessSingleCellSamplesheet(
-        tmp_samplesheet1,
-        singlecell_barcode_json,
-        single_cell_tag)
+        samplesheet_file=tmp_samplesheet1,
+        single_cell_barcode_json=singlecell_barcode_json,
+        singlecell_tag=singlecell_tag)
     sc_data.\
       change_singlecell_barcodes(
         tmp_samplesheet2)
-    # group by index
+    # read samplesheet data
     sa = SampleSheet(tmp_samplesheet2)
     df = pd.DataFrame(sa._data)
-    if 'Lane' in df.columns:
-      pass
+    # convert index2 based on rules
+    if index2_rule == 'REVCOMP':
+      df[index2_column] = \
+        pd.np.where(
+          df[description_column]!=singlecell_tag,
+          df[index2_column].map(lambda x: rev_comp(x)),
+          df[index2_column])
+    # add index length column
+    df[index_column] = df[index_column].fillna('')
+    index_column_list = ['index']
+    if index2_column in df.columns:
+      df[index2_column] = df[index2_column].fillna('')
+      index_column_list.append('index2')
+    df['index_length'] = \
+      df[index_column_list].\
+      agg(''.join, axis=1).\
+      map(lambda x: len(x.replace(' ', '')))
+    # group data per lane per index group
+    counter = 0
+    formatted_samplesheets = dict()
+    # group data per lane and per index group
+    if lane_column in df.columns:
+      for (lane, index_length), lane_df in df.groupby([lane_column, 'index_length']):
+        samplesheet_file = \
+          os.path.join(
+            output_dir,
+            f'SampleSheet_{lane}_{index_length}.csv')
+        sa._data = \
+          lane_df[sa._data_header].\
+          to_dict(orient='records')
+        sa.print_sampleSheet(samplesheet_file)
+        counter += 1
+        formatted_samplesheets.\
+          update({
+            counter: {
+              'tag': f'{lane}_{index_length}',
+              'samplesheet_file': samplesheet_file}
+            })
+      # merged samplesheet per lane
+      for lane, lane_df in df.groupby(lane_column):
+        min_index1 = \
+          lane_df[index_column].\
+            map(lambda x: len(x)).min()
+        lane_df.loc[:, index_column] = \
+          lane_df[index_column].\
+            map(lambda x: x[0:- min_index1])
+        if index2_column in lane_df.columns:
+          min_index2 = \
+            lane_df[index2_column].\
+              map(lambda x: len(x)).min()
+          lane_df.loc[:, index2_column] = \
+            lane_df[index2_column].\
+              map(lambda x: x[0: min_index2])
+          lane_df.loc[:,'c_index'] = \
+            lane_df[index_column] + lane_df[index2_column]
+        else:
+          lane_df.loc[:,'c_index'] = lane_df[index_column]
+        lane_df.\
+          drop_duplicates(
+            'c_index',
+            inplace=True)
+        samplesheet_file = \
+          os.path.join(
+            output_dir,
+            f'SampleSheet_{lane}.csv')
+        sa._data = \
+          lane_df[sa._data_header].\
+          to_dict(orient='records')
+        sa.print_sampleSheet(samplesheet_file)
+        counter += 1
+        formatted_samplesheets.\
+          update({
+            counter: {
+              'tag': f'{lane}_merged',
+              'samplesheet_file': samplesheet_file}
+            })
     else:
-      pass
+      # group data per index group
+      for index_length, lane_df in df.groupby('index_length'):
+        samplesheet_file = \
+          os.path.join(
+            output_dir,
+            f'SampleSheet_{index_length}.csv')
+        sa._data = \
+          lane_df[sa._data_header].\
+          to_dict(orient='records')
+        sa.print_sampleSheet(samplesheet_file)
+        counter += 1
+        formatted_samplesheets.\
+          update({
+            counter: {
+              'tag': index_length,
+              'samplesheet_file': samplesheet_file}
+            })
+      # merged samplesheet
+      min_index1 = \
+        df[index_column].\
+        map(lambda x: len(x)).min()
+      df.loc[:, index_column] = \
+        df[index_column].\
+          map(lambda x: x[0:- min_index1])
+      if index2_column in df.columns:
+        min_index2 = \
+          df[index2_column].\
+            map(lambda x: len(x)).min()
+        df.loc[:, index2_column] = \
+          df['index2'].\
+            map(lambda x: x[0: min_index2])
+        df.loc[:,'c_index'] = \
+          df[index_column] + df[index2_column]
+      else:
+        df.loc[:,'c_index'] = df[index_column]
+      df.\
+        drop_duplicates(
+          'c_index',
+          inplace=True)
+      samplesheet_file = \
+        os.path.join(
+          output_dir,
+          'SampleSheet_merged.csv')
+      sa._data = \
+        df[sa._data_header].\
+        to_dict(orient='records')
+      sa.print_sampleSheet(samplesheet_file)
+      counter += 1
+      formatted_samplesheets.\
+        update({
+          counter: {
+            'tag': 'merged',
+            'samplesheet_file': samplesheet_file}
+          })
+    return formatted_samplesheets
   except Exception as e:
     raise ValueError(f"Failed to format samplesheet per index group, error: {e}")
 
@@ -122,14 +261,21 @@ def _format_samplesheet_per_index_group(
 def get_formatted_samplesheets_func(**context):
   try:
     ti = context.get('ti')
+    dag_run = context.get('dag_run')
     samplesheet_xcom_key = \
       context['params'].get('samplesheet_xcom_key', 'samplesheet_data')
     samplesheet_xcom_task = \
       context['params'].get('samplesheet_xcom_task', 'get_samplesheet_from_portal')
+    formatted_samplesheet_xcom_key = \
+      context['params'].get('formatted_samplesheet_xcom_key', 'formatted_samplesheet_data')
     samplesheet_tag = \
       context['params'].get('samplesheet_tag', 'samplesheet_tag')
     samplesheet_file = \
       context['params'].get('samplesheet_file', 'samplesheet_file')
+    next_task_prefix = \
+      context['params'].get('next_task_prefix', 'bcl_convert_run_')
+    singlecell_tag = \
+      context['params'].get('singlecell_tag', '10X')
     samplesheet_data = \
       ti.xcom_pull(
         task_ids=samplesheet_xcom_task,
@@ -139,12 +285,63 @@ def get_formatted_samplesheets_func(**context):
        samplesheet_file not in samplesheet_data:
       raise ValueError(
         'samplesheet_data is not in the correct format')
-    samplesheet_tag_name = samplesheet_data.get(samplesheet_tag)
-    samplesheet_file_path = samplesheet_data.get(samplesheet_file)
+    samplesheet_tag_name = \
+      samplesheet_data.get(samplesheet_tag)
+    samplesheet_file_path = \
+      samplesheet_data.get(samplesheet_file)
+    seqrun_id = None
+    override_cycles = ''
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('seqrun_id') is not None:
+      seqrun_id = \
+        dag_run.conf.get('seqrun_id')
+      if 'override_cycles' in dag_run.conf:
+        override_cycles = \
+          dag_run.conf.get('override_cycles')
+    if seqrun_id is None:
+      raise ValueError('seqrun_id is not found in dag_run.conf')
     # TO Do following
     # * get index 2 rule from db
+    # Seqrun is present on seqrun and seqrun_attribute table
+    # and has attribute_nale 'flowcell' which matches the Flowcell_barcode_rule.flowcell_type
+    db_params = \
+      read_dbconf_json(DATABASE_CONFIG_FILE)
+    seqrun_adp = \
+      SeqrunAdaptor(**db_params)
+    seqrun_adp.start_session()
+    platform = \
+      seqrun_adp.\
+        fetch_platform_info_for_seqrun(
+          seqrun_igf_id=seqrun_id)
+    flowcell_rule = \
+      seqrun_adp.\
+        fetch_flowcell_barcode_rules_for_seqrun(
+          seqrun_igf_id=seqrun_id,
+          flowcell_label='flowcell',
+          output_mode='dataframe')
+    index2_rule = \
+      flowcell_rule['index2_rule'].values[0]
+    seqrun_adp.close_session()
+    if len(flowcell_rule.index) == 0:
+      raise ValueError(
+        f"No flowcell barcode rule found for seqrun {seqrun_id}")
     # * split samplesheet per index group
-    # * create a merged version of samplesheet
+    formatted_samplesheets = \
+      _format_samplesheet_per_index_group(
+        samplesheet_file=samplesheet_file_path,
+        singlecell_barcode_json=SINGLECELL_BARCODE_JSON,
+        singlecell_dual_barcode_json=SINGLECELL_DUAL_BARCODE_JSON,
+        platform=platform,
+        singlecell_tag=singlecell_tag,
+        index2_rule=index2_rule)
+    ti.xcom_push(
+      key=formatted_samplesheet_xcom_key,
+      value=formatted_samplesheets)
+    task_list = [
+      f'{next_task_prefix}{si}'
+        for si in formatted_samplesheets.keys()]
+    return task_list
   except Exception as e:
     log.error(e)
     send_log_to_channels(
