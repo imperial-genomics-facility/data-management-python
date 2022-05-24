@@ -17,7 +17,7 @@ from igf_data.utils.box_upload import upload_file_or_dir_to_box
 from igf_airflow.utils.dag9_tenx_single_cell_immune_profiling_utils import _check_and_mark_analysis_seed
 
 
-DATABASE_CONFIG_FILE = Variable.get('test_database_config_file',default_var=None)
+DATABASE_CONFIG_FILE = Variable.get('database_config_file',default_var=None)
 SLACK_CONF = Variable.get('analysis_slack_conf',default_var=None)
 MS_TEAMS_CONF = Variable.get('analysis_ms_teams_conf',default_var=None)
 ASANA_CONF = Variable.get('asana_conf',default_var=None)
