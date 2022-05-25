@@ -86,7 +86,7 @@ def _format_samplesheet_per_index_group(
   index2_column: str = 'index2',
   lane_column: str = 'Lane',
   description_column: str = 'Description',
-  index2_rule: str = 'NO_CHANGE') -> dict:
+  index2_rule: str = 'NO_CHANGE') -> list:
   try:
     check_file_path(samplesheet_file)
     check_file_path(singlecell_barcode_json)
@@ -96,7 +96,7 @@ def _format_samplesheet_per_index_group(
     tmp_samplesheet1 = \
       os.path.join(
         tmp_dir,
-        os.path.basename(f'temp1_{samplesheet_file}'))
+        'temp1_samplesheet.csv')
     sc_dual_process = \
       ProcessSingleCellDualIndexSamplesheet(
         samplesheet_file=samplesheet_file,
@@ -110,11 +110,11 @@ def _format_samplesheet_per_index_group(
     tmp_samplesheet2 = \
       os.path.join(
         tmp_dir,
-        os.path.basename(f'temp2_{samplesheet_file}'))
+        'temp2_samplesheet.csv')
     sc_data = \
       ProcessSingleCellSamplesheet(
         samplesheet_file=tmp_samplesheet1,
-        single_cell_barcode_json=singlecell_barcode_json,
+        singlecell_barcode_json=singlecell_barcode_json,
         singlecell_tag=singlecell_tag)
     sc_data.\
       change_singlecell_barcodes(
@@ -141,7 +141,7 @@ def _format_samplesheet_per_index_group(
       map(lambda x: len(x.replace(' ', '')))
     # group data per lane per index group
     counter = 0
-    formatted_samplesheets = dict()
+    formatted_samplesheets = list()
     # group data per lane and per index group
     if lane_column in df.columns:
       for (lane, index_length), lane_df in df.groupby([lane_column, 'index_length']):
@@ -155,11 +155,11 @@ def _format_samplesheet_per_index_group(
         sa.print_sampleSheet(samplesheet_file)
         counter += 1
         formatted_samplesheets.\
-          update({
-            counter: {
-              'tag': f'{lane}_{index_length}',
-              'samplesheet_file': samplesheet_file}
-            })
+          append({
+            'index': counter,
+            'lane': lane,
+            'tag': f'{lane}_{index_length}',
+            'samplesheet_file': samplesheet_file})
       # merged samplesheet per lane
       for lane, lane_df in df.groupby(lane_column):
         min_index1 = \
@@ -193,11 +193,11 @@ def _format_samplesheet_per_index_group(
         sa.print_sampleSheet(samplesheet_file)
         counter += 1
         formatted_samplesheets.\
-          update({
-            counter: {
-              'tag': f'{lane}_merged',
-              'samplesheet_file': samplesheet_file}
-            })
+          append({
+            'index': counter,
+            'lane': lane,
+            'tag': f'{lane}_merged',
+            'samplesheet_file': samplesheet_file})
     else:
       # group data per index group
       for index_length, lane_df in df.groupby('index_length'):
@@ -211,11 +211,11 @@ def _format_samplesheet_per_index_group(
         sa.print_sampleSheet(samplesheet_file)
         counter += 1
         formatted_samplesheets.\
-          update({
-            counter: {
-              'tag': index_length,
-              'samplesheet_file': samplesheet_file}
-            })
+          append({
+            'index': counter,
+            'lane': 'all',
+            'tag': index_length,
+            'samplesheet_file': samplesheet_file})
       # merged samplesheet
       min_index1 = \
         df[index_column].\
@@ -248,11 +248,11 @@ def _format_samplesheet_per_index_group(
       sa.print_sampleSheet(samplesheet_file)
       counter += 1
       formatted_samplesheets.\
-        update({
-          counter: {
-            'tag': 'merged',
-            'samplesheet_file': samplesheet_file}
-          })
+        append({
+          'index': counter,
+          'lane': 'all',
+          'tag': 'merged',
+          'samplesheet_file': samplesheet_file})
     return formatted_samplesheets
   except Exception as e:
     raise ValueError(f"Failed to format samplesheet per index group, error: {e}")

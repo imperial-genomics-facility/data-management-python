@@ -90,6 +90,7 @@ def full_suite():
   from .igf_nextflow.nextflow_runner_test import Nextflow_pre_run_setup_testA
   from .igf_portal.test_metadata_utils import Metadata_dump_test, Metadata_load_test
   from .process.find_and_process_new_project_data_from_portal_db_test import Find_and_register_new_project_data_from_portal_db_test1
+  from .igf_airflow.dag23_test_bclconvert_demult_utils_test import Dag23_test_bclconvert_demult_utils_testA
 
   return unittest.TestSuite([
     unittest.TestLoader().loadTestsFromTestCase(t)
@@ -201,6 +202,7 @@ def full_suite():
         Dag22_bclconvert_demult_utils_testE,
         Dag22_bclconvert_demult_utils_testF,
         Dag22_bclconvert_demult_utils_testG,
-        Dag22_bclconvert_demult_utils_testH
+        Dag22_bclconvert_demult_utils_testH,
+        Dag23_test_bclconvert_demult_utils_testA
       ]
     ])
