@@ -1456,21 +1456,27 @@ def run_bclconvert_func(**context):
         bcl_num_decompression_threads=int(bcl_num_decompression_threads),
         bcl_num_parallel_tiles=int(bcl_num_parallel_tiles),
         lane_id=int(lane_id))
+    check_file_path(demult_dir)    # check if the output dir exists
+    check_file_path(
+      os.path.join(
+        demult_dir,
+        'Reports',
+        'Demultiplex_Stats.csv'))  # check if the demultiplex stats file exists
     bclconvert_output_dir = \
       os.path.join(
         output_dir,
         '{0}_{1}_{2}'.format(
           project_id,
           lane_id,
-          ig_id))
-    copy_local_file(
-      demult_dir,
-      bclconvert_output_dir)
+          ig_id))                  # output dir for bclconvert
     reports_dir = \
       os.path.join(
         bclconvert_output_dir,
-        'Reports')
-    check_file_path(reports_dir)
+        'Reports')                 # output dir for bclconvert reports
+    copy_local_file(
+      demult_dir,
+      bclconvert_output_dir)       # copy the output dir to the output dir
+    check_file_path(reports_dir)   # check if the reports dir exists after copy
     ti.xcom_push(
       key=xcom_key_for_reports,
       value=reports_dir)
@@ -1889,6 +1895,7 @@ def _calculate_bases_mask(
   runinfoxml_file: str,
   numcycle_label: str='numcycles',
   isindexedread_label: str='isindexedread',
+  isreversecomplement_label: str='isreversecomplement',
   read_offset: int=1,
   read_offset_cutoff: int=50) -> str:
   try:
@@ -1898,21 +1905,21 @@ def _calculate_bases_mask(
     for index_name in index_length_stats.keys():
       index_type = len(index_length_stats.get(index_name).keys())
       if index_type > 1:
-        raise ValueError('column {0} has variable lengths'.format( index_type ))
+        raise ValueError(f'column {index_type} has variable lengths')
       index_length = list(index_length_stats.get(index_name).keys())[0]
       samplesheet_index_length_list.\
         append(index_length)
     runinfo_data = RunInfo_xml(xml_file=runinfoxml_file)
     runinfo_reads_stats = runinfo_data.get_reads_stats()
     for read_id in (sorted(runinfo_reads_stats.keys())):
-      runinfo_read_length = int(runinfo_reads_stats[read_id][numcycle_label])
+      runinfo_read_length = int(runinfo_reads_stats[read_id].get(numcycle_label))
       if runinfo_reads_stats[read_id][isindexedread_label] == 'N':
         if int(runinfo_read_length) < read_offset_cutoff:
           read_offset = 0
     index_read_position = 0
     bases_mask_list = list()
     for read_id in (sorted(runinfo_reads_stats.keys())):
-      runinfo_read_length = int(runinfo_reads_stats[read_id][numcycle_label])
+      runinfo_read_length = int(runinfo_reads_stats[read_id].get(numcycle_label))
       if runinfo_reads_stats[read_id][isindexedread_label] == 'Y':
         samplesheet_index_length = \
           samplesheet_index_length_list[index_read_position]
@@ -1920,16 +1927,21 @@ def _calculate_bases_mask(
           int(runinfo_read_length) - int(samplesheet_index_length)
         if samplesheet_index_length == 0:
           bases_mask_list.\
-            append('N{0}'.format(runinfo_read_length))
+            append(f'N{runinfo_read_length}')
           if index_read_position == 0:
             raise ValueError("Index 1 position can't be zero")
         elif index_diff > 0 and \
              samplesheet_index_length > 0:
-          bases_mask_list.\
-            append('I{0}N{1}'.format(samplesheet_index_length, index_diff))
+          if runinfo_reads_stats[read_id].get(isreversecomplement_label) is not None and \
+             runinfo_reads_stats[read_id].get(isreversecomplement_label) == 'Y':
+            bases_mask_list.\
+              append(f'N{index_diff}I{samplesheet_index_length}')
+          else:
+            bases_mask_list.\
+              append(f'I{samplesheet_index_length}N{index_diff}')
         elif index_diff == 0:
           bases_mask_list.\
-            append('I{0}'.format(samplesheet_index_length, index_diff))
+            append(f'I{samplesheet_index_length}')
         index_read_position += 1
       else:
         if int(read_offset) > 0:
@@ -1937,7 +1949,7 @@ def _calculate_bases_mask(
             append('Y{0}N{1}'.format(int(runinfo_read_length) - int(read_offset), read_offset))
         else:
           bases_mask_list.\
-            append('Y{0}'.format(runinfo_read_length, read_offset))
+            append(f'Y{runinfo_read_length}')
     if len(bases_mask_list) < 2:
       raise ValueError("Missing bases mask values")
     return ';'.join(bases_mask_list)

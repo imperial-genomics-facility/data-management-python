@@ -214,6 +214,16 @@ class Dag22_bclconvert_demult_utils_testB(unittest.TestCase):
         samplesheet_file=projectA_lane1_8_10X_samplesheet,
         runinfoxml_file=self.runinfo_xml_file)
     self.assertEqual(bases_mask, 'Y29;I8N2;N10;Y91')
+    projectA_lane1_16_NA = \
+      projectA_lane1[projectA_lane1['index_group'] == '16_NA']
+    projectA_lane1_16_NA_samplesheet = \
+      projectA_lane1_16_NA['samplesheet_file'].values.tolist()[0]
+    bases_mask = \
+      _calculate_bases_mask(
+        samplesheet_file=projectA_lane1_16_NA_samplesheet,
+        runinfoxml_file=self.runinfo_xml_file)
+    print(bases_mask)
+    self.assertEqual(bases_mask, 'Y29;I8N2;N2I8;Y91')
 
 class Dag22_bclconvert_demult_utils_testC(unittest.TestCase):
   def setUp(self):
@@ -523,8 +533,7 @@ class Dag22_bclconvert_demult_utils_testE(unittest.TestCase):
       os.path.join(
         self.bclconvert_output_path,
         'IGFQ0013_23-11-2021_10x',
-        'IGF001_S1_L002_R1_001.fastq.gz') in check_sum_sample_group[0]['fastq_list']
-    )
+        'IGF001_S1_L002_R1_001.fastq.gz') in check_sum_sample_group[0]['fastq_list'])
     sample1_r1_checksum = \
       calculate_file_checksum(
         os.path.join(
