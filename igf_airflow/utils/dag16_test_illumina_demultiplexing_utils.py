@@ -11,6 +11,7 @@ from igf_data.utils.tools.bcl2fastq_utils import run_bcl2fastq
 from igf_data.utils.box_upload import upload_file_or_dir_to_box
 from igf_data.utils.singularity_run_wrapper import singularity_run
 
+log = logging.getLogger(__name__)
 
 SLACK_CONF = Variable.get('slack_conf', default_var=None)
 MS_TEAMS_CONF = Variable.get('ms_teams_conf', default_var=None)
@@ -65,7 +66,7 @@ def get_samplesheet_and_decide_flow_func(**context):
             SEQRUN_BASE_PATH,
             seqrun_id,
             samplesheet_file_name)
-        logging.warn(
+        log.warn(
           'copying samplesheet {0} from remote server'.\
             format(samplesheet_file_name))
         copy_remote_file(
@@ -134,7 +135,7 @@ def get_samplesheet_and_decide_flow_func(**context):
     else:
       raise ValueError('No dag_run.conf entry found')
   except Exception as e:
-    logging.error(e)
+    log.error(e)
     message = \
       'SampleSheet check error: {0}'.\
         format(e)
@@ -304,7 +305,7 @@ def run_demultiplexing_func(**context):
     else:
       raise ValueError('No dag_run.conf entry found')
   except Exception as e:
-    logging.error(e)
+    log.error(e)
     message = \
       'Failed demultiplexing, error: {0}'.\
         format(e)
@@ -415,7 +416,7 @@ def prepare_merged_report_func(**context):
     else:
       raise ValueError('No dag_run.conf entry found')
   except Exception as e:
-    logging.error(e)
+    log.error(e)
     message = \
       'Failed merge report generation, error: {0}'.\
         format(e)

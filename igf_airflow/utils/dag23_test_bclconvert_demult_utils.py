@@ -4,7 +4,7 @@ import logging
 import pandas as pd
 from typing import Tuple
 from airflow.models import Variable
-from igf_data.utils.fileutils import get_temp_dir
+from igf_data.utils.fileutils import copy_local_file, get_temp_dir
 from igf_data.utils.fileutils import check_file_path
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
@@ -18,7 +18,10 @@ from igf_data.process.singlecell_seqrun.processsinglecellsamplesheet import Proc
 from igf_data.process.singlecell_seqrun.processsinglecellsamplesheet import ProcessSingleCellDualIndexSamplesheet
 from igf_airflow.utils.dag22_bclconvert_demult_utils import bclconvert_singularity_wrapper
 from igf_airflow.utils.dag22_bclconvert_demult_utils import _calculate_bases_mask
+from igf_airflow.utils.dag22_bclconvert_demult_utils import generate_bclconvert_report
+from igf_data.utils.box_upload import upload_file_or_dir_to_box
 
+log = logging.getLogger(__name__)
 
 SLACK_CONF = Variable.get('slack_conf',default_var=None)
 MS_TEAMS_CONF = Variable.get('ms_teams_conf',default_var=None)
@@ -33,12 +36,90 @@ BCLCONVERT_REPORT_LIBRARY = Variable.get("bclconvert_report_library", default_va
 BOX_DIR_PREFIX = Variable.get('box_dir_prefix_for_seqrun_report', default_var=None)
 BOX_CONFIG_FILE  = Variable.get('box_config_file', default_var=None)
 IGF_PORTAL_CONF = Variable.get('igf_portal_conf', default_var=None)
-
-log = logging.getLogger(__name__)
+BOX_CONFIG_FILE  = Variable.get('box_config_file', default_var=None)
 
 def upload_report_to_box_func(**context):
   try:
-    pass
+    ti = context.get('ti')
+    dag_run = context.get('dag_run')
+    # get demult report
+    demult_report_key = \
+      context['params'].\
+      get(
+        'demult_report_key',
+        'demult_report')
+    demult_report_task = \
+      context['params'].\
+      get('demult_report_task')
+    demult_report = \
+      ti.xcom_pull(
+        task_ids=demult_report_task,
+        key=demult_report_key)
+    check_file_path(demult_report)
+    # get seqrun id
+    seqrun_id = None
+    samplesheet_tag = None
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('seqrun_id') is not None:
+      seqrun_id = dag_run.conf.get('seqrun_id')
+      samplesheet_tag = dag_run.conf.get('samplesheet_tag')
+    if seqrun_id is None:
+      raise ValueError('seqrun_id is not provided')
+    if samplesheet_tag is None:
+      raise ValueError('samplesheet_tag is not provided')
+    # get formatted samplesheets
+    formatted_samplesheet_xcom_key = \
+      context['params'].\
+      get(
+        'formatted_samplesheet_xcom_key',
+        'formatted_samplesheet_data')
+    formatted_samplesheet_xcom_task = \
+      context['params'].\
+      get(
+        'formatted_samplesheet_xcom_task',
+        'get_formatted_samplesheets')
+    samplesheet_index = \
+      context['params'].\
+      get('samplesheet_index')
+    index_column = \
+      context['params'].\
+      get('index_column', 'index')
+    lane_column = \
+      context['params'].\
+      get('lane_column', 'lane')
+    tag_column = \
+      context['params'].\
+      get('tag_column', 'tag')
+    formatted_samplesheet_data = \
+      ti.xcom_pull(
+        task_ids=formatted_samplesheet_xcom_task,
+        key=formatted_samplesheet_xcom_key)
+    if not isinstance(formatted_samplesheet_data) or \
+       len(formatted_samplesheet_data) == 0:
+      raise ValueError('formatted_samplesheet_data is empty')
+    df = pd.DataFrame(formatted_samplesheet_data)
+    df[index_column] = \
+      df[index_column].\
+        astype(str)
+    filtered_df = \
+      df[df[index_column]==samplesheet_index]
+    if len(filtered_df)==0:
+      raise ValueError('No samplesheet index found in the samplesheet')
+    lane_id = filtered_df[lane_column].values[0]
+    tag = filtered_df[tag_column].values[0]
+    # upload file to box
+    box_dir = \
+      os.path.join(
+        BOX_DIR_PREFIX,
+        seqrun_id,
+        samplesheet_tag,
+        lane_id,
+        tag)
+    upload_file_or_dir_to_box(
+      box_config_file=BOX_CONFIG_FILE,
+      file_path=demult_report,
+      upload_dir=box_dir)
   except Exception as e:
     log.error(e)
     send_log_to_channels(
@@ -49,10 +130,67 @@ def upload_report_to_box_func(**context):
       comment=e,
       reaction='fail')
     raise
+
 
 def generate_report_func(**context):
   try:
-    pass
+    ti = context.get('ti')
+    dag_run = context.get('dag_run')
+    demult_report_key = \
+      context['params'].\
+      get(
+        'demult_report_key',
+        'demult_report')
+    demult_dir_key = \
+      context['params'].\
+      get(
+        'demult_dir_key',
+        'demult_dir')
+    demult_dir_task = \
+      context['params'].\
+      get('demult_dir_task')
+    demult_dir = \
+      ti.xcom_pull(
+        task_ids=demult_dir_task,
+        key=demult_dir_key)
+    check_file_path(demult_dir)
+    bclconvert_reports_path = \
+      os.path.join(
+        demult_dir,
+        'Reports')
+    check_file_path(bclconvert_reports_path)
+    # get seqrun path and samplesheet tag
+    seqrun_id = None
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('seqrun_id') is not None:
+      seqrun_id = \
+        dag_run.conf.get('seqrun_id')
+    if seqrun_id is None:
+      raise ValueError('seqrun_id is not found in dag_run.conf')
+    seqrun_path = \
+      os.path.join(HPC_SEQRUN_BASE_PATH, seqrun_id)
+    # generate report
+    temp_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    report_file = \
+      generate_bclconvert_report(
+        seqrun_path=seqrun_path,
+        image_path=INTEROP_NOTEBOOK_IMAGE,
+        report_template=BCLCONVERT_REPORT_TEMPLATE,
+        bclconvert_report_library_path=BCLCONVERT_REPORT_LIBRARY,
+        bclconvert_reports_path=bclconvert_reports_path)
+    report_dest_path = \
+      os.path.join(
+        temp_dir,
+        os.path.basename(report_file))
+    copy_local_file(
+      report_file,
+      report_dest_path)
+    # add report to xcom
+    ti.xcom_push(
+      key=demult_report_key,
+      value=report_dest_path)
   except Exception as e:
     log.error(e)
     send_log_to_channels(
@@ -64,9 +202,60 @@ def generate_report_func(**context):
       reaction='fail')
     raise
 
+
 def bcl_convert_run_func(**context):
   try:
-    pass
+    ti = context.get('ti')
+    dag_run = context.get('dag_run')
+    demult_dir_key = \
+      context['params'].\
+      get(
+        'demult_dir_key',
+        'demult_dir')
+    mod_samplesheet_xcom_key = \
+      context['params'].\
+      get(
+        'mod_samplesheet_xcom_key',
+        'mod_samplesheet')
+    mod_samplesheet_xcom_task = \
+      context['params'].\
+      get('mod_samplesheet_xcom_task')
+    samplesheet_file = \
+      ti.xcom_pull(
+        task_ids=mod_samplesheet_xcom_task,
+        key=mod_samplesheet_xcom_key)
+    check_file_path(samplesheet_file)
+    seqrun_id = None
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('seqrun_id') is not None:
+      seqrun_id = \
+        dag_run.conf.get('seqrun_id')
+    if seqrun_id is None:
+      raise ValueError('seqrun_id is not found in dag_run.conf')
+    # seqrun path
+    seqrun_path = \
+      os.path.join(HPC_SEQRUN_BASE_PATH, seqrun_id)
+    demult_dir = get_temp_dir(use_ephemeral_space=True)
+    cmd = \
+      bclconvert_singularity_wrapper(
+        image_path=BCLCONVERT_IMAGE,
+        input_dir=seqrun_path,
+        output_dir=demult_dir,
+        samplesheet_file=samplesheet_file,
+        bcl_num_conversion_threads=1,
+        bcl_num_compression_threads=1,
+        bcl_num_decompression_threads=1,
+        bcl_num_parallel_tiles=1,
+        first_tile_only=True)
+    check_file_path(
+      os.path.join(
+        demult_dir,
+        'Reports',
+        'Demultiplex_Stats.csv'))
+    ti.xcom_push(
+      key=demult_dir_key,
+      value=demult_dir)
   except Exception as e:
     log.error(e)
     send_log_to_channels(

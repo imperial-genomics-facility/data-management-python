@@ -1312,6 +1312,7 @@ def bclconvert_singularity_wrapper(
       bcl_num_parallel_tiles: int = 1,
       lane_id : int = 0,
       tile_id_list: tuple = (),
+      first_tile_only: bool = False,
       dry_run: bool = False) \
       -> str:
   try:
@@ -1332,10 +1333,15 @@ def bclconvert_singularity_wrapper(
       "--bcl-num-parallel-tiles", str(bcl_num_parallel_tiles),
       "--bcl-sampleproject-subdirectories", "true",
       "--strict-mode", "true"]
+    if first_tile_only:
+      bclconvert_cmd.\
+        extend(["--first-tile-only", "true"])
     if lane_id > 0:
-      bclconvert_cmd.extend(["--bcl-only-lane", str(lane_id)])
+      bclconvert_cmd.\
+        extend(["--bcl-only-lane", str(lane_id)])
     if len(tile_id_list) > 0:
-      bclconvert_cmd.extend(["--tiles", ",".join(tile_id_list)])
+      bclconvert_cmd.\
+        extend(["--tiles", ",".join(tile_id_list)])
     bclconvert_cmd = \
       ' '.join(bclconvert_cmd)
     bind_paths = [
