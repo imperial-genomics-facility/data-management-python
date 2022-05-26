@@ -336,6 +336,9 @@ def get_formatted_samplesheets_func(**context):
         platform=platform,
         singlecell_tag=singlecell_tag,
         index2_rule=index2_rule)
+    if len(formatted_samplesheets) == 0:
+      raise ValueError(
+        f"No samplesheet found for seqrun {seqrun_id}")
     ti.xcom_push(
       key=formatted_samplesheet_xcom_key,
       value=formatted_samplesheets)
