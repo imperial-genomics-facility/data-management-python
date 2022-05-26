@@ -16,6 +16,9 @@ from igf_data.utils.sequtils import rev_comp
 from igf_airflow.utils.dag22_bclconvert_demult_utils import _check_and_seed_seqrun_pipeline
 from igf_data.process.singlecell_seqrun.processsinglecellsamplesheet import ProcessSingleCellSamplesheet
 from igf_data.process.singlecell_seqrun.processsinglecellsamplesheet import ProcessSingleCellDualIndexSamplesheet
+from igf_airflow.utils.dag22_bclconvert_demult_utils import bclconvert_singularity_wrapper
+from igf_airflow.utils.dag22_bclconvert_demult_utils import _calculate_bases_mask
+
 
 SLACK_CONF = Variable.get('slack_conf',default_var=None)
 MS_TEAMS_CONF = Variable.get('ms_teams_conf',default_var=None)
@@ -74,6 +77,112 @@ def bcl_convert_run_func(**context):
       comment=e,
       reaction='fail')
     raise
+
+
+def calculate_override_bases_mask_func(**context):
+  try:
+    ti = context.get('ti')
+    dag_run = context.get('dag_run')
+    mod_samplesheet_xcom_key = \
+      context['params'].\
+      get(
+        'mod_samplesheet_xcom_key',
+        'mod_samplesheet')
+    formatted_samplesheet_xcom_key = \
+      context['params'].\
+      get(
+        'formatted_samplesheet_xcom_key',
+        'formatted_samplesheet_data')
+    formatted_samplesheet_xcom_task = \
+      context['params'].\
+      get(
+        'formatted_samplesheet_xcom_task',
+        'get_formatted_samplesheets')
+    samplesheet_index = \
+      context['params'].\
+      get('samplesheet_index')
+    index_column = \
+      context['params'].\
+      get('index_column', 'index')
+    samplesheet_file_column = \
+      context['params'].\
+      get('samplesheet_file_column', 'samplesheet_file')
+    formatted_samplesheet_data = \
+      ti.xcom_pull(
+        task_ids=formatted_samplesheet_xcom_task,
+        key=formatted_samplesheet_xcom_key)
+    if not isinstance(formatted_samplesheet_data) or \
+       len(formatted_samplesheet_data)==0:
+      raise ValueError('formatted_samplesheet_data is empty')
+    df = pd.DataFrame(formatted_samplesheet_data)
+    df[index_column] = \
+      df[index_column].\
+        astype(str)
+    filtered_df = \
+      df[df[index_column]==samplesheet_index]
+    if len(filtered_df)==0:
+      raise ValueError('No samplesheet index found in the samplesheet')
+    if samplesheet_file_column not in filtered_df.columns:
+      raise ValueError('samplesheet_file column not found in the samplesheet df')
+    # get samplesheet
+    samplesheet_file_path = \
+      filtered_df[samplesheet_file_column].values[0]
+    check_file_path(samplesheet_file_path)
+    # fetch seqrun id and override cycle
+    seqrun_id = None
+    override_cycles = ''
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('seqrun_id') is not None:
+      seqrun_id = \
+        dag_run.conf.get('seqrun_id')
+      if 'override_cycles' in dag_run.conf and \
+         dag_run.conf.get('override_cycles') is not None and \
+         dag_run.conf.get('override_cycles') != '':
+        override_cycles = \
+          dag_run.conf.get('override_cycles')
+    if seqrun_id is None:
+      raise ValueError('seqrun_id is not found in dag_run.conf')
+    # seqrun path
+    seqrun_path = \
+      os.path.join(HPC_SEQRUN_BASE_PATH, seqrun_id)
+    # runinfo path
+    runinfo_path = \
+      os.path.join(seqrun_path, 'RunInfo.xml')
+    # calculate bases mask
+    if override_cycles == '':                           # only calculate if override cycle is not present
+      override_cycles = \
+        _calculate_bases_mask(
+          samplesheet_file=samplesheet_file_path,
+          runinfoxml_file=runinfo_path)
+    # write new samplesheet
+    temp_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    new_samplesheet_path = \
+      os.path.join(
+        temp_dir,
+        os.path.basename(samplesheet_file_path))
+    mod_sa = SampleSheet(samplesheet_file_path)
+    mod_sa.\
+      set_header_for_bclconvert_run(
+        bases_mask=override_cycles)
+    mod_sa.\
+      print_sampleSheet(new_samplesheet_path)
+    # add new samplesheet to xcom
+    ti.xcom_push(
+      key=mod_samplesheet_xcom_key,
+      value=new_samplesheet_path)
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
 
 def _format_samplesheet_per_index_group(
   samplesheet_file: str,

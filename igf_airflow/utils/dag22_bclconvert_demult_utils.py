@@ -1953,8 +1953,9 @@ def _calculate_bases_mask(
     if len(bases_mask_list) < 2:
       raise ValueError("Missing bases mask values")
     return ';'.join(bases_mask_list)
-  except:
-    raise
+  except Exception as e:
+    raise ValueError(
+            f"Failed to calculate bases mask, error: {e}")
 
 
 def find_seqrun_func(**context):

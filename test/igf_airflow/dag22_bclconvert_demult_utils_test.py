@@ -222,7 +222,6 @@ class Dag22_bclconvert_demult_utils_testB(unittest.TestCase):
       _calculate_bases_mask(
         samplesheet_file=projectA_lane1_16_NA_samplesheet,
         runinfoxml_file=self.runinfo_xml_file)
-    print(bases_mask)
     self.assertEqual(bases_mask, 'Y29;I8N2;N2I8;Y91')
 
 class Dag22_bclconvert_demult_utils_testC(unittest.TestCase):
