@@ -151,7 +151,7 @@ def test_format_samplesheet_per_index_group2(self):
     self.assertEqual(len(sg1m.index), 1)
     sg2 = df[(df['lane']=='2') &(df['tag']=='16')]
     self.assertEqual(len(sg2.index), 1)
-    sg2m = df[(df['lane']=='2') &(df['tag']=='2_merged')]
+    sg2m = df[(df['lane']=='2') &(df['tag']=='merged')]
     self.assertEqual(len(sg2m.index), 1)
     sg7_1 = df[(df['lane']=='7') &(df['tag']=='16')]
     self.assertEqual(len(sg7_1.index), 1)
@@ -169,7 +169,7 @@ def test_format_samplesheet_per_index_group2(self):
     sa_df = pd.DataFrame(sa._data)
     self.assertEqual(len(sa_df.index), 1)                 # 1 20bp index
     self.assertTrue('IGF8' in sa_df['Sample_ID'].values)
-    sg7_m = df[(df['lane']=='7') &(df['tag']=='7_merged')]
+    sg7_m = df[(df['lane']=='7') &(df['tag']=='merged')]
     self.assertEqual(len(sg7_m.index), 2)
     samplesheet = sg7_m['samplesheet_file'].values[0]
     self.assertTrue(os.path.exists(samplesheet))

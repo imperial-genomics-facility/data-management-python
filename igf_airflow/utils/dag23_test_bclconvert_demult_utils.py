@@ -196,7 +196,7 @@ def _format_samplesheet_per_index_group(
           append({
             'index': counter,
             'lane': lane,
-            'tag': f'{lane}_merged',
+            'tag': f'merged',
             'samplesheet_file': samplesheet_file})
     else:
       # group data per index group
@@ -285,20 +285,21 @@ def get_formatted_samplesheets_func(**context):
        samplesheet_file not in samplesheet_data:
       raise ValueError(
         'samplesheet_data is not in the correct format')
-    samplesheet_tag_name = \
-      samplesheet_data.get(samplesheet_tag)
+    #samplesheet_tag_name = \
+    #  samplesheet_data.get(samplesheet_tag)
     samplesheet_file_path = \
       samplesheet_data.get(samplesheet_file)
     seqrun_id = None
-    override_cycles = ''
+    #override_cycles = ''
     if dag_run is not None and \
        dag_run.conf is not None and \
        dag_run.conf.get('seqrun_id') is not None:
       seqrun_id = \
         dag_run.conf.get('seqrun_id')
-      if 'override_cycles' in dag_run.conf:
-        override_cycles = \
-          dag_run.conf.get('override_cycles')
+      # don't need override now
+      #if 'override_cycles' in dag_run.conf:
+      #  override_cycles = \
+      #    dag_run.conf.get('override_cycles')
     if seqrun_id is None:
       raise ValueError('seqrun_id is not found in dag_run.conf')
     # TO Do following
@@ -338,9 +339,11 @@ def get_formatted_samplesheets_func(**context):
     ti.xcom_push(
       key=formatted_samplesheet_xcom_key,
       value=formatted_samplesheets)
+    formatted_samplesheets_df = \
+      pd.DataFrame(formatted_samplesheets)
     task_list = [
       f'{next_task_prefix}{si}'
-        for si in formatted_samplesheets.keys()]
+        for si in formatted_samplesheets_df['index'].values.tolist()]
     return task_list
   except Exception as e:
     log.error(e)
