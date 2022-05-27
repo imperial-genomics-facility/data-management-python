@@ -38,6 +38,45 @@ BOX_CONFIG_FILE  = Variable.get('box_config_file', default_var=None)
 IGF_PORTAL_CONF = Variable.get('igf_portal_conf', default_var=None)
 BOX_CONFIG_FILE  = Variable.get('box_config_file', default_var=None)
 
+def create_demult_report_for_portal(
+      samplesheet_data: str,
+      demult_data: str,
+      index_column: str = 'index',
+      demult_dir_column: str = 'demult_dir',
+      lane_column: str = 'lane',
+      tag_column: str = 'tag') -> str:
+  try:
+    samplesheet_df = pd.DataFrame(samplesheet_data)
+    if not index_column in samplesheet_df.columns or \
+       not lane_column in samplesheet_df.columns or \
+       not tag_column in samplesheet_df.columns:
+      raise ValueError(
+        'index_column, lane_column and tag_column must be in samplesheet_df.columns')
+    demult_df = pd.DataFrame(demult_data)
+    if not demult_dir_column in demult_df.columns or \
+       not index_column in demult_df.columns:
+      raise ValueError(
+        'demult_dir_column and index_column must be in demult_df.columns')
+    merged_samplesheet_df = \
+      samplesheet_df[samplesheet_df[tag_column]=='merged']
+    if not len(merged_samplesheet_df):
+      raise ValueError('No merged samplesheet found')
+    for index in merged_samplesheet_df[index_column].values.tolist():
+      filtered_demult_df = demult_df[demult_df[index_column]==index]
+      if len(filtered_demult_df)==0:
+        log.warning(f'No demult data found for index {index}')
+      else:
+        demult_dir = \
+          filtered_demult_df[demult_dir_column].values[0]
+        demult_reports_dir = \
+          os.path.join(demult_dir, 'Reports')
+        check_file_path(demult_reports_dir)
+      ## TO DO # update
+  except Exception as e:
+    raise ValueError(
+      f'Failed to create combined demult report for portal, error: {e}')
+
+
 def generate_merged_report_func(**context):
   try:
     ti = context.get('ti')
@@ -47,6 +86,18 @@ def generate_merged_report_func(**context):
       get(
         'demult_info_key',
         'demult_info')
+    all_upstream_tasks = \
+      context['task'].\
+      get_direct_relative_ids(upstream=True)
+    all_demult_info = list()
+    for task_id in all_upstream_tasks:
+      xcom_data = \
+        ti.xcom_pull(
+          task_ids=task_id,
+          key=demult_info_key)
+      if xcom_data is not None:
+        all_demult_info.\
+          append(xcom_data)
     # get seqrun id
     seqrun_id = None
     if dag_run is not None and \
@@ -66,6 +117,21 @@ def generate_merged_report_func(**context):
       get(
         'formatted_samplesheet_xcom_task',
         'get_formatted_samplesheets')
+    formatted_samplesheet_data = \
+      ti.xcom_pull(
+        task_ids=formatted_samplesheet_xcom_task,
+        key=formatted_samplesheet_xcom_key)
+    if len(all_demult_info) != len(formatted_samplesheet_data):
+      log.warn(
+        'Number of samplesheets: {0}, number of demultiplexing dir: {1}'.\
+          format(
+            len(formatted_samplesheet_data),
+            len(all_demult_info)))
+    # merge demultiplexing reports
+    merged_report = \
+      create_demult_report_for_portal(
+        samplesheet_data = formatted_samplesheet_data,
+        demult_data = all_demult_info)
   except Exception as e:
     log.error(e)
     send_log_to_channels(
