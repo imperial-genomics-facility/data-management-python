@@ -38,6 +38,46 @@ BOX_CONFIG_FILE  = Variable.get('box_config_file', default_var=None)
 IGF_PORTAL_CONF = Variable.get('igf_portal_conf', default_var=None)
 BOX_CONFIG_FILE  = Variable.get('box_config_file', default_var=None)
 
+def generate_merged_report_func(**context):
+  try:
+    ti = context.get('ti')
+    dag_run = context.get('dag_run')
+    demult_info_key = \
+      context['params'].\
+      get(
+        'demult_info_key',
+        'demult_info')
+    # get seqrun id
+    seqrun_id = None
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('seqrun_id') is not None:
+      seqrun_id = dag_run.conf.get('seqrun_id')
+    if seqrun_id is None:
+      raise ValueError('seqrun_id is not provided')
+    # get formatted samplesheets
+    formatted_samplesheet_xcom_key = \
+      context['params'].\
+      get(
+        'formatted_samplesheet_xcom_key',
+        'formatted_samplesheet_data')
+    formatted_samplesheet_xcom_task = \
+      context['params'].\
+      get(
+        'formatted_samplesheet_xcom_task',
+        'get_formatted_samplesheets')
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
+
 def upload_report_to_box_func(**context):
   try:
     ti = context.get('ti')
@@ -212,6 +252,17 @@ def bcl_convert_run_func(**context):
       get(
         'demult_dir_key',
         'demult_dir')
+    demult_info_key = \
+      context['params'].\
+      get(
+        'demult_info_key',
+        'demult_info')
+    samplesheet_index = \
+      context['params'].\
+      get('samplesheet_index')
+    index_column = \
+      context['params'].\
+      get('index_column', 'index')
     mod_samplesheet_xcom_key = \
       context['params'].\
       get(
@@ -256,6 +307,12 @@ def bcl_convert_run_func(**context):
     ti.xcom_push(
       key=demult_dir_key,
       value=demult_dir)
+    demult_info = {
+      index_column: samplesheet_index,
+      'demult_dir': demult_dir}
+    ti.xcom_push(
+      key=demult_info_key,
+      value=demult_info)
   except Exception as e:
     log.error(e)
     send_log_to_channels(
