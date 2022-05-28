@@ -872,7 +872,7 @@ def get_samplesheet_from_portal_func(**context):
       raise ValueError(f"Failed to get samplesheet from portal")
     ti.xcom_push(
       key=samplesheet_xcom_key,
-      value={samplesheet_tag: samplesheet_tag, samplesheet_file: samplesheet_file})
+      value={'samplesheet_tag': samplesheet_tag, 'samplesheet_file': samplesheet_file})
   except Exception as e:
     log.error(e)
     send_log_to_channels(
