@@ -706,6 +706,7 @@ def get_formatted_samplesheets_func(**context):
       ti.xcom_pull(
         task_ids=samplesheet_xcom_task,
         key=samplesheet_xcom_key)
+    log.warn(samplesheet_data)
     if not isinstance(samplesheet_data, dict) or \
        samplesheet_tag not in samplesheet_data or \
        samplesheet_file not in samplesheet_data:
