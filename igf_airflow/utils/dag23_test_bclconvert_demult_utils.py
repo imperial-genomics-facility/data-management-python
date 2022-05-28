@@ -749,6 +749,8 @@ def get_formatted_samplesheets_func(**context):
       raise ValueError(
         f"No flowcell barcode rule found for seqrun {seqrun_id}")
     # * split samplesheet per index group
+    output_dir = \
+      get_temp_dir(use_ephemeral_space=True)
     formatted_samplesheets = \
       _format_samplesheet_per_index_group(
         samplesheet_file=samplesheet_file_path,
@@ -756,6 +758,7 @@ def get_formatted_samplesheets_func(**context):
         singlecell_dual_barcode_json=SINGLECELL_DUAL_BARCODE_JSON,
         platform=platform,
         singlecell_tag=singlecell_tag,
+        output_dir=output_dir,
         index2_rule=index2_rule)
     if len(formatted_samplesheets) == 0:
       raise ValueError(
