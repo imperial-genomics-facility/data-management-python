@@ -353,7 +353,12 @@ def bcl_convert_run_func(**context):
     # seqrun path
     seqrun_path = \
       os.path.join(HPC_SEQRUN_BASE_PATH, seqrun_id)
-    demult_dir = get_temp_dir(use_ephemeral_space=True)
+    temp_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    demult_dir = \
+      os.path.join(
+        temp_dir,
+        'demult')
     cmd = \
       bclconvert_singularity_wrapper(
         image_path=BCLCONVERT_IMAGE,
