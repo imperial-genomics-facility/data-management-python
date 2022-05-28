@@ -221,7 +221,7 @@ def upload_report_to_box_func(**context):
         seqrun_id,
         samplesheet_tag,
         str(lane_id),
-        tag)
+        str(tag))
     upload_file_or_dir_to_box(
       box_config_file=BOX_CONFIG_FILE,
       file_path=demult_report,
