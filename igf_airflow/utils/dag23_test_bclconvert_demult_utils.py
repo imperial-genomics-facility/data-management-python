@@ -694,8 +694,8 @@ def get_formatted_samplesheets_func(**context):
       context['params'].get('samplesheet_xcom_task', 'get_samplesheet_from_portal')
     formatted_samplesheet_xcom_key = \
       context['params'].get('formatted_samplesheet_xcom_key', 'formatted_samplesheet_data')
-    samplesheet_tag = \
-      context['params'].get('samplesheet_tag', 'samplesheet_tag')
+    samplesheet_tag_label = \
+      context['params'].get('samplesheet_tag_label', 'samplesheet_tag')
     samplesheet_file = \
       context['params'].get('samplesheet_file', 'samplesheet_file')
     next_task_prefix = \
@@ -706,9 +706,8 @@ def get_formatted_samplesheets_func(**context):
       ti.xcom_pull(
         task_ids=samplesheet_xcom_task,
         key=samplesheet_xcom_key)
-    log.warn(samplesheet_data)
     if not isinstance(samplesheet_data, dict) or \
-       samplesheet_tag not in samplesheet_data or \
+       samplesheet_tag_label not in samplesheet_data or \
        samplesheet_file not in samplesheet_data:
       raise ValueError(
         'samplesheet_data is not in the correct format')
