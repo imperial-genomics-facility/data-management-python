@@ -220,7 +220,7 @@ def upload_report_to_box_func(**context):
         BOX_DIR_PREFIX,
         seqrun_id,
         samplesheet_tag,
-        lane_id,
+        str(lane_id),
         tag)
     upload_file_or_dir_to_box(
       box_config_file=BOX_CONFIG_FILE,
