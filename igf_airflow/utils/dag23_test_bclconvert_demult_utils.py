@@ -743,7 +743,7 @@ def get_formatted_samplesheets_func(**context):
           flowcell_label='flowcell',
           output_mode='dataframe')
     index2_rule = \
-      flowcell_rule['index2_rule'].values[0]
+      flowcell_rule['index_2'].values[0]
     seqrun_adp.close_session()
     if len(flowcell_rule.index) == 0:
       raise ValueError(
