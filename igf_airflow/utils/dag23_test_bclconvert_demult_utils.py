@@ -201,7 +201,7 @@ def upload_report_to_box_func(**context):
       ti.xcom_pull(
         task_ids=formatted_samplesheet_xcom_task,
         key=formatted_samplesheet_xcom_key)
-    if not isinstance(formatted_samplesheet_data) or \
+    if not isinstance(formatted_samplesheet_data, list) or \
        len(formatted_samplesheet_data) == 0:
       raise ValueError('formatted_samplesheet_data is empty')
     df = pd.DataFrame(formatted_samplesheet_data)
