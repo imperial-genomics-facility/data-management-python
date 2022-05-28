@@ -431,7 +431,7 @@ def calculate_override_bases_mask_func(**context):
       df[index_column].\
         astype(str)
     filtered_df = \
-      df[df[index_column]==samplesheet_index]
+      df[df[index_column]==str(samplesheet_index)]
     if len(filtered_df)==0:
       raise ValueError('No samplesheet index found in the samplesheet')
     if samplesheet_file_column not in filtered_df.columns:
