@@ -285,21 +285,6 @@ def upload_report_to_box_func(**context):
     tag_column = \
       context['params'].\
       get('tag_column', 'tag')
-    #formatted_samplesheet_data = \
-    #  ti.xcom_pull(
-    #    task_ids=formatted_samplesheet_xcom_task,
-    #    key=formatted_samplesheet_xcom_key)
-    #if not isinstance(formatted_samplesheet_data, list) or \
-    #   len(formatted_samplesheet_data) == 0:
-    #  raise ValueError('formatted_samplesheet_data is empty')
-    #df = pd.DataFrame(formatted_samplesheet_data)
-    #df[index_column] = \
-    #  df[index_column].\
-    #    astype(str)
-    #filtered_df = \
-    #  df[df[index_column]==str(samplesheet_index)]
-    #if len(filtered_df)==0:
-    #  raise ValueError('No samplesheet index found in the samplesheet')
     filtered_df = \
       _fetch_formatted_samplesheet_info_from_task_instance(
         ti=ti,
@@ -572,21 +557,6 @@ def calculate_override_bases_mask_func(**context):
     samplesheet_file_column = \
       context['params'].\
       get('samplesheet_file_column', 'samplesheet_file')
-    #formatted_samplesheet_data = \
-    #  ti.xcom_pull(
-    #    task_ids=formatted_samplesheet_xcom_task,
-    #    key=formatted_samplesheet_xcom_key)
-    #if not isinstance(formatted_samplesheet_data, list) or \
-    #   len(formatted_samplesheet_data)==0:
-    #  raise ValueError('formatted_samplesheet_data is empty')
-    #df = pd.DataFrame(formatted_samplesheet_data)
-    #df[index_column] = \
-    #  df[index_column].\
-    #    astype(str)
-    #filtered_df = \
-    #  df[df[index_column]==str(samplesheet_index)]
-    #if len(filtered_df)==0:
-    #  raise ValueError('No samplesheet index found in the samplesheet')
     filtered_df = \
       _fetch_formatted_samplesheet_info_from_task_instance(
         ti=ti,
