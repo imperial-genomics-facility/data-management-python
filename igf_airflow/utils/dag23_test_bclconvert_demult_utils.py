@@ -130,10 +130,10 @@ def generate_merged_report_func(**context):
             len(formatted_samplesheet_data),
             len(all_demult_info)))
     # merge demultiplexing reports
-    merged_report = \
-      create_demult_report_for_portal(
-        samplesheet_data = formatted_samplesheet_data,
-        demult_data = all_demult_info)
+    #merged_report = \
+    #  create_demult_report_for_portal(
+    #    samplesheet_data = formatted_samplesheet_data,
+    #    demult_data = all_demult_info)
   except Exception as e:
     log.error(e)
     send_log_to_channels(
