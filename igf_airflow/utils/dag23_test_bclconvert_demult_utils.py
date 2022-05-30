@@ -27,6 +27,7 @@ log = logging.getLogger(__name__)
 SLACK_CONF = Variable.get('slack_conf',default_var=None)
 MS_TEAMS_CONF = Variable.get('ms_teams_conf',default_var=None)
 HPC_SEQRUN_BASE_PATH = Variable.get('hpc_seqrun_path', default_var=None)
+HPC_SEQRUN_REPORT_PATH = Variable.get('hpc_seqrun_report_path', default_var=None)
 DATABASE_CONFIG_FILE = Variable.get('database_config_file', default_var=None)
 SINGLECELL_BARCODE_JSON = Variable.get('singlecell_barcode_json', default_var=None)
 SINGLECELL_DUAL_BARCODE_JSON = Variable.get('singlecell_dual_barcode_json', default_var=None)
@@ -133,6 +134,92 @@ def generate_merged_report_func(**context):
       create_demult_report_for_portal(
         samplesheet_data = formatted_samplesheet_data,
         demult_data = all_demult_info)
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
+
+def copy_report_to_rds_func(**context):
+  try:
+    ti = context.get('ti')
+    dag_run = context.get('dag_run')
+    demult_report_key = \
+      context['params'].\
+      get(
+        'demult_report_key',
+        'demult_report')
+    demult_report_task = \
+      context['params'].\
+      get('demult_report_task')
+    demult_report = \
+      ti.xcom_pull(
+        task_ids=demult_report_task,
+        key=demult_report_key)
+    check_file_path(demult_report)
+    # get seqrun id
+    seqrun_id = None
+    samplesheet_tag = None
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('seqrun_id') is not None:
+      seqrun_id = dag_run.conf.get('seqrun_id')
+      samplesheet_tag = dag_run.conf.get('samplesheet_tag')
+    if seqrun_id is None:
+      raise ValueError('seqrun_id is not provided')
+    if samplesheet_tag is None:
+      raise ValueError('samplesheet_tag is not provided')
+    # get formatted samplesheets
+    formatted_samplesheet_xcom_key = \
+      context['params'].\
+      get(
+        'formatted_samplesheet_xcom_key',
+        'formatted_samplesheet_data')
+    formatted_samplesheet_xcom_task = \
+      context['params'].\
+      get(
+        'formatted_samplesheet_xcom_task',
+        'get_formatted_samplesheets')
+    samplesheet_index = \
+      context['params'].\
+      get('samplesheet_index')
+    index_column = \
+      context['params'].\
+      get('index_column', 'index')
+    lane_column = \
+      context['params'].\
+      get('lane_column', 'lane')
+    tag_column = \
+      context['params'].\
+      get('tag_column', 'tag')
+    filtered_df = \
+      _fetch_formatted_samplesheet_info_from_task_instance(
+        ti=ti,
+        samplesheet_index=samplesheet_index,
+        index_column=index_column,
+        samplesheet_key=formatted_samplesheet_xcom_key,
+        samplesheet_task=formatted_samplesheet_xcom_task)
+    lane_id = filtered_df[lane_column].values[0]
+    tag = filtered_df[tag_column].values[0]
+    # copy file to rds
+    destination_path = \
+      os.path.join(
+        HPC_SEQRUN_REPORT_PATH,
+        seqrun_id,
+        context['task'].dag_id,
+        samplesheet_tag,
+        str(lane_id),
+        str(tag))
+    copy_local_file(
+      demult_report,
+      destination_path,
+      force=True)
   except Exception as e:
     log.error(e)
     send_log_to_channels(
