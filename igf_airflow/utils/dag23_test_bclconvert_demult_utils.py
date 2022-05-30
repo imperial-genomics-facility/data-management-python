@@ -215,7 +215,8 @@ def copy_report_to_rds_func(**context):
         context['task'].dag_id,
         samplesheet_tag,
         str(lane_id),
-        str(tag))
+        str(tag),
+        os.path.basename(demult_report))
     copy_local_file(
       demult_report,
       destination_path,

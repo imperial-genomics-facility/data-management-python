@@ -6,6 +6,7 @@ from igf_data.utils.fileutils import get_temp_dir
 from igf_data.utils.fileutils import remove_dir
 from igf_data.illumina.samplesheet import SampleSheet
 from igf_airflow.utils.dag23_test_bclconvert_demult_utils import _format_samplesheet_per_index_group
+from igf_airflow.utils.dag23_test_bclconvert_demult_utils import copy_report_to_rds_func
 
 class Dag23_test_bclconvert_demult_utils_testA(unittest.TestCase):
   def setUp(self):
