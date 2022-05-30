@@ -2,8 +2,9 @@ import os
 import json
 import logging
 import pandas as pd
-from typing import Tuple
+from typing import Tuple, Any
 from airflow.models import Variable
+from airflow.models import taskinstance
 from igf_data.utils.fileutils import copy_local_file, get_temp_dir
 from igf_data.utils.fileutils import check_file_path
 from igf_data.utils.dbutils import read_dbconf_json
@@ -197,21 +198,28 @@ def upload_report_to_box_func(**context):
     tag_column = \
       context['params'].\
       get('tag_column', 'tag')
-    formatted_samplesheet_data = \
-      ti.xcom_pull(
-        task_ids=formatted_samplesheet_xcom_task,
-        key=formatted_samplesheet_xcom_key)
-    if not isinstance(formatted_samplesheet_data, list) or \
-       len(formatted_samplesheet_data) == 0:
-      raise ValueError('formatted_samplesheet_data is empty')
-    df = pd.DataFrame(formatted_samplesheet_data)
-    df[index_column] = \
-      df[index_column].\
-        astype(str)
+    #formatted_samplesheet_data = \
+    #  ti.xcom_pull(
+    #    task_ids=formatted_samplesheet_xcom_task,
+    #    key=formatted_samplesheet_xcom_key)
+    #if not isinstance(formatted_samplesheet_data, list) or \
+    #   len(formatted_samplesheet_data) == 0:
+    #  raise ValueError('formatted_samplesheet_data is empty')
+    #df = pd.DataFrame(formatted_samplesheet_data)
+    #df[index_column] = \
+    #  df[index_column].\
+    #    astype(str)
+    #filtered_df = \
+    #  df[df[index_column]==str(samplesheet_index)]
+    #if len(filtered_df)==0:
+    #  raise ValueError('No samplesheet index found in the samplesheet')
     filtered_df = \
-      df[df[index_column]==str(samplesheet_index)]
-    if len(filtered_df)==0:
-      raise ValueError('No samplesheet index found in the samplesheet')
+      _fetch_formatted_samplesheet_info_from_task_instance(
+        ti=ti,
+        samplesheet_index=samplesheet_index,
+        index_column=index_column,
+        samplesheet_key=formatted_samplesheet_xcom_key,
+        samplesheet_task=formatted_samplesheet_xcom_task)
     lane_id = filtered_df[lane_column].values[0]
     tag = filtered_df[tag_column].values[0]
     # upload file to box
@@ -323,12 +331,37 @@ def bcl_convert_run_func(**context):
       get(
         'demult_info_key',
         'demult_info')
+    formatted_samplesheet_xcom_key = \
+      context['params'].\
+      get(
+        'formatted_samplesheet_xcom_key',
+        'formatted_samplesheet_data')
+    formatted_samplesheet_xcom_task = \
+      context['params'].\
+      get(
+        'formatted_samplesheet_xcom_task',
+        'get_formatted_samplesheets')
     samplesheet_index = \
       context['params'].\
       get('samplesheet_index')
     index_column = \
       context['params'].\
       get('index_column', 'index')
+    lane_column = \
+      context['params'].\
+      get('lane_column', 'lane')
+    filtered_df = \
+      _fetch_formatted_samplesheet_info_from_task_instance(
+        ti=ti,
+        samplesheet_index=samplesheet_index,
+        index_column=index_column,
+        samplesheet_key=formatted_samplesheet_xcom_key,
+        samplesheet_task=formatted_samplesheet_xcom_task)
+    lane_id = filtered_df[lane_column].values[0]
+    if str(lane_id) != 'all':
+      lane_id = int(lane_id)
+    else:
+      lane_id = 0
     mod_samplesheet_xcom_key = \
       context['params'].\
       get(
@@ -364,6 +397,7 @@ def bcl_convert_run_func(**context):
         image_path=BCLCONVERT_IMAGE,
         input_dir=seqrun_path,
         output_dir=demult_dir,
+        lane_id=lane_id,
         samplesheet_file=samplesheet_file,
         bcl_num_conversion_threads=1,
         bcl_num_compression_threads=1,
@@ -395,6 +429,33 @@ def bcl_convert_run_func(**context):
       reaction='fail')
     raise
 
+def _fetch_formatted_samplesheet_info_from_task_instance(
+      ti: taskinstance,
+      samplesheet_index: int,
+      index_column: str = 'index',
+      samplesheet_key: str = 'formatted_samplesheet_data',
+      samplesheet_task: str = 'get_formatted_samplesheets') \
+      -> pd.DataFrame:
+  try:
+    formatted_samplesheet_data = \
+      ti.xcom_pull(
+        task_ids=samplesheet_task,
+        key=samplesheet_key)
+    if not isinstance(formatted_samplesheet_data, list) or \
+       len(formatted_samplesheet_data)==0:
+      raise ValueError('formatted_samplesheet_data is empty')
+    df = pd.DataFrame(formatted_samplesheet_data)
+    df[index_column] = \
+      df[index_column].\
+        astype(str)
+    filtered_df = \
+      df[df[index_column]==str(samplesheet_index)]
+    if len(filtered_df)==0:
+      raise ValueError('No samplesheet index found in the samplesheet')
+    return filtered_df
+  except Exception as e:
+    raise ValueError(f"Fail to fetch samplesheet info from task instance: {e}")
+
 
 def calculate_override_bases_mask_func(**context):
   try:
@@ -424,21 +485,28 @@ def calculate_override_bases_mask_func(**context):
     samplesheet_file_column = \
       context['params'].\
       get('samplesheet_file_column', 'samplesheet_file')
-    formatted_samplesheet_data = \
-      ti.xcom_pull(
-        task_ids=formatted_samplesheet_xcom_task,
-        key=formatted_samplesheet_xcom_key)
-    if not isinstance(formatted_samplesheet_data, list) or \
-       len(formatted_samplesheet_data)==0:
-      raise ValueError('formatted_samplesheet_data is empty')
-    df = pd.DataFrame(formatted_samplesheet_data)
-    df[index_column] = \
-      df[index_column].\
-        astype(str)
+    #formatted_samplesheet_data = \
+    #  ti.xcom_pull(
+    #    task_ids=formatted_samplesheet_xcom_task,
+    #    key=formatted_samplesheet_xcom_key)
+    #if not isinstance(formatted_samplesheet_data, list) or \
+    #   len(formatted_samplesheet_data)==0:
+    #  raise ValueError('formatted_samplesheet_data is empty')
+    #df = pd.DataFrame(formatted_samplesheet_data)
+    #df[index_column] = \
+    #  df[index_column].\
+    #    astype(str)
+    #filtered_df = \
+    #  df[df[index_column]==str(samplesheet_index)]
+    #if len(filtered_df)==0:
+    #  raise ValueError('No samplesheet index found in the samplesheet')
     filtered_df = \
-      df[df[index_column]==str(samplesheet_index)]
-    if len(filtered_df)==0:
-      raise ValueError('No samplesheet index found in the samplesheet')
+      _fetch_formatted_samplesheet_info_from_task_instance(
+        ti=ti,
+        samplesheet_index=samplesheet_index,
+        index_column=index_column,
+        samplesheet_key=formatted_samplesheet_xcom_key,
+        samplesheet_task=formatted_samplesheet_xcom_task)
     if samplesheet_file_column not in filtered_df.columns:
       raise ValueError('samplesheet_file column not found in the samplesheet df')
     # get samplesheet
