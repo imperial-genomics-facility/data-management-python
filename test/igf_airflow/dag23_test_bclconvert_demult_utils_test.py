@@ -120,6 +120,14 @@ class Dag23_test_bclconvert_demult_utils_testA(unittest.TestCase):
     self.assertTrue('IGF1' in sa_df['Sample_ID'].values)   # sample1
     self.assertTrue('IGF2' in sa_df['Sample_ID'].values)   # sample2
     self.assertTrue('IGF3' in sa_df['Sample_ID'].values)   # sample3
+    min_index1 = \
+      sa_df['index'].\
+      map(lambda x: len(x)).min()
+    self.assertEqual(min_index1, 8)                       # 8bp index1
+    min_index2 = \
+      sa_df['index2'].\
+      map(lambda x: len(x)).min()
+    self.assertEqual(min_index2, 8)                       # 8bp index2
 
 def test_format_samplesheet_per_index_group2(self):
     formatted_samplesheets = \
@@ -178,6 +186,14 @@ def test_format_samplesheet_per_index_group2(self):
     self.assertEqual(len(sa_df.index), 2)                 # 2 16bp index
     self.assertTrue('IGF7' in sa_df['Sample_ID'].values)
     self.assertTrue('IGF8' in sa_df['Sample_ID'].values)
+    min_index1 = \
+      sa_df['index'].\
+      map(lambda x: len(x)).min()
+    self.assertEqual(min_index1, 8)                       # 8bp index1
+    min_index2 = \
+      sa_df['index2'].\
+      map(lambda x: len(x)).min()
+    self.assertEqual(min_index2, 8)                       # 8bp index2
 
 if __name__=='__main__':
   unittest.main()

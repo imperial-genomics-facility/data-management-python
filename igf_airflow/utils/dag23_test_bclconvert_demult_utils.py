@@ -661,7 +661,7 @@ def _format_samplesheet_per_index_group(
             map(lambda x: len(x)).min()
         lane_df.loc[:, index_column] = \
           lane_df[index_column].\
-            map(lambda x: x[0:- min_index1])
+            map(lambda x: x[0: min_index1])
         if index2_column in lane_df.columns:
           min_index2 = \
             lane_df[index2_column].\
@@ -716,7 +716,7 @@ def _format_samplesheet_per_index_group(
         map(lambda x: len(x)).min()
       df.loc[:, index_column] = \
         df[index_column].\
-          map(lambda x: x[0:- min_index1])
+          map(lambda x: x[0: min_index1])
       if index2_column in df.columns:
         min_index2 = \
           df[index2_column].\
