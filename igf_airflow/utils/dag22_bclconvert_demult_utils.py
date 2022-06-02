@@ -1321,7 +1321,7 @@ def bclconvert_singularity_wrapper(
     if os.path.exists(output_dir):
       raise ValueError(f"Output directory {output_dir} already exists")
     check_file_path(samplesheet_file)
-    temp_dir = get_temp_dir()
+    temp_dir = get_temp_dir(use_ephemeral_space=True)
     bclconvert_cmd = [
       "bcl-convert",
       "--bcl-input-directory", input_dir,
