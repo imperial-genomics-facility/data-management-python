@@ -233,7 +233,7 @@ class Dag22_bclconvert_demult_utils_testC(unittest.TestCase):
     self.input_dir = os.path.join(self.temp_dir, 'input')
     os.makedirs(self.input_dir)
     self.output_dir = os.path.join(self.temp_dir, 'output')
-    os.makedirs(self.output_dir)
+    #os.makedirs(self.output_dir)
     self.samplesheet_file = os.path.join(self.temp_dir, 'samplesheet.csv')
     with open(self.samplesheet_file, 'w') as fp:
       fp.write('A')
@@ -699,9 +699,9 @@ class Dag22_bclconvert_demult_utils_testG(unittest.TestCase):
     self.assertTrue('file_list' in sample_group_with_run_id[0])
     self.assertTrue('IGF001' in sample_group_with_run_id[0].get('dir_list'))
     self.assertEqual(len(sample_group_with_run_id[0].get('file_list')), 2)
-    self.assertTrue(
-      '/path/IGF001_S1_R2_001.fastq.gz' in \
-      pd.DataFrame(sample_group_with_run_id[0].get('file_list'))['file_name'].values.tolist())
+    #self.assertTrue(
+    #  '/path/IGF001_S1_R2_001.fastq.gz' in \
+    #  pd.DataFrame(sample_group_with_run_id[0].get('file_list'))['file_name'].values.tolist())
 
 
 class Dag22_bclconvert_demult_utils_testH(unittest.TestCase):

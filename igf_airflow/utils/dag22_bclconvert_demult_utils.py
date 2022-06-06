@@ -1967,7 +1967,13 @@ def _calculate_bases_mask(
 def find_seqrun_func(**context):
   try:
     dag_run = context.get('dag_run')
-    task_list = ['mark_run_finished',]
+    next_task_id = \
+      context['params'].\
+      get('next_task_id', 'mark_seqrun_as_running')
+    no_work_task = \
+      context['params'].\
+      get('no_work_task', 'no_work')
+    task_list = [no_work_task,]
     if dag_run is not None and \
        dag_run.conf is not None and \
        dag_run.conf.get('seqrun_id') is not None:
@@ -1989,13 +1995,13 @@ def find_seqrun_func(**context):
           seqrun_id=seqrun_id,
           seqrun_path=seqrun_path,
           dbconf_json_path=DATABASE_CONFIG_FILE)
-        seed_status = \
-          _check_and_seed_seqrun_pipeline(
-            seqrun_id=seqrun_id,
-            pipeline_name=context['task'].dag_id,
-            dbconf_json_path=DATABASE_CONFIG_FILE)
-        if seed_status:
-          task_list = ['format_and_split_samplesheet',]
+        #seed_status = \
+        #  _check_and_seed_seqrun_pipeline(
+        #    seqrun_id=seqrun_id,
+        #    pipeline_name=context['task'].dag_id,
+        #    dbconf_json_path=DATABASE_CONFIG_FILE)
+      if run_status:
+        task_list = [next_task_id,]
     return task_list
   except Exception as e:
     log.error(e)
