@@ -406,6 +406,33 @@ class PipelineAdaptor(BaseAdaptor):
                 format(seed_id,pipeline_name,e))
 
 
+  def check_seed_id_status(self, seed_id: str, seed_table: str) -> list:
+    '''
+    A method for checking the status of a seed_id in pipeline_seed table
+
+    :param seed_id: A string, seed_id
+    :param seed_table: A string, seed_table
+    :returns: A list of strings, status of the seed_id
+    '''
+    try:
+      query = \
+        self.session.\
+        query(Pipeline.pipeline_name, Pipeline_seed.status).\
+        join(Pipeline_seed, Pipeline.pipeline_id==Pipeline_seed.pipeline_id).\
+        filter(Pipeline_seed.seed_id==seed_id).\
+        filter(Pipeline_seed.seed_table==seed_table)
+      records = \
+        self.fetch_records(
+          query=query,
+          output_mode='dataframe')
+      records = \
+        records.\
+          to_dict(orient='records')
+      return records
+    except Exception as e:
+      raise ValueError(f'Failed to check seed id status, error: {e}')
+
+
   def seed_new_seqruns(self,pipeline_name,autosave=True,seed_table='seqrun'):
     '''
     A method for creating seed for new seqruns
