@@ -2,6 +2,7 @@ import pandas as pd
 from copy import deepcopy
 import os
 import re
+import json
 import stat
 import logging
 import subprocess
@@ -37,6 +38,7 @@ from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_data.utils.singularity_run_wrapper import execute_singuarity_cmd
 from igf_data.utils.jupyter_nbconvert_wrapper import Notebook_runner
 from igf_data.utils.seqrunutils import get_seqrun_date_from_igf_id
+from igf_portal.api_utils import upload_files_to_portal
 
 SLACK_CONF = Variable.get('slack_conf',default_var=None)
 MS_TEAMS_CONF = Variable.get('ms_teams_conf',default_var=None)
@@ -52,6 +54,7 @@ HPC_BASE_RAW_DATA_PATH = Variable.get('hpc_base_raw_data_path', default_var=None
 FASTQC_IMAGE_PATH = Variable.get('fastqc_image_path', default_var=None)
 FASTQSCREEN_IMAGE_PATH = Variable.get('fastqscreen_image_path', default_var=None)
 FASTQSCREEN_CONF_PATH = Variable.get('fastqscreen_conf_path', default_var=None)
+IGF_PORTAL_CONF = Variable.get('igf_portal_conf', default_var=None)
 
 log = logging.getLogger(__name__)
 
@@ -1963,6 +1966,73 @@ def _calculate_bases_mask(
   except Exception as e:
     raise ValueError(
             f"Failed to calculate bases mask, error: {e}")
+
+
+def get_samplesheet_from_portal_func(**context):
+  try:
+    ti = context.get('ti')
+    samplesheet_xcom_key = \
+      context['params'].\
+      get('samplesheet_xcom_key', 'samplesheet_data')
+    samplesheet_tag = \
+      context['params'].\
+      get('samplesheet_tag', 'samplesheet_tag')
+    samplesheet_file = \
+      context['params'].\
+      get('samplesheet_file', 'samplesheet_file')
+    dag_run = context.get('dag_run')
+    seqrun_id = None
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('seqrun_id') is not None:
+      seqrun_id = \
+        dag_run.conf.get('seqrun_id')
+    if seqrun_id is None:
+      raise ValueError('seqrun_id is not found in dag_run.conf')
+    temp_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    seqrun_id_json = \
+      os.path.join(temp_dir, 'seqrun_id.json')
+    with open(seqrun_id_json, 'w') as fp:
+      json.dump({'seqrun_id': seqrun_id}, fp)
+    res = \
+      upload_files_to_portal(
+        url_suffix="/api/v1/raw_seqrun/search_run_samplesheet",
+        portal_config_file=IGF_PORTAL_CONF,
+        file_path=seqrun_id_json,
+        verify=False,
+        jsonify=False)
+    if res.status_code != 200:
+      raise ValueError('Failed to get samplesheet from portal')
+    data = res.content.decode('utf-8')
+    # deal with runs without valid samplesheets
+    if "No samplesheet found" in data:
+      raise ValueError(f"No samplesheet found for seqrun_id: {seqrun_id}")
+    samplesheet_file = \
+      os.path.join(temp_dir, 'SampleSheet.csv')
+    with open(samplesheet_file, 'w') as fp:
+      fp.write(data)
+    samplesheet_tag = None
+    if 'Content-Disposition' in res.headers.keys():
+      header_message = res.headers.get('Content-Disposition')
+      if 'attachment; filename=' in header_message:
+        header_message = header_message.replace('attachment; filename=', '')
+        samplesheet_tag = header_message.replace(".csv", "")
+    if samplesheet_tag is None:
+      raise ValueError(f"Failed to get samplesheet from portal")
+    ti.xcom_push(
+      key=samplesheet_xcom_key,
+      value={'samplesheet_tag': samplesheet_tag, 'samplesheet_file': samplesheet_file})
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
 
 
 def mark_seqrun_status_func(**context):
