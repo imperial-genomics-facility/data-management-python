@@ -26,6 +26,7 @@ from igf_data.utils.fileutils import get_date_stamp_for_file_name
 from igf_data.utils.fileutils import calculate_file_checksum
 from igf_data.utils.singularity_run_wrapper import execute_singuarity_cmd
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
+from igf_data.igfdb.platformadaptor import PlatformAdaptor
 from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
 from igf_data.igfdb.sampleadaptor import SampleAdaptor
 from igf_data.igfdb.experimentadaptor import ExperimentAdaptor
@@ -2092,18 +2093,44 @@ def _check_and_load_seqrun_to_db(
     dbconf = read_dbconf_json(dbconf_json_path)
     sra = SeqrunAdaptor(**dbconf)
     sra.start_session()
+    pl = PlatformAdaptor(**{'session': sra.session})
     run_exists = \
       sra.check_seqrun_exists(seqrun_id)
     if not run_exists:
       runinfo_file = os.path.join(seqrun_path, runinfo_file_name)
       runinfo_data = RunInfo_xml(xml_file=runinfo_file)
-      platform_name = runinfo_data.get_platform_number()
+      platform_igf_id = runinfo_data.get_platform_number()
       flowcell_id = runinfo_data.get_flowcell_name()
-      ## TO DO: add flowcell details to attribute table
+      ## add flowcell details to attribute table
+      pl_data = \
+        pl.fetch_platform_records_igf_id(
+          platform_igf_id=platform_igf_id)
+      platform_name = \
+        pl_data.model_name
+      flowcell_type = ''
+      if platform_name == 'HISEQ4000':
+        runparameters_file = \
+          os.path.join(seqrun_path,'runParameters.xml')
+        runparameters_data = \
+          RunParameter_xml(xml_file=runparameters_file)
+        flowcell_type = \
+          runparameters_data.\
+            get_hiseq_flowcell()
+      elif platform_name == 'NOVASEQ6000':
+        runparameters_file = \
+          os.path.join(seqrun_path,'RunParameters.xml')
+        runparameters_data = \
+          RunParameter_xml(xml_file=runparameters_file)
+        flowcell_type = \
+          runparameters_data.\
+            get_novaseq_flowcell()
+      else:
+        flowcell_type = platform_name
       seqrun_data = [{
         'seqrun_igf_id': seqrun_id,
-        'platform_igf_id': platform_name,
-        'flowcell_id': flowcell_id }]
+        'platform_igf_id': platform_igf_id,
+        'flowcell_id': flowcell_id,
+        'flowcell':  flowcell_type}]
       sra.store_seqrun_and_attribute_data(
         data=seqrun_data,
         autosave=True)
@@ -2127,11 +2154,10 @@ def _check_and_seed_seqrun_pipeline(
     base = BaseAdaptor(**dbconf)
     base.start_session()
     sra = SeqrunAdaptor(**{'session': base.session})
+    pa = PipelineAdaptor(**{'session': base.session})
     seqrun_entry = \
       sra.fetch_seqrun_records_igf_id(
           seqrun_igf_id=seqrun_id)
-    pa = \
-      PipelineAdaptor(**{'session': base.session})
     seed_new_pipeline = True
     if check_all_pipelines_for_seed_id:
       seed_status_list = \

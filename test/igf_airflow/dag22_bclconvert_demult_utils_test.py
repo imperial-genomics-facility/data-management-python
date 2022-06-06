@@ -1,6 +1,6 @@
 import unittest, os, json
 import pandas as pd
-from igf_data.igfdb.igfTables import Base, Seqrun
+from igf_data.igfdb.igfTables import Base, Seqrun, Seqrun_attribute
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.platformadaptor import PlatformAdaptor
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
@@ -83,7 +83,19 @@ class Dag22_bclconvert_demult_utils_testA(unittest.TestCase):
         output_mode='one_or_none')
     self.assertTrue(seqrun_entry is not None)
     self.assertEqual(seqrun_entry.seqrun_igf_id, self.seqrun_id)
+    query = \
+      base.session.\
+        query(Seqrun_attribute.attribute_value).\
+        join(Seqrun, Seqrun.seqrun_id==Seqrun_attribute.seqrun_id).\
+        filter(Seqrun.seqrun_igf_id==self.seqrun_id).\
+        filter(Seqrun_attribute.attribute_name=='flowcell')
+    seqrun_attribute_entry = \
+      base.fetch_records(
+        query=query,
+        output_mode='one_or_none')
     base.close_session()
+    self.assertTrue(seqrun_attribute_entry is not None)
+    self.assertEqual(seqrun_attribute_entry[0], 'NEXTSEQ')
 
   def test_check_and_seed_seqrun_pipeline(self):
     _check_and_load_seqrun_to_db(
