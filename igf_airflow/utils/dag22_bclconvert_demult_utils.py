@@ -1964,6 +1964,58 @@ def _calculate_bases_mask(
             f"Failed to calculate bases mask, error: {e}")
 
 
+def mark_seqrun_status_func(**context):
+  try:
+    dag_run = context.get('dag_run')
+    next_task = \
+      context['params'].\
+      get('next_task', None)
+    last_task = \
+      context['params'].\
+      get('last_task', None)
+    seed_status = \
+      context['params'].\
+      get('seed_status', None)
+    no_change_status = \
+      context['params'].\
+      get('no_change_status', None)
+    seed_table = \
+      context['params'].\
+        get('seed_table', None)
+    seqrun_id = None
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('seqrun_id') is not None:
+      seqrun_id = \
+        dag_run.conf.get('seqrun_id')
+    if seqrun_id is None:
+      raise ValueError('seqrun_id is not found in dag_run.conf')
+    status = \
+      _check_and_seed_seqrun_pipeline(
+        seqrun_id=seqrun_id,
+        pipeline_name=context['task'].dag_id,
+        dbconf_json_path=DATABASE_CONFIG_FILE,
+        seed_status=seed_status,
+        seed_table=seed_table,
+        no_change_status=no_change_status)
+    if status and \
+       next_task is not None:
+      return [next_task]
+    if not status and \
+        last_task is not None:
+        return [last_task]
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
+
 def find_seqrun_func(**context):
   try:
     dag_run = context.get('dag_run')
