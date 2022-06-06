@@ -97,13 +97,19 @@ class Dag22_bclconvert_demult_utils_testA(unittest.TestCase):
       "pipeline_name" : "demultiplexing_fastq",
       "pipeline_db" : "sqlite:////data/bcl2fastq.db", 
       "pipeline_init_conf" : { "input_dir":"data/seqrun_dir/" , "output_dir" : "data"}, 
+      "pipeline_run_conf" : { "output_dir" : "data" }},{
+      "pipeline_name" : "demultiplexing_fastq2",
+      "pipeline_db" : "sqlite:////data/bcl2fastq2.db", 
+      "pipeline_init_conf" : { "input_dir":"data/seqrun_dir/" , "output_dir" : "data"}, 
       "pipeline_run_conf" : { "output_dir" : "data" }}]
     pla.store_pipeline_data(data=pipeline_data)
     pla.close_session()
-    _check_and_seed_seqrun_pipeline(
-      seqrun_id=self.seqrun_id,
-      pipeline_name='demultiplexing_fastq',
-      dbconf_json_path=self.dbconfig)
+    seed_status = \
+      _check_and_seed_seqrun_pipeline(
+        seqrun_id=self.seqrun_id,
+        pipeline_name='demultiplexing_fastq',
+        dbconf_json_path=self.dbconfig)
+    self.assertTrue(seed_status)
     base.start_session()
     pla = PipelineAdaptor(**{'session':base.session})
     (pipeseed_data, table_data) = \
@@ -114,6 +120,13 @@ class Dag22_bclconvert_demult_utils_testA(unittest.TestCase):
     self.assertTrue(pipeseed_data.to_dict(orient='records')[0]['seed_table'] == 'seqrun')
     self.assertTrue(table_data.to_dict(orient='records')[0]['seqrun_igf_id'] == self.seqrun_id)
     base.close_session()
+    seed_status = \
+      _check_and_seed_seqrun_pipeline(
+        seqrun_id=self.seqrun_id,
+        pipeline_name='demultiplexing_fastq2',
+        dbconf_json_path=self.dbconfig,
+        check_all_pipelines_for_seed_id=True)
+    self.assertFalse(seed_status)
 
 
 class Dag22_bclconvert_demult_utils_testB(unittest.TestCase):

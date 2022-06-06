@@ -1982,6 +1982,9 @@ def mark_seqrun_status_func(**context):
     seed_table = \
       context['params'].\
         get('seed_table', None)
+    check_all_pipelines_for_seed_id = \
+      context['params'].\
+        get('check_all_pipelines_for_seed_id', False)
     seqrun_id = None
     if dag_run is not None and \
        dag_run.conf is not None and \
@@ -1997,7 +2000,8 @@ def mark_seqrun_status_func(**context):
         dbconf_json_path=DATABASE_CONFIG_FILE,
         seed_status=seed_status,
         seed_table=seed_table,
-        no_change_status=no_change_status)
+        no_change_status=no_change_status,
+        check_all_pipelines_for_seed_id=check_all_pipelines_for_seed_id)
     if status and \
        next_task is not None:
       return [next_task]
@@ -2095,6 +2099,7 @@ def _check_and_load_seqrun_to_db(
       runinfo_data = RunInfo_xml(xml_file=runinfo_file)
       platform_name = runinfo_data.get_platform_number()
       flowcell_id = runinfo_data.get_flowcell_name()
+      ## TO DO: add flowcell details to attribute table
       seqrun_data = [{
         'seqrun_igf_id': seqrun_id,
         'platform_igf_id': platform_name,
@@ -2115,7 +2120,8 @@ def _check_and_seed_seqrun_pipeline(
     dbconf_json_path: str,
     seed_status: str = 'SEEDED',
     seed_table: str ='seqrun',
-    no_change_status: str = 'RUNNING') -> bool:
+    no_change_status: str = 'RUNNING',
+    check_all_pipelines_for_seed_id: bool = False) -> bool:
   try:
     dbconf = read_dbconf_json(dbconf_json_path)
     base = BaseAdaptor(**dbconf)
@@ -2124,14 +2130,29 @@ def _check_and_seed_seqrun_pipeline(
     seqrun_entry = \
       sra.fetch_seqrun_records_igf_id(
           seqrun_igf_id=seqrun_id)
-    pa = PipelineAdaptor(**{'session': base.session})
-    seed_status = \
-      pa.create_or_update_pipeline_seed(
-        seed_id=seqrun_entry.seqrun_id,
-        pipeline_name=pipeline_name,
-        new_status=seed_status,
-        seed_table=seed_table,
-        no_change_status=no_change_status)
+    pa = \
+      PipelineAdaptor(**{'session': base.session})
+    seed_new_pipeline = True
+    if check_all_pipelines_for_seed_id:
+      seed_status_list = \
+        pa.check_seed_id_status(
+          seed_id=seqrun_entry.seqrun_id,
+          seed_table=seed_table)
+      seed_status_df = \
+        pd.DataFrame(seed_status_list)
+      if 'SEEDED' in seed_status_df['status'].values.tolist() or \
+         'RUNNING' in seed_status_df['status'].values.tolist():
+        seed_new_pipeline = False
+    if seed_new_pipeline:
+      seed_status = \
+        pa.create_or_update_pipeline_seed(
+          seed_id=seqrun_entry.seqrun_id,
+          pipeline_name=pipeline_name,
+          new_status=seed_status,
+          seed_table=seed_table,
+          no_change_status=no_change_status)
+    else:
+      seed_status = False
     base.close_session()
     return seed_status
   except Exception as e:
