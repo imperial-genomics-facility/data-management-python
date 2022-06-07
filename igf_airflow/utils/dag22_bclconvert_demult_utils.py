@@ -2177,7 +2177,8 @@ def _check_for_required_files(seqrun_path: str, file_list: list) -> bool:
         return False
     return True
   except Exception as e:
-    raise IOError("Failed to get required files for seqrun {0}".format(seqrun_path))
+    raise IOError(
+      f"Failed to get required files for seqrun {seqrun_path}")
 
 
 def _check_and_load_seqrun_to_db(
@@ -2194,10 +2195,14 @@ def _check_and_load_seqrun_to_db(
     run_exists = \
       sra.check_seqrun_exists(seqrun_id)
     if not run_exists:
-      runinfo_file = os.path.join(seqrun_path, runinfo_file_name)
-      runinfo_data = RunInfo_xml(xml_file=runinfo_file)
-      platform_igf_id = runinfo_data.get_platform_number()
-      flowcell_id = runinfo_data.get_flowcell_name()
+      runinfo_file = \
+        os.path.join(seqrun_path, runinfo_file_name)
+      runinfo_data = \
+        RunInfo_xml(xml_file=runinfo_file)
+      platform_igf_id = \
+        runinfo_data.get_platform_number()
+      flowcell_id = \
+        runinfo_data.get_flowcell_name()
       ## add flowcell details to attribute table
       pl_data = \
         pl.fetch_platform_records_igf_id(
@@ -2207,7 +2212,7 @@ def _check_and_load_seqrun_to_db(
       flowcell_type = ''
       if platform_name == 'HISEQ4000':
         runparameters_file = \
-          os.path.join(seqrun_path,'runParameters.xml')
+          os.path.join(seqrun_path, 'runParameters.xml')
         runparameters_data = \
           RunParameter_xml(xml_file=runparameters_file)
         flowcell_type = \
@@ -2215,7 +2220,7 @@ def _check_and_load_seqrun_to_db(
             get_hiseq_flowcell()
       elif platform_name == 'NOVASEQ6000':
         runparameters_file = \
-          os.path.join(seqrun_path,'RunParameters.xml')
+          os.path.join(seqrun_path, 'RunParameters.xml')
         runparameters_data = \
           RunParameter_xml(xml_file=runparameters_file)
         flowcell_type = \
@@ -2234,8 +2239,7 @@ def _check_and_load_seqrun_to_db(
     sra.close_session()
   except Exception as e:
     raise ValueError(
-            "Failed to load seqrun {0} to database, error: {1}".\
-            format(seqrun_id, e))
+      f"Failed to load seqrun {seqrun_id} to database, error: {e}")
 
 
 def _check_and_seed_seqrun_pipeline(
@@ -2280,5 +2284,4 @@ def _check_and_seed_seqrun_pipeline(
     return seed_status
   except Exception as e:
     raise ValueError(
-            "Faild to seed pipeline {0} for seqrun {1}, error: {2}".\
-            format(pipeline_name, seqrun_id, e))
+      f"Faild to seed pipeline {pipeline_name} for seqrun {seqrun_id}, error: {e}")
