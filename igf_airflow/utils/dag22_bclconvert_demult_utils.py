@@ -1655,11 +1655,20 @@ def format_and_split_samplesheet_func(**context):
   try:
     ti = context['ti']
     xcom_key = \
-      context['params'].get('xcom_key', 'formatted_samplesheets')
+      context['params'].\
+      get('xcom_key', 'formatted_samplesheets')
     max_projects = \
-      context['params'].get('max_projects', 0)
+      context['params'].\
+      get('max_projects', 0)
     project_task_prefix = \
-      context['params'].get('project_task_prefix', 'demult_start_project_')
+      context['params'].\
+      get('project_task_prefix', 'demult_start_project_')
+    samplesheet_xcom_key = \
+      context['params'].\
+      get('samplesheet_xcom_key', 'samplesheet_data')
+    samplesheet_xcom_task = \
+      context['params'].\
+      get('samplesheet_xcom_task', 'fetch_samplesheet_for_run')
     dag_run = context.get('dag_run')
     task_list = ['mark_run_finished',]
     if dag_run is not None and \
@@ -1669,40 +1678,58 @@ def format_and_split_samplesheet_func(**context):
         dag_run.conf.get('seqrun_id')
       seqrun_path = \
         os.path.join(HPC_SEQRUN_BASE_PATH, seqrun_id)
-      samplesheet_file = \
-        os.path.join(seqrun_path, 'SampleSheet.csv')
-      runinfo_xml_file = \
-        os.path.join(seqrun_path, 'RunInfo.xml')
-      check_file_path(samplesheet_file)
-      samplesheet_dir = \
-        get_temp_dir(use_ephemeral_space=True)
-      formatted_samplesheets_list = \
-        _get_formatted_samplesheets(
-          samplesheet_file=samplesheet_file,
-          runinfo_xml_file=runinfo_xml_file,
-          samplesheet_output_dir=samplesheet_dir,
-          singlecell_barcode_json=SINGLECELL_BARCODE_JSON,
-          singlecell_dual_barcode_json=SINGLECELL_DUAL_BARCODE_JSON)
-      ti.xcom_push(
-        key=xcom_key,
-        value=formatted_samplesheets_list)
-      project_indices = \
-        pd.DataFrame(formatted_samplesheets_list)['project_index'].\
-        drop_duplicates().values.tolist()
-      if len(project_indices) > max_projects:
-        raise ValueError(
-                "Too many projects {0}. Increase MAX_PROJECTS param from {1}".\
-                format(project_indices, max_projects))
-      task_list = [
-        '{0}{1}'.format(project_task_prefix,project_index)
-          for project_index in project_indices]
-      if len(task_list) == 0:
-        log.warning(
-          "No project indices found in samplesheet {0}".\
-            format(samplesheet_file))
-        task_list = ['mark_run_finished']
     else:
-      log.warning("No seqrun_id found in dag_run conf")
+      raise("No seqrun_id found in dag_run conf")
+    ## fetch samplesheet from previous task
+    samplesheet_file = \
+      ti.xcom_pull(
+        task_ids=samplesheet_xcom_task,
+        key=samplesheet_xcom_key)
+    check_file_path(samplesheet_file)
+    runinfo_xml_file = \
+      os.path.join(
+        seqrun_path,
+        'RunInfo.xml')
+    check_file_path(samplesheet_file)
+    samplesheet_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    ## get formatted samplesheets
+    ## output:
+    ## [{
+	  ##   'project': 'project_name',
+	  ##   'project_index': 1,
+	  ##   'lane': 1,
+	  ##   'lane_index': 1,
+	  ##   'bases_mask': 'Y28;I10;I10;Y90',
+	  ##   'index_group': '20_10X',
+	  ##   'index_group_index': 1,
+	  ##   'samplesheet_file': '/tmp/SampleSheet_project_name_1_20_NA.csv',
+	  ##   'output_dir': '/tmp/dir'
+    ## }]
+    formatted_samplesheets_list = \
+      _get_formatted_samplesheets(
+        samplesheet_file=samplesheet_file,
+        runinfo_xml_file=runinfo_xml_file,
+        samplesheet_output_dir=samplesheet_dir,
+        singlecell_barcode_json=SINGLECELL_BARCODE_JSON,
+        singlecell_dual_barcode_json=SINGLECELL_DUAL_BARCODE_JSON)
+    ## save formatted samplesheet data to xcom
+    ti.xcom_push(
+      key=xcom_key,
+      value=formatted_samplesheets_list)
+    project_indices = \
+      pd.DataFrame(formatted_samplesheets_list)['project_index'].\
+      drop_duplicates().values.tolist()
+    if len(project_indices) > max_projects:
+      raise ValueError(
+        f"Too many projects {project_indices}. Increase MAX_PROJECTS param from {max_projects}")
+    ## generate task list
+    task_list = [
+      f'{project_task_prefix}{project_index}'
+        for project_index in project_indices]
+    if len(task_list) == 0:
+      log.warning(
+        f"No project indices found in samplesheet {samplesheet_file}")
       task_list = ['mark_run_finished']
     return task_list
   except Exception as e:
