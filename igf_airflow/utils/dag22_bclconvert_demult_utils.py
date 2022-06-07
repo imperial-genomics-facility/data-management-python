@@ -1,12 +1,15 @@
+from tkinter import E
 import pandas as pd
 from copy import deepcopy
 import os
 import re
 import json
 import stat
+import math
 import logging
 import subprocess
 from typing import Tuple
+from typing import List
 from airflow.models import Variable
 from igf_data.illumina.runinfo_xml import RunInfo_xml
 from igf_data.illumina.runparameters_xml import RunParameter_xml
@@ -39,10 +42,14 @@ from igf_data.utils.singularity_run_wrapper import execute_singuarity_cmd
 from igf_data.utils.jupyter_nbconvert_wrapper import Notebook_runner
 from igf_data.utils.seqrunutils import get_seqrun_date_from_igf_id
 from igf_portal.api_utils import upload_files_to_portal
+from igf_data.igfdb.projectadaptor import ProjectAdaptor
+from igf_data.utils.fileutils import remove_dir
+from jinja2 import Template,Environment, FileSystemLoader, select_autoescape
 
 SLACK_CONF = Variable.get('slack_conf',default_var=None)
 MS_TEAMS_CONF = Variable.get('ms_teams_conf',default_var=None)
 HPC_SEQRUN_BASE_PATH = Variable.get('hpc_seqrun_path', default_var=None)
+HPC_SSH_KEY_FILE = Variable.get('hpc_ssh_key_file', default_var=None)
 DATABASE_CONFIG_FILE = Variable.get('database_config_file', default_var=None)
 SINGLECELL_BARCODE_JSON = Variable.get('singlecell_barcode_json', default_var=None)
 SINGLECELL_DUAL_BARCODE_JSON = Variable.get('singlecell_dual_barcode_json', default_var=None)
@@ -55,6 +62,10 @@ FASTQC_IMAGE_PATH = Variable.get('fastqc_image_path', default_var=None)
 FASTQSCREEN_IMAGE_PATH = Variable.get('fastqscreen_image_path', default_var=None)
 FASTQSCREEN_CONF_PATH = Variable.get('fastqscreen_conf_path', default_var=None)
 IGF_PORTAL_CONF = Variable.get('igf_portal_conf', default_var=None)
+FTP_HOSTNAME = Variable.get('ftp_hostname', default_var=None)
+FTP_USERNAME = Variable.get('ftp_username', default_var=None)
+FTP_PROJECT_PATH = Variable.get('ftp_project_path', default_var=None)
+QC_PAGE_TEMPLATE_DIR = Variable.get('qc_page_template_dir', default_var=None)
 
 log = logging.getLogger(__name__)
 
@@ -1649,6 +1660,377 @@ def trigger_lane_jobs(**context):
       comment=e,
       reaction='fail')
     raise
+
+
+def _get_project_user_list(
+      db_config_file: str,
+      project_name: str) -> \
+      Tuple[list, dict, bool]:
+  try:
+    dbparams = \
+      read_dbconf_json(db_config_file)
+    pa = ProjectAdaptor(**dbparams)
+    pa.start_session()
+    user_info = \
+      pa.get_project_user_info(
+        project_igf_id=project_name)                             # fetch user info from db
+    pa.close_session()
+    user_info = \
+      user_info.to_dict(orient='records')
+    if len(user_info) == 0:
+      raise ValueError(
+        f"No user found for project {project_name}")
+    user_list = list()
+    user_passwd_dict = dict()
+    hpc_user = True
+    for user in user_info:
+      username = user['username']
+      user_list.append(username)
+      if 'ht_password' in user.keys():
+        ht_passwd = user['ht_password']
+        user_passwd_dict.\
+          update({username: ht_passwd})
+      if 'category' in user.keys() and \
+           'data_authority' in user.keys() and \
+           user['category'] == 'NON_HPC_USER' and \
+           user['data_authority']=='T':
+          hpc_user = False
+    return user_list, user_passwd_dict, hpc_user
+  except Exception as e:
+    raise ValueError(
+      f"Failed to get user list for project {project_name}, error: {e}")
+
+
+def _get_project_sample_count(
+      db_config_file: str,
+      project_name: str,
+      only_active: bool = True) -> int:
+  try:
+    dbparams = \
+      read_dbconf_json(db_config_file)
+    pa = ProjectAdaptor(**dbparams)
+    pa.start_session()
+    sample_counts = \
+      pa.count_project_samples(\
+        project_igf_id=project_name,
+        only_active=only_active)
+    pa.close_session()
+    return sample_counts
+  except Exception as e:
+    raise ValueError(
+      f"Failed to get project samples, error: {e}")
+
+
+def _configure_qc_pages_for_ftp(
+      template_dir: str,
+      project_name: str,
+      db_config_file: str,
+      remote_project_base_path: str,
+      output_path: str = '',
+      htaccess_template: str = 'ht_access/htaccess',
+      htpasswd_template: str = 'ht_access/htpasswd',
+      project_template: str = 'project_info/index.html',
+      status_template: str = 'project_info/status.html',
+      analysis_template: str = 'project_info/analysis.html',
+      analysis_viewer_template: str = 'project_info/analysis_viewer.html',
+      seqruninfofile: str = 'seqruninfofile.json',
+      samplereadcountfile: str = 'samplereadcountfile.json',
+      samplereadcountcsvfile: str = 'samplereadcountfile.csv',
+      status_data_json: str = 'status_data.json',
+      analysis_data_json: str = 'analysis_data.json',
+      analysis_data_csv: str = 'analysis_data.csv',
+      analysis_chart_data_csv: str = 'analysis_chart_data.csv',
+      analysis_chart_data_json: str = 'analysis_chart_data.json',
+      analysis_view_js: str = 'viewer.js',
+      project_image_height: int = 700,
+      project_sample_count_threshold: int = 75
+      ) -> dict:
+  try:
+    ## get template paths
+    htaccess_template_path = \
+      os.path.join(
+        template_dir,
+        htaccess_template)
+    check_file_path(htaccess_template_path)
+    htpasswd_template_path = \
+      os.path.join(
+        template_dir,
+        htpasswd_template)
+    check_file_path(htpasswd_template_path)
+    project_template_path = \
+      os.path.join(
+        template_dir,
+        project_template)
+    check_file_path(project_template_path)
+    status_template_path = \
+      os.path.join(
+        template_dir,
+        status_template)
+    check_file_path(status_template_path)
+    analysis_template_path = \
+      os.path.join(
+        template_dir,
+        analysis_template)
+    check_file_path(analysis_template_path)
+    analysis_viewer_template = \
+      os.path.join(
+        template_dir,
+        analysis_viewer_template)
+    check_file_path(analysis_viewer_template)
+    ## get projects user list and sample count from db
+    user_list, user_passwd_dict, hpc_user = \
+      _get_project_user_list(
+        db_config_file=db_config_file,
+        project_name=project_name)
+    sample_counts = \
+      _get_project_sample_count(
+        db_config_file=db_config_file,
+        project_name=project_name,
+        only_active=True)
+    ## get image height for project page
+    image_height = \
+      _calculate_image_height_for_project_page(
+        sample_count=sample_counts,
+        height=project_image_height,
+        threshold=project_sample_count_threshold)
+    ## create output in temp dir
+    if output_path != '':
+      check_file_path(output_path)
+      temp_work_dir = output_path
+    else:
+      temp_work_dir = \
+        get_temp_dir(use_ephemeral_space=True)
+    ## htaccess file
+    htaccess_output = \
+      os.path.join(
+        temp_work_dir,
+        ".{0}".format(os.path.basename(htaccess_template_path)))
+    _create_output_from_jinja_template(
+      template_file=htaccess_template_path,
+      output_file=htaccess_output,
+      autoescape_list=['html', 'xml'],
+      data=dict(
+        remote_project_dir=remote_project_base_path,
+        project_tag=project_name,
+        hpcUser=hpc_user,
+        htpasswd_filename=os.path.basename(htpasswd_template),
+        customerUsernameList=' '.join(user_list)))
+    ## htpasswd file
+    htpasswd_output = \
+      os.path.join(
+        temp_work_dir,
+        ".{0}".format(os.path.basename(htpasswd_template_path)))
+    _create_output_from_jinja_template(
+      template_file=htpasswd_template_path,
+      output_file=htpasswd_output,
+      autoescape_list=['html', 'xml'],
+      data=dict(userDict=user_passwd_dict))
+    ## project page
+    project_output = \
+      os.path.join(
+        temp_work_dir,
+        os.path.basename(project_template_path))
+    _create_output_from_jinja_template(
+      template_file=project_template_path,
+      output_file=project_output,
+      autoescape_list=['txt', 'xml'],
+      data=dict(
+        ProjectName=project_name,
+        seqrunInfoFile=seqruninfofile,
+        sampleReadCountFile=samplereadcountfile,
+        sampleReadCountCsvFile=samplereadcountcsvfile,
+        ImageHeight=image_height))
+    ## status page
+    status_output = \
+      os.path.join(
+        temp_work_dir,
+        os.path.basename(status_template_path))
+    _create_output_from_jinja_template(
+      template_file=status_template_path,
+      output_file=status_output,
+      autoescape_list=['txt', 'xml'],
+      data=dict(
+        ProjectName=project_name,
+        status_data_json=status_data_json))
+    ## analysis page
+    analysis_output = \
+      os.path.join(
+        temp_work_dir,
+        os.path.basename(analysis_template_path))
+    _create_output_from_jinja_template(
+      template_file=analysis_template_path,
+      output_file=analysis_output,
+      autoescape_list=['txt', 'xml'],
+      data=dict(
+        ProjectName=project_name,
+        analysisInfoFile=analysis_data_json,
+        analysisInfoCsvFile=analysis_data_csv,
+        analysisCsvDataFile=analysis_chart_data_csv,
+        analysisPlotFile=analysis_chart_data_json))
+    ## analysis viewer page
+    analysis_viewer_output = \
+      os.path.join(
+        temp_work_dir,
+        os.path.basename(analysis_viewer_template))
+    _create_output_from_jinja_template(
+      template_file=analysis_viewer_template,
+      output_file=analysis_viewer_output,
+      autoescape_list=['txt', 'xml'],
+      data=dict(
+        ProjectName=project_name,
+        analysisJsFile=analysis_view_js))
+    ## get remote page paths
+    remote_project_dir = \
+      os.path.join(
+        remote_project_base_path,
+        project_name)
+    remote_htaccess_file = \
+      os.path.join(
+        remote_project_dir,
+        os.path.basename(htaccess_output))
+    remote_htpasswd_file = \
+      os.path.join(
+        remote_project_dir,
+        os.path.basename(htpasswd_output))
+    remote_project_output_file = \
+      os.path.join(
+        remote_project_dir,
+        os.path.basename(project_output))
+    remote_status_output_file = \
+      os.path.join(
+        remote_project_dir,
+        os.path.basename(status_output))
+    remote_analysis_output_file = \
+      os.path.join(
+        remote_project_dir,
+        os.path.basename(analysis_output))
+    remote_analysis_viewer_output_file = \
+      os.path.join(
+        remote_project_dir,
+        os.path.basename(analysis_viewer_output))
+    output_file_dict = {
+      htaccess_output: remote_htaccess_file,
+      htpasswd_output: remote_htpasswd_file,
+      project_output: remote_project_output_file,
+      status_output: remote_status_output_file,
+      analysis_output: remote_analysis_output_file,
+      analysis_viewer_output: remote_analysis_viewer_output_file}
+    return output_file_dict
+  except Exception as e:
+    raise ValueError(
+      f"Failed to configure qc pages for ftp, error: {e}")
+
+
+def setup_qc_page_for_project_func(**context):
+  try:
+    ti = context.get('ti')
+    project_data_xcom_key = \
+      context['params'].\
+      get('project_data_xcom_key', 'formatted_samplesheets')
+    project_data_xcom_task = \
+      context['params'].\
+      get('project_data_xcom_task', 'format_and_split_samplesheet')
+    project_index_column = \
+      context['params'].\
+      get('project_index_column', 'project_index')
+    project_index = \
+      context['params'].\
+      get('project_index')
+    project_column = \
+      context['params'].\
+      get('project_column', 'project')
+    ## fetch project name
+    formatted_samplesheets_list = \
+      ti.xcom_pull(
+        task_ids=project_data_xcom_task,
+        key=project_data_xcom_key)
+    df = \
+      pd.DataFrame(
+        formatted_samplesheets_list)
+    if project_index_column not in df.columns:
+      raise KeyError(f"{project_index_column} column not found")
+    df[project_index_column] = \
+      df[project_index_column].astype(int)
+    project_df = \
+      df[df[project_index_column]==int(project_index)]
+    project_name = \
+      project_df[project_column].values.tolist()[0]
+    ## dump qc pages to temp dir
+    output_file_dict = \
+      _configure_qc_pages_for_ftp(
+      template_dir=QC_PAGE_TEMPLATE_DIR,
+      project_name=project_name,
+      remote_project_base_path=FTP_PROJECT_PATH,
+      db_config_file=DATABASE_CONFIG_FILE)
+    ## upload qc pages to remote server
+    for local_file, remote_file in output_file_dict.items():
+      os.chmod(local_file, mode=0o774)
+      copy_remote_file(
+      source_path=local_file,
+      destination_path=remote_file,
+      destination_address=f"{FTP_USERNAME}@{FTP_HOSTNAME}",
+      ssh_key_file=HPC_SSH_KEY_FILE,
+      force_update=True)
+    return True
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
+
+def _create_output_from_jinja_template(
+      template_file: str,
+      output_file: str,
+      autoescape_list: list,
+      data: dict) -> None:
+  try:
+    template_env = \
+      Environment(\
+        loader=FileSystemLoader(
+          searchpath=os.path.dirname(template_file)),
+          autoescape=select_autoescape(autoescape_list))
+    template = \
+      template_env.\
+        get_template(
+          os.path.basename(template_file))
+    template.\
+      stream(**data).\
+      dump(output_file)
+    check_file_path(output_file)
+  except Exception as e:
+    raise ValueError(
+      f"Failed to create output file usinh jinja, error {e}")
+
+
+def _calculate_image_height_for_project_page(
+      sample_count: int,
+      height: int = 700,
+      threshold: int = 75) -> int:
+    '''
+    An internal static method for calculating image height based on the number
+    of samples registered for any projects
+
+    :param sample_count: Sample count for a given project
+    :param height: Height of the image of display page, default 700
+    :param threshold: Sample count threshold, default 75
+    :returns: Revised image height
+    '''
+    try:
+      if sample_count <= threshold:                                             # low sample count
+        return height
+      else:
+        if (sample_count / threshold) <= 2:                                     # high sample count
+          return height * 2
+        else:                                                                   # very high sample count
+          return int(height * (2 + math.log(sample_count / threshold)))
+    except Exception as e:
+      raise ValueError(e)
 
 
 def format_and_split_samplesheet_func(**context):

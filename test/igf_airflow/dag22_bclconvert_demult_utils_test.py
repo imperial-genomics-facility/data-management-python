@@ -7,6 +7,7 @@ from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
 from igf_data.igfdb.sampleadaptor import SampleAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
+from igf_data.igfdb.useradaptor import UserAdaptor
 from igf_data.illumina.samplesheet import SampleSheet
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.utils.dbutils import read_dbconf_json
@@ -28,6 +29,11 @@ from igf_airflow.utils.dag22_bclconvert_demult_utils import get_project_id_sampl
 from igf_airflow.utils.dag22_bclconvert_demult_utils import register_experiment_and_runs_to_db
 from igf_airflow.utils.dag22_bclconvert_demult_utils import load_data_raw_data_collection
 from igf_airflow.utils.dag22_bclconvert_demult_utils import copy_or_replace_file_to_disk_and_change_permission
+from igf_airflow.utils.dag22_bclconvert_demult_utils import _get_project_user_list
+from igf_airflow.utils.dag22_bclconvert_demult_utils import _configure_qc_pages_for_ftp
+from igf_airflow.utils.dag22_bclconvert_demult_utils import _get_project_sample_count
+from igf_airflow.utils.dag22_bclconvert_demult_utils import _calculate_image_height_for_project_page
+from igf_airflow.utils.dag22_bclconvert_demult_utils import _create_output_from_jinja_template
 
 class Dag22_bclconvert_demult_utils_testA(unittest.TestCase):
   def setUp(self):
@@ -870,6 +876,104 @@ class Dag22_bclconvert_demult_utils_testH(unittest.TestCase):
     os.chmod(os.path.dirname(dest_file), 0o777)
     os.chmod(dest_file, 0o777)
     remove_dir(os.path.dirname(dest_file))
+
+
+class Dag22_bclconvert_demult_utils_testI(unittest.TestCase):
+  def setUp(self):
+    self.dbconfig = 'data/dbconfig.json'
+    dbparam = read_dbconf_json(self.dbconfig)
+    base = BaseAdaptor(**dbparam)
+    self.engine = base.engine
+    self.dbname = dbparam['dbname']
+    Base.metadata.create_all(self.engine)
+    self.session_class = base.get_session_class()
+    project_data = [{
+      'project_igf_id': 'IGFP0001_test_22-8-2017_rna'}]
+    user_data = [{
+      'name': 'UserA', 
+      'email_id': 'usera@ic.ac.uk', 
+      'username': 'usera',
+      'password': 'BBB'}]
+    project_user_data = [{
+      'project_igf_id': 'IGFP0001_test_22-8-2017_rna',
+      'email_id': 'usera@ic.ac.uk',
+      'data_authority': True}]
+    sample_data = [
+      {'sample_igf_id': 'IGFS001', 'project_igf_id': 'IGFP0001_test_22-8-2017_rna'},
+      {'sample_igf_id': 'IGFS002', 'project_igf_id': 'IGFP0001_test_22-8-2017_rna',},
+      {'sample_igf_id': 'IGFS003', 'project_igf_id': 'IGFP0001_test_22-8-2017_rna',}]
+    base.start_session()
+    ua = UserAdaptor(**{'session': base.session})
+    ua.store_user_data(data=user_data)
+    pa = ProjectAdaptor(**{'session': base.session})
+    pa.store_project_and_attribute_data(data=project_data)
+    pa.assign_user_to_project(data=project_user_data)
+    sa = SampleAdaptor(**{'session': base.session})
+    sa.store_sample_and_attribute_data(data=sample_data)
+    base.close_session()
+    self.temp_dir = get_temp_dir()
+    self.test_template = \
+      os.path.join(self.temp_dir, 'test_template.txt')
+    with open(self.test_template, 'w') as f:
+      f.write('sample_name = {{ SAMPLE_NAME }}')
+
+  def tearDown(self):
+    Base.metadata.drop_all(self.engine)
+    os.remove(self.dbname)
+    remove_dir(self.temp_dir)
+
+  def test_get_project_user_list(self):
+    user_list, user_passwd_dict, hpc_user = \
+      _get_project_user_list(
+      db_config_file=self.dbconfig,
+      project_name='IGFP0001_test_22-8-2017_rna')
+    self.assertEqual(len(user_list), 1)
+    self.assertEqual(user_list[0], 'usera')
+    self.assertTrue(user_passwd_dict['usera'].startswith('{SHA}'))
+    self.assertFalse(hpc_user)
+
+  def test_get_project_sample_count(self):
+    sample_count = \
+      _get_project_sample_count(
+      db_config_file=self.dbconfig,
+      project_name='IGFP0001_test_22-8-2017_rna')
+    self.assertEqual(sample_count, 3)
+
+  def test_calculate_image_height_for_project_page(self):
+    height = \
+      _calculate_image_height_for_project_page(
+        sample_count=4,
+        height=1,
+        threshold=2)
+    self.assertEqual(height, 2)
+
+  def test_create_output_from_jinja_template(self):
+    output_file = \
+      os.path.join(self.temp_dir, 'output.txt')
+    _create_output_from_jinja_template(
+      template_file=self.test_template,
+      output_file=output_file,
+      autoescape_list=['html', 'xml'],
+      data=dict(SAMPLE_NAME='SampleA',  PROJECT_NAME='ProjectA'))
+    self.assertTrue(os.path.exists(output_file))
+    with open(output_file, 'r') as f:
+      self.assertEqual(f.read(), 'sample_name = SampleA')
+
+  def test_configure_qc_pages_for_ftp(self):
+    output_dict = \
+      _configure_qc_pages_for_ftp(
+        template_dir='template',
+        project_name='IGFP0001_test_22-8-2017_rna',
+        db_config_file=self.dbconfig,
+        remote_project_base_path='ftp_path',
+        output_path=self.temp_dir)
+    htacccess_path = \
+      os.path.join(self.temp_dir, '.htaccess')
+    htaccess_ftp_path = \
+      os.path.join('ftp_path', 'IGFP0001_test_22-8-2017_rna', '.htaccess')
+    self.assertEqual(len(output_dict), 6)
+    self.assertTrue(os.path.exists(htacccess_path))
+    self.assertEqual(output_dict[htacccess_path], htaccess_ftp_path)
 
 if __name__=='__main__':
   unittest.main()
