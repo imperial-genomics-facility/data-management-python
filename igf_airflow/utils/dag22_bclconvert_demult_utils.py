@@ -45,6 +45,7 @@ from igf_portal.api_utils import upload_files_to_portal
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.utils.fileutils import remove_dir
 from jinja2 import Template,Environment, FileSystemLoader, select_autoescape
+from igf_data.utils.seqrunutils import get_seqrun_date_from_igf_id
 
 SLACK_CONF = Variable.get('slack_conf',default_var=None)
 MS_TEAMS_CONF = Variable.get('ms_teams_conf',default_var=None)
@@ -1126,7 +1127,8 @@ def get_sample_id_and_fastq_path_for_sample_groups(
         'sample_ids': new_sample_groups_list})
     return formatted_sample_group
   except Exception as e:
-    raise ValueError("Failed to get sample fastq path for sample groups, error: {0}".format(e))
+    raise ValueError(
+      f"Failed to get sample fastq path for sample groups, error: {e}")
 
 
 def sample_known_qc_factory_func(**context):
@@ -1158,7 +1160,7 @@ def sample_known_qc_factory_func(**context):
         key=xcom_key_for_bclconvert_output)
     if bclconvert_output_dir is None:
       raise ValueError(
-              f"Failed to get bcl convert output dir for task {xcom_task_for_bclconvert_output}")
+        f"Failed to get bcl convert output dir for task {xcom_task_for_bclconvert_output}")
     if max_samples == 0:
       raise ValueError("max_samples is not set")
     samplesheet_path = \
@@ -1650,6 +1652,88 @@ def trigger_lane_jobs(**context):
       '{0}{1}'.format(lane_task_prefix, lane_count)
         for lane_count in lane_counts]
     return task_list
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
+
+def setup_globus_transfer_for_project_func(**context):
+  """
+  Create a temp dir in Ephemeral space and add to xcom
+  """
+  try:
+    ti = context['ti']
+    globus_dir_xcom_key = \
+      context['params'].\
+      get('globus_dir_xcom_key', 'globus_root_dir')
+    project_data_xcom_key = \
+      context['params'].\
+      get('project_data_xcom_key', 'formatted_samplesheets')
+    project_data_xcom_task = \
+      context['params'].\
+      get('project_data_xcom_task', 'format_and_split_samplesheet')
+    project_index_column = \
+      context['params'].\
+      get('project_index_column', 'project_index')
+    project_index = \
+      context['params'].\
+      get('project_index')
+    project_column = \
+      context['params'].\
+      get('project_column', 'project')
+    ## get serun id
+    dag_run = context.get('dag_run')
+    seqrun_id = ''
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('seqrun_id') is not None:
+      seqrun_id = \
+        dag_run.conf.get('seqrun_id')
+    else:
+      raise IOError("Failed to get seqrun_id from dag_run")
+    ## get flowcell id from db
+    _, flowcell_id = \
+      get_flatform_name_and_flowcell_id_for_seqrun(
+        seqrun_igf_id=seqrun_id,
+        db_config_file=DATABASE_CONFIG_FILE)
+    ## get seqrun date from seqrun id
+    seqrun_date = \
+      get_seqrun_date_from_igf_id(
+        seqrun_igf_id=seqrun_id)
+    ## fetch project name
+    formatted_samplesheets_list = \
+      ti.xcom_pull(
+        task_ids=project_data_xcom_task,
+        key=project_data_xcom_key)
+    df = \
+      pd.DataFrame(
+        formatted_samplesheets_list)
+    if project_index_column not in df.columns:
+      raise KeyError(
+        f"{project_index_column} column not found")
+    df[project_index_column] = \
+      df[project_index_column].astype(int)
+    project_df = \
+      df[df[project_index_column]==int(project_index)]
+    project_name = \
+      project_df[project_column].values.tolist()[0]
+    ## temp_dir / project name _ run_date _ flowcell_id
+    globus_root_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    globus_project_dir = \
+      os.path.join(
+        globus_root_dir,
+        f"{project_name}_{flowcell_id}_{seqrun_date}")
+    ti.xcom_push(
+      key=globus_dir_xcom_key,
+      value=globus_project_dir)
   except Exception as e:
     log.error(e)
     send_log_to_channels(
