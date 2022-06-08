@@ -1,4 +1,3 @@
-from tkinter import E
 import pandas as pd
 from copy import deepcopy
 import os
@@ -62,6 +61,7 @@ HPC_BASE_RAW_DATA_PATH = Variable.get('hpc_base_raw_data_path', default_var=None
 FASTQC_IMAGE_PATH = Variable.get('fastqc_image_path', default_var=None)
 FASTQSCREEN_IMAGE_PATH = Variable.get('fastqscreen_image_path', default_var=None)
 FASTQSCREEN_CONF_PATH = Variable.get('fastqscreen_conf_path', default_var=None)
+FASTQSCREEN_REF_DIR = Variable.get('fastqscreen_ref_dir', default_var=None)
 IGF_PORTAL_CONF = Variable.get('igf_portal_conf', default_var=None)
 FTP_HOSTNAME = Variable.get('ftp_hostname', default_var=None)
 FTP_USERNAME = Variable.get('ftp_username', default_var=None)
@@ -70,19 +70,20 @@ QC_PAGE_TEMPLATE_DIR = Variable.get('qc_page_template_dir', default_var=None)
 
 log = logging.getLogger(__name__)
 
+
 def run_fastqScreen(
-    fastqscreen_image_path: str,
-    fastq_path: str,
-    output_dir: str,
-    fastqscreen_conf: str,
-    fastqscreen_exe: str = 'fastq_screen',
-    fastqscreen_options: tuple = (
-      '--aligner bowtie2',
-      '--force',
-      '--quiet',
-      '--subset 100000',
-      '--threads 1')) \
-    -> list:
+      fastqscreen_image_path: str,
+      fastq_path: str,
+      output_dir: str,
+      fastqscreen_conf: str,
+      fastqscreen_exe: str = 'fastq_screen',
+      fastqscreen_options: tuple = (
+        '--aligner bowtie2',
+        '--force',
+        '--quiet',
+        '--subset 100000',
+        '--threads 1')) \
+        -> list:
   try:
     check_file_path(fastqscreen_image_path)
     check_file_path(fastq_path)
@@ -115,7 +116,8 @@ def run_fastqScreen(
         output_file_list.append(dest_path)
     return output_file_list
   except Exception as e:
-    raise ValueError("Failed to run fastqscreen, error: {0}".format(e))
+    raise ValueError(
+      f"Failed to run fastqscreen, error: {e}")
 
 
 def run_fastqc(
@@ -124,7 +126,7 @@ def run_fastqc(
     output_dir: str,
     fastqc_exe: str = 'fastqc',
     fastqc_options: tuple = ('-q', '--noextract', '-ffastq', '-k7', '-t1')) \
-    -> list:
+      -> list:
   try:
     check_file_path(fastq_path)
     check_file_path(output_dir)
@@ -175,23 +177,25 @@ def run_fastqc(
       output_file_list.append(dest_file)
     return output_file_list
   except Exception as e:
-    raise ValueError("Failed to run fastqc for {0}".format(fastq_path))
+    raise ValueError(
+      f"Failed to run fastqc for {fastq_path}")
+
 
 def fastqscreen_run_wrapper_for_known_samples_func(**context):
   try:
     ti = context['ti']
     xcom_key_for_bclconvert_output = \
       context['params'].\
-        get("xcom_key_for_bclconvert_output", "bclconvert_output")
+      get("xcom_key_for_bclconvert_output", "bclconvert_output")
     xcom_task_for_bclconvert_output = \
       context['params'].\
-        get("xcom_task_for_bclconvert_output")
+      get("xcom_task_for_bclconvert_output")
     xcom_key_for_collection_group = \
       context['params'].\
-        get("xcom_key_for_collection_group", "collection_group")
+      get("xcom_key_for_collection_group", "collection_group")
     xcom_task_for_collection_group = \
       context['params'].\
-        get("xcom_task_for_collection_group")
+      get("xcom_task_for_collection_group")
     fastqscreen_collection_type = 'FASTQSCREEN_HTML_REPORT'
     collection_table = 'run'
     bclconvert_output = \
@@ -274,16 +278,16 @@ def fastqc_run_wrapper_for_known_samples_func(**context):
     ti = context['ti']
     xcom_key_for_bclconvert_output = \
       context['params'].\
-        get("xcom_key_for_bclconvert_output", "bclconvert_output")
+      get("xcom_key_for_bclconvert_output", "bclconvert_output")
     xcom_task_for_bclconvert_output = \
       context['params'].\
-        get("xcom_task_for_bclconvert_output")
+      get("xcom_task_for_bclconvert_output")
     xcom_key_for_collection_group = \
       context['params'].\
-        get("xcom_key_for_collection_group", "collection_group")
+      get("xcom_key_for_collection_group", "collection_group")
     xcom_task_for_collection_group = \
       context['params'].\
-        get("xcom_task_for_collection_group")
+      get("xcom_task_for_collection_group")
     fastqc_collection_type = 'FASTQC_HTML_REPORT'
     collection_table = 'run'
     bclconvert_output = \
@@ -351,9 +355,11 @@ def fastqc_run_wrapper_for_known_samples_func(**context):
       reaction='fail')
     raise
 
+
 def get_flatform_name_and_flowcell_id_for_seqrun(
       seqrun_igf_id: str,
-      db_config_file: str) -> Tuple[str, str]:
+      db_config_file: str) \
+        -> Tuple[str, str]:
     try:
       check_file_path(db_config_file)
       dbparams = read_dbconf_json(db_config_file)
@@ -368,14 +374,13 @@ def get_flatform_name_and_flowcell_id_for_seqrun(
       return platform_name, seqrun.flowcell_id
     except Exception as e:
       raise ValueError(
-              "Failed to get platform name and flowcell id for seqrun {0}, error: {1}".\
-              format(seqrun_igf_id, e))
+        f"Failed to get platform name and flowcell id for seqrun {seqrun_igf_id}, error: {e}")
 
 
 def get_project_id_samples_list_from_db(
       sample_igf_id_list: list,
       db_config_file: str) \
-      -> dict:
+        -> dict:
     try:
       check_file_path(db_config_file)
       project_sample_dict = dict()
@@ -387,15 +392,14 @@ def get_project_id_samples_list_from_db(
           sa.fetch_sample_project(sample_igf_id=sample_id)
         if project_id is None:
           raise ValueError(
-                  "Failed to get project id for sample {0}".\
-                  format(sample_id))
+            f"Failed to get project id for sample {sample_id}")
         project_sample_dict.\
           update({sample_id: project_id})
       sa.close_session()
       return project_sample_dict
     except Exception as e:
       raise ValueError(
-              "Failed to get project id and samples list from db, error: {0}".format(e))
+        f"Failed to get project id and samples list from db, error: {e}")
 
 
 def copy_or_replace_file_to_disk_and_change_permission(
@@ -408,8 +412,7 @@ def copy_or_replace_file_to_disk_and_change_permission(
     if os.path.exists(destination_path):
       if not replace_existing_file:
         raise ValueError(
-                "File {0} already exists. Set replace_existing_file to True".\
-                format(destination_path))
+          f"File {destination_path} already exists. Set replace_existing_file to True")
       else:
         # add write permission for user
         os.chmod(destination_path, stat.S_IWUSR)
@@ -449,7 +452,8 @@ def copy_or_replace_file_to_disk_and_change_permission(
           stat.S_IXUSR |
           stat.S_IXGRP)
   except Exception as e:
-    raise ValueError("Failed to copy file to new path, error: {0}".format(e))
+    raise ValueError(
+      f"Failed to copy file to new path, error: {e}")
 
 
 def load_data_raw_data_collection(
@@ -463,7 +467,7 @@ def load_data_raw_data_collection(
       size_key: str = 'size',
       location_key: str = 'location',
       cleanup_existing_collection: bool = False) \
-      -> None:
+        -> None:
     try:
       check_file_path(db_config_file)
       dbparam = read_dbconf_json(db_config_file)
@@ -516,7 +520,7 @@ def load_data_raw_data_collection(
                 autosave=False)
             else:
               raise ValueError(
-                "File {0} already exists in database".format(file_path))
+                f"File {file_path} already exists in database")
         for entry in collection_list:
           if collection_name_key not in entry or \
              collection_type_key not in entry or \
@@ -530,7 +534,8 @@ def load_data_raw_data_collection(
           size = entry.get(size_key, None)
           location = entry.get(location_key, None)
           if not os.path.exists(file_path):
-            raise ValueError("File {0} does not exist".format(file_path))
+            raise ValueError(
+              f"File {file_path} does not exist")
           collection_data = {
             'name': collection_name,
             'type': collection_type,
@@ -557,7 +562,8 @@ def load_data_raw_data_collection(
         ca.close_session()
         raise
     except Exception as e:
-      raise ValueError("Failed to load collection, error: {0}".format(e))
+      raise ValueError(
+        f"Failed to load collection, error: {e}")
 
 
 def load_raw_files_to_db_and_disk(
@@ -572,7 +578,7 @@ def load_raw_files_to_db_and_disk(
       collection_name_key: str = 'collection_name',
       dir_list_key: str = 'dir_list',
       file_list_key: str = 'file_list') \
-      -> list:
+        -> list:
     try:
       ## TO DO:
       # * get collection name from list
@@ -593,22 +599,25 @@ def load_raw_files_to_db_and_disk(
       file_collection_list = list()
       for entry in collection_list:
         if collection_name_key not in entry:
-          raise KeyError("{0} key not found in collection list".\
-                          format(collection_name_key))
+          raise KeyError(
+            f"{collection_name_key} key not found in collection list")
         if file_list_key not in entry:
-          raise KeyError("{0} key not found in collection list".\
-                          format(file_list_key))
+          raise KeyError(
+            f"{file_list_key} key not found in collection list")
         if dir_list_key not in entry:
-          raise KeyError("{0} key not found in collection list".\
-                          format(dir_list_key))
-        collection_name = entry.get(collection_name_key)
-        file_list = entry.get(file_list_key)
-        dir_list = entry.get(dir_list_key)
+          raise KeyError(
+            f"{dir_list_key} key not found in collection list")
+        collection_name = \
+          entry.get(collection_name_key)
+        file_list = \
+          entry.get(file_list_key)
+        dir_list = \
+          entry.get(dir_list_key)
         if not isinstance(dir_list, list):
           raise TypeError("dir_list must be a list")
         if len(file_list) == 0:
-          raise ValueError("No files found in collection {0}".\
-                           format(collection_name))
+          raise ValueError(
+            f"No files found in collection {collection_name}")
         for file_list_entry in file_list:
           file_path = file_list_entry.get('file_path')
           file_md5 = file_list_entry.get('md5')
@@ -652,7 +661,8 @@ def load_raw_files_to_db_and_disk(
         cleanup_existing_collection=cleanup_existing_collection)
       return file_collection_list
     except Exception as e:
-      raise ValueError("Failed to load raw files to db, error: {0}".format(e))
+      raise ValueError(
+        f"Failed to load raw files to db, error: {e}")
 
 
 def register_experiment_and_runs_to_db(
@@ -661,7 +671,7 @@ def register_experiment_and_runs_to_db(
       lane_id: int,
       index_group: str,
       sample_group: list) \
-      -> list:
+        -> list:
     try:
       check_file_path(db_config_file)
       (platform_name, flowcell_id) = \
@@ -692,21 +702,15 @@ def register_experiment_and_runs_to_db(
         project_id = project_sample_dict.get(sample_id)
         if project_id is None:
           raise ValueError(
-                  "Failed to get project id for sample {0}".\
-                  format(sample_id))
+            f"Failed to get project id for sample {sample_id}")
         # set library id
         library_id = sample_id
         # calcaulate experiment id
         experiment_id = \
-          '{0}_{1}'.format(
-            library_id,#
-            platform_name)
+          f'{library_id}_{platform_name}'
         # calculate run id
         run_igf_id = \
-          '{0}_{1}_{2}'.format(
-            experiment_id,
-            flowcell_id,
-            lane_id)
+          f'{experiment_id}_{flowcell_id}_{}lane_id'
         library_layout = 'SINGLE'
         for fastq in entry.get('fastq_list'):
           if fastq.endswith('_R2_001.fastq.gz'):
@@ -794,7 +798,8 @@ def register_experiment_and_runs_to_db(
         raise
       return sample_group_with_run_id
     except Exception as e:
-      raise ValueError("Failed to register experiment and runs, error: {0}".format(e))
+      raise ValueError(
+        f"Failed to register experiment and runs, error: {e}")
 
 
 def load_fastq_and_qc_to_db_func(**context):
@@ -802,36 +807,46 @@ def load_fastq_and_qc_to_db_func(**context):
     ti = context['ti']
     xcom_key_for_checksum_sample_group = \
       context['params'].\
-        get("xcom_key_for_checksum_sample_group", "checksum_sample_group")
+      get("xcom_key_for_checksum_sample_group", "checksum_sample_group")
     xcom_task_for_checksum_sample_group = \
       context['params'].\
-        get("xcom_task_for_checksum_sample_group")
+      get("xcom_task_for_checksum_sample_group")
     #lane_id = context['params'].get('lane_id')
     xcom_key = \
-      context['params'].get('xcom_key', 'formatted_samplesheets')
+      context['params'].\
+      get('xcom_key', 'formatted_samplesheets')
     xcom_task = \
-      context['params'].get('xcom_task', 'format_and_split_samplesheet')
+      context['params'].\
+      get('xcom_task', 'format_and_split_samplesheet')
     xcom_key_for_collection_group = \
       context['params'].\
-        get("xcom_key_for_collection_group", "collection_group")
+      get("xcom_key_for_collection_group", "collection_group")
     project_index_column = \
-      context['params'].get('project_index_column', 'project_index')
+      context['params'].\
+      get('project_index_column', 'project_index')
     project_index = \
-      context['params'].get('project_index', 0)
+      context['params'].\
+      get('project_index', 0)
     lane_index_column = \
-      context['params'].get('lane_index_column', 'lane_index')
+      context['params'].\
+      get('lane_index_column', 'lane_index')
     lane_index = \
-      context['params'].get('lane_index', 0)
+      context['params'].\
+      get('lane_index', 0)
     ig_index_column = \
-      context['params'].get('ig_index_column', 'index_group_index')
+      context['params'].\
+      get('ig_index_column', 'index_group_index')
     ig_index = \
-      context['params'].get('ig_index', 0)
+      context['params'].\
+      get('ig_index', 0)
     index_group_column = \
-      context['params'].get('index_group_column', 'index_group')
+      context['params'].\
+      get('index_group_column', 'index_group')
     if project_index == 0 or \
        lane_index == 0 or \
        ig_index == 0:
-      raise ValueError("project_index, lane_index or ig_index is not set")
+      raise ValueError(
+        "project_index, lane_index or ig_index is not set")
     formatted_samplesheets_list = \
       ti.xcom_pull(task_ids=xcom_task, key=xcom_key)
     df = pd.DataFrame(formatted_samplesheets_list)
@@ -848,8 +863,7 @@ def load_fastq_and_qc_to_db_func(**context):
         (df[ig_index_column]==ig_index)]
     if len(ig_df.index) == 0:
       raise ValueError(
-          "No index group found for project {0}, lane {1}, ig {2}".\
-          format(project_index, lane_index, ig_index))
+        f"No index group found for project {project_index}, lane {lane_index}, ig {ig_index}")
     index_group = \
       ig_df[index_group_column].values.tolist()[0]
     checksum_sample_group = \
@@ -917,21 +931,23 @@ def load_fastq_and_qc_to_db_func(**context):
 
 
 def get_sample_info_from_sample_group(
-    worker_index: int,
-    sample_group: list) \
-    -> list:
+      worker_index: int,
+      sample_group: list) \
+        -> list:
   try:
     if len(sample_group) == 0:
       raise ValueError("sample_group is empty")
     df = pd.DataFrame(sample_group)
     if 'worker_index' not in df.columns or \
        'sample_ids' not in df.columns:
-      raise KeyError("worker_index or sample_ids is not in sample_group")
+      raise KeyError(
+        "worker_index or sample_ids is not in sample_group")
     df['worker_index'] = \
       df['worker_index'].astype(int)
     filt_df = df[df['worker_index'] == int(worker_index)]
     if len(filt_df.index) == 0:
-      raise ValueError("worker_index {0} is not in sample_group".format(worker_index))
+      raise ValueError(
+        f"worker_index {worker_index} is not in sample_group")
     sample_ids = \
       filt_df['sample_ids'].values.tolist()[0]
     if len(sample_ids) == 0:
@@ -945,12 +961,13 @@ def get_sample_info_from_sample_group(
         'fastq_list': fastq_list})
     return fastq_files_list
   except Exception as e:
-    raise ValueError("Failed to get sample info from sample group, error: {0}".format(e))
+    raise ValueError(
+      f"Failed to get sample info from sample group, error: {e}")
 
 
 def get_checksum_for_sample_group_fastq_files(
-    sample_group: list) \
-    -> list:
+      sample_group: list) \
+        -> list:
   try:
     if len(sample_group) == 0:
       raise ValueError("sample_group is empty")
@@ -960,14 +977,17 @@ def get_checksum_for_sample_group_fastq_files(
       fastq_list = entry.get("fastq_list")
       fastq_dict = dict()
       for fastq_file in fastq_list:
-        fastq_md5 = calculate_file_checksum(fastq_file)
-        fastq_dict.update({fastq_file: fastq_md5})
+        fastq_md5 = \
+          calculate_file_checksum(fastq_file)
+        fastq_dict.update({
+          fastq_file: fastq_md5})
       check_sum_sample_group.append({
         'sample_id': sample_id,
         'fastq_list': fastq_dict})
     return check_sum_sample_group
   except Exception as e:
-    raise ValueError("Failed to get checksum for sample group fastq files, error: {0}".format(e))
+    raise ValueError(
+      f"Failed to get checksum for sample group fastq files, error: {e}")
 
 
 def calculate_fastq_md5_checksum_func(**context):
@@ -975,16 +995,16 @@ def calculate_fastq_md5_checksum_func(**context):
     ti = context['ti']
     xcom_key_for_sample_group = \
       context['params'].\
-        get("xcom_key_for_sample_group", "sample_group")
+      get("xcom_key_for_sample_group", "sample_group")
     xcom_task_for_sample_group = \
       context['params'].\
-        get("xcom_task_for_sample_group")
+      get("xcom_task_for_sample_group")
     sample_group_id = \
       context['params'].\
-        get("sample_group_id")
+      get("sample_group_id")
     xcom_key_for_checksum_sample_group = \
       context['params'].\
-        get("xcom_key_for_checksum_sample_group", "checksum_sample_group")
+      get("xcom_key_for_checksum_sample_group", "checksum_sample_group")
     sample_group = \
       ti.xcom_pull(
         task_ids=xcom_task_for_sample_group,
@@ -1016,9 +1036,9 @@ def calculate_fastq_md5_checksum_func(**context):
 
 
 def get_jobs_per_worker(
-    max_workers: int,
-    total_jobs: int) \
-    -> list:
+      max_workers: int,
+      total_jobs: int) \
+        -> list:
   try:
     job_list = list()
     job_counter = 0
@@ -1033,19 +1053,25 @@ def get_jobs_per_worker(
             'worker_index': worker_index,
             'jobs': job_counter})
     df = pd.DataFrame(job_list)
-    df['jobs'] = df['jobs'].astype('str')
-    grp_df = df.groupby('worker_index').agg({'jobs': ','.join}, axis=1)
-    grp_df = grp_df.reset_index()
-    grp_df['jobs'] = grp_df['jobs'].str.split(',')
+    df['jobs'] = \
+      df['jobs'].astype('str')
+    grp_df = \
+      df.groupby('worker_index').\
+      agg({'jobs': ','.join}, axis=1)
+    grp_df = \
+      grp_df.reset_index()
+    grp_df['jobs'] = \
+      grp_df['jobs'].str.split(',')
     return grp_df.to_dict(orient='records')
   except Exception as e:
-    raise ValueError("Failed to divide jobs per worker, error: {0}".format(e))
+    raise ValueError(
+      f"Failed to divide jobs per worker, error: {e}")
 
 
 def get_sample_groups_for_bcl_convert_output(
-    samplesheet_file: str,
-    max_samples: int = 20) \
-    -> list:
+      samplesheet_file: str,
+      max_samples: int = 20) \
+        -> list:
   try:
     sa = SampleSheet(samplesheet_file)
     df = pd.DataFrame(sa._data)
@@ -1066,16 +1092,15 @@ def get_sample_groups_for_bcl_convert_output(
     return sample_groups_list
   except Exception as e:
     raise ValueError(
-            "Failed to get sample groups for bcl convert output, error: {0}".\
-            format(e))
+      f"Failed to get sample groups for bcl convert output, error: {e}")
 
 
 def get_sample_id_and_fastq_path_for_sample_groups(
-    samplesheet_file: str,
-    lane_id: int,
-    bclconv_output_path: str,
-    sample_group: list) \
-    -> list:
+      samplesheet_file: str,
+      lane_id: int,
+      bclconv_output_path: str,
+      sample_group: list) \
+        -> list:
   try:
     check_file_path(samplesheet_file)
     check_file_path(bclconv_output_path)
@@ -1101,8 +1126,8 @@ def get_sample_id_and_fastq_path_for_sample_groups(
         filt_df = \
           samplesheet_df[samplesheet_df['Sample_ID']==sample_id].fillna('')
         if len(filt_df.index)==0:
-          raise ValueError("Sample_ID {0} not found in samplesheet file {1}".\
-                           format(sample_id, samplesheet_file))
+          raise ValueError(
+            f"Sample_ID {sample_id} not found in samplesheet file {samplesheet_file}")
         sample_project = \
           filt_df['Sample_Project'].values.tolist()[0]
         base_fastq_path = \
@@ -1136,24 +1161,25 @@ def sample_known_qc_factory_func(**context):
     ti = context['ti']
     samplesheet_file_suffix = \
       context['params'].\
-        get("samplesheet_file_suffix", "Reports/SampleSheet.csv")
+      get("samplesheet_file_suffix", "Reports/SampleSheet.csv")
     xcom_key_for_bclconvert_output = \
       context['params'].\
-        get("xcom_key_for_bclconvert_output", "bclconvert_output")
+      get("xcom_key_for_bclconvert_output", "bclconvert_output")
     xcom_task_for_bclconvert_output = \
       context['params'].\
-        get("xcom_task_for_bclconvert_output", None)
+      get("xcom_task_for_bclconvert_output", None)
     max_samples = \
       context['params'].\
-        get("max_samples", 0)
+      get("max_samples", 0)
     lane_index = \
       context['params'].\
-        get("lane_index")
+      get("lane_index")
     xcom_key_for_sample_group = \
       context['params'].\
-        get("xcom_key_for_sample_group", "sample_group")
+      get("xcom_key_for_sample_group", "sample_group")
     next_task_prefix = \
-      context['params'].get("next_task_prefix")
+      context['params'].\
+      get("next_task_prefix")
     bclconvert_output_dir = \
       ti.xcom_pull(
         task_ids=xcom_task_for_bclconvert_output,
@@ -1190,9 +1216,7 @@ def sample_known_qc_factory_func(**context):
     task_list = list()
     for sample_id in sample_id_list:
       task_list.append(
-        "{0}{1}".format(
-          next_task_prefix,
-          sample_id))
+        "{next_task_prefix}{sample_id}")
     return task_list
   except Exception as e:
     log.error(e)
@@ -1205,14 +1229,15 @@ def sample_known_qc_factory_func(**context):
       reaction='fail')
     raise
 
+
 def generate_bclconvert_report(
-  seqrun_path: str,
-  image_path: str,
-  report_template: str,
-  bclconvert_report_library_path: str,
-  bclconvert_reports_path: str,
-  dry_run: bool = False) \
-  -> str:
+      seqrun_path: str,
+      image_path: str,
+      report_template: str,
+      bclconvert_report_library_path: str,
+      bclconvert_reports_path: str,
+      dry_run: bool = False) \
+        -> str:
   try:
     check_file_path(seqrun_path)
     check_file_path(image_path)
@@ -1260,7 +1285,7 @@ def generate_bclconvert_report(
         container_paths=container_bind_dir_list,
         kernel='python3',
         use_ephemeral_space=True,
-        singularity_options=['--no-home','-C', "--env", "PYTHONPATH={0}".format(bclconvert_report_library_path)],
+        singularity_options=['--no-home','-C', "--env", f"PYTHONPATH={bclconvert_report_library_path}"],
         allow_errors=False,
         singularity_image_path=image_path,
         dry_run=dry_run)
@@ -1269,16 +1294,18 @@ def generate_bclconvert_report(
     return output_notebook_path
   except Exception as e:
     raise ValueError(
-            "Failed to generate bclconvert report, error: {0}".format(e))
+      f"Failed to generate bclconvert report, error: {e}")
 
 
 def bclconvert_report_func(**context):
   try:
     ti = context['ti']
     xcom_key_for_reports = \
-      context['params'].get('xcom_key_for_reports', 'bclconvert_reports')
+      context['params'].\
+      get('xcom_key_for_reports', 'bclconvert_reports')
     xcom_task_for_reports = \
-      context['params'].get('xcom_task_for_reports', None)
+      context['params'].\
+      get('xcom_task_for_reports', None)
     bclconvert_reports_path = \
       ti.xcom_pull(
         key=xcom_key_for_reports,
@@ -1362,7 +1389,7 @@ def bclconvert_singularity_wrapper(
     bclconvert_cmd = \
       ' '.join(bclconvert_cmd)
     bind_paths = [
-      '{0}:/var/log'.format(temp_dir),
+      f'{temp_dir}:/var/log',
       os.path.dirname(samplesheet_file),
       input_dir,
       os.path.dirname(output_dir)]
@@ -1379,41 +1406,59 @@ def run_bclconvert_func(**context):
   try:
     ti = context['ti']
     xcom_key = \
-      context['params'].get('xcom_key', 'formatted_samplesheets')
+      context['params'].\
+      get('xcom_key', 'formatted_samplesheets')
     xcom_task = \
-      context['params'].get('xcom_task', 'format_and_split_samplesheet')
+      context['params'].\
+      get('xcom_task', 'format_and_split_samplesheet')
     project_index_column = \
-      context['params'].get('project_index_column', 'project_index')
+      context['params'].\
+      get('project_index_column', 'project_index')
     project_index = \
-      context['params'].get('project_index', 0)
+      context['params'].\
+      get('project_index', 0)
     project_column = \
-      context['params'].get('project_column', 'project')
+      context['params'].\
+      get('project_column', 'project')
     lane_index_column = \
-      context['params'].get('lane_index_column', 'lane_index')
+      context['params'].\
+      get('lane_index_column', 'lane_index')
     lane_column = \
-      context['params'].get('lane_column', 'lane')
+      context['params'].\
+      get('lane_column', 'lane')
     lane_index = \
-      context['params'].get('lane_index', 0)
+      context['params'].\
+      get('lane_index', 0)
     ig_index_column = \
-      context['params'].get('ig_index_column', 'index_group_index')
+      context['params'].\
+      get('ig_index_column', 'index_group_index')
     index_group_column = \
-      context['params'].get('index_group_column', 'index_group')
+      context['params'].\
+      get('index_group_column', 'index_group')
     ig_index = \
-      context['params'].get('ig_index', 0)
+      context['params'].\
+      get('ig_index', 0)
     samplesheet_column = \
-      context['params'].get('samplesheet_column', 'samplesheet_file')
+      context['params'].\
+      get('samplesheet_column', 'samplesheet_file')
     xcom_key_for_reports = \
-      context['params'].get('xcom_key_for_reports', 'bclconvert_reports')
+      context['params'].\
+      get('xcom_key_for_reports', 'bclconvert_reports')
     xcom_key_for_output = \
-      context['params'].get('xcom_key_for_output', 'bclconvert_output')
+      context['params'].\
+      get('xcom_key_for_output', 'bclconvert_output')
     bcl_num_conversion_threads = \
-      context['params'].get('bcl_num_conversion_threads', '1')
+      context['params'].\
+      get('bcl_num_conversion_threads', '1')
     bcl_num_compression_threads = \
-      context['params'].get('bcl_num_compression_threads', '1')
+      context['params'].\
+      get('bcl_num_compression_threads', '1')
     bcl_num_decompression_threads = \
-      context['params'].get('bcl_num_decompression_threads', '1')
+      context['params'].\
+      get('bcl_num_decompression_threads', '1')
     bcl_num_parallel_tiles = \
-      context['params'].get('bcl_num_parallel_tiles', '1')
+      context['params'].\
+      get('bcl_num_parallel_tiles', '1')
     dag_run = context.get('dag_run')
     seqrun_path = ''
     if dag_run is not None and \
@@ -1424,11 +1469,13 @@ def run_bclconvert_func(**context):
       seqrun_path = \
         os.path.join(HPC_SEQRUN_BASE_PATH, seqrun_id)
     else:
-      raise IOError("Failed to get seqrun_id from dag_run")
+      raise IOError(
+        "Failed to get seqrun_id from dag_run")
     if project_index == 0 or \
        lane_index == 0 or \
        ig_index == 0:
-      raise ValueError('project_index, lane_index or ig_index is not set')
+      raise ValueError(
+        'project_index, lane_index or ig_index is not set')
     if xcom_key is None or \
        xcom_task is None:
       raise ValueError('xcom_key or xcom_task is not set')
@@ -1450,8 +1497,7 @@ def run_bclconvert_func(**context):
         (df[ig_index_column]==ig_index)]
     if len(ig_df.index) == 0:
       raise ValueError(
-          "No samplesheet found for project {0}, lane {1}, ig {2}".\
-          format(project_index, lane_index, ig_index))
+        f"No samplesheet found for project {project_index}, lane {lane_index}, ig {ig_index}")
     samplesheet_file = \
       ig_df[samplesheet_column].values.tolist()[0]
     output_dir = \
@@ -1467,7 +1513,7 @@ def run_bclconvert_func(**context):
     demult_dir = \
       os.path.join(
         output_temp_dir,
-        '{0}_{1}_{2}'.format(project_id, lane_id, ig_id))
+        f'{project_id}_{lane_id}_{ig_id}')
     cmd = \
       bclconvert_singularity_wrapper(
         image_path=BCLCONVERT_IMAGE,
@@ -1507,8 +1553,7 @@ def run_bclconvert_func(**context):
       key=xcom_key_for_output,
       value=bclconvert_output_dir)
     message = \
-      'Finished demultiplexing project {0}, lane {1}, ig {2} - cmd: {3}'.\
-      format(project_id, lane_id, ig_id, cmd)
+      f'Finished demultiplexing project {project_id}, lane {lane_id}, ig {ig_id} - cmd: {cmd}'
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
