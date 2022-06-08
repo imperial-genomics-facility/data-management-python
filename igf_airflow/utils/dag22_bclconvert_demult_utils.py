@@ -2225,12 +2225,13 @@ def format_and_split_samplesheet_func(**context):
 
 
 def _get_formatted_samplesheets(
-  samplesheet_file: str,
-  runinfo_xml_file: str,
-  samplesheet_output_dir: str,
-  singlecell_barcode_json: str,
-  singlecell_dual_barcode_json: str,
-  tenx_sc_tag: str='10X') -> list:
+      samplesheet_file: str,
+      runinfo_xml_file: str,
+      samplesheet_output_dir: str,
+      singlecell_barcode_json: str,
+      singlecell_dual_barcode_json: str,
+      tenx_sc_tag: str='10X') \
+        -> list:
   try:
     check_file_path(samplesheet_file)
     check_file_path(runinfo_xml_file)
@@ -2403,18 +2404,18 @@ def _get_formatted_samplesheets(
     return formatted_samplesheets_list
   except Exception as e:
     raise ValueError(
-            "Failed to get formatted samplesheets and bases mask, error: {0}".\
-            format(e))
+      f"Failed to get formatted samplesheets and bases mask, error: {e}")
 
 
 def _calculate_bases_mask(
-  samplesheet_file: str,
-  runinfoxml_file: str,
-  numcycle_label: str='numcycles',
-  isindexedread_label: str='isindexedread',
-  isreversecomplement_label: str='isreversecomplement',
-  read_offset: int=1,
-  read_offset_cutoff: int=50) -> str:
+      samplesheet_file: str,
+      runinfoxml_file: str,
+      numcycle_label: str='numcycles',
+      isindexedread_label: str='isindexedread',
+      isreversecomplement_label: str='isreversecomplement',
+      read_offset: int=1,
+      read_offset_cutoff: int=50) \
+        -> str:
   try:
     samplesheet_data = SampleSheet(infile=samplesheet_file)
     index_length_stats = samplesheet_data.get_index_count()
@@ -2472,7 +2473,7 @@ def _calculate_bases_mask(
     return ';'.join(bases_mask_list)
   except Exception as e:
     raise ValueError(
-            f"Failed to calculate bases mask, error: {e}")
+      f"Failed to calculate bases mask, error: {e}")
 
 
 def get_samplesheet_from_portal_func(**context):
@@ -2764,4 +2765,4 @@ def _check_and_seed_seqrun_pipeline(
     return seed_status
   except Exception as e:
     raise ValueError(
-      f"Faild to seed pipeline {pipeline_name} for seqrun {seqrun_id}, error: {e}")
+      f"Failed to seed pipeline {pipeline_name} for seqrun {seqrun_id}, error: {e}")
