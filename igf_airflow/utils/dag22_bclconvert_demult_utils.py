@@ -213,18 +213,25 @@ def fastqscreen_run_wrapper_for_known_samples_func(**context):
         task_ids=xcom_task_for_collection_group,
         key=xcom_key_for_collection_group)
     fastqscreen_temp_output_path = \
-      os.path.join(bclconvert_output, 'fastqscreen_dir')
-    os.makedirs(fastqscreen_temp_output_path, exist_ok=True)
+      os.path.join(
+        bclconvert_output,
+        'fastqscreen_dir')
+    os.makedirs(
+      fastqscreen_temp_output_path,
+      exist_ok=True)
     fastqscreen_collection_list = list()
-    work_dir = get_temp_dir(use_ephemeral_space=True)
+    work_dir = \
+      get_temp_dir(
+        use_ephemeral_space=True)
     for entry in collection_group:
       collection_name = entry.get('collection_name')
       dir_list = entry.get('dir_list')
       file_list = entry.get('file_list')
       ## RUN FASTQACREEN for the file
-      fastq_output_dict = dict()
+      fastq_output_list = list()
       for fastq_file_entry in file_list:
-        fastq_file = fastq_file_entry.get('file_path')
+        fastq_file = \
+          fastq_file_entry.get('file_path')
         output_fastqc_list = \
           run_fastqScreen(
             fastqscreen_image_path=FASTQSCREEN_IMAGE_PATH,
@@ -241,7 +248,7 @@ def fastqscreen_run_wrapper_for_known_samples_func(**context):
             file_entry,
             dest_path, force=True)
           if file_entry.endswith('.html'):
-            fastq_output_dict.update({
+            fastq_output_list.append({
               'file_path': file_entry,
               'md5': calculate_file_checksum(file_entry)})
       ## LOAD FASTQC REPORT TO DB
@@ -251,7 +258,7 @@ def fastqscreen_run_wrapper_for_known_samples_func(**context):
       fastqscreen_collection_list.append({
         'collection_name': collection_name,
         'dir_list': dir_list,
-        'file_list': fastq_output_dict})
+        'file_list': fastq_output_list})
     file_collection_list = \
       load_raw_files_to_db_and_disk(
         db_config_file=DATABASE_CONFIG_FILE,
@@ -317,7 +324,7 @@ def fastqc_run_wrapper_for_known_samples_func(**context):
       dir_list = entry.get('dir_list')
       file_list = entry.get('file_list')
       ## RUN FASTQC for the file
-      fastq_output_dict = dict()
+      fastq_output_list = list()
       for fastq_file_entry in file_list:
         fastq_file = fastq_file_entry.get('file_path')
         output_fastqc_list = \
@@ -334,7 +341,7 @@ def fastqc_run_wrapper_for_known_samples_func(**context):
             file_entry,
             dest_path, force=True)
           if file_entry.endswith('.html'):
-            fastq_output_dict.update({
+            fastq_output_list.append({
               'file_path': file_entry,
               'md5': calculate_file_checksum(file_entry)})
       ## LOAD FASTQC REPORT TO DB
@@ -344,7 +351,7 @@ def fastqc_run_wrapper_for_known_samples_func(**context):
       fastqc_collection_list.append({
         'collection_name': collection_name,
         'dir_list': dir_list,
-        'file_list': fastq_output_dict})
+        'file_list': fastq_output_list})
     file_collection_list = \
       load_raw_files_to_db_and_disk(
         db_config_file=DATABASE_CONFIG_FILE,
