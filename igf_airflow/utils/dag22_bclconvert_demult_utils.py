@@ -416,15 +416,15 @@ def copy_or_replace_file_to_disk_and_change_permission(
       else:
         # add write permission for user
         os.chmod(destination_path, stat.S_IWUSR)
-        os.chmod(
-          os.path.dirname(destination_path),
-          stat.S_IWUSR |
-          stat.S_IXUSR)
-    if os.path.exists(os.path.dirname(destination_path)):
-      os.chmod(
-          os.path.dirname(destination_path),
-          stat.S_IWUSR |
-          stat.S_IXUSR)
+        # os.chmod(
+        #   os.path.dirname(destination_path),
+        #   stat.S_IWUSR |
+        #   stat.S_IXUSR)
+    # if os.path.exists(os.path.dirname(destination_path)):
+    #   os.chmod(
+    #       os.path.dirname(destination_path),
+    #       stat.S_IWUSR |
+    #       stat.S_IXUSR)
     copy_local_file(
       source_path,
       destination_path,
@@ -445,12 +445,12 @@ def copy_or_replace_file_to_disk_and_change_permission(
           stat.S_IRUSR |
           stat.S_IRGRP)
         # make dir read only
-        os.chmod(
-          os.path.dirname(destination_path),
-          stat.S_IRUSR |
-          stat.S_IRGRP |
-          stat.S_IXUSR |
-          stat.S_IXGRP)
+        # os.chmod(
+        #   os.path.dirname(destination_path),
+        #   stat.S_IRUSR |
+        #   stat.S_IRGRP |
+        #   stat.S_IXUSR |
+        #   stat.S_IXGRP)
   except Exception as e:
     raise ValueError(
       f"Failed to copy file to new path, error: {e}")
