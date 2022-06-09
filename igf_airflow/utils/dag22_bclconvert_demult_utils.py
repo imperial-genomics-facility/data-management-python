@@ -67,6 +67,9 @@ FTP_HOSTNAME = Variable.get('ftp_hostname', default_var=None)
 FTP_USERNAME = Variable.get('ftp_username', default_var=None)
 FTP_PROJECT_PATH = Variable.get('ftp_project_path', default_var=None)
 QC_PAGE_TEMPLATE_DIR = Variable.get('qc_page_template_dir', default_var=None)
+FASTQSCREEN_HTML_REPORT_TYPE = Variable.get('fastqscreen_html_report_type', default_var='FASTQSCREEN_HTML_REPORT')
+FASTQC_HTML_REPORT_TYPE = Variable.get('fastqc_html_report_type', default_var='FASTQC_HTML_REPORT')
+FASTQ_COLLECTION_TYPE = Variable.get('fastq_collection_type', default_var='demultiplexed_fastq')
 
 log = logging.getLogger(__name__)
 
@@ -199,7 +202,7 @@ def fastqscreen_run_wrapper_for_known_samples_func(**context):
     xcom_task_for_collection_group = \
       context['params'].\
       get("xcom_task_for_collection_group")
-    fastqscreen_collection_type = 'FASTQSCREEN_HTML_REPORT'
+    fastqscreen_collection_type = FASTQSCREEN_HTML_REPORT_TYPE
     collection_table = 'run'
     bclconvert_output = \
       ti.xcom_pull(
@@ -292,7 +295,7 @@ def fastqc_run_wrapper_for_known_samples_func(**context):
     xcom_task_for_collection_group = \
       context['params'].\
       get("xcom_task_for_collection_group")
-    fastqc_collection_type = 'FASTQC_HTML_REPORT'
+    fastqc_collection_type = FASTQC_HTML_REPORT_TYPE
     collection_table = 'run'
     bclconvert_output = \
       ti.xcom_pull(
@@ -920,7 +923,7 @@ def load_fastq_and_qc_to_db_func(**context):
     file_collection_list = \
       load_raw_files_to_db_and_disk(
         db_config_file=DATABASE_CONFIG_FILE,
-        collection_type='demultiplexed_fastq',
+        collection_type=FASTQ_COLLECTION_TYPE,
         collection_table='run',
         base_data_path= HPC_BASE_RAW_DATA_PATH,
         file_location='HPC_PROJECT',
