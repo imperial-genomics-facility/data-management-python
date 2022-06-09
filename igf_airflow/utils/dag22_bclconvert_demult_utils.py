@@ -241,7 +241,7 @@ def fastqscreen_run_wrapper_for_known_samples_func(**context):
             file_entry,
             dest_path, force=True)
           if file_entry.endswith('.html'):
-            fastq_output_dict.append({
+            fastq_output_dict.update({
               'file_path': file_entry,
               'md5': calculate_file_checksum(file_entry)})
       ## LOAD FASTQC REPORT TO DB
@@ -332,7 +332,7 @@ def fastqc_run_wrapper_for_known_samples_func(**context):
             file_entry,
             dest_path, force=True)
           if file_entry.endswith('.html'):
-            fastq_output_dict.append({
+            fastq_output_dict.update({
               'file_path': file_entry,
               'md5': calculate_file_checksum(file_entry)})
       ## LOAD FASTQC REPORT TO DB
