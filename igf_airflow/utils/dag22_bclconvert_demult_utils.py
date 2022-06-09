@@ -1405,12 +1405,18 @@ def bclconvert_singularity_wrapper(
 def run_bclconvert_func(**context):
   try:
     ti = context['ti']
-    xcom_key = \
+    seqrun_igf_id = \
       context['params'].\
-      get('xcom_key', 'formatted_samplesheets')
-    xcom_task = \
+      get('seqrun_igf_id')
+    formatted_samplesheets_list =\
       context['params'].\
-      get('xcom_task', 'format_and_split_samplesheet')
+      get('formatted_samplesheets')
+    # xcom_key = \
+    #   context['params'].\
+    #   get('xcom_key', 'formatted_samplesheets')
+    # xcom_task = \
+    #   context['params'].\
+    #   get('xcom_task', 'format_and_split_samplesheet')
     project_index_column = \
       context['params'].\
       get('project_index_column', 'project_index')
@@ -1461,26 +1467,33 @@ def run_bclconvert_func(**context):
       get('bcl_num_parallel_tiles', '1')
     dag_run = context.get('dag_run')
     seqrun_path = ''
-    if dag_run is not None and \
-       dag_run.conf is not None and \
-       dag_run.conf.get('seqrun_id') is not None:
-      seqrun_id = \
-        dag_run.conf.get('seqrun_id')
-      seqrun_path = \
-        os.path.join(HPC_SEQRUN_BASE_PATH, seqrun_id)
-    else:
+    # if dag_run is not None and \
+    #    dag_run.conf is not None and \
+    #    dag_run.conf.get('seqrun_id') is not None:
+    #   seqrun_id = \
+    #     dag_run.conf.get('seqrun_id')
+    #   seqrun_path = \
+    #     os.path.join(HPC_SEQRUN_BASE_PATH, seqrun_id)
+    # else:
+    #   raise IOError(
+    #     "Failed to get seqrun_id from dag_run")
+    if seqrun_igf_id is None:
       raise IOError(
-        "Failed to get seqrun_id from dag_run")
+        "Failed to get seqrun_igf_id")
+    seqrun_path = \
+      os.path.join(
+        HPC_SEQRUN_BASE_PATH,
+        seqrun_igf_id)
     if project_index == 0 or \
        lane_index == 0 or \
        ig_index == 0:
       raise ValueError(
         'project_index, lane_index or ig_index is not set')
-    if xcom_key is None or \
-       xcom_task is None:
-      raise ValueError('xcom_key or xcom_task is not set')
-    formatted_samplesheets_list = \
-      ti.xcom_pull(task_ids=xcom_task, key=xcom_key)
+    # if xcom_key is None or \
+    #    xcom_task is None:
+    #   raise ValueError('xcom_key or xcom_task is not set')
+    # formatted_samplesheets_list = \
+    #   ti.xcom_pull(task_ids=xcom_task, key=xcom_key)
     df = pd.DataFrame(formatted_samplesheets_list)
     if project_index_column not in df.columns or \
         lane_index_column not in df.columns or \
