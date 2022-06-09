@@ -2596,7 +2596,10 @@ def get_samplesheet_from_portal_func(**context):
 
 def mark_seqrun_status_func(**context):
   try:
-    dag_run = context.get('dag_run')
+    # dag_run = context.get('dag_run')
+    seqrun_igf_id = \
+      context['params'].\
+      get('seqrun_igf_id')
     next_task = \
       context['params'].\
       get('next_task', None)
@@ -2615,17 +2618,17 @@ def mark_seqrun_status_func(**context):
     check_all_pipelines_for_seed_id = \
       context['params'].\
         get('check_all_pipelines_for_seed_id', False)
-    seqrun_id = None
-    if dag_run is not None and \
-       dag_run.conf is not None and \
-       dag_run.conf.get('seqrun_id') is not None:
-      seqrun_id = \
-        dag_run.conf.get('seqrun_id')
-    if seqrun_id is None:
-      raise ValueError('seqrun_id is not found in dag_run.conf')
+    # seqrun_id = None
+    # if dag_run is not None and \
+    #    dag_run.conf is not None and \
+    #    dag_run.conf.get('seqrun_id') is not None:
+    #   seqrun_id = \
+    #     dag_run.conf.get('seqrun_id')
+    if seqrun_igf_id is None:
+      raise ValueError('seqrun_id is not found')
     status = \
       _check_and_seed_seqrun_pipeline(
-        seqrun_id=seqrun_id,
+        seqrun_id=seqrun_igf_id,
         pipeline_name=context['task'].dag_id,
         dbconf_json_path=DATABASE_CONFIG_FILE,
         seed_status=seed_status,
@@ -2652,7 +2655,10 @@ def mark_seqrun_status_func(**context):
 
 def find_seqrun_func(**context):
   try:
-    dag_run = context.get('dag_run')
+    # dag_run = context.get('dag_run')
+    seqrun_igf_id = \
+      context['params'].\
+      get('seqrun_igf_id')
     next_task_id = \
       context['params'].\
       get('next_task_id', 'mark_seqrun_as_running')
@@ -2660,34 +2666,38 @@ def find_seqrun_func(**context):
       context['params'].\
       get('no_work_task', 'no_work')
     task_list = [no_work_task,]
-    if dag_run is not None and \
-       dag_run.conf is not None and \
-       dag_run.conf.get('seqrun_id') is not None:
-      seqrun_id = \
-        dag_run.conf.get('seqrun_id')
-      seqrun_path = \
-        os.path.join(HPC_SEQRUN_BASE_PATH, seqrun_id)
-      run_status = \
-        _check_for_required_files(
-          seqrun_path,
-          file_list=[
-            'RunInfo.xml',
-            'RunParameters.xml',
-            'SampleSheet.csv',
-            'Data/Intensities/BaseCalls',
-            'InterOp'])
-      if run_status:
-        _check_and_load_seqrun_to_db(
-          seqrun_id=seqrun_id,
-          seqrun_path=seqrun_path,
-          dbconf_json_path=DATABASE_CONFIG_FILE)
-        #seed_status = \
-        #  _check_and_seed_seqrun_pipeline(
-        #    seqrun_id=seqrun_id,
-        #    pipeline_name=context['task'].dag_id,
-        #    dbconf_json_path=DATABASE_CONFIG_FILE)
-      if run_status:
-        task_list = [next_task_id,]
+    # if dag_run is not None and \
+    #    dag_run.conf is not None and \
+    #    dag_run.conf.get('seqrun_id') is not None:
+    #   seqrun_id = \
+    #     dag_run.conf.get('seqrun_id')
+    if seqrun_igf_id is None:
+      raise ValueError('seqrun_id is not found')
+    seqrun_path = \
+      os.path.join(
+        HPC_SEQRUN_BASE_PATH,
+        seqrun_igf_id)
+    run_status = \
+      _check_for_required_files(
+        seqrun_path,
+        file_list=[
+          'RunInfo.xml',
+          'RunParameters.xml',
+          'SampleSheet.csv',
+          'Data/Intensities/BaseCalls',
+          'InterOp'])
+    if run_status:
+      _check_and_load_seqrun_to_db(
+        seqrun_id=seqrun_igf_id,
+        seqrun_path=seqrun_path,
+        dbconf_json_path=DATABASE_CONFIG_FILE)
+      #seed_status = \
+      #  _check_and_seed_seqrun_pipeline(
+      #    seqrun_id=seqrun_id,
+      #    pipeline_name=context['task'].dag_id,
+      #    dbconf_json_path=DATABASE_CONFIG_FILE)
+    if run_status:
+      task_list = [next_task_id,]
     return task_list
   except Exception as e:
     log.error(e)
