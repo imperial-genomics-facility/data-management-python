@@ -76,6 +76,7 @@ def run_fastqScreen(
       fastq_path: str,
       output_dir: str,
       fastqscreen_conf: str,
+      fastqscreen_ref_dir: str,
       fastqscreen_exe: str = 'fastq_screen',
       fastqscreen_options: tuple = (
         '--aligner bowtie2',
@@ -89,6 +90,7 @@ def run_fastqScreen(
     check_file_path(fastq_path)
     check_file_path(output_dir)
     check_file_path(fastqscreen_conf)
+    check_file_path(fastqscreen_ref_dir)
     temp_dir = get_temp_dir()
     fastqscreen_cmd = [
       fastqscreen_exe,
@@ -98,6 +100,7 @@ def run_fastqScreen(
     fastqscreen_cmd.append(fastq_path)
     bind_dir_list = [
       temp_dir,
+      fastqscreen_ref_dir,
       os.path.dirname(fastq_path),
       os.path.dirname(fastqscreen_conf)]
     execute_singuarity_cmd(
@@ -223,6 +226,7 @@ def fastqscreen_run_wrapper_for_known_samples_func(**context):
           run_fastqScreen(
             fastqscreen_image_path=FASTQSCREEN_IMAGE_PATH,
             fastqscreen_conf=FASTQSCREEN_CONF_PATH,
+            fastqscreen_ref_dir=FASTQSCREEN_REF_DIR,
             fastq_path=fastq_file,
             output_dir=work_dir)
         for file_entry in output_fastqc_list:
