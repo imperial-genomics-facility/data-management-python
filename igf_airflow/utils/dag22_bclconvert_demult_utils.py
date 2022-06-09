@@ -2178,46 +2178,55 @@ def _calculate_image_height_for_project_page(
 
 def format_and_split_samplesheet_func(**context):
   try:
-    ti = context['ti']
-    xcom_key = \
+    # ti = context['ti']
+    # seqrun_igf_id = \
+    #   context['params'].\
+    #   get('seqrun_igf_id')
+    # formatted_samplesheets = \
+    #   context['params'].\
+    #   get('formatted_samplesheets')
+    sample_groups = \
       context['params'].\
-      get('xcom_key', 'formatted_samplesheets')
+      get('sample_groups')
+    # xcom_key = \
+    #   context['params'].\
+    #   get('xcom_key', 'formatted_samplesheets')
     max_projects = \
       context['params'].\
       get('max_projects', 0)
     project_task_prefix = \
       context['params'].\
-      get('project_task_prefix', 'demult_start_project_')
-    samplesheet_xcom_key = \
-      context['params'].\
-      get('samplesheet_xcom_key', 'samplesheet_data')
-    samplesheet_xcom_task = \
-      context['params'].\
-      get('samplesheet_xcom_task', 'fetch_samplesheet_for_run')
-    dag_run = context.get('dag_run')
+      get('project_task_prefix', 'setup_qc_page_for_project_')
+    # samplesheet_xcom_key = \
+    #   context['params'].\
+    #   get('samplesheet_xcom_key', 'samplesheet_data')
+    # samplesheet_xcom_task = \
+    #   context['params'].\
+    #   get('samplesheet_xcom_task', 'fetch_samplesheet_for_run')
+    # dag_run = context.get('dag_run')
     task_list = ['mark_run_finished',]
-    if dag_run is not None and \
-       dag_run.conf is not None and \
-       dag_run.conf.get('seqrun_id') is not None:
-      seqrun_id = \
-        dag_run.conf.get('seqrun_id')
-      seqrun_path = \
-        os.path.join(HPC_SEQRUN_BASE_PATH, seqrun_id)
-    else:
-      raise("No seqrun_id found in dag_run conf")
+    # if dag_run is not None and \
+    #    dag_run.conf is not None and \
+    #    dag_run.conf.get('seqrun_id') is not None:
+    #   seqrun_id = \
+    #     dag_run.conf.get('seqrun_id')
+    #   seqrun_path = \
+    #     os.path.join(HPC_SEQRUN_BASE_PATH, seqrun_id)
+    # else:
+    #   raise("No seqrun_id found in dag_run conf")
     ## fetch samplesheet from previous task
-    samplesheet_file = \
-      ti.xcom_pull(
-        task_ids=samplesheet_xcom_task,
-        key=samplesheet_xcom_key)
-    check_file_path(samplesheet_file)
-    runinfo_xml_file = \
-      os.path.join(
-        seqrun_path,
-        'RunInfo.xml')
-    check_file_path(samplesheet_file)
-    samplesheet_dir = \
-      get_temp_dir(use_ephemeral_space=True)
+    # samplesheet_file = \
+    #   ti.xcom_pull(
+    #     task_ids=samplesheet_xcom_task,
+    #     key=samplesheet_xcom_key)
+    # check_file_path(samplesheet_file)
+    # runinfo_xml_file = \
+    #   os.path.join(
+    #     seqrun_path,
+    #     'RunInfo.xml')
+    # check_file_path(samplesheet_file)
+    # samplesheet_dir = \
+    #   get_temp_dir(use_ephemeral_space=True)
     ## get formatted samplesheets
     ## output:
     ## [{
@@ -2231,30 +2240,36 @@ def format_and_split_samplesheet_func(**context):
 	  ##   'samplesheet_file': '/tmp/SampleSheet_project_name_1_20_NA.csv',
 	  ##   'output_dir': '/tmp/dir'
     ## }]
-    formatted_samplesheets_list = \
-      _get_formatted_samplesheets(
-        samplesheet_file=samplesheet_file,
-        runinfo_xml_file=runinfo_xml_file,
-        samplesheet_output_dir=samplesheet_dir,
-        singlecell_barcode_json=SINGLECELL_BARCODE_JSON,
-        singlecell_dual_barcode_json=SINGLECELL_DUAL_BARCODE_JSON)
+    # formatted_samplesheets_list = \
+    #   _get_formatted_samplesheets(
+    #     samplesheet_file=samplesheet_file,
+    #     runinfo_xml_file=runinfo_xml_file,
+    #     samplesheet_output_dir=samplesheet_dir,
+    #     singlecell_barcode_json=SINGLECELL_BARCODE_JSON,
+    #     singlecell_dual_barcode_json=SINGLECELL_DUAL_BARCODE_JSON)
     ## save formatted samplesheet data to xcom
-    ti.xcom_push(
-      key=xcom_key,
-      value=formatted_samplesheets_list)
-    project_indices = \
-      pd.DataFrame(formatted_samplesheets_list)['project_index'].\
-      drop_duplicates().values.tolist()
-    if len(project_indices) > max_projects:
+    # ti.xcom_push(
+    #   key=xcom_key,
+    #   value=formatted_samplesheets_list)
+    # project_indices = \
+    #   pd.DataFrame(formatted_samplesheets_list)['project_index'].\
+    #   drop_duplicates().values.tolist()
+    # if len(project_indices) > max_projects:
+    #   raise ValueError(
+    #     f"Too many projects {project_indices}. Increase MAX_PROJECTS param from {max_projects}")
+    if len(sample_groups.keys()) > max_projects:
       raise ValueError(
-        f"Too many projects {project_indices}. Increase MAX_PROJECTS param from {max_projects}")
+        f"Too many projects {sample_groups.keys()}. Increase MAX_PROJECTS param from {max_projects}")
     ## generate task list
+    # task_list = [
+    #   f'{project_task_prefix}{project_index}'
+    #     for project_index in project_indices]
     task_list = [
       f'{project_task_prefix}{project_index}'
-        for project_index in project_indices]
+        for project_index in sample_groups.keys()]
     if len(task_list) == 0:
       log.warning(
-        f"No project indices found in samplesheet {samplesheet_file}")
+        f"No project indices found in sample_groups {sample_groups}")
       task_list = ['mark_run_finished']
     return task_list
   except Exception as e:
