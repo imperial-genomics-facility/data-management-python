@@ -1489,7 +1489,7 @@ def run_bclconvert_func(**context):
     bcl_num_parallel_tiles = \
       context['params'].\
       get('bcl_num_parallel_tiles', '1')
-    dag_run = context.get('dag_run')
+    # dag_run = context.get('dag_run')
     seqrun_path = ''
     # if dag_run is not None and \
     #    dag_run.conf is not None and \
