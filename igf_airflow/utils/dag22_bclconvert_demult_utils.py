@@ -2395,6 +2395,8 @@ def _get_formatted_samplesheets(
               temp_dir = get_temp_dir(use_ephemeral_space=True)
               ig_final_sa.\
                 print_sampleSheet(ig_samplesheet_path)
+              sample_counts = \
+                len(ig_final_sa._data)
               formatted_samplesheets_list.\
                 append({
                   'project': project_name,
@@ -2404,6 +2406,7 @@ def _get_formatted_samplesheets(
                   'bases_mask': bases_mask,
                   'index_group': '{0}_{1}'.format(ig, desc_item),
                   'index_group_index': ig_counter,
+                  'sample_counts': sample_counts,
                   'samplesheet_file': ig_samplesheet_path,
                   'output_dir': temp_dir})
           else:
@@ -2434,6 +2437,8 @@ def _get_formatted_samplesheets(
               set_header_for_bclconvert_run(bases_mask=bases_mask)
             ig_final_sa.\
               print_sampleSheet(ig_samplesheet_path)
+            sample_counts = \
+              len(ig_final_sa._data)
             temp_dir = get_temp_dir(use_ephemeral_space=True)
             formatted_samplesheets_list.\
               append({
@@ -2444,6 +2449,7 @@ def _get_formatted_samplesheets(
                 'bases_mask': bases_mask,
                 'index_group': ig,
                 'index_group_index': ig_counter,
+                'sample_counts': sample_counts,
                 'samplesheet_file': ig_samplesheet_path,
                 'output_dir': temp_dir})
     return formatted_samplesheets_list
