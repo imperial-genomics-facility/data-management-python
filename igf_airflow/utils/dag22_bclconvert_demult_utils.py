@@ -269,6 +269,7 @@ def fastqscreen_run_wrapper_for_known_samples_func(**context):
         replace_existing_file=True,
         cleanup_existing_collection=True,
         collection_list=fastqscreen_collection_list)
+    return file_collection_list
   except Exception as e:
     log.error(e)
     send_log_to_channels(
@@ -362,6 +363,7 @@ def fastqc_run_wrapper_for_known_samples_func(**context):
         replace_existing_file=True,
         cleanup_existing_collection=True,
         collection_list=fastqc_collection_list)
+    return file_collection_list
   except Exception as e:
     log.error(e)
     send_log_to_channels(
