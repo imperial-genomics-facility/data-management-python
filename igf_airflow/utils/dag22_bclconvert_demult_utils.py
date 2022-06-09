@@ -710,7 +710,7 @@ def register_experiment_and_runs_to_db(
           f'{library_id}_{platform_name}'
         # calculate run id
         run_igf_id = \
-          f'{experiment_id}_{flowcell_id}_{}lane_id'
+          f'{experiment_id}_{flowcell_id}_{lane_id}'
         library_layout = 'SINGLE'
         for fastq in entry.get('fastq_list'):
           if fastq.endswith('_R2_001.fastq.gz'):
