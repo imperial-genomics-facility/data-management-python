@@ -805,6 +805,12 @@ def register_experiment_and_runs_to_db(
 def load_fastq_and_qc_to_db_func(**context):
   try:
     ti = context['ti']
+    seqrun_igf_id = \
+      context['params'].\
+      get("seqrun_igf_id", None)
+    formatted_samplesheets_list = \
+      context['params'].\
+      get("formatted_samplesheets", None)
     xcom_key_for_checksum_sample_group = \
       context['params'].\
       get("xcom_key_for_checksum_sample_group", "checksum_sample_group")
@@ -812,12 +818,12 @@ def load_fastq_and_qc_to_db_func(**context):
       context['params'].\
       get("xcom_task_for_checksum_sample_group")
     #lane_id = context['params'].get('lane_id')
-    xcom_key = \
-      context['params'].\
-      get('xcom_key', 'formatted_samplesheets')
-    xcom_task = \
-      context['params'].\
-      get('xcom_task', 'format_and_split_samplesheet')
+    # xcom_key = \
+    #   context['params'].\
+    #   get('xcom_key', 'formatted_samplesheets')
+    # xcom_task = \
+    #   context['params'].\
+    #   get('xcom_task', 'format_and_split_samplesheet')
     xcom_key_for_collection_group = \
       context['params'].\
       get("xcom_key_for_collection_group", "collection_group")
@@ -847,8 +853,8 @@ def load_fastq_and_qc_to_db_func(**context):
        ig_index == 0:
       raise ValueError(
         "project_index, lane_index or ig_index is not set")
-    formatted_samplesheets_list = \
-      ti.xcom_pull(task_ids=xcom_task, key=xcom_key)
+    # formatted_samplesheets_list = \
+    #   ti.xcom_pull(task_ids=xcom_task, key=xcom_key)
     df = pd.DataFrame(formatted_samplesheets_list)
     if project_index_column not in df.columns or \
         lane_index_column not in df.columns or \
@@ -872,12 +878,12 @@ def load_fastq_and_qc_to_db_func(**context):
         key=xcom_key_for_checksum_sample_group)
     ## TO DO: fix lane_id
     lane_id = lane_index
-    dag_run = context.get('dag_run')
-    if dag_run is None or \
-       dag_run.conf is None or \
-       dag_run.conf.get('seqrun_id') is None:
-      raise ValueError('Missing seqrun_id in dag_run.conf')
-    seqrun_id = dag_run.conf.get('seqrun_id')
+    # dag_run = context.get('dag_run')
+    # if dag_run is None or \
+    #    dag_run.conf is None or \
+    #    dag_run.conf.get('seqrun_id') is None:
+    #   raise ValueError('Missing seqrun_id in dag_run.conf')
+    # seqrun_id = dag_run.conf.get('seqrun_id')
     ## To DO:
     #  for each sample in the sample_group
     #    * get sample_id
@@ -886,10 +892,12 @@ def load_fastq_and_qc_to_db_func(**context):
     #    * register experiment and run ids if they are not present
     #    * load fastqs with the run id as collection name
     #    * do these operations in batch mode
+    if seqrun_igf_id is None:
+      raise ValueError("Missing seqrun_igf_id")
     fastq_collection_list = \
       register_experiment_and_runs_to_db(
         db_config_file=DATABASE_CONFIG_FILE,
-        seqrun_id=seqrun_id,
+        seqrun_id=seqrun_igf_id,
         lane_id=lane_id,
         index_group=index_group,
         sample_group=checksum_sample_group)
