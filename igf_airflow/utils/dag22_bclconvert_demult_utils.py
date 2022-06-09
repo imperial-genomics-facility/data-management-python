@@ -258,7 +258,9 @@ def fastqscreen_run_wrapper_for_known_samples_func(**context):
         collection_type=fastqscreen_collection_type,
         collection_table=collection_table,
         base_data_path= HPC_BASE_RAW_DATA_PATH,
-        file_location='HPC_STORAGE',
+        file_location='HPC_PROJECT',
+        replace_existing_file=True,
+        cleanup_existing_collection=True,
         collection_list=fastqscreen_collection_list)
   except Exception as e:
     log.error(e)
@@ -349,7 +351,9 @@ def fastqc_run_wrapper_for_known_samples_func(**context):
         collection_type=fastqc_collection_type,
         collection_table=collection_table,
         base_data_path= HPC_BASE_RAW_DATA_PATH,
-        file_location='HPC_STORAGE',
+        file_location='HPC_PROJECT',
+        replace_existing_file=True,
+        cleanup_existing_collection=True,
         collection_list=fastqc_collection_list)
   except Exception as e:
     log.error(e)
