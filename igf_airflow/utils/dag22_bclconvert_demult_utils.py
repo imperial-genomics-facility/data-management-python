@@ -1576,65 +1576,80 @@ def run_bclconvert_func(**context):
 def trigger_ig_jobs(**context):
   try:
     ti = context['ti']
-    xcom_key = \
-      context['params'].get('xcom_key', 'formatted_samplesheets')
-    xcom_task = \
-      context['params'].get('xcom_task', 'format_and_split_samplesheet')
-    project_index_column = \
-      context['params'].get('project_index_column', 'project_index')
+    sample_groups = \
+      context['params'].\
+      get('sample_groups')
+    # xcom_key = \
+    #   context['params'].\
+    #   get('xcom_key', 'formatted_samplesheets')
+    # xcom_task = \
+    #   context['params'].\
+    #   get('xcom_task', 'format_and_split_samplesheet')
+    # project_index_column = \
+    #   context['params'].\
+    #   get('project_index_column', 'project_index')
     project_index = \
-      context['params'].get('project_index', 0)
-    lane_index_column = \
-      context['params'].get('lane_index_column', 'lane_index')
+      context['params'].\
+      get('project_index', 0)
+    # lane_index_column = \
+    #   context['params'].get('lane_index_column', 'lane_index')
     lane_index = \
-      context['params'].get('lane_index', 0)
+      context['params'].\
+      get('lane_index', 0)
     ig_task_prefix = \
-      context['params'].get('ig_task_prefix')
+      context['params'].\
+      get('ig_task_prefix')
     max_index_groups = \
-      context['params'].get('max_index_groups')
-    ig_index_column = \
-      context['params'].get('ig_index_column', 'index_group_index')
-    formatted_samplesheets_list = \
-      ti.xcom_pull(task_ids=xcom_task, key=xcom_key)
-    if len(formatted_samplesheets_list) == 0:
-      raise ValueError(
-              "No samplesheet found for seqrun {0}".\
-              format(context['dag_run'].conf.get('seqrun_id')))
-    df = pd.DataFrame(formatted_samplesheets_list)
+      context['params'].\
+      get('max_index_groups')
+    # ig_index_column = \
+    #   context['params'].get('ig_index_column', 'index_group_index')
+    # formatted_samplesheets_list = \
+    #   ti.xcom_pull(task_ids=xcom_task, key=xcom_key)
+    # if len(formatted_samplesheets_list) == 0:
+    #   raise ValueError(
+    #           "No samplesheet found for seqrun {0}".\
+    #           format(context['dag_run'].conf.get('seqrun_id')))
+    # df = pd.DataFrame(formatted_samplesheets_list)
     if project_index == 0 :
       raise ValueError("Invalid projext index 0")
-    if project_index_column not in df.columns:
-      raise KeyError("Column {0} not found in samplesheet".\
-                     format(project_index_column))
+    # if project_index_column not in df.columns:
+    #   raise KeyError("Column {0} not found in samplesheet".\
+    #                  format(project_index_column))
     if lane_index == 0 :
       raise ValueError("Invalid lane index 0")
-    if lane_index_column not in df.columns:
-      raise KeyError("Column {0} not found in samplesheet".\
-                      format(lane_index_column))
-    if ig_index_column not in df.columns:
-      raise KeyError("Column {0} not found in samplesheet".\
-                      format(ig_index_column))
-    df[project_index_column] = df[project_index_column].astype(int)
-    df[lane_index_column] = df[lane_index_column].astype(int)
-    df[ig_index_column] = df[ig_index_column].astype(int)
-    project_df = df[df[project_index_column] == int(project_index)]
-    lane_df = project_df[project_df[lane_index_column] == int(lane_index)]
-    if len(lane_df.index) == 0:
-      raise ValueError("No samplesheet found for project {0}, lane {1}".\
-                       format(project_index, lane_index))
+    # if lane_index_column not in df.columns:
+    #   raise KeyError("Column {0} not found in samplesheet".\
+    #                   format(lane_index_column))
+    # if ig_index_column not in df.columns:
+    #   raise KeyError("Column {0} not found in samplesheet".\
+    #                   format(ig_index_column))
+    # df[project_index_column] = df[project_index_column].astype(int)
+    # df[lane_index_column] = df[lane_index_column].astype(int)
+    # df[ig_index_column] = df[ig_index_column].astype(int)
+    # project_df = df[df[project_index_column] == int(project_index)]
+    # lane_df = project_df[project_df[lane_index_column] == int(lane_index)]
+    # if len(lane_df.index) == 0:
+    #   raise ValueError("No samplesheet found for project {0}, lane {1}".\
+    #                    format(project_index, lane_index))
+    # ig_counts = \
+    #   lane_df[ig_index_column].\
+    #   drop_duplicates().\
+    #   values.\
+    #   tolist()
     ig_counts = \
-      lane_df[ig_index_column].\
-      drop_duplicates().\
-      values.\
-      tolist()
+      sample_groups.\
+      get(project_index).\
+      get(lane_index).\
+      keys()
     if len(ig_counts) == 0:
-      raise ValueError("No index group found for project {0}, lane {1}".\
-                       format(project_index, lane_index))
+      raise ValueError(
+        f"No index group found for project {project_index}, lane {lane_index}")
     if len(ig_counts) > int(max_index_groups):
-      raise ValueError("Too many index groups found for project {0}, lane {1}".\
-                       format(project_index, lane_index))
+      raise ValueError(
+        f"Too many index groups found for project {project_index}, lane {lane_index}")
     task_list = [
-      '{0}{1}'.format(ig_task_prefix, ig)
+      f'{ig_task_prefix}{ig}'
          for ig in ig_counts]
     return task_list
   except Exception as e:
