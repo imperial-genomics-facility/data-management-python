@@ -2067,12 +2067,15 @@ def _configure_qc_pages_for_ftp(
 def setup_qc_page_for_project_func(**context):
   try:
     ti = context.get('ti')
-    project_data_xcom_key = \
+    formatted_samplesheets_list = \
       context['params'].\
-      get('project_data_xcom_key', 'formatted_samplesheets')
-    project_data_xcom_task = \
-      context['params'].\
-      get('project_data_xcom_task', 'format_and_split_samplesheet')
+      get('formatted_samplesheets')
+    # project_data_xcom_key = \
+    #   context['params'].\
+    #   get('project_data_xcom_key', 'formatted_samplesheets')
+    # project_data_xcom_task = \
+    #   context['params'].\
+    #   get('project_data_xcom_task', 'format_and_split_samplesheet')
     project_index_column = \
       context['params'].\
       get('project_index_column', 'project_index')
@@ -2083,10 +2086,10 @@ def setup_qc_page_for_project_func(**context):
       context['params'].\
       get('project_column', 'project')
     ## fetch project name
-    formatted_samplesheets_list = \
-      ti.xcom_pull(
-        task_ids=project_data_xcom_task,
-        key=project_data_xcom_key)
+    # formatted_samplesheets_list = \
+    #   ti.xcom_pull(
+    #     task_ids=project_data_xcom_task,
+    #     key=project_data_xcom_key)
     df = \
       pd.DataFrame(
         formatted_samplesheets_list)
