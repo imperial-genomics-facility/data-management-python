@@ -169,8 +169,8 @@ def run_fastqc(
           output_dir,
           os.path.basename(html_file))
       copy_local_file(
-        src_file=html_file,
-        dest_file=dest_file)
+        source_path=html_file,
+        destination_path=dest_file)
       output_file_list.append(dest_file)
     for zip_file in fastqc_zip:
       dest_file = \
@@ -178,8 +178,8 @@ def run_fastqc(
           output_dir,
           os.path.basename(zip_file))
       copy_local_file(
-        src_file=zip_file,
-        dest_file=dest_file)
+        source_path=zip_file,
+        destination_path=dest_file)
       output_file_list.append(dest_file)
     return output_file_list
   except Exception as e:
