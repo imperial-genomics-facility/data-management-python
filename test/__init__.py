@@ -29,7 +29,7 @@ def full_suite():
   from .process.processsinglecellsamplesheet_test import ProcessSingleCellSamplesheet_testA
   from .process.processsinglecellsamplesheet_test import ProcessSingleCellSamplesheet_testB
   from .process.processsinglecellsamplesheet_test import ProcessSingleCellDualIndexSamplesheetA
-  from .process.mergesinglecellfastq_test import MergeSingleCellFastq_testA
+  from .process.mergesinglecellfastq_test import MergeSingleCellFastq_testA, MergeSingleCellFastq_testB
   from .utils.project_data_display_utils_test import Convert_project_data_gviz_data1,Add_seqrun_path_info1
   from .utils.projectutils_test import Projectutils_test1,Projectutils_test2
   from .dbadaptor.fileadaptor_test import Fileadaptor_test1
@@ -136,6 +136,7 @@ def full_suite():
         ProcessSingleCellSamplesheet_testB,
         ProcessSingleCellDualIndexSamplesheetA,
         MergeSingleCellFastq_testA,
+        MergeSingleCellFastq_testB,
         Convert_project_data_gviz_data1,
         Add_seqrun_path_info1,
         Projectutils_test1,
