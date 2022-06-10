@@ -1258,6 +1258,46 @@ def sample_known_qc_factory_func(**context):
     raise
 
 
+def merge_single_cell_fastq_files_func(**context):
+  try:
+    ti = context['ti']
+    seqrun_igf_id = \
+      context['params'].\
+      get('seqrun_igf_id', None)
+    xcom_key_for_reports = \
+      context['params'].\
+      get('xcom_key_for_reports', 'bclconvert_reports')
+    xcom_task_for_reports = \
+      context['params'].\
+      get('xcom_task_for_reports', None)
+    bclconvert_reports_path = \
+      ti.xcom_pull(
+        key=xcom_key_for_reports,
+        task_ids=xcom_task_for_reports)
+    formatted_samplesheets_list =\
+      context['params'].\
+      get('formatted_samplesheets')
+    project_index = \
+      context['params'].\
+      get('project_index', 0)
+    lane_index = \
+      context['params'].\
+      get('lane_index', 0)
+    ig_index = \
+      context['params'].\
+      get('ig_index', 0)
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
+
 def generate_bclconvert_report(
       seqrun_path: str,
       image_path: str,
@@ -2033,7 +2073,7 @@ def _configure_qc_pages_for_ftp(
         remote_project_dir=remote_project_base_path,
         project_tag=project_name,
         hpcUser=hpc_user,
-        htpasswd_filename=os.path.basename(htpasswd_template),
+        htpasswd_filename='.{0}'.format(os.path.basename(htpasswd_template)),
         customerUsernameList=' '.join(user_list)))
     ## htpasswd file
     htpasswd_output = \
