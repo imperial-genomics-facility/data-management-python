@@ -17,7 +17,7 @@ from igf_data.process.singlecell_seqrun.processsinglecellsamplesheet import Proc
 from igf_data.process.singlecell_seqrun.processsinglecellsamplesheet import ProcessSingleCellSamplesheet
 from igf_data.utils.box_upload import upload_file_or_dir_to_box
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
-from igf_data.utils.fileutils import copy_local_file
+from igf_data.utils.fileutils import move_file
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.utils.fileutils import get_temp_dir
 from igf_data.utils.fileutils import copy_remote_file
@@ -45,6 +45,7 @@ from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.utils.fileutils import remove_dir
 from jinja2 import Template,Environment, FileSystemLoader, select_autoescape
 from igf_data.utils.seqrunutils import get_seqrun_date_from_igf_id
+from igf_data.process.singlecell_seqrun.mergesinglecellfastq import MergeSingleCellFastq
 
 SLACK_CONF = Variable.get('slack_conf',default_var=None)
 MS_TEAMS_CONF = Variable.get('ms_teams_conf',default_var=None)
@@ -376,7 +377,7 @@ def fastqc_run_wrapper_for_known_samples_func(**context):
     raise
 
 
-def get_flatform_name_and_flowcell_id_for_seqrun(
+def get_platform_name_and_flowcell_id_for_seqrun(
       seqrun_igf_id: str,
       db_config_file: str) \
         -> Tuple[str, str]:
@@ -695,7 +696,7 @@ def register_experiment_and_runs_to_db(
     try:
       check_file_path(db_config_file)
       (platform_name, flowcell_id) = \
-        get_flatform_name_and_flowcell_id_for_seqrun(
+        get_platform_name_and_flowcell_id_for_seqrun(
           seqrun_igf_id=seqrun_id,
           db_config_file=db_config_file)
       seqrun_date = \
@@ -1258,22 +1259,144 @@ def sample_known_qc_factory_func(**context):
     raise
 
 
+def reset_single_cell_samplesheet(
+      samplesheet_file: str,
+      sampleid_col: str = 'Sample_ID',
+      samplename_col: str = 'Sample_Name',
+      filter_column_prefix: str = 'Original_',
+      orig_sampleid_col : str = 'Original_Sample_ID',
+      description_col: str = 'Description',
+      orig_samplename_col: str = 'Original_Sample_Name',
+      index_col: str = 'index',
+      orig_index_col: str = 'Original_index',
+      singlecell_tag: str = '10X') \
+        -> None:
+  try:
+    check_file_path(samplesheet_file)
+    samplesheet = \
+      SampleSheet(samplesheet_file)
+    samplesheet.\
+      filter_sample_data(
+        condition_key=description_col,
+        condition_value=singlecell_tag,
+        method='include')
+    singlecell_df = \
+      pd.DataFrame(samplesheet._data)
+    samplesheet = \
+      SampleSheet(samplesheet_file)
+    samplesheet.\
+      filter_sample_data(
+        condition_key=description_col,
+        condition_value=singlecell_tag,
+        method='include')
+    non_singlecell_df = \
+      pd.DataFrame(samplesheet._data)
+    if orig_sampleid_col not in singlecell_df.columns or \
+       orig_samplename_col not in singlecell_df.columns or \
+       orig_index_col not in singlecell_df.columns:
+      raise ValueError(
+        f"Original sample name, id or index columns not found in samplesheet file {samplesheet_file}")
+    ## fix singlecell samplesheet
+    singlecell_df[index_col] = \
+      singlecell_df[orig_index_col]
+    singlecell_df[sampleid_col] = \
+      singlecell_df[orig_sampleid_col]
+    singlecell_df[samplename_col] = \
+      singlecell_df[orig_samplename_col]
+    singlecell_df[description_col] = ''
+    allowed_columns = [
+      f for f in singlecell_df.columns
+        if not f.startswith(filter_column_prefix)]
+    if len(singlecell_df.index) > 0 and \
+       len(allowed_columns) == 0:
+      raise ValueError(
+        f"No columns found after filtering samplesheet for {filter_column_prefix}")
+    singlecell_df = \
+      singlecell_df[allowed_columns]
+    ## fix non-singlecell samplesheet
+    allowed_columns = [
+      f for f in non_singlecell_df.columns
+        if not f.startswith(filter_column_prefix)]
+    if len(non_singlecell_df.index) > 0 and \
+        len(allowed_columns) == 0:
+      raise ValueError(
+        f"No columns found after filtering samplesheet for prefix {filter_column_prefix}")
+    non_singlecell_df = \
+      non_singlecell_df[allowed_columns]
+    ## merge data and create modified samplesheet
+    merged_data = list()
+    singlecell_data = \
+      singlecell_df.\
+      to_dict(orient='records')
+    if len(singlecell_data) > 0:
+      merged_data.extend(singlecell_data)
+    non_singlecell_data = \
+      non_singlecell_df.\
+      to_dict(orient='records')
+    if len(non_singlecell_data) > 0:
+      merged_data.extend(non_singlecell_data)
+    merged_columns = \
+      pd.DataFrame(merged_data).columns
+    samplesheet = \
+      SampleSheet(samplesheet_file)
+    samplesheet._data_header = \
+      merged_columns
+    samplesheet._data = \
+      merged_data
+    ## move original samplesheet to backup
+    backup_file = \
+      samplesheet_file + '_original'
+    copy_local_file(
+      samplesheet_file,
+      backup_file,
+      force=True)
+    os.remove(samplesheet_file)
+    ## write modified samplesheet
+    samplesheet.\
+      print_sampleSheet(samplesheet_file)
+  except Exception as e:
+    raise ValueError(
+      f"Failed to reset single cell samplesheet, error: {e}")
+
+
 def merge_single_cell_fastq_files_func(**context):
   try:
     ti = context['ti']
     seqrun_igf_id = \
       context['params'].\
       get('seqrun_igf_id', None)
-    xcom_key_for_reports = \
+    singlecell_tag = \
       context['params'].\
-      get('xcom_key_for_reports', 'bclconvert_reports')
-    xcom_task_for_reports = \
+      get('singlecell_tag', '10X')
+    xcom_key_bclconvert_output = \
       context['params'].\
-      get('xcom_task_for_reports', None)
+      get('xcom_key_bclconvert_output', 'bclconvert_output')
+    xcom_task_bclconvert_output = \
+      context['params'].\
+      get('xcom_task_bclconvert_output', None)
+    xcom_key_bclconvert_reports = \
+      context['params'].\
+      get('xcom_key_bclconvert_reports', 'bclconvert_reports')
+    xcom_task_bclconvert_reports = \
+      context['params'].\
+      get('xcom_task_bclconvert_reports', None)
+    samplesheet_file_suffix = \
+      context['params'].\
+      get('samplesheet_file_suffix', "SampleSheet.csv")
+    bclconvert_output_path = \
+      ti.xcom_pull(
+        key=xcom_key_bclconvert_output,
+        task_ids=xcom_task_bclconvert_output)
     bclconvert_reports_path = \
       ti.xcom_pull(
-        key=xcom_key_for_reports,
-        task_ids=xcom_task_for_reports)
+        key=xcom_key_bclconvert_reports,
+        task_ids=xcom_task_bclconvert_reports)
+    ## get original samplesheet
+    samplesheet_path = \
+      os.path.join(
+        bclconvert_reports_path,
+        samplesheet_file_suffix)
+    check_file_path(samplesheet_path)
     formatted_samplesheets_list =\
       context['params'].\
       get('formatted_samplesheets')
@@ -1286,6 +1409,95 @@ def merge_single_cell_fastq_files_func(**context):
     ig_index = \
       context['params'].\
       get('ig_index', 0)
+    ## TO DO 1: merge fastq files for single cell samples
+    if lane_index == 0:
+      raise ValueError("lane_index is not set")
+    if seqrun_igf_id is None:
+      raise ValueError("seqrun_igf_id is not set")
+    check_file_path(bclconvert_output_path)
+    platform_name, _  = \
+      get_platform_name_and_flowcell_id_for_seqrun(
+        seqrun_igf_id=seqrun_igf_id,
+        db_config_file=DATABASE_CONFIG_FILE)
+    sc_data = \
+      MergeSingleCellFastq(
+        fastq_dir=bclconvert_output_path,
+        samplesheet=samplesheet_path,
+        platform_name=platform_name,
+        use_bclconvert_settings=True,
+        pseudo_lane_list=(str(lane_index),),
+        singlecell_tag=singlecell_tag)
+    sc_data.\
+      merge_fastq_per_lane_per_sample()
+    ## TO DO 2: reset samplesheet after merging for single cell samples
+    reset_single_cell_samplesheet(
+      samplesheet_file=samplesheet_path)
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
+
+def check_demult_stats_file_for_failed_samples(
+      demult_stats_file: str,
+      read_column: str = '# Reads',
+      read_count_threshold: int = 500) -> bool:
+  try:
+    check_file_path(demult_stats_file)
+    demult_stats_df = \
+      pd.read_csv(demult_stats_file)
+    filt_rows = \
+      demult_stats_df[demult_stats_df[read_column] < read_count_threshold]
+    if len(filt_rows.index) > 0:
+      return False
+    else:
+      return True
+  except Exception as e:
+    raise ValueError("Failed to check demult stats file for failed samples")
+
+
+def check_output_for_project_lane_index_group_func(**context):
+  try:
+    ti = context['ti']
+    seqrun_igf_id = \
+      context['params'].\
+      get('seqrun_igf_id', None)
+    demult_stats_file_name = \
+      context['params'].\
+      get('demult_stats_file_name', 'Demultiplex_Stats.csv')
+    xcom_key_bclconvert_reports = \
+      context['params'].\
+      get('xcom_key_bclconvert_reports', 'bclconvert_reports')
+    xcom_task_bclconvert_reports = \
+      context['params'].\
+      get('xcom_task_bclconvert_reports', None)
+    read_count_threshold = \
+      context['params'].\
+      get('read_count_threshold', 500)
+    if seqrun_igf_id is None:
+      raise ValueError("seqrun_igf_id is not set")
+    bclconvert_reports_path = \
+      ti.xcom_pull(
+        key=xcom_key_bclconvert_reports,
+        task_ids=xcom_task_bclconvert_reports)
+    demult_stats_file_path = \
+      os.path.join(
+        bclconvert_reports_path,
+        demult_stats_file_name)
+    check_file_path(demult_stats_file_path)
+    check_status = \
+      check_demult_stats_file_for_failed_samples(
+        demult_stats_file=demult_stats_file_path,
+        read_count_threshold=read_count_threshold)
+    if not check_status:
+      raise ValueError(
+        f"Run {seqrun_igf_id} failing read count validation")
   except Exception as e:
     log.error(e)
     send_log_to_channels(

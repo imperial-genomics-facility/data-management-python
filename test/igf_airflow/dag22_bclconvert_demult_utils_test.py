@@ -1,4 +1,4 @@
-import unittest, os, json
+import unittest, os, json, re
 import pandas as pd
 from igf_data.igfdb.igfTables import Base, Seqrun, Seqrun_attribute
 from igf_data.igfdb.baseadaptor import BaseAdaptor
@@ -11,8 +11,9 @@ from igf_data.igfdb.useradaptor import UserAdaptor
 from igf_data.illumina.samplesheet import SampleSheet
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.utils.dbutils import read_dbconf_json
-from igf_data.utils.fileutils import get_temp_dir, remove_dir
+from igf_data.utils.fileutils import check_file_path, get_temp_dir, remove_dir
 from igf_data.utils.fileutils import calculate_file_checksum
+from igf_data.illumina.samplesheet import SampleSheet
 from igf_airflow.utils.dag22_bclconvert_demult_utils import _check_and_load_seqrun_to_db
 from igf_airflow.utils.dag22_bclconvert_demult_utils import _check_and_seed_seqrun_pipeline
 from igf_airflow.utils.dag22_bclconvert_demult_utils import _get_formatted_samplesheets
@@ -24,7 +25,7 @@ from igf_airflow.utils.dag22_bclconvert_demult_utils import get_sample_groups_fo
 from igf_airflow.utils.dag22_bclconvert_demult_utils import get_sample_id_and_fastq_path_for_sample_groups
 from igf_airflow.utils.dag22_bclconvert_demult_utils import get_sample_info_from_sample_group
 from igf_airflow.utils.dag22_bclconvert_demult_utils import get_checksum_for_sample_group_fastq_files
-from igf_airflow.utils.dag22_bclconvert_demult_utils import get_flatform_name_and_flowcell_id_for_seqrun
+from igf_airflow.utils.dag22_bclconvert_demult_utils import get_platform_name_and_flowcell_id_for_seqrun
 from igf_airflow.utils.dag22_bclconvert_demult_utils import get_project_id_samples_list_from_db
 from igf_airflow.utils.dag22_bclconvert_demult_utils import register_experiment_and_runs_to_db
 from igf_airflow.utils.dag22_bclconvert_demult_utils import load_data_raw_data_collection
@@ -34,6 +35,8 @@ from igf_airflow.utils.dag22_bclconvert_demult_utils import _configure_qc_pages_
 from igf_airflow.utils.dag22_bclconvert_demult_utils import _get_project_sample_count
 from igf_airflow.utils.dag22_bclconvert_demult_utils import _calculate_image_height_for_project_page
 from igf_airflow.utils.dag22_bclconvert_demult_utils import _create_output_from_jinja_template
+from igf_airflow.utils.dag22_bclconvert_demult_utils import reset_single_cell_samplesheet
+from igf_airflow.utils.dag22_bclconvert_demult_utils import check_demult_stats_file_for_failed_samples
 
 class Dag22_bclconvert_demult_utils_testA(unittest.TestCase):
   def setUp(self):
@@ -640,7 +643,7 @@ class Dag22_bclconvert_demult_utils_testF(unittest.TestCase):
 
   def test_get_flatform_name_and_flowcell_id_for_seqrun(self):
     (platform_name, flowcell_id) = \
-      get_flatform_name_and_flowcell_id_for_seqrun(
+      get_platform_name_and_flowcell_id_for_seqrun(
         seqrun_igf_id='171003_H00001_0089_TEST',
         db_config_file=self.dbconfig)
     self.assertEqual(platform_name, 'HISEQ4000')
@@ -865,8 +868,6 @@ class Dag22_bclconvert_demult_utils_testH(unittest.TestCase):
       replace_existing_file=True,
       make_file_and_dir_read_only=True)
     self.assertTrue(os.path.exists(dest_file))
-    with self.assertRaises(PermissionError):
-      os.remove(dest_file)
     copy_or_replace_file_to_disk_and_change_permission(
       source_path=source_file,
       destination_path=dest_file,
@@ -974,6 +975,97 @@ class Dag22_bclconvert_demult_utils_testI(unittest.TestCase):
     self.assertEqual(len(output_dict), 6)
     self.assertTrue(os.path.exists(htacccess_path))
     self.assertEqual(output_dict[htacccess_path], htaccess_ftp_path)
+
+
+class Dag22_bclconvert_demult_utils_testJ(unittest.TestCase):
+  def setUp(self):
+    self.temp_dir = get_temp_dir()
+    self.samplesheet_file = \
+      os.path.join(
+        self.temp_dir,
+        'SampleSheet.csv')
+    samplesheet_data = """
+    [Header]
+    IEMFileVersion,4,,,,,,,,
+    Application,NextSeq2000 FASTQ Only,,,,,,,,
+    [Reads]
+    151,,,,,,,,,
+    151,,,,,,,,,
+    [Settings]
+    CreateFastqForIndexReads,1
+    MinimumTrimmedReadLength,8
+    FastqCompressionFormat,gzip
+    MaskShortReads,8
+    OverrideCycles,Y150N1;I8N2;N10;Y150N1
+    [Data]
+    Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description,Original_index,Original_Sample_ID,Original_Sample_Name
+    IGF1_1,A01_1,,,SI-GA-C2,CCTAGACC,,,IGFQ1,10X,SI-GA-C2,IGF1,A01
+    IGF1_2,A01_2,,,SI-GA-C2,ATCTCTGT,,,IGFQ1,10X,SI-GA-C2,IGF1,A01
+    IGF1_3,A01_3,,,SI-GA-C2,TAGCTCTA,,,IGFQ1,10X,SI-GA-C2,IGF1,A01
+    IGF1_4,A01_4,,,SI-GA-C2,GGAGAGAG,,,IGFQ1,10X,SI-GA-C2,IGF1,A01
+    IGF2_1,A02_1,,,SI-GA-D2,TAACAAGG,,,IGFQ1,10X,SI-GA-D2,IGF2,A02
+    IGF2_2,A02_2,,,SI-GA-D2,GGTTCCTC,,,IGFQ1,10X,SI-GA-D2,IGF2,A02
+    IGF2_3,A02_2,,,SI-GA-D2,GGTTCCTC,,,IGFQ1,10X,SI-GA-D2,IGF2,A02
+    IGF2_4,A02_2,,,SI-GA-D2,GGTTCCTC,,,IGFQ1,10X,SI-GA-D2,IGF2,A02
+    """
+    pattern1 = re.compile(r'\n\s+')
+    pattern2 = re.compile(r'^\n+')
+    samplesheet_data = re.sub(pattern1, '\n', samplesheet_data)
+    samplesheet_data = re.sub(pattern2, '', samplesheet_data)
+    with open(self.samplesheet_file, 'w') as fh:
+        fh.write(samplesheet_data)
+
+  def tearDown(self):
+    remove_dir(self.temp_dir)
+
+  def test_reset_single_cell_samplesheet(self):
+    self.assertTrue(os.path.exists(self.samplesheet_file))
+    samplesheet = \
+      SampleSheet(self.samplesheet_file)
+    samplesheet_df = \
+      pd.DataFrame(samplesheet._data)
+    self.assertTrue('Original_Sample_ID' in samplesheet_df.columns)
+    self.assertTrue('IGF1_1' in samplesheet_df['Sample_ID'].values.tolist())
+    reset_single_cell_samplesheet(
+      samplesheet_file=self.samplesheet_file)
+    self.assertTrue(os.path.exists(self.samplesheet_file))
+    samplesheet = \
+      SampleSheet(self.samplesheet_file)
+    samplesheet_df = \
+      pd.DataFrame(samplesheet._data)
+    self.assertTrue('Original_Sample_ID' not in samplesheet_df.columns)
+    self.assertTrue('IGF1' in samplesheet_df['Sample_ID'].values.tolist())
+
+class Dag22_bclconvert_demult_utils_testK(unittest.TestCase):
+  def setUp(self):
+    self.temp_dir = get_temp_dir()
+    self.demult_stats_file = \
+      os.path.join(
+        self.temp_dir,
+        'Demultiplex_Stats.csv')
+    demult_stats_data = """
+    Lane,SampleID,Index,# Reads,# Perfect Index Reads,# One Mismatch Index Reads,# Two Mismatch Index Reads,% Reads,% Perfect Index Reads,% One Mismatch Index Reads,% Two Mismatch Index Reads
+    1,IGF122019,CGGCTAAT-,413403,413403,0,0,0.0921,1.0000,0.0000,0.0000
+    1,IGF121857_4,GTCGATGC-,26974,26974,0,0,0.0060,1.0000,0.0000,0.0000
+    1,IGF122023,ATAGCGTC-,0,0,0,0,0.0000,1.0000,1.0000,0.0000
+    1,IGF122026,GTCGGAGC-,350624,350624,0,0,0.0781,1.0000,0.0000,0.0000
+    1,Undetermined,Undetermined,2345516,2345516,0,0,0.5227,1.0000,0.0000,0.0000
+    """
+    pattern1 = re.compile(r'\n\s+')
+    pattern2 = re.compile(r'^\n+')
+    demult_stats_data = re.sub(pattern1, '\n', demult_stats_data)
+    demult_stats_data = re.sub(pattern2, '', demult_stats_data)
+    with open(self.demult_stats_file, 'w') as fh:
+        fh.write(demult_stats_data)
+
+  def tearDown(self):
+    remove_dir(self.temp_dir)
+
+  def test_check_demult_stats_file_for_failed_samples(self):
+    check_status = \
+      check_demult_stats_file_for_failed_samples(
+        demult_stats_file=self.demult_stats_file)
+    self.assertFalse(check_status)
 
 if __name__=='__main__':
   unittest.main()

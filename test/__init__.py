@@ -82,6 +82,8 @@ def full_suite():
   from .igf_airflow.dag22_bclconvert_demult_utils_test import Dag22_bclconvert_demult_utils_testG
   from .igf_airflow.dag22_bclconvert_demult_utils_test import Dag22_bclconvert_demult_utils_testH
   from .igf_airflow.dag22_bclconvert_demult_utils_test import Dag22_bclconvert_demult_utils_testI
+  from .igf_airflow.dag22_bclconvert_demult_utils_test import Dag22_bclconvert_demult_utils_testJ
+  from .igf_airflow.dag22_bclconvert_demult_utils_test import Dag22_bclconvert_demult_utils_testK
   from .utils.cellranger_count_utils_test import Cellranger_count_utils_testA
   from .dbadaptor.analysisadaptor_test import Analysisadaptor_test1
   from .dbadaptor.seqrunadaptor_test import SeqrunAdaptor_test1
@@ -206,6 +208,8 @@ def full_suite():
         Dag22_bclconvert_demult_utils_testG,
         Dag22_bclconvert_demult_utils_testH,
         Dag22_bclconvert_demult_utils_testI,
+        Dag22_bclconvert_demult_utils_testJ,
+        Dag22_bclconvert_demult_utils_testK,
         Dag23_test_bclconvert_demult_utils_testA
       ]
     ])
