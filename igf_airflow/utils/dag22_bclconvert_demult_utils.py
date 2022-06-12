@@ -74,6 +74,67 @@ FASTQ_COLLECTION_TYPE = Variable.get('fastq_collection_type', default_var='demul
 
 log = logging.getLogger(__name__)
 
+def collect_qc_reports_for_samples_func(**context):
+  try:
+    ti = context['ti']
+    xcom_key_for_bclconvert_output = \
+      context['params'].\
+      get("xcom_key_for_bclconvert_output", "bclconvert_output")
+    bclconvert_task_prefix = \
+      context['params'].\
+      get("bclconvert_task_prefix", "bclconvert_")
+    fastqc_task_prefix = \
+      context['params'].\
+      get("fastqc_task_prefix", "fastqc_")
+    fastq_screen_task_prefix = \
+      context['params'].\
+      get("fastq_screen_task_prefix", "fastq_screen_")
+    xcom_key_for_fastqc_output = \
+      context['params'].\
+      get("xcom_key_for_fastqc_output", "fastqc_output")
+    xcom_key_for_fastq_screen_output = \
+      context['params'].\
+      get("xcom_key_for_fastq_screen_output", "fastq_screen_output")
+    all_task_ids = \
+      context['task'].\
+      get_direct_relative_ids(upstream=True)
+    qc_output_list = list()
+    for task_name in all_task_ids:
+      if task_name.startswith(bclconvert_task_prefix):
+        bclconvert_output = \
+          ti.xcom_pull(
+            task_ids=task_name,
+            key=xcom_key_for_bclconvert_output)
+        qc_output_list.append(bclconvert_output)
+      elif task_name.startswith(fastqc_task_prefix):
+        fastqc_output = \
+          ti.xcom_pull(
+            task_ids=task_name,
+            key=xcom_key_for_fastqc_output)
+        qc_output_list.append(fastqc_output)
+      elif task_name.startswith(fastq_screen_task_prefix):
+        fastq_screen_output = \
+          ti.xcom_pull(
+            task_ids=task_name,
+            key=xcom_key_for_fastq_screen_output)
+        qc_output_list.append(fastq_screen_output)
+    work_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    qc_output_file = \
+      os.path.join(work_dir, "qc_output.txt")
+    with open(qc_output_file, "w") as fp:
+      fp.write('\n'.join(qc_output_list))
+    return qc_output_file
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
 
 def run_fastqScreen(
       fastqscreen_image_path: str,
