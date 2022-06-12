@@ -191,35 +191,38 @@ def run_fastqc(
 def fastqscreen_run_wrapper_for_known_samples_func(**context):
   try:
     ti = context['ti']
-    xcom_key_for_bclconvert_output = \
-      context['params'].\
-      get("xcom_key_for_bclconvert_output", "bclconvert_output")
-    xcom_task_for_bclconvert_output = \
-      context['params'].\
-      get("xcom_task_for_bclconvert_output")
+    # xcom_key_for_bclconvert_output = \
+    #   context['params'].\
+    #   get("xcom_key_for_bclconvert_output", "bclconvert_output")
+    # xcom_task_for_bclconvert_output = \
+    #   context['params'].\
+    #   get("xcom_task_for_bclconvert_output")
     xcom_key_for_collection_group = \
       context['params'].\
       get("xcom_key_for_collection_group", "collection_group")
     xcom_task_for_collection_group = \
       context['params'].\
       get("xcom_task_for_collection_group")
+    xcom_key_for_fastq_screen_output = \
+      context['params'].\
+      get("xcom_key_for_fastq_screen_output", "fastq_screen_output")
     fastqscreen_collection_type = FASTQSCREEN_HTML_REPORT_TYPE
     collection_table = 'run'
-    bclconvert_output = \
-      ti.xcom_pull(
-        task_ids=xcom_task_for_bclconvert_output,
-        key=xcom_key_for_bclconvert_output)
+    # bclconvert_output = \
+    #   ti.xcom_pull(
+    #     task_ids=xcom_task_for_bclconvert_output,
+    #     key=xcom_key_for_bclconvert_output)
     collection_group = \
       ti.xcom_pull(
         task_ids=xcom_task_for_collection_group,
         key=xcom_key_for_collection_group)
-    fastqscreen_temp_output_path = \
-      os.path.join(
-        bclconvert_output,
-        'fastqscreen_dir')
-    os.makedirs(
-      fastqscreen_temp_output_path,
-      exist_ok=True)
+    # fastqscreen_temp_output_path = \
+    #   os.path.join(
+    #     bclconvert_output,
+    #     'fastqscreen_dir')
+    # os.makedirs(
+    #   fastqscreen_temp_output_path,
+    #   exist_ok=True)
     fastqscreen_collection_list = list()
     work_dir = \
       get_temp_dir(
@@ -241,13 +244,14 @@ def fastqscreen_run_wrapper_for_known_samples_func(**context):
             fastq_path=fastq_file,
             output_dir=work_dir)
         for file_entry in output_fastqc_list:
-          dest_path = \
-            os.path.join(
-              fastqscreen_temp_output_path,
-              os.path.basename(file_entry))
-          copy_local_file(
-            file_entry,
-            dest_path, force=True)
+          # dest_path = \
+          #   os.path.join(
+          #     fastqscreen_temp_output_path,
+          #     os.path.basename(file_entry))
+          # copy_local_file(
+          #   file_entry,
+          #   dest_path,
+          #   force=True)
           if file_entry.endswith('.html'):
             fastq_output_list.append({
               'file_path': file_entry,
@@ -270,7 +274,9 @@ def fastqscreen_run_wrapper_for_known_samples_func(**context):
         replace_existing_file=True,
         cleanup_existing_collection=True,
         collection_list=fastqscreen_collection_list)
-    return file_collection_list
+    ti.xcom_push(
+      key=xcom_key_for_fastq_screen_output,
+      value=work_dir)
   except Exception as e:
     log.error(e)
     send_log_to_channels(
@@ -294,33 +300,38 @@ def fastqc_run_wrapper_for_known_samples_func(**context):
     # * load report to disk and db
     # * copy fastqc results to temp output path
     ti = context['ti']
-    xcom_key_for_bclconvert_output = \
-      context['params'].\
-      get("xcom_key_for_bclconvert_output", "bclconvert_output")
-    xcom_task_for_bclconvert_output = \
-      context['params'].\
-      get("xcom_task_for_bclconvert_output")
+    # xcom_key_for_bclconvert_output = \
+    #   context['params'].\
+    #   get("xcom_key_for_bclconvert_output", "bclconvert_output")
+    # xcom_task_for_bclconvert_output = \
+    #   context['params'].\
+    #   get("xcom_task_for_bclconvert_output")
     xcom_key_for_collection_group = \
       context['params'].\
       get("xcom_key_for_collection_group", "collection_group")
     xcom_task_for_collection_group = \
       context['params'].\
       get("xcom_task_for_collection_group")
+    xcom_key_for_fastqc_output = \
+      context['params'].\
+      get('xcom_key_for_fastqc_output', 'fastqc_output')
     fastqc_collection_type = FASTQC_HTML_REPORT_TYPE
     collection_table = 'run'
-    bclconvert_output = \
-      ti.xcom_pull(
-        task_ids=xcom_task_for_bclconvert_output,
-        key=xcom_key_for_bclconvert_output)
+    # bclconvert_output = \
+    #   ti.xcom_pull(
+    #     task_ids=xcom_task_for_bclconvert_output,
+    #     key=xcom_key_for_bclconvert_output)
     collection_group = \
       ti.xcom_pull(
         task_ids=xcom_task_for_collection_group,
         key=xcom_key_for_collection_group)
-    fastqc_temp_output_path = \
-      os.path.join(bclconvert_output, 'fastqc_dir')
-    os.makedirs(fastqc_temp_output_path, exist_ok=True)
+    # fastqc_temp_output_path = \
+    #   os.path.join(bclconvert_output, 'fastqc_dir')
+    # os.makedirs(fastqc_temp_output_path, exist_ok=True)
     fastqc_collection_list = list()
-    work_dir = get_temp_dir(use_ephemeral_space=True)
+    work_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    # all_fastqc_output_list = list()
     for entry in collection_group:
       collection_name = entry.get('collection_name')
       dir_list = entry.get('dir_list')
@@ -335,13 +346,13 @@ def fastqc_run_wrapper_for_known_samples_func(**context):
             fastq_path=fastq_file,
             output_dir=work_dir)
         for file_entry in output_fastqc_list:
-          dest_path = \
-            os.path.join(
-              fastqc_temp_output_path,
-              os.path.basename(file_entry))
-          copy_local_file(
-            file_entry,
-            dest_path, force=True)
+          # dest_path = \
+          #   os.path.join(
+          #     fastqc_temp_output_path,
+          #     os.path.basename(file_entry))
+          # copy_local_file(
+          #   file_entry,
+          #   dest_path, force=True)
           if file_entry.endswith('.html'):
             fastq_output_list.append({
               'file_path': file_entry,
@@ -364,7 +375,9 @@ def fastqc_run_wrapper_for_known_samples_func(**context):
         replace_existing_file=True,
         cleanup_existing_collection=True,
         collection_list=fastqc_collection_list)
-    return file_collection_list
+    ti.xcom_push(
+      key=xcom_key_for_fastqc_output,
+      value=work_dir)
   except Exception as e:
     log.error(e)
     send_log_to_channels(
