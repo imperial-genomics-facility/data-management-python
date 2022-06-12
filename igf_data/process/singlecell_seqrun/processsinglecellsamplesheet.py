@@ -1,5 +1,6 @@
 import os,json
 import pandas as pd
+from typing import Any, Tuple
 from igf_data.utils.fileutils import check_file_path,read_json_data
 from igf_data.illumina.samplesheet import SampleSheet
 from igf_data.utils.sequtils import rev_comp
@@ -18,21 +19,29 @@ class ProcessSingleCellDualIndexSamplesheet:
   :param sample_description_column: Sample description column name in samplesheet, default 'Description'
   :param index2_rule: Rule for changing index2 barcode, default None
   :param workflow_group: A dictionary containing the I5 index tag for different platforms, default
-                          (('HISEQ4000', 'index2_workflow_b(i5)'),
-                           ('NEXTSEQ', 'index2_workflow_b(i5)'),
-                           ('NOVASEQ6000', 'index2_workflow_a(i5)'),
-                           ('NEXTSEQ2000', 'index2_workflow_a(i5)'),
-                           ('MISEQ', 'index2_workflow_a(i5)'))
+      (('HISEQ4000', 'index2_workflow_b(i5)'),
+      ('NEXTSEQ', 'index2_workflow_b(i5)'),
+      ('NOVASEQ6000', 'index2_workflow_a(i5)'),
+      ('NEXTSEQ2000', 'index2_workflow_a(i5)'),
+      ('MISEQ', 'index2_workflow_a(i5)'))
   '''
   def __init__(
-    self,samplesheet_file,singlecell_dual_index_barcode_json,platform,singlecell_tag='10X',
-    index_column='index',index2_column='index2',sample_description_column='Description',
-    sc_barcode_index1_tag='index(i7)',index2_rule=None,
-    workflow_group=(('HISEQ4000', 'index2_workflow_b(i5)'),
-                    ('NEXTSEQ', 'index2_workflow_b(i5)'),
-                    ('NOVASEQ6000', 'index2_workflow_a(i5)'),
-                    ('NEXTSEQ2000', 'index2_workflow_a(i5)'),
-                    ('MISEQ', 'index2_workflow_a(i5)'))):
+        self,
+        samplesheet_file: str,
+        singlecell_dual_index_barcode_json: str,
+        platform: str,
+        singlecell_tag: str = '10X',
+        index_column: str = 'index',
+        index2_column: str = 'index2',
+        sample_description_column: str = 'Description',
+        sc_barcode_index1_tag: str = 'index(i7)',
+        index2_rule: Any = None,
+        workflow_group: Any = 
+          (('HISEQ4000', 'index2_workflow_b(i5)'),
+           ('NEXTSEQ', 'index2_workflow_b(i5)'),
+           ('NOVASEQ6000', 'index2_workflow_a(i5)'),
+           ('NEXTSEQ2000', 'index2_workflow_a(i5)'),
+           ('MISEQ', 'index2_workflow_a(i5)'))) -> None:
     self.samplesheet_file = samplesheet_file
     self.singlecell_barcodes = \
       read_json_data(singlecell_dual_index_barcode_json)[0]
@@ -46,8 +55,14 @@ class ProcessSingleCellDualIndexSamplesheet:
     self.index2_rule = index2_rule
 
   def modify_samplesheet_for_sc_dual_barcode(
-        self,output_samplesheet, remove_adapters=True, adapter_trim_section='Settings',
-        adapter1_label='Adapter', adapter2_label='AdapterRead2'):
+        self,
+        output_samplesheet: str,
+        remove_adapters: bool = True,
+        reset_sample_description: bool = False,
+        adapter_trim_section: str ='Settings',
+        adapter1_label: str = 'Adapter',
+        adapter2_label: str = 'AdapterRead2') \
+          -> None:
     '''
     A method for modifying samplesheet file sor sc dual index barcodes
 
@@ -75,6 +90,9 @@ class ProcessSingleCellDualIndexSamplesheet:
           lambda series: self._replace_sc_dual_barcodes(series),
           result_type='reduce',
           axis=1)
+      ## reset sample description
+      if reset_sample_description:
+        df[self.sample_description_column] = ''
       sa._data = df.to_dict(orient='records')
       if remove_adapters:
         adapter1_count = \
