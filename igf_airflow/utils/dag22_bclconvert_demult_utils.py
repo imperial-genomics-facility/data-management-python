@@ -2645,8 +2645,7 @@ def _get_formatted_samplesheets(
       os.path.join(temp_dir, 'sc_dual_index_samplesheet.csv')
     sc_dual_process.\
       modify_samplesheet_for_sc_dual_barcode(
-        output_samplesheet=temp_sc_dual_conv_samplesheet_file,
-        reset_sample_description=True)
+        output_samplesheet=temp_sc_dual_conv_samplesheet_file)
     # 10x sc single index conversion
     sc_data = \
       ProcessSingleCellSamplesheet(

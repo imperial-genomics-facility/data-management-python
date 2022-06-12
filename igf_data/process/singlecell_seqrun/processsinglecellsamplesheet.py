@@ -36,7 +36,7 @@ class ProcessSingleCellDualIndexSamplesheet:
         sample_description_column: str = 'Description',
         sc_barcode_index1_tag: str = 'index(i7)',
         index2_rule: Any = None,
-        workflow_group: Any = 
+        workflow_group: Any = \
           (('HISEQ4000', 'index2_workflow_b(i5)'),
            ('NEXTSEQ', 'index2_workflow_b(i5)'),
            ('NOVASEQ6000', 'index2_workflow_a(i5)'),
@@ -54,11 +54,11 @@ class ProcessSingleCellDualIndexSamplesheet:
     self.sc_barcode_index1_tag = sc_barcode_index1_tag
     self.index2_rule = index2_rule
 
+
   def modify_samplesheet_for_sc_dual_barcode(
         self,
         output_samplesheet: str,
         remove_adapters: bool = True,
-        reset_sample_description: bool = False,
         adapter_trim_section: str ='Settings',
         adapter1_label: str = 'Adapter',
         adapter2_label: str = 'AdapterRead2') \
@@ -91,8 +91,6 @@ class ProcessSingleCellDualIndexSamplesheet:
           result_type='reduce',
           axis=1)
       ## reset sample description
-      if reset_sample_description:
-        df[self.sample_description_column] = ''
       sa._data = df.to_dict(orient='records')
       if remove_adapters:
         adapter1_count = \
