@@ -6,6 +6,7 @@ import json
 import stat
 import math
 import logging
+import fnmatch
 import subprocess
 from typing import Tuple
 from typing import List
@@ -43,7 +44,7 @@ from igf_data.utils.seqrunutils import get_seqrun_date_from_igf_id
 from igf_portal.api_utils import upload_files_to_portal
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.utils.fileutils import remove_dir
-from jinja2 import Template,Environment, FileSystemLoader, select_autoescape
+from jinja2 import Template, Environment, FileSystemLoader, select_autoescape
 from igf_data.utils.seqrunutils import get_seqrun_date_from_igf_id
 from igf_data.process.singlecell_seqrun.mergesinglecellfastq import MergeSingleCellFastq
 
@@ -71,8 +72,234 @@ QC_PAGE_TEMPLATE_DIR = Variable.get('qc_page_template_dir', default_var=None)
 FASTQSCREEN_HTML_REPORT_TYPE = Variable.get('fastqscreen_html_report_type', default_var='FASTQSCREEN_HTML_REPORT')
 FASTQC_HTML_REPORT_TYPE = Variable.get('fastqc_html_report_type', default_var='FASTQC_HTML_REPORT')
 FASTQ_COLLECTION_TYPE = Variable.get('fastq_collection_type', default_var='demultiplexed_fastq')
+MULTIQC_CONF_TEMPLATE_FILE = Variable.get("multiqc_conf_template_file", default_var=None)
+MULTIQC_SINGULARITY_IMAGE = Variable.get("multiqc_singularity_image", default_var=None)
+MULTIQC_HTML_REPORT_COLLECTION_TYPE = "MULTIQC_HTML_REPORT"
 
 log = logging.getLogger(__name__)
+
+
+def run_multiqc(
+      singularity_image_path: str,
+      multiqc_report_title: str,
+      multiqc_input_list: str,
+      multiqc_conf_file: str,
+      multiqc_param_list: list,
+      multiqc_exe: str = 'multiqc'):
+  try:
+    bind_dir_list = list()
+    with open(multiqc_input_list, 'r') as f:
+      for line in f:
+        bind_dir_list.append(
+          line.rstrip())
+    bind_dir_list.append(
+      os.path.dirname(multiqc_conf_file))
+    multiqc_result_dir = \
+      get_temp_dir(
+        use_ephemeral_space=True)
+    bind_dir_list.append(
+      multiqc_result_dir)
+    multiqc_cmd = [
+      multiqc_exe,
+      '--file-list', multiqc_input_list,
+      '--outdir', multiqc_result_dir,
+      '--title', multiqc_report_title,
+      '--config', multiqc_conf_file]
+    multiqc_cmd = \
+      ' '.join(multiqc_cmd)
+    multiqc_cmd.extend(
+      multiqc_param_list)
+    execute_singuarity_cmd(
+      image_path=singularity_image_path,
+      command_string=multiqc_cmd,
+      bind_dir_list=bind_dir_list)
+    multiqc_html = None
+    multiqc_data = None
+    for root, _, files in os.walk(top=multiqc_result_dir):
+      for file in files:
+        if fnmatch.fnmatch(file, '*.html'):
+          multiqc_html = \
+            os.path.join(root, file)                          # get multiqc html path
+        elif fnmatch.fnmatch(file, '*.zip'):
+          multiqc_data = \
+            os.path.join(root, file)
+    return multiqc_html, multiqc_data
+  except Exception as e:
+    raise ValueError(
+      f"Failed to run multiqc: {e}")
+
+
+def multiqc_for_project_lane_index_group_func(**context):
+  try:
+    ti = context['ti']
+    xcom_key_for_qc_file_list = \
+      context['params'].\
+      get("xcom_key_for_qc_file_list", "qc_file_list")
+    xcom_task_for_qc_file_list = \
+      context['params'].\
+      get("xcom_task_for_qc_file_list")
+    xcom_key_for_multiqc = \
+      context['params'].\
+      get("xcom_key_for_multiqc", "multiqc")
+    seqrun_igf_id = \
+      context['params'].\
+      get('seqrun_igf_id', None)
+    ## multiqc config
+    tool_order_list = \
+      context['params'].\
+      get('tool_order_list', ['bclconvert', 'fastqc', 'fastqscreen'])
+    multiqc_param_list = \
+      context['params'].\
+      get('multiqc_param_list', ['--zip-data-dir'])
+    status_tag = \
+      context['params'].\
+      get('status_tag', None)
+    ## fetch data about project, lane and index group
+    formatted_samplesheets_list = \
+      context['params'].\
+      get('formatted_samplesheets', None)
+    project_column = \
+      context['params'].\
+      get('project_column', 'project')
+    project_index_column = \
+      context['params'].\
+      get('project_index_column', 'project_index')
+    project_index = \
+      context['params'].\
+      get('project_index', 0)
+    lane_column = \
+      context['params'].\
+      get('lane_column', 'lane')
+    lane_index_column = \
+      context['params'].\
+      get('lane_index_column', 'lane_index')
+    lane_index = \
+      context['params'].\
+      get('lane_index', 0)
+    ig_index_column = \
+      context['params'].\
+      get('ig_index_column', 'index_group_index')
+    index_group_column = \
+      context['params'].\
+      get('index_group_column', 'index_group')
+    index_group_index = \
+      context['params'].\
+      get('index_group_index', 0)
+    ## load formatted samplesheets and filter for project, lane and index group
+    df = pd.DataFrame(formatted_samplesheets_list)
+    df[ig_index_column] = \
+      df[ig_index_column].astype(int)
+    df[project_index_column] = \
+      df[project_index_column].astype(int)
+    df[lane_index_column] = \
+      df[lane_index_column].astype(int)
+    filt_df = \
+      df[
+        (df[project_index_column]==int(project_index)) &
+        (df[lane_index_column]==int(lane_index)) &
+        (df[ig_index_column]==int(index_group_index))]
+    if len(filt_df.index) == 0 :
+      raise ValueError(
+        f"No samplesheet found for index group {index_group_index}")
+    project_name = \
+      filt_df[project_column].values.tolist()[0]
+    lane_id = \
+      filt_df[lane_column].values.tolist()[0]
+    index_group_tag = \
+      filt_df[index_group_column].values.tolist()[0]
+    project_name = \
+      filt_df['project_name'].values.tolist()[0]
+    ## get multiqc input
+    multiqc_input_list = \
+      ti.xcom_pull(
+        task_ids=xcom_task_for_qc_file_list,
+        key=xcom_key_for_qc_file_list)
+    check_file_path(multiqc_input_list)
+    ## get mutiqc conf file
+    temp_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    multiqc_conf_file = \
+      os.path.join(
+        temp_dir,
+        'multiqc_input_file.txt')
+    ## get tag name for report title
+    tag_name = \
+      f"{lane_id}_{index_group_tag}_{status_tag}"
+    ## get current date stamp
+    date_stamp = get_date_stamp()
+    ## get seqrun info
+    seqrun_date = \
+      get_seqrun_date_from_igf_id(seqrun_igf_id)
+    platform_name, flowcell_id = \
+      get_platform_name_and_flowcell_id_for_seqrun(
+        seqrun_igf_id=seqrun_igf_id,
+        db_config_file=DATABASE_CONFIG_FILE)
+    ## set multiqc report title
+    multiqc_report_title = \
+      f'Project:{project_name},Sequencing_date:{seqrun_date},Flowcell_lane:{flowcell_id}_{lane_id},status:{status_tag}'
+    ## create config for multiqc report
+    _create_output_from_jinja_template(
+      template_file=MULTIQC_CONF_TEMPLATE_FILE,
+      output_file=multiqc_conf_file,
+      autoescape_list=['html', 'xml'],
+      data=dict(
+        project_igf_id=project_name,
+        flowcell_id=flowcell_id,
+        platform_name=platform_name,
+        tag_name=tag_name,
+        date_stamp=date_stamp,
+        tool_order_list=tool_order_list))
+    ## generate multiqc report
+    multiqc_html, multiqc_data = \
+      run_multiqc(
+        singularity_image_path=MULTIQC_SINGULARITY_IMAGE,
+        multiqc_report_title=multiqc_report_title,
+        multiqc_input_list=multiqc_input_list,
+        multiqc_conf_file=multiqc_conf_file,
+        multiqc_param_list=multiqc_param_list)
+    ti.xcom_push(
+      key=xcom_key_for_multiqc,
+      value={
+        "project_index": project_index,
+        "lane_index": lane_index,
+        "index_group_index": index_group_index,
+        "multiqc_html": multiqc_html,
+        "multiqc_data": multiqc_data,
+        "xcom_key_for_qc_file_list": multiqc_input_list})
+    ## load multiqc report to collection table
+    dir_list = [
+      project_name,
+      'fastq_multiqc',
+      seqrun_date,
+      flowcell_id,
+      lane_id,
+      index_group_tag,
+      status_tag]
+    multiqc_collection_list = [{
+      'collection_name': f"{project_name}_{flowcell_id}_{lane_id}_{index_group_tag}_{status_tag}",
+      'dir_list': dir_list,
+      'file_list': [multiqc_html]}]
+    _ = \
+      load_raw_files_to_db_and_disk(
+        db_config_file=DATABASE_CONFIG_FILE,
+        collection_type=MULTIQC_HTML_REPORT_COLLECTION_TYPE,
+        collection_table="file",
+        base_data_path=HPC_BASE_RAW_DATA_PATH,
+        file_location='HPC_PROJECT',
+        replace_existing_file=True,
+        cleanup_existing_collection=True,
+        collection_list=multiqc_collection_list)
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
 
 def collect_qc_reports_for_samples_func(**context):
   try:
@@ -95,6 +322,9 @@ def collect_qc_reports_for_samples_func(**context):
     xcom_key_for_fastq_screen_output = \
       context['params'].\
       get("xcom_key_for_fastq_screen_output", "fastq_screen_output")
+    xcom_key_for_qc_file_list = \
+      context['params'].\
+      get("xcom_key_for_qc_file_list", "qc_file_list")
     all_task_ids = \
       context['task'].\
       get_direct_relative_ids(upstream=True)
@@ -124,7 +354,9 @@ def collect_qc_reports_for_samples_func(**context):
       os.path.join(work_dir, "qc_output.txt")
     with open(qc_output_file, "w") as fp:
       fp.write('\n'.join(qc_output_list))
-    return qc_output_file
+    ti.xcom_push(
+      key=xcom_key_for_qc_file_list,
+      value=qc_output_file)
   except Exception as e:
     log.error(e)
     send_log_to_channels(
