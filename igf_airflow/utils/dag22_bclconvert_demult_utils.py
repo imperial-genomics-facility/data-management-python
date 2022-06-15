@@ -130,8 +130,9 @@ def copy_file_to_ftp_and_load_to_db(
         db_config_file=db_config_file,
         collection_list=ftp_file_collection_list,
         cleanup_existing_collection=True)
-  except:
-    raise ValueError("Failed to copy file to remote dir and load to db")
+  except Exception as e:
+    raise ValueError(
+      f"Failed to copy file to remote dir and load to db, error: {e}")
 
 
 def run_multiqc(
@@ -350,7 +351,8 @@ def multiqc_for_project_lane_index_group_func(**context):
       "file_list": [multiqc_html],
       "project_igf_id": project_name,
       "dir_list": [flowcell_id, lane_id, index_group_tag, status_tag],
-      "collection_name": multiqc_collection_name}
+      "collection_name": multiqc_collection_name,
+      "collection_table": "file"}
     ti.xcom_push(
       key=xcom_key_for_multiqc,
       value=multiqc_data_dict)
@@ -564,6 +566,9 @@ def fastqscreen_run_wrapper_for_known_samples_func(**context):
     xcom_key_for_fastq_screen_output = \
       context['params'].\
       get("xcom_key_for_fastq_screen_output", "fastq_screen_output")
+    xcom_key_for_fastq_screen_collection = \
+      context['params'].\
+      get("xcom_key_for_fastq_screen_collection", "fastq_screen_collection")
     fastqscreen_collection_type = FASTQSCREEN_HTML_REPORT_TYPE
     collection_table = 'run'
     # bclconvert_output = \
@@ -590,7 +595,7 @@ def fastqscreen_run_wrapper_for_known_samples_func(**context):
       dir_list = entry.get('dir_list')
       file_list = entry.get('file_list')
       ## RUN FASTQACREEN for the file
-      fastq_output_list = list()
+      fastq_screen_output_list = list()
       for fastq_file_entry in file_list:
         fastq_file = \
           fastq_file_entry.get('file_path')
@@ -611,7 +616,7 @@ def fastqscreen_run_wrapper_for_known_samples_func(**context):
           #   dest_path,
           #   force=True)
           if file_entry.endswith('.html'):
-            fastq_output_list.append({
+            fastq_screen_output_list.append({
               'file_path': file_entry,
               'md5': calculate_file_checksum(file_entry)})
       ## LOAD FASTQC REPORT TO DB
@@ -621,7 +626,7 @@ def fastqscreen_run_wrapper_for_known_samples_func(**context):
       fastqscreen_collection_list.append({
         'collection_name': collection_name,
         'dir_list': dir_list,
-        'file_list': fastq_output_list})
+        'file_list': fastq_screen_output_list})
     file_collection_list = \
       load_raw_files_to_db_and_disk(
         db_config_file=DATABASE_CONFIG_FILE,
@@ -635,6 +640,9 @@ def fastqscreen_run_wrapper_for_known_samples_func(**context):
     ti.xcom_push(
       key=xcom_key_for_fastq_screen_output,
       value=work_dir)
+    ti.xcom_push(
+      key=xcom_key_for_fastq_screen_collection,
+      value=file_collection_list)
   except Exception as e:
     log.error(e)
     send_log_to_channels(
@@ -673,6 +681,9 @@ def fastqc_run_wrapper_for_known_samples_func(**context):
     xcom_key_for_fastqc_output = \
       context['params'].\
       get('xcom_key_for_fastqc_output', 'fastqc_output')
+    xcom_key_for_fastqc_collection = \
+      context['params'].\
+      get('xcom_key_for_fastqc_collection', 'fastqc_collection')
     fastqc_collection_type = FASTQC_HTML_REPORT_TYPE
     collection_table = 'run'
     # bclconvert_output = \
@@ -736,6 +747,9 @@ def fastqc_run_wrapper_for_known_samples_func(**context):
     ti.xcom_push(
       key=xcom_key_for_fastqc_output,
       value=work_dir)
+    ti.xcom_push(
+      key=xcom_key_for_fastqc_collection,
+      value=file_collection_list)
   except Exception as e:
     log.error(e)
     send_log_to_channels(
