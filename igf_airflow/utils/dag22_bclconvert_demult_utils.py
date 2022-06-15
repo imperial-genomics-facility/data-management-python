@@ -10,6 +10,7 @@ import fnmatch
 import subprocess
 from typing import Tuple
 from typing import List
+from typing import Any
 from airflow.models import Variable
 from igf_data.illumina.runinfo_xml import RunInfo_xml
 from igf_data.illumina.runparameters_xml import RunParameter_xml
@@ -77,6 +78,60 @@ MULTIQC_SINGULARITY_IMAGE = Variable.get("multiqc_singularity_image", default_va
 MULTIQC_HTML_REPORT_COLLECTION_TYPE = "MULTIQC_HTML_REPORT"
 
 log = logging.getLogger(__name__)
+
+def copy_file_to_ftp_and_load_to_db(
+      ftp_server: str,
+      ftp_username: str,
+      base_remote_dir: str,
+      project_name: str,
+      dir_list: list,
+      file_list: list,
+      db_config_file: str,
+      remote_collection_name: Any = None,
+      remote_collection_type: Any = None,
+      remote_collection_table: Any = None,
+      remote_location: Any = None,
+      ssh_key_file: Any = None) \
+        -> None:
+  try:
+    check_file_path(db_config_file)
+    ftp_file_collection_list = list()
+    for file_name in file_list:
+      check_file_path(file_name)
+      dest_file_path = \
+        os.path.join(
+          base_remote_dir,
+          project_name)
+      if len(dir_list) > 0:
+        dest_file_path = \
+          os.path.join(dest_file_path, *dir_list)
+      dest_file_path = \
+        os.path.join(
+          dest_file_path,
+          os.path.basename(file_name))
+      ftp_file_collection_list.append({
+        'collection_name': remote_collection_name,
+        'collection_type': remote_collection_type,
+        'collection_table': remote_collection_table,
+        'file_path': dest_file_path,
+        'md5': calculate_file_checksum(file_name),
+        'location': remote_location,
+        'size': os.path.getsize(file_name)})
+      copy_remote_file(
+        source_path=file_name,
+        dest_path=dest_file_path,
+        destination_address=f"{ftp_username}@{ftp_server}",
+        ssh_key_file=ssh_key_file)
+    if remote_collection_name is not None and \
+       remote_collection_type is not None and \
+       remote_collection_table is not None and \
+       remote_location is not None:
+      load_data_raw_data_collection(
+        db_config_file=db_config_file,
+        collection_list=ftp_file_collection_list,
+        cleanup_existing_collection=True)
+  except:
+    raise ValueError("Failed to copy file to remote dir and load to db")
 
 
 def run_multiqc(
