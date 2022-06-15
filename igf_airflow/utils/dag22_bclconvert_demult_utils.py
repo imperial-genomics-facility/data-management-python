@@ -312,15 +312,15 @@ def multiqc_for_project_lane_index_group_func(**context):
         multiqc_input_list=multiqc_input_list,
         multiqc_conf_file=multiqc_conf_file,
         multiqc_param_list=multiqc_param_list)
-    ti.xcom_push(
-      key=xcom_key_for_multiqc,
-      value={
-        "project_index": project_index,
-        "lane_index": lane_index,
-        "index_group_index": index_group_index,
-        "multiqc_html": multiqc_html,
-        "multiqc_data": multiqc_data,
-        "xcom_key_for_qc_file_list": multiqc_input_list})
+    # ti.xcom_push(
+    #   key=xcom_key_for_multiqc,
+    #   value={
+    #     "project_index": project_index,
+    #     "lane_index": lane_index,
+    #     "index_group_index": index_group_index,
+    #     "multiqc_html": multiqc_html,
+    #     "multiqc_data": multiqc_data,
+    #     "xcom_key_for_qc_file_list": multiqc_input_list})
     ## load multiqc report to collection table
     dir_list = [
       project_name,
@@ -330,8 +330,10 @@ def multiqc_for_project_lane_index_group_func(**context):
       lane_id,
       index_group_tag,
       status_tag]
+    multiqc_collection_name = \
+      f"{project_name}_{flowcell_id}_{lane_id}_{index_group_tag}_{status_tag}"
     multiqc_collection_list = [{
-      'collection_name': f"{project_name}_{flowcell_id}_{lane_id}_{index_group_tag}_{status_tag}",
+      'collection_name': multiqc_collection_name,
       'dir_list': dir_list,
       'file_list': [multiqc_html]}]
     _ = \
@@ -344,6 +346,14 @@ def multiqc_for_project_lane_index_group_func(**context):
         replace_existing_file=True,
         cleanup_existing_collection=True,
         collection_list=multiqc_collection_list)
+    multiqc_data_dict = {
+      "file_list": [multiqc_html],
+      "project_igf_id": project_name,
+      "dir_list": [flowcell_id, lane_id, index_group_tag, status_tag],
+      "collection_name": multiqc_collection_name}
+    ti.xcom_push(
+      key=xcom_key_for_multiqc,
+      value=multiqc_data_dict)
   except Exception as e:
     log.error(e)
     send_log_to_channels(
