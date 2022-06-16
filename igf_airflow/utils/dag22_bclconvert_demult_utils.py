@@ -29,6 +29,7 @@ from igf_data.utils.fileutils import read_json_data
 from igf_data.utils.fileutils import get_date_stamp
 from igf_data.utils.fileutils import get_date_stamp_for_file_name
 from igf_data.utils.fileutils import calculate_file_checksum
+from igf_data.utils.fastqc_utils import get_fastq_info_from_fastq_zip
 from igf_data.utils.singularity_run_wrapper import execute_singuarity_cmd
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.igfdb.platformadaptor import PlatformAdaptor
@@ -79,6 +80,30 @@ MULTIQC_SINGULARITY_IMAGE = Variable.get("multiqc_singularity_image", default_va
 MULTIQC_HTML_REPORT_COLLECTION_TYPE = "MULTIQC_HTML_REPORT"
 
 log = logging.getLogger(__name__)
+
+
+def get_data_for_sample_qc_page(
+      project_igf_id: str,
+      seqrun_igf_id: str,
+      lane_id: str,
+      index_group: str,
+      samplesheet_file: str,
+      database_config_file: str,
+      fastqc_collection_type: str,
+      fastq_screen_collection_type: str) \
+        -> list:
+  try:
+    check_file_path(database_config_file)
+    check_file_path(samplesheet_file)
+    ## Read samplesheet and get all sample ids
+    ## Get all fastq files for the sample - lane (run)
+    ## Get fastq read counts for R1
+    ## Get Ftp fastqc report path
+    ## Get fastq screen report path
+    ## Build json data for the sample qc page
+  except Exception as e:
+    raise ValueError(e)
+
 
 def copy_file_to_ftp_and_load_to_db(
       ftp_server: str,
@@ -750,6 +775,7 @@ def fastqc_run_wrapper_for_known_samples_func(**context):
       file_list = entry.get('file_list')
       ## RUN FASTQC for the file
       fastq_output_list = list()
+      fastq_read_count_set = set()
       for fastq_file_entry in file_list:
         fastq_file = fastq_file_entry.get('file_path')
         output_fastqc_list = \
@@ -769,6 +795,13 @@ def fastqc_run_wrapper_for_known_samples_func(**context):
             fastq_output_list.append({
               'file_path': file_entry,
               'md5': calculate_file_checksum(file_entry)})
+          if file_entry.endswith('.zip'):
+            (total_reads, _) = \
+              get_fastq_info_from_fastq_zip(file_entry)
+            fastq_read_count_set.add(int(total_reads))
+      if len(fastq_read_count_set) > 1:
+        raise ValueError(
+          f'Found multiple read counts for fastq files: {fastq_read_count_set}')
       ## LOAD FASTQC REPORT TO DB
       dir_list = [
         f if f != 'fastq' else 'fastqc'
