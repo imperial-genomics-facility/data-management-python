@@ -1,4 +1,8 @@
-import unittest, os, json, re
+import unittest
+import os
+import json
+import re
+import subprocess
 import pandas as pd
 from igf_data.igfdb.igfTables import Base, Seqrun, Seqrun_attribute
 from igf_data.igfdb.baseadaptor import BaseAdaptor
@@ -698,11 +702,13 @@ class Dag22_bclconvert_demult_utils_testG(unittest.TestCase):
     pa.store_project_and_attribute_data(data=project_data)
     sa.store_sample_and_attribute_data(data=sample_data)
     base.close_session()
+    self.temp_dir = get_temp_dir()
 
   def tearDown(self):
     Base.metadata.drop_all(self.engine)
     if os.path.exists(self.dbname):
       os.remove(self.dbname)
+    remove_dir(self.temp_dir)
 
   def test_get_project_id_samples_list_from_db(self):
     project_sample_dict = \
@@ -713,6 +719,15 @@ class Dag22_bclconvert_demult_utils_testG(unittest.TestCase):
     self.assertEqual(project_sample_dict['IGF001'], 'IGFQ0013_23-11-2021_10x')
 
   def test_register_experiment_and_runs_to_db(self):
+    for f in ('IGF001_S1_R1_001.fastq', 'IGF001_S1_R2_001.fastq'):
+      file_path = \
+        os.path.join(self.temp_dir, f)
+      with open(file_path, 'w') as fh:
+        fh.write('@AAAA\n')
+        fh.write('AAAA\n')
+        fh.write('+\n')
+        fh.write('AAAA\n')
+      subprocess.check_call(f"gzip {file_path}", shell=True)
     sample_group_with_run_id = \
       register_experiment_and_runs_to_db(
         db_config_file=self.dbconfig,
@@ -722,8 +737,8 @@ class Dag22_bclconvert_demult_utils_testG(unittest.TestCase):
         sample_group=[{
           'sample_id': 'IGF001' ,
           'fastq_list': {
-            '/path/IGF001_S1_R1_001.fastq.gz':'00000',
-            '/path/IGF001_S1_R2_001.fastq.gz':'00001'
+            os.path.join(self.temp_dir, 'IGF001_S1_R1_001.fastq.gz'): '00000',
+            os.path.join(self.temp_dir, 'IGF001_S1_R2_001.fastq.gz'): '00001'
           }
         }]
       )
