@@ -170,7 +170,7 @@ def copy_qc_to_ftp_func(**context):
       db_config_file=DATABASE_CONFIG_FILE,
       remote_collection_name=collection_name,
       remote_collection_type=remote_collection_type,
-      remote_collection_table=collection_table
+      remote_collection_table=collection_table,
       remote_location=FTP_LOCATION,
       ssh_key_file=HPC_SSH_KEY_FILE)
   except Exception as e:
