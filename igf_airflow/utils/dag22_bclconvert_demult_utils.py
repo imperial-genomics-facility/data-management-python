@@ -1162,9 +1162,23 @@ def register_experiment_and_runs_to_db(
         run_igf_id = \
           f'{experiment_id}_{flowcell_id}_{lane_id}'
         library_layout = 'SINGLE'
+        read_count = 0
         for fastq in entry.get('fastq_list'):
+          if fastq.endswith('_R1_001.fastq.gz'):
+            cmd = f"zcat {fastq}|wc -l"
+            line_counts = \
+              subprocess.\
+                check_output(cmd, shell=True).\
+                decode('utf-8').rstrip()
+            if len(line_counts) == 0:
+              raise ValueError(
+                f"Failed to get line count for fastq {fastq}")
+            read_count = int(int(line_counts) / 4)
           if fastq.endswith('_R2_001.fastq.gz'):
             library_layout = 'PAIRED'
+        if read_count == 0:
+          raise ValueError(
+            f"Failed to get read count for run {run_igf_id}")
         #sample_group_with_run_id.append({
         #  'project_igf_id': project_id,
         #  'sample_igf_id': sample_id,
@@ -1200,6 +1214,7 @@ def register_experiment_and_runs_to_db(
         run_data.append({
           'experiment_igf_id': experiment_id,
           'run_igf_id': run_igf_id,
+          'R1_READ_COUNT': read_count,
           'lane_number': str(lane_id),
           'seqrun_igf_id': seqrun_id
         })
