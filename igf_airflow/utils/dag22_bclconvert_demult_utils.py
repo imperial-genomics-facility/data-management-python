@@ -69,6 +69,7 @@ IGF_PORTAL_CONF = Variable.get('igf_portal_conf', default_var=None)
 FTP_HOSTNAME = Variable.get('ftp_hostname', default_var=None)
 FTP_USERNAME = Variable.get('ftp_username', default_var=None)
 FTP_PROJECT_PATH = Variable.get('ftp_project_path', default_var=None)
+FTP_LOCATION = Variable.get('ftp_location', default_var='ELIOT')
 QC_PAGE_TEMPLATE_DIR = Variable.get('qc_page_template_dir', default_var=None)
 FASTQSCREEN_HTML_REPORT_TYPE = Variable.get('fastqscreen_html_report_type', default_var='FASTQSCREEN_HTML_REPORT')
 FASTQC_HTML_REPORT_TYPE = Variable.get('fastqc_html_report_type', default_var='FASTQC_HTML_REPORT')
@@ -83,7 +84,6 @@ def copy_file_to_ftp_and_load_to_db(
       ftp_server: str,
       ftp_username: str,
       base_remote_dir: str,
-      project_name: str,
       dir_list: list,
       file_list: list,
       db_config_file: str,
@@ -98,13 +98,9 @@ def copy_file_to_ftp_and_load_to_db(
     ftp_file_collection_list = list()
     for file_name in file_list:
       check_file_path(file_name)
-      dest_file_path = \
-        os.path.join(
-          base_remote_dir,
-          project_name)
       if len(dir_list) > 0:
         dest_file_path = \
-          os.path.join(dest_file_path, *dir_list)
+          os.path.join(base_remote_dir, *dir_list)
       dest_file_path = \
         os.path.join(
           dest_file_path,
@@ -133,6 +129,53 @@ def copy_file_to_ftp_and_load_to_db(
   except Exception as e:
     raise ValueError(
       f"Failed to copy file to remote dir and load to db, error: {e}")
+
+
+def copy_qc_to_ftp_func(**context):
+  try:
+    ti = context['ti']
+    xcom_key_for_qc_collection = \
+      context['params'].\
+      get("xcom_key_for_qc_collection")
+    xcom_task_for_qc_collection = \
+      context['params'].\
+      get("xcom_task_for_qc_collection")
+    remote_collection_type = \
+      context['params'].\
+      get("remote_collection_type")
+    qc_collections = \
+      ti.xcom_pull(
+        task_ids=xcom_task_for_qc_collection,
+        key=xcom_key_for_qc_collection)
+    ## loading all files under same collection
+    ## TO DO: check if more than one collection is present
+    file_list = [
+      f.get('file_path')
+        for f in qc_collections]
+    collection_name = [
+      f.get('collection_name')
+        for f in qc_collections][0]
+    collection_table = [
+      f.get('collection_table')
+        for f in qc_collections][0]
+    dir_list = [
+      f.get('dir_list')
+        for f in qc_collections][0]
+    copy_file_to_ftp_and_load_to_db(
+      ftp_server=FTP_HOSTNAME,
+      ftp_username=FTP_USERNAME,
+      base_remote_dir=FTP_PROJECT_PATH,
+      dir_list=dir_list,
+      file_list=file_list,
+      db_config_file=DATABASE_CONFIG_FILE,
+      remote_collection_name=collection_name,
+      remote_collection_type=remote_collection_type,
+      remote_collection_table=collection_table
+      remote_location=FTP_LOCATION,
+      ssh_key_file=HPC_SSH_KEY_FILE)
+  except Exception as e:
+    raise ValueError(
+      f"Failed to copy fastqc to ftp, error: {e}")
 
 
 def run_multiqc(
@@ -337,7 +380,7 @@ def multiqc_for_project_lane_index_group_func(**context):
       'collection_name': multiqc_collection_name,
       'dir_list': dir_list,
       'file_list': [multiqc_html]}]
-    _ = \
+    file_collection_list = \
       load_raw_files_to_db_and_disk(
         db_config_file=DATABASE_CONFIG_FILE,
         collection_type=MULTIQC_HTML_REPORT_COLLECTION_TYPE,
@@ -347,15 +390,15 @@ def multiqc_for_project_lane_index_group_func(**context):
         replace_existing_file=True,
         cleanup_existing_collection=True,
         collection_list=multiqc_collection_list)
-    multiqc_data_dict = {
-      "file_list": [multiqc_html],
-      "project_igf_id": project_name,
-      "dir_list": [flowcell_id, lane_id, index_group_tag, status_tag],
-      "collection_name": multiqc_collection_name,
-      "collection_table": "file"}
+    # multiqc_data_dict = {
+    #   "file_list": [multiqc_html],
+    #   "project_igf_id": project_name,
+    #   "dir_list": [flowcell_id, lane_id, index_group_tag, status_tag],
+    #   "collection_name": multiqc_collection_name,
+    #   "collection_table": "file"}
     ti.xcom_push(
       key=xcom_key_for_multiqc,
-      value=multiqc_data_dict)
+      value=file_collection_list)
   except Exception as e:
     log.error(e)
     send_log_to_channels(
@@ -1049,6 +1092,7 @@ def load_raw_files_to_db_and_disk(
             'collection_type': collection_type,
             'collection_table': collection_table,
             'file_path': destination_path,
+            dir_list_key: dir_list,
             'md5': file_md5,
             'location': file_location,
             'size': file_size})
