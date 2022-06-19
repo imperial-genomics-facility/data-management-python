@@ -12,6 +12,12 @@ from typing import Tuple
 from typing import List
 from typing import Any
 from airflow.models import Variable
+from igf_data.igfdb.igfTables import Base
+from igf_data.igfdb.igfTables import Sample
+from igf_data.igfdb.igfTables import Experiment
+from igf_data.igfdb.igfTables import Seqrun
+from igf_data.igfdb.igfTables import Run
+from igf_data.igfdb.igfTables import Run_attribute
 from igf_data.illumina.runinfo_xml import RunInfo_xml
 from igf_data.illumina.runparameters_xml import RunParameter_xml
 from igf_data.illumina.samplesheet import SampleSheet
@@ -73,34 +79,295 @@ FTP_PROJECT_PATH = Variable.get('ftp_project_path', default_var=None)
 FTP_LOCATION = Variable.get('ftp_location', default_var='ELIOT')
 QC_PAGE_TEMPLATE_DIR = Variable.get('qc_page_template_dir', default_var=None)
 FASTQSCREEN_HTML_REPORT_TYPE = Variable.get('fastqscreen_html_report_type', default_var='FASTQSCREEN_HTML_REPORT')
-FASTQC_HTML_REPORT_TYPE = Variable.get('fastqc_html_report_type', default_var='FASTQC_HTML_REPORT')
+FTP_FASTQSCREEN_HTML_REPORT_TYPE = Variable.get('fastqscreen_html_report_type', default_var='FTP_FASTQSCREEN_HTML_REPORT')
+FASTQC_HTML_REPORT_TYPE = Variable.get('ftp_fastqc_html_report_type', default_var='FASTQC_HTML_REPORT')
+FTP_FASTQC_HTML_REPORT_TYPE = Variable.get('ftp_fastqc_html_report_type', default_var='FTP_FASTQC_HTML_REPORT')
 FASTQ_COLLECTION_TYPE = Variable.get('fastq_collection_type', default_var='demultiplexed_fastq')
 MULTIQC_CONF_TEMPLATE_FILE = Variable.get("multiqc_conf_template_file", default_var=None)
 MULTIQC_SINGULARITY_IMAGE = Variable.get("multiqc_singularity_image", default_var=None)
-MULTIQC_HTML_REPORT_COLLECTION_TYPE = "MULTIQC_HTML_REPORT"
+MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("multiqc_html_report", default_var="MULTIQC_HTML_REPORT")
 
 log = logging.getLogger(__name__)
+
+def get_run_id_for_samples_flowcell_and_lane(
+      database_config_file: str,
+      sample_igf_ids: list,
+      seqrun_igf_id: str,
+      lane: int) \
+        -> dict:
+  try:
+    run_id_dict = dict()
+    dbparams = \
+      read_dbconf_json(database_config_file)
+    ra = RunAdaptor(**dbparams)
+    ra.start_session()
+    query = \
+      ra.session.\
+        query(
+          Sample.sample_igf_id,
+          Run.run_igf_id).\
+        join(Experiment, Experiment.experiment_id == Run.experiment_id).\
+        join(Seqrun, Seqrun.seqrun_id == Run.seqrun_id).\
+        join(Sample, Sample.sample_id == Experiment.sample_id).\
+        filter(Sample.sample_igf_id.in_(sample_igf_ids)).\
+        filter(Seqrun.seqrun_igf_id == seqrun_igf_id).\
+        filter(Run.lane_number == lane)
+    records = \
+      ra.fetch_records(
+        query=query,
+        output_mode='dataframe')
+    ra.close_session()
+    records = \
+      records.to_dict(orient='records')
+    for row in records:
+      run_id_dict.update({
+        row['sample_igf_id']: row['run_igf_id']})
+    return run_id_dict
+  except Exception as e:
+    raise ValueError(
+      f'Error getting run id for samples, flowcell {seqrun_igf_id} and lane {lane}, error: {e}')
+
+
+def get_files_for_collection_ids(
+      collection_name_list: list,
+      collection_type: str,
+      collection_table: str,
+      database_config_file: str) -> list:
+    try:
+      check_file_path(database_config_file)
+      collection_records_list = list()
+      dbparams = \
+        read_dbconf_json(database_config_file)
+      ca = CollectionAdaptor(**dbparams)
+      ca.start_session()
+      for collection_name in collection_name_list:
+        collection_records = \
+          ca.get_collection_files(
+            collection_name=collection_name,
+            collection_type=collection_type,
+            collection_table=collection_table,
+            output_mode='dataframe')
+        collection_records = \
+          collection_records[['name', 'file_path', 'md5', 'size']].\
+          to_dict(orient='records')
+        if len(collection_records) > 0:
+          collection_records_list.extend(
+            collection_records)
+      ca.close_session()
+      return collection_records_list
+    except Exception as e:
+      raise ValueError(
+        f'Error getting files for collection {collection_name}, error: {e}')
+
+
+def get_run_read_count_from_attribute_table(
+      database_config_file: str,
+      run_id_list: list,
+      attribute_name: str = 'R1_READ_COUNT') \
+        -> list:
+  try:
+    check_file_path(database_config_file)
+    run_read_count_list = list()
+    dbparams = \
+      read_dbconf_json(
+        database_config_file)
+    ra = RunAdaptor(**dbparams)
+    ra.start_session()
+    query = \
+      ra.session.\
+        query(
+          Run.run_igf_id,
+          Run_attribute.attribute_value).\
+        join(Run_attribute, Run_attribute.run_id == Run.run_id).\
+        filter(Run.run_igf_id.in_(run_id_list)).\
+        filter(Run_attribute.attribute_name == attribute_name)
+    records = \
+      ra.fetch_records(
+        query=query,
+        output_mode='dataframe')
+    ra.close_session()
+    records.columns = [
+      'run_igf_id',
+      'read_count']
+    records = \
+      records.\
+        to_dict(orient='records')
+    return records
+  except Exception as e:
+    raise ValueError(
+      f'Error getting run read count from attribute table, error: {e}')
 
 
 def get_data_for_sample_qc_page(
       project_igf_id: str,
       seqrun_igf_id: str,
-      lane_id: str,
-      index_group: str,
+      lane_id: int,
       samplesheet_file: str,
       database_config_file: str,
+      fastq_collection_type: str,
       fastqc_collection_type: str,
-      fastq_screen_collection_type: str) \
+      fastq_screen_collection_type: str,
+      ftp_path_prefix: str,
+      ftp_url_prefix: str,
+      samplesheet_data_id_column: str = 'Sample_ID',
+      samplesheet_data_lane_column: str = 'Lane',
+      samplesheet_data_name_column: str = 'Sample_Name',
+      samplesheet_data_project_column: str = 'Sample_Project',
+      samplesheet_data_index_column: str = 'index',
+      samplesheet_data_index2_column: str = 'index2',
+      db_run_igf_id_column: str = 'run_igf_id',
+      db_reac_count_column: str = 'read_count',
+      db_collection_name_column: str = 'name',
+      db_file_path_column: str = 'file_path') \
         -> list:
   try:
     check_file_path(database_config_file)
     check_file_path(samplesheet_file)
+    json_data = list()
     ## Read samplesheet and get all sample ids
+    ## its the merged samplesheet file from bclconvert report
+    ## filter samplesheet for project id and lane id
+    samplesheet = \
+      SampleSheet(samplesheet_file)
+    samplesheet.\
+      filter_sample_data(
+        condition_key=samplesheet_data_project_column,
+        condition_value=project_igf_id,
+        method='include')
+    if samplesheet_data_lane_column in samplesheet._data_header:
+      samplesheet.\
+        filter_sample_data(
+          condition_key=samplesheet_data_lane_column,
+          condition_value=lane_id,
+          method='include')
+    samplesheet_df = \
+      pd.DataFrame(samplesheet._data)
+    sample_id_list = \
+      samplesheet_df[samplesheet_data_id_column].\
+      drop_duplicates().\
+      values.tolist()
+    ## get samplesheet index columns
+    samplesheet_index_cols = [
+      samplesheet_data_index_column]
+    if samplesheet_data_index2_column in samplesheet_df.columns:
+      samplesheet_index_cols.\
+        append(samplesheet_data_index2_column)
     ## Get all fastq files for the sample - lane (run)
-    ## Get fastq read counts for R1
+    run_id_dict = \
+      get_run_id_for_samples_flowcell_and_lane(
+        database_config_file=database_config_file,
+        sample_igf_ids=sample_id_list,
+        seqrun_igf_id=seqrun_igf_id,
+        lane=lane_id)
+    ## check if any sample is missing
+    failed_sample_list = [
+      s for s in sample_id_list
+        if s not in run_id_dict.keys()]
+    if len(failed_sample_list) > 0:
+      raise ValueError(
+        f'Failed to get run id for samples {failed_sample_list}')
+    ## Get fastq and read counts for R1
+    fastq_read_records = \
+      get_files_for_collection_ids(
+        collection_name_list=list(run_id_dict.values()),
+        collection_type=fastq_collection_type,
+        collection_table='run',
+        database_config_file=database_config_file)
+    fastq_read_records_df = \
+      pd.DataFrame(fastq_read_records)
+    ## get read counts
+    read_counts = \
+      get_run_read_count_from_attribute_table(
+      database_config_file=database_config_file,
+      run_id_list=list(run_id_dict.values()))
+    read_counts_df = \
+      pd.DataFrame(read_counts)
     ## Get Ftp fastqc report path
+    fastqc_html_records = \
+      get_files_for_collection_ids(
+        collection_name_list=list(run_id_dict.values()),
+        collection_type=fastqc_collection_type,
+        collection_table='run',
+        database_config_file=database_config_file)
+    fastqc_html_records_df = \
+      pd.DataFrame(fastqc_html_records)
     ## Get fastq screen report path
+    fastq_screen_html_records = \
+      get_files_for_collection_ids(
+        collection_name_list=list(run_id_dict.values()),
+        collection_type=fastq_screen_collection_type,
+        collection_table='run',
+        database_config_file=database_config_file)
+    fastq_screen_html_records_df = \
+      pd.DataFrame(fastq_screen_html_records)
     ## Build json data for the sample qc page
+    ## merge all the data
+    ## samplesheet controls the output report page
+    for sample_igf_id, run_igf_id in run_id_dict.items():
+      ## get sample name and index from samplesheet
+      sample_indices = \
+        samplesheet_df[
+          samplesheet_df[samplesheet_data_id_column] == sample_igf_id][
+            samplesheet_index_cols].values.tolist()[0]
+      sample_indices = \
+        '-'.join(sample_indices)
+      sample_name = \
+        samplesheet_df[
+          samplesheet_df[samplesheet_data_id_column] == sample_igf_id][
+            samplesheet_data_name_column].values.tolist()[0]
+      ## get fastq file names
+      fastq_files = \
+        fastq_read_records_df[
+          fastq_read_records_df[db_collection_name_column] == run_igf_id][
+            db_file_path_column].values.tolist()
+      if len(fastq_files) == 0:
+        raise ValueError(
+          f'No fastq files found for sample {sample_igf_id}')
+      fastq_files = [
+        os.path.basename(f)
+          for f in fastq_files]
+      ## get fastq read counts
+      fastq_read_count = \
+        read_counts_df[
+          read_counts_df[db_run_igf_id_column] == run_igf_id][
+            db_reac_count_column].values.tolist()[0]
+      ## get fastqc and fastqscreen html paths
+      ## format paths for html link
+      fastqc_html_files = \
+        fastqc_html_records_df[
+          fastqc_html_records_df[db_collection_name_column] == run_igf_id][
+            db_file_path_column].values.tolist()
+      if len(fastqc_html_files) == 0:
+        raise ValueError(
+          f'No fastqc html files found for sample {sample_igf_id}')
+      fastqc_html_files = [
+        f.replace(ftp_path_prefix, ftp_url_prefix)
+          for f in fastqc_html_files]
+      fastqc_html_files = [
+        '<a href="{0}">{1}</a>'.format(f, os.path.basename(f))
+          for f in fastqc_html_files]
+      fastq_screen_html_files = \
+        fastq_screen_html_records_df[
+          fastq_screen_html_records_df[db_collection_name_column] == run_igf_id][
+            db_file_path_column].values.tolist()
+      if len(fastq_screen_html_files) == 0:
+        raise ValueError(
+          f'No fastq_screen html files found for sample {sample_igf_id}')
+      fastq_screen_html_files = [
+        f.replace(ftp_path_prefix, ftp_url_prefix)
+          for f in fastq_screen_html_files]
+      fastq_screen_html_files = [
+        '<a href="{0}">{1}</a>'.format(f, os.path.basename(f))
+          for f in fastq_screen_html_files]
+      json_data.append({
+        'Sample_ID': sample_igf_id,
+        'Sample_Name': sample_name,
+        'Sample_Index': sample_indices,
+        'Read_Counts': fastq_read_count,
+        'Fastq_Files': fastq_files,
+        'FastQC': fastqc_html_files,
+        'Fastq_Screen': fastq_screen_html_files})
+    return json_data
   except Exception as e:
     raise ValueError(e)
 

@@ -4,13 +4,17 @@ import json
 import re
 import subprocess
 import pandas as pd
+from pyrsistent import s
 from igf_data.igfdb.igfTables import Base, Seqrun, Seqrun_attribute
+from igf_data.igfdb.igfTables import Collection, Collection_group, File
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.platformadaptor import PlatformAdaptor
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
 from igf_data.igfdb.sampleadaptor import SampleAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
+from igf_data.igfdb.experimentadaptor import ExperimentAdaptor
+from igf_data.igfdb.runadaptor import RunAdaptor
 from igf_data.igfdb.useradaptor import UserAdaptor
 from igf_data.illumina.samplesheet import SampleSheet
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
@@ -41,6 +45,9 @@ from igf_airflow.utils.dag22_bclconvert_demult_utils import _calculate_image_hei
 from igf_airflow.utils.dag22_bclconvert_demult_utils import _create_output_from_jinja_template
 from igf_airflow.utils.dag22_bclconvert_demult_utils import reset_single_cell_samplesheet
 from igf_airflow.utils.dag22_bclconvert_demult_utils import check_demult_stats_file_for_failed_samples
+from igf_airflow.utils.dag22_bclconvert_demult_utils import get_data_for_sample_qc_page
+from igf_airflow.utils.dag22_bclconvert_demult_utils import get_run_id_for_samples_flowcell_and_lane
+from igf_airflow.utils.dag22_bclconvert_demult_utils import get_files_for_collection_ids
 
 class Dag22_bclconvert_demult_utils_testA(unittest.TestCase):
   def setUp(self):
@@ -1081,6 +1088,324 @@ class Dag22_bclconvert_demult_utils_testK(unittest.TestCase):
       check_demult_stats_file_for_failed_samples(
         demult_stats_file=self.demult_stats_file)
     self.assertFalse(check_status)
+
+class Dag22_bclconvert_demult_utils_testL(unittest.TestCase):
+  def setUp(self):
+    self.temp_dir = get_temp_dir()
+    self.samplesheet_file = \
+      os.path.join(
+        self.temp_dir,
+        'SampleSheet.csv')
+    samplesheet_data = """
+    [Header]
+    IEMFileVersion,4,,,,,,,,
+    Investigator Name,b,,,,,,,,
+    Experiment Name,f_25-4-2022_Hi-C,,,,,,,,
+    Date,31/05/2022,,,,,,,,
+    Workflow,GenerateFASTQ,,,,,,,,
+    Application,NextSeq FASTQ Only,,,,,,,,
+    Assay,TruSeq HT,,,,,,,,
+    Description,,,, ,,,,,
+    Chemistry,Amplicon,,,,,,,,
+    ,,,,,,,,,
+    [Reads]
+    151,,,,,,,,,
+    151,,,,,,,,,
+    ,,,,,,,,,
+    [Settings]
+    CreateFastqForIndexReads,1
+    MinimumTrimmedReadLength,8
+    FastqCompressionFormat,gzip
+    MaskShortReads,8
+    OverrideCycles,Y150N1;I8N2;N2I8;Y150N1
+    [Data]
+    Sample_ID,Sample_Name,Sample_Plate,Sample_Well,I7_Index_ID,index,I5_Index_ID,index2,Sample_Project,Description,Original_index,Original_Sample_ID,Original_Sample_Name
+    IGF1,P01,,,Index9,CGGCTAAT,Index9,AGAACGAG,IGFQ001,,,,
+    IGF2,P02,,,Index10,ATCGATCG,Index10,TGCTTCCA,IGFQ001,,,,
+    IGF3,P03,,,Index2,ACTCTCGA,Index2,TGGTACAG,IGFQ001,,,,
+    """
+    pattern1 = re.compile(r'\n\s+')
+    pattern2 = re.compile(r'^\n+')
+    samplesheet_data = re.sub(pattern1, '\n', samplesheet_data)
+    samplesheet_data = re.sub(pattern2, '', samplesheet_data)
+    with open(self.samplesheet_file, 'w') as fh:
+        fh.write(samplesheet_data)
+    ## register seqrun
+    self.dbconfig = 'data/dbconfig.json'
+    dbparam = None
+    with open(self.dbconfig, 'r') as json_data:
+      dbparam = json.load(json_data)
+    base = BaseAdaptor(**dbparam)
+    self.engine = base.engine
+    self.dbname = dbparam['dbname']
+    Base.metadata.create_all(self.engine)
+    self.session_class = base.session_class
+    base.start_session()
+    platform_data = [{
+      "platform_igf_id" : "M00001",
+      "model_name" : "MISEQ",
+      "vendor_name" : "ILLUMINA",
+      "software_name" : "RTA",
+      "software_version" : "RTA1.18.54"}]
+    flowcell_rule_data = [{
+      "platform_igf_id" : "M00001",
+      "flowcell_type" : "MISEQ",
+      "index_1" : "NO_CHANGE",
+      "index_2" : "NO_CHANGE"}]
+    pl = \
+      PlatformAdaptor(**{'session' : base.session})
+    pl.store_platform_data(
+      data=platform_data)
+    pl.store_flowcell_barcode_rule(
+      data=flowcell_rule_data)
+    seqrun_data = [{
+      'seqrun_igf_id' : '171003_M00001_0089_000000000-D0YLK',
+      'flowcell_id' : '000000000-D0YLK',
+      'platform_igf_id' : 'M00001',
+      'flowcell' : 'MISEQ'}]
+    sra = \
+      SeqrunAdaptor(**{'session' : base.session})
+    sra.store_seqrun_and_attribute_data(
+      data=seqrun_data)
+    ## register project and run
+    project_data = [{
+      'project_igf_id':'IGFQ001'}]
+    pa = ProjectAdaptor(**{'session' : base.session})
+    pa.store_project_and_attribute_data(
+      data=project_data)
+    sample_data = [{
+      'sample_igf_id' : 'IGF1', 'project_igf_id' : 'IGFQ001'},{
+      'sample_igf_id' : 'IGF2', 'project_igf_id' : 'IGFQ001'},{
+      'sample_igf_id' : 'IGF3', 'project_igf_id' : 'IGFQ001'}]
+    sa = \
+      SampleAdaptor(**{'session' : base.session})
+    sa.store_sample_and_attribute_data(
+      data=sample_data)
+    experiment_data = [{
+      'experiment_igf_id' : 'IGF1_MISEQ',
+      'project_igf_id' : 'IGFQ001',
+      'library_name' : 'IGF1',
+      'platform_name': 'MISEQ',
+      'sample_igf_id' : 'IGF1'}, {
+      'experiment_igf_id' : 'IGF2_MISEQ',
+      'project_igf_id' : 'IGFQ001',
+      'library_name' : 'IGF2',
+      'platform_name': 'MISEQ',
+      'sample_igf_id' : 'IGF2'}, {
+      'experiment_igf_id' : 'IGF3_MISEQ',
+      'project_igf_id' : 'IGFQ001',
+      'library_name' : 'IGF3',
+      'platform_name': 'MISEQ',
+      'sample_igf_id' : 'IGF3'}]
+    ea = \
+      ExperimentAdaptor(**{'session' : base.session})
+    ea.store_project_and_attribute_data(
+      data=experiment_data)
+    run_data = [{
+      'run_igf_id' : 'IGF1_MISEQ_000000000-D0YLK_1',
+      'experiment_igf_id' : 'IGF1_MISEQ',
+      'seqrun_igf_id' : '171003_M00001_0089_000000000-D0YLK',
+      'lane_number' : '1',
+      'R1_READ_COUNT' : 1000}, {
+      'run_igf_id' : 'IGF2_MISEQ_000000000-D0YLK_1',
+      'experiment_igf_id' : 'IGF2_MISEQ',
+      'seqrun_igf_id' : '171003_M00001_0089_000000000-D0YLK',
+      'lane_number' : '1',
+      'R1_READ_COUNT' : 1000}, {
+      'run_igf_id' : 'IGF3_MISEQ_000000000-D0YLK_1',
+      'experiment_igf_id' : 'IGF3_MISEQ',
+      'seqrun_igf_id' : '171003_M00001_0089_000000000-D0YLK',
+      'lane_number' : '1',
+      'R1_READ_COUNT' : 1000}]
+    ra = \
+      RunAdaptor(**{'session':base.session})
+    ra.store_run_and_attribute_data(
+      data=run_data)
+    ## add fastq collection
+    data = [{
+      'name' : 'IGF1_MISEQ_000000000-D0YLK_1',
+      'type' : 'demultiplexed_fastq',
+      'table' : 'run',
+      'file_path' : '/path/IGF1_S1_L001_R1_001.fastq.gz',
+      'location' : 'HPC_PROJECT'}, {
+      'name' : 'IGF1_MISEQ_000000000-D0YLK_1',
+      'type' : 'demultiplexed_fastq',
+      'table' : 'run',
+      'file_path' : '/path/IGF1_S1_L001_R2_001.fastq.gz',
+      'location' : 'HPC_PROJECT'}, {
+      'name' : 'IGF2_MISEQ_000000000-D0YLK_1',
+      'type' : 'demultiplexed_fastq',
+      'table' : 'run',
+      'file_path' : '/path/IGF2_S2_L001_R1_001.fastq.gz',
+      'location' : 'HPC_PROJECT'}, {
+      'name' : 'IGF2_MISEQ_000000000-D0YLK_1',
+      'type' : 'demultiplexed_fastq',
+      'table' : 'run',
+      'file_path' : '/path/IGF2_S2_L001_R2_001.fastq.gz',
+      'location' : 'HPC_PROJECT'}, {
+      'name' : 'IGF3_MISEQ_000000000-D0YLK_1',
+      'type' : 'demultiplexed_fastq',
+      'table' : 'run',
+      'file_path' : '/path/IGF3_S3_L001_R1_001.fastq.gz',
+      'location' : 'HPC_PROJECT'}, {
+      'name' : 'IGF3_MISEQ_000000000-D0YLK_1',
+      'type' : 'demultiplexed_fastq',
+      'table' : 'run',
+      'file_path' : '/path/IGF3_S3_L001_R2_001.fastq.gz',
+      'location' : 'HPC_PROJECT'}]
+    ca = \
+      CollectionAdaptor(**{'session':base.session})
+    ca.load_file_and_create_collection(
+      data=data,
+      calculate_file_size_and_md5=False)
+    ## add ftp fastqc collection
+    data = [{
+      'name' : 'IGF1_MISEQ_000000000-D0YLK_1',
+      'type' : 'FTP_FASTQC_HTML_REPORT',
+      'table' : 'run',
+      'file_path' : '/ftp/IGF1_S1_L001_R1_001.fastqc.html',
+      'location' : 'ELIOT'}, {
+      'name' : 'IGF1_MISEQ_000000000-D0YLK_1',
+      'type' : 'FTP_FASTQC_HTML_REPORT',
+      'table' : 'run',
+      'file_path' : '/ftp/IGF1_S1_L001_R2_001.fastqc.html',
+      'location' : 'ELIOT'}, {
+      'name' : 'IGF2_MISEQ_000000000-D0YLK_1',
+      'type' : 'FTP_FASTQC_HTML_REPORT',
+      'table' : 'run',
+      'file_path' : '/ftp/IGF2_S2_L001_R1_001.fastqc.html',
+      'location' : 'ELIOT'}, {
+      'name' : 'IGF2_MISEQ_000000000-D0YLK_1',
+      'type' : 'FTP_FASTQC_HTML_REPORT',
+      'table' : 'run',
+      'file_path' : '/ftp/IGF2_S2_L001_R2_001.fastqc.html',
+      'location' : 'ELIOT'}, {
+      'name' : 'IGF3_MISEQ_000000000-D0YLK_1',
+      'type' : 'FTP_FASTQC_HTML_REPORT',
+      'table' : 'run',
+      'file_path' : '/ftp/IGF3_S3_L001_R1_001.fastqc.html',
+      'location' : 'ELIOT'}, {
+      'name' : 'IGF3_MISEQ_000000000-D0YLK_1',
+      'type' : 'FTP_FASTQC_HTML_REPORT',
+      'table' : 'run',
+      'file_path' : '/ftp/IGF3_S3_L001_R2_001.fastqc.html',
+      'location' : 'ELIOT'}]
+    ca = \
+      CollectionAdaptor(**{'session':base.session})
+    ca.load_file_and_create_collection(
+      data=data,
+      calculate_file_size_and_md5=False)
+    ## add ftp fastqscreen collection
+    data = [{
+      'name' : 'IGF1_MISEQ_000000000-D0YLK_1',
+      'type' : 'FTP_FASTQSCREEN_HTML_REPORT',
+      'table' : 'run',
+      'file_path' : '/ftp/IGF1_S1_L001_R1_001.fastq_screen.html',
+      'location' : 'ELIOT'}, {
+      'name' : 'IGF1_MISEQ_000000000-D0YLK_1',
+      'type' : 'FTP_FASTQSCREEN_HTML_REPORT',
+      'table' : 'run',
+      'file_path' : '/ftp/IGF1_S1_L001_R2_001.fastq_screen.html',
+      'location' : 'ELIOT'}, {
+      'name' : 'IGF2_MISEQ_000000000-D0YLK_1',
+      'type' : 'FTP_FASTQSCREEN_HTML_REPORT',
+      'table' : 'run',
+      'file_path' : '/ftp/IGF2_S2_L001_R1_001.fastq_screen.html',
+      'location' : 'ELIOT'}, {
+      'name' : 'IGF2_MISEQ_000000000-D0YLK_1',
+      'type' : 'FTP_FASTQSCREEN_HTML_REPORT',
+      'table' : 'run',
+      'file_path' : '/ftp/IGF2_S2_L001_R2_001.fastq_screen.html',
+      'location' : 'ELIOT'}, {
+      'name' : 'IGF3_MISEQ_000000000-D0YLK_1',
+      'type' : 'FTP_FASTQSCREEN_HTML_REPORT',
+      'table' : 'run',
+      'file_path' : '/ftp/IGF3_S3_L001_R1_001.fastq_screen.html',
+      'location' : 'ELIOT'}, {
+      'name' : 'IGF3_MISEQ_000000000-D0YLK_1',
+      'type' : 'FTP_FASTQSCREEN_HTML_REPORT',
+      'table' : 'run',
+      'file_path' : '/ftp/IGF3_S3_L001_R2_001.fastq_screen.html',
+      'location' : 'ELIOT'}]
+    ca = \
+      CollectionAdaptor(**{'session':base.session})
+    ca.load_file_and_create_collection(
+      data=data,
+      calculate_file_size_and_md5=False)
+    base.close_session()
+
+  def tearDown(self):
+    remove_dir(self.temp_dir)
+    Base.metadata.drop_all(self.engine)
+    if os.path.exists(self.dbname):
+      os.remove(self.dbname)
+
+  def test_get_run_id_for_samples_flowcell_and_lane(self):
+    run_id_dict = \
+      get_run_id_for_samples_flowcell_and_lane(
+        database_config_file=self.dbconfig,
+        sample_igf_ids=['IGF1', 'IGF2', 'IGF3'],
+        seqrun_igf_id='171003_M00001_0089_000000000-D0YLK',
+        lane=1)
+    self.assertEqual(len(run_id_dict), 3)
+    self.assertTrue('IGF1' in run_id_dict)
+
+  def test_get_files_for_collection_ids(self):
+    collection_records_list = \
+      get_files_for_collection_ids(
+        database_config_file=self.dbconfig,
+        collection_name_list=['IGF1_MISEQ_000000000-D0YLK_1', 'IGF2_MISEQ_000000000-D0YLK_1', 'IGF3_MISEQ_000000000-D0YLK_1'],
+        collection_type='demultiplexed_fastq',
+        collection_table='run')
+    self.assertEqual(len(collection_records_list), 6)
+    df = pd.DataFrame(collection_records_list)
+    sample1_fastqs = \
+      df[df['name']=='IGF1_MISEQ_000000000-D0YLK_1']['file_path'].values.tolist()
+    self.assertTrue('/path/IGF1_S1_L001_R1_001.fastq.gz' in sample1_fastqs)
+    self.assertTrue('/path/IGF2_S2_L001_R1_001.fastq.gz' not in sample1_fastqs)
+    collection_records_list = \
+      get_files_for_collection_ids(
+        database_config_file=self.dbconfig,
+        collection_name_list=['IGF1_MISEQ_000000000-D0YLK_1', 'IGF2_MISEQ_000000000-D0YLK_1', 'IGF3_MISEQ_000000000-D0YLK_1'],
+        collection_type='FTP_FASTQC_HTML_REPORT',
+        collection_table='run')
+    self.assertEqual(len(collection_records_list), 6)
+    df = pd.DataFrame(collection_records_list)
+    sample1_fastqs = \
+      df[df['name']=='IGF1_MISEQ_000000000-D0YLK_1']['file_path'].values.tolist()
+    self.assertTrue('/ftp/IGF1_S1_L001_R1_001.fastqc.html' in sample1_fastqs)
+    self.assertTrue('/ftp/IGF2_S2_L001_R2_001.fastqc.html' not in sample1_fastqs)
+
+
+  def test_get_data_for_sample_qc_page(self):
+    json_data = \
+      get_data_for_sample_qc_page(
+        project_igf_id='IGFQ001',
+        seqrun_igf_id='171003_M00001_0089_000000000-D0YLK',
+        lane_id=1,
+        samplesheet_file=self.samplesheet_file,
+        database_config_file=self.dbconfig,
+        fastq_collection_type='demultiplexed_fastq',
+        fastqc_collection_type='FTP_FASTQC_HTML_REPORT',
+        fastq_screen_collection_type='FTP_FASTQSCREEN_HTML_REPORT',
+        ftp_path_prefix='/ftp/',
+        ftp_url_prefix='http://ftp.example.com/')
+    self.assertEqual(len(json_data), 3)
+    for entry in json_data:
+      sample_id = entry['Sample_ID']
+      if sample_id == 'IGF1':
+        read_count = entry['Read_Counts']
+        self.assertEqual(int(read_count), 1000)
+        fastq_files = entry['Fastq_Files']
+        self.assertEqual(len(fastq_files), 2)
+        self.assertTrue('IGF1_S1_L001_R1_001.fastq.gz' in fastq_files)
+        fastqc_files = entry['FastQC']
+        self.assertEqual(len(fastqc_files), 2)
+        self.assertTrue('<a href="http://ftp.example.com/IGF1_S1_L001_R1_001.fastqc.html">IGF1_S1_L001_R1_001.fastqc.html</a>' in fastqc_files)
+        fastq_screen_files = entry['Fastq_Screen']
+        self.assertEqual(len(fastq_screen_files), 2)
+        self.assertTrue('<a href="http://ftp.example.com/IGF1_S1_L001_R2_001.fastq_screen.html">IGF1_S1_L001_R2_001.fastq_screen.html</a>' in fastq_screen_files)
+
 
 if __name__=='__main__':
   unittest.main()
