@@ -86,8 +86,95 @@ FASTQ_COLLECTION_TYPE = Variable.get('fastq_collection_type', default_var='demul
 MULTIQC_CONF_TEMPLATE_FILE = Variable.get("multiqc_conf_template_file", default_var=None)
 MULTIQC_SINGULARITY_IMAGE = Variable.get("multiqc_singularity_image", default_var=None)
 MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("multiqc_html_report", default_var="MULTIQC_HTML_REPORT")
+QC_PAGE_JSON_DATA_COLLECTION_TYPE = Variable.get("qc_page_json_data_collection_type", default_var="QC_PAGE_JSON_DATA")
+HPC_FILE_LOCATION = Variable.get("hpc_file_location", default_var="HPC_PROJECT")
+
 
 log = logging.getLogger(__name__)
+
+
+def build_qc_page_for_project_func(**context):
+  try:
+    ti = context["ti"]
+    seqrun_igf_id = \
+      context["params"].\
+      get("seqrun_igf_id")
+    formatted_samplesheets_list = \
+      context["params"].\
+      get("formatted_samplesheets")
+    project_index_column = \
+      context["params"].\
+      get("project_index_column", "project_index")
+    lane_index_column = \
+      context["params"].\
+      get("lane_index_column", "lane_index")
+    ig_index_column = \
+      context["params"].\
+      get("ig_index_column", "index_group_index")
+    project_column = \
+      context["params"].\
+      get("project_column", "project")
+    lane_column = \
+      context["params"].\
+      get("lane_column", "lane")
+    index_group_column = \
+      context["params"].\
+      get("index_group_column", "index_group")
+    project_index = \
+      context["params"].\
+      get("project_index")
+    ## load formatted samplesheets and filter for project, lane and index group
+    df = pd.DataFrame(formatted_samplesheets_list)
+    df[ig_index_column] = \
+      df[ig_index_column].astype(int)
+    df[project_index_column] = \
+      df[project_index_column].astype(int)
+    df[lane_index_column] = \
+      df[lane_index_column].astype(int)
+    filt_df = \
+      df[df[project_index_column]==int(project_index)]
+    if len(filt_df.index) == 0 :
+      raise ValueError(
+        f"No samplesheet found for project index {project_index}")
+    project_name = \
+      filt_df[project_column].values.tolist()[0]
+    ## flowcell id
+    _, flowcell_id = \
+      get_platform_name_and_flowcell_id_for_seqrun(
+        seqrun_igf_id=seqrun_igf_id,
+        db_config_file=DATABASE_CONFIG_FILE)
+    ## get samplesheet groups
+    samplesheet_groups = \
+      filt_df[[
+        project_column,
+        lane_column,
+        index_group_column]].\
+      values.tolist()
+    collection_name_list = list()
+    for project, lane, ig in filt_df:
+      collection_name = \
+        f'{project}_{flowcell_id}_{lane}_{ig}'
+      collection_name_list.append(
+        collection_name)
+    ## collect qc json data
+    ## collect ftp multiqc file
+    ## collect ftp demult report file
+    ##   to do: add ftp demult report to db
+    ## build qc page for ig
+    ## copy qc page to ftp location
+    ## build run home qc page
+    ## update project home page
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
 
 def get_run_id_for_samples_flowcell_and_lane(
       database_config_file: str,
@@ -196,6 +283,148 @@ def get_run_read_count_from_attribute_table(
   except Exception as e:
     raise ValueError(
       f'Error getting run read count from attribute table, error: {e}')
+
+
+def build_qc_page_data_for_project_lane_index_group_func(**context):
+  try:
+    ti = context["ti"]
+    seqrun_igf_id = \
+      context["params"].\
+      get("seqrun_igf_id")
+    formatted_samplesheets_list = \
+      context["params"].\
+      get("formatted_samplesheets")
+    project_index_column = \
+      context["params"].\
+      get("project_index_column", "project_index")
+    lane_index_column = \
+      context["params"].\
+      get("lane_index_column", "lane_index")
+    ig_index_column = \
+      context["params"].\
+      get("ig_index_column", "index_group_index")
+    project_column = \
+      context["params"].\
+      get("project_column", "project")
+    lane_column = \
+      context["params"].\
+      get("lane_column", "lane")
+    index_group_column = \
+      context["params"].\
+      get("index_group_column", "index_group")
+    project_index = \
+      context["params"].\
+      get("project_index")
+    lane_index = \
+      context["params"].\
+      get("lane_index")
+    index_group_index = \
+      context["params"].\
+      get("index_group_index")
+    xcom_key_bclconvert_reports = \
+      context["params"].\
+      get("xcom_key_bclconvert_reports", "bclconvert_reports")
+    xcom_task_bclconvert_reports = \
+      context["params"].\
+      get("xcom_task_bclconvert_reports")
+    samplesheet_file_suffix = \
+      context["params"].\
+      get("samplesheet_file_suffix", "SampleSheet.csv")
+    ftp_path_prefix = \
+      context["params"].\
+      get("ftp_path_prefix", "/www/html/")
+    ftp_url_prefix = \
+      context["params"].\
+      get("ftp_url_prefix", "http://eliot.med.ic.ac.uk/")
+    ## load formatted samplesheets and filter for project, lane and index group
+    df = pd.DataFrame(formatted_samplesheets_list)
+    df[ig_index_column] = \
+      df[ig_index_column].astype(int)
+    df[project_index_column] = \
+      df[project_index_column].astype(int)
+    df[lane_index_column] = \
+      df[lane_index_column].astype(int)
+    filt_df = \
+      df[
+        (df[project_index_column]==int(project_index)) &
+        (df[lane_index_column]==int(lane_index)) &
+        (df[ig_index_column]==int(index_group_index))]
+    if len(filt_df.index) == 0 :
+      raise ValueError(
+        f"No samplesheet found for index group {index_group_index}")
+    project_name = \
+      filt_df[project_column].values.tolist()[0]
+    lane_id = \
+      filt_df[lane_column].values.tolist()[0]
+    index_group_tag = \
+      filt_df[index_group_column].values.tolist()[0]
+    ## get samplesheet path from bclconvert reports
+    bclconvert_reports_path = \
+      ti.xcom_pull(
+        task_ids=xcom_task_bclconvert_reports,
+        key=xcom_key_bclconvert_reports)
+    samplesheet_path = \
+      os.path.join(
+        bclconvert_reports_path,
+        samplesheet_file_suffix)
+    check_file_path(samplesheet_path)
+    ## get json data for project+lane+ig
+    json_data = \
+      get_data_for_sample_qc_page(
+        project_igf_id=project_name,
+        seqrun_igf_id=seqrun_igf_id,
+        lane_id=int(lane_id),
+        samplesheet_file=samplesheet_path,
+        database_config_file=DATABASE_CONFIG_FILE,
+        fastq_collection_type=FASTQ_COLLECTION_TYPE,
+        fastqc_collection_type=FTP_FASTQC_HTML_REPORT_TYPE,
+        fastq_screen_collection_type=FTP_FASTQSCREEN_HTML_REPORT_TYPE,
+        ftp_path_prefix=ftp_path_prefix,
+        ftp_url_prefix=ftp_url_prefix)
+    ## load json data to db collection
+    _, flowcell_id = \
+      get_platform_name_and_flowcell_id_for_seqrun(
+        seqrun_igf_id=seqrun_igf_id,
+        db_config_file=DATABASE_CONFIG_FILE)
+    json_collection_name = \
+      f'{project_name}_{flowcell_id}_{lane_id}_{index_group_tag}'
+    dir_list = [
+      project_name,
+      'qc_page_data']
+    json_file = \
+      f'qc_data_{seqrun_igf_id}_{lane_id}_{index_group_tag}.json'
+    temp_dir = \
+      get_temp_dir()
+    json_file_path = \
+      os.path.join(
+        temp_dir,
+        json_file)
+    with open(json_file_path, 'w') as f:
+      json.dump(json_data, f)
+    json_collection_list = [{
+      "collection_name": json_collection_name,
+      "dir_list": dir_list,
+      "file_list": [json_file_path]}]
+    file_collection_list = \
+      load_raw_files_to_db_and_disk(
+        db_config_file=DATABASE_CONFIG_FILE,
+        collection_type=QC_PAGE_JSON_DATA_COLLECTION_TYPE,
+        collection_table="file",
+        base_data_path=HPC_BASE_RAW_DATA_PATH,
+        file_location=HPC_FILE_LOCATION,
+        replace_existing_file=True,
+        cleanup_existing_collection=True,
+        collection_list=json_collection_list)
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
 
 
 def get_data_for_sample_qc_page(
@@ -466,8 +695,15 @@ def copy_qc_to_ftp_func(**context):
       remote_location=FTP_LOCATION,
       ssh_key_file=HPC_SSH_KEY_FILE)
   except Exception as e:
-    raise ValueError(
-      f"Failed to copy fastqc to ftp, error: {e}")
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
 
 
 def run_multiqc(
@@ -598,8 +834,6 @@ def multiqc_for_project_lane_index_group_func(**context):
       filt_df[lane_column].values.tolist()[0]
     index_group_tag = \
       filt_df[index_group_column].values.tolist()[0]
-    project_name = \
-      filt_df['project_name'].values.tolist()[0]
     ## get multiqc input
     multiqc_input_list = \
       ti.xcom_pull(
