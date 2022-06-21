@@ -88,9 +88,48 @@ MULTIQC_SINGULARITY_IMAGE = Variable.get("multiqc_singularity_image", default_va
 MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("multiqc_html_report", default_var="MULTIQC_HTML_REPORT")
 QC_PAGE_JSON_DATA_COLLECTION_TYPE = Variable.get("qc_page_json_data_collection_type", default_var="QC_PAGE_JSON_DATA")
 HPC_FILE_LOCATION = Variable.get("hpc_file_location", default_var="HPC_PROJECT")
-
+FORMATTED_SAMPLESHEET_PROJECT_INDEX_COLUMN = Variable.get("project_index_column", default_var="project_index")
+FORMATTED_SAMPLESHEET_LANE_INDEX_COLUMN = Variable.get("lane_index_column", default_var="lane_index")
+FORMATTED_SAMPLESHEET_INDEX_GROUP_INDEX_COLUMN = Variable.get("index_group_index_column", default_var="index_group_index")
+FORMATTED_SAMPLESHEET_PROJECT_COLUMN = Variable.get("project_column", default_var="project")
+FORMATTED_SAMPLESHEET_LANE_COLUMN = Variable.get("lane_column", default_var="lane")
+FORMATTED_SAMPLESHEET_INDEX_GROUP_COLUMN = Variable.get("index_group_column", default_var="index_group")
 
 log = logging.getLogger(__name__)
+
+def get_target_rows_from_formatted_samplesheet_data(
+      formatted_samplesheets: list,
+      project_index: int,
+      lane_index: Any = None,
+      index_group_index: Any = None,
+      project_index_column: str = FORMATTED_SAMPLESHEET_PROJECT_INDEX_COLUMN,
+      lane_index_column: str = FORMATTED_SAMPLESHEET_LANE_INDEX_COLUMN,
+      index_group_index_column: str = FORMATTED_SAMPLESHEET_INDEX_GROUP_INDEX_COLUMN) \
+        -> list:
+  try:
+    df = \
+      pd.DataFrame(formatted_samplesheets)
+    df[index_group_index_column] = \
+      df[index_group_index_column].astype(int)
+    df[project_index_column] = \
+      df[project_index_column].astype(int)
+    df[lane_index_column] = \
+      df[lane_index_column].astype(int)
+    filt_df = \
+      df[df[project_index_column] == int(project_index)]
+    if lane_index is not None:
+      filt_df = \
+        filt_df[filt_df[lane_index_column] == int(lane_index)]
+    if index_group_index is not None:
+      filt_df = \
+        filt_df[filt_df[index_group_index_column] == int(index_group_index)]
+    if len(filt_df.index) == 0 :
+      raise ValueError(
+        f"No samplesheet found for index group {index_group_index}")
+    return filt_df.to_dict(orient='records')
+  except Exception as e:
+    raise ValueError(
+      f'Failed to get target rows from formatted samplesheet data, error: {e}')
 
 
 def build_qc_page_for_project_func(**context):
@@ -102,42 +141,49 @@ def build_qc_page_for_project_func(**context):
     formatted_samplesheets_list = \
       context["params"].\
       get("formatted_samplesheets")
-    project_index_column = \
-      context["params"].\
-      get("project_index_column", "project_index")
-    lane_index_column = \
-      context["params"].\
-      get("lane_index_column", "lane_index")
-    ig_index_column = \
-      context["params"].\
-      get("ig_index_column", "index_group_index")
-    project_column = \
-      context["params"].\
-      get("project_column", "project")
-    lane_column = \
-      context["params"].\
-      get("lane_column", "lane")
-    index_group_column = \
-      context["params"].\
-      get("index_group_column", "index_group")
+    # project_index_column = \
+    #   context["params"].\
+    #   get("project_index_column", "project_index")
+    # lane_index_column = \
+    #   context["params"].\
+    #   get("lane_index_column", "lane_index")
+    # ig_index_column = \
+    #   context["params"].\
+    #   get("ig_index_column", "index_group_index")
+    # project_column = \
+    #   context["params"].\
+    #   get("project_column", "project")
+    # lane_column = \
+    #   context["params"].\
+    #   get("lane_column", "lane")
+    # index_group_column = \
+    #   context["params"].\
+    #   get("index_group_column", "index_group")
     project_index = \
       context["params"].\
       get("project_index")
     ## load formatted samplesheets and filter for project, lane and index group
-    df = pd.DataFrame(formatted_samplesheets_list)
-    df[ig_index_column] = \
-      df[ig_index_column].astype(int)
-    df[project_index_column] = \
-      df[project_index_column].astype(int)
-    df[lane_index_column] = \
-      df[lane_index_column].astype(int)
+    # df = pd.DataFrame(formatted_samplesheets_list)
+    # df[ig_index_column] = \
+    #   df[ig_index_column].astype(int)
+    # df[project_index_column] = \
+    #   df[project_index_column].astype(int)
+    # df[lane_index_column] = \
+    #   df[lane_index_column].astype(int)
+    # filt_df = \
+    #   df[df[project_index_column]==int(project_index)]
+    # if len(filt_df.index) == 0 :
+    #   raise ValueError(
+    #     f"No samplesheet found for project index {project_index}")
+    filt_df_list = \
+      get_target_rows_from_formatted_samplesheet_data(
+        formatted_samplesheets=formatted_samplesheets_list,
+        project_index=project_index)
     filt_df = \
-      df[df[project_index_column]==int(project_index)]
-    if len(filt_df.index) == 0 :
-      raise ValueError(
-        f"No samplesheet found for project index {project_index}")
+      pd.DataFrame(filt_df_list)
     project_name = \
-      filt_df[project_column].values.tolist()[0]
+      filt_df[FORMATTED_SAMPLESHEET_PROJECT_COLUMN].\
+        values.tolist()[0]
     ## flowcell id
     _, flowcell_id = \
       get_platform_name_and_flowcell_id_for_seqrun(
