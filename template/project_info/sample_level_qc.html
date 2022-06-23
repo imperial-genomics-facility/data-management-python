@@ -20,10 +20,10 @@
       <div class="collapse navbar-collapse" id="navbarsExampleDefault">
         <ul class="navbar-nav mr-auto">
           <li class="nav-item">
-            <a class="nav-link" href="../../../index.html">Project Home</a>
+            <a class="nav-link" href="http://eliot.med.ic.ac.uk/report/project/{{ ProjectName }}/index.html">Project Home</a>
           </li>
           <li class="nav-item active">
-            <a class="nav-link" href="../index.html">Run Home<span class="sr-only">(current)</span></a>
+            <a class="nav-link" href="http://eliot.med.ic.ac.uk/report/project/{{ ProjectName }}/{{ FlowcellId }}/index.html">Run Home<span class="sr-only">(current)</span></a>
           </li>
           <!--li class="nav-item">
             <a class="nav-link" href="../undetermined.html">Undetermined reads</a>
@@ -51,15 +51,19 @@
         <h1>Sample Information</h1>
           <dl class="row">
             <dt class="col-sm-3">Project Name</dt>
-            <dd class="col-sm-9">{{ ProjectName }}</dd>
+            <dd class="col-sm-9"><a href="http://eliot.med.ic.ac.uk/report/project/{{ ProjectName }}/index.html">{{ ProjectName }}</a></dd>
+
             <dt class="col-sm-3">Sequencing run date</dt>
-            <dd class="col-sm-9"><a href="../index.html">{{ SeqrunDate }}</a></dd>
+            <dd class="col-sm-9">{{ SeqrunDate }}</dd>
+
             <dt class="col-sm-3">Flowcell id</dt>
-            <dd class="col-sm-9">{{ FlowcellId }}</dd>
+            <dd class="col-sm-9"><a href="http://eliot.med.ic.ac.uk/report/project/{{ ProjectName }}/{{ FlowcellId }}/index.html"></a>{{ FlowcellId }}</a></dd>
+
             <dt class="col-sm-3">Lane id</dt>
             <dd class="col-sm-9">{{ Lane }}</dd>
-            <dt class="col-sm-3">Index barcode length</dt>
-            <dd class="col-sm-9">{{ IndexBarcodeLength }}</dd>
+
+            <dt class="col-sm-3">Index barcode group</dt>
+            <dd class="col-sm-9">{{ IndexBarcodeGroup }}</dd>
           </dl>
         <h2>Fastq read QC</h2>
           <div class="table-responsive">

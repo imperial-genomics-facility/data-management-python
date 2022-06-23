@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="stylesheet" href="http://eliot.med.ic.ac.uk/report/static_pages/bootstrap-4.1.3/dist/css/bootstrap.min.css"  crossorigin="anonymous">
+    <!-- link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous"-->
+    <link href="http://eliot.med.ic.ac.uk/report/static_pages/dashboard.css" rel="stylesheet">
+    <link href="http://eliot.med.ic.ac.uk/report/static_pages/sticky-footer.css" rel="stylesheet">
+    <title>IGF QC Report</title>
+</head>
+<body>
+  <header>
+      <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+        <a class="navbar-brand" href="#"><img style='height:30px' src='http://eliot.med.ic.ac.uk/report/static_pages/igf.png' /> IGF QC Report</a>
+        <button class="navbar-toggler d-lg-none" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+          <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+              <a class="nav-link" href="http://eliot.med.ic.ac.uk/report/project/{{ ProjectName }}/index.html">Project Home</a>
+           </li>
+           <li class="nav-item active">
+              <a class="nav-link" href="http://eliot.med.ic.ac.uk/report/project/{{ ProjectName }}/{{ FlowcellId }}/index.html">Run Home<span class="sr-only">(current)</span></a>
+           </li>
+           <!--li class="nav-item">
+              <a class="nav-link" href="undetermined.html">Undetermined reads</a>
+            </li-->
+           <li class="nav-item">
+              <a class="nav-link" href="https://imperial-genomics-facility.github.io/igf-pipeline-help/">Help</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="http://www.imperial.ac.uk/medicine/research-and-impact/facilities/genomics-facility/about/">About</a>
+            </li>
+          </ul>
+        </div>
+     </nav>
+    </header>
+    <div class="container-fluid">
+      <div class="row">
+        <nav class="col-sm-3 col-md-2 d-none d-sm-block bg-light sidebar">
+          <ul class="nav nav-pills flex-column">
+            <li class="nav-item">
+              <a class="nav-link active" href="#">Fastq<span class="sr-only">(current)</span></a>
+            </li>
+          </ul>
+        </nav>
+
+        <main role="main" class="col-sm-9 ml-sm-auto col-md-10 pt-3">
+          <h1>Project Information</h1>
+          <dl class="row">
+           <dt class="col-sm-3">Project Name</dt>
+           <dd class="col-sm-9"><a href="http://eliot.med.ic.ac.uk/report/project/{{ ProjectName }}/index.html">{{ ProjectName }}</a></dd>
+
+           <dt class="col-sm-3">Sequencing run date</dt>
+           <dd class="col-sm-9">{{ SeqrunDate }}</dd>
+
+           <dt class="col-sm-3">Flowcell id</dt>
+           <dd class="col-sm-9">{{ FlowcellId }}</dd>
+          </dl>
+          <h2>Fastq read QC for all lanes</h2>
+          <div class="table-responsive">
+            <table class="table table-hover">
+              <thead>
+                <tr class="table-light">
+                {% for column_name in qc_data[0].keys() %}
+                  <td scope="col">{{ column_name }}</td>
+                {% endfor %}
+                </tr>
+              </thead>
+              <tbody>
+              {% for row in qc_data %}
+                <tr>
+                {% for column_name, data in row.items() %}
+                  {% if data is string %}
+                  <td>{{ data }}</td>
+                  {% else %}
+                  <td><ul>
+                    {% for entry in data %}
+                    <li>{{ entry }}</li>
+                    {% endfor %}
+                  </ul></td>
+                  {% endif %}
+                {% endfor %}
+                </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </main>
+      </div>
+    </div>
+    <footer class="footer">
+      <div class="container">
+        <span class="text-muted">
+          <p>
+            <a>Copyright IGF team,</a>
+            <a>Email us </a><a href="mailto:igf@imperial.ac.uk">igf@imperial.ac.uk,</a>
+            <a href="https://twitter.com/ImperialGF?ref_src=twsrc%5Etfw" class="twitter-follow-button" data-show-count="false">Follow @ImperialGF</a>
+            <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+            <!--
+            <a href="https://twitter.com/messages/compose?recipient_id=2967805493&ref_src=twsrc%5Etfw&text=Hi%20IGF%20Team%2C%20I%20have%20a%20question%20related%20to%20project%20{{ ProjectName }}%2C%20date%20{{ SeqrunDate }}" class="twitter-dm-button" data-screen-name="@ImperialGF" data-show-count="false">Message</a>
+            <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+            -->
+          </p>
+        </span>
+      </div>
+    </footer>
+  </body>
+</html>
