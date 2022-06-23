@@ -86,6 +86,7 @@ FASTQ_COLLECTION_TYPE = Variable.get('fastq_collection_type', default_var='demul
 MULTIQC_CONF_TEMPLATE_FILE = Variable.get("multiqc_conf_template_file", default_var=None)
 MULTIQC_SINGULARITY_IMAGE = Variable.get("multiqc_singularity_image", default_var=None)
 MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("multiqc_html_report", default_var="MULTIQC_HTML_REPORT")
+FTP_MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("multiqc_html_report", default_var="FTP_MULTIQC_HTML_REPORT")
 QC_PAGE_JSON_DATA_COLLECTION_TYPE = Variable.get("qc_page_json_data_collection_type", default_var="QC_PAGE_JSON_DATA")
 HPC_FILE_LOCATION = Variable.get("hpc_file_location", default_var="HPC_PROJECT")
 FORMATTED_SAMPLESHEET_PROJECT_INDEX_COLUMN = Variable.get("project_index_column", default_var="project_index")
@@ -130,6 +131,91 @@ def get_target_rows_from_formatted_samplesheet_data(
   except Exception as e:
     raise ValueError(
       f'Failed to get target rows from formatted samplesheet data, error: {e}')
+
+
+def _collect_qc_json_and_build_sampleqc_pages(
+      collection_name_dict: dict,
+      sample_qc_page_template: str,
+      seqrun_igf_id: str,
+      output_dir: str,
+      json_data_collection_type: str,
+      database_config_file: str) \
+        -> dict:
+  """
+  This function collects qc json data and builds sampleqc pages
+
+  :param collection_name_dict: dict of collection names, example dictionary
+    collection_name_dict = {
+      collection_name: {
+        "project": project,
+        "flowcell_id": flowcell_id,
+        "lane": lane,
+        "index_group": index_group,
+        "tags": [
+          project,
+          flowcell_id,
+          lane,
+          ig
+        ]}
+  :param sample_qc_page_template: sampleqc page template
+  :param seqrun_igf_id: seqrun igf id
+  :param output_dir: output dir
+  :param json_data_collection_type: json data collection type
+  :param database_config_file: database config file
+  :returns: dict of sampleqc pages
+  """
+  try:
+    check_file_path(sample_qc_page_template)
+    check_file_path(output_dir)
+    qc_pages_dict = dict()
+    qc_json_collection_list = \
+      get_files_for_collection_ids(
+      collection_name_list=list(collection_name_dict.keys()),
+      collection_type=json_data_collection_type,
+      collection_table="file",
+      database_config_file=database_config_file)
+    ## build sample qc page using the json data
+    for entry in qc_json_collection_list:
+      collection_name = entry.get("name")
+      file_path = entry.get("file_path")
+      collection_entry = \
+        collection_name_dict.get(collection_name)
+      if collection_entry is None:
+        raise ValueError(
+          f"No collection entry found for collection name {collection_name}")
+      project = \
+        collection_entry.get("project")
+      lane = \
+        collection_entry.get("lane")
+      index_group = \
+        collection_entry.get("index_group")
+      flowcell_id = \
+        collection_entry.get("flowcell_id")
+      seqrun_date = \
+        get_seqrun_date_from_igf_id(seqrun_igf_id)
+      with open(file_path, "r") as fp:
+        qc_data = json.load(fp)
+      qc_file_name = \
+        os.path.json(
+          output_dir,
+          f"{collection_name}_SampleQC.html")
+      _create_output_from_jinja_template(
+        template_file=sample_qc_page_template,
+        output_file=qc_file_name,
+        autoescape_list=["xml"],
+        data=dict(
+          ProjectName=project,
+          SeqrunDate=seqrun_date,
+          FlowcellId=flowcell_id,
+          Lane=lane,
+          IndexBarcodeLength=index_group,
+          qc_data=qc_data))
+      qc_pages_dict.update({
+        collection_name: qc_file_name})
+    return qc_pages_dict
+  except Exception as e:
+    raise ValueError(
+      f"Failed to collect qc json and build sampleqc pages, error: {e}")
 
 
 def build_qc_page_for_project_func(**context):
@@ -192,22 +278,67 @@ def build_qc_page_for_project_func(**context):
     ## get samplesheet groups
     samplesheet_groups = \
       filt_df[[
-        project_column,
-        lane_column,
-        index_group_column]].\
+        FORMATTED_SAMPLESHEET_PROJECT_COLUMN,
+        FORMATTED_SAMPLESHEET_LANE_COLUMN,
+        FORMATTED_SAMPLESHEET_INDEX_GROUP_COLUMN]].\
       values.tolist()
-    collection_name_list = list()
+    collection_name_dict = dict()
     for project, lane, ig in filt_df:
       collection_name = \
         f'{project}_{flowcell_id}_{lane}_{ig}'
-      collection_name_list.append(
-        collection_name)
-    ## collect qc json data
+      collection_name_dict.update({
+        collection_name: {
+          "project": project,
+          "flowcell_id": flowcell_id,
+          "lane": lane,
+          "index_group": ig,
+          "tags": [
+            project,
+            flowcell_id,
+            lane,
+            ig
+          ]}
+        })
+    ## collect qc json data and build qc page for ig
+    temp_qc_dir = get_temp_dir()
+    template_path = \
+      os.path.join(
+        QC_PAGE_TEMPLATE_DIR,
+        "sample_level_qc.html")
+    check_file_path(template_path)
+    qc_page_dict = \
+      _collect_qc_json_and_build_sampleqc_pages(
+        collection_name_dict=collection_name_dict,
+        sample_qc_page_template=template_path,
+        seqrun_igf_id=seqrun_igf_id,
+        output_dir=temp_qc_dir,
+        json_data_collection_type=QC_PAGE_JSON_DATA_COLLECTION_TYPE,
+        database_config_file=DATABASE_CONFIG_FILE)
+    ## copy qc page to ftp location
+    for collection_name, qc_page in qc_page_dict.items():
+      dir_list = \
+        collection_name_dict.get(collection_name).get('tags')
+      copy_file_to_ftp_and_load_to_db(
+        ftp_server=FTP_HOSTNAME,
+        ftp_username=FTP_USERNAME,
+        base_remote_dir=FTP_PROJECT_PATH,
+        dir_list=dir_list,
+        file_list=[qc_page],
+        db_config_file=DATABASE_CONFIG_FILE,
+        remote_collection_name=collection_name,
+        remote_collection_type=None,
+        remote_collection_table="file",
+        remote_location=FTP_LOCATION,
+        ssh_key_file=HPC_SSH_KEY_FILE)
     ## collect ftp multiqc file
+    multiqc_collection_list = \
+      get_files_for_collection_ids(
+      collection_name_list=list(collection_name_dict.keys()), ## to do, multiqc collection names are different
+      collection_type=FTP_MULTIQC_HTML_REPORT_COLLECTION_TYPE,
+      collection_table="file",
+      database_config_file=DATABASE_CONFIG_FILE)
     ## collect ftp demult report file
     ##   to do: add ftp demult report to db
-    ## build qc page for ig
-    ## copy qc page to ftp location
     ## build run home qc page
     ## update project home page
   except Exception as e:
@@ -3504,7 +3635,7 @@ def _create_output_from_jinja_template(
     check_file_path(output_file)
   except Exception as e:
     raise ValueError(
-      f"Failed to create output file usinh jinja, error {e}")
+      f"Failed to create output file using jinja, error {e}")
 
 
 def _calculate_image_height_for_project_page(

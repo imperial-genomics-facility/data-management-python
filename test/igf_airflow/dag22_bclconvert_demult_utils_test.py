@@ -1390,6 +1390,7 @@ class Dag22_bclconvert_demult_utils_testL(unittest.TestCase):
         fastq_screen_collection_type='FTP_FASTQSCREEN_HTML_REPORT',
         ftp_path_prefix='/ftp/',
         ftp_url_prefix='http://ftp.example.com/')
+    print(json_data)
     self.assertEqual(len(json_data), 3)
     for entry in json_data:
       sample_id = entry['Sample_ID']
