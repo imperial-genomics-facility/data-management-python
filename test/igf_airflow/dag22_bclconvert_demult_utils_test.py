@@ -48,6 +48,7 @@ from igf_airflow.utils.dag22_bclconvert_demult_utils import check_demult_stats_f
 from igf_airflow.utils.dag22_bclconvert_demult_utils import get_data_for_sample_qc_page
 from igf_airflow.utils.dag22_bclconvert_demult_utils import get_run_id_for_samples_flowcell_and_lane
 from igf_airflow.utils.dag22_bclconvert_demult_utils import get_files_for_collection_ids
+from igf_airflow.utils.dag22_bclconvert_demult_utils import _build_run_qc_page
 
 class Dag22_bclconvert_demult_utils_testA(unittest.TestCase):
   def setUp(self):
@@ -1376,7 +1377,6 @@ class Dag22_bclconvert_demult_utils_testL(unittest.TestCase):
     self.assertTrue('/ftp/IGF1_S1_L001_R1_001.fastqc.html' in sample1_fastqs)
     self.assertTrue('/ftp/IGF2_S2_L001_R2_001.fastqc.html' not in sample1_fastqs)
 
-
   def test_get_data_for_sample_qc_page(self):
     json_data = \
       get_data_for_sample_qc_page(
@@ -1390,7 +1390,6 @@ class Dag22_bclconvert_demult_utils_testL(unittest.TestCase):
         fastq_screen_collection_type='FTP_FASTQSCREEN_HTML_REPORT',
         ftp_path_prefix='/ftp/',
         ftp_url_prefix='http://ftp.example.com/')
-    print(json_data)
     self.assertEqual(len(json_data), 3)
     for entry in json_data:
       sample_id = entry['Sample_ID']
@@ -1406,6 +1405,142 @@ class Dag22_bclconvert_demult_utils_testL(unittest.TestCase):
         fastq_screen_files = entry['Fastq_Screen']
         self.assertEqual(len(fastq_screen_files), 2)
         self.assertTrue('<a href="http://ftp.example.com/IGF1_S1_L001_R2_001.fastq_screen.html">IGF1_S1_L001_R2_001.fastq_screen.html</a>' in fastq_screen_files)
+
+class Dag22_bclconvert_demult_utils_testL(unittest.TestCase):
+  def setUp(self):
+    self.temp_dir = get_temp_dir()
+    self.dbconfig = 'data/dbconfig.json'
+    dbparam = None
+    with open(self.dbconfig, 'r') as json_data:
+      dbparam = json.load(json_data)
+    base = BaseAdaptor(**dbparam)
+    self.engine = base.engine
+    self.dbname = dbparam['dbname']
+    Base.metadata.create_all(self.engine)
+    self.session_class = base.session_class
+    base.start_session()
+    self.multiqc_html_report_known = \
+      "FTP_MULTIQC_HTML_REPORT_KNOWN"
+    self.multiqc_html_report_undetermined = \
+      "FTP_MULTIQC_HTML_REPORT_UNDETERMINED"
+    self.sample_qc_page_collection_type = \
+      "FTP_SAMPLE_QC_PAGE"
+    self.demultiplexing_report_html_type = \
+      "DEMULTIPLEXING_REPORT_HTML"
+    self.run_qc_page_template = \
+      "template/project_info/run_level_qc.html"
+    data = [{
+      'name' : 'Project1_000000000-D0YLK_1_8_10X',
+      'type' : self.sample_qc_page_collection_type,
+      'table' : 'file',
+      'file_path' : '/ftp/Project1_000000000-D0YLK_1_8_10X/SampleQC.html',
+      'location' : 'ELIOT'}, {
+      'name' : 'Project1_000000000-D0YLK_2_8_10X',
+      'type' : self.sample_qc_page_collection_type,
+      'table' : 'file',
+      'file_path' : '/ftp/Project1_000000000-D0YLK_2_8_10X/SampleQC.html',
+      'location' : 'ELIOT'}, {
+      'name' : 'Project1_000000000-D0YLK_1_8_10X',
+      'type' : self.demultiplexing_report_html_type,
+      'table' : 'file',
+      'file_path' : '/ftp/Project1_000000000-D0YLK_1_8_10X/Demult_report.html',
+      'location' : 'ELIOT'}, {
+      'name' : 'Project1_000000000-D0YLK_2_8_10X',
+      'type' : self.demultiplexing_report_html_type,
+      'table' : 'file',
+      'file_path' : '/ftp/Project1_000000000-D0YLK_2_8_10X/Demult_report.html',
+      'location' : 'ELIOT'}, {
+      'name' : 'Project1_000000000-D0YLK_1_8_10X_known',
+      'type' : self.multiqc_html_report_known,
+      'table' : 'file',
+      'file_path' : '/ftp/Project1_000000000-D0YLK_1_8_10X_known/MultiQC.html',
+      'location' : 'ELIOT'}, {
+      'name' : 'Project1_000000000-D0YLK_2_8_10X_known',
+      'type' : self.multiqc_html_report_known,
+      'table' : 'file',
+      'file_path' : '/ftp/Project1_000000000-D0YLK_2_8_10X_known/MultiQC.html',
+      'location' : 'ELIOT'}, {
+      'name' : 'Project1_000000000-D0YLK_1_8_10X_undetermined',
+      'type' : self.multiqc_html_report_undetermined,
+      'table' : 'file',
+      'file_path' : '/ftp/Project1_000000000-D0YLK_1_8_10X_undetermined/MultiQC.html',
+      'location' : 'ELIOT'}, {
+      'name' : 'Project1_000000000-D0YLK_2_8_10X_undetermined',
+      'type' : self.multiqc_html_report_undetermined,
+      'table' : 'file',
+      'file_path' : '/ftp/Project1_000000000-D0YLK_2_8_10X_undetermined/MultiQC.html',
+      'location' : 'ELIOT'}]
+    ca = \
+      CollectionAdaptor(**{'session':base.session})
+    ca.load_file_and_create_collection(
+      data=data,
+      calculate_file_size_and_md5=False)
+    base.close_session()
+
+  def tearDown(self):
+    remove_dir(self.temp_dir)
+    Base.metadata.drop_all(self.engine)
+    if os.path.exists(self.dbname):
+      os.remove(self.dbname)
+
+  def test_build_run_qc_page(self):
+    collection_name_dict = {
+      'Project1_000000000-D0YLK_1_8_10X': {
+        "project": 'Project1',
+        "flowcell_id": '000000000-D0YLK',
+        "lane": 1,
+        "index_group": '8_10X',
+        "tags": [
+          'Project1',
+          '000000000-D0YLK',
+          1,
+          '8_10X'
+        ]},
+      'Project1_000000000-D0YLK_2_8_10X': {
+        "project": 'Project1',
+        "flowcell_id": '000000000-D0YLK',
+        "lane": 2,
+        "index_group": '8_10X',
+        "tags": [
+          'Project1',
+          '000000000-D0YLK',
+          2,
+          '8_10X'
+        ]}
+      }
+    run_qc_dict = \
+      _build_run_qc_page(
+        collection_name_dict=collection_name_dict,
+        sample_qc_page_collection_type=self.sample_qc_page_collection_type,
+        known_multiqc_page_collection_type=self.multiqc_html_report_known,
+        undetermined_multiqc_page_collection_type=self.multiqc_html_report_undetermined,
+        demultiplexing_report_collection_type=self.demultiplexing_report_html_type,
+        run_qc_page_template=self.run_qc_page_template,
+        seqrun_igf_id='171003_M00001_0089_000000000-D0YLK',
+        ftp_path_prefix='/ftp/',
+        ftp_url_prefix='http://example.com/ftp/',
+        output_dir=self.temp_dir,
+        database_config_file=self.dbconfig,
+        run_qc_page_name="index.html",
+        known_multiqc_name_suffix="known",
+        undetermined_multiqc_name_suffix="undetermined")
+    self.assertTrue('Project1_000000000-D0YLK' in run_qc_dict)
+    run_qc_page = \
+      run_qc_dict['Project1_000000000-D0YLK']['run_qc_page']
+    self.assertTrue(os.path.exists(run_qc_page))
+    table_dfs = \
+      pd.read_html(
+        run_qc_page,
+        attrs = {'class': 'table table-hover'},
+        flavor='bs4')
+    self.assertEqual(len(table_dfs), 1)
+    table_df = table_dfs[0]
+    self.assertEqual(len(table_df.index), 2)
+    self.assertTrue('Lane' in table_df.columns)
+    self.assertTrue('Index_group' in table_df.columns)
+    lane_df = table_df[table_df['Lane'] == 1]
+    self.assertEqual(len(lane_df.index), 1)
+    self.assertEqual(lane_df['Index_group'].values[0], '8_10X')
 
 
 if __name__=='__main__':

@@ -86,8 +86,10 @@ FASTQ_COLLECTION_TYPE = Variable.get('fastq_collection_type', default_var='demul
 MULTIQC_CONF_TEMPLATE_FILE = Variable.get("multiqc_conf_template_file", default_var=None)
 MULTIQC_SINGULARITY_IMAGE = Variable.get("multiqc_singularity_image", default_var=None)
 MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("multiqc_html_report", default_var="MULTIQC_HTML_REPORT")
-FTP_MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("multiqc_html_report", default_var="FTP_MULTIQC_HTML_REPORT")
+FTP_KNOWN_MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("ftp_known_multiqc_html_report", default_var="FTP_MULTIQC_HTML_REPORT_KNOWN")
+FTP_UNDETERMINED_MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("ftp_undetermined_multiqc_html_report", default_var="FTP_MULTIQC_HTML_REPORT_UNDETERMINED")
 QC_PAGE_JSON_DATA_COLLECTION_TYPE = Variable.get("qc_page_json_data_collection_type", default_var="QC_PAGE_JSON_DATA")
+SAMPLE_QC_PAGE_COLLECTION_TYPE = Variable.get("sample_qc_page_collection_type", default_var="FTP_SAMPLE_QC_PAGE")
 HPC_FILE_LOCATION = Variable.get("hpc_file_location", default_var="HPC_PROJECT")
 FORMATTED_SAMPLESHEET_PROJECT_INDEX_COLUMN = Variable.get("project_index_column", default_var="project_index")
 FORMATTED_SAMPLESHEET_LANE_INDEX_COLUMN = Variable.get("lane_index_column", default_var="lane_index")
@@ -95,6 +97,7 @@ FORMATTED_SAMPLESHEET_INDEX_GROUP_INDEX_COLUMN = Variable.get("index_group_index
 FORMATTED_SAMPLESHEET_PROJECT_COLUMN = Variable.get("project_column", default_var="project")
 FORMATTED_SAMPLESHEET_LANE_COLUMN = Variable.get("lane_column", default_var="lane")
 FORMATTED_SAMPLESHEET_INDEX_GROUP_COLUMN = Variable.get("index_group_column", default_var="index_group")
+DEMULTIPLEXING_REPORT_HTML_TYPE = Variable.get("demultiplexing_report_html_type", default_var="DEMULTIPLEXING_REPORT_HTML")
 
 log = logging.getLogger(__name__)
 
@@ -133,13 +136,195 @@ def get_target_rows_from_formatted_samplesheet_data(
       f'Failed to get target rows from formatted samplesheet data, error: {e}')
 
 
+def _build_run_qc_page(
+      collection_name_dict: dict,
+      sample_qc_page_collection_type: str,
+      known_multiqc_page_collection_type: str,
+      undetermined_multiqc_page_collection_type: str,
+      demultiplexing_report_collection_type: str,
+      run_qc_page_template: str,
+      seqrun_igf_id: str,
+      ftp_path_prefix: str,
+      ftp_url_prefix: str,
+      output_dir: str,
+      database_config_file: str,
+      run_qc_page_name: str = "index.html",
+      known_multiqc_name_suffix: str = "known",
+      undetermined_multiqc_name_suffix: str = "undetermined") \
+        -> dict:
+  try:
+    check_file_path(run_qc_page_template)
+    check_file_path(output_dir)
+    seqrun_date = \
+      get_seqrun_date_from_igf_id(seqrun_igf_id)
+    formatted_collection_data = list()
+    for collection_name, collection_data in collection_name_dict.items():
+      formatted_collection_data.append({
+        "project": collection_data.get("project"),
+        "flowcell_id": collection_data.get("flowcell_id"),
+        "lane": collection_data.get("lane"),
+        "index_group": collection_data.get("index_group"),
+        "collection_name": collection_name,
+        "multiqc_known_collection_name": f"{collection_name}_{known_multiqc_name_suffix}",
+        "multiqc_undetermined_collection_name": f"{collection_name}_{undetermined_multiqc_name_suffix}"})
+    ## group data by project, flowcell, lane and index group
+    df = pd.DataFrame(formatted_collection_data)
+    samplq_qc_collections = \
+      df['collection_name'].drop_duplicates().tolist()
+    multiqc_known_collections = \
+      df['multiqc_known_collection_name'].drop_duplicates().tolist()
+    multiqc_undetermined_collections = \
+      df['multiqc_undetermined_collection_name'].drop_duplicates().tolist()
+    ## collect qc page paths
+    samplq_qc_file_collections = \
+      get_files_for_collection_ids(
+        collection_name_list=samplq_qc_collections,
+        collection_type=sample_qc_page_collection_type,
+        collection_table="file",
+        database_config_file=database_config_file)
+    if len(samplq_qc_file_collections) == 0:
+      raise ValueError(
+        f"No qc page found for collection type {sample_qc_page_collection_type}")
+    samplq_qc_file_collections_df = \
+      pd.DataFrame(samplq_qc_file_collections)
+    ## collect multiqc paths
+    multiqc_known_file_collections = \
+      get_files_for_collection_ids(
+        collection_name_list=multiqc_known_collections,
+        collection_type=known_multiqc_page_collection_type,
+        collection_table="file",
+        database_config_file=database_config_file)
+    if len(multiqc_known_file_collections) == 0:
+      raise ValueError(
+        f"No qc page found for collection type {known_multiqc_page_collection_type}")
+    multiqc_known_file_collections_df = \
+      pd.DataFrame(multiqc_known_file_collections)
+    ## get multiqc undetermined pages
+    multiqc_undetermined_file_collections = []
+    multiqc_undetermined_file_collections = \
+      get_files_for_collection_ids(
+        collection_name_list=multiqc_undetermined_collections,
+        collection_type=undetermined_multiqc_page_collection_type,
+        collection_table="file",
+        database_config_file=database_config_file)
+    if len(multiqc_undetermined_file_collections) == 0:
+      raise ValueError(
+        f"No qc page found for collection type {undetermined_multiqc_page_collection_type}")
+    multiqc_undetermined_file_collections_df = \
+      pd.DataFrame(multiqc_undetermined_file_collections)
+    ## collect de-multiplexing report paths
+    demult_report_file_collections = \
+      get_files_for_collection_ids(
+        collection_name_list=samplq_qc_collections,
+        collection_type=demultiplexing_report_collection_type,
+        collection_table="file",
+        database_config_file=database_config_file)
+    if len(demult_report_file_collections) == 0:
+      raise ValueError(
+        f"No qc page found for collection type {demultiplexing_report_collection_type}")
+    demult_report_file_collections_df = \
+      pd.DataFrame(demult_report_file_collections)
+    ## combine all report paths per lane, index_group
+    all_projects_data = dict()
+    for project, p_data in df.groupby('project'):
+      for flowcell, f_data in p_data.groupby('flowcell_id'):
+        all_lanes_data = list()
+        for lane, l_data in f_data.groupby('lane'):
+          for index_group, ig_data in l_data.groupby('index_group'):
+            collection_name = \
+              ig_data['collection_name'].values.tolist()[0]
+            ## get sampleqc page
+            sample_collection_file = \
+              samplq_qc_file_collections_df[
+                samplq_qc_file_collections_df['name'] == collection_name][
+                  'file_path'].tolist()[0]
+            sample_collection_file = \
+              sample_collection_file.\
+                replace(ftp_path_prefix, ftp_url_prefix)
+            sample_collection_file = \
+              f'<a href="{sample_collection_file}">{os.path.basename(sample_collection_file)}</a>'
+            ## get multiqc known file
+            multiqc_known_collection_name = \
+              ig_data['multiqc_known_collection_name'].values.tolist()[0]
+            multiqc_known_collection_file = \
+              multiqc_known_file_collections_df[
+                multiqc_known_file_collections_df['name'] == multiqc_known_collection_name][
+                  'file_path'].tolist()[0]
+            multiqc_known_collection_file = \
+              multiqc_known_collection_file.\
+                replace(ftp_path_prefix, ftp_url_prefix)
+            multiqc_known_collection_file = \
+              f'<a href="{multiqc_known_collection_file}">{os.path.basename(multiqc_known_collection_file)}</a>'
+            ## get multiqc undetermined file
+            multiqc_undetermined_collection_name = \
+              ig_data['multiqc_undetermined_collection_name'].values.tolist()[0]
+            multiqc_undetermined_collection_file = \
+              multiqc_undetermined_file_collections_df[
+                multiqc_undetermined_file_collections_df['name'] == multiqc_undetermined_collection_name][
+                  'file_path'].tolist()[0]
+            multiqc_undetermined_collection_file = \
+              multiqc_undetermined_collection_file.\
+                replace(ftp_path_prefix, ftp_url_prefix)
+            multiqc_undetermined_collection_file = \
+              f'<a href="{multiqc_undetermined_collection_file}">{os.path.basename(multiqc_undetermined_collection_file)}</a>'
+            ## get demultiplexing report file
+            demult_report_file = \
+              demult_report_file_collections_df[
+                demult_report_file_collections_df['name'] == collection_name][
+                  'file_path'].tolist()[0]
+            demult_report_file = \
+              demult_report_file.\
+                replace(ftp_path_prefix, ftp_url_prefix)
+            demult_report_file = \
+              f'<a href="{demult_report_file}">{os.path.basename(demult_report_file)}</a>'
+            all_lanes_data.\
+              append({
+                "Lane": str(lane),
+                "Index_group": index_group,
+                "SampleQC": sample_collection_file,
+                "Demultiplexing_report": demult_report_file,
+                "MultiQC": multiqc_known_collection_file,
+                "MultiQC_undetermined": multiqc_undetermined_collection_file})
+        ## create run qc page
+        run_qc_page = \
+          os.path.join(
+            output_dir,
+            f"{project}_{flowcell}",
+            run_qc_page_name)
+        os.makedirs(
+          os.path.join(
+            output_dir,
+            f"{project}_{flowcell}"),
+          exist_ok=True)
+        _create_output_from_jinja_template(
+          template_file=run_qc_page_template,
+          output_file=run_qc_page,
+          autoescape_list=["xml"],
+          data=dict(
+            ProjectName=project,
+            SeqrunDate=seqrun_date,
+            FlowcellId=flowcell,
+            qc_data=all_lanes_data))
+        all_projects_data.\
+          update({
+            f"{project}_{flowcell}": {
+              "project": project,
+              "flowcell": flowcell,
+              "run_qc_page": run_qc_page}})
+    return all_projects_data
+  except Exception as e:
+    raise ValueError(
+      f"Failed to build run qc page, error: {e}")
+
+
 def _collect_qc_json_and_build_sampleqc_pages(
       collection_name_dict: dict,
       sample_qc_page_template: str,
       seqrun_igf_id: str,
       output_dir: str,
       json_data_collection_type: str,
-      database_config_file: str) \
+      database_config_file: str,
+      sample_qc_page_name: str = "SampleQC.html") \
         -> dict:
   """
   This function collects qc json data and builds sampleqc pages
@@ -157,11 +342,13 @@ def _collect_qc_json_and_build_sampleqc_pages(
           lane,
           ig
         ]}
+      }
   :param sample_qc_page_template: sampleqc page template
   :param seqrun_igf_id: seqrun igf id
   :param output_dir: output dir
   :param json_data_collection_type: json data collection type
   :param database_config_file: database config file
+  :param sample_qc_page_name: sampleqc page name, default is SampleQC.html
   :returns: dict of sampleqc pages
   """
   try:
@@ -198,7 +385,13 @@ def _collect_qc_json_and_build_sampleqc_pages(
       qc_file_name = \
         os.path.json(
           output_dir,
-          f"{collection_name}_SampleQC.html")
+          collection_name,
+          sample_qc_page_name)
+      os.makedirs(
+        os.path.json(
+          output_dir,
+          collection_name),
+        exist_ok=True)
       _create_output_from_jinja_template(
         template_file=sample_qc_page_template,
         output_file=qc_file_name,
@@ -267,9 +460,6 @@ def build_qc_page_for_project_func(**context):
         project_index=project_index)
     filt_df = \
       pd.DataFrame(filt_df_list)
-    project_name = \
-      filt_df[FORMATTED_SAMPLESHEET_PROJECT_COLUMN].\
-        values.tolist()[0]
     ## flowcell id
     _, flowcell_id = \
       get_platform_name_and_flowcell_id_for_seqrun(
@@ -283,20 +473,20 @@ def build_qc_page_for_project_func(**context):
         FORMATTED_SAMPLESHEET_INDEX_GROUP_COLUMN]].\
       values.tolist()
     collection_name_dict = dict()
-    for project, lane, ig in filt_df:
+    for project, lane, index_group in filt_df:
       collection_name = \
-        f'{project}_{flowcell_id}_{lane}_{ig}'
+        f"{project}_{flowcell_id}_{lane}_{index_group}"
       collection_name_dict.update({
         collection_name: {
           "project": project,
           "flowcell_id": flowcell_id,
           "lane": lane,
-          "index_group": ig,
+          "index_group": index_group,
           "tags": [
             project,
             flowcell_id,
             lane,
-            ig
+            index_group
           ]}
         })
     ## collect qc json data and build qc page for ig
@@ -326,17 +516,20 @@ def build_qc_page_for_project_func(**context):
         file_list=[qc_page],
         db_config_file=DATABASE_CONFIG_FILE,
         remote_collection_name=collection_name,
-        remote_collection_type=None,
+        remote_collection_type=SAMPLE_QC_PAGE_COLLECTION_TYPE,
         remote_collection_table="file",
         remote_location=FTP_LOCATION,
         ssh_key_file=HPC_SSH_KEY_FILE)
     ## collect ftp multiqc file
+    multiqc_collection_name_list = [
+      f'{collection_name}_known'
+        for collection_name in collection_name_dict.keys()]
     multiqc_collection_list = \
       get_files_for_collection_ids(
-      collection_name_list=list(collection_name_dict.keys()), ## to do, multiqc collection names are different
-      collection_type=FTP_MULTIQC_HTML_REPORT_COLLECTION_TYPE,
-      collection_table="file",
-      database_config_file=DATABASE_CONFIG_FILE)
+        collection_name_list=multiqc_collection_name_list,
+        collection_type=FTP_MULTIQC_HTML_REPORT_COLLECTION_TYPE,
+        collection_table="file",
+        database_config_file=DATABASE_CONFIG_FILE)
     ## collect ftp demult report file
     ##   to do: add ftp demult report to db
     ## build run home qc page
@@ -1086,7 +1279,7 @@ def multiqc_for_project_lane_index_group_func(**context):
     file_collection_list = \
       load_raw_files_to_db_and_disk(
         db_config_file=DATABASE_CONFIG_FILE,
-        collection_type=MULTIQC_HTML_REPORT_COLLECTION_TYPE,
+        collection_type=FTP_KNOWN_MULTIQC_HTML_REPORT_COLLECTION_TYPE,
         collection_table="file",
         base_data_path=HPC_BASE_RAW_DATA_PATH,
         file_location='HPC_PROJECT',
