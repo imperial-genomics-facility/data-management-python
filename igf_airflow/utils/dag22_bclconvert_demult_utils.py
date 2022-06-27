@@ -106,6 +106,9 @@ FORMATTED_SAMPLESHEET_PROJECT_COLUMN = Variable.get("project_column", default_va
 FORMATTED_SAMPLESHEET_LANE_COLUMN = Variable.get("lane_column", default_var="lane")
 FORMATTED_SAMPLESHEET_INDEX_GROUP_COLUMN = Variable.get("index_group_column", default_var="index_group")
 DEMULTIPLEXING_REPORT_HTML_TYPE = Variable.get("demultiplexing_report_html_type", default_var="DEMULTIPLEXING_REPORT_HTML")
+FTP_DEMULTIPLEXING_REPORT_HTML_TYPE = Variable.get("ftp_demultiplexing_report_html_type", default_var="FTP_DEMULTIPLEXING_REPORT_HTML")
+DEMULTIPLEXING_REPORT_DIR_TYPE = Variable.get("demultiplexing_report_dir_type", default_var="DEMULTIPLEXING_REPORT_DIR")
+
 
 log = logging.getLogger(__name__)
 
@@ -552,7 +555,7 @@ def build_qc_page_for_project_func(**context):
         sample_qc_page_collection_type=SAMPLE_QC_PAGE_COLLECTION_TYPE,
         known_multiqc_page_collection_type=FTP_KNOWN_MULTIQC_HTML_REPORT_COLLECTION_TYPE,
         undetermined_multiqc_page_collection_type=FTP_KNOWN_MULTIQC_HTML_REPORT_COLLECTION_TYPE,
-        demultiplexing_report_collection_type=DEMULTIPLEXING_REPORT_HTML_TYPE,
+        demultiplexing_report_collection_type=FTP_DEMULTIPLEXING_REPORT_HTML_TYPE,
         run_qc_page_template=run_qc_page_template,
         seqrun_igf_id=seqrun_igf_id,
         ftp_path_prefix=ftp_path_prefix,
@@ -3007,7 +3010,131 @@ def check_output_for_project_lane_index_group_func(**context):
 
 
 def load_bclconvert_report_func(**context):
-  pass
+  try:
+    ti = context['ti']
+    project_index = \
+      context['params'].\
+      get("project_index")
+    lane_index = \
+      context['params'].\
+      get("lane_index")
+    index_group_index = \
+      context['params'].\
+      get("index_group_index")
+    seqrun_igf_id = \
+      context['params'].\
+      get("seqrun_igf_id")
+    formatted_samplesheets_list = \
+      context["params"].\
+      get("formatted_samplesheets")
+    xcom_key_for_reports = \
+      context['params'].\
+      get('xcom_key_for_reports', 'bclconvert_reports')
+    xcom_task_for_reports = \
+      context['params'].\
+      get('xcom_task_for_reports')
+    bclconvert_reports_path = \
+      ti.xcom_pull(
+        key=xcom_key_for_reports,
+        task_ids=xcom_task_for_reports)
+    xcom_key_for_html_reports = \
+      context['params'].\
+      get('xcom_key_for_html_reports', 'bclconvert_html_reports')
+    xcom_task_for_html_reports = \
+      context['params'].\
+      get('xcom_task_for_html_reports')
+    bclconvert_html_reports_path = \
+      ti.xcom_pull(
+        key=xcom_key_for_html_reports,
+        task_ids=xcom_task_for_html_reports)
+    check_file_path(bclconvert_reports_path)
+    check_file_path(bclconvert_html_reports_path)
+    filt_df_list = \
+      get_target_rows_from_formatted_samplesheet_data(
+        formatted_samplesheets=formatted_samplesheets_list,
+        project_index=project_index,
+        lane_index=lane_index,
+        index_group_index=index_group_index)
+    filt_df = pd.DataFrame(filt_df_list)
+    project_name = \
+      filt_df[FORMATTED_SAMPLESHEET_PROJECT_COLUMN].\
+        values.tolist()[0]
+    lane_id = \
+      filt_df[FORMATTED_SAMPLESHEET_LANE_COLUMN].\
+        values.tolist()[0]
+    index_group = \
+      filt_df[FORMATTED_SAMPLESHEET_INDEX_GROUP_COLUMN].\
+        values.tolist()[0]
+    _, flowcell_id = \
+      get_platform_name_and_flowcell_id_for_seqrun(
+        seqrun_igf_id=seqrun_igf_id,
+        db_config_file=DATABASE_CONFIG_FILE)
+    collection_name = \
+      f"{project_name}_{flowcell_id}_{lane_id}_{index_group}"
+    ftp_dir_list = [
+      project_name,
+      flowcell_id,
+      lane_id,
+      index_group]
+    disk_dir_list = [
+      project_name,
+      "demult_reports",
+      flowcell_id,
+      lane_id,
+      index_group]
+    ## copy html file to FTP
+    copy_file_to_ftp_and_load_to_db(
+      ftp_server=FTP_HOSTNAME,
+      ftp_username=FTP_USERNAME,
+      base_remote_dir=FTP_PROJECT_PATH,
+      dir_list=ftp_dir_list,
+      file_list=[bclconvert_html_reports_path],
+      db_config_file=DATABASE_CONFIG_FILE,
+      remote_collection_name=collection_name,
+      remote_collection_type=FTP_DEMULTIPLEXING_REPORT_HTML_TYPE,
+      remote_collection_table="file",
+      remote_location=FTP_LOCATION,
+      ssh_key_file=HPC_SSH_KEY_FILE)
+    ## copy html file to disk
+    html_collection_list = [{
+      "collection_name": collection_name,
+      "dir_list": disk_dir_list,
+      "file_list": [bclconvert_html_reports_path]}]
+    _ = \
+      load_raw_files_to_db_and_disk(
+        db_config_file=DATABASE_CONFIG_FILE,
+        collection_type=DEMULTIPLEXING_REPORT_HTML_TYPE,
+        collection_table="file",
+        base_data_path=HPC_BASE_RAW_DATA_PATH,
+        file_location=HPC_FILE_LOCATION,
+        replace_existing_file=True,
+        cleanup_existing_collection=True,
+        collection_list=html_collection_list)
+    ## copy dir to disk
+    dir_collection_list = [{
+      "collection_name": collection_name,
+      "dir_list": disk_dir_list,
+      "file_list": [bclconvert_reports_path]}]
+    _ = \
+      load_raw_files_to_db_and_disk(
+        db_config_file=DATABASE_CONFIG_FILE,
+        collection_type=DEMULTIPLEXING_REPORT_DIR_TYPE,
+        collection_table="file",
+        base_data_path=HPC_BASE_RAW_DATA_PATH,
+        file_location=HPC_FILE_LOCATION,
+        replace_existing_file=True,
+        cleanup_existing_collection=True,
+        collection_list=dir_collection_list)
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
 
 
 def generate_bclconvert_report(
@@ -3588,7 +3715,7 @@ def setup_globus_transfer_for_project_func(**context):
     #   raise IOError("Failed to get seqrun_id from dag_run")
     ## get flowcell id from db
     _, flowcell_id = \
-      get_flatform_name_and_flowcell_id_for_seqrun(
+      get_platform_name_and_flowcell_id_for_seqrun(
         seqrun_igf_id=seqrun_igf_id,
         db_config_file=DATABASE_CONFIG_FILE)
     ## get seqrun date from seqrun id
