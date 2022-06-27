@@ -60,6 +60,7 @@ from igf_data.utils.projectutils import get_seqrun_info_for_project
 from igf_data.utils.project_data_display_utils import convert_project_data_gviz_data
 from igf_data.utils.gviz_utils import convert_to_gviz_json_for_display
 from igf_data.utils.project_data_display_utils import add_seqrun_path_info
+from igf_data.utils.project_status_utils import Project_status
 
 SLACK_CONF = Variable.get('slack_conf',default_var=None)
 MS_TEAMS_CONF = Variable.get('ms_teams_conf',default_var=None)
@@ -459,6 +460,12 @@ def build_qc_page_for_project_func(**context):
     seqruninfofile = \
       context["params"].\
       get("seqruninfofile", 'seqruninfofile.json')
+    status_data_json = \
+      context["params"].\
+      get("status_data_json", 'status_data.json')
+    analysis_pipeline = \
+      context["params"].\
+      get("analysis_pipeline", 'PrimaryAnalysisCombined')
     # project_index_column = \
     #   context["params"].\
     #   get("project_index_column", "project_index")
@@ -679,6 +686,24 @@ def build_qc_page_for_project_func(**context):
       copy_remote_file(
         source_path=temp_read_count_output,
         destination_path=os.path.join(remote_project_dir, samplereadcountfile),
+        destination_address=remote_address,
+        ssh_key_file=HPC_SSH_KEY_FILE)
+      ps = \
+        Project_status(
+          dbconfig_file=DATABASE_CONFIG_FILE,
+          project_igf_id=project)
+      temp_status_output = \
+        os.path.join(
+          temp_work_dir,
+          status_data_json)
+      ps.generate_gviz_json_file(
+        output_file=temp_status_output,
+        demultiplexing_pipeline=context['task'].dag_id,
+        analysis_pipeline=analysis_pipeline,                                  # todo: fix this
+        active_seqrun_igf_id=seqrun_igf_id)
+      copy_remote_file(
+        source_path=temp_status_output,
+        destination_path=os.path.join(remote_project_dir, status_data_json),
         destination_address=remote_address,
         ssh_key_file=HPC_SSH_KEY_FILE)
   except Exception as e:
