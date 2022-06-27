@@ -3006,6 +3006,10 @@ def check_output_for_project_lane_index_group_func(**context):
     raise
 
 
+def load_bclconvert_report_func(**context):
+  pass
+
+
 def generate_bclconvert_report(
       seqrun_path: str,
       image_path: str,
