@@ -563,7 +563,7 @@ def build_qc_page_for_project_func(**context):
         known_multiqc_name_suffix=known_multiqc_name_suffix,
         undetermined_multiqc_name_suffix=undetermined_multiqc_name_suffix)
     ## copy and load run qc pages to FTP and load json data
-    for key, collection_entry in run_qc_page_data.items():
+    for _, collection_entry in run_qc_page_data.items():
       project = collection_entry.get('project')
       flowcell = collection_entry.get('flowcell')
       run_qc_page = collection_entry.get('run_qc_page')
@@ -585,6 +585,10 @@ def build_qc_page_for_project_func(**context):
         remote_location=FTP_LOCATION,
         ssh_key_file=HPC_SSH_KEY_FILE)
       ## load json to disk
+      dir_list = [
+        project,
+        'qc_page_data',
+        flowcell]
       json_collection_list = [{
         "collection_name": collection_name,
         "dir_list": dir_list,
@@ -903,7 +907,8 @@ def build_qc_page_data_for_project_lane_index_group_func(**context):
       f'{project_name}_{flowcell_id}_{lane_id}_{index_group_tag}'
     dir_list = [
       project_name,
-      'qc_page_data']
+      'qc_page_data',
+      flowcell_id]
     json_file = \
       f'qc_data_{seqrun_igf_id}_{lane_id}_{index_group_tag}.json'
     temp_dir = \
