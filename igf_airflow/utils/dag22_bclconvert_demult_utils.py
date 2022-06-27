@@ -55,6 +55,11 @@ from igf_data.utils.fileutils import remove_dir
 from jinja2 import Template, Environment, FileSystemLoader, select_autoescape
 from igf_data.utils.seqrunutils import get_seqrun_date_from_igf_id
 from igf_data.process.singlecell_seqrun.mergesinglecellfastq import MergeSingleCellFastq
+from igf_data.utils.projectutils import get_project_read_count
+from igf_data.utils.projectutils import get_seqrun_info_for_project
+from igf_data.utils.project_data_display_utils import convert_project_data_gviz_data
+from igf_data.utils.gviz_utils import convert_to_gviz_json_for_display
+from igf_data.utils.project_data_display_utils import add_seqrun_path_info
 
 SLACK_CONF = Variable.get('slack_conf',default_var=None)
 MS_TEAMS_CONF = Variable.get('ms_teams_conf',default_var=None)
@@ -445,6 +450,15 @@ def build_qc_page_for_project_func(**context):
     formatted_samplesheets_list = \
       context["params"].\
       get("formatted_samplesheets")
+    samplereadcountfile = \
+      context["params"].\
+      get("samplereadcountfile", 'samplereadcountfile.json')
+    samplereadcountcsvfile = \
+      context["params"].\
+      get("samplereadcountcsvfile", 'samplereadcountfile.csv')
+    seqruninfofile = \
+      context["params"].\
+      get("seqruninfofile", 'seqruninfofile.json')
     # project_index_column = \
     #   context["params"].\
     #   get("project_index_column", "project_index")
@@ -606,7 +620,67 @@ def build_qc_page_for_project_func(**context):
           replace_existing_file=True,
           cleanup_existing_collection=True,
           collection_list=json_collection_list)
-    ## update project home page
+      ## update project home page
+      temp_work_dir = get_temp_dir()
+      temp_read_count_output = \
+        os.path.join(
+          temp_work_dir,
+          samplereadcountfile)
+      raw_read_count = \
+        get_project_read_count(
+          dbconfig_file=DATABASE_CONFIG_FILE,
+          project_igf_id=project)
+      (description, read_count_data, column_order) = \
+        convert_project_data_gviz_data(
+          input_data=raw_read_count)
+      convert_to_gviz_json_for_display(
+        description=description,
+        data=read_count_data,
+        columns_order=column_order,
+        output_file=temp_read_count_output)
+      read_count_data = pd.DataFrame(read_count_data)
+      sample_column = 'sample_igf_id'
+      temp_read_count_csv_output = \
+        os.path.join(
+          temp_work_dir,
+          samplereadcountcsvfile)
+      read_count_data.\
+        set_index(sample_column).\
+        to_csv(
+          temp_read_count_csv_output,
+          index=True)
+      seqrun_data = \
+        get_seqrun_info_for_project(
+          dbconfig_file=DATABASE_CONFIG_FILE,
+          project_igf_id=project)
+      temp_seqrun_info = \
+        os.path.join(
+          temp_work_dir,
+          seqruninfofile)
+      add_seqrun_path_info(
+        input_data=seqrun_data,
+        output_file=temp_seqrun_info)
+      remote_project_dir = \
+        os.path.join(
+          FTP_PROJECT_PATH,
+          project)
+      remote_address = \
+        f'{FTP_USERNAME}@{FTP_HOSTNAME}'
+      copy_remote_file(
+        source_path=temp_seqrun_info,
+        destination_path=os.path.join(remote_project_dir, seqruninfofile),
+        destination_address=remote_address,
+        ssh_key_file=HPC_SSH_KEY_FILE)
+      copy_remote_file(
+        source_path=temp_read_count_csv_output,
+        destination_path=os.path.join(remote_project_dir, samplereadcountcsvfile),
+        destination_address=remote_address,
+        ssh_key_file=HPC_SSH_KEY_FILE)
+      copy_remote_file(
+        source_path=temp_read_count_output,
+        destination_path=os.path.join(remote_project_dir, samplereadcountfile),
+        destination_address=remote_address,
+        ssh_key_file=HPC_SSH_KEY_FILE)
   except Exception as e:
     log.error(e)
     send_log_to_channels(

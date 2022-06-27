@@ -19,7 +19,7 @@ def get_project_read_count(
         -> pd.DataFrame:
   '''
   A utility method for fetching sample read counts for an input project_igf_id
-  
+
   :param project_igf_id: A project_igf_id string
   :param session_class: A db session class object, default None
   :param dbconfig_file: A db config file, default None
@@ -78,13 +78,18 @@ def get_project_read_count(
       f"Failed to get project read count for {project_igf_id}, error: {e}")
 
 
-def get_seqrun_info_for_project(project_igf_id,session_class):
+def get_seqrun_info_for_project(
+      project_igf_id: str,
+      session_class: Any = None,
+      dbconfig_file: Any = None) \
+        -> pd.DataFrame:
   '''
   A utility method for fetching seqrun_igf_id and flowcell_id which are linked
   to a specific project_igf_id
 
   :param project_igf_id: A project_igf_id string
-  :param session_class: A db session class object
+  :param session_class: A db session class object, default None
+  :param dbconfig_file: A db config file, default None
   :returns: A pandas dataframe containing following columns
 
     * seqrun_igf_id
@@ -92,7 +97,14 @@ def get_seqrun_info_for_project(project_igf_id,session_class):
   '''
   try:
     seqrun_info = pd.DataFrame()
-    pr = ProjectAdaptor(**{'session_class':session_class})
+    if session_class is not None:
+      pr = ProjectAdaptor(**{'session_class':session_class})
+    elif dbconfig_file is not None:
+      dbparams = read_dbconf_json(dbconfig_file)
+      pr = ProjectAdaptor(**{dbparams})
+    else:
+      raise ValueError(
+        "Either session_class or dbconfig_file must be provided")
     pr.start_session()
     query = \
       pr.session.\
@@ -109,7 +121,10 @@ def get_seqrun_info_for_project(project_igf_id,session_class):
         filter(Experiment.experiment_id==Run.experiment_id).\
         filter(Run.seqrun_id==Seqrun.seqrun_id).\
         filter(Project.project_igf_id==project_igf_id)
-    results = pr.fetch_records(query=query)
+    results = \
+      pr.fetch_records(
+        query=query,
+        output_mode='dataframe')
     pr.close_session()
     if len(results.index)>0:
       seqrun_info=results
