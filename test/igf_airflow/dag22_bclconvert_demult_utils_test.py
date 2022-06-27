@@ -1527,7 +1527,13 @@ class Dag22_bclconvert_demult_utils_testL(unittest.TestCase):
     self.assertTrue('Project1_000000000-D0YLK' in run_qc_dict)
     run_qc_page = \
       run_qc_dict['Project1_000000000-D0YLK']['run_qc_page']
+    run_qc_json = \
+      run_qc_dict['Project1_000000000-D0YLK']['run_qc_json']
     self.assertTrue(os.path.exists(run_qc_page))
+    self.assertTrue(os.path.exists(run_qc_json))
+    with open(run_qc_json, 'r') as fp:
+      run_qc_json_data = json.load(fp)
+    self.assertEqual(len(run_qc_json_data), 2)
     table_dfs = \
       pd.read_html(
         run_qc_page,

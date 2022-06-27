@@ -89,7 +89,9 @@ MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("multiqc_html_report", defaul
 FTP_KNOWN_MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("ftp_known_multiqc_html_report", default_var="FTP_MULTIQC_HTML_REPORT_KNOWN")
 FTP_UNDETERMINED_MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("ftp_undetermined_multiqc_html_report", default_var="FTP_MULTIQC_HTML_REPORT_UNDETERMINED")
 QC_PAGE_JSON_DATA_COLLECTION_TYPE = Variable.get("qc_page_json_data_collection_type", default_var="QC_PAGE_JSON_DATA")
+RUN_QC_PAGE_JSON_DATA_COLLECTION_TYPE = Variable.get("run_qc_page_json_data_collection_type", default_var="RUN_QC_PAGE_JSON_DATA")
 SAMPLE_QC_PAGE_COLLECTION_TYPE = Variable.get("sample_qc_page_collection_type", default_var="FTP_SAMPLE_QC_PAGE")
+RUN_QC_PAGE_COLLECTION_TYPE = Variable.get("run_qc_page_collection_type", default_var="FTP_RUN_QC_PAGE")
 HPC_FILE_LOCATION = Variable.get("hpc_file_location", default_var="HPC_PROJECT")
 FORMATTED_SAMPLESHEET_PROJECT_INDEX_COLUMN = Variable.get("project_index_column", default_var="project_index")
 FORMATTED_SAMPLESHEET_LANE_INDEX_COLUMN = Variable.get("lane_index_column", default_var="lane_index")
@@ -291,6 +293,11 @@ def _build_run_qc_page(
             output_dir,
             f"{project}_{flowcell}",
             run_qc_page_name)
+        run_qc_json = \
+          os.path.join(
+            output_dir,
+            f"{project}_{flowcell}",
+            f"{run_qc_page_name}.json")
         os.makedirs(
           os.path.join(
             output_dir,
@@ -305,11 +312,14 @@ def _build_run_qc_page(
             SeqrunDate=seqrun_date,
             FlowcellId=flowcell,
             qc_data=all_lanes_data))
+        with open(run_qc_json, "w") as fp:
+          json.dump(all_lanes_data, fp)
         all_projects_data.\
           update({
             f"{project}_{flowcell}": {
               "project": project,
               "flowcell": flowcell,
+              "run_qc_json": run_qc_json,
               "run_qc_page": run_qc_page}})
     return all_projects_data
   except Exception as e:
@@ -414,6 +424,21 @@ def _collect_qc_json_and_build_sampleqc_pages(
 def build_qc_page_for_project_func(**context):
   try:
     ti = context["ti"]
+    ftp_path_prefix = \
+      context['params'].\
+      get('ftp_path_prefix', '/www/html/')
+    ftp_url_prefix = \
+      context['params'].\
+      get('ftp_url_prefix', 'http://eliot.med.ic.ac.uk/')
+    run_qc_page_name = \
+      context['params'].\
+      get('run_qc_page_name', 'index.html')
+    known_multiqc_name_suffix = \
+      context['params'].\
+      get('known_multiqc_name_suffix', 'known')
+    undetermined_multiqc_name_suffix = \
+      context['params'].\
+      get('undetermined_multiqc_name_suffix', 'undetermined')
     seqrun_igf_id = \
       context["params"].\
       get("seqrun_igf_id")
@@ -520,19 +545,67 @@ def build_qc_page_for_project_func(**context):
         remote_collection_table="file",
         remote_location=FTP_LOCATION,
         ssh_key_file=HPC_SSH_KEY_FILE)
-    ## collect ftp multiqc file
-    multiqc_collection_name_list = [
-      f'{collection_name}_known'
-        for collection_name in collection_name_dict.keys()]
-    multiqc_collection_list = \
-      get_files_for_collection_ids(
-        collection_name_list=multiqc_collection_name_list,
-        collection_type=FTP_MULTIQC_HTML_REPORT_COLLECTION_TYPE,
-        collection_table="file",
-        database_config_file=DATABASE_CONFIG_FILE)
-    ## collect ftp demult report file
-    ##   to do: add ftp demult report to db
     ## build run home qc page
+    run_qc_page_template = \
+      os.path.join(
+        QC_PAGE_TEMPLATE_DIR,
+        'run_level_qc.html')
+    check_file_path(run_qc_page_template)
+    output_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    run_qc_page_data = \
+      _build_run_qc_page(
+        collection_name_dict=collection_name_dict,
+        sample_qc_page_collection_type=SAMPLE_QC_PAGE_COLLECTION_TYPE,
+        known_multiqc_page_collection_type=FTP_KNOWN_MULTIQC_HTML_REPORT_COLLECTION_TYPE,
+        undetermined_multiqc_page_collection_type=FTP_KNOWN_MULTIQC_HTML_REPORT_COLLECTION_TYPE,
+        demultiplexing_report_collection_type=DEMULTIPLEXING_REPORT_HTML_TYPE,
+        run_qc_page_template=run_qc_page_template,
+        seqrun_igf_id=seqrun_igf_id,
+        ftp_path_prefix=ftp_path_prefix,
+        ftp_url_prefix=ftp_url_prefix,
+        output_dir=output_dir,
+        database_config_file=DATABASE_CONFIG_FILE,
+        run_qc_page_name=run_qc_page_name,
+        known_multiqc_name_suffix=known_multiqc_name_suffix,
+        undetermined_multiqc_name_suffix=undetermined_multiqc_name_suffix)
+    ## copy and load run qc pages to FTP and load json data
+    for key, collection_entry in run_qc_page_data.items():
+      project = collection_entry.get('project')
+      flowcell = collection_entry.get('flowcell')
+      run_qc_page = collection_entry.get('run_qc_page')
+      run_qc_json = collection_entry.get('run_qc_json')
+      ## load page to ftp
+      dir_list = [project, flowcell]
+      collection_name = \
+        f"{project}_{flowcell}"
+      copy_file_to_ftp_and_load_to_db(
+        ftp_server=FTP_HOSTNAME,
+        ftp_username=FTP_USERNAME,
+        base_remote_dir=FTP_PROJECT_PATH,
+        dir_list=dir_list,
+        file_list=[run_qc_page],
+        db_config_file=DATABASE_CONFIG_FILE,
+        remote_collection_name=collection_name,
+        remote_collection_type=RUN_QC_PAGE_COLLECTION_TYPE,
+        remote_collection_table="file",
+        remote_location=FTP_LOCATION,
+        ssh_key_file=HPC_SSH_KEY_FILE)
+      ## load json to disk
+      json_collection_list = [{
+        "collection_name": collection_name,
+        "dir_list": dir_list,
+        "file_list": [run_qc_json]}]
+      _ = \
+        load_raw_files_to_db_and_disk(
+          db_config_file=DATABASE_CONFIG_FILE,
+          collection_type=RUN_QC_PAGE_JSON_DATA_COLLECTION_TYPE,
+          collection_table="file",
+          base_data_path=HPC_BASE_RAW_DATA_PATH,
+          file_location=HPC_FILE_LOCATION,
+          replace_existing_file=True,
+          cleanup_existing_collection=True,
+          collection_list=json_collection_list)
     ## update project home page
   except Exception as e:
     log.error(e)
