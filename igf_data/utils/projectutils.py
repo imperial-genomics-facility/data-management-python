@@ -1,5 +1,6 @@
 import os,time,subprocess
 import pandas as pd
+from typing import Any
 from sqlalchemy import distinct
 from datetime import datetime,timedelta
 from dateutil.parser import parse
@@ -10,17 +11,22 @@ from igf_data.utils.fileutils import check_file_path,get_temp_dir,remove_dir,cop
 from igf_data.igfdb.igfTables import Base,Project,User,ProjectUser,Sample,Experiment,Run,Collection,Collection_group,File,Seqrun,Run_attribute,Project_attribute
 
 def get_project_read_count(
-      project_igf_id,session_class,run_attribute_name='R1_READ_COUNT',
-      active_status='ACTIVE'):
+      project_igf_id: str,
+      session_class: Any = None,
+      dbconfig_file: Any = None,
+      run_attribute_name: str = 'R1_READ_COUNT',
+      active_status: str = 'ACTIVE') \
+        -> pd.DataFrame:
   '''
   A utility method for fetching sample read counts for an input project_igf_id
   
   :param project_igf_id: A project_igf_id string
-  :param session_class: A db session class object
+  :param session_class: A db session class object, default None
+  :param dbconfig_file: A db config file, default None
   :param run_attribute_name: Attribute name from Run_attribute table for read count lookup
   :param active_status: text label for active runs, default ACTIVE
   :returns: A pandas dataframe containing following columns
-  
+
     * project_igf_id
     * sample_igf_id
     * flowcell_id
@@ -28,7 +34,14 @@ def get_project_read_count(
   '''
   try:
     read_count = pd.DataFrame()
-    pr = ProjectAdaptor(**{'session_class':session_class})
+    if session_class is not None:
+      pr = ProjectAdaptor(**{'session_class':session_class})
+    elif dbconfig_file is not None:
+      dbparams = read_dbconf_json(dbconfig_file)
+      pr = ProjectAdaptor(**{dbparams})
+    else:
+      raise ValueError(
+        "Either session_class or dbconfig_file must be provided")
     pr.start_session()
     query = \
       pr.session.\
@@ -52,15 +65,17 @@ def get_project_read_count(
         filter(Run.status==active_status).\
         filter(Experiment.status==active_status).\
         filter(Sample.status==active_status)
-    results = pr.fetch_records(query=query)
+    results = \
+      pr.fetch_records(
+        query=query,
+        output_mode='dataframe')
     pr.close_session()
-    if len(results.index)>0:
+    if len(results.index) > 0:
       read_count = results
     return read_count
   except Exception as e:
     raise ValueError(
-            "Failed to get project read count for {0}, error: {1}".\
-              format(project_igf_id,e))
+      f"Failed to get project read count for {project_igf_id}, error: {e}")
 
 
 def get_seqrun_info_for_project(project_igf_id,session_class):
