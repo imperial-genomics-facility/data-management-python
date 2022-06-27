@@ -439,6 +439,9 @@ def build_qc_page_for_project_func(**context):
     run_qc_page_name = \
       context['params'].\
       get('run_qc_page_name', 'index.html')
+    run_qc_template_name = \
+      context['params'].\
+      get('run_qc_template_name', 'run_level_qc.html')
     known_multiqc_name_suffix = \
       context['params'].\
       get('known_multiqc_name_suffix', 'known')
@@ -466,40 +469,9 @@ def build_qc_page_for_project_func(**context):
     analysis_pipeline = \
       context["params"].\
       get("analysis_pipeline", 'PrimaryAnalysisCombined')
-    # project_index_column = \
-    #   context["params"].\
-    #   get("project_index_column", "project_index")
-    # lane_index_column = \
-    #   context["params"].\
-    #   get("lane_index_column", "lane_index")
-    # ig_index_column = \
-    #   context["params"].\
-    #   get("ig_index_column", "index_group_index")
-    # project_column = \
-    #   context["params"].\
-    #   get("project_column", "project")
-    # lane_column = \
-    #   context["params"].\
-    #   get("lane_column", "lane")
-    # index_group_column = \
-    #   context["params"].\
-    #   get("index_group_column", "index_group")
     project_index = \
       context["params"].\
       get("project_index")
-    ## load formatted samplesheets and filter for project, lane and index group
-    # df = pd.DataFrame(formatted_samplesheets_list)
-    # df[ig_index_column] = \
-    #   df[ig_index_column].astype(int)
-    # df[project_index_column] = \
-    #   df[project_index_column].astype(int)
-    # df[lane_index_column] = \
-    #   df[lane_index_column].astype(int)
-    # filt_df = \
-    #   df[df[project_index_column]==int(project_index)]
-    # if len(filt_df.index) == 0 :
-    #   raise ValueError(
-    #     f"No samplesheet found for project index {project_index}")
     filt_df_list = \
       get_target_rows_from_formatted_samplesheet_data(
         formatted_samplesheets=formatted_samplesheets_list,
@@ -519,7 +491,7 @@ def build_qc_page_for_project_func(**context):
         FORMATTED_SAMPLESHEET_INDEX_GROUP_COLUMN]].\
       values.tolist()
     collection_name_dict = dict()
-    for project, lane, index_group in filt_df:
+    for project, lane, index_group in samplesheet_groups:
       collection_name = \
         f"{project}_{flowcell_id}_{lane}_{index_group}"
       collection_name_dict.update({
@@ -570,7 +542,7 @@ def build_qc_page_for_project_func(**context):
     run_qc_page_template = \
       os.path.join(
         QC_PAGE_TEMPLATE_DIR,
-        'run_level_qc.html')
+        run_qc_template_name)
     check_file_path(run_qc_page_template)
     output_dir = \
       get_temp_dir(use_ephemeral_space=True)
@@ -628,10 +600,9 @@ def build_qc_page_for_project_func(**context):
           cleanup_existing_collection=True,
           collection_list=json_collection_list)
       ## update project home page
-      temp_work_dir = get_temp_dir()
       temp_read_count_output = \
         os.path.join(
-          temp_work_dir,
+          temp_qc_dir,
           samplereadcountfile)
       raw_read_count = \
         get_project_read_count(
@@ -649,7 +620,7 @@ def build_qc_page_for_project_func(**context):
       sample_column = 'sample_igf_id'
       temp_read_count_csv_output = \
         os.path.join(
-          temp_work_dir,
+          temp_qc_dir,
           samplereadcountcsvfile)
       read_count_data.\
         set_index(sample_column).\
@@ -662,7 +633,7 @@ def build_qc_page_for_project_func(**context):
           project_igf_id=project)
       temp_seqrun_info = \
         os.path.join(
-          temp_work_dir,
+          temp_qc_dir,
           seqruninfofile)
       add_seqrun_path_info(
         input_data=seqrun_data,
@@ -694,7 +665,7 @@ def build_qc_page_for_project_func(**context):
           project_igf_id=project)
       temp_status_output = \
         os.path.join(
-          temp_work_dir,
+          temp_qc_dir,
           status_data_json)
       ps.generate_gviz_json_file(
         output_file=temp_status_output,
