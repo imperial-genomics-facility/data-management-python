@@ -2389,7 +2389,7 @@ def load_data_raw_data_collection(
           file_exists = \
             fa.check_file_records_file_path(
               file_path=file_path)
-          if file_exists and check_file:
+          if file_exists:
             if cleanup_existing_collection:
               fa.remove_file_data_for_file_path(
                 file_path=file_path,
