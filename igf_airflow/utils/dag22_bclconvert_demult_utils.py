@@ -113,20 +113,20 @@ FTP_FASTQSCREEN_HTML_REPORT_TYPE = Variable.get('fastqscreen_html_report_type', 
 ## MULTIQC
 MULTIQC_CONF_TEMPLATE_FILE = Variable.get("multiqc_conf_template_file", default_var=None)
 MULTIQC_SINGULARITY_IMAGE = Variable.get("multiqc_singularity_image", default_var=None)
-# MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("multiqc_html_report", default_var="MULTIQC_HTML_REPORT")
 KNOWN_MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("ftp_known_multiqc_html_report", default_var="MULTIQC_HTML_REPORT_KNOWN")
 UNDETERMINED_MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("ftp_undetermined_multiqc_html_report", default_var="MULTIQC_HTML_REPORT_UNDETERMINED")
 FTP_KNOWN_MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("ftp_known_multiqc_html_report", default_var="FTP_MULTIQC_HTML_REPORT_KNOWN")
 FTP_UNDETERMINED_MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("ftp_undetermined_multiqc_html_report", default_var="FTP_MULTIQC_HTML_REPORT_UNDETERMINED")
 
 ## FORMATTED SAMPLESHEET
-FORMATTED_SAMPLESHEET_PROJECT_INDEX_COLUMN = Variable.get("project_index_column", default_var="project_index")
-FORMATTED_SAMPLESHEET_LANE_INDEX_COLUMN = Variable.get("lane_index_column", default_var="lane_index")
-FORMATTED_SAMPLESHEET_INDEX_GROUP_INDEX_COLUMN = Variable.get("index_group_index_column", default_var="index_group_index")
-FORMATTED_SAMPLESHEET_PROJECT_COLUMN = Variable.get("project_column", default_var="project")
-FORMATTED_SAMPLESHEET_LANE_COLUMN = Variable.get("lane_column", default_var="lane")
-FORMATTED_SAMPLESHEET_INDEX_GROUP_COLUMN = Variable.get("index_group_column", default_var="index_group")
-
+FORMATTED_SAMPLESHEET_PROJECT_INDEX_COLUMN = Variable.get("formatted_samplesheet_project_index_column", default_var="project_index")
+FORMATTED_SAMPLESHEET_LANE_INDEX_COLUMN = Variable.get("formatted_samplesheet_lane_index_column", default_var="lane_index")
+FORMATTED_SAMPLESHEET_INDEX_GROUP_INDEX_COLUMN = Variable.get("formatted_samplesheet_index_group_index_column", default_var="index_group_index")
+FORMATTED_SAMPLESHEET_PROJECT_COLUMN = Variable.get("formatted_samplesheet_project_column", default_var="project")
+FORMATTED_SAMPLESHEET_LANE_COLUMN = Variable.get("formatted_samplesheet_lane_column", default_var="lane")
+FORMATTED_SAMPLESHEET_INDEX_GROUP_COLUMN = Variable.get("formatted_samplesheet_index_group_column", default_var="index_group")
+FORMATTED_SAMPLESHEET_SAMPLESHEET_FILE_COLUMN = Variable.get("formatted_samplesheet_samplesheet_file_column", default_var="samplesheet_file")
+FORMATTED_SAMPLESHEET_OUTPUT_DIR = Variable.get("formatted_samplesheet_output_dir", default_var='output_dir')
 
 log = logging.getLogger(__name__)
 
@@ -832,24 +832,24 @@ def build_qc_page_data_for_project_lane_index_group_func(**context):
     formatted_samplesheets_list = \
       context["params"].\
       get("formatted_samplesheets")
-    project_index_column = \
-      context["params"].\
-      get("project_index_column", "project_index")
-    lane_index_column = \
-      context["params"].\
-      get("lane_index_column", "lane_index")
-    ig_index_column = \
-      context["params"].\
-      get("ig_index_column", "index_group_index")
-    project_column = \
-      context["params"].\
-      get("project_column", "project")
-    lane_column = \
-      context["params"].\
-      get("lane_column", "lane")
-    index_group_column = \
-      context["params"].\
-      get("index_group_column", "index_group")
+    # project_index_column = \
+    #   context["params"].\
+    #   get("project_index_column", "project_index")
+    # lane_index_column = \
+    #   context["params"].\
+    #   get("lane_index_column", "lane_index")
+    # ig_index_column = \
+    #   context["params"].\
+    #   get("ig_index_column", "index_group_index")
+    # project_column = \
+    #   context["params"].\
+    #   get("project_column", "project")
+    # lane_column = \
+    #   context["params"].\
+    #   get("lane_column", "lane")
+    # index_group_column = \
+    #   context["params"].\
+    #   get("index_group_column", "index_group")
     project_index = \
       context["params"].\
       get("project_index")
@@ -875,27 +875,47 @@ def build_qc_page_data_for_project_lane_index_group_func(**context):
       context["params"].\
       get("ftp_url_prefix", "http://eliot.med.ic.ac.uk/")
     ## load formatted samplesheets and filter for project, lane and index group
-    df = pd.DataFrame(formatted_samplesheets_list)
-    df[ig_index_column] = \
-      df[ig_index_column].astype(int)
-    df[project_index_column] = \
-      df[project_index_column].astype(int)
-    df[lane_index_column] = \
-      df[lane_index_column].astype(int)
-    filt_df = \
-      df[
-        (df[project_index_column]==int(project_index)) &
-        (df[lane_index_column]==int(lane_index)) &
-        (df[ig_index_column]==int(index_group_index))]
-    if len(filt_df.index) == 0 :
-      raise ValueError(
-        f"No samplesheet found for index group {index_group_index}")
+    # df = pd.DataFrame(formatted_samplesheets_list)
+    # df[ig_index_column] = \
+    #   df[ig_index_column].astype(int)
+    # df[project_index_column] = \
+    #   df[project_index_column].astype(int)
+    # df[lane_index_column] = \
+    #   df[lane_index_column].astype(int)
+    # filt_df = \
+    #   df[
+    #     (df[project_index_column]==int(project_index)) &
+    #     (df[lane_index_column]==int(lane_index)) &
+    #     (df[ig_index_column]==int(index_group_index))]
+    # if len(filt_df.index) == 0 :
+    #   raise ValueError(
+    #     f"No samplesheet found for index group {index_group_index}")
+    # project_name = \
+    #   filt_df[project_column].values.tolist()[0]
+    # lane_id = \
+    #   filt_df[lane_column].values.tolist()[0]
+    # index_group_tag = \
+    #   filt_df[index_group_column].values.tolist()[0]
+    ## get metadata info
+    formatted_samplesheets_list = \
+      context["params"].\
+      get("formatted_samplesheets")
+    filt_df_list = \
+      get_target_rows_from_formatted_samplesheet_data(
+        formatted_samplesheets=formatted_samplesheets_list,
+        project_index=project_index,
+        lane_index=lane_index,
+        index_group_index=index_group_index)
+    filt_df = pd.DataFrame(filt_df_list)
     project_name = \
-      filt_df[project_column].values.tolist()[0]
+      filt_df[FORMATTED_SAMPLESHEET_PROJECT_COLUMN].\
+        values.tolist()[0]
     lane_id = \
-      filt_df[lane_column].values.tolist()[0]
+      filt_df[FORMATTED_SAMPLESHEET_LANE_COLUMN].\
+        values.tolist()[0]
     index_group_tag = \
-      filt_df[index_group_column].values.tolist()[0]
+      filt_df[FORMATTED_SAMPLESHEET_INDEX_GROUP_COLUMN].\
+        values.tolist()[0]
     ## get samplesheet path from bclconvert reports
     bclconvert_reports_path = \
       ti.xcom_pull(
@@ -1321,58 +1341,78 @@ def multiqc_for_project_lane_index_group_func(**context):
       context['params'].\
       get('status_tag', None)
     ## fetch data about project, lane and index group
-    formatted_samplesheets_list = \
-      context['params'].\
-      get('formatted_samplesheets', None)
-    project_column = \
-      context['params'].\
-      get('project_column', 'project')
-    project_index_column = \
-      context['params'].\
-      get('project_index_column', 'project_index')
+    # formatted_samplesheets_list = \
+    #   context['params'].\
+    #   get('formatted_samplesheets', None)
+    # project_column = \
+    #   context['params'].\
+    #   get('project_column', 'project')
+    # project_index_column = \
+    #   context['params'].\
+    #   get('project_index_column', 'project_index')
+    # lane_column = \
+    #   context['params'].\
+    #   get('lane_column', 'lane')
+    # lane_index_column = \
+    #   context['params'].\
+    #   get('lane_index_column', 'lane_index')
+    # ig_index_column = \
+    #   context['params'].\
+    #   get('ig_index_column', 'index_group_index')
+    # index_group_column = \
+    #   context['params'].\
+    #   get('index_group_column', 'index_group')
     project_index = \
       context['params'].\
-      get('project_index', 0)
-    lane_column = \
-      context['params'].\
-      get('lane_column', 'lane')
-    lane_index_column = \
-      context['params'].\
-      get('lane_index_column', 'lane_index')
+      get('project_index')
     lane_index = \
       context['params'].\
-      get('lane_index', 0)
-    ig_index_column = \
-      context['params'].\
-      get('ig_index_column', 'index_group_index')
-    index_group_column = \
-      context['params'].\
-      get('index_group_column', 'index_group')
+      get('lane_index')
     index_group_index = \
       context['params'].\
-      get('index_group_index', 0)
+      get('index_group_index')
     ## load formatted samplesheets and filter for project, lane and index group
-    df = pd.DataFrame(formatted_samplesheets_list)
-    df[ig_index_column] = \
-      df[ig_index_column].astype(int)
-    df[project_index_column] = \
-      df[project_index_column].astype(int)
-    df[lane_index_column] = \
-      df[lane_index_column].astype(int)
-    filt_df = \
-      df[
-        (df[project_index_column]==int(project_index)) &
-        (df[lane_index_column]==int(lane_index)) &
-        (df[ig_index_column]==int(index_group_index))]
-    if len(filt_df.index) == 0 :
-      raise ValueError(
-        f"No samplesheet found for index group {index_group_index}")
+    # df = pd.DataFrame(formatted_samplesheets_list)
+    # df[ig_index_column] = \
+    #   df[ig_index_column].astype(int)
+    # df[project_index_column] = \
+    #   df[project_index_column].astype(int)
+    # df[lane_index_column] = \
+    #   df[lane_index_column].astype(int)
+    # filt_df = \
+    #   df[
+    #     (df[project_index_column]==int(project_index)) &
+    #     (df[lane_index_column]==int(lane_index)) &
+    #     (df[ig_index_column]==int(index_group_index))]
+    # if len(filt_df.index) == 0 :
+    #   raise ValueError(
+    #     f"No samplesheet found for index group {index_group_index}")
+    # project_name = \
+    #   filt_df[project_column].values.tolist()[0]
+    # lane_id = \
+    #   filt_df[lane_column].values.tolist()[0]
+    # index_group_tag = \
+    #   filt_df[index_group_column].values.tolist()[0]
+    ## get metadata info
+    formatted_samplesheets_list = \
+      context["params"].\
+      get("formatted_samplesheets")
+    filt_df_list = \
+      get_target_rows_from_formatted_samplesheet_data(
+        formatted_samplesheets=formatted_samplesheets_list,
+        project_index=project_index,
+        lane_index=lane_index,
+        index_group_index=index_group_index)
+    filt_df = pd.DataFrame(filt_df_list)
     project_name = \
-      filt_df[project_column].values.tolist()[0]
+      filt_df[FORMATTED_SAMPLESHEET_PROJECT_COLUMN].\
+        values.tolist()[0]
     lane_id = \
-      filt_df[lane_column].values.tolist()[0]
+      filt_df[FORMATTED_SAMPLESHEET_LANE_COLUMN].\
+        values.tolist()[0]
     index_group_tag = \
-      filt_df[index_group_column].values.tolist()[0]
+      filt_df[FORMATTED_SAMPLESHEET_INDEX_GROUP_COLUMN].\
+        values.tolist()[0]
     ## get multiqc input
     multiqc_input_list = \
       ti.xcom_pull(
@@ -1911,9 +1951,6 @@ def multiqc_for_undetermined_reads_func(**context):
     seqrun_igf_id = \
       context['params'].\
       get("seqrun_igf_id")
-    formatted_samplesheets_list = \
-      context["params"].\
-      get("formatted_samplesheets")
     xcom_key_for_undetermined_fastq_screen = \
       context['params'].\
       get("xcom_key_for_undetermined_fastq_screen", "undetermined_fastq_screen")
@@ -1962,6 +1999,9 @@ def multiqc_for_undetermined_reads_func(**context):
         seqrun_igf_id=seqrun_igf_id,
         db_config_file=DATABASE_CONFIG_FILE)
     ## get metadata info
+    formatted_samplesheets_list = \
+      context["params"].\
+      get("formatted_samplesheets")
     filt_df_list = \
       get_target_rows_from_formatted_samplesheet_data(
         formatted_samplesheets=formatted_samplesheets_list,
@@ -2649,9 +2689,9 @@ def load_fastq_and_qc_to_db_func(**context):
     seqrun_igf_id = \
       context['params'].\
       get("seqrun_igf_id", None)
-    formatted_samplesheets_list = \
-      context['params'].\
-      get("formatted_samplesheets", None)
+    # formatted_samplesheets_list = \
+    #   context['params'].\
+    #   get("formatted_samplesheets", None)
     xcom_key_for_checksum_sample_group = \
       context['params'].\
       get("xcom_key_for_checksum_sample_group", "checksum_sample_group")
@@ -2668,27 +2708,27 @@ def load_fastq_and_qc_to_db_func(**context):
     xcom_key_for_collection_group = \
       context['params'].\
       get("xcom_key_for_collection_group", "collection_group")
-    project_index_column = \
-      context['params'].\
-      get('project_index_column', 'project_index')
+    # project_index_column = \
+    #   context['params'].\
+    #   get('project_index_column', 'project_index')
     project_index = \
       context['params'].\
       get('project_index', 0)
-    lane_index_column = \
-      context['params'].\
-      get('lane_index_column', 'lane_index')
+    # lane_index_column = \
+    #   context['params'].\
+    #   get('lane_index_column', 'lane_index')
     lane_index = \
       context['params'].\
       get('lane_index', 0)
-    ig_index_column = \
-      context['params'].\
-      get('ig_index_column', 'index_group_index')
+    # ig_index_column = \
+    #   context['params'].\
+    #   get('ig_index_column', 'index_group_index')
     ig_index = \
       context['params'].\
       get('ig_index', 0)
-    index_group_column = \
-      context['params'].\
-      get('index_group_column', 'index_group')
+    # index_group_column = \
+    #   context['params'].\
+    #   get('index_group_column', 'index_group')
     if project_index == 0 or \
        lane_index == 0 or \
        ig_index == 0:
@@ -2696,23 +2736,44 @@ def load_fastq_and_qc_to_db_func(**context):
         "project_index, lane_index or ig_index is not set")
     # formatted_samplesheets_list = \
     #   ti.xcom_pull(task_ids=xcom_task, key=xcom_key)
-    df = pd.DataFrame(formatted_samplesheets_list)
-    if project_index_column not in df.columns or \
-        lane_index_column not in df.columns or \
-        ig_index_column not in df.columns:
-      raise KeyError(""""
-        project_index_column, lane_index_column or
-        ig_index_column is not found""")
-    ig_df = \
-      df[
-        (df[project_index_column]==project_index) &
-        (df[lane_index_column]==lane_index) &
-        (df[ig_index_column]==ig_index)]
-    if len(ig_df.index) == 0:
-      raise ValueError(
-        f"No index group found for project {project_index}, lane {lane_index}, ig {ig_index}")
+    # df = pd.DataFrame(formatted_samplesheets_list)
+    # if project_index_column not in df.columns or \
+    #     lane_index_column not in df.columns or \
+    #     ig_index_column not in df.columns:
+    #   raise KeyError(""""
+    #     project_index_column, lane_index_column or
+    #     ig_index_column is not found""")
+    # ig_df = \
+    #   df[
+    #     (df[project_index_column]==project_index) &
+    #     (df[lane_index_column]==lane_index) &
+    #     (df[ig_index_column]==ig_index)]
+    # if len(ig_df.index) == 0:
+    #   raise ValueError(
+    #     f"No index group found for project {project_index}, lane {lane_index}, ig {ig_index}")
+    # index_group = \
+    #   ig_df[index_group_column].values.tolist()[0]
+    ## get metadata info
+    formatted_samplesheets_list = \
+      context["params"].\
+      get("formatted_samplesheets")
+    filt_df_list = \
+      get_target_rows_from_formatted_samplesheet_data(
+        formatted_samplesheets=formatted_samplesheets_list,
+        project_index=project_index,
+        lane_index=lane_index,
+        index_group_index=ig_index)
+    filt_df = pd.DataFrame(filt_df_list)
+    # project_name = \
+    #   filt_df[FORMATTED_SAMPLESHEET_PROJECT_COLUMN].\
+    #     values.tolist()[0]
+    lane_id = \
+      filt_df[FORMATTED_SAMPLESHEET_LANE_COLUMN].\
+        values.tolist()[0]
     index_group = \
-      ig_df[index_group_column].values.tolist()[0]
+      filt_df[FORMATTED_SAMPLESHEET_INDEX_GROUP_COLUMN].\
+        values.tolist()[0]
+    ## get checksum sample groups
     checksum_sample_group = \
       ti.xcom_pull(
         task_ids=xcom_task_for_checksum_sample_group,
@@ -3217,9 +3278,9 @@ def merge_single_cell_fastq_files_func(**context):
         bclconvert_reports_path,
         samplesheet_file_suffix)
     check_file_path(samplesheet_path)
-    formatted_samplesheets_list =\
-      context['params'].\
-      get('formatted_samplesheets')
+    # formatted_samplesheets_list =\
+    #   context['params'].\
+    #   get('formatted_samplesheets')
     project_index = \
       context['params'].\
       get('project_index', 0)
@@ -3229,9 +3290,29 @@ def merge_single_cell_fastq_files_func(**context):
     ig_index = \
       context['params'].\
       get('ig_index', 0)
-    ## TO DO 1: merge fastq files for single cell samples
     if lane_index == 0:
       raise ValueError("lane_index is not set")
+    ## get metadata info
+    formatted_samplesheets_list = \
+      context["params"].\
+      get("formatted_samplesheets")
+    filt_df_list = \
+      get_target_rows_from_formatted_samplesheet_data(
+        formatted_samplesheets=formatted_samplesheets_list,
+        project_index=project_index,
+        lane_index=lane_index,
+        index_group_index=ig_index)
+    filt_df = pd.DataFrame(filt_df_list)
+    # project_name = \
+    #   filt_df[FORMATTED_SAMPLESHEET_PROJECT_COLUMN].\
+    #     values.tolist()[0]
+    lane_id = \
+      filt_df[FORMATTED_SAMPLESHEET_LANE_COLUMN].\
+        values.tolist()[0]
+    # index_group = \
+    #   filt_df[FORMATTED_SAMPLESHEET_INDEX_GROUP_COLUMN].\
+    #     values.tolist()[0]
+    ## get seqrun info
     if seqrun_igf_id is None:
       raise ValueError("seqrun_igf_id is not set")
     check_file_path(bclconvert_output_path)
@@ -3245,7 +3326,7 @@ def merge_single_cell_fastq_files_func(**context):
         samplesheet=samplesheet_path,
         platform_name=platform_name,
         use_bclconvert_settings=True,
-        pseudo_lane_list=(str(lane_index),),
+        pseudo_lane_list=(str(lane_id),),
         singlecell_tag=singlecell_tag)
     sc_data.\
       merge_fastq_per_lane_per_sample()
@@ -3645,45 +3726,45 @@ def run_bclconvert_func(**context):
     seqrun_igf_id = \
       context['params'].\
       get('seqrun_igf_id')
-    formatted_samplesheets_list =\
-      context['params'].\
-      get('formatted_samplesheets')
+    # formatted_samplesheets_list =\
+    #   context['params'].\
+    #   get('formatted_samplesheets')
     # xcom_key = \
     #   context['params'].\
     #   get('xcom_key', 'formatted_samplesheets')
     # xcom_task = \
     #   context['params'].\
     #   get('xcom_task', 'format_and_split_samplesheet')
-    project_index_column = \
-      context['params'].\
-      get('project_index_column', 'project_index')
+    # project_index_column = \
+    #   context['params'].\
+    #   get('project_index_column', 'project_index')
     project_index = \
       context['params'].\
       get('project_index', 0)
-    project_column = \
-      context['params'].\
-      get('project_column', 'project')
-    lane_index_column = \
-      context['params'].\
-      get('lane_index_column', 'lane_index')
-    lane_column = \
-      context['params'].\
-      get('lane_column', 'lane')
+    # project_column = \
+    #   context['params'].\
+    #   get('project_column', 'project')
+    # lane_index_column = \
+    #   context['params'].\
+    #   get('lane_index_column', 'lane_index')
+    # lane_column = \
+    #   context['params'].\
+    #   get('lane_column', 'lane')
     lane_index = \
       context['params'].\
       get('lane_index', 0)
-    ig_index_column = \
-      context['params'].\
-      get('ig_index_column', 'index_group_index')
-    index_group_column = \
-      context['params'].\
-      get('index_group_column', 'index_group')
+    # ig_index_column = \
+    #   context['params'].\
+    #   get('ig_index_column', 'index_group_index')
+    # index_group_column = \
+    #   context['params'].\
+    #   get('index_group_column', 'index_group')
     ig_index = \
       context['params'].\
       get('ig_index', 0)
-    samplesheet_column = \
-      context['params'].\
-      get('samplesheet_column', 'samplesheet_file')
+    # samplesheet_column = \
+    #   context['params'].\
+    #   get('samplesheet_column', 'samplesheet_file')
     xcom_key_for_reports = \
       context['params'].\
       get('xcom_key_for_reports', 'bclconvert_reports')
@@ -3731,33 +3812,59 @@ def run_bclconvert_func(**context):
     #   raise ValueError('xcom_key or xcom_task is not set')
     # formatted_samplesheets_list = \
     #   ti.xcom_pull(task_ids=xcom_task, key=xcom_key)
-    df = pd.DataFrame(formatted_samplesheets_list)
-    if project_index_column not in df.columns or \
-        lane_index_column not in df.columns or \
-        lane_column not in df.columns or \
-        ig_index_column not in df.columns or \
-        samplesheet_column not in df.columns:
-      raise KeyError(""""
-        project_index_column, lane_index_column, lane_column,
-        ig_index_column or samplesheet_column is not found""")
-    ig_df = \
-      df[
-        (df[project_index_column]==project_index) &
-        (df[lane_index_column]==lane_index) &
-        (df[ig_index_column]==ig_index)]
-    if len(ig_df.index) == 0:
-      raise ValueError(
-        f"No samplesheet found for project {project_index}, lane {lane_index}, ig {ig_index}")
-    samplesheet_file = \
-      ig_df[samplesheet_column].values.tolist()[0]
-    output_dir = \
-      ig_df['output_dir'].values.tolist()[0]
+    # df = pd.DataFrame(formatted_samplesheets_list)
+    # if project_index_column not in df.columns or \
+    #     lane_index_column not in df.columns or \
+    #     lane_column not in df.columns or \
+    #     ig_index_column not in df.columns or \
+    #     samplesheet_column not in df.columns:
+    #   raise KeyError(""""
+    #     project_index_column, lane_index_column, lane_column,
+    #     ig_index_column or samplesheet_column is not found""")
+    # ig_df = \
+    #   df[
+    #     (df[project_index_column]==project_index) &
+    #     (df[lane_index_column]==lane_index) &
+    #     (df[ig_index_column]==ig_index)]
+    # if len(ig_df.index) == 0:
+    #   raise ValueError(
+    #     f"No samplesheet found for project {project_index}, lane {lane_index}, ig {ig_index}")
+    # samplesheet_file = \
+    #   ig_df[samplesheet_column].values.tolist()[0]
+    # output_dir = \
+    #   ig_df['output_dir'].values.tolist()[0]
+    # project_id = \
+    #   ig_df[project_column].values.tolist()[0]
+    # lane_id = \
+    #   ig_df[lane_column].values.tolist()[0]
+    # ig_id = \
+    #   ig_df[index_group_column].values.tolist()[0]
+    ## get metadata info
+    formatted_samplesheets_list = \
+      context["params"].\
+      get("formatted_samplesheets")
+    filt_df_list = \
+      get_target_rows_from_formatted_samplesheet_data(
+        formatted_samplesheets=formatted_samplesheets_list,
+        project_index=project_index,
+        lane_index=lane_index,
+        index_group_index=ig_index)
+    filt_df = pd.DataFrame(filt_df_list)
     project_id = \
-      ig_df[project_column].values.tolist()[0]
+      filt_df[FORMATTED_SAMPLESHEET_PROJECT_COLUMN].\
+        values.tolist()[0]
     lane_id = \
-      ig_df[lane_column].values.tolist()[0]
+      filt_df[FORMATTED_SAMPLESHEET_LANE_COLUMN].\
+        values.tolist()[0]
     ig_id = \
-      ig_df[index_group_column].values.tolist()[0]
+      filt_df[FORMATTED_SAMPLESHEET_INDEX_GROUP_COLUMN].\
+        values.tolist()[0]
+    samplesheet_file = \
+      filt_df[FORMATTED_SAMPLESHEET_SAMPLESHEET_FILE_COLUMN].\
+        values.tolist()[0]
+    output_dir = \
+      filt_df[FORMATTED_SAMPLESHEET_OUTPUT_DIR].values.tolist()[0]
+    ## temp dir
     output_temp_dir = \
       get_temp_dir(use_ephemeral_space=True)
     demult_dir = \
@@ -3775,6 +3882,7 @@ def run_bclconvert_func(**context):
         bcl_num_decompression_threads=int(bcl_num_decompression_threads),
         bcl_num_parallel_tiles=int(bcl_num_parallel_tiles),
         lane_id=int(lane_id))
+    ## TO DO: SKIP COPY TO OUTPUT DIR
     check_file_path(demult_dir)    # check if the output dir exists
     check_file_path(
       os.path.join(
@@ -4344,40 +4452,63 @@ def _configure_qc_pages_for_ftp(
 def setup_qc_page_for_project_func(**context):
   try:
     ti = context.get('ti')
-    formatted_samplesheets_list = \
-      context['params'].\
-      get('formatted_samplesheets')
+    # formatted_samplesheets_list = \
+    #   context['params'].\
+    #   get('formatted_samplesheets')
     # project_data_xcom_key = \
     #   context['params'].\
     #   get('project_data_xcom_key', 'formatted_samplesheets')
     # project_data_xcom_task = \
     #   context['params'].\
     #   get('project_data_xcom_task', 'format_and_split_samplesheet')
-    project_index_column = \
-      context['params'].\
-      get('project_index_column', 'project_index')
+    # project_index_column = \
+    #   context['params'].\
+    #   get('project_index_column', 'project_index')
     project_index = \
       context['params'].\
       get('project_index')
-    project_column = \
-      context['params'].\
-      get('project_column', 'project')
+    # project_column = \
+    #   context['params'].\
+    #   get('project_column', 'project')
     ## fetch project name
     # formatted_samplesheets_list = \
     #   ti.xcom_pull(
     #     task_ids=project_data_xcom_task,
     #     key=project_data_xcom_key)
-    df = \
-      pd.DataFrame(
-        formatted_samplesheets_list)
-    if project_index_column not in df.columns:
-      raise KeyError(f"{project_index_column} column not found")
-    df[project_index_column] = \
-      df[project_index_column].astype(int)
-    project_df = \
-      df[df[project_index_column]==int(project_index)]
+    # df = \
+    #   pd.DataFrame(
+    #     formatted_samplesheets_list)
+    # if project_index_column not in df.columns:
+    #   raise KeyError(f"{project_index_column} column not found")
+    # df[project_index_column] = \
+    #   df[project_index_column].astype(int)
+    # project_df = \
+    #   df[df[project_index_column]==int(project_index)]
+    # project_name = \
+    #   project_df[project_column].values.tolist()[0]
+    ## get metadata info
+    formatted_samplesheets_list = \
+      context["params"].\
+      get("formatted_samplesheets")
+    filt_df_list = \
+      get_target_rows_from_formatted_samplesheet_data(
+        formatted_samplesheets=formatted_samplesheets_list,
+        project_index=project_index)
+    filt_df = pd.DataFrame(filt_df_list)
     project_name = \
-      project_df[project_column].values.tolist()[0]
+      filt_df[FORMATTED_SAMPLESHEET_PROJECT_COLUMN].\
+        values.tolist()[0]
+    # lane_id = \
+    #   filt_df[FORMATTED_SAMPLESHEET_LANE_COLUMN].\
+    #     values.tolist()[0]
+    # ig_id = \
+    #   filt_df[FORMATTED_SAMPLESHEET_INDEX_GROUP_COLUMN].\
+    #     values.tolist()[0]
+    # samplesheet_file = \
+    #   filt_df[FORMATTED_SAMPLESHEET_SAMPLESHEET_FILE_COLUMN].\
+    #     values.tolist()[0]
+    # output_dir = \
+    #   filt_df[FORMATTED_SAMPLESHEET_OUTPUT_DIR].values.tolist()[0]
     ## dump qc pages to temp dir
     output_file_dict = \
       _configure_qc_pages_for_ftp(
