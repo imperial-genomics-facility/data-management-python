@@ -2401,7 +2401,8 @@ def load_data_raw_data_collection(
           md5 = entry.get(md5_key, None)
           size = entry.get(size_key, None)
           location = entry.get(location_key, None)
-          if not os.path.exists(file_path):
+          if check_file and \
+            not os.path.exists(file_path):
             raise ValueError(
               f"File {file_path} does not exist")
           collection_data = {
