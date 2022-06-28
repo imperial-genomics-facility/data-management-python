@@ -1207,6 +1207,7 @@ def copy_file_to_ftp_and_load_to_db(
       load_data_raw_data_collection(
         db_config_file=db_config_file,
         collection_list=ftp_file_collection_list,
+        check_file=False,
         cleanup_existing_collection=True)
   except Exception as e:
     raise ValueError(
