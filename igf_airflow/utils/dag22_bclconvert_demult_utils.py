@@ -613,7 +613,9 @@ def build_qc_page_for_project_func(**context):
       json_collection_list = [{
         "collection_name": collection_name,
         "dir_list": dir_list,
-        "file_list": [run_qc_json]}]
+        "file_list": [{
+          "file_list": run_qc_json,
+          "md5": calculate_file_checksum(run_qc_json)}]}]
       _ = \
         load_raw_files_to_db_and_disk(
           db_config_file=DATABASE_CONFIG_FILE,
@@ -963,7 +965,9 @@ def build_qc_page_data_for_project_lane_index_group_func(**context):
     json_collection_list = [{
       "collection_name": json_collection_name,
       "dir_list": dir_list,
-      "file_list": [json_file_path]}]
+      "file_list": [{
+        "file_path": json_file_path,
+        "md5": calculate_file_checksum(json_file_path)}]}]
     file_collection_list = \
       load_raw_files_to_db_and_disk(
         db_config_file=DATABASE_CONFIG_FILE,
@@ -1487,7 +1491,9 @@ def multiqc_for_project_lane_index_group_func(**context):
     multiqc_collection_list = [{
       'collection_name': multiqc_collection_name,
       'dir_list': dir_list,
-      'file_list': [multiqc_html]}]
+      'file_list': [{
+        "file_path": multiqc_html,
+        "md5": calculate_file_checksum(multiqc_html)}]}]
     file_collection_list = \
       load_raw_files_to_db_and_disk(
         db_config_file=DATABASE_CONFIG_FILE,
@@ -2088,7 +2094,9 @@ def multiqc_for_undetermined_reads_func(**context):
     multiqc_collection_list = [{
       'collection_name': multiqc_collection_name,
       'dir_list': dir_list,
-      'file_list': [multiqc_html]}]
+      'file_list': [{
+        "file_path": multiqc_html,
+        "md5": calculate_file_checksum(multiqc_html)}]}]
     _ = \
       load_raw_files_to_db_and_disk(
         db_config_file=DATABASE_CONFIG_FILE,
@@ -3506,7 +3514,9 @@ def load_bclconvert_report_func(**context):
     html_collection_list = [{
       "collection_name": collection_name,
       "dir_list": disk_dir_list,
-      "file_list": [bclconvert_html_reports_path]}]
+      "file_list": [{
+        'file_path': bclconvert_html_reports_path,
+        'md5': calculate_file_checksum(bclconvert_html_reports_path)}]}]
     _ = \
       load_raw_files_to_db_and_disk(
         db_config_file=DATABASE_CONFIG_FILE,
@@ -3521,7 +3531,7 @@ def load_bclconvert_report_func(**context):
     dir_collection_list = [{
       "collection_name": collection_name,
       "dir_list": disk_dir_list,
-      "file_list": [bclconvert_reports_path]}]
+      "file_list": [{'file_path': bclconvert_reports_path}]}]
     _ = \
       load_raw_files_to_db_and_disk(
         db_config_file=DATABASE_CONFIG_FILE,
