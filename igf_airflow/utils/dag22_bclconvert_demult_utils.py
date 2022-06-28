@@ -1179,6 +1179,8 @@ def copy_file_to_ftp_and_load_to_db(
     for file_name in file_list:
       check_file_path(file_name)
       if len(dir_list) > 0:
+        dir_list = [
+          str(d) for d in dir_list]
         dest_file_path = \
           os.path.join(base_remote_dir, *dir_list)
       dest_file_path = \
