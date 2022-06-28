@@ -1197,7 +1197,7 @@ def copy_file_to_ftp_and_load_to_db(
         'size': os.path.getsize(file_name)})
       copy_remote_file(
         source_path=file_name,
-        dest_path=dest_file_path,
+        destination_path=dest_file_path,
         destination_address=f"{ftp_username}@{ftp_server}",
         ssh_key_file=ssh_key_file)
     if remote_collection_name is not None and \
