@@ -69,45 +69,63 @@ HPC_SSH_KEY_FILE = Variable.get('hpc_ssh_key_file', default_var=None)
 DATABASE_CONFIG_FILE = Variable.get('database_config_file', default_var=None)
 SINGLECELL_BARCODE_JSON = Variable.get('singlecell_barcode_json', default_var=None)
 SINGLECELL_DUAL_BARCODE_JSON = Variable.get('singlecell_dual_barcode_json', default_var=None)
-BCLCONVERT_IMAGE = Variable.get('bclconvert_image_path', default_var=None)
 INTEROP_NOTEBOOK_IMAGE = Variable.get('interop_notebook_image_path', default_var=None)
+HPC_BASE_RAW_DATA_PATH = Variable.get('hpc_base_raw_data_path', default_var=None)
+IGF_PORTAL_CONF = Variable.get('igf_portal_conf', default_var=None)
+HPC_FILE_LOCATION = Variable.get("hpc_file_location", default_var="HPC_PROJECT")
+
+## BCLCONVERT
+BCLCONVERT_IMAGE = Variable.get('bclconvert_image_path', default_var=None)
 BCLCONVERT_REPORT_TEMPLATE = Variable.get('bclconvert_report_template', default_var=None)
 BCLCONVERT_REPORT_LIBRARY = Variable.get("bclconvert_report_library", default_var=None)
-HPC_BASE_RAW_DATA_PATH = Variable.get('hpc_base_raw_data_path', default_var=None)
-FASTQC_IMAGE_PATH = Variable.get('fastqc_image_path', default_var=None)
-FASTQSCREEN_IMAGE_PATH = Variable.get('fastqscreen_image_path', default_var=None)
-FASTQSCREEN_CONF_PATH = Variable.get('fastqscreen_conf_path', default_var=None)
-FASTQSCREEN_REF_DIR = Variable.get('fastqscreen_ref_dir', default_var=None)
-IGF_PORTAL_CONF = Variable.get('igf_portal_conf', default_var=None)
+FASTQ_COLLECTION_TYPE = Variable.get('fastq_collection_type', default_var='demultiplexed_fastq')
+
+## DEMULTIPLEXING REPORT
+DEMULTIPLEXING_REPORT_HTML_TYPE = Variable.get("demultiplexing_report_html_type", default_var="DEMULTIPLEXING_REPORT_HTML")
+FTP_DEMULTIPLEXING_REPORT_HTML_TYPE = Variable.get("ftp_demultiplexing_report_html_type", default_var="FTP_DEMULTIPLEXING_REPORT_HTML")
+DEMULTIPLEXING_REPORT_DIR_TYPE = Variable.get("demultiplexing_report_dir_type", default_var="DEMULTIPLEXING_REPORT_DIR")
+
+## FTP
 FTP_HOSTNAME = Variable.get('ftp_hostname', default_var=None)
 FTP_USERNAME = Variable.get('ftp_username', default_var=None)
 FTP_PROJECT_PATH = Variable.get('ftp_project_path', default_var=None)
 FTP_LOCATION = Variable.get('ftp_location', default_var='ELIOT')
+
+## QC PAGE
 QC_PAGE_TEMPLATE_DIR = Variable.get('qc_page_template_dir', default_var=None)
-FASTQSCREEN_HTML_REPORT_TYPE = Variable.get('fastqscreen_html_report_type', default_var='FASTQSCREEN_HTML_REPORT')
-FTP_FASTQSCREEN_HTML_REPORT_TYPE = Variable.get('fastqscreen_html_report_type', default_var='FTP_FASTQSCREEN_HTML_REPORT')
-FASTQC_HTML_REPORT_TYPE = Variable.get('ftp_fastqc_html_report_type', default_var='FASTQC_HTML_REPORT')
-FTP_FASTQC_HTML_REPORT_TYPE = Variable.get('ftp_fastqc_html_report_type', default_var='FTP_FASTQC_HTML_REPORT')
-FASTQ_COLLECTION_TYPE = Variable.get('fastq_collection_type', default_var='demultiplexed_fastq')
-MULTIQC_CONF_TEMPLATE_FILE = Variable.get("multiqc_conf_template_file", default_var=None)
-MULTIQC_SINGULARITY_IMAGE = Variable.get("multiqc_singularity_image", default_var=None)
-MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("multiqc_html_report", default_var="MULTIQC_HTML_REPORT")
-FTP_KNOWN_MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("ftp_known_multiqc_html_report", default_var="FTP_MULTIQC_HTML_REPORT_KNOWN")
-FTP_UNDETERMINED_MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("ftp_undetermined_multiqc_html_report", default_var="FTP_MULTIQC_HTML_REPORT_UNDETERMINED")
 QC_PAGE_JSON_DATA_COLLECTION_TYPE = Variable.get("qc_page_json_data_collection_type", default_var="QC_PAGE_JSON_DATA")
 RUN_QC_PAGE_JSON_DATA_COLLECTION_TYPE = Variable.get("run_qc_page_json_data_collection_type", default_var="RUN_QC_PAGE_JSON_DATA")
 SAMPLE_QC_PAGE_COLLECTION_TYPE = Variable.get("sample_qc_page_collection_type", default_var="FTP_SAMPLE_QC_PAGE")
 RUN_QC_PAGE_COLLECTION_TYPE = Variable.get("run_qc_page_collection_type", default_var="FTP_RUN_QC_PAGE")
-HPC_FILE_LOCATION = Variable.get("hpc_file_location", default_var="HPC_PROJECT")
+
+## FASTQC
+FASTQC_IMAGE_PATH = Variable.get('fastqc_image_path', default_var=None)
+FASTQC_HTML_REPORT_TYPE = Variable.get('ftp_fastqc_html_report_type', default_var='FASTQC_HTML_REPORT')
+FTP_FASTQC_HTML_REPORT_TYPE = Variable.get('ftp_fastqc_html_report_type', default_var='FTP_FASTQC_HTML_REPORT')
+
+## FASTQSCREEN
+FASTQSCREEN_IMAGE_PATH = Variable.get('fastqscreen_image_path', default_var=None)
+FASTQSCREEN_CONF_PATH = Variable.get('fastqscreen_conf_path', default_var=None)
+FASTQSCREEN_REF_DIR = Variable.get('fastqscreen_ref_dir', default_var=None)
+FASTQSCREEN_HTML_REPORT_TYPE = Variable.get('fastqscreen_html_report_type', default_var='FASTQSCREEN_HTML_REPORT')
+FTP_FASTQSCREEN_HTML_REPORT_TYPE = Variable.get('fastqscreen_html_report_type', default_var='FTP_FASTQSCREEN_HTML_REPORT')
+
+## MULTIQC
+MULTIQC_CONF_TEMPLATE_FILE = Variable.get("multiqc_conf_template_file", default_var=None)
+MULTIQC_SINGULARITY_IMAGE = Variable.get("multiqc_singularity_image", default_var=None)
+# MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("multiqc_html_report", default_var="MULTIQC_HTML_REPORT")
+KNOWN_MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("ftp_known_multiqc_html_report", default_var="MULTIQC_HTML_REPORT_KNOWN")
+UNDETERMINED_MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("ftp_undetermined_multiqc_html_report", default_var="MULTIQC_HTML_REPORT_UNDETERMINED")
+FTP_KNOWN_MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("ftp_known_multiqc_html_report", default_var="FTP_MULTIQC_HTML_REPORT_KNOWN")
+FTP_UNDETERMINED_MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("ftp_undetermined_multiqc_html_report", default_var="FTP_MULTIQC_HTML_REPORT_UNDETERMINED")
+
+## FORMATTED SAMPLESHEET
 FORMATTED_SAMPLESHEET_PROJECT_INDEX_COLUMN = Variable.get("project_index_column", default_var="project_index")
 FORMATTED_SAMPLESHEET_LANE_INDEX_COLUMN = Variable.get("lane_index_column", default_var="lane_index")
 FORMATTED_SAMPLESHEET_INDEX_GROUP_INDEX_COLUMN = Variable.get("index_group_index_column", default_var="index_group_index")
 FORMATTED_SAMPLESHEET_PROJECT_COLUMN = Variable.get("project_column", default_var="project")
 FORMATTED_SAMPLESHEET_LANE_COLUMN = Variable.get("lane_column", default_var="lane")
 FORMATTED_SAMPLESHEET_INDEX_GROUP_COLUMN = Variable.get("index_group_column", default_var="index_group")
-DEMULTIPLEXING_REPORT_HTML_TYPE = Variable.get("demultiplexing_report_html_type", default_var="DEMULTIPLEXING_REPORT_HTML")
-FTP_DEMULTIPLEXING_REPORT_HTML_TYPE = Variable.get("ftp_demultiplexing_report_html_type", default_var="FTP_DEMULTIPLEXING_REPORT_HTML")
-DEMULTIPLEXING_REPORT_DIR_TYPE = Variable.get("demultiplexing_report_dir_type", default_var="DEMULTIPLEXING_REPORT_DIR")
 
 
 log = logging.getLogger(__name__)
@@ -1430,7 +1448,7 @@ def multiqc_for_project_lane_index_group_func(**context):
     file_collection_list = \
       load_raw_files_to_db_and_disk(
         db_config_file=DATABASE_CONFIG_FILE,
-        collection_type=FTP_KNOWN_MULTIQC_HTML_REPORT_COLLECTION_TYPE,
+        collection_type=KNOWN_MULTIQC_HTML_REPORT_COLLECTION_TYPE,
         collection_table="file",
         base_data_path=HPC_BASE_RAW_DATA_PATH,
         file_location='HPC_PROJECT',
@@ -1443,6 +1461,24 @@ def multiqc_for_project_lane_index_group_func(**context):
     #   "dir_list": [flowcell_id, lane_id, index_group_tag, status_tag],
     #   "collection_name": multiqc_collection_name,
     #   "collection_table": "file"}
+    dir_list = [
+      project_name,
+      flowcell_id,
+      lane_id,
+      index_group_tag,
+      status_tag]
+    copy_file_to_ftp_and_load_to_db(
+      ftp_server=FTP_HOSTNAME,
+      ftp_username=FTP_USERNAME,
+      base_remote_dir=FTP_PROJECT_PATH,
+      dir_list=dir_list,
+      file_list=[multiqc_html],
+      db_config_file=DATABASE_CONFIG_FILE,
+      remote_collection_name=multiqc_collection_name,
+      remote_collection_type=FTP_KNOWN_MULTIQC_HTML_REPORT_COLLECTION_TYPE,
+      remote_collection_table="file",
+      remote_location=FTP_LOCATION,
+      ssh_key_file=HPC_SSH_KEY_FILE)
     ti.xcom_push(
       key=xcom_key_for_multiqc,
       value=file_collection_list)
@@ -1848,6 +1884,291 @@ def fastqc_run_wrapper_for_known_samples_func(**context):
     ti.xcom_push(
       key=xcom_key_for_fastqc_collection,
       value=file_collection_list)
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
+
+def multiqc_for_undetermined_reads_func(**context):
+  try:
+    ti = context['ti']
+    project_index = \
+      context['params'].\
+      get("project_index")
+    lane_index = \
+      context['params'].\
+      get("lane_index")
+    index_group_index = \
+      context['params'].\
+      get("index_group_index")
+    seqrun_igf_id = \
+      context['params'].\
+      get("seqrun_igf_id")
+    formatted_samplesheets_list = \
+      context["params"].\
+      get("formatted_samplesheets")
+    xcom_key_for_undetermined_fastq_screen = \
+      context['params'].\
+      get("xcom_key_for_undetermined_fastq_screen", "undetermined_fastq_screen")
+    xcom_task_for_undetermined_fastq_screen = \
+      context['params'].\
+      get("xcom_task_for_undetermined_fastq_screen")
+    xcom_key_for_undetermined_fastqc = \
+      context['params'].\
+      get("xcom_key_for_undetermined_fastqc", "undetermined_fastqc")
+    xcom_task_for_undetermined_fastqc = \
+      context['params'].\
+      get("xcom_task_for_undetermined_fastqc")
+    xcom_key_for_bclconvert_reports = \
+      context['params'].\
+      get("xcom_key_for_bclconvert_reports", "bclconvert_reports")
+    xcom_task_for_bclconvert_reports = \
+      context['params'].\
+      get("xcom_task_for_bclconvert_reports")
+    undetermined_fastq_screen_files = \
+      ti.xcom_pull(
+        task_ids=xcom_task_for_undetermined_fastq_screen,
+        key=xcom_key_for_undetermined_fastq_screen)
+    undetermined_fastqc_files = \
+      ti.xcom_pull(
+        task_ids=xcom_task_for_undetermined_fastqc,
+        key=xcom_key_for_undetermined_fastqc)
+    bclconvert_reports = \
+      ti.xcom_pull(
+        task_ids=xcom_task_for_bclconvert_reports,
+        key=xcom_key_for_bclconvert_reports)
+    ## multiqc config
+    tool_order_list = \
+      context['params'].\
+      get('tool_order_list', ['bclconvert', 'fastqc', 'fastqscreen'])
+    multiqc_param_list = \
+      context['params'].\
+      get('multiqc_param_list', ['--zip-data-dir'])
+    status_tag = \
+      context['params'].\
+      get('status_tag', None)
+    ## get seqrun info
+    seqrun_date = \
+      get_seqrun_date_from_igf_id(seqrun_igf_id)
+    platform_name, flowcell_id = \
+      get_platform_name_and_flowcell_id_for_seqrun(
+        seqrun_igf_id=seqrun_igf_id,
+        db_config_file=DATABASE_CONFIG_FILE)
+    ## get metadata info
+    filt_df_list = \
+      get_target_rows_from_formatted_samplesheet_data(
+        formatted_samplesheets=formatted_samplesheets_list,
+        project_index=project_index,
+        lane_index=lane_index,
+        index_group_index=index_group_index)
+    filt_df = pd.DataFrame(filt_df_list)
+    project_name = \
+      filt_df[FORMATTED_SAMPLESHEET_PROJECT_COLUMN].\
+        values.tolist()[0]
+    lane_id = \
+      filt_df[FORMATTED_SAMPLESHEET_LANE_COLUMN].\
+        values.tolist()[0]
+    index_group = \
+      filt_df[FORMATTED_SAMPLESHEET_INDEX_GROUP_COLUMN].\
+        values.tolist()[0]
+    # collection_name = \
+    #   f"{project_name}_{flowcell_id}_{lane_id}_{index_group}_{status_tag}"
+    ## get tag name for report title
+    tag_name = \
+      f"{lane_id}_{index_group}_{status_tag}"
+    ## get current date stamp
+    date_stamp = get_date_stamp()
+    ## create multiqc input file
+    undetermined_qc_files = list()
+    undetermined_qc_files.append(
+      bclconvert_reports)
+    undetermined_qc_files.extend(
+      undetermined_fastq_screen_files)
+    undetermined_qc_files.extend(
+      undetermined_fastqc_files)
+    ## create multiqc input
+    ## get mutiqc conf file
+    temp_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    multiqc_input_list = \
+      os.path.join(
+        temp_dir,
+        "multiqc_input.txt")
+    with open(multiqc_input_list, "w") as f:
+      f.write("\n".join(undetermined_qc_files))
+    ## create multiqc template file
+    multiqc_conf_file = \
+      os.path.join(
+        temp_dir,
+        'multiqc_input_file.txt')
+    ## set multiqc report title
+    multiqc_report_title = \
+      f'Project:{project_name},Sequencing_date:{seqrun_date},Flowcell_lane:{flowcell_id}_{lane_id},status:{status_tag}'
+    ## create config for multiqc report
+    _create_output_from_jinja_template(
+      template_file=MULTIQC_CONF_TEMPLATE_FILE,
+      output_file=multiqc_conf_file,
+      autoescape_list=['html', 'xml'],
+      data=dict(
+        project_igf_id=project_name,
+        flowcell_id=flowcell_id,
+        platform_name=platform_name,
+        tag_name=tag_name,
+        date_stamp=date_stamp,
+        tool_order_list=tool_order_list))
+    ## generate multiqc report
+    multiqc_html, multiqc_data = \
+      run_multiqc(
+        singularity_image_path=MULTIQC_SINGULARITY_IMAGE,
+        multiqc_report_title=multiqc_report_title,
+        multiqc_input_list=multiqc_input_list,
+        multiqc_conf_file=multiqc_conf_file,
+        multiqc_param_list=multiqc_param_list)
+    ## load multiqc report to collection table
+    dir_list = [
+      project_name,
+      'fastq_multiqc',
+      seqrun_date,
+      flowcell_id,
+      lane_id,
+      index_group,
+      status_tag]
+    multiqc_collection_name = \
+      f"{project_name}_{flowcell_id}_{lane_id}_{index_group}_{status_tag}"
+    multiqc_collection_list = [{
+      'collection_name': multiqc_collection_name,
+      'dir_list': dir_list,
+      'file_list': [multiqc_html]}]
+    _ = \
+      load_raw_files_to_db_and_disk(
+        db_config_file=DATABASE_CONFIG_FILE,
+        collection_type=UNDETERMINED_MULTIQC_HTML_REPORT_COLLECTION_TYPE,
+        collection_table="file",
+        base_data_path=HPC_BASE_RAW_DATA_PATH,
+        file_location='HPC_PROJECT',
+        replace_existing_file=True,
+        cleanup_existing_collection=True,
+        collection_list=multiqc_collection_list)
+    dir_list = [
+      project_name,
+      flowcell_id,
+      lane_id,
+      index_group,
+      status_tag]
+    ## load multiqc to FTP site
+    copy_file_to_ftp_and_load_to_db(
+      ftp_server=FTP_HOSTNAME,
+      ftp_username=FTP_USERNAME,
+      base_remote_dir=FTP_PROJECT_PATH,
+      dir_list=dir_list,
+      file_list=[multiqc_html],
+      db_config_file=DATABASE_CONFIG_FILE,
+      remote_collection_name=multiqc_collection_name,
+      remote_collection_type=FTP_UNDETERMINED_MULTIQC_HTML_REPORT_COLLECTION_TYPE,
+      remote_collection_table="file",
+      remote_location=FTP_LOCATION,
+      ssh_key_file=HPC_SSH_KEY_FILE)
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
+
+def fastq_screen_for_undetermined_reads_func(**context):
+  try:
+    ti = context['ti']
+    xcom_key_for_undetermined_fastq_screen = \
+      context['params'].\
+      get("xcom_key_for_undetermined_fastq_screen", "undetermined_fastq_screen")
+    xcom_key_for_bclconvert_output = \
+      context['params'].\
+      get("xcom_key_for_bclconvert_output", "bclconvert_output")
+    xcom_task_for_bclconvert_output = \
+      context['params'].\
+      get("xcom_task_for_bclconvert_output")
+    bclconvert_output = \
+      ti.xcom_pull(
+        task_ids=xcom_task_for_bclconvert_output,
+        key=xcom_key_for_bclconvert_output)
+    check_file_path(bclconvert_output)
+    undetermined_fastq_screen_list = list()
+    output_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    for file_path in os.listdir(bclconvert_output):
+      if os.path.isfile(file_path) and \
+         file_path.startswith("Undetermined") and \
+         file_path.endswith(".fastq.gz"):
+        fastq_screen_files = \
+          run_fastqScreen(
+            fastqscreen_image_path=FASTQSCREEN_IMAGE_PATH,
+            fastq_path=file_path,
+            output_dir=output_dir,
+            fastqscreen_conf=FASTQSCREEN_CONF_PATH,
+            fastqscreen_ref_dir=FASTQSCREEN_REF_DIR)
+        undetermined_fastq_screen_list.extend(
+          fastq_screen_files)
+    ti.xcom_push(
+      key=xcom_key_for_undetermined_fastq_screen,
+      value=undetermined_fastq_screen_list)
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
+
+def fastqc_for_undetermined_reads_func(**context):
+  try:
+    ti = context['ti']
+    xcom_key_for_undetermined_fastqc = \
+      context['params'].\
+      get("xcom_key_for_undetermined_fastqc", "undetermined_fastqc")
+    xcom_key_for_bclconvert_output = \
+      context['params'].\
+      get("xcom_key_for_bclconvert_output", "bclconvert_output")
+    xcom_task_for_bclconvert_output = \
+      context['params'].\
+      get("xcom_task_for_bclconvert_output")
+    bclconvert_output = \
+      ti.xcom_pull(
+        task_ids=xcom_task_for_bclconvert_output,
+        key=xcom_key_for_bclconvert_output)
+    check_file_path(bclconvert_output)
+    undetermined_fastqc_list = list()
+    output_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    for file_path in os.listdir(bclconvert_output):
+      if os.path.isfile(file_path) and \
+         file_path.startswith("Undetermined") and \
+         file_path.endswith(".fastq.gz"):
+        fastqc_output_files = \
+          run_fastqc(
+            fastqc_image_path=FASTQC_IMAGE_PATH,
+            fastq_path=file_path,
+            output_dir=output_dir)
+        undetermined_fastqc_list.extend(
+          fastqc_output_files)
+    ti.xcom_push(
+      key=xcom_key_for_undetermined_fastqc,
+      value=undetermined_fastqc_list)
   except Exception as e:
     log.error(e)
     send_log_to_channels(
