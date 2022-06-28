@@ -3624,6 +3624,9 @@ def bclconvert_report_func(**context):
       ti.xcom_pull(
         key=xcom_key_for_reports,
         task_ids=xcom_task_for_reports)
+    xcom_key_for_html_reports = \
+      context['params'].\
+      get('xcom_key_for_html_reports', 'bclconvert_html_reports')
     # dag_run = context.get('dag_run')
     # seqrun_path = None
     # if dag_run is not None and \
@@ -3651,6 +3654,11 @@ def bclconvert_report_func(**context):
     copy_local_file(
       report_file,
       os.path.join(
+        bclconvert_reports_path,
+        os.path.basename(report_file)))
+    ti.xcom_push(
+      key=xcom_key_for_html_reports,
+      value=os.path.join(
         bclconvert_reports_path,
         os.path.basename(report_file)))
   except Exception as e:
