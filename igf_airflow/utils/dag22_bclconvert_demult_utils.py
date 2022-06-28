@@ -3296,14 +3296,14 @@ def merge_single_cell_fastq_files_func(**context):
     #   get('formatted_samplesheets')
     project_index = \
       context['params'].\
-      get('project_index', 0)
+      get('project_index')
     lane_index = \
       context['params'].\
-      get('lane_index', 0)
+      get('lane_index')
     index_group_index = \
       context['params'].\
-      get('index_group_index', 0)
-    if lane_index == 0:
+      get('index_group_index')
+    if lane_index is  None:
       raise ValueError("lane_index is not set")
     ## get metadata info
     formatted_samplesheets_list = \
