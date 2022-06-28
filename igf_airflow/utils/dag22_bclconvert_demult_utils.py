@@ -3411,7 +3411,7 @@ def check_output_for_project_lane_index_group_func(**context):
         read_count_threshold=read_count_threshold)
     if not check_status:
       raise ValueError(
-        f"Run {seqrun_igf_id} failing read count validation")
+        f"Demultiplexing {demult_stats_file_path} failing read count validation")
   except Exception as e:
     log.error(e)
     send_log_to_channels(
