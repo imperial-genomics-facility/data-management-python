@@ -99,14 +99,15 @@ class MergeSingleCellFastq:
           self.orig_sampleid_col,
           self.orig_samplename_col,
           self.project_col]
-        samplesheet_df = \
-          pd.DataFrame(samplesheet_data._data)
-        for group_tag, _ in samplesheet_df.groupby(samplesheet_group_columns):
-          sample_lane_data.append({
-            'lane_id': group_tag[0],
-            'sample_id': group_tag[1],
-            'sample_name': group_tag[2],
-            'project_id': group_tag[3]})
+        if len(samplesheet_data._data) > 0:
+          samplesheet_df = \
+            pd.DataFrame(samplesheet_data._data)
+          for group_tag, _ in samplesheet_df.groupby(samplesheet_group_columns):
+            sample_lane_data.append({
+              'lane_id': group_tag[0],
+              'sample_id': group_tag[1],
+              'sample_name': group_tag[2],
+              'project_id': group_tag[3]})
       elif self.platform_name=='MISEQ':                                         # hack for miseq
         samplesheet_data.\
           add_pseudo_lane_for_miseq()
@@ -115,14 +116,15 @@ class MergeSingleCellFastq:
           self.orig_sampleid_col,
           self.orig_samplename_col,
           self.project_col]
-        samplesheet_df = \
-          pd.DataFrame(samplesheet_data._data)
-        for group_tag, _ in samplesheet_df.groupby(samplesheet_group_columns):
-          sample_lane_data.append({
-            'lane_id': group_tag[0],
-            'sample_id': group_tag[1],
-            'sample_name': group_tag[2],
-            'project_id': group_tag[3]})
+        if len(samplesheet_data._data) > 0:
+          samplesheet_df = \
+            pd.DataFrame(samplesheet_data._data)
+          for group_tag, _ in samplesheet_df.groupby(samplesheet_group_columns):
+            sample_lane_data.append({
+              'lane_id': group_tag[0],
+              'sample_id': group_tag[1],
+              'sample_name': group_tag[2],
+              'project_id': group_tag[3]})
       elif self.platform_name=='HISEQ4000' or \
            self.platform_name=='NOVASEQ6000':                                     # check for hiseq4k
         samplesheet_group_columns = [
@@ -130,14 +132,15 @@ class MergeSingleCellFastq:
           self.orig_sampleid_col,
           self.orig_samplename_col,
           self.project_col]
-        samplesheet_df = \
-          pd.DataFrame(samplesheet_data._data)
-        for group_tag, _ in samplesheet_df.groupby(samplesheet_group_columns):
-          sample_lane_data.append({
-            'lane_id': group_tag[0],
-            'sample_id': group_tag[1],
-            'sample_name': group_tag[2],
-            'project_id': group_tag[3]})
+        if len(samplesheet_data._data) > 0:
+          samplesheet_df = \
+            pd.DataFrame(samplesheet_data._data)
+          for group_tag, _ in samplesheet_df.groupby(samplesheet_group_columns):
+            sample_lane_data.append({
+              'lane_id': group_tag[0],
+              'sample_id': group_tag[1],
+              'sample_name': group_tag[2],
+              'project_id': group_tag[3]})
       else:
         raise ValueError(
           f'platform {self.platform_name} not supported')

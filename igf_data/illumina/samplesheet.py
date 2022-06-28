@@ -319,8 +319,8 @@ class SampleSheet:
     '''
     try:
       lanes = list(lanes)
-      if self.get_platform_name() == 'NextSeq2000':
-        lanes = ['1',]
+      # if self.get_platform_name() == 'NextSeq2000':
+      #   lanes = ['1',]
       data = self._data
       newdata = list()
       for row in data:
