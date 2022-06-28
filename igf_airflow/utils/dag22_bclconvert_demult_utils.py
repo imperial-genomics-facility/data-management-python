@@ -3300,9 +3300,9 @@ def merge_single_cell_fastq_files_func(**context):
     lane_index = \
       context['params'].\
       get('lane_index', 0)
-    ig_index = \
+    index_group_index = \
       context['params'].\
-      get('ig_index', 0)
+      get('index_group_index', 0)
     if lane_index == 0:
       raise ValueError("lane_index is not set")
     ## get metadata info
@@ -3314,7 +3314,7 @@ def merge_single_cell_fastq_files_func(**context):
         formatted_samplesheets=formatted_samplesheets_list,
         project_index=project_index,
         lane_index=lane_index,
-        index_group_index=ig_index)
+        index_group_index=index_group_index)
     filt_df = pd.DataFrame(filt_df_list)
     # project_name = \
     #   filt_df[FORMATTED_SAMPLESHEET_PROJECT_COLUMN].\
