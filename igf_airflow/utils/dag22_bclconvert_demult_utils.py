@@ -3655,7 +3655,8 @@ def bclconvert_report_func(**context):
       report_file,
       os.path.join(
         bclconvert_reports_path,
-        os.path.basename(report_file)))
+        os.path.basename(report_file)),
+      force=True)
     ti.xcom_push(
       key=xcom_key_for_html_reports,
       value=os.path.join(
