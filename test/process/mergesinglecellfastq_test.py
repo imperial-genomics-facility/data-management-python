@@ -69,6 +69,7 @@ class MergeSingleCellFastq_testB(unittest.TestCase):
     IGF2_2,A02_2,,,SI-GA-D2,GGTTCCTC,,,IGFQ1,10X,SI-GA-D2,IGF2,A02
     IGF2_3,A02_2,,,SI-GA-D2,GGTTCCTC,,,IGFQ1,10X,SI-GA-D2,IGF2,A02
     IGF2_4,A02_2,,,SI-GA-D2,GGTTCCTC,,,IGFQ1,10X,SI-GA-D2,IGF2,A02
+    IGF3,A03,,,Iaaa,AATCACGA,,,IGFQ1,,,,
     """
     pattern1 = re.compile(r'\n\s+')
     pattern2 = re.compile(r'^\n+')
@@ -110,13 +111,17 @@ class MergeSingleCellFastq_testB(unittest.TestCase):
       'IGFQ1/IGF2_4_S8_L001_I1_001.fastq',
       'IGFQ1/IGF2_4_S8_L001_I2_001.fastq',
       'IGFQ1/IGF2_4_S8_L001_R1_001.fastq',
-      'IGFQ1/IGF2_4_S8_L001_R2_001.fastq']
+      'IGFQ1/IGF2_4_S8_L001_R2_001.fastq',
+      'IGFQ1/IGF3_S9_L001_R1_001.fastq',
+      'IGFQ1/IGF3_S9_L001_R2_001.fastq',
+      'IGFQ1/IGF3_S9_L001_I1_001.fastq',
+      'IGFQ1/IGF3_S9_L001_I2_001.fastq']
     for f in fastq_list:
       fastq_path = \
         os.path.join(self.temp_dir, 'fastq', f)
       os.makedirs(os.path.dirname(fastq_path), exist_ok=True)
       with open(fastq_path,'w') as fq:
-        fq.write('@header\nATCG\n+\n####')
+        fq.write('@header\nATCG\n+\n####\n')
       subprocess.check_call(["gzip", fastq_path])
     self.fastq_dir = \
       os.path.join(
@@ -142,12 +147,17 @@ class MergeSingleCellFastq_testB(unittest.TestCase):
       for file in files:
         if fnmatch.fnmatch(file, '*.fastq.gz'):
           all_fastq_file.append(os.path.join(root, file))
-    self.assertEqual(len(all_fastq_file), 8)
+    self.assertEqual(len(all_fastq_file), 12)
     self.assertTrue(
       os.path.join(self.temp_dir, 'fastq', 'IGFQ1', 'IGF1_S1_L001_R1_001.fastq.gz') in all_fastq_file)
     fastq_lines = \
       subprocess.check_output(f"zcat {all_fastq_file[0]}|wc -l", shell=True)
-    self.assertEqual(fastq_lines.decode().strip(), '12')
+    self.assertEqual(fastq_lines.decode().strip(), '16')
+    self.assertTrue(
+      os.path.join(self.temp_dir, 'fastq', 'IGFQ1', 'IGF3_S9_L001_R1_001.fastq.gz') in all_fastq_file)
+    fastq_lines = \
+      subprocess.check_output(f"zcat {os.path.join(self.temp_dir, 'fastq', 'IGFQ1', 'IGF3_S9_L001_R1_001.fastq.gz')}|wc -l", shell=True)
+    self.assertEqual(fastq_lines.decode().strip(), '4')
 
 if __name__=='__main__':
   unittest.main()
