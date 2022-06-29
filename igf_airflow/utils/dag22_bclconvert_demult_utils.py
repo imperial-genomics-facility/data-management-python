@@ -3185,28 +3185,29 @@ def reset_single_cell_samplesheet(
         method='exclude')
     non_singlecell_df = \
       pd.DataFrame(samplesheet._data)
-    if orig_sampleid_col not in singlecell_df.columns or \
-       orig_samplename_col not in singlecell_df.columns or \
-       orig_index_col not in singlecell_df.columns:
-      raise ValueError(
-        f"Original sample name, id or index columns not found in samplesheet file {samplesheet_file}")
-    ## fix singlecell samplesheet
-    singlecell_df[index_col] = \
-      singlecell_df[orig_index_col]
-    singlecell_df[sampleid_col] = \
-      singlecell_df[orig_sampleid_col]
-    singlecell_df[samplename_col] = \
-      singlecell_df[orig_samplename_col]
-    singlecell_df[description_col] = ''
-    allowed_columns = [
-      f for f in singlecell_df.columns
-        if not f.startswith(filter_column_prefix)]
-    if len(singlecell_df.index) > 0 and \
-       len(allowed_columns) == 0:
-      raise ValueError(
-        f"No columns found after filtering samplesheet for {filter_column_prefix}")
-    singlecell_df = \
-      singlecell_df[allowed_columns]
+    if len(singlecell_df.index) > 0:
+      if orig_sampleid_col not in singlecell_df.columns or \
+         orig_samplename_col not in singlecell_df.columns or \
+         orig_index_col not in singlecell_df.columns:
+        raise ValueError(
+          f"Original sample name, id or index columns not found in samplesheet file {samplesheet_file}")
+      ## fix singlecell samplesheet
+      singlecell_df[index_col] = \
+        singlecell_df[orig_index_col]
+      singlecell_df[sampleid_col] = \
+        singlecell_df[orig_sampleid_col]
+      singlecell_df[samplename_col] = \
+        singlecell_df[orig_samplename_col]
+      singlecell_df[description_col] = ''
+      allowed_columns = [
+        f for f in singlecell_df.columns
+          if not f.startswith(filter_column_prefix)]
+      if len(singlecell_df.index) > 0 and \
+         len(allowed_columns) == 0:
+        raise ValueError(
+          f"No columns found after filtering samplesheet for {filter_column_prefix}")
+      singlecell_df = \
+        singlecell_df[allowed_columns]
     ## fix non-singlecell samplesheet
     allowed_columns = [
       f for f in non_singlecell_df.columns
