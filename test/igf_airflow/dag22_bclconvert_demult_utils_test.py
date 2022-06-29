@@ -1030,6 +1030,7 @@ class Dag22_bclconvert_demult_utils_testJ(unittest.TestCase):
     IGF2_2,A02_2,,,SI-GA-D2,GGTTCCTC,,,IGFQ1,10X,SI-GA-D2,IGF2,A02
     IGF2_3,A02_2,,,SI-GA-D2,GGTTCCTC,,,IGFQ1,10X,SI-GA-D2,IGF2,A02
     IGF2_4,A02_2,,,SI-GA-D2,GGTTCCTC,,,IGFQ1,10X,SI-GA-D2,IGF2,A02
+    IGF3,A03,,,iaaa,GGTTCCTC,,,IGFQ1,,,,
     """
     pattern1 = re.compile(r'\n\s+')
     pattern2 = re.compile(r'^\n+')
@@ -1058,6 +1059,8 @@ class Dag22_bclconvert_demult_utils_testJ(unittest.TestCase):
       pd.DataFrame(samplesheet._data)
     self.assertTrue('Original_Sample_ID' not in samplesheet_df.columns)
     self.assertTrue('IGF1' in samplesheet_df['Sample_ID'].values.tolist())
+    self.assertFalse('IGF1_1' in samplesheet_df['Sample_ID'].values.tolist())
+    self.assertTrue('IGF3' in samplesheet_df['Sample_ID'].values.tolist())
 
 class Dag22_bclconvert_demult_utils_testK(unittest.TestCase):
   def setUp(self):

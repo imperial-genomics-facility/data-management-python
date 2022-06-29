@@ -3182,7 +3182,7 @@ def reset_single_cell_samplesheet(
       filter_sample_data(
         condition_key=description_col,
         condition_value=singlecell_tag,
-        method='include')
+        method='exclude')
     non_singlecell_df = \
       pd.DataFrame(samplesheet._data)
     if orig_sampleid_col not in singlecell_df.columns or \
