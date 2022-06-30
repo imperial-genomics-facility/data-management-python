@@ -111,7 +111,7 @@ FASTQSCREEN_HTML_REPORT_TYPE = Variable.get('fastqscreen_html_report_type', defa
 FTP_FASTQSCREEN_HTML_REPORT_TYPE = Variable.get('fastqscreen_html_report_type', default_var='FTP_FASTQSCREEN_HTML_REPORT')
 
 ## MULTIQC
-MULTIQC_CONF_TEMPLATE_FILE = Variable.get("multiqc_conf_template_file", default_var=None)
+MULTIQC_CONF_TEMPLATE_FILE = Variable.get("multiqc_template_file", default_var=None)
 MULTIQC_SINGULARITY_IMAGE = Variable.get("multiqc_singularity_image", default_var=None)
 KNOWN_MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("ftp_known_multiqc_html_report", default_var="MULTIQC_HTML_REPORT_KNOWN")
 UNDETERMINED_MULTIQC_HTML_REPORT_COLLECTION_TYPE = Variable.get("ftp_undetermined_multiqc_html_report", default_var="MULTIQC_HTML_REPORT_UNDETERMINED")
