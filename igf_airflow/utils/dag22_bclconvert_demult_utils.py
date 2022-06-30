@@ -617,7 +617,7 @@ def build_qc_page_for_project_func(**context):
         "collection_name": collection_name,
         "dir_list": dir_list,
         "file_list": [{
-          "file_list": run_qc_json,
+          "file_path": run_qc_json,
           "md5": calculate_file_checksum(run_qc_json)}]}]
       _ = \
         load_raw_files_to_db_and_disk(
