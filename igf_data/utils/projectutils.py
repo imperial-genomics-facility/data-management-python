@@ -38,7 +38,7 @@ def get_project_read_count(
       pr = ProjectAdaptor(**{'session_class':session_class})
     elif dbconfig_file is not None:
       dbparams = read_dbconf_json(dbconfig_file)
-      pr = ProjectAdaptor(**{dbparams})
+      pr = ProjectAdaptor(**dbparams)
     else:
       raise ValueError(
         "Either session_class or dbconfig_file must be provided")
@@ -101,7 +101,7 @@ def get_seqrun_info_for_project(
       pr = ProjectAdaptor(**{'session_class':session_class})
     elif dbconfig_file is not None:
       dbparams = read_dbconf_json(dbconfig_file)
-      pr = ProjectAdaptor(**{dbparams})
+      pr = ProjectAdaptor(**dbparams)
     else:
       raise ValueError(
         "Either session_class or dbconfig_file must be provided")
