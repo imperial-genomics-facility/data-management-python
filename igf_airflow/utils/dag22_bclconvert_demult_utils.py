@@ -1298,10 +1298,10 @@ def run_multiqc(
       '--outdir', multiqc_result_dir,
       '--title', multiqc_report_title,
       '--config', multiqc_conf_file]
-    multiqc_cmd = \
-      ' '.join(multiqc_cmd)
     multiqc_cmd.extend(
       multiqc_param_list)
+    multiqc_cmd = \
+      ' '.join(multiqc_cmd)
     execute_singuarity_cmd(
       image_path=singularity_image_path,
       command_string=multiqc_cmd,
