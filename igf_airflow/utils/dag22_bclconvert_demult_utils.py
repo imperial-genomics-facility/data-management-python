@@ -1008,7 +1008,7 @@ def get_data_for_sample_qc_page(
       samplesheet_data_index_column: str = 'index',
       samplesheet_data_index2_column: str = 'index2',
       db_run_igf_id_column: str = 'run_igf_id',
-      db_reac_count_column: str = 'read_count',
+      db_read_count_column: str = 'read_count',
       db_collection_name_column: str = 'name',
       db_file_path_column: str = 'file_path') \
         -> list:
@@ -1070,8 +1070,8 @@ def get_data_for_sample_qc_page(
     ## get read counts
     read_counts = \
       get_run_read_count_from_attribute_table(
-      database_config_file=database_config_file,
-      run_id_list=list(run_id_dict.values()))
+        database_config_file=database_config_file,
+        run_id_list=list(run_id_dict.values()))
     read_counts_df = \
       pd.DataFrame(read_counts)
     ## Get Ftp fastqc report path
@@ -2660,6 +2660,7 @@ def register_experiment_and_runs_to_db(
       ## register exp and run data
       filtered_exp_data = list()
       filtered_run_data = list()
+      update_run_data = list()
       dbparams = read_dbconf_json(db_config_file)
       base = BaseAdaptor(**dbparams)
       base.start_session()
@@ -2681,19 +2682,30 @@ def register_experiment_and_runs_to_db(
         run_exists = \
           ra.check_run_records_igf_id(
             run_entry.get('run_igf_id'))
-        if not run_exists:
+        if run_exists:
+          update_run_data.append({
+            'run_igf_id': run_entry.get('run_igf_id'),
+            'attribute_name': 'R1_READ_COUNT',
+            'attribute_value': run_entry.get('R1_READ_COUNT')
+          })
+        else:
           filtered_run_data.append(run_entry)
       try:
         if len(filtered_exp_data) > 0:
           ea.store_project_and_attribute_data(
             data=filtered_exp_data,
             autosave=False)
-        base.session.flush()
+          base.session.flush()
         if len(filtered_run_data) > 0:
           ra.store_run_and_attribute_data(
             data=filtered_run_data,
             autosave=False)
-        base.session.flush()
+          base.session.flush()
+        if len(update_run_data) > 0:
+          ra.update_run_attribute_records_by_igfid(
+            update_data=update_run_data,
+            autosave=False)
+          base.session.flush()
         base.session.commit()
         base.close_session()
       except:
