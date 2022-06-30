@@ -1287,6 +1287,8 @@ def run_multiqc(
           line.rstrip())
     bind_dir_list.append(
       os.path.dirname(multiqc_conf_file))
+    bind_dir_list.append(
+      os.path.dirname(multiqc_input_list))
     multiqc_result_dir = \
       get_temp_dir(
         use_ephemeral_space=True)
