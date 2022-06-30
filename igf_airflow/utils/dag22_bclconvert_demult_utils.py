@@ -2161,13 +2161,17 @@ def fastq_screen_for_undetermined_reads_func(**context):
     output_dir = \
       get_temp_dir(use_ephemeral_space=True)
     for file_path in os.listdir(bclconvert_output):
-      if os.path.isfile(file_path) and \
+      fastq_path = \
+        os.path.join(
+          bclconvert_output,
+          file_path)
+      if os.path.isfile(fastq_path) and \
          file_path.startswith("Undetermined") and \
          file_path.endswith(".fastq.gz"):
         fastq_screen_files = \
           run_fastqScreen(
             fastqscreen_image_path=FASTQSCREEN_IMAGE_PATH,
-            fastq_path=file_path,
+            fastq_path=fastq_path,
             output_dir=output_dir,
             fastqscreen_conf=FASTQSCREEN_CONF_PATH,
             fastqscreen_ref_dir=FASTQSCREEN_REF_DIR)
@@ -2209,13 +2213,17 @@ def fastqc_for_undetermined_reads_func(**context):
     output_dir = \
       get_temp_dir(use_ephemeral_space=True)
     for file_path in os.listdir(bclconvert_output):
-      if os.path.isfile(file_path) and \
+      fastq_path = \
+        os.path.join(
+          bclconvert_output,
+          file_path)
+      if os.path.isfile(fastq_path) and \
          file_path.startswith("Undetermined") and \
          file_path.endswith(".fastq.gz"):
         fastqc_output_files = \
           run_fastqc(
             fastqc_image_path=FASTQC_IMAGE_PATH,
-            fastq_path=file_path,
+            fastq_path=fastq_path,
             output_dir=output_dir)
         undetermined_fastqc_list.extend(
           fastqc_output_files)
