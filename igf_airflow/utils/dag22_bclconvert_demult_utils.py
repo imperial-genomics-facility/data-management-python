@@ -1554,10 +1554,10 @@ def collect_qc_reports_for_samples_func(**context):
       get("bclconvert_task_prefix", "bclconvert_")
     fastqc_task_prefix = \
       context['params'].\
-      get("fastqc_task_prefix", "fastqc_")
+      get("fastqc_task_prefix")
     fastq_screen_task_prefix = \
       context['params'].\
-      get("fastq_screen_task_prefix", "fastq_screen_")
+      get("fastq_screen_task_prefix")
     xcom_key_for_fastqc_output = \
       context['params'].\
       get("xcom_key_for_fastqc_output", "fastqc_output")
