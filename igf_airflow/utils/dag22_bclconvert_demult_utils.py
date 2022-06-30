@@ -575,7 +575,7 @@ def build_qc_page_for_project_func(**context):
         collection_name_dict=collection_name_dict,
         sample_qc_page_collection_type=SAMPLE_QC_PAGE_COLLECTION_TYPE,
         known_multiqc_page_collection_type=FTP_KNOWN_MULTIQC_HTML_REPORT_COLLECTION_TYPE,
-        undetermined_multiqc_page_collection_type=FTP_KNOWN_MULTIQC_HTML_REPORT_COLLECTION_TYPE,
+        undetermined_multiqc_page_collection_type=FTP_UNDETERMINED_MULTIQC_HTML_REPORT_COLLECTION_TYPE,
         demultiplexing_report_collection_type=FTP_DEMULTIPLEXING_REPORT_HTML_TYPE,
         run_qc_page_template=run_qc_page_template,
         seqrun_igf_id=seqrun_igf_id,
