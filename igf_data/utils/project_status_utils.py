@@ -50,7 +50,7 @@ class Project_status:
       dbparams = \
         read_dbconf_json(dbconfig_file)
       self.base_adaptor = \
-        BaseAdaptor(**{dbparams})
+        BaseAdaptor(**dbparams)
     elif igf_session_class is not None:
       self.base_adaptor = \
         BaseAdaptor(**{'session_class': igf_session_class})
