@@ -420,12 +420,12 @@ def _collect_qc_json_and_build_sampleqc_pages(
       with open(file_path, "r") as fp:
         qc_data = json.load(fp)
       qc_file_name = \
-        os.path.json(
+        os.path.join(
           output_dir,
           collection_name,
           sample_qc_page_name)
       os.makedirs(
-        os.path.json(
+        os.path.join(
           output_dir,
           collection_name),
         exist_ok=True)
