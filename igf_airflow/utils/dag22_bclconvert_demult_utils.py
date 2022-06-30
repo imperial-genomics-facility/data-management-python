@@ -1122,7 +1122,7 @@ def get_data_for_sample_qc_page(
       fastq_read_count = \
         read_counts_df[
           read_counts_df[db_run_igf_id_column] == run_igf_id][
-            db_reac_count_column].values.tolist()[0]
+            db_read_count_column].values.tolist()[0]
       ## get fastqc and fastqscreen html paths
       ## format paths for html link
       fastqc_html_files = \
