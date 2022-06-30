@@ -225,7 +225,7 @@ def _build_run_qc_page(
         database_config_file=database_config_file)
     if len(multiqc_known_file_collections) == 0:
       raise ValueError(
-        f"No qc page found for collection type {known_multiqc_page_collection_type}")
+        f"No qc page found for collection type {known_multiqc_page_collection_type}: {multiqc_known_collections}")
     multiqc_known_file_collections_df = \
       pd.DataFrame(multiqc_known_file_collections)
     ## get multiqc undetermined pages
