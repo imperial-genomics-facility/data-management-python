@@ -462,7 +462,10 @@ def build_qc_page_for_project_func(**context):
       get('run_qc_page_name', 'index.html')
     run_qc_template_name = \
       context['params'].\
-      get('run_qc_template_name', 'run_level_qc.html')
+      get('run_qc_template_name', 'project_info/run_level_qc.html')
+    sample_qc_template_name = \
+      context['params'].\
+      get('sample_qc_template_name', 'project_info/sample_level_qc.html')
     known_multiqc_name_suffix = \
       context['params'].\
       get('known_multiqc_name_suffix', 'known')
@@ -533,7 +536,7 @@ def build_qc_page_for_project_func(**context):
     template_path = \
       os.path.join(
         QC_PAGE_TEMPLATE_DIR,
-        "sample_level_qc.html")
+        sample_qc_template_name)
     check_file_path(template_path)
     qc_page_dict = \
       _collect_qc_json_and_build_sampleqc_pages(
