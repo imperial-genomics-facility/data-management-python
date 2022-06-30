@@ -345,6 +345,30 @@ class RunAdaptor(BaseAdaptor):
               'Failed to fetch flowcell and lane, error: {0}'.format(e))
 
 
+  def check_run_attribute_records_by_db_id(
+        self,
+        run_id: int,
+        attribute_name: str) \
+          -> bool:
+    try:
+      record_exists = False
+      query = \
+        self.session.\
+          query(Run_attribute).\
+          filter(Run_attribute.run_id==run_id).\
+          filter(Run_attribute.attribute_name==attribute_name)
+      records = \
+        self.fetch_records(
+          query=query,
+          output_mode='dataframe')                                              # attribute can present more than one time
+      if len(records.index) > 0:
+        record_exists = True
+      return record_exists
+    except Exception as e:
+      raise ValueError(
+        f'Failed to check run attribute records, error: {e}')
+
+
   def update_run_attribute_records_by_igfid(self, update_data, autosave=True):
     try:
       if not isinstance(update_data, list):
@@ -379,11 +403,21 @@ class RunAdaptor(BaseAdaptor):
           to_dict(orient='records')
       for run_data in update_data:
         run_id = run_data.get('run_id')
-        query = \
-          self.session.\
-            query(Run_attribute).\
-            filter(Run_attribute.run_id==run_id)                                   # define base query
-        query.update(run_data)
+        attribute_name = run_data.get('attribute_name')
+        run_attribute_exists = \
+          self.check_run_attribute_records_by_db_id(
+            run_id=run_id,
+            attribute_name=attribute_name)
+        if run_attribute_exists:
+          query = \
+            self.session.\
+              query(Run_attribute).\
+              filter(Run_attribute.run_id==run_id)                                   # define base query
+          query.update(run_data)
+        else:
+          self.store_attributes(
+            attribute_table=Run_attribute,
+            data=[run_data])
       if autosave:
         self.commit_session()
     except Exception as e:
