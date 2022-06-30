@@ -331,17 +331,27 @@ DROP INDEX `igf_id_UNIQUE` ON rejected_run;
 
 DROP TABLE rejected_run;
 
+ALTER TABLE `experiment` MODIFY COLUMN `platform_name` ENUM('HISEQ2500', 'HISEQ4000', 'MISEQ', 'NEXTSEQ', 'NANOPORE_MINION', 'NOVASEQ6000', 'DNBSEQ-G400', 'DNBSEQ-G50', 'DNBSEQ-T7', 'UNKNOWN') NOT NULL DEFAULT 'UNKNOWN';
+
 UPDATE alembic_version SET version_num='442ba214cfa3' WHERE alembic_version.version_num = '4d320ef483f9';
 
 -- Running upgrade 442ba214cfa3 -> e8db5fecec16
+ALTER TABLE `platform` MODIFY COLUMN `model_name` ENUM('HISEQ2500','HISEQ4000','MISEQ','NEXTSEQ', 'NEXTSEQ2000','NOVASEQ6000','NANOPORE_MINION','DNBSEQ-G400', 'DNBSEQ-G50', 'DNBSEQ-T7', 'SEQUEL2') NOT NULL;
+
+ALTER TABLE `platform` MODIFY COLUMN `vendor_name` ENUM('ILLUMINA','NANOPORE', 'MGI', 'PACBIO') NOT NULL;
 
 UPDATE alembic_version SET version_num='e8db5fecec16' WHERE alembic_version.version_num = '442ba214cfa3';
 
 -- Running upgrade e8db5fecec16 -> a9afd3bafe6f
+ALTER TABLE `experiment` MODIFY COLUMN `platform_name` ENUM('HISEQ2500','HISEQ4000','MISEQ','NEXTSEQ', 'NEXTSEQ2000','NOVASEQ6000','NANOPORE_MINION','DNBSEQ-G400', 'DNBSEQ-G50', 'DNBSEQ-T7', 'SEQUEL2','UNKNOWN') NOT NULL DEFAULT 'UNKNOWN';
 
 UPDATE alembic_version SET version_num='a9afd3bafe6f' WHERE alembic_version.version_num = 'e8db5fecec16';
 
 -- Running upgrade a9afd3bafe6f -> 6192847ca318
+
+ALTER TABLE `collection` MODIFY COLUMN `name` varchar(150) NOT NULL;
+
+ALTER TABLE `collection` MODIFY COLUMN `type` varchar(150) NOT NULL;
 
 UPDATE alembic_version SET version_num='6192847ca318' WHERE alembic_version.version_num = 'a9afd3bafe6f';
 
