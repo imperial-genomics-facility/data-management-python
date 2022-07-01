@@ -3306,13 +3306,13 @@ def merge_single_cell_fastq_files_func(**context):
       get('xcom_key_bclconvert_output', 'bclconvert_output')
     xcom_task_bclconvert_output = \
       context['params'].\
-      get('xcom_task_bclconvert_output', None)
+      get('xcom_task_bclconvert_output')
     xcom_key_bclconvert_reports = \
       context['params'].\
       get('xcom_key_bclconvert_reports', 'bclconvert_reports')
     xcom_task_bclconvert_reports = \
       context['params'].\
-      get('xcom_task_bclconvert_reports', None)
+      get('xcom_task_bclconvert_reports')
     samplesheet_file_suffix = \
       context['params'].\
       get('samplesheet_file_suffix', "SampleSheet.csv")
@@ -3382,9 +3382,9 @@ def merge_single_cell_fastq_files_func(**context):
         singlecell_tag=singlecell_tag)
     sc_data.\
       merge_fastq_per_lane_per_sample()
-    ## TO DO 2: reset samplesheet after merging for single cell samples
     reset_single_cell_samplesheet(
       samplesheet_file=samplesheet_path)
+    return bclconvert_output_path
   except Exception as e:
     log.error(e)
     send_log_to_channels(
@@ -3925,8 +3925,8 @@ def run_bclconvert_func(**context):
     samplesheet_file = \
       filt_df[FORMATTED_SAMPLESHEET_SAMPLESHEET_FILE_COLUMN].\
         values.tolist()[0]
-    output_dir = \
-      filt_df[FORMATTED_SAMPLESHEET_OUTPUT_DIR].values.tolist()[0]
+    # output_dir = \
+    #   filt_df[FORMATTED_SAMPLESHEET_OUTPUT_DIR].values.tolist()[0]
     ## temp dir
     output_temp_dir = \
       get_temp_dir(use_ephemeral_space=True)
@@ -3952,27 +3952,27 @@ def run_bclconvert_func(**context):
         demult_dir,
         'Reports',
         'Demultiplex_Stats.csv'))  # check if the demultiplex stats file exists
-    bclconvert_output_dir = \
-      os.path.join(
-        output_dir,
-        '{0}_{1}_{2}'.format(
-          project_id,
-          lane_id,
-          ig_id))                  # output dir for bclconvert
-    reports_dir = \
-      os.path.join(
-        bclconvert_output_dir,
-        'Reports')                 # output dir for bclconvert reports
-    copy_local_file(
-      demult_dir,
-      bclconvert_output_dir)       # copy the output dir to the output dir
-    check_file_path(reports_dir)   # check if the reports dir exists after copy
+    # bclconvert_output_dir = \
+    #   os.path.join(
+    #     output_dir,
+    #     '{0}_{1}_{2}'.format(
+    #       project_id,
+    #       lane_id,
+    #       ig_id))                  # output dir for bclconvert
+    # reports_dir = \
+    #   os.path.join(
+    #     bclconvert_output_dir,
+    #     'Reports')                 # output dir for bclconvert reports
+    # copy_local_file(
+    #   demult_dir,
+    #   bclconvert_output_dir)       # copy the output dir to the output dir
+    # check_file_path(reports_dir)   # check if the reports dir exists after copy
     ti.xcom_push(
       key=xcom_key_for_reports,
-      value=reports_dir)
+      value=os.path.join(demult_dir, 'Reports'))
     ti.xcom_push(
       key=xcom_key_for_output,
-      value=bclconvert_output_dir)
+      value=demult_dir)
     message = \
       f'Finished demultiplexing project {project_id}, lane {lane_id}, ig {ig_id} - cmd: {cmd}'
     send_log_to_channels(
@@ -4881,7 +4881,7 @@ def _get_formatted_samplesheets(
               ig_final_sa = SampleSheet(ig_samplesheet_temp_path)
               ig_final_sa.\
                 set_header_for_bclconvert_run(bases_mask=bases_mask)
-              temp_dir = get_temp_dir(use_ephemeral_space=True)
+              # temp_dir = get_temp_dir(use_ephemeral_space=True)
               ig_final_sa.\
                 print_sampleSheet(ig_samplesheet_path)
               sample_counts = \
@@ -4897,7 +4897,8 @@ def _get_formatted_samplesheets(
                   'index_group_index': ig_counter,
                   'sample_counts': sample_counts,
                   'samplesheet_file': ig_samplesheet_path,
-                  'output_dir': temp_dir})
+                  # 'output_dir': temp_dir
+                  })
           else:
             ig_counter += 1
             samplesheet_name = \
