@@ -1281,7 +1281,8 @@ def run_multiqc(
       multiqc_input_list: str,
       multiqc_conf_file: str,
       multiqc_param_list: list,
-      multiqc_exe: str = 'multiqc'):
+      multiqc_exe: str = 'multiqc',
+      multiqc_html_filename: str = 'MultiQC.html'):
   try:
     bind_dir_list = list()
     with open(multiqc_input_list, 'r') as f:
@@ -1313,14 +1314,26 @@ def run_multiqc(
       bind_dir_list=bind_dir_list)
     multiqc_html = None
     multiqc_data = None
-    for root, _, files in os.walk(top=multiqc_result_dir):
-      for file in files:
-        if fnmatch.fnmatch(file, '*.html'):
-          multiqc_html = \
-            os.path.join(root, file)                          # get multiqc html path
-        elif fnmatch.fnmatch(file, '*.zip'):
-          multiqc_data = \
-            os.path.join(root, file)
+    target_multiqc_html_file = \
+      os.path.join(
+        multiqc_result_dir,
+        multiqc_html_filename)
+    for file_path in os.listdir(multiqc_result_dir):
+      if fnmatch.fnmatch(file_path, '*.html'):
+        multiqc_html = \
+          os.path.join(
+            multiqc_result_dir,
+            file_path)                                             # get multiqc html path
+        if multiqc_html_filename != file_path:
+          copy_local_file(
+            source_path=multiqc_html,
+            destination_path=target_multiqc_html_file)
+          multiqc_html = target_multiqc_html_file
+      elif fnmatch.fnmatch(file_path, '*.zip'):
+        multiqc_data = \
+          os.path.join(
+            multiqc_result_dir,
+            file_path)
     return multiqc_html, multiqc_data
   except Exception as e:
     raise ValueError(
