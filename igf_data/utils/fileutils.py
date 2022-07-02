@@ -140,47 +140,62 @@ def list_remote_file_or_dirs(remote_server,remote_path,only_dirs=True,
               format(e))
 
 
-def copy_local_file(source_path,destination_path,cd_to_dest=True,force=False):
+def copy_local_file(
+      source_path: str,
+      destination_path: str,
+      cd_to_dest: bool = True,
+      force: bool = False,
+      dirs_exist_ok: bool = True) \
+        -> None:
   '''
   A method for copy files to local disk
 
   :param source_path: A source file path
   :param destination_path: A destination file path, including the file name  ##FIX TYPO
   :param cd_to_dest: Change to destination dir before copy, default True
-  :param force: Optional, set True to overwrite existing
-                destination file, default is False
+  :param force: Optional, set True to overwrite existing destination file, default is False
+  :param dirs_exist_ok: Optional, set True to allow existing directories, default is False
+  :returns: None
   '''
   try:
-    destination_path = destination_path                                        # NEED TO FIX TYPO
     if not os.path.exists(source_path):
-      raise IOError('source file {0} not found'.\
-                    format(source_path))
-    dir_path = os.path.dirname(destination_path)
-    if not os.path.exists(dir_path):
-      os.makedirs(dir_path, mode=0o770)
-    current_dir = os.getcwd()                                                   # present dir path
+      raise IOError(
+        f'source file {source_path} not found')
+    dir_path = \
+      os.path.dirname(destination_path)
+    os.makedirs(
+      dir_path,
+      mode=0o770,
+      exist_ok=dirs_exist_ok)
+    current_dir = \
+      os.getcwd()                                                               # present dir path
     if cd_to_dest:
       os.chdir(dir_path)                                                        # change to dest dir before copy
     if os.path.isfile(source_path):
       if os.path.exists(destination_path) and not force:
         raise IOError(
-                'destination file {0} already present. set option "force" as True to overwrite it'.\
-                  format(destination_path))
-      copy2(source_path, destination_path, follow_symlinks=True)                # copy file
+          f'destination file {destination_path} already present. set option "force" as True to overwrite it')
+      copy2(
+        source_path,
+        destination_path,
+        follow_symlinks=True)                                                   # copy file
       check_file_path(destination_path)
     elif os.path.isdir(source_path):
       if os.path.exists(destination_path) and not force:
         raise ValueError(
-                'Failed to copy dir {0}, path already exists, use force to remove it'.\
-                  format(destination_path))
+          f'Failed to copy dir {destination_path}, path already exists, use force to remove it')
       if os.path.exists(destination_path) and force:
         remove_dir(destination_path)
-      copytree(source_path,destination_path)                                    # copy dir
+      copytree(
+        src=source_path,
+        dst=destination_path,
+        dirs_exist_ok=dirs_exist_ok)                                            # copy dir
       check_file_path(destination_path)
     if cd_to_dest:
       os.chdir(current_dir)                                                     # change to original path after copy
   except Exception as e:
-    raise ValueError("Failed to copy local file, error: {0}".format(e))
+    raise ValueError(
+      f"Failed to copy local file, error: {e}")
 
 
 def copy_remote_file(
