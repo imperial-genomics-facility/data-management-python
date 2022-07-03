@@ -25,13 +25,11 @@ from igf_data.process.singlecell_seqrun.processsinglecellsamplesheet import Proc
 from igf_data.process.singlecell_seqrun.processsinglecellsamplesheet import ProcessSingleCellSamplesheet
 from igf_data.utils.box_upload import upload_file_or_dir_to_box
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
-from igf_data.utils.fileutils import move_file
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.utils.fileutils import get_temp_dir
 from igf_data.utils.fileutils import copy_remote_file
 from igf_data.utils.fileutils import copy_local_file
 from igf_data.utils.fileutils import check_file_path
-from igf_data.utils.fileutils import read_json_data
 from igf_data.utils.fileutils import get_date_stamp
 from igf_data.utils.fileutils import get_date_stamp_for_file_name
 from igf_data.utils.fileutils import calculate_file_checksum
@@ -674,16 +672,31 @@ def build_qc_page_for_project_func(**context):
           project)
       remote_address = \
         f'{FTP_USERNAME}@{FTP_HOSTNAME}'
+      os.chmod(
+        temp_seqrun_info,
+        stat.S_IRUSR |
+        stat.S_IRGRP |
+        stat.S_IROTH)
       copy_remote_file(
         source_path=temp_seqrun_info,
         destination_path=os.path.join(remote_project_dir, seqruninfofile),
         destination_address=remote_address,
         ssh_key_file=HPC_SSH_KEY_FILE)
+      os.chmod(
+        temp_read_count_csv_output,
+        stat.S_IRUSR |
+        stat.S_IRGRP |
+        stat.S_IROTH)
       copy_remote_file(
         source_path=temp_read_count_csv_output,
         destination_path=os.path.join(remote_project_dir, samplereadcountcsvfile),
         destination_address=remote_address,
         ssh_key_file=HPC_SSH_KEY_FILE)
+      os.chmod(
+        temp_read_count_output,
+        stat.S_IRUSR |
+        stat.S_IRGRP |
+        stat.S_IROTH)
       copy_remote_file(
         source_path=temp_read_count_output,
         destination_path=os.path.join(remote_project_dir, samplereadcountfile),
@@ -702,6 +715,11 @@ def build_qc_page_for_project_func(**context):
         demultiplexing_pipeline=context['task'].dag_id,
         analysis_pipeline=analysis_pipeline,                                  # todo: fix this
         active_seqrun_igf_id=seqrun_igf_id)
+      os.chmod(
+        temp_status_output,
+        stat.S_IRUSR |
+        stat.S_IRGRP |
+        stat.S_IROTH)
       copy_remote_file(
         source_path=temp_status_output,
         destination_path=os.path.join(remote_project_dir, status_data_json),
@@ -1174,6 +1192,7 @@ def copy_file_to_ftp_and_load_to_db(
       dir_list: list,
       file_list: list,
       db_config_file: str,
+      add_read_access_for_ftp_file: bool = True,
       remote_collection_name: Any = None,
       remote_collection_type: Any = None,
       remote_collection_table: Any = None,
@@ -1185,6 +1204,22 @@ def copy_file_to_ftp_and_load_to_db(
     ftp_file_collection_list = list()
     for file_name in file_list:
       check_file_path(file_name)
+      if add_read_access_for_ftp_file:
+        if os.path.isdir(file_name):
+          os.chmod(
+            file_name,
+            stat.S_IRUSR |
+            stat.S_IXUSR |
+            stat.S_IRGRP |
+            stat.S_IXGRP |
+            stat.S_IROTH |
+            stat.S_IXOTH)
+        elif os.path.isdir(file_name):
+          os.chmod(
+            file_name,
+            stat.S_IRUSR |
+            stat.S_IRGRP |
+            stat.S_IROTH)
       if len(dir_list) > 0:
         dir_list = [
           str(d) for d in dir_list]
