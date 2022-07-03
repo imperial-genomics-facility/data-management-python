@@ -188,8 +188,8 @@ def copy_local_file(
         remove_dir(destination_path)
       copytree(
         src=source_path,
-        dst=destination_path,
-        dirs_exist_ok=dirs_exist_ok)                                            # copy dir
+        dst=destination_path,)
+        # dirs_exist_ok=dirs_exist_ok)                                            # copy dir for 3.8+
       check_file_path(destination_path)
     if cd_to_dest:
       os.chdir(current_dir)                                                     # change to original path after copy
