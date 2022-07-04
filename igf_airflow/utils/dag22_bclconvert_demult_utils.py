@@ -682,7 +682,8 @@ def build_qc_page_for_project_func(**context):
         source_path=temp_seqrun_info,
         destination_path=os.path.join(remote_project_dir, seqruninfofile),
         destination_address=remote_address,
-        ssh_key_file=HPC_SSH_KEY_FILE)
+        ssh_key_file=HPC_SSH_KEY_FILE,
+        force_update=True)
       os.chmod(
         temp_read_count_csv_output,
         stat.S_IRUSR |
@@ -692,7 +693,8 @@ def build_qc_page_for_project_func(**context):
         source_path=temp_read_count_csv_output,
         destination_path=os.path.join(remote_project_dir, samplereadcountcsvfile),
         destination_address=remote_address,
-        ssh_key_file=HPC_SSH_KEY_FILE)
+        ssh_key_file=HPC_SSH_KEY_FILE,
+        force_update=True)
       os.chmod(
         temp_read_count_output,
         stat.S_IRUSR |
@@ -702,7 +704,8 @@ def build_qc_page_for_project_func(**context):
         source_path=temp_read_count_output,
         destination_path=os.path.join(remote_project_dir, samplereadcountfile),
         destination_address=remote_address,
-        ssh_key_file=HPC_SSH_KEY_FILE)
+        ssh_key_file=HPC_SSH_KEY_FILE,
+        force_update=True)
       ps = \
         Project_status(
           dbconfig_file=DATABASE_CONFIG_FILE,
@@ -725,7 +728,8 @@ def build_qc_page_for_project_func(**context):
         source_path=temp_status_output,
         destination_path=os.path.join(remote_project_dir, status_data_json),
         destination_address=remote_address,
-        ssh_key_file=HPC_SSH_KEY_FILE)
+        ssh_key_file=HPC_SSH_KEY_FILE,
+        force_update=True)
   except Exception as e:
     log.error(e)
     send_log_to_channels(
