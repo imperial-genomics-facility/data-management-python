@@ -1206,21 +1206,24 @@ def copy_file_to_ftp_and_load_to_db(
     for file_name in file_list:
       check_file_path(file_name)
       if add_read_access_for_ftp_file:
-        if os.path.isdir(file_name):
-          os.chmod(
-            file_name,
-            stat.S_IRUSR |
-            stat.S_IXUSR |
-            stat.S_IRGRP |
-            stat.S_IXGRP |
-            stat.S_IROTH |
-            stat.S_IXOTH)
-        elif os.path.isdir(file_name):
-          os.chmod(
-            file_name,
-            stat.S_IRUSR |
-            stat.S_IRGRP |
-            stat.S_IROTH)
+        change_file_and_dir_permission(
+          path=file_name,
+          make_dir_and_files_read_only_for_all=True)
+        # if os.path.isdir(file_name):
+        #   os.chmod(
+        #     file_name,
+        #     stat.S_IRUSR |
+        #     stat.S_IXUSR |
+        #     stat.S_IRGRP |
+        #     stat.S_IXGRP |
+        #     stat.S_IROTH |
+        #     stat.S_IXOTH)
+        # elif os.path.isdir(file_name):
+        #   os.chmod(
+        #     file_name,
+        #     stat.S_IRUSR |
+        #     stat.S_IRGRP |
+        #     stat.S_IROTH)
       if len(dir_list) > 0:
         dir_list = [
           str(d) for d in dir_list]
