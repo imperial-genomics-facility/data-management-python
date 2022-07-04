@@ -32,6 +32,7 @@ from igf_data.utils.fileutils import copy_local_file
 from igf_data.utils.fileutils import check_file_path
 from igf_data.utils.fileutils import get_date_stamp
 from igf_data.utils.fileutils import get_date_stamp_for_file_name
+from igf_data.utils.fileutils import change_file_and_dir_permission
 from igf_data.utils.fileutils import calculate_file_checksum
 from igf_data.utils.fastqc_utils import get_fastq_info_from_fastq_zip
 from igf_data.utils.singularity_run_wrapper import execute_singuarity_cmd
@@ -2351,8 +2352,12 @@ def copy_or_replace_file_to_disk_and_change_permission(
         raise ValueError(
           f"File {destination_path} already exists. Set replace_existing_file to True")
       else:
-        # add write permission for user
-        os.chmod(destination_path, stat.S_IWUSR)
+        # add write permission for user, unlock
+        change_file_and_dir_permission(
+          path=destination_path,
+          unlock_dir_and_files=True)
+        # os.chmod(destination_path, stat.S_IWUSR)
+        ## TO DO: fix permissions for directory
         # os.chmod(
         #   os.path.dirname(destination_path),
         #   stat.S_IWUSR |
@@ -2367,20 +2372,23 @@ def copy_or_replace_file_to_disk_and_change_permission(
       destination_path,
       force=replace_existing_file)
     if make_file_and_dir_read_only:
-      if os.path.isdir(destination_path):
-        # make dir read only
-        os.chmod(
-          destination_path,
-          stat.S_IRUSR |
-          stat.S_IRGRP |
-          stat.S_IXUSR |
-          stat.S_IXGRP)
-      elif os.path.isfile(destination_path):
-        # make file read only
-        os.chmod(
-          destination_path,
-          stat.S_IRUSR |
-          stat.S_IRGRP)
+      change_file_and_dir_permission(
+        path=destination_path,
+        lock_dir_and_files=True)
+      # if os.path.isdir(destination_path):
+      #   # make dir read only
+      #   os.chmod(
+      #     destination_path,
+      #     stat.S_IRUSR |
+      #     stat.S_IRGRP |
+      #     stat.S_IXUSR |
+      #     stat.S_IXGRP)
+      # elif os.path.isfile(destination_path):
+      #   # make file read only
+      #   os.chmod(
+      #     destination_path,
+      #     stat.S_IRUSR |
+      #     stat.S_IRGRP)
         # make dir read only
         # os.chmod(
         #   os.path.dirname(destination_path),
