@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import json
 import pandas as pd
-import os,subprocess,hashlib,string,re
+import os,subprocess,hashlib,string,re, stat
 import tarfile,fnmatch
 from shlex import quote
 from datetime import datetime
@@ -138,6 +138,124 @@ def list_remote_file_or_dirs(remote_server,remote_path,only_dirs=True,
     raise ValueError(
             "Failed to list files from remote server, error: {0}".\
               format(e))
+
+
+def change_file_and_dir_permission(
+      path: str,
+      lock_dir_and_files: bool = False,
+      unlock_dir_and_files: bool = False,
+      make_dir_and_files_read_only_for_all: bool = False) \
+        -> None:
+  try:
+    if not os.path.exists(path):
+      raise IOError(
+        f"Path {path} not found")
+    if (lock_dir_and_files and unlock_dir_and_files) or \
+       (make_dir_and_files_read_only_for_all and unlock_dir_and_files):
+      raise ValueError("conflicting options")
+    if os.path.isdir(path):
+      if lock_dir_and_files:
+        for root, dirs, files in os.walk(path):
+          for dir_name in dirs:
+            dir_path = \
+              os.path.join(root, dir_name)
+            ## enable read and execute for user and group
+            os.chmod(
+              dir_path,
+              stat.S_IRUSR |
+              stat.S_IRGRP |
+              stat.S_IXUSR |
+              stat.S_IXGRP)
+          for file_name in files:
+            file_path = \
+              os.path.join(root, file_name)
+            ## enable read for user and group
+            os.chmod(
+              file_path,
+              stat.S_IRUSR |
+              stat.S_IRGRP)
+        ## change base dir permissions
+        os.chmod(
+          path,
+          stat.S_IRUSR |
+          stat.S_IRGRP |
+          stat.S_IXUSR |
+          stat.S_IXGRP)
+      if make_dir_and_files_read_only_for_all:
+        for root, dirs, files in os.walk(path):
+          for dir_name in dirs:
+            dir_path = \
+              os.path.join(root, dir_name)
+            ## enable read and execute for user, group and other
+            os.chmod(
+              dir_path,
+              stat.S_IRUSR |
+              stat.S_IRGRP |
+              stat.S_IXUSR |
+              stat.S_IXGRP |
+              stat.S_IROTH |
+              stat.S_IXOTH)
+          for file_name in files:
+            file_path = \
+              os.path.join(root, file_name)
+            ## enable read for user, group and other
+            os.chmod(
+              file_path,
+              stat.S_IRUSR |
+              stat.S_IRGRP |
+              stat.S_IROTH)
+        ## change base dir permissions
+        os.chmod(
+          path,
+          stat.S_IRUSR |
+          stat.S_IRGRP |
+          stat.S_IXUSR |
+          stat.S_IXGRP |
+          stat.S_IROTH |
+          stat.S_IXOTH)
+      if unlock_dir_and_files:
+        for root, dirs, files in os.walk(path):
+          for dir_name in dirs:
+            dir_path = \
+              os.path.join(root, dir_name)
+            ## enable read, write and execute for user
+            os.chmod(
+              dir_path,
+              stat.S_IRUSR |
+              stat.S_IWUSR |
+              stat.S_IXUSR)
+          for file_name in files:
+            file_path = \
+              os.path.join(root, file_name)
+            ## enable read and write for user
+            os.chmod(
+              file_path,
+              stat.S_IWUSR)
+        ## change base dir permissions
+        os.chmod(
+          path,
+          stat.S_IRUSR |
+          stat.S_IWUSR |
+          stat.S_IXUSR)
+    elif os.path.isfile(path):
+      if lock_dir_and_files:
+        os.chmod(
+          path,
+          stat.S_IRUSR |
+          stat.S_IRGRP)
+      if make_dir_and_files_read_only_for_all:
+        os.chmod(
+          path,
+          stat.S_IRUSR |
+          stat.S_IRGRP |
+          stat.S_IROTH)
+      if unlock_dir_and_files:
+        os.chmod(
+          path,
+          stat.S_IWUSR)
+  except Exception as e:
+    raise ValueError(
+      f"Failed to change file and dir permission, error: {e}")
 
 
 def copy_local_file(
