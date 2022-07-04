@@ -1245,7 +1245,8 @@ def copy_file_to_ftp_and_load_to_db(
         source_path=file_name,
         destination_path=dest_file_path,
         destination_address=f"{ftp_username}@{ftp_server}",
-        ssh_key_file=ssh_key_file)
+        ssh_key_file=ssh_key_file,
+        force_update=True)
     if remote_collection_name is not None and \
        remote_collection_type is not None and \
        remote_collection_table is not None and \
