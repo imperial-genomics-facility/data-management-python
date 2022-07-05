@@ -2212,6 +2212,14 @@ def fastq_screen_for_undetermined_reads_func(**context):
     xcom_task_for_bclconvert_output = \
       context['params'].\
       get("xcom_task_for_bclconvert_output")
+    fastqscreen_options = \
+       context['params'].\
+       get("fastqscreen_options",  (
+        '--aligner bowtie2',
+        '--force',
+        '--quiet',
+        '--top 100000',
+        '--threads 1'))
     bclconvert_output = \
       ti.xcom_pull(
         task_ids=xcom_task_for_bclconvert_output,
@@ -2234,7 +2242,8 @@ def fastq_screen_for_undetermined_reads_func(**context):
             fastq_path=fastq_path,
             output_dir=output_dir,
             fastqscreen_conf=FASTQSCREEN_CONF_PATH,
-            fastqscreen_ref_dir=FASTQSCREEN_REF_DIR)
+            fastqscreen_ref_dir=FASTQSCREEN_REF_DIR,
+            fastqscreen_options=fastqscreen_options)
         undetermined_fastq_screen_list.extend(
           fastq_screen_files)
     ti.xcom_push(
