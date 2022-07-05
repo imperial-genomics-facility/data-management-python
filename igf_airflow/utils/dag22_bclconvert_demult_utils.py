@@ -5224,7 +5224,6 @@ def find_seqrun_func(**context):
         file_list=[
           'RunInfo.xml',
           'RunParameters.xml',
-          'SampleSheet.csv',
           'Data/Intensities/BaseCalls',
           'InterOp'])
     if run_status:
