@@ -1,6 +1,8 @@
-import json
+import json, os
 import subprocess
 from collections import defaultdict
+from igf_data.utils.fileutils import get_temp_dir
+from igf_data.utils.fileutils import remove_dir
 from tempfile import TemporaryFile
 
 def get_pbspro_job_count(job_name_prefix=''):
@@ -12,17 +14,31 @@ def get_pbspro_job_count(job_name_prefix=''):
             { job_name: {'Q': counts, 'R': counts }}
   '''
   try:
-    with TemporaryFile() as tmp_file:
+    # with TemporaryFile() as tmp_file:
+    #   subprocess.\
+    #   check_call(
+    #       'qstat -t -f -F json|grep -v BASH_FUNC_module',                       # this can fix or break pipeline as well
+    #       shell=True,
+    #       stdout=tmp_file)
+    #   tmp_file.seek(0)
+    #   json_data = tmp_file.read()
+    #   json_data = json.loads(json_data)
+    temp_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    temp_queue_file = \
+      os.path.join(temp_dir, 'queue_data.json')
+    with open(temp_queue_file, 'w') as tmp_file:
       subprocess.\
         check_call(
-          'qstat -t -f -F json|grep -v BASH_FUNC_module',                       # this can fix or break pipeline as well
-          shell=True,
-          stdout=tmp_file)
-      tmp_file.seek(0)
-      json_data = tmp_file.read()
-      json_data = json.loads(json_data)
+            'qstat -t -f -F json|grep -v BASH_FUNC_module',                       # this can fix or break pipeline as well
+            shell=True,
+            stdout=tmp_file)
+    ## close the tempfile and then read the json data
+    with open(temp_queue_file, 'r') as fp:
+      json_data = json.load(fp)
     jobs = json_data.get('Jobs')
     active_jobs = dict()
+    remove_dir(temp_dir)
     if jobs is not None:
       active_jobs = defaultdict(lambda: defaultdict(int))
       if len(jobs) > 0:
