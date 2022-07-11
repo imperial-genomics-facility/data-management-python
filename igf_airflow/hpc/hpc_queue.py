@@ -30,7 +30,7 @@ def get_pbspro_job_count(job_name_prefix=''):
     with open(temp_queue_file, 'w') as tmp_file:
       subprocess.\
         check_call(
-            'qstat -t -f -F json|grep -v BASH_FUNC__module',                       # this can fix or break pipeline as well
+            'qstat -t -f -F json|grep -v -e BASH_FUNC__module -e BASH_FUNC_module', # this can fix or break pipeline as well
             shell=True,
             stdout=tmp_file)
     ## close the tempfile and then read the json data
