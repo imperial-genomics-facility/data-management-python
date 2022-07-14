@@ -5061,6 +5061,9 @@ def _calculate_bases_mask(
         elif index_diff == 0:
           bases_mask_list.\
             append(f'I{samplesheet_index_length}')
+        elif index_diff < 0:
+          bases_mask_list.\
+            append(f'I{runinfo_read_length}')
         index_read_position += 1
       else:
         if int(read_offset) > 0:
