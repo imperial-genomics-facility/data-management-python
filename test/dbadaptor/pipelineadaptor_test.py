@@ -439,6 +439,22 @@ class Pipelineadaptor_test4(unittest.TestCase):
     if os.path.exists(self.dbname):
       os.remove(self.dbname)
 
+  def test_check_pipeline_using_pipeline_name(self):
+    pl = \
+      PipelineAdaptor(**{
+        'session_class': self.session_class})
+    pl.start_session()
+    pipeline_check1 = \
+      pl.check_pipeline_using_pipeline_name(
+        pipeline_name='analysys_pipeline_1')
+    self.assertTrue(pipeline_check1)
+    pipeline_check2 = \
+      pl.check_pipeline_using_pipeline_name(
+        pipeline_name='analysys_pipeline_2')
+    self.assertFalse(pipeline_check2)
+    pl.close_session()
+
+
   def test_create_or_update_pipeline_seed(self):
     pl = \
       PipelineAdaptor(**{

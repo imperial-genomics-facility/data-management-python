@@ -17,6 +17,39 @@ def load_new_pipeline_data(data_file, dbconfig):
   except:
     raise
 
+
+def check_and_load_pipeline(
+      pipeline_data: list,
+      dbconfig: str,
+      pipeline_name_column: str = 'pipeline_name') -> None:
+  try:
+    dbparam = read_dbconf_json(dbconfig)
+    pa = PipelineAdaptor(**dbparam)
+    pa.start_session()
+    try:
+      filt_pipeline_data = list()
+      for entry in pipeline_data:
+        pipeline_name = entry.get(pipeline_name_column)
+        if pipeline_name is None:
+          raise ValueError('pipeline_name is None')
+        pipeline_exists = \
+          pa.check_pipeline_using_pipeline_name(
+            pipeline_name=pipeline_name)
+        if not pipeline_exists:
+          filt_pipeline_data.\
+            append(entry)
+      pa.store_pipeline_data(
+        data=filt_pipeline_data,
+        autosave=True)
+      pa.close_session()
+    except:
+      pa.rollback_session()
+      pa.close_session()
+  except Exception as e:
+    raise ValueError(
+      f"Error in check_and_load_pipeline: {e}")
+
+
 def find_new_analysis_seeds(dbconfig_path,pipeline_name,project_name_file,
                             species_name_list,fastq_type,library_source_list):
   '''

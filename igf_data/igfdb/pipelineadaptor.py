@@ -54,6 +54,25 @@ class PipelineAdaptor(BaseAdaptor):
               'Failed to fetch pipeline record, error: {0}'.format(e))
 
 
+  def check_pipeline_using_pipeline_name(self, pipeline_name: str) -> bool:
+    try:
+      query = \
+        self.session.\
+          query(Pipeline).\
+          filter(Pipeline.pipeline_name == pipeline_name)
+      records = \
+        self.fetch_records(
+          query=query,
+          output_mode='one_or_none')
+      if records is None:
+        return False
+      else:
+        return True
+    except Exception as e:
+      raise ValueError(
+        f'Failed to check pipeline using pipeline name, error: {e}')
+
+
   def fetch_pipeline_seed(
         self,pipeline_id,seed_id,seed_table,
         target_column_name=('pipeline_id', 'seed_id','seed_table')):

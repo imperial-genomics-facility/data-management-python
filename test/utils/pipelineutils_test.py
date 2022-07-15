@@ -11,7 +11,9 @@ from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.utils.dbutils import read_json_data, read_dbconf_json
-from igf_data.utils.pipelineutils import load_new_pipeline_data,find_new_analysis_seeds
+from igf_data.utils.pipelineutils import load_new_pipeline_data
+from igf_data.utils.pipelineutils import find_new_analysis_seeds
+from igf_data.utils.pipelineutils import check_and_load_pipeline
 from igf_data.utils.fileutils import get_temp_dir,remove_dir
 
 class Pipelineutils_test1(unittest.TestCase):
@@ -274,7 +276,6 @@ class Pipelineutils_test2(unittest.TestCase):
       )
     self.assertTrue(available_exps is None)
     self.assertTrue('projectA' in seeded_exps)
-    
     pla = PipelineAdaptor(**{'session_class':self.session_class})
     pla.start_session()
     seeded_data, exp_data = pla.fetch_pipeline_seed_with_table_data(\
@@ -285,6 +286,42 @@ class Pipelineutils_test2(unittest.TestCase):
     exp_data = exp_data.to_dict(orient='records')
     self.assertTrue(len(exp_data),1)
     self.assertEqual(exp_data[0]['experiment_igf_id'],'sampleA_MISEQ')
+
+  def test_check_and_load_pipeline(self):
+    pipeline_data = [
+      {"pipeline_name" : "PrimaryAnalysis"}]
+    check_and_load_pipeline(
+      pipeline_data=pipeline_data,
+      dbconfig=self.dbconfig)
+    pla = PipelineAdaptor(**{'session_class':self.session_class})
+    pla.start_session()
+    query = \
+      pla.session.\
+        query(Pipeline).\
+        filter(Pipeline.pipeline_name == 'PrimaryAnalysis')
+    pipeline_records = \
+      pla.fetch_records(
+        query=query,
+        output_mode='one_or_none')
+    pla.close_session()
+    self.assertTrue(pipeline_records is not None)
+    pipeline_data = [
+      {"pipeline_name" : "PrimaryAnalysis1",
+       "pipeline_db" : "postgres"}]
+    check_and_load_pipeline(
+      pipeline_data=pipeline_data,
+      dbconfig=self.dbconfig)
+    pla.start_session()
+    query = \
+      pla.session.\
+        query(Pipeline).\
+        filter(Pipeline.pipeline_name == 'PrimaryAnalysis1')
+    pipeline_records = \
+      pla.fetch_records(
+        query=query,
+        output_mode='one_or_none')
+    pla.close_session()
+    self.assertTrue(pipeline_records is not None)
 
 if __name__ == '__main__':
   unittest.main()
