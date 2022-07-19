@@ -1,10 +1,12 @@
 import pandas as pd
-import unittest, json, os, shutil
+import unittest, json, os, shutil, stat
 from sqlalchemy import create_engine
-from igf_data.igfdb.igfTables import Base,Collection,Collection_attribute
+from igf_data.igfdb.igfTables import Base, Collection, Collection_attribute
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
+from igf_data.utils.fileutils import get_temp_dir
+from igf_data.utils.fileutils import remove_dir
 
 class CollectionAdaptor_test1(unittest.TestCase):
   def setUp(self):
@@ -381,7 +383,129 @@ class CollectionAdaptor_test2(unittest.TestCase):
     self.assertEqual(len(results.index),0)
 
 
+class CollectionAdaptor_test3(unittest.TestCase):
+  def setUp(self):
+    self.dbconfig = 'data/dbconfig.json'
+    dbparam = None
+    with open(self.dbconfig, 'r') as json_data:
+      dbparam = json.load(json_data)
+    base = BaseAdaptor(**dbparam)
+    self.engine = base.engine
+    self.dbname = dbparam['dbname']
+    Base.metadata.create_all(self.engine)
+    self.session_class = base.session_class
+    self.temp_dir = get_temp_dir()
+    file_list = [
+      'sample1/sample1_S1_R1_001.fastq.gz',
+      'sample1/sample1_S1_R2_001.fastq.gz',
+      'sample1/sample1_S1_I1_001.fastq.gz',
+      'sample1/sample1_S1_I2_001.fastq.gz'
+    ]
+    collection_list = list()
+    for entry in file_list:
+      file_path = \
+        os.path.join(self.temp_dir, entry)
+      os.makedirs(
+        os.path.dirname(file_path),
+        exist_ok=True)
+      with open(file_path, 'w') as f:
+        f.write('A')
+      os.chmod(
+        file_path,
+        stat.S_IRUSR)
+      collection_list.append({
+        'name' : 'run1',
+        'type' : 'demultiplexed_fastq',
+        'table' : 'run',
+        'file_path' : file_path,
+        'location' : 'HPC_PROJECT'})
+    file_list = [
+      'sample2/sample2_S2_R1_001.fastq.gz'
+    ]
+    for entry in file_list:
+      file_path = \
+        os.path.join(self.temp_dir, entry)
+      os.makedirs(
+        os.path.dirname(file_path),
+        exist_ok=True)
+      with open(file_path, 'w') as f:
+        f.write('A')
+      os.chmod(
+        file_path,
+        stat.S_IRUSR)
+      collection_list.append({
+        'name' : 'run2',
+        'type' : 'demultiplexed_fastq',
+        'table' : 'run',
+        'file_path' : file_path,
+        'location' : 'HPC_PROJECT'})
+    ca = CollectionAdaptor(**{'session_class': self.session_class})
+    ca.start_session()
+    ca.load_file_and_create_collection(
+      collection_list,
+      calculate_file_size_and_md5=False)
+    ca.close_session()
 
+  def tearDown(self):
+    Base.metadata.drop_all(self.engine)
+    if os.path.exists(self.dbname):
+      os.remove(self.dbname)
+    if os.path.exists(self.temp_dir):
+      remove_dir(self.temp_dir)
+
+  def test_cleanup_collection_and_file_for_name_and_type(self):
+    ca = CollectionAdaptor(**{'session_class': self.session_class})
+    ca.start_session()
+    ca.cleanup_collection_and_file_for_name_and_type(
+      collection_name='run1',
+      collection_type='demultiplexed_fastq',
+      autosave=True,
+      remove_files_on_disk=True)
+    ca.close_session()
+    ca.start_session()
+    files = \
+      ca.get_collection_files(
+        collection_name='run1',
+        collection_type='demultiplexed_fastq')
+    self.assertEqual(len(files.index), 0)
+    files = \
+      ca.get_collection_files(
+        collection_name='run2',
+        collection_type='demultiplexed_fastq')
+    self.assertEqual(len(files.index), 1)
+    ca.close_session()
+    self.assertFalse(
+      os.path.exists(
+        os.path.join(
+          self.temp_dir,
+          'sample1/sample1_S1_R1_001.fastq.gz')
+      ))
+    self.assertTrue(
+      os.path.exists(
+        os.path.join(
+          self.temp_dir,
+          'sample2/sample2_S2_R1_001.fastq.gz')
+      ))
+    ca.start_session()
+    ca.cleanup_collection_and_file_for_name_and_type(
+      collection_name='run2',
+      collection_type='demultiplexed_fastq',
+      autosave=True,
+      remove_files_on_disk=False)
+    ca.close_session()
+    ca.start_session()
+    files = \
+      ca.get_collection_files(
+        collection_name='run2',
+        collection_type='demultiplexed_fastq')
+    self.assertEqual(len(files.index), 0)
+    ca.close_session()
+    self.assertTrue(
+      os.path.exists(
+        os.path.join(
+          self.temp_dir,
+          'sample2/sample2_S2_R1_001.fastq.gz')
+      ))
 
 if __name__=='__main__':
   unittest.main()

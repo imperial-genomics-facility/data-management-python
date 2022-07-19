@@ -7,7 +7,9 @@ def full_suite():
   from .process.basesmask_test import BasesMask_testA,BasesMask_testB,BasesMask_testC,BasesMask_testD
   from .process.checksequenceIndexbarcodes_test import CheckSequenceIndexBarcodes_test1
   from .process.collect_seqrun_fastq_to_db_test import Collect_fastq_test1,Collect_fastq_test_sc1
-  from .dbadaptor.collectionadaptor_test import CollectionAdaptor_test1,CollectionAdaptor_test2
+  from .dbadaptor.collectionadaptor_test import CollectionAdaptor_test1
+  from .dbadaptor.collectionadaptor_test import CollectionAdaptor_test2
+  from .dbadaptor.collectionadaptor_test import CollectionAdaptor_test3
   from .utils.dbutils_test import Dbutils_test1
   from .process.find_and_process_new_seqrun_test import Find_seqrun_test1
   from .process.flowcell_rules_test import Flowcell_barcode_rule_test1
@@ -85,7 +87,6 @@ def full_suite():
   from .igf_airflow.dag22_bclconvert_demult_utils_test import Dag22_bclconvert_demult_utils_testJ
   from .igf_airflow.dag22_bclconvert_demult_utils_test import Dag22_bclconvert_demult_utils_testK
   from .igf_airflow.dag22_bclconvert_demult_utils_test import Dag22_bclconvert_demult_utils_testL
-  from .igf_airflow.dag22_bclconvert_demult_utils_test import Dag22_bclconvert_demult_utils_testM
   from .utils.cellranger_count_utils_test import Cellranger_count_utils_testA
   from .dbadaptor.analysisadaptor_test import Analysisadaptor_test1
   from .dbadaptor.seqrunadaptor_test import SeqrunAdaptor_test1
@@ -109,6 +110,7 @@ def full_suite():
         Collect_fastq_test_sc1,
         CollectionAdaptor_test1,
         CollectionAdaptor_test2,
+        CollectionAdaptor_test3,
         Dbutils_test1,
         Find_seqrun_test1,
         Flowcell_barcode_rule_test1,
@@ -213,7 +215,6 @@ def full_suite():
         Dag22_bclconvert_demult_utils_testJ,
         Dag22_bclconvert_demult_utils_testK,
         Dag22_bclconvert_demult_utils_testL,
-        Dag22_bclconvert_demult_utils_testM,
         Dag23_test_bclconvert_demult_utils_testA
       ]
     ])

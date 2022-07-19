@@ -1,9 +1,11 @@
 import os
+import stat
 import pandas as pd
 from igf_data.utils.fileutils import calculate_file_checksum
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_data.igfdb.igfTables import Collection, File, Collection_group, Collection_attribute
+from igf_data.utils.fileutils import check_file_path, remove_dir
 
 class CollectionAdaptor(BaseAdaptor):
   '''
@@ -13,7 +15,7 @@ class CollectionAdaptor(BaseAdaptor):
   def store_collection_and_attribute_data(self,data,autosave=True):
     '''
     A method for dividing and storing data to collection and attribute table
-    
+
     :param data: A list of dictionary or a Pandas DataFrame
     :param autosave: A toggle for saving changes to database, default True
     :returns: None
@@ -77,7 +79,7 @@ class CollectionAdaptor(BaseAdaptor):
   def store_collection_data(self,data,autosave=False):
     '''
     A method for loading data to Collection table
-    
+
     :param data: A list of dictionary or a Pandas DataFrame
     :param autosave: A toggle for saving changes to database, default True
     :returns: None
@@ -100,7 +102,7 @@ class CollectionAdaptor(BaseAdaptor):
         self,collection_name,collection_type,attribute_name):
     '''
     A method for checking collection attribute records for an attribute_name
-    
+
     :param collection_name: A collection name
     :param collection_type: A collection type
     :param attribute_name: A collection attribute name
@@ -136,7 +138,7 @@ class CollectionAdaptor(BaseAdaptor):
         attribute_name,attribute_value,autosave=True):
     '''
     A method for updating collection attribute
-    
+
     :param collection_name: A collection name
     :param collection_type: A collection type
     :param attribute_name: A collection attribute name
@@ -189,20 +191,19 @@ class CollectionAdaptor(BaseAdaptor):
   def create_or_update_collection_attributes(self,data,autosave=True):
     '''
     A method for creating or updating collection attribute table, if the collection exists
-    
+
     :param data: A list of dictionaries, containing following entries
-    
-                 * name
-                 * type
-                 * attribute_name
-                 * attribute_value
+      * name
+      * type
+      * attribute_name
+      * attribute_value
 
     :param autosave: A toggle for saving changes to database, default True
     :returns: None
     '''
     try:
       if not isinstance(data,list) or \
-         len(data)==0:
+         len(data) == 0:
         raise ValueError('No data found for collection attribute update')
 
       for entry in data:
@@ -262,7 +263,7 @@ class CollectionAdaptor(BaseAdaptor):
         collection_name,collection_type,data_list):
     '''
     A static method for building data structure for collection attribute table update
-    
+
     :param collection_name: A collection name
     :param collection_type: A collection type
     :param data: A list of dictionaries containing the data for attribute table
@@ -291,7 +292,7 @@ class CollectionAdaptor(BaseAdaptor):
   def store_collection_attributes(self,data,collection_id='',autosave=False):
     '''
     A method for storing data to Collectionm_attribute table
-    
+
     :param data: A list of dictionary or a Pandas DataFrame
     :param collection_id: A collection id, optional
     :param autosave: A toggle for saving changes to database, default False
@@ -367,7 +368,7 @@ class CollectionAdaptor(BaseAdaptor):
         self, collection_name,collection_type,target_column_name=('name','type')):
     '''
     A method for fetching data for Collection table
-    
+
     :param collection_name: a collection name value
     :param collection_type: a collection type value
     :param target_column_name: a list of columns, default is ['name','type']
@@ -401,7 +402,7 @@ class CollectionAdaptor(BaseAdaptor):
           'file_path','size','md5','location')):
     '''
     A function for loading files to db and creating collections
-    
+
     :param data: A list of dictionary or a Pandas dataframe
     :param autosave: Save data to db, default True
     :param required_coumns: List of required columns
@@ -484,7 +485,7 @@ class CollectionAdaptor(BaseAdaptor):
   def _tag_existing_collection_data(self,data,tag='EXISTS',tag_column='data_exists'):
     '''
     An internal method for checking a dataframe for existing collection record
-    
+
     :param data: A Pandas data series or a dictionary with following keys
 
                         * name
@@ -524,7 +525,7 @@ class CollectionAdaptor(BaseAdaptor):
     A method for fetching collection name and collection_table info using the
     file_path information. It will return None if the file doesn't have any
     collection present in the database
-    
+
     :param file_path: A filepath info
     :returns: Collection name and collection table for first collection group
     '''
@@ -564,7 +565,7 @@ class CollectionAdaptor(BaseAdaptor):
         required_file_column='file_path'):
     '''
     A function for creating collection group, a link between a file and a collection
-    
+
     :param data: A list dictionary or a Pandas DataFrame with following columns
 
                            * name
@@ -650,7 +651,7 @@ class CollectionAdaptor(BaseAdaptor):
         collection_table='',output_mode='dataframe'):
     '''
     A method for fetching information from Collection, File, Collection_group tables
-    
+
     :param collection_name: A collection name to fetch the linked files
     :param collection_type: A collection type
     :param collection_table: A collection table
@@ -696,7 +697,7 @@ class CollectionAdaptor(BaseAdaptor):
         collection_id_col='collection_id',file_id_col='file_id'):
     '''
     An internal method for checking and removing collection group data
-    
+
     :param data: A dictionary or a Pandas Series
     :param autosave: A toggle for saving changes to database, default True
     :param collection_name_col: Name of the collection name column, default name
@@ -754,11 +755,11 @@ class CollectionAdaptor(BaseAdaptor):
 
     :param data: A list dictionary or a Pandas DataFrame with following columns
 
-                           * name
-                           * type
-                           * file_path
+      * name
+      * type
+      * file_path
 
-                 File_path information is not mandatory
+      File_path information is not mandatory
     :param required_collection_column: List of required column for fetching collection,
                                        default 'name','type'
     :param required_file_column: Required column for fetching file information,
@@ -793,11 +794,91 @@ class CollectionAdaptor(BaseAdaptor):
       raise ValueError(
               'Failed to remove collection group info, error; {0}'.format(e))
 
+
+  def cleanup_collection_and_file_for_name_and_type(
+        self,
+        collection_name: str,
+        collection_type: str,
+        autosave: bool = True,
+        remove_files_on_disk: bool = False,
+        skip_dirs: bool = True) -> None:
+    try:
+      query = \
+        self.session.\
+          query(Collection.name, Collection.type, File.file_path).\
+          join(Collection_group, Collection.collection_id==Collection_group.collection_id).\
+          join(File, File.file_id==Collection_group.file_id).\
+          filter(Collection.name==collection_name).\
+          filter(Collection.type==collection_type)
+      records = \
+        self.fetch_records(
+          query=query,
+          output_mode='dataframe')
+      if len(records.index) > 0:
+        collection_records = \
+          records[['name', 'type']].drop_duplicates().to_dict(orient='records')
+        file_records = \
+          records['file_path'].drop_duplicates().values.tolist()
+        ## clean files from db
+        try:
+          ## file clean up
+          self.session.\
+            query(File).\
+            filter(File.file_path.in_(file_records)).\
+            delete(synchronize_session=False)
+          ## collection clean up
+          for collection_entry in collection_records:
+            self.session.\
+              query(Collection).\
+              filter(Collection.name==collection_entry.get('name')).\
+              filter(Collection.type==collection_entry.get('type')).\
+              delete(synchronize_session=False)
+          if autosave:
+            self.commit_session()
+        except:
+          if autosave:
+            self.rollback_session()
+          raise
+        ## clean files from disk
+        if remove_files_on_disk:
+          for file_path in file_records:
+            check_file_path(file_path)
+            ## enable read, write and execute for user
+            os.chmod(
+              file_path,
+              stat.S_IRUSR |
+              stat.S_IWUSR)
+            os.remove(file_path)
+            if os.path.isdir(file_path) and \
+               not skip_dirs:
+              for root, dirs, files in os.walk(file_path):
+                for dir_name in dirs:
+                  dir_path = \
+                    os.path.join(root, dir_name)
+                  ## enable read, write and execute for user
+                  os.chmod(
+                    dir_path,
+                    stat.S_IRUSR |
+                    stat.S_IWUSR |
+                    stat.S_IXUSR)
+                for file_name in files:
+                  path = \
+                    os.path.join(root, file_name)
+                  ## enable read and write for user
+                  os.chmod(
+                    path,
+                    stat.S_IRUSR |
+                    stat.S_IWUSR)
+              remove_dir(file_path)
+    except Exception as e:
+      raise ValueError(
+        f'Failed to cleanup collection and file for name and type, error: {e}')
+
 if __name__=='__main__':
   from igf_data.igfdb.igfTables import Base
   from igf_data.utils.fileutils import get_temp_dir
   from igf_data.utils.fileutils import remove_dir
-  
+
 
   dbparams = {'dbname':'collection_test.sqlite','driver':'sqlite'}
   dbname = dbparams['dbname']
@@ -811,7 +892,6 @@ if __name__=='__main__':
   collection_data=[{ 'name':'IGF001_MISEQ',
                      'type':'ALIGNMENT_CRAM',
                      'table':'experiment',
-                     
                    },
                    { 'name':'IGF002_MISEQ',
                      'type':'ALIGNMENT_CRAM',
@@ -822,7 +902,7 @@ if __name__=='__main__':
   c_data,ca_data = ca.divide_data_to_table_and_attribute(collection_data)
   print(c_data.to_dict(orient='records'))
   print(ca_data.to_dict(orient='records'))
-  
+
   ca.store_collection_and_attribute_data(data=collection_data,
                                          autosave=True)
   """
