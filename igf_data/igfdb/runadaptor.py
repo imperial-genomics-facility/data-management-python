@@ -423,3 +423,32 @@ class RunAdaptor(BaseAdaptor):
     except Exception as e:
       self.rollback_session()
       raise ValueError('Failed to update run attribute records, error: {0}'.format(e))
+
+
+  def get_all_run_for_seqrun_igf_id(
+        self,
+        seqrun_igf_id: str) -> list:
+    try:
+      query = \
+        self.session.\
+          query(
+            Run.run_igf_id,
+            Run.lane_number,
+            Seqrun.flowcell_id,
+            Project.project_igf_id).\
+          join(Experiment, Run.experiment_id==Experiment.experiment_id).\
+          join(Sample, Experiment.sample_id==Sample.sample_id).\
+          join(Project, Sample.project_id==Project.project_id).\
+          join(Seqrun, Run.seqrun_id==Seqrun.seqrun_id).\
+          filter(Run.status=='ACTIVE').\
+          filter(Seqrun.seqrun_igf_id==seqrun_igf_id).\
+          filter(Sample.status=='ACTIVE').\
+          filter(Experiment.status=='ACTIVE')
+      records = \
+        self.fetch_records(
+          query=query,
+          output_mode='dataframe')
+      return records.to_dict(orient='records')
+    except Exception as e:
+      raise ValueError(
+        f'Failed to get all run for seqrun id, error: {e}')

@@ -1,3 +1,4 @@
+import pandas as pd
 import unittest, json, os, shutil
 from numpy.core.records import record
 from sqlalchemy import create_engine
@@ -158,6 +159,21 @@ class RunAdaptor_test1(unittest.TestCase):
         record['run_igf_id']=='IGF00001_MISEQ_000000000-D0YLK_2')]
     self.assertEqual(record.index.size, 1)
     self.assertEqual(int(record['attribute_value'].values[0]), 2000)
+    ra.close_session()
+
+  def test_get_all_run_for_seqrun_igf_id(self):
+    ra = RunAdaptor(**{'session_class':self.session_class})
+    ra.start_session()
+    run_records_list = ra.get_all_run_for_seqrun_igf_id(seqrun_igf_id='171003_M00001_0089_000000000-TEST')
+    run_records_df = pd.DataFrame(run_records_list)
+    self.assertEqual(len(run_records_df.index), 2)
+    self.assertTrue('run_igf_id' in run_records_df.columns)
+    self.assertTrue('IGF00001_MISEQ_000000000-D0YLK_1' in run_records_df['run_igf_id'].values.tolist())
+    self.assertTrue('flowcell_id' in run_records_df.columns)
+    self.assertEqual(run_records_df['flowcell_id'].values.tolist()[0], '000000000-D0YLK')
+    self.assertTrue('project_igf_id' in run_records_df.columns)
+    self.assertEqual(len(run_records_df['project_igf_id'].drop_duplicates().values.tolist()), 1)
+    self.assertEqual(run_records_df['project_igf_id'].drop_duplicates().values.tolist()[0], 'IGFP0001_test_22-8-2017_rna')
     ra.close_session()
 
 if __name__=='__main__':
