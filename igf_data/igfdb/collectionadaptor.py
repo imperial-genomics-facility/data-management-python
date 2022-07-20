@@ -803,7 +803,7 @@ class CollectionAdaptor(BaseAdaptor):
         partial_collection_name: bool = False,
         min_collection_name_length: int = 10,
         remove_files_on_disk: bool = False,
-        skip_dirs: bool = True) -> None:
+        cleanup_dirs: bool = False) -> None:
     try:
       if partial_collection_name:
         if len(collection_name) < min_collection_name_length:
@@ -865,7 +865,12 @@ class CollectionAdaptor(BaseAdaptor):
                 stat.S_IWUSR)
               os.remove(file_path)
             if os.path.isdir(file_path) and \
-               not skip_dirs:
+               cleanup_dirs:
+              os.chmod(
+                file_path,
+                stat.S_IRUSR |
+                stat.S_IWUSR |
+                stat.S_IXUSR)
               for root, dirs, files in os.walk(file_path):
                 for dir_name in dirs:
                   dir_path = \
