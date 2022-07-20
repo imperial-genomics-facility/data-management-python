@@ -857,12 +857,13 @@ class CollectionAdaptor(BaseAdaptor):
         if remove_files_on_disk:
           for file_path in file_records:
             check_file_path(file_path)
-            ## enable read, write and execute for user
-            os.chmod(
-              file_path,
-              stat.S_IRUSR |
-              stat.S_IWUSR)
-            os.remove(file_path)
+            if os.path.isfile(file_path):
+              ## enable read, write and execute for user
+              os.chmod(
+                file_path,
+                stat.S_IRUSR |
+                stat.S_IWUSR)
+              os.remove(file_path)
             if os.path.isdir(file_path) and \
                not skip_dirs:
               for root, dirs, files in os.walk(file_path):
