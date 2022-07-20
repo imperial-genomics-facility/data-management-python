@@ -452,6 +452,25 @@ class CollectionAdaptor_test3(unittest.TestCase):
         'table' : 'run',
         'file_path' : file_path,
         'location' : 'HPC_PROJECT'})
+    file_list = [
+      'sample3/sample3_S2_R1_001.fastq.gz']
+    for entry in file_list:
+      file_path = \
+        os.path.join(self.temp_dir, entry)
+      os.makedirs(
+        os.path.dirname(file_path),
+        exist_ok=True)
+      with open(file_path, 'w') as f:
+        f.write('A')
+      os.chmod(
+        file_path,
+        stat.S_IRUSR)
+      collection_list.append({
+        'name' : 'Prun1',
+        'type' : 'demultiplexed_fastq',
+        'table' : 'run',
+        'file_path' : file_path,
+        'location' : 'HPC_PROJECT'})
     ca = CollectionAdaptor(**{'session_class': self.session_class})
     ca.start_session()
     ca.load_file_and_create_collection(
@@ -519,6 +538,33 @@ class CollectionAdaptor_test3(unittest.TestCase):
           self.temp_dir,
           'sample2/sample2_S2_R1_001.fastq.gz')
       ))
+
+  def test_cleanup_collection_and_file_for_name_and_type2(self):
+    ca = CollectionAdaptor(**{'session_class': self.session_class})
+    ca.start_session()
+    with self.assertRaises(Exception):
+      ca.cleanup_collection_and_file_for_name_and_type(
+        collection_name='run',
+        collection_type='demultiplexed_fastq',
+        partial_collection_name=True,
+        min_collection_name_length=10,
+        autosave=True,
+        remove_files_on_disk=True)
+    ca.cleanup_collection_and_file_for_name_and_type(
+      collection_name='run',
+      collection_type='demultiplexed_fastq',
+      partial_collection_name=True,
+      min_collection_name_length=3,
+      autosave=True,
+      remove_files_on_disk=True)
+    ca.close_session()
+    ca.start_session()
+    files = \
+      ca.get_collection_files(
+        collection_name='Prun1',
+        collection_type='demultiplexed_fastq')
+    self.assertEqual(len(files.index), 1)
+    ca.close_session()
 
 if __name__=='__main__':
   unittest.main()

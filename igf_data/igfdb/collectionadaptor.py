@@ -800,16 +800,30 @@ class CollectionAdaptor(BaseAdaptor):
         collection_name: str,
         collection_type: str,
         autosave: bool = True,
+        partial_collection_name: bool = False,
+        min_collection_name_length: int = 10,
         remove_files_on_disk: bool = False,
         skip_dirs: bool = True) -> None:
     try:
-      query = \
-        self.session.\
-          query(Collection.name, Collection.type, File.file_path).\
-          join(Collection_group, Collection.collection_id==Collection_group.collection_id).\
-          join(File, File.file_id==Collection_group.file_id).\
-          filter(Collection.name==collection_name).\
-          filter(Collection.type==collection_type)
+      if partial_collection_name:
+        if len(collection_name) < min_collection_name_length:
+          raise ValueError(
+            f'Collection name length should be greater than {min_collection_name_length}')
+        query = \
+          self.session.\
+            query(Collection.name, Collection.type, File.file_path).\
+            join(Collection_group, Collection.collection_id==Collection_group.collection_id).\
+            join(File, File.file_id==Collection_group.file_id).\
+            filter(Collection.name.like(f'{collection_name}%')).\
+            filter(Collection.type==collection_type)
+      else:
+        query = \
+          self.session.\
+            query(Collection.name, Collection.type, File.file_path).\
+            join(Collection_group, Collection.collection_id==Collection_group.collection_id).\
+            join(File, File.file_id==Collection_group.file_id).\
+            filter(Collection.name==collection_name).\
+            filter(Collection.type==collection_type)
       records = \
         self.fetch_records(
           query=query,
