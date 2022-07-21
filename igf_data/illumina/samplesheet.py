@@ -525,13 +525,14 @@ class SampleSheet:
       raise
 
   def set_header_for_bclconvert_run(
-      self, bases_mask, min_trimmed_length=8, mask_short_read=8):
+      self, bases_mask, min_trimmed_length=8, mask_short_read=8, trim_umi=0):
     try:
       bclconv_settings = {
         'CreateFastqForIndexReads': 1,
         'MinimumTrimmedReadLength': min_trimmed_length,
         'FastqCompressionFormat': 'gzip',
         'MaskShortReads': mask_short_read,
+        'TrimUMI': trim_umi,
         'OverrideCycles': bases_mask}
       settings_section = None
       if self.samplesheet_version == 'v1':

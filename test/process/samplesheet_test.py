@@ -325,7 +325,7 @@ class SampleSheet_format_v2_test1(unittest.TestCase):
     self.assertTrue('TCTTAAAG' in indices)
 
   def test_add_pseudo_lane_for_nextseq(self):
-    self.samplesheet_data.add_pseudo_lane_for_nextseq()
+    self.samplesheet_data.add_pseudo_lane_for_nextseq(lanes=('1',))
     projects = self.samplesheet_data.get_project_and_lane(lane_tag='PseudoLane')
     self.assertEqual(len(projects), 1)
     self.assertEqual(projects[0].split(':')[0].strip(), 'Project1')
