@@ -7,7 +7,8 @@ from igf_data.utils.fileutils import check_file_path
 def get_request(
       url: str,
       headers: Any = None,
-      verify: bool = False) \
+      verify: bool = False,
+      jsonify: bool = True) \
          -> Any:
   try:
     res = \
@@ -18,7 +19,8 @@ def get_request(
     if res.status_code != 200:
       raise ValueError(
         f"Failed get request, got status: {res.status_code}")
-    res = res.json()
+    if jsonify:
+      res = res.json()
     return res
   except Exception as e:
     raise ValueError(e)
@@ -90,6 +92,7 @@ def get_data_from_portal(
       portal_config_file: str,
       url_suffix: str,
       verify: bool = False,
+      jsonify: bool = True,
       request_mode: str = 'get') \
         -> Any:
   try:
@@ -110,14 +113,16 @@ def get_data_from_portal(
         get_request(
           url=url,
           headers={"accept": "application/json", "Authorization": f"Bearer {token}"},
-          verify=verify)
+          verify=verify,
+          jsonify=jsonify)
     elif request_mode == 'post':
       res = \
         post_request(
           url=url,
           data=None,
           headers={"accept": "application/json", "Authorization": f"Bearer {token}"},
-          verify=verify)
+          verify=verify,
+          jsonify=jsonify)
     else:
       raise ValueError(
         f"Unsupported request mode: {request_mode}")
