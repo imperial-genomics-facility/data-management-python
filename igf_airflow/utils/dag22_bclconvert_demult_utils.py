@@ -4853,7 +4853,8 @@ def _get_formatted_samplesheets(
       ProcessSingleCellSamplesheet(
         temp_sc_dual_conv_samplesheet_file,
         singlecell_barcode_json,
-        tenx_sc_tag)
+        tenx_sc_tag,
+        orig_sample_id='Original_Sample_ID')
     temp_sc_conv_samplesheet_file = \
       os.path.join(temp_dir, 'sc_index_samplesheet.csv')
     sc_data.\
@@ -4941,11 +4942,28 @@ def _get_formatted_samplesheets(
               ig_final_sa = SampleSheet(ig_samplesheet_temp_path)
               ig_final_sa.\
                 set_header_for_bclconvert_run(bases_mask=bases_mask)
-              # temp_dir = get_temp_dir(use_ephemeral_space=True)
               ig_final_sa.\
                 print_sampleSheet(ig_samplesheet_path)
-              sample_counts = \
-                len(ig_final_sa._data)
+              # sample_counts = \
+              #   len(ig_final_sa._data)
+              ## get sample counts
+              sample_counts = 0
+              ig_sample_df = \
+                pd.DataFrame(ig_final_sa._data)
+              ig_sample_df_tenx = \
+                ig_sample_df[ig_sample_df['Description'] == tenx_sc_tag]
+              ig_sample_df_non_tenx = \
+                ig_sample_df[ig_sample_df['Description'] != tenx_sc_tag]
+              ## for tenx samples, count Original_Sample_ID
+              if len(ig_sample_df_tenx.index) > 0:
+                tenx_samples = \
+                  ig_sample_df_tenx['Original_Sample_ID'].drop_duplicates().values.tolist()
+                sample_counts += len(tenx_samples)
+              ## for non-tenx samples, count Sample_ID
+              if len(ig_sample_df_non_tenx.index) > 0:
+                non_tenx_samples = \
+                  ig_sample_df_non_tenx['Sample_ID'].drop_duplicates().values.tolist()
+                sample_counts += len(non_tenx_samples)
               formatted_samplesheets_list.\
                 append({
                   'project': project_name,
@@ -4957,7 +4975,6 @@ def _get_formatted_samplesheets(
                   'index_group_index': ig_counter,
                   'sample_counts': sample_counts,
                   'samplesheet_file': ig_samplesheet_path,
-                  # 'output_dir': temp_dir
                   })
           else:
             ig_counter += 1
@@ -4987,9 +5004,26 @@ def _get_formatted_samplesheets(
               set_header_for_bclconvert_run(bases_mask=bases_mask)
             ig_final_sa.\
               print_sampleSheet(ig_samplesheet_path)
-            sample_counts = \
-              len(ig_final_sa._data)
-            temp_dir = get_temp_dir(use_ephemeral_space=True)
+            # sample_counts = \
+            #   len(ig_final_sa._data)
+            ## get sample counts
+            sample_counts = 0
+            ig_sample_df = \
+              pd.DataFrame(ig_final_sa._data)
+            ig_sample_df_tenx = \
+              ig_sample_df[ig_sample_df['Description'] == tenx_sc_tag]
+            ig_sample_df_non_tenx = \
+              ig_sample_df[ig_sample_df['Description'] != tenx_sc_tag]
+            ## for tenx samples, count Original_Sample_ID
+            if len(ig_sample_df_tenx.index) > 0:
+              tenx_samples = \
+                ig_sample_df_tenx['Original_Sample_ID'].drop_duplicates().values.tolist()
+              sample_counts += len(tenx_samples)
+            ## for non-tenx samples, count Sample_ID
+            if len(ig_sample_df_non_tenx.index) > 0:
+              non_tenx_samples = \
+                ig_sample_df_non_tenx['Sample_ID'].drop_duplicates().values.tolist()
+              sample_counts += len(non_tenx_samples)
             formatted_samplesheets_list.\
               append({
                 'project': project_name,
@@ -5000,8 +5034,7 @@ def _get_formatted_samplesheets(
                 'index_group': ig,
                 'index_group_index': ig_counter,
                 'sample_counts': sample_counts,
-                'samplesheet_file': ig_samplesheet_path,
-                'output_dir': temp_dir})
+                'samplesheet_file': ig_samplesheet_path})
     return formatted_samplesheets_list
   except Exception as e:
     raise ValueError(

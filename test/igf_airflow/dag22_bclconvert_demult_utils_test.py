@@ -217,11 +217,13 @@ class Dag22_bclconvert_demult_utils_testB(unittest.TestCase):
     self.assertEqual(pd.DataFrame(sa._data)['Sample_ID'].values.tolist()[0], 'sampleC')
     self.assertEqual(pd.DataFrame(sa._data)['index'].values.tolist()[0], 'GTAGCCCTGT')
     self.assertEqual(pd.DataFrame(sa._data)['index2'].values.tolist()[0], 'GAGCATCTAT')
+    self.assertEqual(projectA_lane1_20_NA['sample_counts'].values.tolist()[0], 1)
     projectA_lane1_8_10X = projectA_lane1[projectA_lane1['index_group'] == '8_10X']
     sa = SampleSheet(projectA_lane1_8_10X['samplesheet_file'].values.tolist()[0])
     self.assertEqual(len(pd.DataFrame(sa._data).index), 4)
     self.assertTrue('sampleD_1' in pd.DataFrame(sa._data)['Sample_ID'].values.tolist())
     self.assertTrue('TTTCATGA' in pd.DataFrame(sa._data)['index'].values.tolist())
+    self.assertEqual(projectA_lane1_8_10X['sample_counts'].values.tolist()[0], 1)
 
   def test_calculate_bases_mask(self):
     formatted_samplesheets_list = \
