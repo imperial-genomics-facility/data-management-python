@@ -1,9 +1,14 @@
 import os, requests, json
+from typing import Any
 from urllib.parse import urljoin
 from igf_data.utils.dbutils import read_json_data
 from igf_data.utils.fileutils import check_file_path
 
-def get_request(url, headers=None, verify=False):
+def get_request(
+      url: str,
+      headers: Any = None,
+      verify: bool = False) \
+         -> Any:
   try:
     res = \
       requests.get(
@@ -12,14 +17,20 @@ def get_request(url, headers=None, verify=False):
         verify=verify)
     if res.status_code != 200:
       raise ValueError(
-              "Failed get request, got status: {0}".\
-                format(res.status_code))
+        f"Failed get request, got status: {res.status_code}")
     res = res.json()
     return res
   except Exception as e:
     raise ValueError(e)
 
-def post_request(url,  data, headers=None, verify=False, file_attachment=None, jsonify=True):
+def post_request(
+      url: str,
+      data: Any,
+      headers: Any = None,
+      verify: bool = False,
+      file_attachment: Any = None,
+      jsonify: bool = True) \
+        -> Any:
   try:
     files = None
     if file_attachment is not None:
@@ -36,8 +47,7 @@ def post_request(url,  data, headers=None, verify=False, file_attachment=None, j
         files=files)
     if res.status_code != 200:
       raise ValueError(
-              "Failed post request, got status: {0}".\
-                format(res.status_code))
+        f"Failed post request, got status: {res.status_code}")
     if jsonify:
       res = res.json()
     return res
@@ -45,7 +55,11 @@ def post_request(url,  data, headers=None, verify=False, file_attachment=None, j
     raise
 
 
-def get_login_token(portal_config_file, verify=False, url_suffix='/api/v1/security/login'):
+def get_login_token(
+      portal_config_file: str,
+      verify: bool = False,
+      url_suffix: str = '/api/v1/security/login') \
+        -> Any:
   try:
     portal_config = read_json_data(portal_config_file)
     if isinstance(portal_config, list):
@@ -68,10 +82,16 @@ def get_login_token(portal_config_file, verify=False, url_suffix='/api/v1/securi
     token = json_res.get('access_token')
     return token
   except Exception as e:
-    raise ValueError("Failed to get token from portal, error: {0}".format(e))
+    raise ValueError(
+      f"Failed to get token from portal, error: {e}")
 
 
-def get_data_from_portal(portal_config_file, url_suffix, verify=False):
+def get_data_from_portal(
+      portal_config_file: str,
+      url_suffix: str,
+      verify: bool = False,
+      request_mode: str = 'get') \
+        -> Any:
   try:
     check_file_path(portal_config_file)
     portal_config = read_json_data(portal_config_file)
@@ -85,17 +105,34 @@ def get_data_from_portal(portal_config_file, url_suffix, verify=False):
       get_login_token(
         portal_config_file=portal_config_file,
         verify=verify)
-    res = \
-      get_request(
-        url=url,
-        headers={"accept": "application/json", "Authorization": "Bearer {0}".format(token)},
-        verify=verify)
+    if request_mode == 'get':
+      res = \
+        get_request(
+          url=url,
+          headers={"accept": "application/json", "Authorization": f"Bearer {token}"},
+          verify=verify)
+    elif request_mode == 'post':
+      res = \
+        post_request(
+          url=url,
+          data=None,
+          headers={"accept": "application/json", "Authorization": f"Bearer {token}"},
+          verify=verify)
+    else:
+      raise ValueError(
+        f"Unsupported request mode: {request_mode}")
     return res
   except Exception as e:
     raise ValueError(e)
 
 
-def upload_files_to_portal(portal_config_file, file_path, url_suffix, verify=False, jsonify=True):
+def upload_files_to_portal(
+      portal_config_file: str,
+      file_path: str,
+      url_suffix: str,
+      verify: bool = False,
+      jsonify: bool = True) \
+        -> Any:
   try:
     check_file_path(file_path)
     portal_config = read_json_data(portal_config_file)
@@ -113,12 +150,11 @@ def upload_files_to_portal(portal_config_file, file_path, url_suffix, verify=Fal
       post_request(
         url=url,
         data=None,
-        headers={"accept": "application/json", "Authorization": "Bearer {0}".format(token)},
+        headers={"accept": "application/json", "Authorization": f"Bearer {token}"},
         file_attachment=file_path,
         verify=verify,
         jsonify=jsonify)
     return res
   except Exception as e:
     raise ValueError(
-            "Failed to upload file {0} to portal, error: {1}".\
-              format(file_path, e))
+      f"Failed to upload file {file_path} to portal, error: {e}")
