@@ -4824,7 +4824,8 @@ def _get_formatted_samplesheets(
       samplesheet_output_dir: str,
       singlecell_barcode_json: str,
       singlecell_dual_barcode_json: str,
-      tenx_sc_tag: str='10X') \
+      tenx_sc_tag: str='10X',
+      override_cycles: str = '') \
         -> list:
   try:
     check_file_path(samplesheet_file)
@@ -4918,12 +4919,7 @@ def _get_formatted_samplesheets(
               if desc_item == '':
                 desc_item = 'NA'
               samplesheet_name = \
-                'SampleSheet_{0}_{1}_{2}_{3}.csv'.\
-                format(
-                  project_name,
-                  lane_id,
-                  ig,
-                  desc_item)
+                f'SampleSheet_{project_name}_{lane_id}_{ig}_{desc_item}.csv'
               ig_samplesheet_temp_path = \
                 os.path.join(
                   temp_dir,
@@ -4934,18 +4930,20 @@ def _get_formatted_samplesheets(
                   samplesheet_name)
               ig_sa.\
                 print_sampleSheet(ig_samplesheet_temp_path)
-              bases_mask = \
-                _calculate_bases_mask(
-                  samplesheet_file=ig_samplesheet_temp_path,
-                  runinfoxml_file=runinfo_xml_file,
-                  read_offset_cutoff=29)
+              ## override cycles
+              if override_cycles == '':
+                bases_mask = \
+                  _calculate_bases_mask(
+                    samplesheet_file=ig_samplesheet_temp_path,
+                    runinfoxml_file=runinfo_xml_file,
+                    read_offset_cutoff=29)
+              else:
+                bases_mask = override_cycles
               ig_final_sa = SampleSheet(ig_samplesheet_temp_path)
               ig_final_sa.\
                 set_header_for_bclconvert_run(bases_mask=bases_mask)
               ig_final_sa.\
                 print_sampleSheet(ig_samplesheet_path)
-              # sample_counts = \
-              #   len(ig_final_sa._data)
               ## get sample counts
               sample_counts = 0
               ig_sample_df = \
@@ -4971,19 +4969,15 @@ def _get_formatted_samplesheets(
                   'lane': lane_id,
                   'lane_index': lane_counter,
                   'bases_mask': bases_mask,
-                  'index_group': '{0}_{1}'.format(ig, desc_item),
+                  'index_group': f'{ig}_{desc_item}',
                   'index_group_index': ig_counter,
                   'sample_counts': sample_counts,
                   'samplesheet_file': ig_samplesheet_path,
-                  })
+                })
           else:
             ig_counter += 1
             samplesheet_name = \
-              'SampleSheet_{0}_{1}_{2}.csv'.\
-              format(
-                project_name,
-                lane_id,
-                ig)
+              f'SampleSheet_{project_name}_{lane_id}_{ig}.csv'
             ig_samplesheet_temp_path = \
                 os.path.join(
                   temp_dir,
@@ -4994,18 +4988,20 @@ def _get_formatted_samplesheets(
                   samplesheet_name)
             ig_sa.\
               print_sampleSheet(ig_samplesheet_temp_path)
-            bases_mask = \
-              _calculate_bases_mask(
-                samplesheet_file=ig_samplesheet_temp_path,
-                runinfoxml_file=runinfo_xml_file,
-                read_offset_cutoff=29)
+            ## override cycles
+            if override_cycles == '':
+              bases_mask = \
+                _calculate_bases_mask(
+                  samplesheet_file=ig_samplesheet_temp_path,
+                  runinfoxml_file=runinfo_xml_file,
+                  read_offset_cutoff=29)
+            else:
+              bases_mask = override_cycles
             ig_final_sa = SampleSheet(ig_samplesheet_temp_path)
             ig_final_sa.\
               set_header_for_bclconvert_run(bases_mask=bases_mask)
             ig_final_sa.\
               print_sampleSheet(ig_samplesheet_path)
-            # sample_counts = \
-            #   len(ig_final_sa._data)
             ## get sample counts
             sample_counts = 0
             ig_sample_df = \

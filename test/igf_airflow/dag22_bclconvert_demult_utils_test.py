@@ -193,7 +193,7 @@ class Dag22_bclconvert_demult_utils_testB(unittest.TestCase):
     remove_dir(self.input_dir)
 
 
-  def test_get_formatted_samplesheets_and_bases_mask(self):
+  def test_get_formatted_samplesheets_and_bases_mask1(self):
     formatted_samplesheets_list = \
       _get_formatted_samplesheets(
         samplesheet_file=self.samplesheet_file,
@@ -224,6 +224,23 @@ class Dag22_bclconvert_demult_utils_testB(unittest.TestCase):
     self.assertTrue('sampleD_1' in pd.DataFrame(sa._data)['Sample_ID'].values.tolist())
     self.assertTrue('TTTCATGA' in pd.DataFrame(sa._data)['index'].values.tolist())
     self.assertEqual(projectA_lane1_8_10X['sample_counts'].values.tolist()[0], 1)
+
+
+  def test_get_formatted_samplesheets_and_bases_mask2(self):
+    formatted_samplesheets_list = \
+      _get_formatted_samplesheets(
+        samplesheet_file=self.samplesheet_file,
+        samplesheet_output_dir=self.temp_dir,
+        runinfo_xml_file=self.runinfo_xml_file,
+        singlecell_barcode_json='data/singlecell_data/chromium-shared-sample-indexes-plate_20180301.json',
+        singlecell_dual_barcode_json='data/singlecell_data/chromium_dual_indexes_plate_TT_NT_20210209.json',
+        override_cycles='Y29;I10;U10;Y91')
+    df = pd.DataFrame(formatted_samplesheets_list)
+    projectA = df[df['project'] == 'projectA']
+    projectA_lane1 = projectA[projectA['lane'] == '1']
+    projectA_lane1_20_NA = projectA_lane1[projectA_lane1['index_group'] == '20_NA']
+    self.assertEqual(projectA_lane1_20_NA['bases_mask'].values.tolist()[0], 'Y29;I10;U10;Y91')
+
 
   def test_calculate_bases_mask(self):
     formatted_samplesheets_list = \
