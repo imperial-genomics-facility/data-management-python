@@ -3320,11 +3320,13 @@ def reset_single_cell_samplesheet(
     merged_data = list()
     singlecell_data = \
       singlecell_df.\
+      drop_duplicates().\
       to_dict(orient='records')
     if len(singlecell_data) > 0:
       merged_data.extend(singlecell_data)
     non_singlecell_data = \
       non_singlecell_df.\
+      drop_duplicates().\
       to_dict(orient='records')
     if len(non_singlecell_data) > 0:
       merged_data.extend(non_singlecell_data)
