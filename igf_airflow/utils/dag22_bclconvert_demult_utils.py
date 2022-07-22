@@ -3237,7 +3237,7 @@ def sample_known_qc_factory_func(**context):
     task_list = list()
     for sample_id in sample_id_list:
       task_list.append(
-        "{next_task_prefix}{sample_id}")
+        f"{next_task_prefix}{sample_id}")
     return task_list
   except Exception as e:
     log.error(e)
