@@ -17,7 +17,11 @@ from igf_data.igfdb.igfTables import Sample
 from igf_data.igfdb.igfTables import Experiment
 from igf_data.igfdb.igfTables import Seqrun
 from igf_data.igfdb.igfTables import Run
+from igf_data.igfdb.igfTables import Seqrun
 from igf_data.igfdb.igfTables import Run_attribute
+from igf_data.igfdb.igfTables import Collection
+from igf_data.igfdb.igfTables import Collection_group
+from igf_data.igfdb.igfTables import File
 from igf_data.illumina.runinfo_xml import RunInfo_xml
 from igf_data.illumina.runparameters_xml import RunParameter_xml
 from igf_data.illumina.samplesheet import SampleSheet
@@ -3044,6 +3048,322 @@ def calculate_fastq_md5_checksum_func(**context):
     ti.xcom_push(
       key=xcom_key_for_checksum_sample_group,
       value=sample_with_checksum_list)
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
+
+def copy_fastqs_for_sample_to_globus_dir(
+      sample_id_list: list,
+      seqrun_igf_id: str,
+      lane_number: int,
+      globus_dir_for_index_group: str,
+      fastq_collection_type: str,
+      database_config_file: str,
+      active_status: str = 'ACTIVE',
+      cleanup_globus_dir: bool = True) \
+        -> None:
+  try:
+    ## clean up target dir if present
+    if os.path.exists(globus_dir_for_index_group) and \
+       cleanup_globus_dir:
+      remove_dir(
+        globus_dir_for_index_group,
+        ignore_errors=False)
+    ## create target dir
+    os.makedirs(
+      globus_dir_for_index_group,
+      exist_ok=True)
+    ## check sample list
+    if len(sample_id_list) == 0:
+      raise ValueError("sample_id_list is empty")
+    ## fetch fastq files from database
+    dbconfig = \
+      read_dbconf_json(database_config_file)
+    base = BaseAdaptor(**dbconfig)
+    base.start_session()
+    query = \
+      base.session.\
+        query(
+          Sample.sample_igf_id,
+          File.file_path,
+          File.md5,
+          File.size).\
+        join(Collection_group, File.file_id==Collection_group.file_id).\
+        join(Collection, Collection_group.collection_id==Collection.collection_id).\
+        join(Run, Run.run_igf_id==Collection.name).\
+        join(Seqrun, Seqrun.seqrun_id==Run.seqrun_id).\
+        join(Experiment, Experiment.experiment_id==Run.experiment_id).\
+        join(Sample, Sample.sample_id==Experiment.sample_id).\
+        filter(Sample.sample_igf_id.in_(sample_id_list)).\
+        filter(Seqrun.seqrun_igf_id==seqrun_igf_id).\
+        filter(Collection.collection_type==fastq_collection_type).\
+        filter(Run.lane_number==lane_number).\
+        filter(Run.status==active_status).\
+        filter(Experiment.status==active_status).\
+        filter(Sample.status==active_status)
+    records = \
+      base.fetch_records(
+        query=query,
+        output_mode="dataframe")
+    base.close_session()
+    if records is None or \
+       len(records.index) == 0:
+      raise ValueError(
+        f"No fastq records found for {sample_id_list}")
+    ## copy fastq files to globus dir
+    for sample_igf_id in sample_id_list:
+      fastq_list = \
+        records[records["sample_igf_id"]==sample_igf_id].\
+        values.tolist()
+      if len(fastq_list) == 0:
+        raise ValueError(
+          f"No fastq records found for {sample_igf_id}")
+      sample_globus_path = \
+        os.path.join(
+          globus_dir_for_index_group,
+          sample_igf_id)
+      for source_fastq_path in fastq_list:
+        target_fastq_path = \
+          os.path.join(
+            sample_globus_path,
+            os.path.basename(source_fastq_path))
+        copy_local_file(
+          source_fastq_path,
+          target_fastq_path)
+        ## FIX ME: check file permission after Globus share
+    ## dump md5 list to file
+    target_md5_manifest_path = \
+      os.path.join(
+        globus_dir_for_index_group,
+        "md5_manifest.tsv")
+    records[['md5', 'file_path']].\
+      to_csv(
+        target_md5_manifest_path,
+        sep="\t",
+        index=False)
+  except Exception as e:
+    raise ValueError(
+      f"Error in copy_fastqs_for_sample_to_globus_dir: {e}")
+
+
+def copy_collection_file_to_globus_for_ig(
+      database_config_file: str,
+      collection_type: str,
+      collection_name: str,
+      globus_target_dir: str,
+      collection_table: str = '',
+      cleanup_globus_dir: bool = True) \
+        -> None:
+  try:
+    ## fetch collection files from database
+    dbconfig = \
+      read_dbconf_json(database_config_file)
+    ca = CollectionAdaptor(**dbconfig)
+    ca.start_session()
+    collection_files_df = \
+      ca.get_collection_files(
+        collection_name=collection_name,
+        collection_type=collection_type,
+        collection_table=collection_table)
+    ca.close_session()
+    file_list = \
+      collection_files_df['file_path'].\
+        values.tolist()
+    if len(file_list) == 0:
+      raise ValueError(
+        f"No files found for {collection_name}")
+    for file_entry in file_list:
+      dest_path = \
+        os.path.join(
+          globus_target_dir,
+          os.path.basename(file_entry))
+      copy_local_file(
+        source_path=file_entry,
+        destination_path=dest_path,
+        force=cleanup_globus_dir)
+  except Exception as e:
+    raise ValueError(
+      f"Failed to copy collection {collection_name} to globus")
+
+
+def get_files_and_copy_to_globus_func(**context):
+  try:
+    ti = context['ti']
+    target_dir_key = \
+      context['params'].\
+      get("target_dir_key", "target_dir")
+    target_dir_task = \
+      context['params'].\
+      get("target_dir_task")
+    sample_groups_task = \
+      context['params'].\
+      get("sample_groups_task")
+    sample_groups_key = \
+      context['params'].\
+      get("sample_groups_key", "sample_groups")
+    project_index = \
+      context['params'].\
+      get("project_index")
+    lane_index = \
+      context['params'].\
+      get("lane_index")
+    index_group_index = \
+      context['params'].\
+      get("index_group_index")
+    formatted_samplesheets_list = \
+      context['params'].\
+      get("formatted_samplesheets")
+    seqrun_igf_id = \
+      context['params'].\
+      get("seqrun_igf_id")
+    ## fetch target globus dir
+    target_dir = \
+      ti.xcom_pull(
+        task_ids=target_dir_task,
+        key=target_dir_key)
+    ## fetch sample groups
+    sample_groups = \
+      ti.xcom_pull(
+        task_ids=sample_groups_task,
+        key=sample_groups_key)
+    ## fetch sample ids from sample group
+    sample_ids = list()
+    for entry in sample_groups:
+      samples = entry.get('sample_ids')
+      for s in samples:
+        sample_id = s.get('sample_id')
+        sample_ids.append(sample_id)
+    if len(sample_ids) == 0:
+      raise ValueError("sample_ids is empty")
+    ## get project, lane and ig info
+    filt_df_list = \
+      get_target_rows_from_formatted_samplesheet_data(
+        formatted_samplesheets=formatted_samplesheets_list,
+        project_index=project_index,
+        lane_index=lane_index,
+        index_group_index=index_group_index)
+    filt_df = pd.DataFrame(filt_df_list)
+    project_name = \
+      filt_df[FORMATTED_SAMPLESHEET_PROJECT_COLUMN].\
+      values.tolist()[0]
+    lane_id = \
+      filt_df[FORMATTED_SAMPLESHEET_LANE_COLUMN].\
+      values.tolist()[0]
+    index_group = \
+      filt_df[FORMATTED_SAMPLESHEET_INDEX_GROUP_COLUMN].\
+      values.tolist()[0]
+    ## get fastq files for sample ids
+    ## copy sample ids to globus dir
+    ## get md5 list for fastq files
+    ## dump md5 list to globus dir
+    copy_fastqs_for_sample_to_globus_dir(
+      sample_id_list=sample_ids,
+      seqrun_igf_id=seqrun_igf_id,
+      lane_number=int(lane_id),
+      globus_dir_for_index_group=target_dir,
+      fastq_collection_type=FASTQ_COLLECTION_TYPE,
+      database_config_file=DATABASE_CONFIG_FILE,
+      active_status='ACTIVE',
+      cleanup_globus_dir=True)
+    ## get demult for ig
+    ## copy demult report to globus dir
+    copy_collection_file_to_globus_for_ig(
+      database_config_file=DATABASE_CONFIG_FILE,
+      collection_type=DEMULTIPLEXING_REPORT_DIR_TYPE,
+      collection_name=f'{project_name}_{lane_id}_{index_group}',
+      globus_target_dir=target_dir,
+      cleanup_globus_dir=True)
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
+
+def prepare_globus_copy_func(**context):
+  try:
+    ti = context['ti']
+    globus_dir_task = \
+      context['params'].\
+      get("globus_dir_task")
+    globus_dir_key = \
+      context['params'].\
+      get("globus_dir_key", "globus_root_dir")
+    globus_target_dir_key = \
+      context['params'].\
+      get("globus_target_dir_key", "globus_target_dir")
+    project_index = \
+      context['params'].\
+      get("project_index")
+    lane_index = \
+      context['params'].\
+      get("lane_index")
+    index_group_index = \
+      context['params'].\
+      get("index_group_index")
+    formatted_samplesheets_list = \
+      context['params'].\
+      get("formatted_samplesheets")
+    seqrun_igf_id = \
+      context['params'].\
+      get("seqrun_igf_id")
+    ## get project, lane and ig info
+    filt_df_list = \
+      get_target_rows_from_formatted_samplesheet_data(
+        formatted_samplesheets=formatted_samplesheets_list,
+        project_index=project_index,
+        lane_index=lane_index,
+        index_group_index=index_group_index)
+    filt_df = pd.DataFrame(filt_df_list)
+    project_name = \
+      filt_df[FORMATTED_SAMPLESHEET_PROJECT_COLUMN].\
+      values.tolist()[0]
+    lane_id = \
+      filt_df[FORMATTED_SAMPLESHEET_LANE_COLUMN].\
+      values.tolist()[0]
+    index_group = \
+      filt_df[FORMATTED_SAMPLESHEET_INDEX_GROUP_COLUMN].\
+      values.tolist()[0]
+    ## get seqrun date
+    seqrun_date = \
+      get_seqrun_date_from_igf_id(seqrun_igf_id)
+    ## get flowcell ids
+    _, flowcell_id  = \
+      get_platform_name_and_flowcell_id_for_seqrun(
+        seqrun_igf_id=seqrun_igf_id,
+        db_config_file=DATABASE_CONFIG_FILE)
+    ## fetch project specific globus dir
+    globus_dir = \
+      ti.xcom_pull(
+        task_ids=globus_dir_task,
+        key=globus_dir_key)
+    check_file_path(globus_dir)
+    ## set target dir
+    target_dir = \
+      os.path.join(
+        globus_dir,
+        'fastq',
+        project_name,
+        seqrun_date,
+        flowcell_id,
+        lane_id,
+        index_group)
+    ti.xcom_push(
+      key=globus_target_dir_key,
+      value=target_dir)
   except Exception as e:
     log.error(e)
     send_log_to_channels(
