@@ -2,6 +2,7 @@ import pandas as pd
 from copy import deepcopy
 import os
 import re
+import time
 import json
 import stat
 import math
@@ -11,6 +12,7 @@ import subprocess
 from typing import Tuple
 from typing import List
 from typing import Any
+import smtplib
 from airflow.models import Variable
 from igf_data.igfdb.igfTables import Base
 from igf_data.igfdb.igfTables import Sample
@@ -30,6 +32,7 @@ from igf_data.process.singlecell_seqrun.processsinglecellsamplesheet import Proc
 from igf_data.utils.box_upload import upload_file_or_dir_to_box
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_data.utils.dbutils import read_dbconf_json
+from igf_data.utils.fileutils import read_json_data
 from igf_data.utils.fileutils import get_temp_dir
 from igf_data.utils.fileutils import copy_remote_file
 from igf_data.utils.fileutils import copy_local_file
@@ -131,7 +134,169 @@ FORMATTED_SAMPLESHEET_INDEX_GROUP_COLUMN = Variable.get("formatted_samplesheet_i
 FORMATTED_SAMPLESHEET_SAMPLESHEET_FILE_COLUMN = Variable.get("formatted_samplesheet_samplesheet_file_column", default_var="samplesheet_file")
 FORMATTED_SAMPLESHEET_OUTPUT_DIR = Variable.get("formatted_samplesheet_output_dir", default_var='output_dir')
 
+
+## EMAIL CONFIG
+EMAIL_CONFIG = Variable.get("email_config", default_var=None)
+EMAIL_TEMPLATE = Variable.get("seqrun_email_template", default_var=None)
+DEFAULT_EMAIL_USER = Variable.get("default_email_user", default_var=None)
+
 log = logging.getLogger(__name__)
+
+
+def send_email_via_smtp(
+      sender: str,
+      receiver: str,
+      email_config_json: str,
+      email_text_file: str,
+      host_key: str = 'host',
+      port_key: str = 'port',
+      user_key: str = 'username',
+      pass_key: str = 'password') \
+        -> None:
+  try:
+    check_file_path(email_text_file)
+    with open(email_text_file, 'r') as fp:
+      email_message = fp.readlines()
+      if len(email_message) == 0:
+        raise ValueError(
+          f"Failed to send mail. No txt found in {email_text_file}")
+      email_message = ''.join(email_message)
+      email_config = \
+        read_json_data(email_config_json)
+      if isinstance(email_config, list):
+        email_config = email_config[0]
+      if host_key not in email_config or \
+         port_key not in email_config or \
+         user_key not in email_config or \
+         pass_key not in email_config:
+        raise KeyError("Missing email config key")
+      smtpObj = \
+        smtplib.SMTP(email_config.get(host_key), email_config.get(port_key))
+      smtpObj.ehlo()
+      smtpObj.starttls()
+      smtpObj.ehlo()
+      smtpObj.login(
+        email_config.get(user_key),
+        email_config.get(pass_key))
+      smtpObj.sendmail(
+        sender, [receiver], email_message)
+      time.sleep(10)
+      smtpObj.quit()
+  except Exception as e:
+    raise ValueError(f"Failed to send mail. Error {e}")
+
+
+def generate_email_body(
+      project_igf_id: str,
+      flowcell_id: str,
+      seqrun_date: str,
+      template_path: str,
+      dbconfig: str,
+      default_user: str = 'igf@imperial.ac.uk',
+      send_email_to_user: bool = False) \
+        -> Tuple[str, str]:
+  try:
+    dbparams = read_dbconf_json(dbconfig)
+    pa = ProjectAdaptor(**dbparams)
+    pa.start_session()
+    user_info = pa.get_project_user_info(project_igf_id=project_igf_id)
+    pa.close_session()
+    user_info = user_info[user_info['data_authority']=='T']
+    user_info = user_info.to_dict(orient='records')
+    if len(user_info) == 0:
+      raise ValueError(
+        f'No user found for project {project_igf_id}')
+    user_info = user_info[0]
+    user_name = user_info['name']
+    login_name = user_info['username']
+    user_email = user_info['email_id']
+    user_category = user_info['category']
+    hpcUser = False
+    if user_category=='HPC_USER':
+      hpcUser = True
+    temp_dir = get_temp_dir()
+    output_file = \
+      os.path.join(temp_dir, 'email.txt')
+    _create_output_from_jinja_template(
+      template_file=template_path,
+      output_file=output_file,
+      autoescape_list=['xml', 'html'],
+      data=dict(
+        customerEmail=user_email,
+        projectName=project_igf_id,
+        customerName=user_name,
+        flowcellId=flowcell_id,
+        projectRunDate=seqrun_date,
+        customerUsername=login_name,
+        hpcUser=hpcUser,
+        send_email_to_user=send_email_to_user))
+    if send_email_to_user:
+      target_email = user_email
+    else:
+      target_email = default_user
+    return output_file, target_email
+  except:
+    raise
+
+
+def send_email_to_user_for_project_func(**context):
+  try:
+    project_index = \
+      context['params'].\
+      get("project_index")
+    formatted_samplesheets_list = \
+      context['params'].\
+      get("formatted_samplesheets")
+    seqrun_igf_id = \
+      context['params'].\
+      get("seqrun_igf_id")
+    send_email_to_user = \
+      context['params'].\
+      get("send_email_to_user", False)
+    ## get project, lane and ig info
+    filt_df_list = \
+      get_target_rows_from_formatted_samplesheet_data(
+        formatted_samplesheets=formatted_samplesheets_list,
+        project_index=project_index)
+    filt_df = pd.DataFrame(filt_df_list)
+    project_igf_id = \
+      filt_df[FORMATTED_SAMPLESHEET_PROJECT_COLUMN].\
+      values.tolist()[0]
+    ## get seqrun date
+    seqrun_date = \
+      get_seqrun_date_from_igf_id(seqrun_igf_id)
+    ## get flowcell ids
+    _, flowcell_id  = \
+      get_platform_name_and_flowcell_id_for_seqrun(
+        seqrun_igf_id=seqrun_igf_id,
+        db_config_file=DATABASE_CONFIG_FILE)
+    ## build email txt
+    email_text_file, receiver = \
+      generate_email_body(
+        project_igf_id=project_igf_id,
+        flowcell_id=flowcell_id,
+        seqrun_date=seqrun_date,
+        template_path=EMAIL_TEMPLATE,
+        dbconfig=DATABASE_CONFIG_FILE,
+        default_user=DEFAULT_EMAIL_USER,
+        send_email_to_user=send_email_to_user)
+    ## send email
+    send_email_via_smtp(
+      sender=DEFAULT_EMAIL_USER,
+      receiver=receiver,
+      email_config_json=EMAIL_CONFIG,
+      email_text_file=email_text_file)
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
 
 def get_target_rows_from_formatted_samplesheet_data(
       formatted_samplesheets: list,

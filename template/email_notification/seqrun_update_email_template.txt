@@ -1,0 +1,46 @@
+To: {% if send_email_to_user %}{{ customerEmail }}{% else %}igf@imperial.ac.uk{% endif %}
+Cc: igf@imperial.ac.uk
+Subject: {{ projectName }} - Sequencing data available for download
+From: igf@imperial.ac.uk
+MIME-Version: 1.0
+Content-Type: text/plain
+
+Dear {{ customerName }}, {% if not send_email_to_user %}EMAIL FOR {{ customerEmail }}{% endif %}
+
+We would like to update you that the fastq files from a recent sequencing run "{{ flowcellId }}" is now available for your project {{ projectName }}.
+
+Data access:
+  - Check the "Data Access" section from our help page for a list of available methods for data transfer
+      https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html
+  - We are changing our default process for data distribution and currently support only these three options:
+    - Imperial College's RDS storage
+    - Globus data share
+    - Basespace share
+  Please check our help page for further instructions and send us required information for data share (within 30 DAYS from the date of this e-mail).
+
+QC Report pages:
+  - Project home:
+      http://eliot.med.ic.ac.uk/report/project/{{ projectName }}
+  - Flowcell home:
+      http://eliot.med.ic.ac.uk/report/project/{{ projectName }}/{{ projectRunDate }}/{{ flowcellId }}
+  - Login information (for QC page):
+      User Name: {{ customerUsername }}
+      {% if hpcUser %}Password: Your account password for Imperial College{% else %}Password: Your IGF account password (sent to you via a separate email){% endif %}
+
+You can refer to the "samplesheet.csv" in the "Reports" dir for mapping facility sample ids to the original sample names.
+
+Subscribe to IGF mailing list for updates and announcements:
+https://mailman.ic.ac.uk/mailman/listinfo/igf-users
+
+Kind regards
+Imperial BRC Genomics Facility
+
+Imperial College London
+Burlington Danes Building
+Hammersmith Hospital Campus
+Du Cane Road
+London, W12 0NN
+United Kingdom
+phone +44 (0)20 7594 9107
+Twitter https://twitter.com/ImperialGF
+www.imperial.ac.uk/genomicsfacility
