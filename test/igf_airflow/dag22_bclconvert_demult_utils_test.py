@@ -49,6 +49,9 @@ from igf_airflow.utils.dag22_bclconvert_demult_utils import get_data_for_sample_
 from igf_airflow.utils.dag22_bclconvert_demult_utils import get_run_id_for_samples_flowcell_and_lane
 from igf_airflow.utils.dag22_bclconvert_demult_utils import get_files_for_collection_ids
 from igf_airflow.utils.dag22_bclconvert_demult_utils import _build_run_qc_page
+from igf_airflow.utils.dag22_bclconvert_demult_utils import copy_collection_file_to_globus_for_ig
+from igf_airflow.utils.dag22_bclconvert_demult_utils import copy_fastqs_for_sample_to_globus_dir
+from igf_airflow.utils.dag22_bclconvert_demult_utils import generate_email_body
 
 class Dag22_bclconvert_demult_utils_testA(unittest.TestCase):
   def setUp(self):
@@ -1356,12 +1359,14 @@ class Dag22_bclconvert_demult_utils_testL(unittest.TestCase):
       data=data,
       calculate_file_size_and_md5=False)
     base.close_session()
+    self.globus_dir = get_temp_dir()
 
   def tearDown(self):
     remove_dir(self.temp_dir)
     Base.metadata.drop_all(self.engine)
     if os.path.exists(self.dbname):
       os.remove(self.dbname)
+    remove_dir(self.globus_dir)
 
   def test_get_run_id_for_samples_flowcell_and_lane(self):
     run_id_dict = \
@@ -1570,6 +1575,157 @@ class Dag22_bclconvert_demult_utils_testL(unittest.TestCase):
     self.assertEqual(len(lane_df.index), 1)
     self.assertEqual(lane_df['Index_group'].values[0], '8_10X')
 
+
+class Dag22_bclconvert_demult_utils_testL(unittest.TestCase):
+  def setUp(self):
+    self.data_dir = get_temp_dir()
+    self.globus_dir = get_temp_dir()
+    self.dbconfig = 'data/dbconfig.json'
+    with open(self.dbconfig, 'r') as json_data:
+      dbparam = json.load(json_data)
+    base = BaseAdaptor(**dbparam)
+    self.engine = base.engine
+    self.dbname = dbparam['dbname']
+    Base.metadata.create_all(self.engine)
+    self.session_class = base.session_class
+    base.start_session()
+    # platform
+    platform_data = [{
+      "platform_igf_id" : "M00001",
+      "model_name" : "MISEQ",
+      "vendor_name" : "ILLUMINA",
+      "software_name" : "RTA",
+      "software_version" : "RTA1.18.54"}]
+    flowcell_rule_data = [{
+      "platform_igf_id" : "M00001",
+      "flowcell_type" : "MISEQ",
+      "index_1" : "NO_CHANGE",
+      "index_2" : "NO_CHANGE"}]
+    pl = \
+      PlatformAdaptor(**{'session' : base.session})
+    pl.store_platform_data(
+      data=platform_data)
+    pl.store_flowcell_barcode_rule(
+      data=flowcell_rule_data)
+    # seqrun
+    seqrun_data = [{
+      'seqrun_igf_id' : 'SEQ0001',
+      'flowcell_id' : '000000000-D0YLK',
+      'platform_igf_id' : 'M00001',
+      'flowcell' : 'MISEQ'}]
+    sra = \
+      SeqrunAdaptor(**{'session' : base.session})
+    sra.store_seqrun_and_attribute_data(
+      data=seqrun_data)
+    # project sample experiment and run
+    project_data = [{
+      'project_igf_id':'IGFQ001'}]
+    pa = ProjectAdaptor(**{'session' : base.session})
+    pa.store_project_and_attribute_data(
+      data=project_data)
+    sample_data = [{
+      'sample_igf_id' : 'IGF1', 'project_igf_id' : 'IGFQ001'},{
+      'sample_igf_id' : 'IGF2', 'project_igf_id' : 'IGFQ001'},{
+      'sample_igf_id' : 'IGF3', 'project_igf_id' : 'IGFQ001'}]
+    sa = \
+      SampleAdaptor(**{'session' : base.session})
+    sa.store_sample_and_attribute_data(
+      data=sample_data)
+    experiment_data = [{
+      'experiment_igf_id' : 'IGF1_MISEQ',
+      'project_igf_id' : 'IGFQ001',
+      'library_name' : 'IGF1',
+      'platform_name': 'MISEQ',
+      'sample_igf_id' : 'IGF1'}, {
+      'experiment_igf_id' : 'IGF2_MISEQ',
+      'project_igf_id' : 'IGFQ001',
+      'library_name' : 'IGF2',
+      'platform_name': 'MISEQ',
+      'sample_igf_id' : 'IGF2'}]
+    ea = \
+      ExperimentAdaptor(**{'session' : base.session})
+    ea.store_project_and_attribute_data(
+      data=experiment_data)
+    run_data = [{
+      'run_igf_id' : 'IGF1_MISEQ_000000000-D0YLK_1',
+      'experiment_igf_id' : 'IGF1_MISEQ',
+      'seqrun_igf_id' : 'SEQ0001',
+      'lane_number' : '1',
+      'R1_READ_COUNT' : 1000}, {
+      'run_igf_id' : 'IGF2_MISEQ_000000000-D0YLK_1',
+      'experiment_igf_id' : 'IGF2_MISEQ',
+      'seqrun_igf_id' : 'SEQ0001',
+      'lane_number' : '1',
+      'R1_READ_COUNT' : 1000}]
+    ra = \
+      RunAdaptor(**{'session':base.session})
+    ra.store_run_and_attribute_data(
+      data=run_data)
+    # file collection
+    files = [
+      os.path.join(self.data_dir, 'IGF1_S1_L001_R1_001.fastq.gz'),
+      os.path.join(self.data_dir, 'IGF1_S1_L001_R2_001.fastq.gz'),
+      os.path.join(self.data_dir, 'IGF2_S2_L001_R1_001.fastq.gz'),
+      os.path.join(self.data_dir, 'IGF2_S2_L001_R2_001.fastq.gz')]
+    for f in files:
+      with open(f , 'w') as fp:
+        fp.write('A')
+    data = [{
+      'name' : 'IGF1_MISEQ_000000000-D0YLK_1',
+      'type' : 'demultiplexed_fastq',
+      'table' : 'run',
+      'file_path' : os.path.join(self.data_dir, 'IGF1_S1_L001_R1_001.fastq.gz'),
+      'location' : 'HPC_PROJECT'}, {
+      'name' : 'IGF1_MISEQ_000000000-D0YLK_1',
+      'type' : 'demultiplexed_fastq',
+      'table' : 'run',
+      'file_path' : os.path.join(self.data_dir, 'IGF1_S1_L001_R2_001.fastq.gz'),
+      'location' : 'HPC_PROJECT'}, {
+      'name' : 'IGF2_MISEQ_000000000-D0YLK_1',
+      'type' : 'demultiplexed_fastq',
+      'table' : 'run',
+      'file_path' : os.path.join(self.data_dir, 'IGF2_S2_L001_R1_001.fastq.gz'),
+      'location' : 'HPC_PROJECT'}, {
+      'name' : 'IGF2_MISEQ_000000000-D0YLK_1',
+      'type' : 'demultiplexed_fastq',
+      'table' : 'run',
+      'file_path' : os.path.join(self.data_dir, 'IGF2_S2_L001_R2_001.fastq.gz'),
+      'location' : 'HPC_PROJECT'}]
+    ca = \
+      CollectionAdaptor(**{'session':base.session})
+    ca.load_file_and_create_collection(
+      data=data,
+      calculate_file_size_and_md5=False)
+
+  def tearDown(self):
+    remove_dir(self.data_dir)
+    remove_dir(self.globus_dir)
+    Base.metadata.drop_all(self.engine)
+    if os.path.exists(self.dbname):
+      os.remove(self.dbname)
+
+  def test_copy_fastqs_for_sample_to_globus_dir(self):
+    copy_fastqs_for_sample_to_globus_dir(
+      sample_id_list=['IGF1',],
+      seqrun_igf_id='SEQ0001',
+      lane_number=1,
+      globus_dir_for_index_group=self.globus_dir,
+      fastq_collection_type='demultiplexed_fastq',
+      database_config_file=self.dbconfig,
+      active_status='ACTIVE',
+      cleanup_globus_dir=True)
+    self.assertTrue(
+      os.path.exists(
+        os.path.join(
+          self.globus_dir,
+          'IGF1',
+          'IGF1_S1_L001_R1_001.fastq.gz')))
+    self.assertFalse(
+      os.path.exists(
+        os.path.join(
+          self.globus_dir,
+          'IGF2',
+          'IGF2_S2_L001_R1_001.fastq.gz')))
 
 if __name__=='__main__':
   unittest.main()

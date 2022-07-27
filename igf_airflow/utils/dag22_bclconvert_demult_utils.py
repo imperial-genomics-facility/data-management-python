@@ -3269,7 +3269,7 @@ def copy_fastqs_for_sample_to_globus_dir(
         join(Sample, Sample.sample_id==Experiment.sample_id).\
         filter(Sample.sample_igf_id.in_(sample_id_list)).\
         filter(Seqrun.seqrun_igf_id==seqrun_igf_id).\
-        filter(Collection.collection_type==fastq_collection_type).\
+        filter(Collection.type==fastq_collection_type).\
         filter(Run.lane_number==lane_number).\
         filter(Run.status==active_status).\
         filter(Experiment.status==active_status).\
@@ -3286,7 +3286,7 @@ def copy_fastqs_for_sample_to_globus_dir(
     ## copy fastq files to globus dir
     for sample_igf_id in sample_id_list:
       fastq_list = \
-        records[records["sample_igf_id"]==sample_igf_id].\
+        records[records["sample_igf_id"]==sample_igf_id]['file_path'].\
         values.tolist()
       if len(fastq_list) == 0:
         raise ValueError(
