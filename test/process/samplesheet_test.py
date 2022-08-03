@@ -417,6 +417,7 @@ class SampleSheet_format_v2_test1(unittest.TestCase):
       self.samplesheet_data._header_data
     self.assertTrue('BCLConvert_Settings' in header_data)
     self.assertTrue('OverrideCycles,Y101;I6N2;U28' in header_data['BCLConvert_Settings'])
+    self.assertTrue('TrimUMI,0' in header_data['BCLConvert_Settings'])
 
 if __name__ == '__main__':
   unittest.main()

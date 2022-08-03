@@ -532,8 +532,11 @@ class SampleSheet:
         'MinimumTrimmedReadLength': min_trimmed_length,
         'FastqCompressionFormat': 'gzip',
         'MaskShortReads': mask_short_read,
-        'TrimUMI': trim_umi,
         'OverrideCycles': bases_mask}
+      ## trim umi is only valid if U is present in the bases mask
+      if 'U' in bases_mask:
+        bclconv_settings.\
+          update({'TrimUMI': trim_umi})
       settings_section = None
       if self.samplesheet_version == 'v1':
         settings_section = 'Settings'
