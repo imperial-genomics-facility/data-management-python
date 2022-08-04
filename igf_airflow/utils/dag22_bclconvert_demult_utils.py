@@ -3525,9 +3525,6 @@ def prepare_globus_copy_func(**context):
     target_dir = \
       os.path.join(
         globus_dir,
-        'fastq',
-        project_name,
-        seqrun_date,
         flowcell_id,
         str(lane_id),
         index_group)
