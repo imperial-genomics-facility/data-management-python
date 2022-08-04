@@ -3394,6 +3394,11 @@ def get_files_and_copy_to_globus_func(**context):
     seqrun_igf_id = \
       context['params'].\
       get("seqrun_igf_id")
+    ## get flowcell ids
+    _, flowcell_id  = \
+      get_platform_name_and_flowcell_id_for_seqrun(
+        seqrun_igf_id=seqrun_igf_id,
+        db_config_file=DATABASE_CONFIG_FILE)
     ## fetch target globus dir
     target_dir = \
       ti.xcom_pull(
@@ -3448,7 +3453,7 @@ def get_files_and_copy_to_globus_func(**context):
     copy_collection_file_to_globus_for_ig(
       database_config_file=DATABASE_CONFIG_FILE,
       collection_type=DEMULTIPLEXING_REPORT_DIR_TYPE,
-      collection_name=f'{project_name}_{lane_id}_{index_group}',
+      collection_name=f'{project_name}_{flowcell_id}_{lane_id}_{index_group}',
       globus_target_dir=target_dir,
       cleanup_globus_dir=True)
   except Exception as e:
