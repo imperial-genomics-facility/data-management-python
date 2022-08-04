@@ -3369,7 +3369,7 @@ def get_files_and_copy_to_globus_func(**context):
     ti = context['ti']
     target_dir_key = \
       context['params'].\
-      get("target_dir_key", "target_dir")
+      get("target_dir_key", "globus_target_dir")
     target_dir_task = \
       context['params'].\
       get("target_dir_task")
