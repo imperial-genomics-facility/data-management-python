@@ -3378,7 +3378,7 @@ def get_files_and_copy_to_globus_func(**context):
       get("sample_groups_task")
     sample_groups_key = \
       context['params'].\
-      get("sample_groups_key", "sample_groups")
+      get("sample_groups_key", "sample_group")
     project_index = \
       context['params'].\
       get("project_index")
