@@ -4732,12 +4732,6 @@ def setup_globus_transfer_for_project_func(**context):
     formatted_samplesheets_list = \
       context['params'].\
       get('formatted_samplesheets')
-    # project_data_xcom_key = \
-    #   context['params'].\
-    #   get('project_data_xcom_key', 'formatted_samplesheets')
-    # project_data_xcom_task = \
-    #   context['params'].\
-    #   get('project_data_xcom_task', 'format_and_split_samplesheet')
     project_index_column = \
       context['params'].\
       get('project_index_column', 'project_index')
@@ -4747,16 +4741,6 @@ def setup_globus_transfer_for_project_func(**context):
     project_column = \
       context['params'].\
       get('project_column', 'project')
-    ## get serun id
-    # dag_run = context.get('dag_run')
-    # seqrun_id = ''
-    # if dag_run is not None and \
-    #    dag_run.conf is not None and \
-    #    dag_run.conf.get('seqrun_id') is not None:
-    #   seqrun_id = \
-    #     dag_run.conf.get('seqrun_id')
-    # else:
-    #   raise IOError("Failed to get seqrun_id from dag_run")
     ## get flowcell id from db
     _, flowcell_id = \
       get_platform_name_and_flowcell_id_for_seqrun(
@@ -4767,10 +4751,6 @@ def setup_globus_transfer_for_project_func(**context):
       get_seqrun_date_from_igf_id(
         seqrun_igf_id=seqrun_igf_id)
     ## fetch project name
-    # formatted_samplesheets_list = \
-    #   ti.xcom_pull(
-    #     task_ids=project_data_xcom_task,
-    #     key=project_data_xcom_key)
     df = \
       pd.DataFrame(
         formatted_samplesheets_list)
