@@ -140,6 +140,11 @@ EMAIL_CONFIG = Variable.get("email_config", default_var=None)
 EMAIL_TEMPLATE = Variable.get("seqrun_email_template", default_var=None)
 DEFAULT_EMAIL_USER = Variable.get("default_email_user", default_var=None)
 
+
+## GLOBUS
+GLOBUS_ROOT_DIR = Variable.get("globus_root_dir", default_var=None)
+
+
 log = logging.getLogger(__name__)
 
 
@@ -4779,12 +4784,15 @@ def setup_globus_transfer_for_project_func(**context):
     project_name = \
       project_df[project_column].values.tolist()[0]
     ## temp_dir / project name _ run_date _ flowcell_id
-    globus_root_dir = \
-      get_temp_dir(use_ephemeral_space=True)
     globus_project_dir = \
       os.path.join(
-        globus_root_dir,
+        GLOBUS_ROOT_DIR,
+        project_name,
+        'fastq',
         f"{project_name}_{flowcell_id}_{seqrun_date}")
+    os.makedirs(
+      globus_project_dir,
+      exist_ok=True)
     ti.xcom_push(
       key=globus_dir_xcom_key,
       value=globus_project_dir)
