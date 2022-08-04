@@ -3529,7 +3529,7 @@ def prepare_globus_copy_func(**context):
         project_name,
         seqrun_date,
         flowcell_id,
-        lane_id,
+        str(lane_id),
         index_group)
     ti.xcom_push(
       key=globus_target_dir_key,
