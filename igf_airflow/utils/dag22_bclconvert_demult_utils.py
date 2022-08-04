@@ -850,6 +850,7 @@ def build_qc_page_for_project_func(**context):
       os.chmod(
         temp_seqrun_info,
         stat.S_IRUSR |
+        stat.S_IWUSR |
         stat.S_IRGRP |
         stat.S_IROTH)
       copy_remote_file(
@@ -861,6 +862,7 @@ def build_qc_page_for_project_func(**context):
       os.chmod(
         temp_read_count_csv_output,
         stat.S_IRUSR |
+        stat.S_IWUSR |
         stat.S_IRGRP |
         stat.S_IROTH)
       copy_remote_file(
@@ -872,6 +874,7 @@ def build_qc_page_for_project_func(**context):
       os.chmod(
         temp_read_count_output,
         stat.S_IRUSR |
+        stat.S_IWUSR |
         stat.S_IRGRP |
         stat.S_IROTH)
       copy_remote_file(
@@ -896,6 +899,7 @@ def build_qc_page_for_project_func(**context):
       os.chmod(
         temp_status_output,
         stat.S_IRUSR |
+        stat.S_IWUSR |
         stat.S_IRGRP |
         stat.S_IROTH)
       copy_remote_file(

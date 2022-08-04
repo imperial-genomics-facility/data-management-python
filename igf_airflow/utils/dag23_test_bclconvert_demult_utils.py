@@ -1,4 +1,5 @@
 import os
+import stat
 import json
 import logging
 import pandas as pd
@@ -371,6 +372,12 @@ def generate_report_func(**context):
       os.path.join(
         temp_dir,
         os.path.basename(report_file))
+    ## fix for file permission on hpc
+    os.chmod(
+      report_file,
+      stat.S_IRUSR |
+      stat.S_IWUSR |
+      stat.S_IRGRP)
     copy_local_file(
       report_file,
       report_dest_path)
