@@ -381,6 +381,13 @@ def generate_report_func(**context):
     copy_local_file(
       report_file,
       report_dest_path)
+    os.chmod(
+      os.path.dirname(report_dest_path),
+      stat.S_IRUSR |
+      stat.S_IWUSR |
+      stat.S_IXUSR |
+      stat.S_IRGRP |
+      stat.S_IXGRP)
     # add report to xcom
     ti.xcom_push(
       key=demult_report_key,
