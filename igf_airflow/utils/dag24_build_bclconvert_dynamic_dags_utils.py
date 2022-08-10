@@ -347,7 +347,7 @@ def generate_dynamic_dag_func(**context):
     ## get flowcell ids
     _, flowcell_id  = \
       get_platform_name_and_flowcell_id_for_seqrun(
-        seqrun_igf_id=samplesheet_id,
+        seqrun_igf_id=seqrun_id,
         db_config_file=DATABASE_CONFIG_FILE)
     ## get dynamic dag
     temp_dag_dir = \
