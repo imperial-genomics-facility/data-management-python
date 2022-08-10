@@ -357,7 +357,7 @@ def generate_dynamic_dag_func(**context):
       os.path.join(temp_dag_dir, f"{dag_id}.py")
     _build_dynamic_demult_dag(
       template_file=DYNAMIC_DEMULT_DAG_TEMPLATE,
-      output_file='',
+      output_file=output_file,
       formatted_samplesheets=formatted_samplesheets,
       sample_groups=sample_groups,
       seqrun_igf_id=seqrun_id)
