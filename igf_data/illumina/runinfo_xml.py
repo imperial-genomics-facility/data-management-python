@@ -59,7 +59,7 @@ class RunInfo_xml:
 
   def get_flowcell_name(self):
     '''
-    A mthod for accessing flowcell name from the runinfo xml file
+    A method for accessing flowcell name from the runinfo xml file
     '''
     try:
       flowcell = None
