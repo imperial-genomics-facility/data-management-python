@@ -4,9 +4,13 @@ def get_tests():
   return full_suite()
 
 def full_suite():
-  from .process.basesmask_test import BasesMask_testA,BasesMask_testB,BasesMask_testC,BasesMask_testD
+  from .process.basesmask_test import BasesMask_testA
+  from .process.basesmask_test import BasesMask_testB
+  from .process.basesmask_test import BasesMask_testC
+  from .process.basesmask_test import BasesMask_testD
   from .process.checksequenceIndexbarcodes_test import CheckSequenceIndexBarcodes_test1
-  from .process.collect_seqrun_fastq_to_db_test import Collect_fastq_test1,Collect_fastq_test_sc1
+  from .process.collect_seqrun_fastq_to_db_test import Collect_fastq_test1
+  from .process.collect_seqrun_fastq_to_db_test import Collect_fastq_test_sc1
   from .dbadaptor.collectionadaptor_test import CollectionAdaptor_test1
   from .dbadaptor.collectionadaptor_test import CollectionAdaptor_test2
   from .dbadaptor.collectionadaptor_test import CollectionAdaptor_test3
@@ -16,29 +20,40 @@ def full_suite():
   from .process.moveBclFilesForDemultiplexing_test import MiSeqRunInfo
   from .process.moveBclFilesForDemultiplexing_test import Hiseq4000RunInfo as Hiseq4000RunInfo_moveBcl
   from .dbadaptor.pipelineadaptor_test import Pipelineadaptor_test1
-  from .dbadaptor.pipelineadaptor_test import Pipelineadaptor_test2,Pipelineadaptor_test3,Pipelineadaptor_test4
+  from .dbadaptor.pipelineadaptor_test import Pipelineadaptor_test2
+  from .dbadaptor.pipelineadaptor_test import Pipelineadaptor_test3
+  from .dbadaptor.pipelineadaptor_test import Pipelineadaptor_test4
   from .utils.pipelineutils_test import Pipelineutils_test1,Pipelineutils_test2
   from .utils.platformutils_test import Platformutils_test1,Platformutils_test2
   from .dbadaptor.runadaptor_test import RunAdaptor_test1
   from .process.runinfo_xml_test import Hiseq4000RunInfo as Hiseq4000RunInfo_runinfo_xml
   from .process.runparameters_xml_test import Hiseq4000RunParam
-  from .process.samplesheet_test import Hiseq4000SampleSheet, TestValidateSampleSheet
+  from .process.samplesheet_test import Hiseq4000SampleSheet
+  from .process.samplesheet_test import TestValidateSampleSheet
   from .process.samplesheet_test import SampleSheet_format_v2_test1
-  from .process.samplesheet_test import TestValidateSampleSheet1, TestValidateSampleSheet2
+  from .process.samplesheet_test import TestValidateSampleSheet1
+  from .process.samplesheet_test import TestValidateSampleSheet2
   from .process.find_and_register_new_project_data_test import Find_and_register_project_data1
   from .dbadaptor.useradaptor_test import Useradaptor_test1
-  from .dbadaptor.sampleadaptor_test import Sampleadaptor_test1,Sampleadaptor_test2,Sampleadaptor_test3,Sampleadaptor_test4
+  from .dbadaptor.sampleadaptor_test import Sampleadaptor_test1
+  from .dbadaptor.sampleadaptor_test import Sampleadaptor_test2
+  from .dbadaptor.sampleadaptor_test import Sampleadaptor_test3
+  from .dbadaptor.sampleadaptor_test import Sampleadaptor_test4
   from .process.processsinglecellsamplesheet_test import ProcessSingleCellSamplesheet_testA
   from .process.processsinglecellsamplesheet_test import ProcessSingleCellSamplesheet_testB
   from .process.processsinglecellsamplesheet_test import ProcessSingleCellDualIndexSamplesheetA
-  from .process.mergesinglecellfastq_test import MergeSingleCellFastq_testA, MergeSingleCellFastq_testB
-  from .utils.project_data_display_utils_test import Convert_project_data_gviz_data1,Add_seqrun_path_info1
-  from .utils.projectutils_test import Projectutils_test1,Projectutils_test2
+  from .process.mergesinglecellfastq_test import MergeSingleCellFastq_testA
+  from .process.mergesinglecellfastq_test import MergeSingleCellFastq_testB
+  from .utils.project_data_display_utils_test import Convert_project_data_gviz_data1
+  from .utils.project_data_display_utils_test import Add_seqrun_path_info1
+  from .utils.projectutils_test import Projectutils_test1
+  #from .utils.projectutils_test import Projectutils_test2
   from .dbadaptor.fileadaptor_test import Fileadaptor_test1
   from .process.reset_samplesheet_md5_test import Reset_samplesheet_md5_test1
   from .process.modify_pipeline_seed_test import Modify_pipeline_seed_test1
   from .process.experiment_metadata_updator_test import Experiment_metadata_updator_test
-  from .dbadaptor.projectadaptor_test import Projectadaptor_test1,Projectadaptor_test2
+  from .dbadaptor.projectadaptor_test import Projectadaptor_test1
+  from .dbadaptor.projectadaptor_test import Projectadaptor_test2
   from .utils.analysis_collection_utils_test import Analysis_collection_utils_test1
   from .utils.fileutils_test import Fileutils_test1
   from .utils.pipeseedfactory_utils_test import Pipeseedfactory_utils_test1
@@ -52,7 +67,9 @@ def full_suite():
   from .dbadaptor.platformadaptor_test import Platformadaptor_test1
   from .utils.metadata_validation_test import Validate_project_and_samplesheet_metadata_test1
   from .utils.metadata_validation_test import Validate_project_and_samplesheet_metadata_test2
-  from .utils.project_analysis_utils_test import Project_analysis_test1,Project_analysis_test2,Project_analysis_test3
+  from .utils.project_analysis_utils_test import Project_analysis_test1
+  from .utils.project_analysis_utils_test import Project_analysis_test2
+  from .utils.project_analysis_utils_test import Project_analysis_test3
   from .process.project_pooling_info_test import Project_pooling_info_test1
   from .utils.analysis_fastq_fetch_utils_test import Analysis_fastq_fetch_utils_test1
   from .utils.analysis_fastq_fetch_utils_test import Analysis_fastq_fetch_utils_test2
@@ -87,6 +104,7 @@ def full_suite():
   from .igf_airflow.dag22_bclconvert_demult_utils_test import Dag22_bclconvert_demult_utils_testJ
   from .igf_airflow.dag22_bclconvert_demult_utils_test import Dag22_bclconvert_demult_utils_testK
   from .igf_airflow.dag22_bclconvert_demult_utils_test import Dag22_bclconvert_demult_utils_testL
+  from .igf_airflow.dag22_bclconvert_demult_utils_test import Dag22_bclconvert_demult_utils_testM
   from .utils.cellranger_count_utils_test import Cellranger_count_utils_testA
   from .dbadaptor.analysisadaptor_test import Analysisadaptor_test1
   from .dbadaptor.seqrunadaptor_test import SeqrunAdaptor_test1
@@ -146,7 +164,7 @@ def full_suite():
         Convert_project_data_gviz_data1,
         Add_seqrun_path_info1,
         Projectutils_test1,
-        Projectutils_test2,
+        #Projectutils_test2,
         Fileadaptor_test1,
         Reset_samplesheet_md5_test1,
         Modify_pipeline_seed_test1,
@@ -215,6 +233,7 @@ def full_suite():
         Dag22_bclconvert_demult_utils_testJ,
         Dag22_bclconvert_demult_utils_testK,
         Dag22_bclconvert_demult_utils_testL,
+        Dag22_bclconvert_demult_utils_testM,
         Dag23_test_bclconvert_demult_utils_testA
       ]
     ])

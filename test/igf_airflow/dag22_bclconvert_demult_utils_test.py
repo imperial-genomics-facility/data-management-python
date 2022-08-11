@@ -13,6 +13,7 @@ from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
 from igf_data.igfdb.sampleadaptor import SampleAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
+from igf_data.igfdb.useradaptor import UserAdaptor
 from igf_data.igfdb.experimentadaptor import ExperimentAdaptor
 from igf_data.igfdb.runadaptor import RunAdaptor
 from igf_data.igfdb.useradaptor import UserAdaptor
@@ -1726,6 +1727,83 @@ class Dag22_bclconvert_demult_utils_testL(unittest.TestCase):
           self.globus_dir,
           'IGF2',
           'IGF2_S2_L001_R1_001.fastq.gz')))
+
+class Dag22_bclconvert_demult_utils_testM(unittest.TestCase):
+  def setUp(self):
+    self.template_file = 'template/email_notification/seqrun_update_email_template.txt'
+    self.dbconfig = 'data/dbconfig.json'
+    with open(self.dbconfig, 'r') as json_data:
+      dbparam = json.load(json_data)
+    base = BaseAdaptor(**dbparam)
+    self.engine = base.engine
+    self.dbname = dbparam['dbname']
+    Base.metadata.create_all(self.engine)
+    self.session_class = base.session_class
+    base.start_session()
+    # project sample experiment and run
+    project_data = [{
+      'project_igf_id':'IGFQ001'}]
+    pa = ProjectAdaptor(**{'session' : base.session})
+    pa.store_project_and_attribute_data(
+      data=project_data)
+    user_data = [{
+      'name':'New User',
+      'email_id': 'new.user@email.com',
+      'username': 'nuser'
+    }, {
+      'name': 'Default user',
+      'email_id': 'default.user@email.com',
+      'username': 'duser'
+    }]
+    ua = UserAdaptor(**{'session' : base.session})
+    ua.store_user_data(user_data)
+    project_user_data=[{
+      'project_igf_id': 'IGFQ001',
+      'email_id': 'new.user@email.com',
+      'data_authority':True
+    }, {
+      'project_igf_id': 'IGFQ001',
+      'email_id': 'default.user@email.com'}]
+    pa.assign_user_to_project(data=project_user_data)
+
+  def tearDown(self):
+    Base.metadata.drop_all(self.engine)
+    os.remove(self.dbname)
+
+  def test_generate_email_body(self):
+    output_file, target_email = \
+      generate_email_body(
+      project_igf_id='IGFQ001',
+      flowcell_id='FLOW0001',
+      seqrun_date='2017-01-01',
+      template_path=self.template_file,
+      dbconfig=self.dbconfig,
+      default_user='d.user@email.com',
+      send_email_to_user=False)
+    self.assertTrue(os.path.exists(output_file))
+    self.assertEqual(target_email, 'd.user@email.com')
+    with open(output_file, 'r') as fp:
+      email_data = fp.readlines()
+    email_data = [
+      line.strip() for line in email_data if line.strip()]
+    self.assertTrue('To: d.user@email.com' in email_data)
+    output_file, target_email = \
+      generate_email_body(
+      project_igf_id='IGFQ001',
+      flowcell_id='FLOW0001',
+      seqrun_date='2017-01-01',
+      template_path=self.template_file,
+      dbconfig=self.dbconfig,
+      default_user='d.user@email.com',
+      send_email_to_user=True)
+    self.assertTrue(os.path.exists(output_file))
+    self.assertEqual(target_email, 'new.user@email.com')
+    with open(output_file, 'r') as fp:
+      email_data = fp.readlines()
+    email_data = [
+      line.strip() for line in email_data if line.strip()]
+    self.assertTrue('To: new.user@email.com' in email_data)
+
 
 if __name__=='__main__':
   unittest.main()

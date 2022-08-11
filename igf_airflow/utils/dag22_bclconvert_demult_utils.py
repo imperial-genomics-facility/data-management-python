@@ -228,6 +228,7 @@ def generate_email_body(
       autoescape_list=['xml', 'html'],
       data=dict(
         customerEmail=user_email,
+        defaultUser=default_user,
         projectName=project_igf_id,
         customerName=user_name,
         flowcellId=flowcell_id,

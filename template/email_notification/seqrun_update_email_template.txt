@@ -1,7 +1,7 @@
-To: {% if send_email_to_user %}{{ customerEmail }}{% else %}igf@imperial.ac.uk{% endif %}
-Cc: igf@imperial.ac.uk
+To: {% if send_email_to_user %}{{ customerEmail }}{% else %}{{ defaultUser }}{% endif %}
+Cc: {{ defaultUser }}
 Subject: {{ projectName }} - Sequencing data available for download
-From: igf@imperial.ac.uk
+From: {{ defaultUser }}
 MIME-Version: 1.0
 Content-Type: text/plain
 
