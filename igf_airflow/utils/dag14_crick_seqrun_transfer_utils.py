@@ -15,6 +15,7 @@ from igf_data.utils.fileutils import get_date_stamp
 from igf_data.utils.fileutils import list_remote_file_or_dirs
 from igf_data.utils.fileutils import copy_remote_file
 from igf_data.utils.fileutils import check_file_path
+from igf_data.illumina.runinfo_xml import RunInfo_xml
 from igf_data.utils.fileutils import get_date_stamp_for_file_name
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_airflow.logging.upload_log_msg import send_mentions_to_channels
@@ -322,14 +323,24 @@ def check_and_divide_run_for_remote_copy_func(**context):
               'Seqrun {0} already present on the rempote server {1}, path {2}, remove it before copy'.\
                 format(seqrun_id, SEQRUN_SERVER, REMOTE_SEQRUN_BASE_PATH))
     xcom_bcl_dict = dict()
-    for i in range(1, 9):
+    ## get lane count from RunInfo
+    run_info_xml = \
+      os.path.join(
+        seqrun_dir,
+        'RunInfo.xml')
+    check_file_path(run_info_xml)
+    run_info = RunInfo_xml(run_info_xml)
+    lane_counts = \
+      run_info.get_lane_count()
+    max_lanes = int(lane_counts) + 1
+    for i in range(1, max_lanes):
       local_bcl_path = \
         os.path.join(
           seqrun_dir,
           'Data',
           'Intensities',
           'BaseCalls',
-          'L00{0}'.format(i))
+          f'L00{i}')
       remote_bcl_path = \
         os.path.join(
           remote_seqrun_dir,
@@ -344,12 +355,29 @@ def check_and_divide_run_for_remote_copy_func(**context):
             'remote_bcl_path': remote_bcl_path}})
     additional_files = [
       'RunInfo.xml',
-      'runParameters.xml',
       'InterOp',
       'Logs',
       'Recipe',
       'RTAComplete.txt',
       'Data/Intensities/s.locs']
+    # for RunParameters.xml
+    runParameters_xml_name = 'runParameters.xml'
+    local_runParameters_xml_path = \
+      os.path.join(
+        seqrun_dir,
+        runParameters_xml_name)
+    if os.path.exists(local_runParameters_xml_path):
+      additional_files.\
+        append(runParameters_xml_name)
+    else:
+      runParameters_xml_name = 'RunParameters.xml'
+      local_runParameters_xml_path = \
+        os.path.join(
+          seqrun_dir,
+          runParameters_xml_name)
+      check_file_path(local_runParameters_xml_path)
+      additional_files.\
+        append(runParameters_xml_name)
     xcom_additional_files_dict = dict()
     for f in additional_files:
       local_file_path = \
@@ -375,7 +403,7 @@ def check_and_divide_run_for_remote_copy_func(**context):
       value=xcom_additional_files_dict)
     task_list = [
       'copy_bcl_to_remote_for_lane{0}'.format(i)
-        for i in range(1,9)]
+        for i in range(1, max_lanes)]
     task_list.\
       append('copy_additional_files')
     return task_list
