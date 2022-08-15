@@ -263,7 +263,8 @@ def copy_local_file(
       destination_path: str,
       cd_to_dest: bool = True,
       force: bool = False,
-      dirs_exist_ok: bool = True) \
+      dirs_exist_ok: bool = True,
+      new_dir_mode: int = 0o770) \
         -> None:
   '''
   A method for copy files to local disk
@@ -283,7 +284,7 @@ def copy_local_file(
       os.path.dirname(destination_path)
     os.makedirs(
       dir_path,
-      mode=0o770,
+      mode=new_dir_mode,
       exist_ok=dirs_exist_ok)
     current_dir = \
       os.getcwd()                                                               # present dir path
