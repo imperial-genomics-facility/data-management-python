@@ -1,5 +1,4 @@
-To: {% if send_email_to_user %}{{ customerEmail }}{% else %}{{ defaultUser }}{% endif %}
-Cc: {{ defaultUser }}
+To: {% if send_email_to_user %}{{ customerEmail }}; {{ defaultUser }}{% else %}{{ defaultUser }}{% endif %}
 Subject: {{ projectName }} - Sequencing data available for download
 From: {{ defaultUser }}
 MIME-Version: 1.0

@@ -1771,7 +1771,7 @@ class Dag22_bclconvert_demult_utils_testM(unittest.TestCase):
     os.remove(self.dbname)
 
   def test_generate_email_body(self):
-    output_file, target_email = \
+    output_file, receivers = \
       generate_email_body(
       project_igf_id='IGFQ001',
       flowcell_id='FLOW0001',
@@ -1781,13 +1781,14 @@ class Dag22_bclconvert_demult_utils_testM(unittest.TestCase):
       default_user='d.user@email.com',
       send_email_to_user=False)
     self.assertTrue(os.path.exists(output_file))
-    self.assertEqual(target_email, 'd.user@email.com')
+    self.assertTrue('d.user@email.com' in receivers)
+    self.assertFalse('new.user@email.com' in receivers)
     with open(output_file, 'r') as fp:
       email_data = fp.readlines()
     email_data = [
       line.strip() for line in email_data if line.strip()]
     self.assertTrue('To: d.user@email.com' in email_data)
-    output_file, target_email = \
+    output_file, receivers = \
       generate_email_body(
       project_igf_id='IGFQ001',
       flowcell_id='FLOW0001',
@@ -1797,12 +1798,13 @@ class Dag22_bclconvert_demult_utils_testM(unittest.TestCase):
       default_user='d.user@email.com',
       send_email_to_user=True)
     self.assertTrue(os.path.exists(output_file))
-    self.assertEqual(target_email, 'new.user@email.com')
+    self.assertTrue('new.user@email.com' in receivers)
+    self.assertTrue('d.user@email.com' in receivers)
     with open(output_file, 'r') as fp:
       email_data = fp.readlines()
     email_data = [
       line.strip() for line in email_data if line.strip()]
-    self.assertTrue('To: new.user@email.com' in email_data)
+    self.assertTrue('To: new.user@email.com; d.user@email.com' in email_data)
 
 
 if __name__=='__main__':

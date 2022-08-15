@@ -150,7 +150,7 @@ log = logging.getLogger(__name__)
 
 def send_email_via_smtp(
       sender: str,
-      receiver: str,
+      receivers: list,
       email_config_json: str,
       email_text_file: str,
       host_key: str = 'host',
@@ -184,7 +184,7 @@ def send_email_via_smtp(
         email_config.get(user_key),
         email_config.get(pass_key))
       smtpObj.sendmail(
-        sender, [receiver], email_message)
+        sender, receivers, email_message)
       time.sleep(10)
       smtpObj.quit()
   except Exception as e:
@@ -199,8 +199,9 @@ def generate_email_body(
       dbconfig: str,
       default_user: str = 'igf@imperial.ac.uk',
       send_email_to_user: bool = False) \
-        -> Tuple[str, str]:
+        -> Tuple[str, list]:
   try:
+    receivers = list()
     dbparams = read_dbconf_json(dbconfig)
     pa = ProjectAdaptor(**dbparams)
     pa.start_session()
@@ -237,10 +238,10 @@ def generate_email_body(
         hpcUser=hpcUser,
         send_email_to_user=send_email_to_user))
     if send_email_to_user:
-      target_email = user_email
+      receivers = [user_email, default_user]
     else:
-      target_email = default_user
-    return output_file, target_email
+      receivers = [default_user]
+    return output_file, receivers
   except:
     raise
 
@@ -277,7 +278,7 @@ def send_email_to_user_for_project_func(**context):
         seqrun_igf_id=seqrun_igf_id,
         db_config_file=DATABASE_CONFIG_FILE)
     ## build email txt
-    email_text_file, receiver = \
+    email_text_file, receivers = \
       generate_email_body(
         project_igf_id=project_igf_id,
         flowcell_id=flowcell_id,
@@ -289,7 +290,7 @@ def send_email_to_user_for_project_func(**context):
     ## send email
     send_email_via_smtp(
       sender=DEFAULT_EMAIL_USER,
-      receiver=receiver,
+      receivers=receivers,
       email_config_json=EMAIL_CONFIG,
       email_text_file=email_text_file)
   except Exception as e:
