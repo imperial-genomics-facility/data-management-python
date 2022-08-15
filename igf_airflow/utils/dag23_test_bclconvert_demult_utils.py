@@ -227,6 +227,13 @@ def copy_report_to_rds_func(**context):
       os.path.join(
         HPC_SEQRUN_REPORT_PATH,
         seqrun_id)
+    os.chmod(
+      seqrun_root_dir,
+      stat.S_IRUSR |
+      stat.S_IWUSR |
+      stat.S_IXUSR |
+      stat.S_IRGRP |
+      stat.S_IXGRP)
     for root, dirs, files in os.walk(seqrun_root_dir):
       for dir_name in dirs:
         dir_path = os.path.join(root, dir_name)
