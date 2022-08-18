@@ -1,4 +1,5 @@
 import pandas as pd
+from typing import List, Dict, Any, Tuple, Union, Optional
 from sqlalchemy.sql import column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.igfTables import Seqrun, Run, Platform, Seqrun_attribute, Seqrun_stats, Flowcell_barcode_rule
@@ -203,6 +204,29 @@ class SeqrunAdaptor(BaseAdaptor):
         self.rollback_session()
       raise ValueError(
               'Failed to store seqrun stats data, error: {0}'.format(e))
+
+
+  def get_flowcell_id_for_seqrun_id(
+        self,
+        seqrun_igf_id: str) \
+          -> Union[None, str]:
+    try:
+      query = \
+        self.session.\
+          query(Seqrun.flowcell_id).\
+          filter(Seqrun.seqrun_igf_id == seqrun_igf_id)
+      seqrun_record = \
+        self.fetch_records(
+          query=query,
+          output_mode='one_or_none')
+      if seqrun_record is None:
+        return None
+      else:
+        return seqrun_record[0]
+    except Exception as e:
+      raise ValueError(
+        f'Failed to get flowcell id for seqrun id, error: {e}')
+
 
   def check_seqrun_exists(self,seqrun_id):
     '''
