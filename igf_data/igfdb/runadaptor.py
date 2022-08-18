@@ -185,7 +185,6 @@ class RunAdaptor(BaseAdaptor):
       raise ValueError(
               'Failed to store run atributes, error: {0}'.format(e))
 
-
   def check_run_records_igf_id(
         self,run_igf_id,target_column_name='run_igf_id'):
     '''
@@ -458,3 +457,28 @@ class RunAdaptor(BaseAdaptor):
     except Exception as e:
       raise ValueError(
         f'Failed to get all run for seqrun id, error: {e}')
+
+  def delete_runs_from_db(
+        self,
+        run_igf_id_list: list,
+        autosave: bool = True) \
+          -> bool:
+    try:
+      if len(run_igf_id_list) == 0:
+        return False
+      else:
+        try:
+          self.session.\
+              query(Run).\
+              filter(Run.run_igf_id.in_(run_igf_id_list)).\
+              delete(synchronize_session=False)
+          if autosave:
+            self.commit_session()
+        except:
+          if autosave:
+            self.rollback_session()
+          raise
+        return True
+    except Exception as e:
+      raise ValueError(
+        f'Failed to delete run igfs from db, error: {e}')

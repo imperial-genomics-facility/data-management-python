@@ -182,5 +182,26 @@ class RunAdaptor_test1(unittest.TestCase):
     self.assertEqual(len(run_records_df.index), 2)
     ra.close_session()
 
+  def test_delete_runs_from_db(self):
+    ra = RunAdaptor(**{'session_class':self.session_class})
+    ra.start_session()
+    status = \
+      ra.delete_runs_from_db(
+        run_igf_id_list=['IGF00001_MISEQ_000000000-D0YLK_1',],
+        autosave=True)
+    self.assertTrue(status)
+    record = \
+      ra.session.query(Run.run_igf_id).\
+      filter(Run.run_igf_id=='IGF00001_MISEQ_000000000-D0YLK_1').\
+      one_or_none()
+    self.assertIsNone(record)
+    record = \
+      ra.session.query(Run.run_igf_id).\
+      filter(Run.run_igf_id=='IGF00001_MISEQ_000000000-D0YLK_2').\
+      one_or_none()
+    self.assertIsNotNone(record)
+    self.assertEqual(record.run_igf_id, 'IGF00001_MISEQ_000000000-D0YLK_2')
+    ra.close_session()
+
 if __name__=='__main__':
   unittest.main()
