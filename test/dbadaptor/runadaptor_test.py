@@ -174,6 +174,12 @@ class RunAdaptor_test1(unittest.TestCase):
     self.assertTrue('project_igf_id' in run_records_df.columns)
     self.assertEqual(len(run_records_df['project_igf_id'].drop_duplicates().values.tolist()), 1)
     self.assertEqual(run_records_df['project_igf_id'].drop_duplicates().values.tolist()[0], 'IGFP0001_test_22-8-2017_rna')
+    run_records_list = \
+      ra.get_all_run_for_seqrun_igf_id(
+        seqrun_igf_id='171003_M00001_0089_000000000-TEST',
+        project_igf_id='IGFP0001_test_22-8-2017_rna')
+    run_records_df = pd.DataFrame(run_records_list)
+    self.assertEqual(len(run_records_df.index), 2)
     ra.close_session()
 
 if __name__=='__main__':

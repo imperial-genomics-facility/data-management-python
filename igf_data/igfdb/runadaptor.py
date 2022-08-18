@@ -1,4 +1,5 @@
 import pandas as pd
+from typing import Tuple, Union
 from sqlalchemy.sql import column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.igfTables import Experiment, Run, Run_attribute, Seqrun, Sample,Project
@@ -11,7 +12,7 @@ class RunAdaptor(BaseAdaptor):
   def store_run_and_attribute_data(self,data,autosave=True):
     '''
     A method for dividing and storing data to run and attribute table
-    
+
     :param data: A list of dictionaries or a Pandas DataFrame containing the run data
     :param autosave: A toggle for saving data automatically to db, default True
     :returns: None
@@ -37,7 +38,7 @@ class RunAdaptor(BaseAdaptor):
         attribute_name_column='attribute_name',attribute_value_column='attribute_value'):
     '''
     A method for separating data for Run and Run_attribute tables
-    
+
     :param data: A list of dictionaries or a Pandas DataFrame
     :param table_columns: List of table column names, default None
     :param required_column: column name to add to the attribute data
@@ -78,7 +79,7 @@ class RunAdaptor(BaseAdaptor):
   def store_run_data(self,data,autosave=False):
     '''
     A method for loading data to Run table
-    
+
     :param data: A list of dictionaries or a Pandas DataFrame containing the attribute data
     :param autosave: A toggle for saving data automatically to db, default True
     :returns: None
@@ -142,7 +143,7 @@ class RunAdaptor(BaseAdaptor):
   def store_run_attributes(self,data,run_id='',autosave=False):
     '''
     A method for storing data to Run_attribute table
-    
+
     :param data: A list of dictionaries or a Pandas DataFrame containing the attribute data
     :param autosave: A toggle for saving data automatically to db, default True
     :returns: None
@@ -189,7 +190,7 @@ class RunAdaptor(BaseAdaptor):
         self,run_igf_id,target_column_name='run_igf_id'):
     '''
     A method for existing data for Run table
-    
+
     :param run_igf_id: an igf id
     :param target_column_name: a column name, default run_igf_id
     :returns: True if the file is present in db or False if its not
@@ -218,7 +219,7 @@ class RunAdaptor(BaseAdaptor):
         self,run_igf_id,target_column_name='run_igf_id'):
     '''
     A method for fetching data for Run table
-    
+
     :param run_igf_id: an igf id
     :param target_column_name: a column name, default run_igf_id
     :returns: Run record
@@ -243,7 +244,7 @@ class RunAdaptor(BaseAdaptor):
   def fetch_sample_info_for_run(self,run_igf_id):
     '''
     A method for fetching sample information linked to a run_igf_id
-    
+
     :param run_igf_id: A run_igf_id to search database
     :returns: Sample record
     '''
@@ -272,7 +273,7 @@ class RunAdaptor(BaseAdaptor):
   def fetch_project_sample_and_experiment_for_run(self,run_igf_id):
     '''
     A method for fetching project, sample and experiment information for a run
-    
+
     :param run_igf_id: A run igf id string
     :returns: A list of three strings, or None if not found
                * project_igf_id
@@ -427,7 +428,8 @@ class RunAdaptor(BaseAdaptor):
 
   def get_all_run_for_seqrun_igf_id(
         self,
-        seqrun_igf_id: str) -> list:
+        seqrun_igf_id: str,
+        project_igf_id: Union[None, str] = None) -> list:
     try:
       query = \
         self.session.\
@@ -444,6 +446,10 @@ class RunAdaptor(BaseAdaptor):
           filter(Seqrun.seqrun_igf_id==seqrun_igf_id).\
           filter(Sample.status=='ACTIVE').\
           filter(Experiment.status=='ACTIVE')
+      if project_igf_id is not None:
+        query = \
+          query.\
+            filter(Project.project_igf_id==project_igf_id)
       records = \
         self.fetch_records(
           query=query,
