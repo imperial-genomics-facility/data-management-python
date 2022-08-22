@@ -35,6 +35,8 @@ def get_new_run_id_for_copy(**context):
       context['params'].get('next_task')
     no_work_task = \
       context['params'].get('no_work_task')
+    seqrun_id_xcom_key = \
+      context['params'].get('seqrun_id_xcom_key')
     run_lists = \
       ti.xcom_pull(task_ids=xcom_task)
     if isinstance(run_lists, bytes):
@@ -62,7 +64,7 @@ def get_new_run_id_for_copy(**context):
     if len(new_seqruns) == 0:
       return [no_work_task]
     else:
-      ti.xcom_push(value=new_seqruns[0], key='return_value')
+      ti.xcom_push(value=new_seqruns[0], key='seqrun_id_xcom_key')
       return [next_task]
   except Exception as e:
     log.error(e)
