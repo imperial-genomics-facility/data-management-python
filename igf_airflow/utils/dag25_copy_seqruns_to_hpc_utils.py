@@ -94,6 +94,8 @@ def register_run_to_db_and_portal_func(**context):
     ti = context.get('ti')
     server_in_use = \
       context['params'].get('server_in_use')
+    xcom_key = \
+      context['params'].get('xcom_key', 'seqrun_id')
     wells_xcom_task = \
       context['params'].get('wells_xcom_task', 'get_all_runs_from_wells')
     orwell_xcom_task = \
@@ -102,11 +104,13 @@ def register_run_to_db_and_portal_func(**context):
     if server_in_use.lower() == 'orwell':
       seqrun_id = \
         ti.xcom_pull(
-          task_ids=orwell_xcom_task)
+          task_ids=orwell_xcom_task,
+          key=xcom_key)
     elif server_in_use.lower() == 'wells':
       seqrun_id = \
         ti.xcom_pull(
-          task_ids=wells_xcom_task)
+          task_ids=wells_xcom_task,
+          key=xcom_key)
     if seqrun_id is None:
       raise ValueError('Missing seqrun id')
     ## register seqrun id to production db
