@@ -54,6 +54,10 @@ def get_new_run_id_for_copy(**context):
     run_lists = [
       r.strip()
         for r in run_lists]
+    # xcom has path to RTAComplete.txt
+    run_lists = [
+      os.path.basename(os.path.dirname(s))
+        for s in run_lists]
     dbparam = \
       read_dbconf_json(DATABASE_CONFIG_FILE)
     sra = SeqrunAdaptor(**dbparam)
