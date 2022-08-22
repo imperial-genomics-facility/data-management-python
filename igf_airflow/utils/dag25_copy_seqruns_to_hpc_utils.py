@@ -1,6 +1,7 @@
 import os
 import stat
 import json
+import base64
 import logging
 import pandas as pd
 from typing import Tuple, Any
@@ -41,6 +42,12 @@ def get_new_run_id_for_copy(**context):
       ti.xcom_pull(task_ids=xcom_task)
     if isinstance(run_lists, bytes):
       run_lists = run_lists.decode('utf-8')
+    if isinstance(run_lists, str):
+      run_lists = \
+        base64.b64decode(
+          run_lists.encode('ascii')).\
+        decode('utf-8').\
+        strip()
     if isinstance(run_lists, str):
       run_lists = \
         run_lists.split('\n')
