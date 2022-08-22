@@ -62,7 +62,7 @@ def get_new_run_id_for_copy(**context):
     if len(new_seqruns) == 0:
       return [no_work_task]
     else:
-      ti.xcom_push(value=new_seqruns[0])
+      ti.xcom_push(value=new_seqruns[0], key='return_value')
       return [next_task]
   except Exception as e:
     log.error(e)
