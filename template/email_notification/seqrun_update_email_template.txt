@@ -6,7 +6,7 @@ Content-Type: text/plain
 
 Dear {{ customerName }}, {% if not send_email_to_user %}EMAIL FOR {{ customerEmail }}{% endif %}
 
-We would like to update you that the fastq files from a recent sequencing run "{{ flowcellId }}" is now available for your project {{ projectName }}.
+We would like to update you that the fastq files from a recent sequencing run "{{ flowcellId }} - {{ projectRunDate }}" is now available for your project {{ projectName }}.
 
 Data access:
   - Check the "Data Access" section from our help page for a list of available methods for data transfer
@@ -21,7 +21,7 @@ QC Report pages:
   - Project home:
       http://eliot.med.ic.ac.uk/report/project/{{ projectName }}
   - Flowcell home:
-      http://eliot.med.ic.ac.uk/report/project/{{ projectName }}/{{ projectRunDate }}/{{ flowcellId }}
+      http://eliot.med.ic.ac.uk/report/project/{{ projectName }}/{{ flowcellId }}
   - Login information (for QC page):
       User Name: {{ customerUsername }}
       {% if hpcUser %}Password: Your account password for Imperial College{% else %}Password: Your IGF account password (sent to you via a separate email){% endif %}
