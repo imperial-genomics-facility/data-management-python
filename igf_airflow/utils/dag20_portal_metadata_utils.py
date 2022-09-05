@@ -16,6 +16,9 @@ from igf_data.igfdb.igfTables import Project
 from igf_data.utils.fileutils import check_file_path
 from igf_data.utils.singularity_run_wrapper import singularity_run
 from igf_data.process.metadata_reformat.reformat_metadata_file import Reformat_metadata_file
+from igf_data.process.seqrun_processing.find_and_process_new_project_data_from_portal_db import Find_and_register_new_project_data_from_portal_db
+
+
 
 
 DATABASE_CONFIG_FILE = \
@@ -26,7 +29,42 @@ MS_TEAMS_CONF = \
   Variable.get('ms_teams_conf', default_var=None)
 IGF_PORTAL_CONF = \
   Variable.get('igf_portal_conf', default_var=None)
+EMAIL_TEMPLATE = \
+  Variable.get('user_account_creation_template', default_var=None)
+EMAIL_CONF = \
+  Variable.get("email_config", default_var=None)
 
+
+def fetch_validated_metadata_from_portal_and_load_func(**context):
+  try:
+    fa = \
+      Find_and_register_new_project_data_from_portal_db(
+        portal_db_conf_file=IGF_PORTAL_CONF,
+        dbconfig=DATABASE_CONFIG_FILE,
+        user_account_template=EMAIL_TEMPLATE,
+        log_slack=True,
+        slack_config=SLACK_CONF,
+        check_hpc_user=False,
+        hpc_user=None,
+        hpc_address=None,
+        ldap_server=None,
+        setup_irods=False,
+        notify_user=True,
+        email_config_json=EMAIL_CONF)
+    fa.process_project_data_and_account()
+  except Exception as e:
+    logging.error(e)
+    message = \
+      'Failed metadata dump, error: {0}'.\
+        format(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=message,
+      reaction='fail')
+    raise
 
 
 def get_metadata_dump_from_pipeline_db_func(**context):
@@ -115,15 +153,20 @@ def copy_remote_file_to_hpc_func(**context):
       os.path.join(
         temp_dir,
         os.path.basename(source_path))
-    copy_remote_file(
-      source_path=source_path,
-      destination_path=dest_path,
-      source_address='{0}@{1}'.format(source_user, source_address),
-      ssh_key_file=hpc_ssh_key_file,
-      destination_address=None,
-      copy_method='rsync',
-      check_file=True,
-      force_update=True)
+    if source_address is None:
+      copy_local_file(
+        source_path,
+        dest_path)
+    else:
+      copy_remote_file(
+        source_path=source_path,
+        destination_path=dest_path,
+        source_address='{0}@{1}'.format(source_user, source_address),
+        ssh_key_file=hpc_ssh_key_file,
+        destination_address=None,
+        copy_method='rsync',
+        check_file=True,
+        force_update=True)
     ti.xcom_push(
       key=xcom_key,
       value=dest_path)
