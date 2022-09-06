@@ -123,7 +123,7 @@ dependencies:
     - psutil==5.8.0
     - pycparser==2.21
     - pygments==2.10.0
-    - pyjwt==2.4.0
+    - pyjwt==1.7.1
     - pymysql==1.0.2
     - pynacl==1.4.0
     - pyparsing==2.4.7
