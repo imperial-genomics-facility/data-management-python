@@ -1,4 +1,5 @@
 import os, unittest
+import pandas as pd
 from sqlalchemy import create_engine
 from igf_data.igfdb.igfTables import Base,Pipeline_seed
 from igf_data.igfdb.baseadaptor import BaseAdaptor
@@ -64,7 +65,7 @@ class Pipelineadaptor_test1(unittest.TestCase):
     with self.assertRaises(ValueError):
       pl.create_pipeline_seed(data=pipeline_seed_data1)
     pl.close_session()
-   
+
   def test_fetch_pipeline_seed_with_table_data(self):
     pl = PipelineAdaptor(**{'session_class': self.session_class})
     pl.start_session()
@@ -108,6 +109,28 @@ class Pipelineadaptor_test1(unittest.TestCase):
         status='RUNNING')
     pl.close_session()
     self.assertEqual(pipe_seed2.loc[pipe_seed2.seed_id==1]['status'].values[0],'RUNNING')
+
+
+  def test_check_seed_id_status(self):
+    pl = PipelineAdaptor(**{'session_class': self.session_class})
+    pl.start_session()
+    seed_status_list = \
+      pl.check_seed_id_status(
+        seed_id=1,
+        seed_table='seqrun')
+    seed_status_df = \
+      pd.DataFrame(seed_status_list)
+    self.assertTrue('SEEDED' in seed_status_df['status'].values.tolist())
+    self.assertEqual(len(seed_status_df.index), 1)
+    seed_status_list = \
+      pl.check_seed_id_status(
+        seed_id=2,
+        seed_table='seqrun')
+    pl.close_session()
+    seed_status_df = \
+      pd.DataFrame(seed_status_list)
+    self.assertEqual(len(seed_status_df.index), 0)
+
 
 
 class Pipelineadaptor_test2(unittest.TestCase):
@@ -415,6 +438,22 @@ class Pipelineadaptor_test4(unittest.TestCase):
     Base.metadata.drop_all(self.engine)
     if os.path.exists(self.dbname):
       os.remove(self.dbname)
+
+  def test_check_pipeline_using_pipeline_name(self):
+    pl = \
+      PipelineAdaptor(**{
+        'session_class': self.session_class})
+    pl.start_session()
+    pipeline_check1 = \
+      pl.check_pipeline_using_pipeline_name(
+        pipeline_name='analysys_pipeline_1')
+    self.assertTrue(pipeline_check1)
+    pipeline_check2 = \
+      pl.check_pipeline_using_pipeline_name(
+        pipeline_name='analysys_pipeline_2')
+    self.assertFalse(pipeline_check2)
+    pl.close_session()
+
 
   def test_create_or_update_pipeline_seed(self):
     pl = \

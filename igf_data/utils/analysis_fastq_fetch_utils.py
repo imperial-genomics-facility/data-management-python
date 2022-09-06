@@ -3,7 +3,7 @@ from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.experimentadaptor import ExperimentAdaptor
 from igf_data.utils.dbutils import read_dbconf_json
-from igf_data.igfdb.igfTables import File,Experiment,Run,Collection,Collection_group,Sample
+from igf_data.igfdb.igfTables import File,Experiment,Run,Collection,Collection_group,Sample,Seqrun
 
 def get_fastq_and_run_for_samples(
       dbconfig_file,sample_igf_id_list,active_status='ACTIVE',
@@ -25,12 +25,18 @@ def get_fastq_and_run_for_samples(
     base.start_session()
     query = \
       base.session.\
-        query(Sample.sample_igf_id,Run.run_igf_id,File.file_path).\
-        join(Experiment,Sample.sample_id==Experiment.sample_id).\
-        join(Run,Experiment.experiment_id==Run.experiment_id).\
-        join(Collection,Collection.name==Run.run_igf_id).\
-        join(Collection_group,Collection.collection_id==Collection_group.collection_id).\
-        join(File,File.file_id==Collection_group.file_id).\
+        query(
+          Sample.sample_igf_id,
+          Run.run_igf_id,
+          Seqrun.flowcell_id,
+          Run.lane_number,
+          File.file_path).\
+        join(Experiment, Sample.sample_id==Experiment.sample_id).\
+        join(Run, Experiment.experiment_id==Run.experiment_id).\
+        join(Seqrun, Seqrun.seqrun_id==Run.seqrun_id).\
+        join(Collection, Collection.name==Run.run_igf_id).\
+        join(Collection_group, Collection.collection_id==Collection_group.collection_id).\
+        join(File, File.file_id==Collection_group.file_id).\
         filter(Run.status==active_status).\
         filter(Experiment.status==active_status).\
         filter(File.status==active_status).\

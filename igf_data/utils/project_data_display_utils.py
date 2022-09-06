@@ -138,7 +138,9 @@ def _modify_seqrun_data(data_series,seqrun_col,flowcell_col,path_col):
     seqrun_igf_id=data_series[seqrun_col]
     flowcell_id=data_series[flowcell_col]
     seqrun_date=get_seqrun_date_from_igf_id(seqrun_igf_id)
-    data_series[path_col]=os.path.join(seqrun_date,flowcell_id)                 # adding path to data series
+    # data_series[path_col]=os.path.join(seqrun_date,flowcell_id)                 # adding path to data series
+    data_series[path_col] = flowcell_id
+    data_series[flowcell_col] = f'{flowcell_id} - {seqrun_date}'
     del data_series[seqrun_col]
     return data_series
   except:

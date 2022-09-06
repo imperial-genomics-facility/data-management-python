@@ -1,3 +1,4 @@
+import pandas as pd
 import unittest, json, os, shutil
 from numpy.core.records import record
 from sqlalchemy import create_engine
@@ -62,13 +63,20 @@ class RunAdaptor_test1(unittest.TestCase):
                       'sample_igf_id':'IGF00001'}]
     ea=ExperimentAdaptor(**{'session':base.session})
     ea.store_project_and_attribute_data(data=experiment_data)
-    run_data=[{'run_igf_id':'IGF00001_MISEQ_000000000-D0YLK_1',
-               'experiment_igf_id':'IGF00001_MISEQ',
-               'seqrun_igf_id':'171003_M00001_0089_000000000-TEST',
-               'lane_number':'1',
-               'R1_READ_COUNT': 1000}]
-    ra=RunAdaptor(**{'session':base.session})
+    run_data = [{
+      'run_igf_id':'IGF00001_MISEQ_000000000-D0YLK_1',
+      'experiment_igf_id':'IGF00001_MISEQ',
+      'seqrun_igf_id':'171003_M00001_0089_000000000-TEST',
+      'lane_number':'1',
+      'R1_READ_COUNT': 1000}]
+    run_data2 = [{
+      'run_igf_id':'IGF00001_MISEQ_000000000-D0YLK_2',
+      'experiment_igf_id':'IGF00001_MISEQ',
+      'seqrun_igf_id':'171003_M00001_0089_000000000-TEST',
+      'lane_number':'2'}]
+    ra = RunAdaptor(**{'session':base.session})
     ra.store_run_and_attribute_data(data=run_data)
+    ra.store_run_and_attribute_data(data=run_data2)
     base.close_session()
 
   def tearDown(self):
@@ -76,14 +84,14 @@ class RunAdaptor_test1(unittest.TestCase):
     os.remove(self.dbname)
 
   def test_fetch_sample_info_for_run(self):
-    ra=RunAdaptor(**{'session_class':self.session_class})
+    ra = RunAdaptor(**{'session_class':self.session_class})
     ra.start_session()
-    sample=ra.fetch_sample_info_for_run(run_igf_id='IGF00001_MISEQ_000000000-D0YLK_1')
+    sample = ra.fetch_sample_info_for_run(run_igf_id='IGF00001_MISEQ_000000000-D0YLK_1')
     self.assertEqual(sample['sample_igf_id'], 'IGF00001')
     ra.close_session()
 
   def test_fetch_flowcell_and_lane_for_run(self):
-    ra=RunAdaptor(**{'session_class':self.session_class})
+    ra = RunAdaptor(**{'session_class':self.session_class})
     ra.start_session()
     flowcell_id,lane_number = \
       ra.fetch_flowcell_and_lane_for_run(run_igf_id='IGF00001_MISEQ_000000000-D0YLK_1')
@@ -92,7 +100,7 @@ class RunAdaptor_test1(unittest.TestCase):
     self.assertEqual(int(lane_number),1)
 
   def test_update_run_attribute_records_by_igfid(self):
-    ra=RunAdaptor(**{'session_class':self.session_class})
+    ra = RunAdaptor(**{'session_class':self.session_class})
     ra.start_session()
     query = \
       ra.session.\
@@ -125,6 +133,75 @@ class RunAdaptor_test1(unittest.TestCase):
         record['run_igf_id']=='IGF00001_MISEQ_000000000-D0YLK_1')]
     self.assertEqual(record.index.size, 1)
     self.assertEqual(int(record['attribute_value'].values[0]), 2000)
+    query = \
+      ra.session.\
+      query(
+        Run,
+        Run_attribute).\
+      join(Run_attribute, Run.run_id==Run_attribute.run_id, isouter=True).\
+      filter(Run.run_igf_id=='IGF00001_MISEQ_000000000-D0YLK_2')
+    record = \
+      ra.fetch_records(query=query)
+    self.assertTrue('attribute_name' in record.columns)
+    self.assertTrue(record['attribute_name'].isnull().all())
+    update_data = [{
+      'run_igf_id': 'IGF00001_MISEQ_000000000-D0YLK_2',
+      'attribute_name': 'R1_READ_COUNT',
+      'attribute_value': 2000}]
+    ra.update_run_attribute_records_by_igfid(
+      update_data=update_data,
+      autosave=True)
+    record = \
+      ra.fetch_records(query=query)
+    record = \
+      record[(
+        record['attribute_name']=='R1_READ_COUNT')&(
+        record['run_igf_id']=='IGF00001_MISEQ_000000000-D0YLK_2')]
+    self.assertEqual(record.index.size, 1)
+    self.assertEqual(int(record['attribute_value'].values[0]), 2000)
+    ra.close_session()
+
+  def test_get_all_run_for_seqrun_igf_id(self):
+    ra = RunAdaptor(**{'session_class':self.session_class})
+    ra.start_session()
+    run_records_list = ra.get_all_run_for_seqrun_igf_id(seqrun_igf_id='171003_M00001_0089_000000000-TEST')
+    run_records_df = pd.DataFrame(run_records_list)
+    self.assertEqual(len(run_records_df.index), 2)
+    self.assertTrue('run_igf_id' in run_records_df.columns)
+    self.assertTrue('IGF00001_MISEQ_000000000-D0YLK_1' in run_records_df['run_igf_id'].values.tolist())
+    self.assertTrue('flowcell_id' in run_records_df.columns)
+    self.assertEqual(run_records_df['flowcell_id'].values.tolist()[0], '000000000-D0YLK')
+    self.assertTrue('project_igf_id' in run_records_df.columns)
+    self.assertEqual(len(run_records_df['project_igf_id'].drop_duplicates().values.tolist()), 1)
+    self.assertEqual(run_records_df['project_igf_id'].drop_duplicates().values.tolist()[0], 'IGFP0001_test_22-8-2017_rna')
+    run_records_list = \
+      ra.get_all_run_for_seqrun_igf_id(
+        seqrun_igf_id='171003_M00001_0089_000000000-TEST',
+        project_igf_id='IGFP0001_test_22-8-2017_rna')
+    run_records_df = pd.DataFrame(run_records_list)
+    self.assertEqual(len(run_records_df.index), 2)
+    ra.close_session()
+
+  def test_delete_runs_from_db(self):
+    ra = RunAdaptor(**{'session_class':self.session_class})
+    ra.start_session()
+    status = \
+      ra.delete_runs_from_db(
+        run_igf_id_list=['IGF00001_MISEQ_000000000-D0YLK_1',],
+        autosave=True)
+    self.assertTrue(status)
+    record = \
+      ra.session.query(Run.run_igf_id).\
+      filter(Run.run_igf_id=='IGF00001_MISEQ_000000000-D0YLK_1').\
+      one_or_none()
+    self.assertIsNone(record)
+    record = \
+      ra.session.query(Run.run_igf_id).\
+      filter(Run.run_igf_id=='IGF00001_MISEQ_000000000-D0YLK_2').\
+      one_or_none()
+    self.assertIsNotNone(record)
+    self.assertEqual(record.run_igf_id, 'IGF00001_MISEQ_000000000-D0YLK_2')
+    ra.close_session()
 
 if __name__=='__main__':
   unittest.main()

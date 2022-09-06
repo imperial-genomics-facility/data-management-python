@@ -54,6 +54,25 @@ class PipelineAdaptor(BaseAdaptor):
               'Failed to fetch pipeline record, error: {0}'.format(e))
 
 
+  def check_pipeline_using_pipeline_name(self, pipeline_name: str) -> bool:
+    try:
+      query = \
+        self.session.\
+          query(Pipeline).\
+          filter(Pipeline.pipeline_name == pipeline_name)
+      records = \
+        self.fetch_records(
+          query=query,
+          output_mode='one_or_none')
+      if records is None:
+        return False
+      else:
+        return True
+    except Exception as e:
+      raise ValueError(
+        f'Failed to check pipeline using pipeline name, error: {e}')
+
+
   def fetch_pipeline_seed(
         self,pipeline_id,seed_id,seed_table,
         target_column_name=('pipeline_id', 'seed_id','seed_table')):
@@ -404,6 +423,33 @@ class PipelineAdaptor(BaseAdaptor):
       raise ValueError(
               'Failed to change seed for id {0}, pipeline {1}, error: {2}'.\
                 format(seed_id,pipeline_name,e))
+
+
+  def check_seed_id_status(self, seed_id: str, seed_table: str) -> list:
+    '''
+    A method for checking the status of a seed_id in pipeline_seed table
+
+    :param seed_id: A string, seed_id
+    :param seed_table: A string, seed_table
+    :returns: A list of strings, status of the seed_id
+    '''
+    try:
+      query = \
+        self.session.\
+        query(Pipeline.pipeline_name, Pipeline_seed.status).\
+        join(Pipeline_seed, Pipeline.pipeline_id==Pipeline_seed.pipeline_id).\
+        filter(Pipeline_seed.seed_id==seed_id).\
+        filter(Pipeline_seed.seed_table==seed_table)
+      records = \
+        self.fetch_records(
+          query=query,
+          output_mode='dataframe')
+      records = \
+        records.\
+          to_dict(orient='records')
+      return records
+    except Exception as e:
+      raise ValueError(f'Failed to check seed id status, error: {e}')
 
 
   def seed_new_seqruns(self,pipeline_name,autosave=True,seed_table='seqrun'):

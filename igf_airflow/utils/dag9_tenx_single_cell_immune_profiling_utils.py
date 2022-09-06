@@ -67,6 +67,7 @@ ASANA_CONF = Variable.get('asana_conf', default_var=None)
 ASANA_PROJECT = Variable.get('asana_analysis_project', default_var=None)
 BOX_USERNAME = Variable.get('box_username', default_var=None)
 BOX_CONFIG_FILE = Variable.get('box_config_file', default_var=None)
+HPC_SSH_KEY_FILE = Variable.get('hpc_ssh_key_file', default_var=None)
 FTP_HOSTNAME = Variable.get('ftp_hostname', default_var=None)
 FTP_USERNAME = Variable.get('ftp_username', default_var=None)
 FTP_PROJECT_PATH = Variable.get('ftp_project_path', default_var=None)
@@ -117,7 +118,7 @@ def run_scvelo_for_sc_5p_func(**context):
       context['params'].get('cpu_threads', 8)
     output_notebook_key = \
       context['params'].get('output_notebook_key', 'scvelo_notebook')
-    cell_marker_list = ALL_CELL_MARKER_LIST
+    cell_marker_list = ""
     s_genes = None
     g2m_genes = None
     #cell_marker_mode = ''
@@ -158,10 +159,11 @@ def run_scvelo_for_sc_5p_func(**context):
         analysis_description[0]
     sample_igf_id = \
       analysis_description.get('sample_igf_id')
-    if analysis_description.get('cell_marker_list') is not None:
-      cell_marker_list = \
-        analysis_description.get('cell_marker_list')                            # reset cell marker list
-      check_file_path(cell_marker_list)
+    #if analysis_description.get('cell_annotation_csv') is not None or \
+    #   analysis_description.get('cell_annotation_csv') != "":
+    #  cell_marker_list = \
+    #    analysis_description.get('cell_annotation_csv')                            # reset cell marker list
+    #  check_file_path(cell_marker_list)
     if analysis_description.get('s_genes') is not None:
       s_genes = \
         analysis_description.get('s_genes')
@@ -179,12 +181,12 @@ def run_scvelo_for_sc_5p_func(**context):
     #if analysis_description.get('cell_marker_mode') is not None:
     #  cell_marker_mode = \
     #    analysis_description.get('cell_marker_mode')
-    #sa = SampleAdaptor(**dbparams)
-    #sa.start_session()
-    #genome_build = \
-    #  sa.fetch_sample_species_name(
-    #    sample_igf_id=sample_igf_id)
-    #sa.close_session()
+    sa = SampleAdaptor(**dbparams)
+    sa.start_session()
+    genome_build = \
+      sa.fetch_sample_species_name(
+        sample_igf_id=sample_igf_id)
+    sa.close_session()
     tmp_dir = get_temp_dir(use_ephemeral_space=True)
     scanpy_h5ad = \
       ti.xcom_pull(
@@ -249,6 +251,7 @@ def run_scvelo_for_sc_5p_func(**context):
       'CUSTOM_G2M_GENES_LIST': g2m_genes,
       'VELOCYTO_LOOM': loom_file,
       'SCANPY_H5AD': scanpy_h5ad,
+      'GENOME_BUILD': genome_build,
       'CPU_THREADS': int(cpu_threads)}
     container_bind_dir_list = [
       tmp_dir,
@@ -282,7 +285,8 @@ def run_scvelo_for_sc_5p_func(**context):
       reaction='pass')
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -435,13 +439,16 @@ def run_velocyto_func(**context):
     mask_file = \
       ref_genome._fetch_collection_files(
         collection_type=MASK_TYPE,
-        check_missing=True)
+        check_missing=False)
+    if isinstance(mask_file, list):
+      mask_file = mask_file[0]
     commandline = [
       VELOCYTO_EXE,
       'run10x',
       '-l {0}'.format(velocyto_logic),
-      '-t {0}'.format(velocyto_dtype),
-      '--mask={0}'.format(mask_file)]
+      '-t {0}'.format(velocyto_dtype)]
+    if mask_file is not None:
+      commandline.append('--mask={0}'.format(mask_file))
     if velocyto_metadata_table_file is not None and \
        os.path.exists(velocyto_metadata_table_file):
       commandline.\
@@ -454,8 +461,10 @@ def run_velocyto_func(**context):
     bind_dir_lists = [
       '{0}:/tmp'.format(container_tmp_dir),
       cellranger_output_dir,
-      os.path.dirname(mask_file),
       os.path.dirname(temp_gtf_path)]
+    if mask_file is not None:
+      bind_dir_lists.\
+        append(os.path.dirname(mask_file))
     singularity_run(
       image_path=SCANPY_NOTEBOOK_IMAGE,
       args_list=commandline,
@@ -477,7 +486,8 @@ def run_velocyto_func(**context):
       reaction='pass')
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -532,7 +542,8 @@ def generate_cell_sorted_bam_func(**context):
       sort_params=['-m{0}'.format(samtools_mem), '-tCB'])
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -634,26 +645,31 @@ def create_and_update_qc_pages(**context):
     _check_and_copy_remote_file(
       remote_user=FTP_USERNAME,
       remote_host=FTP_HOSTNAME,
+      ssh_key_file=HPC_SSH_KEY_FILE,
       source_file=temp_status_output,
       remote_file=remote_status_json_path)                                      # copy json data for status page
     _check_and_copy_remote_file(
       remote_user=FTP_USERNAME,
       remote_host=FTP_HOSTNAME,
+      ssh_key_file=HPC_SSH_KEY_FILE,
       source_file=analysis_data_output_file,
       remote_file=remote_analysis_json_path)                                    # copy json data for analysis page
     _check_and_copy_remote_file(
       remote_user=FTP_USERNAME,
       remote_host=FTP_HOSTNAME,
+      ssh_key_file=HPC_SSH_KEY_FILE,
       source_file=chart_json_output_file,
       remote_file=remote_chart_file_path)                                       # copy json data for analysis charts
     _check_and_copy_remote_file(
       remote_user=FTP_USERNAME,
       remote_host=FTP_HOSTNAME,
+      ssh_key_file=HPC_SSH_KEY_FILE,
       source_file=csv_output_file,
       remote_file=remote_csv_file_path)                                         # copy json data for analysis csv data
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -671,7 +687,7 @@ def create_and_update_qc_pages(**context):
 
 
 def _check_and_copy_remote_file(
-      remote_user, remote_host, source_file, remote_file):
+      remote_user, remote_host, source_file, remote_file, ssh_key_file=None):
     '''
     An internal static method for copying files to remote path
 
@@ -690,6 +706,7 @@ def _check_and_copy_remote_file(
         source_path=source_file,
         destination_path=remote_file,
         destination_address=remote_config,
+        ssh_key_file=ssh_key_file,
         force_update=True)                                                      # create dir and copy file to remote
     except Exception as e:
       raise ValueError(
@@ -799,7 +816,8 @@ def clean_up_files(**context):
                 format(type(file_list)))
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -843,7 +861,8 @@ def change_pipeline_status(**context):
                   format(analysis_id, analysis_type))
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -890,7 +909,8 @@ def index_and_copy_bam_for_parallel_analysis(**context):
     return list_of_tasks
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -1084,7 +1104,8 @@ def run_multiqc_for_cellranger(**context):
       value=multiqc_data)
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -1307,7 +1328,8 @@ def run_samtools_for_cellranger(**context):
         value=temp_output)
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -1387,7 +1409,8 @@ def run_picard_for_cellranger(**context):
         ribosomal_interval_type=RIBOSOMAL_INTERVAL_TYPE)
     genome_fasta = ref_genome.get_genome_fasta()
     ref_flat_file = ref_genome.get_gene_reflat()
-    ribosomal_interval_file = ref_genome.get_ribosomal_interval()
+    ribosomal_interval_file = \
+      ref_genome.get_ribosomal_interval(check_missing=False)
     sa.start_session()
     sample_platform_records = \
       sa.fetch_seqrun_and_platform_list_for_sample_id(
@@ -1472,7 +1495,8 @@ def run_picard_for_cellranger(**context):
       reaction='pass')
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -1505,7 +1529,7 @@ def convert_bam_to_cram_func(**context):
     threads = \
       context['params'].get('threads')
     analysis_name = \
-      context['params'].get('analysis_name')
+      context['params'].get('sc_analysis_name')
     collection_table = \
       context['params'].get('collection_table')
     cram_files_xcom_key = \
@@ -1605,7 +1629,8 @@ def convert_bam_to_cram_func(**context):
       reaction='pass')
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -1681,7 +1706,8 @@ def upload_analysis_file_to_box(**context):
         skip_existing=False)
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -1705,8 +1731,8 @@ def task_branch_function(**context):
       context['params'].get('xcom_pull_task_id')
     analysis_info_xcom_key = \
       context['params'].get('analysis_info_xcom_key')
-    analysis_name = \
-      context['params'].get('analysis_name')
+    feature_name = \
+      context['params'].get('feature_name')
     task_prefix = \
       context['params'].get('task_prefix')
     analysis_info = \
@@ -1714,15 +1740,16 @@ def task_branch_function(**context):
         task_ids=xcom_pull_task_id,
         key=analysis_info_xcom_key)
     sample_info = \
-      analysis_info.get(analysis_name)
+      analysis_info.get(feature_name)
     run_list = sample_info.get('runs').keys()
     task_list = [
-      '{0}_{1}_{2}'.format(task_prefix,analysis_name,run_id)
+      '{0}_{1}_{2}'.format(task_prefix,feature_name,run_id)
         for run_id in run_list]
     return task_list
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -1751,7 +1778,7 @@ def load_analysis_files_func(**context):
     file_name_key = \
       context['params'].get('file_name_key')
     analysis_name = \
-      context['params'].get('analysis_name')
+      context['params'].get('sc_analysis_name')
     collection_type = \
       context['params'].get('collection_type')
     collection_table = \
@@ -1803,7 +1830,8 @@ def load_analysis_files_func(**context):
       value=output_file_list)
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -1847,10 +1875,10 @@ def run_singlecell_notebook_wrapper_func(**context):
       context['params'].get('analysis_description_xcom_key')
     kernel_name = \
       context['params'].get('kernel_name')
-    analysis_name = \
-      context['params'].get('analysis_name')
-    analysis_name = analysis_name.upper()
-    cell_marker_list = ALL_CELL_MARKER_LIST
+    sc_analysis_name = \
+      context['params'].get('sc_analysis_name')
+    sc_analysis_name = sc_analysis_name.upper()
+    cell_marker_list = ""
     s_genes = None
     g2m_genes = None
     cell_marker_mode = ''
@@ -1897,9 +1925,10 @@ def run_singlecell_notebook_wrapper_func(**context):
         gex_sample.to_dict(orient='records')[0]                                # resetting analysis_description
     sample_igf_id = \
       analysis_description.get('sample_igf_id')
-    if analysis_description.get('cell_marker_list') is not None:
+    if analysis_description.get('cell_annotation_csv') is not None and \
+       analysis_description.get('cell_annotation_csv') != "":
       cell_marker_list = \
-        analysis_description.get('cell_marker_list')                            # reset cell marker list
+        analysis_description.get('cell_annotation_csv')                            # reset cell marker list
       check_file_path(cell_marker_list)                                         # check filepath
     if analysis_description.get('s_genes') is not None:
       s_genes = \
@@ -1940,9 +1969,12 @@ def run_singlecell_notebook_wrapper_func(**context):
       'GENOME_BUILD': genome_build}
     container_bind_dir_list = [
       cellranger_output,
-      tmp_dir,
-      os.path.dirname(cell_marker_list)]
-    if analysis_name == 'SCANPY':
+      tmp_dir]
+    if cell_marker_list is not None and \
+       cell_marker_list != "":
+      container_bind_dir_list.\
+        append(os.path.dirname(cell_marker_list))
+    if sc_analysis_name == 'SCANPY':
       template_ipynb_path = SCANPY_SINGLE_SAMPLE_TEMPLATE
       singularity_image_path = SCANPY_NOTEBOOK_IMAGE
       scanpy_h5ad = os.path.join(tmp_dir, 'scanpy.h5ad')
@@ -1959,16 +1991,16 @@ def run_singlecell_notebook_wrapper_func(**context):
         'SCANPY_H5AD': scanpy_h5ad,
         'CELLBROWSER_DIR': cellbrowser_dir,
         'CELLBROWSER_HTML_DIR': cellbrowser_html_dir})
-    elif analysis_name == 'SCIRPY':
+    elif sc_analysis_name == 'SCIRPY':
       template_ipynb_path = SCIRPY_SINGLE_SAMPLE_TEMPLATE
       singularity_image_path = SCIRPY_NOTEBOOK_IMAGE
-    elif analysis_name == 'SEURAT':
+    elif sc_analysis_name == 'SEURAT':
       template_ipynb_path = SEURAT_SINGLE_SAMPLE_TEMPLATE
       singularity_image_path = SEURAT_NOTEBOOK_IMAGE
     else:
       raise ValueError(
               'Analysis name {0} not supported'.\
-                format(analysis_name))
+                format(sc_analysis_name))
     nb = Notebook_runner(
       template_ipynb_path=template_ipynb_path,
       output_dir=tmp_dir,
@@ -1985,7 +2017,7 @@ def run_singlecell_notebook_wrapper_func(**context):
     ti.xcom_push(
       key=output_notebook_key,
       value=output_notebook_path)
-    if analysis_name == 'SCANPY':
+    if sc_analysis_name == 'SCANPY':
       ti.xcom_push(
         key=output_cellbrowser_key,
         value=cellbrowser_html_dir)
@@ -1994,7 +2026,7 @@ def run_singlecell_notebook_wrapper_func(**context):
         value=scanpy_h5ad)
     message = \
       'Generated notebook for analysis: {0}, command: {1}'.\
-        format(analysis_name,notebook_cmd)
+        format(sc_analysis_name,notebook_cmd)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
@@ -2007,7 +2039,8 @@ def run_singlecell_notebook_wrapper_func(**context):
       reaction='pass')
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -2036,7 +2069,7 @@ def irods_files_upload_for_analysis(**context):
     collection_name_task = \
       context['params'].get('collection_name_task')
     analysis_name = \
-      context['params'].get('analysis_name')
+      context['params'].get('sc_analysis_name')
     dag_run = context.get('dag_run')
     if dag_run is None or \
        dag_run.conf is None or \
@@ -2100,7 +2133,8 @@ def irods_files_upload_for_analysis(**context):
         file_tag=collection_name)
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -2229,6 +2263,7 @@ def ftp_files_upload_for_analysis(**context):
                                  os.path.basename(file)),
         destination_path=dest_file_path,
         destination_address='{0}@{1}'.format(ftp_username,ftp_hostname),
+        ssh_key_file=HPC_SSH_KEY_FILE,
         force_update=True)
       if os.path.isdir(file):
         dest_file_path = \
@@ -2267,7 +2302,8 @@ def ftp_files_upload_for_analysis(**context):
           raise
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -2296,7 +2332,7 @@ def load_cellranger_result_to_db_func(**context):
     analysis_description_xcom_key = \
       context['params'].get('analysis_description_xcom_key')
     analysis_name = \
-      context['params'].get('analysis_name')
+      context['params'].get('sc_analysis_name')
     collection_table = \
       context['params'].get('collection_table')
     collection_type = \
@@ -2402,7 +2438,8 @@ def load_cellranger_result_to_db_func(**context):
       value=output_html_file[0])
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -2471,7 +2508,8 @@ def decide_analysis_branch_func(**context):
     return task_list
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -2573,7 +2611,8 @@ def load_cellranger_metrices_to_collection(**context):
       raise
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -2737,7 +2776,8 @@ def run_cellranger_tool(**context):
       reaction='pass')
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -2763,8 +2803,8 @@ def run_sc_read_trimmming_func(**context):
       context['params'].get('analysis_info_xcom_key')
     analysis_description_xcom_key = \
       context['params'].get('analysis_description_xcom_key')
-    analysis_name = \
-      context['params'].get('analysis_name')
+    feature_name = \
+      context['params'].get('feature_name')
     run_id = \
       context['params'].get('run_id')
     r1_length = \
@@ -2788,7 +2828,7 @@ def run_sc_read_trimmming_func(**context):
         key=analysis_description_xcom_key)
     _get_fastq_and_run_cutadapt_trim(
       analysis_info=analysis_info,
-      analysis_name=analysis_name,
+      analysis_name=feature_name,
       analysis_description=analysis_description,
       run_id=run_id,
       r1_length=r1_length,
@@ -2799,7 +2839,8 @@ def run_sc_read_trimmming_func(**context):
       singularity_image=singularity_image)
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -2998,7 +3039,8 @@ def configure_cellranger_run_func(**context):
       reaction='pass')
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -3247,9 +3289,9 @@ def fetch_analysis_info_and_branch_func(**context):
         _fetch_formatted_analysis_description(
           analysis_description,
           fastq_list)
-      if len(messages) > 0:
-        raise ValueError('Analysis description formatting failed: {0}'.\
-                format(messages))
+      #if len(messages) > 0:
+      #  raise ValueError('Analysis description formatting failed: {0}'.\
+      #          format(messages))
       #
       # mark analysis_id as running,if its not already running
       #
@@ -3272,10 +3314,11 @@ def fetch_analysis_info_and_branch_func(**context):
           value=analysis_info)
       else:
         analysis_list = [no_analysis]                                           # reset analysis list with no_analysis
-    return analysis_list                                                        # return analysis list for branching
+    return analysis_list                                                    # return analysis list for branching
   except Exception as e:
     logging.error(e)
-    log_file = context.get('task_instance').log_filepath
+    #log_file = context.get('task_instance').log_filepath
+    log_file = None
     if log_file is not None:
       message = \
         'Error: {0}, Log: {1}'.format(e, log_file)
@@ -3396,8 +3439,8 @@ def _check_and_mark_analysis_seed(
       read_dbconf_json(database_config_file)
     pl = \
       PipelineAdaptor(**dbparam)
-    pl.start_session()
     try:
+      pl.start_session()
       status = \
         pl.create_or_update_pipeline_seed(
           seed_id=analysis_id,
@@ -3408,12 +3451,12 @@ def _check_and_mark_analysis_seed(
           autosave=False)
       pl.commit_session()
       pl.close_session()
+      return status
     except Exception as e:
       pl.rollback_session()
       pl.close_session()
       raise ValueError(
         'Failed to change seeds in db, error: {0}'.format(e))
-    return status
   except Exception as e:
     raise ValueError(e)
 
@@ -3567,6 +3610,7 @@ def _validate_analysis_description(
       set(
         [f.replace(' ','_').lower()
           for f in analysis_list])
+    analysis_list = list(analysis_list)
     sample_id_list = \
       list(
         df[sample_column].\

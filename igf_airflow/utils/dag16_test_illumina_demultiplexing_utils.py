@@ -11,6 +11,7 @@ from igf_data.utils.tools.bcl2fastq_utils import run_bcl2fastq
 from igf_data.utils.box_upload import upload_file_or_dir_to_box
 from igf_data.utils.singularity_run_wrapper import singularity_run
 
+log = logging.getLogger(__name__)
 
 SLACK_CONF = Variable.get('slack_conf', default_var=None)
 MS_TEAMS_CONF = Variable.get('ms_teams_conf', default_var=None)
@@ -21,7 +22,8 @@ BCL2FASTQ_IMAGE = Variable.get('bcl2fastq_image_path', default_var=None)
 BOX_DIR_PREFIX = Variable.get('box_dir_prefix_for_seqrun_report', default_var=None)
 BOX_USERNAME = Variable.get('box_username', default_var=None)
 BOX_CONFIG_FILE  = Variable.get('box_config_file', default_var=None)
-INTEROP_IMAGE = Variable.get('interop_notebook_image_path')
+INTEROP_IMAGE = Variable.get('interop_notebook_image_path', default_var=None)
+HPC_SSH_KEY_FILE = Variable.get('hpc_ssh_key_file', default_var=None)
 SEQRUN_SERVER = Variable.get('seqrun_server', default_var=None)
 SEQRUN_BASE_PATH = Variable.get('seqrun_base_path', default_var=None)
 SEQRUN_SERVER_USER = Variable.get('seqrun_server_user', default_var=None)
@@ -64,14 +66,15 @@ def get_samplesheet_and_decide_flow_func(**context):
             SEQRUN_BASE_PATH,
             seqrun_id,
             samplesheet_file_name)
-        logging.warn(
+        log.warn(
           'copying samplesheet {0} from remote server'.\
             format(samplesheet_file_name))
         copy_remote_file(
           source_path=remote_samplesheet_file,
           destination_path=samplesheet_file,
           source_address='{0}@{1}'.format(SEQRUN_SERVER_USER, SEQRUN_SERVER),
-          force_update=True)
+          force_update=True,
+          ssh_key_file=HPC_SSH_KEY_FILE)
       check_file_path(samplesheet_file)
       runParameters_path = \
         os.path.join(run_dir, runParameters_xml_file_name)
@@ -97,7 +100,7 @@ def get_samplesheet_and_decide_flow_func(**context):
             runparameters_data.\
               get_novaseq_flowcell()
           platform_name = 'NOVASEQ6000'
-          index2_rule = None
+          index2_rule = 'REVCOMP'
         if flowcell_type is not None and \
            flowcell_type == 'HiSeq 3000/4000 PE':
           index2_rule = 'REVCOMP'
@@ -132,7 +135,7 @@ def get_samplesheet_and_decide_flow_func(**context):
     else:
       raise ValueError('No dag_run.conf entry found')
   except Exception as e:
-    logging.error(e)
+    log.error(e)
     message = \
       'SampleSheet check error: {0}'.\
         format(e)
@@ -302,7 +305,7 @@ def run_demultiplexing_func(**context):
     else:
       raise ValueError('No dag_run.conf entry found')
   except Exception as e:
-    logging.error(e)
+    log.error(e)
     message = \
       'Failed demultiplexing, error: {0}'.\
         format(e)
@@ -413,7 +416,7 @@ def prepare_merged_report_func(**context):
     else:
       raise ValueError('No dag_run.conf entry found')
   except Exception as e:
-    logging.error(e)
+    log.error(e)
     message = \
       'Failed merge report generation, error: {0}'.\
         format(e)

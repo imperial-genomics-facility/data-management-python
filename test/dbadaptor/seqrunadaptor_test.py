@@ -74,5 +74,17 @@ class SeqrunAdaptor_test1(unittest.TestCase):
     pl3 = sr.fetch_platform_info_for_seqrun('171003_M00001_0089_000000000')
     self.assertEqual(pl3,None)
 
+  def test_get_flowcell_id_for_seqrun_id(self):
+    sr = SeqrunAdaptor(**{'session_class': self.session_class})
+    sr.start_session()
+    flowcell_id = \
+      sr.get_flowcell_id_for_seqrun_id(
+        seqrun_igf_id='171003_H00001_0089_TEST')
+    self.assertEqual(flowcell_id, 'TEST')
+    flowcell_id = \
+      sr.get_flowcell_id_for_seqrun_id(
+        seqrun_igf_id='171003_H00001_0089_TEST1')
+    self.assertIsNone(flowcell_id)
+
 if __name__=='__main__':
   unittest.main()

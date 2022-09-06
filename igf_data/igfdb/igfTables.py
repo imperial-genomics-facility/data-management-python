@@ -298,8 +298,8 @@ class Platform(Base):
 
   platform_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   platform_igf_id = Column(String(10), nullable=False)
-  model_name = Column(Enum('HISEQ2500','HISEQ4000','MISEQ','NEXTSEQ','NOVASEQ6000','NANOPORE_MINION','DNBSEQ-G400', 'DNBSEQ-G50', 'DNBSEQ-T7'), nullable=False)
-  vendor_name = Column(Enum('ILLUMINA','NANOPORE', 'MGI'), nullable=False)
+  model_name = Column(Enum('HISEQ2500','HISEQ4000','MISEQ','NEXTSEQ', 'NEXTSEQ2000','NOVASEQ6000','NANOPORE_MINION','DNBSEQ-G400', 'DNBSEQ-G50', 'DNBSEQ-T7', 'SEQUEL2'), nullable=False)
+  vendor_name = Column(Enum('ILLUMINA','NANOPORE', 'MGI', 'PACBIO'), nullable=False)
   software_name = Column(Enum('RTA','UNKNOWN'), nullable=False)
   software_version = Column(String(20), nullable=False, server_default='UNKNOWN')
   date_created = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now )
@@ -606,6 +606,8 @@ class Experiment(Base):
     * DNBSEQ-G400
     * DNBSEQ-G50
     * DNBSEQ-T7
+    * NEXTSEQ2000
+    * SEQUEL2
     * UNKNOWN
   '''
   __tablename__ = 'experiment'
@@ -642,7 +644,7 @@ class Experiment(Base):
   status = Column(Enum('ACTIVE', 'FAILED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
   date_created = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
   platform_name = Column(Enum('HISEQ2500', 'HISEQ4000', 'MISEQ', 'NEXTSEQ', 'NANOPORE_MINION', 'NOVASEQ6000',
-                              'DNBSEQ-G400', 'DNBSEQ-G50', 'DNBSEQ-T7',
+                              'DNBSEQ-G400', 'DNBSEQ-G50', 'DNBSEQ-T7', 'NEXTSEQ2000', 'SEQUEL2',
                               'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   experiment = relationship('Run', backref='experiment')
   experiment_attribute = relationship('Experiment_attribute', backref='experiment')
@@ -765,8 +767,8 @@ class Collection(Base):
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
   collection_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
-  name = Column(String(70), nullable=False)
-  type = Column(String(50), nullable=False)
+  name = Column(String(150), nullable=False)
+  type = Column(String(150), nullable=False)
   table = Column(Enum('sample', 'experiment', 'run', 'file', 'project', 'seqrun', 'analysis', 'unknown'), nullable=False, server_default='unknown')
   date_stamp = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
   collection_group = relationship('Collection_group', backref='collection')

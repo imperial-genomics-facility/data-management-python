@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import json
 import pandas as pd
-import os,subprocess,hashlib,string,re
+import os,subprocess,hashlib,string,re, stat
 import tarfile,fnmatch
 from shlex import quote
 from datetime import datetime
@@ -140,51 +140,185 @@ def list_remote_file_or_dirs(remote_server,remote_path,only_dirs=True,
               format(e))
 
 
-def copy_local_file(source_path,destination_path,cd_to_dest=True,force=False):
+def change_file_and_dir_permission(
+      path: str,
+      lock_dir_and_files: bool = False,
+      unlock_dir_and_files: bool = False,
+      make_dir_and_files_read_only_for_all: bool = False) \
+        -> None:
+  try:
+    if not os.path.exists(path):
+      raise IOError(
+        f"Path {path} not found")
+    if (lock_dir_and_files and unlock_dir_and_files) or \
+       (make_dir_and_files_read_only_for_all and unlock_dir_and_files):
+      raise ValueError("conflicting options")
+    if os.path.isdir(path):
+      if lock_dir_and_files:
+        for root, dirs, files in os.walk(path):
+          for dir_name in dirs:
+            dir_path = \
+              os.path.join(root, dir_name)
+            ## enable read and execute for user and group
+            os.chmod(
+              dir_path,
+              stat.S_IRUSR |
+              stat.S_IRGRP |
+              stat.S_IXUSR |
+              stat.S_IXGRP)
+          for file_name in files:
+            file_path = \
+              os.path.join(root, file_name)
+            ## enable read for user and group
+            os.chmod(
+              file_path,
+              stat.S_IRUSR |
+              stat.S_IRGRP)
+        ## change base dir permissions
+        os.chmod(
+          path,
+          stat.S_IRUSR |
+          stat.S_IRGRP |
+          stat.S_IXUSR |
+          stat.S_IXGRP)
+      if make_dir_and_files_read_only_for_all:
+        for root, dirs, files in os.walk(path):
+          for dir_name in dirs:
+            dir_path = \
+              os.path.join(root, dir_name)
+            ## enable read and execute for user, group and other
+            os.chmod(
+              dir_path,
+              stat.S_IRUSR |
+              stat.S_IRGRP |
+              stat.S_IXUSR |
+              stat.S_IXGRP |
+              stat.S_IROTH |
+              stat.S_IXOTH)
+          for file_name in files:
+            file_path = \
+              os.path.join(root, file_name)
+            ## enable read for user, group and other
+            os.chmod(
+              file_path,
+              stat.S_IRUSR |
+              stat.S_IRGRP |
+              stat.S_IROTH)
+        ## change base dir permissions
+        os.chmod(
+          path,
+          stat.S_IRUSR |
+          stat.S_IRGRP |
+          stat.S_IXUSR |
+          stat.S_IXGRP |
+          stat.S_IROTH |
+          stat.S_IXOTH)
+      if unlock_dir_and_files:
+        for root, dirs, files in os.walk(path):
+          for dir_name in dirs:
+            dir_path = \
+              os.path.join(root, dir_name)
+            ## enable read, write and execute for user
+            os.chmod(
+              dir_path,
+              stat.S_IRUSR |
+              stat.S_IWUSR |
+              stat.S_IXUSR)
+          for file_name in files:
+            file_path = \
+              os.path.join(root, file_name)
+            ## enable read and write for user
+            os.chmod(
+              file_path,
+              stat.S_IWUSR)
+        ## change base dir permissions
+        os.chmod(
+          path,
+          stat.S_IRUSR |
+          stat.S_IWUSR |
+          stat.S_IXUSR)
+    elif os.path.isfile(path):
+      if lock_dir_and_files:
+        os.chmod(
+          path,
+          stat.S_IRUSR |
+          stat.S_IRGRP)
+      if make_dir_and_files_read_only_for_all:
+        os.chmod(
+          path,
+          stat.S_IRUSR |
+          stat.S_IRGRP |
+          stat.S_IROTH)
+      if unlock_dir_and_files:
+        os.chmod(
+          path,
+          stat.S_IWUSR)
+  except Exception as e:
+    raise ValueError(
+      f"Failed to change file and dir permission, error: {e}")
+
+
+def copy_local_file(
+      source_path: str,
+      destination_path: str,
+      cd_to_dest: bool = True,
+      force: bool = False,
+      dirs_exist_ok: bool = True,
+      new_dir_mode: int = 0o770) \
+        -> None:
   '''
   A method for copy files to local disk
 
   :param source_path: A source file path
   :param destination_path: A destination file path, including the file name  ##FIX TYPO
   :param cd_to_dest: Change to destination dir before copy, default True
-  :param force: Optional, set True to overwrite existing
-                destination file, default is False
+  :param force: Optional, set True to overwrite existing destination file, default is False
+  :param dirs_exist_ok: Optional, set True to allow existing directories, default is False
+  :returns: None
   '''
   try:
-    destination_path = destination_path                                        # NEED TO FIX TYPO
     if not os.path.exists(source_path):
-      raise IOError('source file {0} not found'.\
-                    format(source_path))
-    dir_path = os.path.dirname(destination_path)
-    if not os.path.exists(dir_path):
-      os.makedirs(dir_path, mode=0o770)
-    current_dir = os.getcwd()                                                   # present dir path
+      raise IOError(
+        f'source file {source_path} not found')
+    dir_path = \
+      os.path.dirname(destination_path)
+    os.makedirs(
+      dir_path,
+      mode=new_dir_mode,
+      exist_ok=dirs_exist_ok)
+    current_dir = \
+      os.getcwd()                                                               # present dir path
     if cd_to_dest:
       os.chdir(dir_path)                                                        # change to dest dir before copy
     if os.path.isfile(source_path):
       if os.path.exists(destination_path) and not force:
         raise IOError(
-                'destination file {0} already present. set option "force" as True to overwrite it'.\
-                  format(destination_path))
-      copy2(source_path, destination_path, follow_symlinks=True)                # copy file
+          f'destination file {destination_path} already present. set option "force" as True to overwrite it')
+      copy2(
+        source_path,
+        destination_path,
+        follow_symlinks=True)                                                   # copy file
       check_file_path(destination_path)
     elif os.path.isdir(source_path):
       if os.path.exists(destination_path) and not force:
         raise ValueError(
-                'Failed to copy dir {0}, path already exists, use force to remove it'.\
-                  format(destination_path))
+          f'Failed to copy dir {destination_path}, path already exists, use force to remove it')
       if os.path.exists(destination_path) and force:
         remove_dir(destination_path)
-      copytree(source_path,destination_path)                                    # copy dir
+      copytree(
+        src=source_path,
+        dst=destination_path,)
+        # dirs_exist_ok=dirs_exist_ok)                                            # copy dir for 3.8+
       check_file_path(destination_path)
     if cd_to_dest:
       os.chdir(current_dir)                                                     # change to original path after copy
   except Exception as e:
-    raise ValueError("Failed to copy local file, error: {0}".format(e))
+    raise ValueError(
+      f"Failed to copy local file, error: {e}")
 
 
 def copy_remote_file(
-      source_path,destination_path,source_address=None,destination_address=None,
+      source_path,destination_path,source_address=None,destination_address=None, ssh_key_file=None,
       copy_method='rsync',check_file=True, force_update=False,exclude_pattern_list=None):
     '''
     A method for copy files from or to remote location
@@ -193,6 +327,7 @@ def copy_remote_file(
     :param destination_path: A destination file path
     :param source_address: Address of the source server
     :param destination_address: Address of the destination server
+    :param ssh_key_file: A path to the ssh key file, default None
     :param copy_method: A nethod for copy files, default is 'rsync'
     :param check_file: Check file after transfer using checksum, default True
     :param force_update: Overwrite existing file or dir, default is False
@@ -211,10 +346,13 @@ def copy_remote_file(
                 source_address,
                 source_path)
         if destination_address is not None:
-          dir_cmd = [
-            'ssh',destination_address,'mkdir','-p',
-            os.path.dirname(destination_path)]
-          subprocess.check_call(dir_cmd)
+          dir_cmd = ['ssh']
+          if ssh_key_file is not None:
+            dir_cmd.append('-i {0}'.format(ssh_key_file))
+          dir_cmd.extend([
+            destination_address,
+            'mkdir -p {0}'.format(os.path.dirname(destination_path))])
+          subprocess.check_call(' '.join(dir_cmd), shell=True)
           destination_path = \
             '{0}:{1}'.format(
               destination_address,
@@ -223,7 +361,7 @@ def copy_remote_file(
           dir_cmd = [
             'mkdir','-p',
             os.path.dirname(destination_path)]
-          subprocess.check_call(dir_cmd)
+          subprocess.check_call(' '.join(dir_cmd), shell=True)
         if copy_method == 'rsync':
           cmd = ['rsync']
           if check_file:
@@ -235,23 +373,28 @@ def copy_remote_file(
                len(exclude_pattern_list)>0 ):
             for exclude_path in exclude_pattern_list:
               cmd.extend(['--exclude',quote(exclude_path)])                     # added support for exclude pattern
-          cmd.extend(['-r','-p','-e','ssh',source_path,destination_path])
+          cmd.extend(['-r','-p','-e'])#,source_path,destination_path])
+          if ssh_key_file is not None:
+            cmd.append('\"ssh -i {0}\"'.format(ssh_key_file))
+          else:
+            cmd.append("ssh")
+          cmd.extend([quote(source_path), quote(destination_path)])
         else:
             raise ValueError('copy method {0} is not supported'.\
                              format(copy_method))
-        proc = subprocess.Popen(cmd,stderr=subprocess.PIPE)
-        proc.wait()
-        if proc.returncode !=0:                                                 # fetching error message for non zero exits
-          _,errs = proc.communicate()
-          if proc.returncode == 255:
-            raise ValueError(\
-              '{0}:{1}'.\
-              format('Error while copying file to remote server ssh_exchange_identification',
-                     'Connection closed by remote host'))
-          else:
-            raise ValueError('Error while copying file to remote server {0}'.\
-                             format(errs.decode('utf8')))
-
+        subprocess.check_call(' '.join(cmd), shell=True)
+        #proc = subprocess.Popen(cmd,stderr=subprocess.PIPE)
+        #proc.wait()
+        #if proc.returncode !=0:                                                 # fetching error message for non zero exits
+        #  _,errs = proc.communicate()
+        #  if proc.returncode == 255:
+        #    raise ValueError(\
+        #      '{0}:{1}'.\
+        #      format('Error while copying file to remote server ssh_exchange_identification',
+        #             'Connection closed by remote host'))
+        #  else:
+        #    raise ValueError('Error while copying file to remote server {0}'.\
+        #                     format(errs.decode('utf8')))
     except Exception as e:
         raise ValueError("Failed to copy remote file, error: {0}".format(e))
 
@@ -302,7 +445,7 @@ def get_temp_dir(work_dir=None, prefix='temp',use_ephemeral_space=False):
       use_ephemeral_space = True
     if work_dir is None:
       if use_ephemeral_space:
-        work_dir = os.environ.get('EPHEMERAL')
+        work_dir = os.environ.get('EPHEMERAL', '/tmp')
         if work_dir is None:
           raise ValueError(
                   'Env variable EPHEMERAL is not available, set use_ephemeral_space as False')
@@ -588,6 +731,24 @@ def get_date_stamp():
         strftime(
           datetime.now(),
           '%Y-%b-%d %H:%M')                                                     # date tag values
+    return date_stamp
+  except Exception as e:
+    raise ValueError("Failed to get datestamp, error: {0}".format(e))
+
+
+def get_date_stamp_for_file_name() -> str:
+  '''
+  A method for generating datestamp for file name
+
+  :returns: A string of datestampe in 'YYYY_MM_DD_HH_MM' format
+  '''
+  try:
+    date_stamp = None
+    date_stamp = \
+      datetime.\
+        strftime(
+          datetime.now(),
+          '%Y_%b_%d_%H_%M')                                                     # date tag values
     return date_stamp
   except Exception as e:
     raise ValueError("Failed to get datestamp, error: {0}".format(e))

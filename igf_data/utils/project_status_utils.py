@@ -1,5 +1,7 @@
 from datetime import date,timedelta
 from dateutil.parser import parse
+from typing import Any
+from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.utils.seqrunutils import get_seqrun_date_from_igf_id
 from igf_data.utils.gviz_utils import convert_to_gviz_json_for_display
@@ -8,7 +10,7 @@ from igf_data.igfdb.igfTables import Base, Project,Sample,Experiment,Run,Seqrun,
 class Project_status:
   '''
   A class for project status fetch and gviz json file generation for Google chart grantt plot
-  
+
   :param igf_session_class: Database session class
   :param project_igf_id: Project igf id for database lookup
   :param seqrun_work_day: Duration for seqrun jobs in days, default 2
@@ -25,36 +27,60 @@ class Project_status:
   :param percent_complete_label: Label for percent complete field, default percent_complete
   :param dependencies_label: Label for dependencies field, default dependencies
   '''
-  def __init__(self,igf_session_class,project_igf_id,seqrun_work_day=2,
-               analysis_work_day=1,sequencing_resource_name='Sequencing',
-               demultiplexing_resource_name='Demultiplexing',
-               analysis_resource_name='Primary Analysis',
-               task_id_label='task_id',task_name_label='task_name',
-               resource_label='resource',dependencies_label='dependencies',
-               start_date_label='start_date',end_date_label='end_date',
-               duration_label='duration',percent_complete_label='percent_complete'):
-    self.project_igf_id=project_igf_id
-    self.base_adaptor=BaseAdaptor(**{'session_class':igf_session_class})
-    self.seqrun_work_day=seqrun_work_day
-    self.analysis_work_day=analysis_work_day
-    self.sequencing_resource_name=sequencing_resource_name
-    self.demultiplexing_resource_name=demultiplexing_resource_name
-    self.analysis_resource_name=analysis_resource_name
-    self.task_id_label=task_id_label
-    self.task_name_label=task_name_label
-    self.resource_label=resource_label
-    self.start_date_label=start_date_label
-    self.end_date_label=end_date_label
-    self.duration_label=duration_label
-    self.percent_complete_label=percent_complete_label
-    self.dependencies_label=dependencies_label
+  def __init__(
+        self,
+        project_igf_id: str,
+        igf_session_class: Any = None,
+        dbconfig_file: Any = None,
+        seqrun_work_day: int = 2,
+        analysis_work_day: int = 1,
+        sequencing_resource_name: str = 'Sequencing',
+        demultiplexing_resource_name: str = 'Demultiplexing',
+        analysis_resource_name: str = 'Primary Analysis',
+        task_id_label: str = 'task_id',
+        task_name_label: str = 'task_name',
+        resource_label: str = 'resource',
+        dependencies_label: str = 'dependencies',
+        start_date_label: str = 'start_date',
+        end_date_label: str = 'end_date',
+        duration_label: str = 'duration',
+        percent_complete_label: str = 'percent_complete'):
+    self.project_igf_id = project_igf_id
+    if dbconfig_file is not None:
+      dbparams = \
+        read_dbconf_json(dbconfig_file)
+      self.base_adaptor = \
+        BaseAdaptor(**dbparams)
+    elif igf_session_class is not None:
+      self.base_adaptor = \
+        BaseAdaptor(**{'session_class': igf_session_class})
+    else:
+      raise ValueError(
+        "Either session_class or dbconfig_file must be provided")
+    self.seqrun_work_day = seqrun_work_day
+    self.analysis_work_day = analysis_work_day
+    self.sequencing_resource_name = sequencing_resource_name
+    self.demultiplexing_resource_name = demultiplexing_resource_name
+    self.analysis_resource_name = analysis_resource_name
+    self.task_id_label = task_id_label
+    self.task_name_label = task_name_label
+    self.resource_label = resource_label
+    self.start_date_label = start_date_label
+    self.end_date_label = end_date_label
+    self.duration_label = duration_label
+    self.percent_complete_label = percent_complete_label
+    self.dependencies_label = dependencies_label
 
 
-  def generate_gviz_json_file(self,output_file,demultiplexing_pipeline,
-                              analysis_pipeline,active_seqrun_igf_id=None):
+  def generate_gviz_json_file(
+        self,
+        output_file: str,
+        demultiplexing_pipeline: str,
+        analysis_pipeline: str,
+        active_seqrun_igf_id=None) -> None:
     '''
     A wrapper method for writing a gviz json file with project status information
-    
+
     :param output_file: A filepath for writing project status
     :param analysis_pipeline: Name of the analysis pipeline
     :param demultiplexing_pipeline: Name of the demultiplexing pipeline
@@ -63,22 +89,22 @@ class Project_status:
     :returns: None
     '''
     try:
-      data=list()
-      description=self.get_status_description()                                 # get gviz description
-      column_order=self.get_status_column_order()                               # get gviz column order
-      seqrun_data=self.get_seqrun_info(\
-                         active_seqrun_igf_id=active_seqrun_igf_id,
-                         demultiplexing_pipeline=demultiplexing_pipeline)       # get seqrun data
-      if len(seqrun_data)>0:
-        data.extend(seqrun_data)                                                # add seqrun data
-
-      analysis_data=self.get_analysis_info(\
-                           analysis_pipeline=analysis_pipeline)                 # get analysis status
-      if len(analysis_data)>0:
-        data.extend(analysis_data)                                              # add analysis status
-
-      if len(data)>0:
-        convert_to_gviz_json_for_display(\
+      data = list()
+      description = self.get_status_description()                                 # get gviz description
+      column_order = self.get_status_column_order()                               # get gviz column order
+      seqrun_data = \
+        self.get_seqrun_info(
+          active_seqrun_igf_id=active_seqrun_igf_id,
+          demultiplexing_pipeline=demultiplexing_pipeline)                        # get seqrun data
+      if len(seqrun_data) > 0:
+        data.extend(seqrun_data)                                                  # add seqrun data
+      analysis_data = \
+        self.get_analysis_info(
+          analysis_pipeline=analysis_pipeline)                                    # get analysis status
+      if len(analysis_data) > 0:
+        data.extend(analysis_data)                                                # add analysis status
+      if len(data) > 0:
+        convert_to_gviz_json_for_display(
           data=data,
           description=description,
           columns_order=column_order,
@@ -86,41 +112,42 @@ class Project_status:
       else:
         with open(output_file,'w') as fp:
           fp.write('')                                                          # create an empty file
+    except Exception as e:
+      raise ValueError(
+        f"Fail to generate gviz json file for project {self.project_igf_id}, error: {e}")
 
-    except:
-      raise
 
   @staticmethod
-  def get_status_description():
+  def get_status_description() -> dict:
     '''
     A method for getting description for status json data
-    
+
     :returns: A dictionary containing status info
     '''
     try:
-      description={\
-        'task_id':('string', 'Task ID'),
-        'task_name':('string', 'Task Name'),
-        'resource':('string', 'Resource'),
-        'start_date':('date', 'Start Date'),
-        'end_date':('date', 'End Date'),
-        'duration':('number', 'Percent Complete'),
-        'percent_complete':('number', 'Duration'),
-        'dependencies':('string', 'Dependencies'),
+      description = {
+        'task_id': ('string', 'Task ID'),
+        'task_name': ('string', 'Task Name'),
+        'resource': ('string', 'Resource'),
+        'start_date': ('date', 'Start Date'),
+        'end_date': ('date', 'End Date'),
+        'duration': ('number', 'Percent Complete'),
+        'percent_complete': ('number', 'Duration'),
+        'dependencies': ('string', 'Dependencies'),
       }
       return description
     except:
       raise
 
   @staticmethod
-  def get_status_column_order():
+  def get_status_column_order() -> list:
     '''
     A method for fetching column order for status json data
-    
+
     :return: A list data containing the column order
     '''
     try:
-      columns_order=[\
+      columns_order = [
         'task_id',
         'task_name',
         'resource',
@@ -135,33 +162,40 @@ class Project_status:
       raise
 
 
-  def _add_seqrun_info(self,flowcell_id,seqrun_igf_id,run_found):
+  def _add_seqrun_info(
+        self,
+        flowcell_id: str,
+        seqrun_igf_id: str,
+        run_found: Any) -> dict:
     '''
     An internal method for adding sequencing run info to the status page
-    
+
     :param flowcell_id: A flowcell id for sequencing info
     :param seqrun_igf_id: A seqrun igf id
     :param run_found: A timestamp when run is found
     :returns: A dictionary with seqrun data for the grantt plot
     '''
     try:
-      start_date=parse(get_seqrun_date_from_igf_id(seqrun_igf_id))              # fetch seqrun date
-      end_date=start_date+timedelta(days=self.seqrun_work_day)                  # calculate seqrun finish date
+      start_date = \
+        parse(get_seqrun_date_from_igf_id(seqrun_igf_id))                       # fetch seqrun date
+      end_date = \
+        start_date + timedelta(days=self.seqrun_work_day)                       # calculate seqrun finish date
       if end_date > run_found:
         end_date=run_found                                                      # reset run end timestamp
-
-      duration=int((end_date-start_date).total_seconds()*1000)                  # calculate seqrun duration
-      percent_complete=100                                                      # seqrun is already done
-      new_data=dict()
-      new_data.update(\
-      {self.task_id_label:'Run {0}'.format(flowcell_id),
-       self.task_name_label:'Run {0}'.format(flowcell_id),
-       self.resource_label:self.sequencing_resource_name,
-       self.start_date_label:start_date,
-       self.end_date_label:end_date,
-       self.duration_label:duration,
-       self.percent_complete_label:percent_complete,
-       self.dependencies_label:None,
+      duration = int(
+        (end_date-start_date).\
+          total_seconds() * 1000)                                               # calculate seqrun duration
+      percent_complete = 100                                                    # seqrun is already done
+      new_data = dict()
+      new_data.update({
+        self.task_id_label: f'Run {flowcell_id}',
+        self.task_name_label: f'Run {flowcell_id}',
+        self.resource_label: self.sequencing_resource_name,
+        self.start_date_label: start_date,
+        self.end_date_label: end_date,
+        self.duration_label: duration,
+        self.percent_complete_label: percent_complete,
+        self.dependencies_label: None,
       })
       return new_data
     except:

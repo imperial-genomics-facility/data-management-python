@@ -5,7 +5,7 @@ from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_data.utils.epmc_utils import search_epmc_for_keyword
 from igf_data.utils.confluence_utils import update_confluence_page
 
-CONFLUENCE_CONFIG_FILE = Variable.get('confluence_config')
+CONFLUENCE_CONFIG_FILE = Variable.get('confluence_config', default_var=None)
 SLACK_CONF = Variable.get('slack_conf', default_var=None)
 MS_TEAMS_CONF = Variable.get('ms_teams_conf', default_var=None)
 WIKI_PUBLICATION_PAGE_ID = Variable.get('wiki_publication_page_id', default_var=None)

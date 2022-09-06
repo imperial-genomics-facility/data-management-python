@@ -37,7 +37,7 @@ class Hiseq4000RunInfo(unittest.TestCase):
          read_count += 1
          read_cycle=reads_stats[read_id]['numcycles']
          self.assertEqual(int(read_cycle), read_len)
-     
+
        else:
          continue
 
@@ -49,6 +49,15 @@ class Hiseq4000RunInfo(unittest.TestCase):
     flowcell_name=runinfo_data.get_flowcell_name()
     self.assertEqual(flowcell_name, 'HXXXXXXXX')
 
+  def test_get_lane_count(self):
+    runinfo_data = self.runinfo_data
+    lane_count = runinfo_data.get_lane_count()
+    self.assertEqual(lane_count, 8)
+
+  def test_get_tiles_list(self):
+    runinfo_data = self.runinfo_data
+    tiles = runinfo_data.get_tiles_list()
+    self.assertEqual(len(tiles), 145)
 
 if __name__ == '__main__':
   unittest.main()

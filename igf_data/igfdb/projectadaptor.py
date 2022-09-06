@@ -268,7 +268,7 @@ class ProjectAdaptor(BaseAdaptor):
       session = self.session
       query = \
         session.\
-          query(Project,
+          query(Project.project_igf_id,
                 User,
                 ProjectUser.data_authority).\
           join(ProjectUser,

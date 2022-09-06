@@ -7,6 +7,7 @@ from igf_data.utils.fileutils import check_file_path, get_temp_dir, copy_local_f
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_data.igfdb.analysisadaptor import AnalysisAdaptor
+from airflow.operators.trigger_dagrun import TriggerDagRunOperator
 
 DATABASE_CONFIG_FILE = \
   Variable.get('database_config_file', default_var=None)
@@ -89,15 +90,15 @@ def trigger_dag_func(context, dag_run_obj):
                analysis_list=analysis_list,
                analysis_type=analysis_name,
                index=index)
-        dag_run_obj.payload = analysis_detail
-        return dag_run_obj
+        #dag_run_obj.payload = analysis_detail
+        #return dag_run_obj
         ## FIX for v2
-        # trigger_dag = \
-        #    TriggerDagRunOperator(
-        #        task_id="trigger_dag_{0}_{1}".format(analysis_name, index),
-        #        trigger_dag_id=analysis_name,
-        #        conf=analysis_detail)
-        #return trigger_dag.execute(context=context)
+        trigger_dag = \
+            TriggerDagRunOperator(
+                task_id="trigger_dag_{0}_{1}".format(analysis_name, index),
+                trigger_dag_id=analysis_name,
+                conf=analysis_detail)
+        return trigger_dag.execute(context=context)
     except Exception as e:
         logging.error(e)
         message = \

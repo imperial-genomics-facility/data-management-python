@@ -1,4 +1,5 @@
 import pandas as pd
+from typing import List, Dict, Any, Tuple, Union, Optional
 from sqlalchemy.sql import column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.igfTables import Seqrun, Run, Platform, Seqrun_attribute, Seqrun_stats, Flowcell_barcode_rule
@@ -205,6 +206,50 @@ class SeqrunAdaptor(BaseAdaptor):
               'Failed to store seqrun stats data, error: {0}'.format(e))
 
 
+  def get_flowcell_id_for_seqrun_id(
+        self,
+        seqrun_igf_id: str) \
+          -> Union[None, str]:
+    try:
+      query = \
+        self.session.\
+          query(Seqrun.flowcell_id).\
+          filter(Seqrun.seqrun_igf_id == seqrun_igf_id)
+      seqrun_record = \
+        self.fetch_records(
+          query=query,
+          output_mode='one_or_none')
+      if seqrun_record is None:
+        return None
+      else:
+        return seqrun_record[0]
+    except Exception as e:
+      raise ValueError(
+        f'Failed to get flowcell id for seqrun id, error: {e}')
+
+
+  def check_seqrun_exists(self,seqrun_id):
+    '''
+    A method for checking if seqrun exists
+
+    :param seqrun_id: Seqrun id
+    :returns: True if seqrun exists, False otherwise
+    '''
+    try:
+      seqrun_entry = \
+        self.fetch_records_by_column(
+          table=Seqrun,
+          column_name=Seqrun.seqrun_igf_id,
+          column_id=seqrun_id,
+          output_mode='one_or_none')
+      if seqrun_entry is not None:
+        return True
+      else:
+        return False
+    except Exception as e:
+      raise ValueError(
+              'Failed to check seqrun exists, error: {0}'.format(e))
+
   def fetch_seqrun_records_igf_id(
         self,seqrun_igf_id,target_column_name='seqrun_igf_id'):
     '''
@@ -225,7 +270,7 @@ class SeqrunAdaptor(BaseAdaptor):
           column_name=column,
           column_id=seqrun_igf_id,
           output_mode='one')
-      return seqrun  
+      return seqrun
     except Exception as e:
       raise ValueError(
               'Failed to fetch seqrun if, error: {0}'.format(e))

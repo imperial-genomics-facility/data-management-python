@@ -38,13 +38,13 @@ class RunParameter_xml:
       raise ValueError('Failed to get NovaSeq workflow type')
 
 
-  def get_novaseq_flowcell(self):
+  def get_novaseq_flowcell(self, workflow_types=('NovaSeqXp', 'NovaSeqStandard')):
     try:
       soup = self._soup
       flowcell_id = None
       workflowtype = self.get_nova_workflow_type()
       if workflowtype is None or \
-         workflowtype != 'NovaSeqXp':
+         workflowtype not in workflow_types:
         raise ValueError(
                 'Missing NovaSeq workflow type: {0}'.\
                   format(workflowtype))
@@ -56,18 +56,19 @@ class RunParameter_xml:
         raise ValueError(
                 'Missing NovaSeq flowcell id, file: {0}'.\
                   format(self.xml_file))
+      return flowcell_id
     except Exception as e:
       raise ValueError(
               'Failed to get NovaSeq flowcell id, error: {0}'.format(e))
 
 
-  def get_novaseq_flowcell_mode(self):
+  def get_novaseq_flowcell_mode(self, workflow_types=('NovaSeqXp', 'NovaSeqStandard')):
     try:
       soup = self._soup
       flowcell_mode = None
       workflowtype = self.get_nova_workflow_type()
       if workflowtype is None or \
-         workflowtype != 'NovaSeqXp':
+         workflowtype not in workflow_types:
           raise ValueError(
                   'Missing NovaSeq workflow type: {0}'.\
                     format(workflowtype))
@@ -79,6 +80,7 @@ class RunParameter_xml:
         raise ValueError(
                 'Missing NovaSeq flowcell mode, file: {0}'.\
                   format(self.xml_file))
+      return flowcell_mode
     except Exception as e:
       raise ValueError(
               'Failed to get NovaSeq flowcell mode, error: {0}'.format(e))

@@ -50,8 +50,9 @@ class Add_seqrun_path_info1(unittest.TestCase):
     with open(self.output_file,'r') as j_data:
       json_data=json.load(j_data)
     json_data_line=json_data[0]
-    self.assertEqual(json_data_line['flowcell_id'],'HABCD1234')
-    self.assertEqual(json_data_line['path'],'2018-03-19/HABCD1234')
+    self.assertEqual(json_data_line['flowcell_id'], 'HABCD1234 - 2018-03-19')
+    # self.assertEqual(json_data_line['path'],'2018-03-19/HABCD1234')
+    self.assertEqual(json_data_line['path'],'HABCD1234')
 
 if __name__ == '__main__':
   unittest.main()

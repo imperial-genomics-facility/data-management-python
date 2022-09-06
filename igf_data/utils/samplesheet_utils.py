@@ -11,8 +11,8 @@ from igf_data.process.seqrun_processing.find_and_process_new_seqrun import valid
 from igf_data.process.seqrun_processing.find_and_process_new_seqrun import check_for_registered_project_and_sample
 
 def get_formatted_samplesheet_per_lane(
-    samplesheet_file,singlecell_barcode_json,singlecell_dual_barcode_json,runinfo_file,output_dir,
-    platform,filter_lane=None,single_cell_tag='10X',index1_rule=None,index2_rule=None):
+    samplesheet_file, singlecell_barcode_json, singlecell_dual_barcode_json, runinfo_file, output_dir,
+    platform, filter_lane=None, single_cell_tag='10X', index1_rule=None, index2_rule=None):
   """
   A function for filtering and reformatting samplesheet files and splitting the data per lane
 
@@ -80,7 +80,9 @@ def get_formatted_samplesheet_per_lane(
         condition_key='Lane',
         condition_value=str(lane_id))
       df = pd.DataFrame(sa._data)
-      lane_df = df[df['Lane']==lane_id].copy()
+      df['Lane'] = \
+        df['Lane'].astype(str)
+      lane_df = df[df['Lane']==str(lane_id)].copy()
       if len(lane_df.index)==0:
         raise ValueError(
                 'No data present in samplesheet {0}, lane {1}'.\

@@ -1,4 +1,5 @@
 import pandas as pd
+from typing import Tuple, Union
 from sqlalchemy.sql import column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.igfTables import Experiment, Run, Run_attribute, Seqrun, Sample,Project
@@ -11,7 +12,7 @@ class RunAdaptor(BaseAdaptor):
   def store_run_and_attribute_data(self,data,autosave=True):
     '''
     A method for dividing and storing data to run and attribute table
-    
+
     :param data: A list of dictionaries or a Pandas DataFrame containing the run data
     :param autosave: A toggle for saving data automatically to db, default True
     :returns: None
@@ -37,7 +38,7 @@ class RunAdaptor(BaseAdaptor):
         attribute_name_column='attribute_name',attribute_value_column='attribute_value'):
     '''
     A method for separating data for Run and Run_attribute tables
-    
+
     :param data: A list of dictionaries or a Pandas DataFrame
     :param table_columns: List of table column names, default None
     :param required_column: column name to add to the attribute data
@@ -78,7 +79,7 @@ class RunAdaptor(BaseAdaptor):
   def store_run_data(self,data,autosave=False):
     '''
     A method for loading data to Run table
-    
+
     :param data: A list of dictionaries or a Pandas DataFrame containing the attribute data
     :param autosave: A toggle for saving data automatically to db, default True
     :returns: None
@@ -142,7 +143,7 @@ class RunAdaptor(BaseAdaptor):
   def store_run_attributes(self,data,run_id='',autosave=False):
     '''
     A method for storing data to Run_attribute table
-    
+
     :param data: A list of dictionaries or a Pandas DataFrame containing the attribute data
     :param autosave: A toggle for saving data automatically to db, default True
     :returns: None
@@ -184,12 +185,11 @@ class RunAdaptor(BaseAdaptor):
       raise ValueError(
               'Failed to store run atributes, error: {0}'.format(e))
 
-
   def check_run_records_igf_id(
         self,run_igf_id,target_column_name='run_igf_id'):
     '''
     A method for existing data for Run table
-    
+
     :param run_igf_id: an igf id
     :param target_column_name: a column name, default run_igf_id
     :returns: True if the file is present in db or False if its not
@@ -218,7 +218,7 @@ class RunAdaptor(BaseAdaptor):
         self,run_igf_id,target_column_name='run_igf_id'):
     '''
     A method for fetching data for Run table
-    
+
     :param run_igf_id: an igf id
     :param target_column_name: a column name, default run_igf_id
     :returns: Run record
@@ -243,7 +243,7 @@ class RunAdaptor(BaseAdaptor):
   def fetch_sample_info_for_run(self,run_igf_id):
     '''
     A method for fetching sample information linked to a run_igf_id
-    
+
     :param run_igf_id: A run_igf_id to search database
     :returns: Sample record
     '''
@@ -272,7 +272,7 @@ class RunAdaptor(BaseAdaptor):
   def fetch_project_sample_and_experiment_for_run(self,run_igf_id):
     '''
     A method for fetching project, sample and experiment information for a run
-    
+
     :param run_igf_id: A run igf id string
     :returns: A list of three strings, or None if not found
                * project_igf_id
@@ -345,6 +345,30 @@ class RunAdaptor(BaseAdaptor):
               'Failed to fetch flowcell and lane, error: {0}'.format(e))
 
 
+  def check_run_attribute_records_by_db_id(
+        self,
+        run_id: int,
+        attribute_name: str) \
+          -> bool:
+    try:
+      record_exists = False
+      query = \
+        self.session.\
+          query(Run_attribute).\
+          filter(Run_attribute.run_id==run_id).\
+          filter(Run_attribute.attribute_name==attribute_name)
+      records = \
+        self.fetch_records(
+          query=query,
+          output_mode='dataframe')                                              # attribute can present more than one time
+      if len(records.index) > 0:
+        record_exists = True
+      return record_exists
+    except Exception as e:
+      raise ValueError(
+        f'Failed to check run attribute records, error: {e}')
+
+
   def update_run_attribute_records_by_igfid(self, update_data, autosave=True):
     try:
       if not isinstance(update_data, list):
@@ -379,13 +403,82 @@ class RunAdaptor(BaseAdaptor):
           to_dict(orient='records')
       for run_data in update_data:
         run_id = run_data.get('run_id')
-        query = \
-          self.session.\
-            query(Run_attribute).\
-            filter(Run_attribute.run_id==run_id)                                   # define base query
-        query.update(run_data)
+        attribute_name = run_data.get('attribute_name')
+        run_attribute_exists = \
+          self.check_run_attribute_records_by_db_id(
+            run_id=run_id,
+            attribute_name=attribute_name)
+        if run_attribute_exists:
+          query = \
+            self.session.\
+              query(Run_attribute).\
+              filter(Run_attribute.run_id==run_id)                                   # define base query
+          query.update(run_data)
+        else:
+          self.store_attributes(
+            attribute_table=Run_attribute,
+            data=[run_data])
       if autosave:
         self.commit_session()
     except Exception as e:
       self.rollback_session()
       raise ValueError('Failed to update run attribute records, error: {0}'.format(e))
+
+
+  def get_all_run_for_seqrun_igf_id(
+        self,
+        seqrun_igf_id: str,
+        project_igf_id: Union[None, str] = None) -> list:
+    try:
+      query = \
+        self.session.\
+          query(
+            Run.run_igf_id,
+            Run.lane_number,
+            Seqrun.flowcell_id,
+            Project.project_igf_id).\
+          join(Experiment, Run.experiment_id==Experiment.experiment_id).\
+          join(Sample, Experiment.sample_id==Sample.sample_id).\
+          join(Project, Sample.project_id==Project.project_id).\
+          join(Seqrun, Run.seqrun_id==Seqrun.seqrun_id).\
+          filter(Run.status=='ACTIVE').\
+          filter(Seqrun.seqrun_igf_id==seqrun_igf_id).\
+          filter(Sample.status=='ACTIVE').\
+          filter(Experiment.status=='ACTIVE')
+      if project_igf_id is not None:
+        query = \
+          query.\
+            filter(Project.project_igf_id==project_igf_id)
+      records = \
+        self.fetch_records(
+          query=query,
+          output_mode='dataframe')
+      return records.to_dict(orient='records')
+    except Exception as e:
+      raise ValueError(
+        f'Failed to get all run for seqrun id, error: {e}')
+
+  def delete_runs_from_db(
+        self,
+        run_igf_id_list: list,
+        autosave: bool = True) \
+          -> bool:
+    try:
+      if len(run_igf_id_list) == 0:
+        return False
+      else:
+        try:
+          self.session.\
+              query(Run).\
+              filter(Run.run_igf_id.in_(run_igf_id_list)).\
+              delete(synchronize_session=False)
+          if autosave:
+            self.commit_session()
+        except:
+          if autosave:
+            self.rollback_session()
+          raise
+        return True
+    except Exception as e:
+      raise ValueError(
+        f'Failed to delete run igfs from db, error: {e}')

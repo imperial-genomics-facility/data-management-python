@@ -15,6 +15,8 @@ from igf_data.utils.fileutils import get_date_stamp
 from igf_data.utils.fileutils import list_remote_file_or_dirs
 from igf_data.utils.fileutils import copy_remote_file
 from igf_data.utils.fileutils import check_file_path
+from igf_data.illumina.runinfo_xml import RunInfo_xml
+from igf_data.utils.fileutils import get_date_stamp_for_file_name
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_airflow.logging.upload_log_msg import send_mentions_to_channels
 from igf_data.utils.jupyter_nbconvert_wrapper import Notebook_runner
@@ -26,8 +28,11 @@ MS_TEAMS_CONF = Variable.get('ms_teams_conf', default_var=None)
 HPC_SEQRUN_BASE_PATH = Variable.get('hpc_seqrun_path', default_var=None)
 FTP_SEQRUN_SERVER = Variable.get('crick_ftp_seqrun_hostname', default_var=None)
 FTP_CONFIG_FILE = Variable.get('crick_ftp_config_file_wells', default_var=None)
-SEQRUN_SERVER = Variable.get('seqrun_server', default_var=None)
-REMOTE_SEQRUN_BASE_PATH = Variable.get('seqrun_base_path', default_var=None)
+HPC_SSH_KEY_FILE = Variable.get('hpc_ssh_key_file', default_var=None)
+#SEQRUN_SERVER = Variable.get('seqrun_server', default_var=None)
+SEQRUN_SERVER = Variable.get('wells_server_hostname', default_var=None)
+#REMOTE_SEQRUN_BASE_PATH = Variable.get('seqrun_base_path', default_var=None)
+REMOTE_SEQRUN_BASE_PATH = Variable.get('wells_seqrun_base_path', default_var=None)
 SEQRUN_SERVER_USER = Variable.get('seqrun_server_user', default_var=None)
 INTEROP_DUMPTEXT_EXE = Variable.get('interop_dumptext_exe', default_var=None)
 INTEROP_NOTEBOOK_IMAGE_PATH = Variable.get('interop_notebook_image_path', default_var=None)
@@ -215,6 +220,7 @@ def copy_run_file_to_remote_func(**context):
        xcom_key == 'bcl_files':
       lane_id = \
         context['params'].get('lane_id')
+      lane_id = str(lane_id)
       if lane_id is None:
         raise ValueError('No lane id found for bcl file copy')
       xcom_data = \
@@ -244,6 +250,7 @@ def copy_run_file_to_remote_func(**context):
       copy_remote_file(
         source_path=local_bcl_path,
         destination_path=remote_bcl_path,
+        ssh_key_file=HPC_SSH_KEY_FILE,
         destination_address='{0}@{1}'.format(SEQRUN_SERVER_USER, SEQRUN_SERVER))
     elif xcom_key is not None and \
        xcom_key == 'additional_files':
@@ -269,6 +276,7 @@ def copy_run_file_to_remote_func(**context):
         copy_remote_file(
           source_path=local_file_path,
           destination_path=remote_file_path,
+          ssh_key_file=HPC_SSH_KEY_FILE,
           destination_address='{0}@{1}'.format(SEQRUN_SERVER_USER, SEQRUN_SERVER))
   except Exception as e:
     logging.error(e)
@@ -315,14 +323,24 @@ def check_and_divide_run_for_remote_copy_func(**context):
               'Seqrun {0} already present on the rempote server {1}, path {2}, remove it before copy'.\
                 format(seqrun_id, SEQRUN_SERVER, REMOTE_SEQRUN_BASE_PATH))
     xcom_bcl_dict = dict()
-    for i in range(1, 9):
+    ## get lane count from RunInfo
+    run_info_xml = \
+      os.path.join(
+        seqrun_dir,
+        'RunInfo.xml')
+    check_file_path(run_info_xml)
+    run_info = RunInfo_xml(run_info_xml)
+    lane_counts = \
+      run_info.get_lane_count()
+    max_lanes = int(lane_counts) + 1
+    for i in range(1, max_lanes):
       local_bcl_path = \
         os.path.join(
           seqrun_dir,
           'Data',
           'Intensities',
           'BaseCalls',
-          'L00{0}'.format(i))
+          f'L00{i}')
       remote_bcl_path = \
         os.path.join(
           remote_seqrun_dir,
@@ -337,20 +355,40 @@ def check_and_divide_run_for_remote_copy_func(**context):
             'remote_bcl_path': remote_bcl_path}})
     additional_files = [
       'RunInfo.xml',
-      'runParameters.xml',
       'InterOp',
       'Logs',
       'Recipe',
       'RTAComplete.txt',
       'Data/Intensities/s.locs']
+    # for RunParameters.xml
+    runParameters_xml_name = 'runParameters.xml'
+    local_runParameters_xml_path = \
+      os.path.join(
+        seqrun_dir,
+        runParameters_xml_name)
+    if os.path.exists(local_runParameters_xml_path):
+      additional_files.\
+        append(runParameters_xml_name)
+    else:
+      runParameters_xml_name = 'RunParameters.xml'
+      local_runParameters_xml_path = \
+        os.path.join(
+          seqrun_dir,
+          runParameters_xml_name)
+      check_file_path(local_runParameters_xml_path)
+      additional_files.\
+        append(runParameters_xml_name)
     xcom_additional_files_dict = dict()
     for f in additional_files:
       local_file_path = \
         os.path.join(
           seqrun_dir, f)
-      remote_file_path = \
-        os.path.join(
-          remote_seqrun_dir, f)
+      if f == 'InterOp':
+        remote_file_path = remote_seqrun_dir
+      else:
+        remote_file_path = \
+          os.path.join(
+            remote_seqrun_dir, f)
       check_file_path(local_file_path)
       xcom_additional_files_dict.\
         update({
@@ -365,7 +403,7 @@ def check_and_divide_run_for_remote_copy_func(**context):
       value=xcom_additional_files_dict)
     task_list = [
       'copy_bcl_to_remote_for_lane{0}'.format(i)
-        for i in range(1,9)]
+        for i in range(1, max_lanes)]
     task_list.\
       append('copy_additional_files')
     return task_list
@@ -409,6 +447,9 @@ def validate_md5_chunk_func(**context):
       ti.xcom_pull(
         task_ids=xcom_task,
         key=xcom_key)
+    md5_chunk_dict = {
+      int(k): v
+        for k,v in md5_chunk_dict.items()}
     if int(chunk_id) not in md5_chunk_dict.keys():
       raise ValueError(
               'Missing chunk id {0} in the md5 chunks {1}'.\
@@ -569,6 +610,27 @@ def extract_tar_file_func(**context):
           HPC_SEQRUN_BASE_PATH,
           '{0}.tar.gz'.format(seqrun_id))
       output_seqrun_dir = \
+        os.path.join(
+          HPC_SEQRUN_BASE_PATH,
+          seqrun_id)
+      if os.path.exists(output_seqrun_dir):
+        date_stamp = get_date_stamp_for_file_name()
+        new_seqrun_dir_name = \
+          os.path.join(
+            HPC_SEQRUN_BASE_PATH,
+            "{0}_{1}".format(seqrun_id, date_stamp))
+        os.rename(output_seqrun_dir, new_seqrun_dir_name)
+        message = \
+          'Moved run {0} to {1}'.\
+          format(output_seqrun_dir, new_seqrun_dir_name)
+        send_log_to_channels(
+          slack_conf=SLACK_CONF,
+          ms_teams_conf=MS_TEAMS_CONF,
+          task_id=context['task'].task_id,
+          dag_id=context['task'].dag_id,
+          comment=message,
+          reaction='pass')
+      output_seqrun_dir = \
         _extract_seqrun_tar(
           tar_file=seqrun_tar_file,
           seqrun_id=seqrun_id,
@@ -612,7 +674,7 @@ def _extract_seqrun_tar(tar_file, seqrun_id, seqrun_base_path):
               'Dir {0} already present, remove it before re-run'.\
                 format(output_seqrun_dir))
     temp_dir = \
-      get_temp_dir(use_ephemeral_space=False)
+      get_temp_dir(use_ephemeral_space=True)
     if os.path.exists(temp_dir):
       _change_temp_dir_permissions(temp_dir)
       remove_dir(temp_dir)
