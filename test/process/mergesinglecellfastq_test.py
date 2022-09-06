@@ -150,8 +150,12 @@ class MergeSingleCellFastq_testB(unittest.TestCase):
     self.assertEqual(len(all_fastq_file), 12)
     self.assertTrue(
       os.path.join(self.temp_dir, 'fastq', 'IGFQ1', 'IGF1_S1_L001_R1_001.fastq.gz') in all_fastq_file)
+    fastq_file = \
+      os.path.join(self.temp_dir, 'fastq', 'IGFQ1', 'IGF1_S1_L001_R1_001.fastq.gz')
+    # fastq_lines = \
+    #   subprocess.check_output(f"zcat {all_fastq_file[0]}|wc -l", shell=True)
     fastq_lines = \
-      subprocess.check_output(f"zcat {all_fastq_file[0]}|wc -l", shell=True)
+      subprocess.check_output(f"zcat {fastq_file}|wc -l", shell=True)
     self.assertEqual(fastq_lines.decode().strip(), '16')
     self.assertTrue(
       os.path.join(self.temp_dir, 'fastq', 'IGFQ1', 'IGF3_S9_L001_R1_001.fastq.gz') in all_fastq_file)
