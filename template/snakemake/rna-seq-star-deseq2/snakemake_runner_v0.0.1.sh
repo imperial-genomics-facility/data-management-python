@@ -5,9 +5,11 @@ THIS IS A TEMPLATE FOR RUNNING SNAKEMAKE RNASEQ PIPELINE
 VERSION: 0.0.1
 
 REQUIRED INPUTS:
+
   * SINGULARITY_BIND_DIRS: Comma separated paths to bind to singularity container
   * CONFIG_YAML_PATH: Path to the dynamically generated `config.yaml` file for the run
   * SNAKEMAKE_WORK_DIR: Temp work dir for pipeline run
+
 """
 
 ## LOAD ENV
