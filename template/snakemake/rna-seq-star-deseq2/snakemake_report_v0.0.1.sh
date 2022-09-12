@@ -1,15 +1,14 @@
 #!/bin/bash
 
-"""
-THIS IS A TEMPLATE FOR SNAKEMAKE RNASEQ REPORT GENERATION PIPELINE
-VERSION: 0.0.1
+## THIS IS A TEMPLATE FOR SNAKEMAKE RNASEQ REPORT GENERATION PIPELINE
+## VERSION: 0.0.1
+##
+## REQUIRED INPUTS:
+##
+##  * CONFIG_YAML_PATH: Path to the dynamically generated `config.yaml` file for the run
+##  * SNAKEMAKE_WORK_DIR: Temp work dir for pipeline run
+##
 
-REQUIRED INPUTS:
-
-  * CONFIG_YAML_PATH: Path to the dynamically generated `config.yaml` file for the run
-  * SNAKEMAKE_WORK_DIR: Temp work dir for pipeline run
-
-"""
 
 ## LOAD ENV
 module load anaconda3/personal
