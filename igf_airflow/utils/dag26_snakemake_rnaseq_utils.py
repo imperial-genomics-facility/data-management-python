@@ -10,6 +10,7 @@ from igf_data.utils.fileutils import check_file_path
 from igf_data.utils.fileutils import get_temp_dir
 
 
+
 def parse_design_and_build_inputs_for_snakemake_rnaseq(
       input_design_yaml: str,
       dbconfig_file: str,
