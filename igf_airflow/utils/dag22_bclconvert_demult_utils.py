@@ -10,6 +10,7 @@ import logging
 import fnmatch
 import subprocess
 from typing import Tuple
+from typing import Union
 from typing import List
 from typing import Any
 import smtplib
@@ -5854,7 +5855,7 @@ def _check_and_seed_seqrun_pipeline(
     dbconf_json_path: str,
     seed_status: str = 'SEEDED',
     seed_table: str ='seqrun',
-    no_change_status: str = 'RUNNING',
+    no_change_status: Union[list, str] = 'RUNNING',
     check_all_pipelines_for_seed_id: bool = False) -> bool:
   try:
     dbconf = read_dbconf_json(dbconf_json_path)

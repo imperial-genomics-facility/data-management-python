@@ -1,4 +1,5 @@
 import pandas as pd
+from typing import Tuple, Union
 from sqlalchemy import update
 from sqlalchemy.sql import column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
@@ -369,8 +370,14 @@ class PipelineAdaptor(BaseAdaptor):
 
 
   def create_or_update_pipeline_seed(
-        self,seed_id,pipeline_name,new_status,seed_table,
-        no_change_status=None,autosave=True):
+        self,
+        seed_id: int,
+        pipeline_name: str,
+        new_status: str,
+        seed_table: str,
+        no_change_status: Union[str, list, None] = None,
+        autosave: bool = True) \
+          -> bool:
     try:
       change_status = False
       query = \
@@ -408,12 +415,37 @@ class PipelineAdaptor(BaseAdaptor):
           autosave=autosave)
         change_status = True
       else:
-        if pipeseed_entry.status != no_change_status:
+        ## if no_change_status is None, change it anyway
+        if no_change_status is None:
           pipeseed_data = [{
-            'seed_id':seed_id,
-            'seed_table':seed_table,
-            'pipeline_id':pipeline_id,
-            'status':new_status}]
+            'seed_id': seed_id,
+            'seed_table': seed_table,
+            'pipeline_id': pipeline_id,
+            'status': new_status}]
+          self.update_pipeline_seed(
+            data=pipeseed_data,
+            autosave=autosave)
+          change_status = True
+        ## if no_change_status is string
+        elif isinstance(no_change_status, str) and \
+           pipeseed_entry.status != no_change_status:
+          pipeseed_data = [{
+            'seed_id': seed_id,
+            'seed_table': seed_table,
+            'pipeline_id': pipeline_id,
+            'status': new_status}]
+          self.update_pipeline_seed(
+            data=pipeseed_data,
+            autosave=autosave)
+          change_status = True
+        ## if no_change_status is a list
+        elif isinstance(no_change_status, list) and \
+          pipeseed_entry.status not in no_change_status:
+          pipeseed_data = [{
+            'seed_id': seed_id,
+            'seed_table': seed_table,
+            'pipeline_id': pipeline_id,
+            'status': new_status}]
           self.update_pipeline_seed(
             data=pipeseed_data,
             autosave=autosave)
