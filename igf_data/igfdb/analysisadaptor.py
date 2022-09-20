@@ -93,6 +93,7 @@ class AnalysisAdaptor(BaseAdaptor):
       query = \
         session.\
         query(
+          Analysis.analysis_id,
           Analysis.analysis_name,
           Analysis.analysis_type,
           Analysis.analysis_description).\

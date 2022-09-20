@@ -308,7 +308,7 @@ class TestDag26_snakemake_rnaseq_utilsB(unittest.TestCase):
     ## add analysis data
     aa = \
       AnalysisAdaptor(**{'session': base.session})
-    analysis_design_data = """
+    self.analysis_design_data = """
     sample_metadata:
       sampleA:
         condition: control
@@ -330,14 +330,14 @@ class TestDag26_snakemake_rnaseq_utilsB(unittest.TestCase):
       'project_igf_id': 'projectA',
       'analysis_name': 'analysis_1',
       'analysis_type': 'pipelineA',
-      'analysis_description': analysis_design_data}]
+      'analysis_description': self.analysis_design_data}]
     aa.store_analysis_data(
       data=analysis_data1)
     analysis_data2 = [{
       'project_igf_id': 'projectA',
       'analysis_name': 'analysis_2',
       'analysis_type': 'pipelineB',
-      'analysis_description': analysis_design_data}]
+      'analysis_description': self.analysis_design_data}]
     aa.store_analysis_data(
       data=analysis_data2)
     ## add pipeline data
@@ -438,6 +438,14 @@ class TestDag26_snakemake_rnaseq_utilsB(unittest.TestCase):
           new_status='RUNNING',
           seed_table='analysis',
           no_change_status=['FAILED', 'FINISHED'])
+  def test_fetch_analysis_design(self):
+    input_design_yaml = \
+      fetch_analysis_design(
+        analysis_id=1,
+        pipeline_name='pipelineA',
+        dbconfig_file=self.dbconfig)
+    self.assertIsNotNone(input_design_yaml)
+    self.assertEqual(input_design_yaml, self.analysis_design_data)
 
 
 

@@ -199,11 +199,11 @@ def fetch_analysis_design(
            analysis_entry.analysis_type != pipeline_name:
           raise ValueError(
             f"Analysis name mismatch: {pipeline_name} != {analysis_entry.analysis_type}")
-        if analysis_entry.analysis_design is None:
+        if analysis_entry.analysis_description is None:
           raise ValueError(
-            f"Missing analysis_design for {analysis_id} and {pipeline_name}")
+            f"Missing analysis_description for {analysis_id} and {pipeline_name}")
         input_design_yaml = \
-          analysis_entry.analysis_design
+          analysis_entry.analysis_description
         aa.close_session()
       except:
         aa.close_session()
