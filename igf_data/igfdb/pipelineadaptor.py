@@ -30,7 +30,7 @@ class PipelineAdaptor(BaseAdaptor):
 
 
   def fetch_pipeline_records_pipeline_name(
-        self,pipeline_name,target_column_name='pipeline_name'):
+        self,pipeline_name,target_column_name='pipeline_name',output_mode='one'):
     '''
     A method for fetching data for Pipeline table
 
@@ -48,7 +48,7 @@ class PipelineAdaptor(BaseAdaptor):
           table=Pipeline,
           column_name=column,
           column_id=pipeline_name,
-          output_mode='one')
+          output_mode=output_mode)
       return pipeline
     except Exception as e:
       raise ValueError(
@@ -72,6 +72,32 @@ class PipelineAdaptor(BaseAdaptor):
     except Exception as e:
       raise ValueError(
         f'Failed to check pipeline using pipeline name, error: {e}')
+
+
+  def check_existing_pipeseed(
+        self,
+        seed_id: int,
+        seed_table: str,
+        pipeline_name: str) \
+          -> Union[str, None]:
+    try:
+      query = \
+        self.session.\
+          query(Pipeline_seed.status).\
+          join(Pipeline, Pipeline.pipeline_id==Pipeline_seed.pipeline_id).\
+          filter(Pipeline_seed.seed_id==seed_id).\
+          filter(Pipeline_seed.seed_table==seed_table)
+      pipeseed_record = \
+        self.fetch_records(
+          query=query,
+          output_mode='one_or_none')
+      if pipeseed_record is not None:
+        pipeseed_record = \
+          pipeseed_record.status
+      return pipeseed_record
+    except Exception as e:
+      raise ValueError(
+        f"Failed to get pipeseed for seed {seed_id} and pipeline {pipeline_name}")
 
 
   def fetch_pipeline_seed(

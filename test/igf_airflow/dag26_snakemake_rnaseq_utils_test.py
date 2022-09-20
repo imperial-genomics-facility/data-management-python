@@ -8,6 +8,8 @@ from igf_data.utils.fileutils import check_file_path
 from igf_data.utils.fileutils import remove_dir
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.igfdb.igfTables import Base
+from igf_data.igfdb.igfTables import Analysis
+from igf_data.igfdb.igfTables import Pipeline_seed
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.platformadaptor import PlatformAdaptor
 from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
@@ -17,10 +19,17 @@ from igf_data.igfdb.experimentadaptor import ExperimentAdaptor
 from igf_data.igfdb.runadaptor import RunAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
+from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
+from igf_data.igfdb.analysisadaptor import AnalysisAdaptor
 from igf_data.utils.analysis_fastq_fetch_utils import get_fastq_and_run_for_samples
 from igf_airflow.utils.dag26_snakemake_rnaseq_utils import parse_design_and_build_inputs_for_snakemake_rnaseq
 from igf_airflow.utils.dag26_snakemake_rnaseq_utils import parse_analysus_design_and_get_metadata
 from igf_airflow.utils.dag26_snakemake_rnaseq_utils import prepare_sample_and_units_tsv_for_snakemake_rnaseq
+from igf_airflow.utils.dag26_snakemake_rnaseq_utils import check_and_seed_analysis_pipeline
+from igf_airflow.utils.dag26_snakemake_rnaseq_utils import fetch_analysis_design
+from igf_airflow.utils.dag26_snakemake_rnaseq_utils import load_analysis_and_build_collection
+from igf_airflow.utils.dag26_snakemake_rnaseq_utils import copy_analysis_to_globus_dir
+
 
 class TestDag26_snakemake_rnaseq_utilsA(unittest.TestCase):
   def setUp(self):
@@ -280,6 +289,157 @@ class TestDag26_snakemake_rnaseq_utilsA(unittest.TestCase):
     self.assertEqual(sampleA['unit_name'].values[0], '000000000-BRN47_1')
     self.assertEqual(sampleB['fq1'].values[0], '/path/sampleB_S2_L001_R1_001.fastq.gz')
     self.assertEqual(sampleB['fq2'].values[0], '/path/sampleB_S2_L001_R2_001.fastq.gz')
+
+class TestDag26_snakemake_rnaseq_utilsB(unittest.TestCase):
+  def setUp(self):
+    self.temp_dir = get_temp_dir()
+    self.dbconfig = 'data/dbconfig.json'
+    dbparam = read_dbconf_json(self.dbconfig)
+    base = BaseAdaptor(**dbparam)
+    self.engine = base.engine
+    self.dbname = dbparam['dbname']
+    Base.metadata.create_all(self.engine)
+    self.session_class = base.get_session_class()
+    base.start_session()
+    ## add project data
+    project_data = [{'project_igf_id': 'projectA'}]
+    pa = ProjectAdaptor(**{'session': base.session})
+    pa.store_project_and_attribute_data(data=project_data)
+    ## add analysis data
+    aa = \
+      AnalysisAdaptor(**{'session': base.session})
+    analysis_design_data = """
+    sample_metadata:
+      sampleA:
+        condition: control
+      sampleB:
+        condition: treatment
+    analysis_metadata:
+      ref:
+        species: homo_sapiens
+        release: 106
+        build: GRCh38
+      diffexp:
+        contrasts:
+          control-vs-treatment:
+            - control
+            - treatment
+        model: ~condition
+    """
+    analysis_data1 = [{
+      'project_igf_id': 'projectA',
+      'analysis_name': 'analysis_1',
+      'analysis_type': 'pipelineA',
+      'analysis_description': analysis_design_data}]
+    aa.store_analysis_data(
+      data=analysis_data1)
+    analysis_data2 = [{
+      'project_igf_id': 'projectA',
+      'analysis_name': 'analysis_2',
+      'analysis_type': 'pipelineB',
+      'analysis_description': analysis_design_data}]
+    aa.store_analysis_data(
+      data=analysis_data2)
+    ## add pipeline data
+    pipeline_data = [{
+      "pipeline_name": "pipelineA",
+      "pipeline_type": "AIRFLOW",
+      "pipeline_db": "postgres"}]
+    pl = \
+      PipelineAdaptor(**{'session': base.session})
+    pl.store_pipeline_data(
+      data=pipeline_data)
+    pipeline_seed_data = [{
+      'pipeline_name': 'pipelineA',
+      'seed_id': 1,
+      'seed_table': 'analysis'}]
+    pl.create_pipeline_seed(
+      data=pipeline_seed_data)
+    base.close_session()
+
+  def tearDown(self):
+    remove_dir(self.temp_dir)
+    Base.metadata.drop_all(self.engine)
+    if os.path.exists(self.dbname):
+      os.remove(self.dbname)
+
+  def test_check_and_seed_analysis_pipeline(self):
+    ## don't change seed if its listed in no_change_status
+    seed_status = \
+      check_and_seed_analysis_pipeline(
+        analysis_id=1,
+        pipeline_name='pipelineA',
+        dbconf_json_path=self.dbconfig,
+        new_status='RUNNING',
+        seed_table='analysis',
+        no_change_status=['RUNNING', 'SEEDED'])
+    self.assertFalse(seed_status)
+    aa = \
+      AnalysisAdaptor(**{'session_class': self.session_class})
+    aa.start_session()
+    analysis = \
+      aa.fetch_records(
+        query=\
+          aa.session.query(Analysis).
+          filter(Analysis.analysis_name=='analysis_1').
+          filter(Analysis.project_id==1),
+        output_mode='one')
+    pa = PipelineAdaptor(**{'session': aa.session})
+    pipe_seed = \
+      pa.check_seed_id_status(
+        seed_id=analysis.analysis_id,
+        seed_table='analysis')
+    self.assertEqual(pipe_seed[0].get('status'), 'SEEDED')
+    aa.close_session()
+    ## change seed is its not listed
+    seed_status = \
+      check_and_seed_analysis_pipeline(
+        analysis_id=1,
+        pipeline_name='pipelineA',
+        dbconf_json_path=self.dbconfig,
+        new_status='RUNNING',
+        seed_table='analysis',
+        no_change_status=['RUNNING', 'FAILED', 'FINISHED'])
+    self.assertTrue(seed_status)
+    aa = \
+      AnalysisAdaptor(**{'session_class': self.session_class})
+    aa.start_session()
+    analysis = \
+      aa.fetch_records(
+        query=\
+          aa.session.query(Analysis).
+          filter(Analysis.analysis_name=='analysis_1').
+          filter(Analysis.project_id==1),
+        output_mode='one')
+    pa = PipelineAdaptor(**{'session': aa.session})
+    pipe_seed = \
+      pa.check_seed_id_status(
+        seed_id=analysis.analysis_id,
+        seed_table='analysis')
+    self.assertEqual(pipe_seed[0].get('status'), 'RUNNING')
+    aa.close_session()
+    ## fail with missing pipeline name
+    with self.assertRaises(Exception):
+      seed_status = \
+        check_and_seed_analysis_pipeline(
+          analysis_id=1,
+          pipeline_name='pipelineB',
+          dbconf_json_path=self.dbconfig,
+          new_status='RUNNING',
+          seed_table='analysis',
+          no_change_status=['FAILED', 'FINISHED'])
+    ## fail with incorrect pipeline and analysis combination
+    with self.assertRaises(Exception):
+      seed_status = \
+        check_and_seed_analysis_pipeline(
+          analysis_id=2,
+          pipeline_name='pipelineA',
+          dbconf_json_path=self.dbconfig,
+          new_status='RUNNING',
+          seed_table='analysis',
+          no_change_status=['FAILED', 'FINISHED'])
+
+
 
 if __name__=='__main__':
   unittest.main()

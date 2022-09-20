@@ -1,14 +1,217 @@
 import os
 import re
 import yaml
-from typing import Tuple
+import logging
 import pandas as pd
+from typing import Tuple
+from airflow.models import Variable
 from igf_data.utils.analysis_fastq_fetch_utils import get_fastq_and_run_for_samples
-from yaml import Loader, Dumper
-from typing import Tuple, Union
-from igf_data.utils.fileutils import check_file_path
+from yaml import Loader
+from yaml import Dumper
+from typing import Tuple
+from typing import Union
+from igf_data.igfdb.igfTables import Pipeline, Pipeline_seed, Project, Analysis
+from igf_data.utils.fileutils import check_file_path, copy_local_file
 from igf_data.utils.fileutils import get_temp_dir
+from igf_data.utils.fileutils import get_date_stamp_for_file_name
+from igf_data.utils.dbutils import read_dbconf_json
+from igf_data.igfdb.baseadaptor import BaseAdaptor
+from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
+from igf_data.igfdb.analysisadaptor import AnalysisAdaptor
+from igf_data.igfdb.collectionadaptor import CollectionAdaptor
+from igf_data.igfdb.fileadaptor import FileAdaptor
+from igf_airflow.logging.upload_log_msg import send_log_to_channels
+from igf_airflow.utils.dag22_bclconvert_demult_utils import _create_output_from_jinja_template
 
+log = logging.getLogger(__name__)
+
+SLACK_CONF = Variable.get('slack_conf',default_var=None)
+MS_TEAMS_CONF = Variable.get('ms_teams_conf',default_var=None)
+HPC_SSH_KEY_FILE = Variable.get('hpc_ssh_key_file', default_var=None)
+DATABASE_CONFIG_FILE = Variable.get('database_config_file', default_var=None)
+HPC_BASE_RAW_DATA_PATH = Variable.get('hpc_base_raw_data_path', default_var=None)
+IGF_PORTAL_CONF = Variable.get('igf_portal_conf', default_var=None)
+HPC_FILE_LOCATION = Variable.get("hpc_file_location", default_var="HPC_PROJECT")
+
+## SNAKEMAKE
+SNAKEMAKE_RUNNER_TEMPLATE = Variable.get("snakemake_rnaseq_runner_template", default_var=None)
+SNAKEMAKE_REPORT_TEMPLATE = Variable.get("snakemake_rnaseq_report_template", default_var=None)
+
+## EMAIL CONFIG
+EMAIL_CONFIG = Variable.get("email_config", default_var=None)
+EMAIL_TEMPLATE = Variable.get("seqrun_email_template", default_var=None)
+DEFAULT_EMAIL_USER = Variable.get("default_email_user", default_var=None)
+
+## GLOBUS
+GLOBUS_ROOT_DIR = Variable.get("globus_root_dir", default_var=None)
+
+
+def change_analysis_seed_status_func(**context):
+  try:
+    ## dag_run.conf should have analysis_id
+    dag_run = context.get('dag_run')
+    analysis_id = None
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('analysis_id') is not None:
+      analysis_id = \
+        dag_run.conf.get('analysis_id')
+    if analysis_id is None:
+      raise ValueError('analysis_id not found in dag_run.conf')
+    ## pipeline_name is context['task'].dag_id
+    pipeline_name = context['task'].dag_id
+    ## pipeseed settings
+    new_status = \
+      context['params'].\
+      get('new_status', '')
+    no_change_status = \
+      context['params'].\
+      get('no_change_status', None)
+    seed_table = \
+      context['params'].\
+        get('seed_table', None)
+    ## optional, set next task if seed change is success
+    next_task = \
+      context['params'].\
+      get('next_task', None)
+    last_task = \
+      context['params'].\
+      get('last_task', None)
+    ## change seed status
+    seed_status = \
+      check_and_seed_analysis_pipeline(
+        analysis_id=analysis_id,
+        pipeline_name=pipeline_name,
+        dbconf_json_path=DATABASE_CONFIG_FILE,
+        new_status=new_status,
+        seed_table=seed_table,
+        no_change_status=no_change_status)
+    ## set next tasks
+    task_list = list()
+    if seed_status and \
+       next_task is not None:
+      task_list.append(
+        next_task)
+    if not seed_status and \
+       last_task is not None:
+      task_list.append(
+        last_task)
+    return task_list
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
+
+def check_and_seed_analysis_pipeline(
+      analysis_id: int,
+      pipeline_name: str,
+      dbconf_json_path: str,
+      new_status: str,
+      seed_table: str,
+      create_new_pipeline_seed: bool = False,
+      no_change_status: Union[list, None] = None) \
+        -> bool:
+  try:
+    dbconf = read_dbconf_json(dbconf_json_path)
+    pa = PipelineAdaptor(**dbconf)
+    try:
+      pa.start_session()
+      ## check if pipeline exists
+      # pipeline_exists = \
+      #   pa.fetch_pipeline_records_pipeline_name(
+      #     pipeline_name=pipeline_name,
+      #     output_mode='one_or_none')
+      # if pipeline_exists is None:
+      #   raise ValueError(
+      #     f"Pipeline {pipeline_name} not registered in db")
+      pipeline_exists = \
+        pa.check_pipeline_using_pipeline_name(
+          pipeline_name=pipeline_name)
+      if not pipeline_exists:
+        raise ValueError(
+          f"Pipeline {pipeline_name} not registered in db")
+      ## check if analysis exists
+      aa = AnalysisAdaptor(**{'session': pa.session})
+      analysis_id_exists = \
+        aa.fetch_analysis_records_analysis_id(
+          analysis_id=analysis_id,
+          output_mode='one_or_none')
+      if analysis_id_exists is None:
+        raise ValueError(
+          f'Analysis id {analysis_id} not found in db')
+      ## check for existing analysis and pipeline seed combination
+      if not create_new_pipeline_seed:
+        existing_pipeline_seed = \
+          pa.check_existing_pipeseed(
+            seed_id=analysis_id,
+            seed_table='analysis',
+            pipeline_name=pipeline_name)
+        if existing_pipeline_seed is None:
+          raise ValueError(
+            f"No existing pipeline seed found for analysis {analysis_id} and pipeline {pipeline_name}")
+      ## change seed status
+      seed_status = \
+        pa.create_or_update_pipeline_seed(
+          seed_id=analysis_id,
+          pipeline_name=pipeline_name,
+          new_status=new_status,
+          seed_table=seed_table,
+          no_change_status=no_change_status,
+          autosave=False)
+      pa.commit_session()
+      pa.close_session()
+    except:
+      pa.rollback_session()
+      pa.close_session()
+      raise
+    return seed_status
+  except Exception as e:
+    raise ValueError(
+      f"Failed to change analysis seed, error: {e}")
+
+
+def fetch_analysis_design(
+      analysis_id: int,
+      pipeline_name: str,
+      dbconfig_file: str) \
+        -> str:
+    try:
+      dbconf = read_dbconf_json(dbconfig_file)
+      aa = AnalysisAdaptor(**dbconf)
+      aa.start_session()
+      input_design_yaml = ''
+      try:
+        analysis_entry = \
+          aa.fetch_analysis_records_analysis_id(
+            analysis_id=analysis_id,
+            output_mode='one_or_none')
+        if analysis_entry is None:
+          raise ValueError(
+            f"No entry found for analysis {analysis_id} in db")
+        if analysis_entry.analysis_type is None or \
+           analysis_entry.analysis_type != pipeline_name:
+          raise ValueError(
+            f"Analysis name mismatch: {pipeline_name} != {analysis_entry.analysis_type}")
+        if analysis_entry.analysis_design is None:
+          raise ValueError(
+            f"Missing analysis_design for {analysis_id} and {pipeline_name}")
+        input_design_yaml = \
+          analysis_entry.analysis_design
+        aa.close_session()
+      except:
+        aa.close_session()
+        raise
+      return input_design_yaml
+    except Exception as e:
+      raise ValueError(
+        f"Failed to get analysis design for {analysis_id} and {pipeline_name}")
 
 
 def parse_design_and_build_inputs_for_snakemake_rnaseq(
@@ -184,3 +387,321 @@ def prepare_sample_and_units_tsv_for_snakemake_rnaseq(
   except Exception as e:
     raise ValueError(
       f"Failed to parse analysis design and generate snakemake input, error: {e}")
+
+
+def prepare_snakemake_inputs_func(**context):
+  try:
+    ti = context["ti"]
+    snakemake_command_key = \
+      context['params'].\
+      get("snakemake_command_key", "snakemake_command")
+    snakemake_report_key = \
+      context['params'].\
+      get("snakemake_report_key", "snakemake_report")
+    snakemake_workdir_key = \
+      context['params'].\
+      get("snakemake_workdir_key", "snakemake_workdir")
+    ## dag_run.conf should have analysis_id
+    dag_run = context.get('dag_run')
+    analysis_id = None
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('analysis_id') is not None:
+      analysis_id = \
+        dag_run.conf.get('analysis_id')
+    if analysis_id is None:
+      raise ValueError('analysis_id not found in dag_run.conf')
+    ## pipeline_name is context['task'].dag_id
+    pipeline_name = context['task'].dag_id
+    ## get analysis design
+    input_design_yaml = \
+      fetch_analysis_design(
+        analysis_id=analysis_id,
+        pipeline_name=pipeline_name,
+        dbconfig_file=DATABASE_CONFIG_FILE)
+    ## prepare snakemake input files
+    work_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    config_yaml_file, _, _ = \
+      parse_design_and_build_inputs_for_snakemake_rnaseq(
+        input_design_yaml=input_design_yaml,
+        dbconfig_file=DATABASE_CONFIG_FILE,
+        work_dir=work_dir)
+    ## build snakemake runner script
+    snakemake_runner_script = \
+      os.path.join(
+        work_dir,
+        'snakemake_runner.sh')
+    _create_output_from_jinja_template(
+      template_file=SNAKEMAKE_RUNNER_TEMPLATE,
+      output_file=snakemake_runner_script,
+      autoescape_list=['xml',],
+      data={
+        "SNAKEMAKE_WORK_DIR": work_dir,
+        "CONFIG_YAML_PATH": config_yaml_file
+      })
+    ## build snakemake report script
+    snakemake_report_script = \
+      os.path.join(
+        work_dir,
+        'snakemake_report.sh')
+    _create_output_from_jinja_template(
+      template_file=SNAKEMAKE_REPORT_TEMPLATE,
+      output_file=snakemake_report_script,
+      autoescape_list=['xml',],
+      data={
+        "SNAKEMAKE_WORK_DIR": work_dir,
+        "CONFIG_YAML_PATH": config_yaml_file
+      })
+    ti.xcom_push(
+      key=snakemake_command_key,
+      value=snakemake_runner_script)
+    ti.xcom_push(
+      key=snakemake_report_key,
+      value=snakemake_report_script)
+    ti.xcom_push(
+      key=snakemake_workdir_key,
+      value=work_dir)
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
+
+def load_analysis_to_disk_func(**context):
+  try:
+    ti = context["ti"]
+    analysis_dir_key = \
+      context['params'].\
+      get("analysis_dir_key", None)
+    analysis_dir_task = \
+      context['params'].\
+      get("analysis_dir_task", None)
+    result_dir_name = \
+      context['params'].\
+      get("result_dir_name", None)
+    collection_name = \
+      context['params'].\
+      get("collection_name", None)
+    collection_type = \
+      context['params'].\
+      get("collection_type", None)
+    collection_table = \
+      context['params'].\
+      get("collection_table", None)
+    analysis_collection_dir_key = \
+      context['params'].\
+      get("analysis_collection_dir_key", "analysis_collection_dir")
+    ## dag_run.conf should have analysis_id
+    dag_run = context.get('dag_run')
+    analysis_id = None
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('analysis_id') is not None:
+      analysis_id = \
+        dag_run.conf.get('analysis_id')
+    if analysis_id is None:
+      raise ValueError('analysis_id not found in dag_run.conf')
+    ## pipeline_name is context['task'].dag_id
+    pipeline_name = context['task'].dag_id
+    ## get results dir
+    work_dir = \
+      ti.xcom_pull(
+        task_ids=analysis_dir_task,
+        key=analysis_dir_key)
+    if work_dir is None:
+      raise ValueError("Missing analysis dir")
+    result_dir = \
+      os.path.join(work_dir, result_dir_name)
+    check_file_path(result_dir)
+    ## load analysis
+    date_tag = get_date_stamp_for_file_name()
+    target_dir_path = \
+      load_analysis_and_build_collection(
+        collection_name=collection_name,
+        collection_type=collection_type,
+        collection_table=collection_table,
+        dbconfig_file=DATABASE_CONFIG_FILE,
+        analysis_id=analysis_id,
+        pipeline_name=pipeline_name,
+        result_dir=result_dir,
+        hpc_base_path=HPC_BASE_RAW_DATA_PATH,
+        analysis_dir_prefix='analysis',
+        date_tag=date_tag)
+    ti.xcom_push(
+      key=analysis_collection_dir_key,
+      value=target_dir_path)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=f"Analysis finished. Output path: {target_dir_path}",
+      reaction='success')
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
+
+def load_analysis_and_build_collection(
+      collection_name: str,
+      collection_type: str,
+      collection_table: str,
+      dbconfig_file: str,
+      analysis_id: int,
+      pipeline_name: str,
+      result_dir: str,
+      hpc_base_path: str,
+      date_tag: str,
+      analysis_dir_prefix: str = 'analysis') \
+        -> str:
+  try:
+    check_file_path(result_dir)
+    check_file_path(hpc_base_path)
+    check_file_path(dbconfig_file)
+    ## get project id
+    dbconf = read_dbconf_json(dbconfig_file)
+    aa = AnalysisAdaptor(**dbconf)
+    aa.start_session()
+    project_igf_id = \
+      aa.fetch_project_igf_id_for_analysis_id(
+        analysis_id=analysis_id)
+    aa.close_session()
+    ## move analysis to hpc. This can take long time.
+    target_dir_path = \
+      os.path.join(
+        hpc_base_path,
+        project_igf_id,
+        analysis_dir_prefix,
+        pipeline_name,
+        date_tag,
+        os.path.basename(result_dir))
+    if os.path.exists(target_dir_path):
+      raise ValueError(
+        f"Output path {target_dir_path} already present. Manually remove it before re-run.")
+    copy_local_file(
+      source_path=result_dir,
+      destination_path=target_dir_path)
+    check_file_path(target_dir_path)
+    ## load analysis to db
+    collection_data_list = [{
+      'name': collection_name,
+      'type': collection_type,
+      'table': collection_table,
+      'file_path': target_dir_path}]
+    ca = CollectionAdaptor(**dbconf)
+    ca.start_session()
+    try:
+      ca.load_file_and_create_collection(
+        data=collection_data_list,
+        calculate_file_size_and_md5=False,
+        autosave=False)
+      ca.commit_session()
+      ca.close_session()
+    except:
+      ca.rollback_session()
+      ca.close_session()
+      raise
+    return target_dir_path
+  except Exception as e:
+    raise ValueError(
+      f"Failed to load analysis results from {result_dir}")
+
+
+def copy_analysis_to_globus_dir_func(**context):
+  try:
+    ti = context["ti"]
+    analysis_collection_dir_key = \
+      context['params'].\
+      get("analysis_collection_dir_key", None)
+    analysis_collection_dir_task = \
+      context['params'].\
+      get("analysis_collection_dir_task", None)
+    analysis_dir = \
+      ti.xcom_pull(
+        task_ids=analysis_collection_dir_task,
+        key=analysis_collection_dir_key)
+    ## dag_run.conf should have analysis_id
+    dag_run = context.get('dag_run')
+    analysis_id = None
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('analysis_id') is not None:
+      analysis_id = \
+        dag_run.conf.get('analysis_id')
+    if analysis_id is None:
+      raise ValueError('analysis_id not found in dag_run.conf')
+    ## pipeline_name is context['task'].dag_id
+    pipeline_name = context['task'].dag_id
+    date_tag = get_date_stamp_for_file_name()
+    target_dir_path = \
+      copy_analysis_to_globus_dir(
+        globus_root_dir=GLOBUS_ROOT_DIR,
+        dbconfig_file=DATABASE_CONFIG_FILE,
+        analysis_id=analysis_id,
+        analysis_dir=analysis_dir,
+        pipeline_name=pipeline_name,
+        date_tag=date_tag)
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
+def copy_analysis_to_globus_dir(
+      globus_root_dir: str,
+      dbconfig_file: str,
+      analysis_id: int,
+      analysis_dir: str,
+      pipeline_name: str,
+      date_tag: str,
+      analysis_dir_prefix: str = 'analysis') \
+        -> None:
+  try:
+    check_file_path(globus_root_dir)
+    ## get project id
+    dbconf = read_dbconf_json(dbconfig_file)
+    aa = AnalysisAdaptor(**dbconf)
+    aa.start_session()
+    project_igf_id = \
+      aa.fetch_project_igf_id_for_analysis_id(
+        analysis_id=analysis_id)
+    aa.close_session()
+    ## get globus target path
+    target_dir_path = \
+      os.path.join(
+        globus_root_dir,
+        project_igf_id,
+        analysis_dir_prefix,
+        pipeline_name,
+        date_tag,
+        os.path.basename(analysis_dir))
+    if os.path.exists(target_dir_path):
+      raise ValueError(
+        f"Globus target dir {target_dir_path} already present")
+    copy_local_file(
+      source_path=analysis_dir,
+      destination_path=target_dir_path)
+    check_file_path(target_dir_path)
+    return target_dir_path
+  except Exception as e:
+    raise ValueError(
+      f"Failed to copy data to globus dir, error: {e}")
