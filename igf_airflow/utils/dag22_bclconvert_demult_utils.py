@@ -4044,10 +4044,10 @@ def load_bclconvert_report_func(**context):
       get("formatted_samplesheets")
     xcom_key_for_reports = \
       context['params'].\
-      get('xcom_key_for_reports', 'bclconvert_reports')
+      get('xcom_key_for_bclconvert_reports', 'bclconvert_reports')
     xcom_task_for_reports = \
       context['params'].\
-      get('xcom_task_for_reports')
+      get('xcom_task_for_bclconvert_reports')
     bclconvert_reports_path = \
       ti.xcom_pull(
         key=xcom_key_for_reports,
