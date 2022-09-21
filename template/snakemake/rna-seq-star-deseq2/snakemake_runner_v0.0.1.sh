@@ -30,7 +30,7 @@ cd {{ SNAKEMAKE_WORK_DIR }}
 snakemake \
   --use-singularity \
   --use-conda \
-  --singularity-args="-B {{ SINGULARITY_BIND_DIRS }},$EPHEMERAL:/tmp,$EPHEMERAL:/var/tmp" \
+  --singularity-args="-B {{ SINGULARITY_BIND_DIRS }},$CONDA_PREFIX_DIR,$SNAKEMAKE_OUTPUT_CACHE,$EPHEMERAL,$EPHEMERAL:/tmp,$EPHEMERAL:/var/tmp" \
   --cluster-config $CLUSTER_CONFIG_JSON \
   -j $JOB_LIMIT \
   --cluster "qsub -V -o /dev/null -e /dev/null -lwalltime=08:00:00  -lselect=1:ncpus={cluster.ncpus}:mem={cluster.mem}gb" \
