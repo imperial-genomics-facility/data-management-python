@@ -527,7 +527,7 @@ def load_analysis_to_disk_func(**context):
       get("collection_type", None)
     collection_table = \
       context['params'].\
-      get("collection_table", None)
+      get("collection_table", "analysis")
     analysis_collection_dir_key = \
       context['params'].\
       get("analysis_collection_dir_key", "analysis_collection_dir")
@@ -544,8 +544,6 @@ def load_analysis_to_disk_func(**context):
         dag_run.conf.get('analysis_id')
     if analysis_id is None:
       raise ValueError('analysis_id not found in dag_run.conf')
-    ## pipeline_name is context['task'].dag_id
-    pipeline_name = context['task'].dag_id
     ## get results dir
     work_dir = \
       ti.xcom_pull(
@@ -558,6 +556,15 @@ def load_analysis_to_disk_func(**context):
     check_file_path(result_dir)
     ## load analysis
     date_tag = get_date_stamp_for_file_name()
+    if collection_type is None:
+      collection_type = \
+        context['task'].dag_id.upper()
+    if collection_name is None:
+      collection_name = \
+        calculate_analysis_name(
+          analysis_id=analysis_id,
+          date_tag=date_tag,
+          dbconfig_file=DATABASE_CONFIG_FILE)
     target_dir_path = \
       load_analysis_and_build_collection(
         collection_name=collection_name,
@@ -565,7 +572,7 @@ def load_analysis_to_disk_func(**context):
         collection_table=collection_table,
         dbconfig_file=DATABASE_CONFIG_FILE,
         analysis_id=analysis_id,
-        pipeline_name=pipeline_name,
+        pipeline_name=context['task'].dag_id,
         result_dir=result_dir,
         hpc_base_path=HPC_BASE_RAW_DATA_PATH,
         analysis_dir_prefix='analysis',
@@ -580,7 +587,9 @@ def load_analysis_to_disk_func(**context):
       dag_id=context['task'].dag_id,
       comment=f"Analysis finished. Output path: {target_dir_path}",
       reaction='success')
-    ti.xcom_push(key=date_tag_key, value=date_tag)
+    ti.xcom_push(
+      key=date_tag_key,
+      value=date_tag)
   except Exception as e:
     log.error(e)
     send_log_to_channels(
@@ -695,7 +704,7 @@ def load_analysis_and_build_collection(
     return target_dir_path
   except Exception as e:
     raise ValueError(
-      f"Failed to load analysis results from {result_dir}")
+      f"Failed to load analysis results from {result_dir}, error: {e}")
 
 
 def copy_analysis_to_globus_dir_func(**context):
@@ -727,13 +736,11 @@ def copy_analysis_to_globus_dir_func(**context):
         dag_run.conf.get('analysis_id')
     if analysis_id is None:
       raise ValueError('analysis_id not found in dag_run.conf')
-    ## pipeline_name is context['task'].dag_id
-    pipeline_name = context['task'].dag_id
     ## get date tag
     date_tag = \
       ti.xcom_pull(
         task_ids=date_tag_task,
-        key=date_tag)
+        key=date_tag_key)
     if date_tag is None:
       date_tag = get_date_stamp_for_file_name()
     target_dir_path = \
@@ -742,8 +749,9 @@ def copy_analysis_to_globus_dir_func(**context):
         dbconfig_file=DATABASE_CONFIG_FILE,
         analysis_id=analysis_id,
         analysis_dir=analysis_dir,
-        pipeline_name=pipeline_name,
+        pipeline_name=context['task'].dag_id,
         date_tag=date_tag)
+    return target_dir_path
   except Exception as e:
     log.error(e)
     send_log_to_channels(
@@ -754,6 +762,7 @@ def copy_analysis_to_globus_dir_func(**context):
       comment=e,
       reaction='fail')
     raise
+
 
 def copy_analysis_to_globus_dir(
       globus_root_dir: str,
