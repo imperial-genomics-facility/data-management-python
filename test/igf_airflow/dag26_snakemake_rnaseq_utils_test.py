@@ -27,6 +27,7 @@ from igf_airflow.utils.dag26_snakemake_rnaseq_utils import parse_analysus_design
 from igf_airflow.utils.dag26_snakemake_rnaseq_utils import prepare_sample_and_units_tsv_for_snakemake_rnaseq
 from igf_airflow.utils.dag26_snakemake_rnaseq_utils import check_and_seed_analysis_pipeline
 from igf_airflow.utils.dag26_snakemake_rnaseq_utils import fetch_analysis_design
+from igf_airflow.utils.dag26_snakemake_rnaseq_utils import calculate_analysis_name
 from igf_airflow.utils.dag26_snakemake_rnaseq_utils import load_analysis_and_build_collection
 from igf_airflow.utils.dag26_snakemake_rnaseq_utils import copy_analysis_to_globus_dir
 
@@ -446,6 +447,120 @@ class TestDag26_snakemake_rnaseq_utilsB(unittest.TestCase):
         dbconfig_file=self.dbconfig)
     self.assertIsNotNone(input_design_yaml)
     self.assertEqual(input_design_yaml, self.analysis_design_data)
+
+
+class TestDag26_snakemake_rnaseq_utilsC(unittest.TestCase):
+  def setUp(self):
+    self.temp_dir = get_temp_dir()
+    self.dbconfig = 'data/dbconfig.json'
+    dbparam = read_dbconf_json(self.dbconfig)
+    base = BaseAdaptor(**dbparam)
+    self.engine = base.engine
+    self.dbname = dbparam['dbname']
+    Base.metadata.create_all(self.engine)
+    self.session_class = base.get_session_class()
+    base.start_session()
+    project_data = [{'project_igf_id':'projectA'}]
+    pa = ProjectAdaptor(**{'session': base.session})
+    pa.store_project_and_attribute_data(data=project_data)
+    aa = \
+      AnalysisAdaptor(**{'session': base.session})
+    analysis_data = [{
+      'project_igf_id': 'projectA',
+      'analysis_name': 'analysis 1 (day=23)',
+      'analysis_type': 'pipeline_1',
+      'analysis_description': 'analysis_design'}]
+    aa.store_analysis_data(
+      data=analysis_data)
+    base.close_session()
+    self.input_data_dir = get_temp_dir()
+    self.output_data_dir = get_temp_dir()
+    self.globus_dir = get_temp_dir()
+    self.analysis_files = [
+      'analysis.tsv',
+      'analysis/analysis_tsv'
+    ]
+    os.makedirs(os.path.join(self.input_data_dir, 'analysis'))
+    for i in self.analysis_files:
+      file_path = \
+        os.path.join(self.input_data_dir, i)
+      with open(file_path, 'w') as fp:
+        fp.write('aaaa')
+
+  def tearDown(self):
+    remove_dir(self.temp_dir)
+    Base.metadata.drop_all(self.engine)
+    if os.path.exists(self.dbname):
+      os.remove(self.dbname)
+    remove_dir(self.input_data_dir)
+    remove_dir(self.output_data_dir)
+    remove_dir(self.globus_dir)
+
+  def test_calculate_analysis_name(self):
+    collection_name = \
+      calculate_analysis_name(
+        analysis_id=1,
+        date_tag='2022_01_01',
+        dbconfig_file=self.dbconfig)
+    self.assertEqual(collection_name, f"analysis_1_day_23_1_2022_01_01")
+
+  def test_load_analysis_and_build_collection(self):
+    target_dir_path = \
+      load_analysis_and_build_collection(
+        collection_name='analysis_1',
+        collection_type='type_1',
+        collection_table='analysis',
+        dbconfig_file=self.dbconfig,
+        analysis_id=1,
+        pipeline_name='pipeline_1',
+        result_dir=self.input_data_dir,
+        hpc_base_path=self.output_data_dir,
+        date_tag='2022_01_01',
+        analysis_dir_prefix='analysis')
+    self.assertTrue(os.path.exists(target_dir_path))
+    for i in self.analysis_files:
+      target_path = \
+        os.path.join(target_dir_path, i)
+      self.assertTrue(os.path.exists(target_path))
+
+  def test_copy_analysis_to_globus_dir(self):
+    target_dir_path = \
+      load_analysis_and_build_collection(
+        collection_name='analysis_1',
+        collection_type='type_1',
+        collection_table='analysis',
+        dbconfig_file=self.dbconfig,
+        analysis_id=1,
+        pipeline_name='pipeline_1',
+        result_dir=self.input_data_dir,
+        hpc_base_path=self.output_data_dir,
+        date_tag='2022_01_01',
+        analysis_dir_prefix='analysis')
+    globus_analysis_dir = \
+      copy_analysis_to_globus_dir(
+        globus_root_dir=self.globus_dir,
+        dbconfig_file=self.dbconfig,
+        analysis_id=1,
+        analysis_dir=target_dir_path,
+        pipeline_name='pipeline_1',
+        date_tag='2022_01_01',
+        analysis_dir_prefix='analysis')
+    self.assertTrue(os.path.exists(globus_analysis_dir))
+    self.assertEqual(
+      globus_analysis_dir,
+      os.path.join(
+        self.globus_dir,
+        'projectA',
+        'analysis',
+        'pipeline_1',
+        '2022_01_01',
+        os.path.basename(target_dir_path) )
+    )
+    for i in self.analysis_files:
+      target_path = \
+        os.path.join(globus_analysis_dir, i)
+      self.assertTrue(os.path.exists(target_path))
+
 
 
 

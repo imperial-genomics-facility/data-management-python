@@ -427,7 +427,20 @@ def prepare_snakemake_inputs_func(**context):
         input_design_yaml=input_design_yaml,
         dbconfig_file=DATABASE_CONFIG_FILE,
         work_dir=work_dir)
+    ## get project name
+    project_igf_id = \
+      get_project_igf_id_for_analysis(
+        analysis_id=analysis_id,
+        dbconfig_file=DATABASE_CONFIG_FILE)
     ## build snakemake runner script
+    fastq_dir = \
+      os.path.join(
+        HPC_BASE_RAW_DATA_PATH,
+        project_igf_id,
+        'fastq')
+    check_file_path(fastq_dir)
+    singularity_bind_dirs = \
+      f'{fastq_dir},{work_dir}'
     snakemake_runner_script = \
       os.path.join(
         work_dir,
@@ -438,7 +451,8 @@ def prepare_snakemake_inputs_func(**context):
       autoescape_list=['xml',],
       data={
         "SNAKEMAKE_WORK_DIR": work_dir,
-        "CONFIG_YAML_PATH": config_yaml_file
+        "CONFIG_YAML_PATH": config_yaml_file,
+        "SINGULARITY_BIND_DIRS": singularity_bind_dirs
       })
     ## build snakemake report script
     snakemake_report_script = \
@@ -474,6 +488,25 @@ def prepare_snakemake_inputs_func(**context):
     raise
 
 
+def get_project_igf_id_for_analysis(
+      analysis_id: int,
+      dbconfig_file: str) \
+        -> str:
+  try:
+    check_file_path(dbconfig_file)
+    dbparams = read_dbconf_json(dbconfig_file)
+    aa = AnalysisAdaptor(**dbparams)
+    aa.start_session()
+    project_igf_id = \
+      aa.fetch_project_igf_id_for_analysis_id(
+        analysis_id=analysis_id)
+    aa.close_session()
+    return project_igf_id
+  except Exception as e:
+    raise ValueError(
+      f"Failed to get project_id for analysis {analysis_id}")
+
+
 def load_analysis_to_disk_func(**context):
   try:
     ti = context["ti"]
@@ -498,6 +531,9 @@ def load_analysis_to_disk_func(**context):
     analysis_collection_dir_key = \
       context['params'].\
       get("analysis_collection_dir_key", "analysis_collection_dir")
+    date_tag_key = \
+      context['params'].\
+      get("date_tag_key", "date_tag")
     ## dag_run.conf should have analysis_id
     dag_run = context.get('dag_run')
     analysis_id = None
@@ -544,6 +580,7 @@ def load_analysis_to_disk_func(**context):
       dag_id=context['task'].dag_id,
       comment=f"Analysis finished. Output path: {target_dir_path}",
       reaction='success')
+    ti.xcom_push(key=date_tag_key, value=date_tag)
   except Exception as e:
     log.error(e)
     send_log_to_channels(
@@ -554,6 +591,46 @@ def load_analysis_to_disk_func(**context):
       comment=e,
       reaction='fail')
     raise
+
+
+def calculate_analysis_name(
+      analysis_id: int,
+      date_tag: str,
+      dbconfig_file: str) \
+        -> str:
+  try:
+    check_file_path(dbconfig_file)
+    dbconf = read_dbconf_json(dbconfig_file)
+    aa = AnalysisAdaptor(**dbconf)
+    aa.start_session()
+    analysis = \
+      aa.fetch_analysis_records_analysis_id(
+        analysis_id=analysis_id,
+        output_mode='one_or_none')
+    aa.close_session()
+    if analysis is None:
+      raise ValueError(
+        f"No entry found for analysis id {analysis_id}")
+    analysis_name = \
+      analysis.analysis_name
+    ## clean analysis_name
+    symbol_pattern = \
+      re.compile(r"[!\"#$%&\[\]\\'()*\+,./:;<=>?@^`{|}~]")
+    white_space_pattern = \
+      re.compile(r'\s+')
+    double_underscore = \
+      re.compile(r'_+')
+    s1 = re.sub(symbol_pattern, '_', analysis_name)
+    s2 = re.sub(white_space_pattern, '_', s1)
+    analysis_name = re.sub(double_underscore, '_', s2)
+    collection_name = \
+      f"{analysis_name}_{str(analysis_id)}_{date_tag}"
+    collection_name = \
+      re.sub(double_underscore, '_', collection_name)
+    return collection_name
+  except Exception as e:
+    raise ValueError(
+      f"Failed to calculate analysis name for entry {analysis_id}, error: {e}")
 
 
 def load_analysis_and_build_collection(
@@ -624,6 +701,12 @@ def load_analysis_and_build_collection(
 def copy_analysis_to_globus_dir_func(**context):
   try:
     ti = context["ti"]
+    date_tag_key = \
+      context['params'].\
+      get("date_tag_key", "date_tag")
+    date_tag_task = \
+      context['params'].\
+      get("date_tag_task")
     analysis_collection_dir_key = \
       context['params'].\
       get("analysis_collection_dir_key", None)
@@ -646,7 +729,13 @@ def copy_analysis_to_globus_dir_func(**context):
       raise ValueError('analysis_id not found in dag_run.conf')
     ## pipeline_name is context['task'].dag_id
     pipeline_name = context['task'].dag_id
-    date_tag = get_date_stamp_for_file_name()
+    ## get date tag
+    date_tag = \
+      ti.xcom_pull(
+        task_ids=date_tag_task,
+        key=date_tag)
+    if date_tag is None:
+      date_tag = get_date_stamp_for_file_name()
     target_dir_path = \
       copy_analysis_to_globus_dir(
         globus_root_dir=GLOBUS_ROOT_DIR,
@@ -674,7 +763,7 @@ def copy_analysis_to_globus_dir(
       pipeline_name: str,
       date_tag: str,
       analysis_dir_prefix: str = 'analysis') \
-        -> None:
+        -> str:
   try:
     check_file_path(globus_root_dir)
     ## get project id
