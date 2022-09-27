@@ -4184,6 +4184,18 @@ def generate_bclconvert_report(
     copy_local_file(
       runinfo_xml,
       os.path.join(temp_run_dir, 'RunInfo.xml'))
+    run_parameters_xml_file = \
+      os.path.join(seqrun_path, 'RunParameters.xml')
+    if not os.path.exists(run_parameters_xml_file):
+      run_parameters_xml_file = \
+        os.path.join(seqrun_path, 'runParameters.xml')
+      copy_local_file(
+        run_parameters_xml_file,
+        os.path.join(temp_run_dir, 'runParameters.xml'))
+    else:
+      copy_local_file(
+        run_parameters_xml_file,
+        os.path.join(temp_run_dir, 'RunParameters.xml'))
     copy_local_file(
       index_metric_bin,
       os.path.join(
