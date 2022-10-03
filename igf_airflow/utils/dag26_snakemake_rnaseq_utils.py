@@ -205,8 +205,12 @@ def fetch_analysis_design(
             f"Missing analysis_description for {analysis_id} and {pipeline_name}")
         input_design_yaml = \
           analysis_entry.analysis_description
-        input_design_yaml = \
-          yaml.dump(json.loads(input_design_yaml))
+        if isinstance(input_design_yaml, str):
+          input_design_yaml = \
+            yaml.dump(json.loads(input_design_yaml))
+        if isinstance(input_design_yaml, dict):
+          input_design_yaml = \
+            yaml.dump(input_design_yaml)
         aa.close_session()
       except:
         aa.close_session()
