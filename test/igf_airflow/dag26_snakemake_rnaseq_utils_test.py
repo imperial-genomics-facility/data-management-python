@@ -1,4 +1,5 @@
 import os
+import json
 import yaml
 import unittest
 import pandas as pd
@@ -331,14 +332,14 @@ class TestDag26_snakemake_rnaseq_utilsB(unittest.TestCase):
       'project_igf_id': 'projectA',
       'analysis_name': 'analysis_1',
       'analysis_type': 'pipelineA',
-      'analysis_description': self.analysis_design_data}]
+      'analysis_description': json.dumps(yaml.load(self.analysis_design_data, Loader=Loader))}]
     aa.store_analysis_data(
       data=analysis_data1)
     analysis_data2 = [{
       'project_igf_id': 'projectA',
       'analysis_name': 'analysis_2',
       'analysis_type': 'pipelineB',
-      'analysis_description': self.analysis_design_data}]
+      'analysis_description': json.dumps(yaml.load(self.analysis_design_data, Loader=Loader))}]
     aa.store_analysis_data(
       data=analysis_data2)
     ## add pipeline data
@@ -446,7 +447,9 @@ class TestDag26_snakemake_rnaseq_utilsB(unittest.TestCase):
         pipeline_name='pipelineA',
         dbconfig_file=self.dbconfig)
     self.assertIsNotNone(input_design_yaml)
-    self.assertEqual(input_design_yaml, self.analysis_design_data)
+    self.assertEqual(
+      yaml.load(input_design_yaml, Loader=Loader),
+      yaml.load(self.analysis_design_data, Loader=Loader))
 
 
 class TestDag26_snakemake_rnaseq_utilsC(unittest.TestCase):
@@ -469,7 +472,7 @@ class TestDag26_snakemake_rnaseq_utilsC(unittest.TestCase):
       'project_igf_id': 'projectA',
       'analysis_name': 'analysis 1 (day=23)',
       'analysis_type': 'pipeline_1',
-      'analysis_description': 'analysis_design'}]
+      'analysis_description': '{"analysis_design":""}'}]
     aa.store_analysis_data(
       data=analysis_data)
     base.close_session()
