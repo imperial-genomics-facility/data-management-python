@@ -230,7 +230,6 @@ def parse_design_and_build_inputs_for_snakemake_rnaseq(
       samples_tsv_filename: str = 'samples.tsv') \
         -> Tuple[str, str, str]:
   try:
-    check_file_path(input_design_yaml)
     check_file_path(dbconfig_file)
     check_file_path(work_dir)
     sample_metadata, analysis_metadata = \
@@ -311,9 +310,7 @@ def parse_analysus_design_and_get_metadata(
       analysis_metadata_key: str = 'analysis_metadata') \
       -> Tuple[Union[dict, None], Union[dict, None]]:
   try:
-    check_file_path(input_design_yaml)
-    with open(input_design_yaml, 'r') as fp:
-      yaml_data = yaml.load(fp, Loader=Loader)
+    yaml_data = yaml.load(input_design_yaml, Loader=Loader)
     sample_metadata = \
       yaml_data.get(sample_metadata_key)
     analysis_metadata = \

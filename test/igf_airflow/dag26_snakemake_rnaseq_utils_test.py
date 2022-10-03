@@ -172,7 +172,7 @@ class TestDag26_snakemake_rnaseq_utilsA(unittest.TestCase):
     ca.store_collection_and_attribute_data(data=collection_data)
     ca.create_collection_group(data=collection_files_data)
     base.close_session()
-    yaml_data = """
+    self.yaml_data = """
     sample_metadata:
       sampleA:
         condition: control
@@ -195,7 +195,7 @@ class TestDag26_snakemake_rnaseq_utilsA(unittest.TestCase):
         self.temp_dir,
         'analysis_design.yaml')
     with open(self.yaml_file, 'w') as fp:
-      fp.write(yaml_data)
+      fp.write(self.yaml_data)
 
   def tearDown(self):
     remove_dir(self.temp_dir)
@@ -206,7 +206,7 @@ class TestDag26_snakemake_rnaseq_utilsA(unittest.TestCase):
   def test_parse_analysus_design_and_get_metadata(self):
     sample_metadata, analysis_metadata = \
       parse_analysus_design_and_get_metadata(
-        input_design_yaml=self.yaml_file)
+        input_design_yaml=self.yaml_data)
     self.assertTrue('sampleA' in sample_metadata)
     self.assertTrue(isinstance(sample_metadata.get('sampleA'), dict))
     self.assertTrue('condition' in sample_metadata.get('sampleA'))
@@ -215,7 +215,7 @@ class TestDag26_snakemake_rnaseq_utilsA(unittest.TestCase):
   def test_prepare_sample_and_units_tsv_for_snakemake_rnaseq(self):
     sample_metadata, analysis_metadata = \
       parse_analysus_design_and_get_metadata(
-        input_design_yaml=self.yaml_file)
+        input_design_yaml=self.yaml_data)
     fastq_list = \
       get_fastq_and_run_for_samples(
         dbconfig_file=self.dbconfig,
@@ -252,7 +252,7 @@ class TestDag26_snakemake_rnaseq_utilsA(unittest.TestCase):
   def test_parse_design_and_build_inputs_for_snakemake_rnaseq(self):
     config_yaml_file, samples_tsv_file, units_tsv_file = \
       parse_design_and_build_inputs_for_snakemake_rnaseq(
-        input_design_yaml=self.yaml_file,
+        input_design_yaml=self.yaml_data,
         dbconfig_file=self.dbconfig,
         work_dir=self.temp_dir)
     self.assertTrue(os.path.exists(config_yaml_file))
