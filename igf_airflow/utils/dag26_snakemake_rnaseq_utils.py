@@ -115,7 +115,7 @@ def check_and_seed_analysis_pipeline(
       pipeline_name: str,
       dbconf_json_path: str,
       new_status: str,
-      seed_table: str,
+      seed_table: str = 'analysis',
       create_new_pipeline_seed: bool = False,
       no_change_status: Union[list, None] = None) \
         -> bool:
@@ -152,7 +152,7 @@ def check_and_seed_analysis_pipeline(
         existing_pipeline_seed = \
           pa.check_existing_pipeseed(
             seed_id=analysis_id,
-            seed_table='analysis',
+            seed_table=seed_table,
             pipeline_name=pipeline_name)
         if existing_pipeline_seed is None:
           raise ValueError(
