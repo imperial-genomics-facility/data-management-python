@@ -532,6 +532,9 @@ def load_analysis_to_disk_func(**context):
     collection_table = \
       context['params'].\
       get("collection_table", "analysis")
+    reports_html = \
+      context['params'].\
+      get("reports_html", "reports.html")
     analysis_collection_dir_key = \
       context['params'].\
       get("analysis_collection_dir_key", "analysis_collection_dir")
@@ -558,6 +561,14 @@ def load_analysis_to_disk_func(**context):
     result_dir = \
       os.path.join(work_dir, result_dir_name)
     check_file_path(result_dir)
+    ## copy reports file to results dir
+    source_report_path = \
+      os.path.join(work_dir, reports_html)
+    target_report_path = \
+      os.path.join(result_dir, reports_html)
+    copy_local_file(
+      source_report_path,
+      target_report_path)
     ## load analysis
     date_tag = get_date_stamp_for_file_name()
     if collection_type is None:
