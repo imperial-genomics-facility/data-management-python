@@ -120,6 +120,7 @@ def full_suite():
   from .igf_airflow.dag26_snakemake_rnaseq_utils_test import TestDag26_snakemake_rnaseq_utilsA
   from .igf_airflow.dag26_snakemake_rnaseq_utils_test import TestDag26_snakemake_rnaseq_utilsB
   from .igf_airflow.dag26_snakemake_rnaseq_utils_test import TestDag26_snakemake_rnaseq_utilsC
+  from .igf_airflow.dag27_cleanup_demultiplexing_output_utils_test import TestDag27_cleanup_demultiplexing_output_utilsA
 
   return unittest.TestSuite([
     unittest.TestLoader().loadTestsFromTestCase(t)
@@ -244,6 +245,7 @@ def full_suite():
         TestDag26_snakemake_rnaseq_utilsB,
         TestDag26_snakemake_rnaseq_utilsC,
         TestDag25_copy_seqruns_to_hpc_utilsA,
-        TestDag25_copy_seqruns_to_hpc_utilsB
+        TestDag25_copy_seqruns_to_hpc_utilsB,
+        TestDag27_cleanup_demultiplexing_output_utilsA
       ]
     ])
