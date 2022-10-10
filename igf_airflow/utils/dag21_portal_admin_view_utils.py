@@ -134,6 +134,8 @@ def prepare_storage_plot_func(**context):
       context['params'].get('woolf_data1')
     woolf_data2 = \
       context['params'].get('woolf_data2')
+    nextseq1_data = \
+      context['params'].get('nextseq1_data')
     hpc_rds = \
       context['params'].get('hpc_rds')
     xcom_key = \
@@ -151,6 +153,10 @@ def prepare_storage_plot_func(**context):
       ti.xcom_pull(task_ids=wells_data)
     wells_data_data = \
       _convert_base64_to_ascii(wells_data_data)
+    nextseq1_data_data = \
+      ti.xcom_pull(task_ids=nextseq1_data)
+    nextseq1_data_data = \
+      _convert_base64_to_ascii(nextseq1_data_data)
     eliot_root_data = \
       ti.xcom_pull(task_ids=eliot_root)
     eliot_root_data = \
@@ -192,7 +198,8 @@ def prepare_storage_plot_func(**context):
       'woolf_root': woolf_root_data,
       'woolf_data1': woolf_data1_data,
       'woolf_data2': woolf_data2_data,
-      'hpc_rds': hpc_rds_data
+      'hpc_rds': hpc_rds_data,
+      'NextSeq_1': nextseq1_data_data
     }
     plot_data = \
       _get_storage_plot(data_dict=data_dict)
