@@ -39,7 +39,7 @@ class Cellranger_count_utils_testA(unittest.TestCase):
       fp.write('a')
     with open(os.path.join(output_path, 'metrics_summary.csv'),'w') as fp:
       fp.write('a')
-    with open(os.path.join(output_path, 'count/sample_feature_bc_matrix.h5'), 'w') as fp:
+    with open(os.path.join(output_path, 'count/sample_filtered_feature_bc_matrix.h5'), 'w') as fp:
       fp.write('a')
     with open(os.path.join(output_path, 'count/sample_alignments.bam'), 'w') as fp:
       fp.write('a')
