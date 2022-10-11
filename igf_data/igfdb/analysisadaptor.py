@@ -75,7 +75,7 @@ class AnalysisAdaptor(BaseAdaptor):
       return result.project_igf_id
     except Exception as e:
       raise ValueError(
-              'Failed to fetch project id for abalysis {0},error: {1}'.\
+              'Failed to fetch project id for analysis {0},error: {1}'.\
                 format(analysis_id,e))
 
 
