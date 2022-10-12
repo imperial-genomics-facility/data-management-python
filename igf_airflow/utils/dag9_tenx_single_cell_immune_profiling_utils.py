@@ -344,7 +344,7 @@ def run_velocyto_func(**context):
     new_matrix_dir = \
       os.path.join(
         cellranger_outs_dir,
-        'sample_feature_bc_matrix')
+        'sample_filtered_feature_bc_matrix')
     # fix for new cellranger multi layout
     if not os.path.exists(old_matrix_dir):
       os.symlink(
@@ -394,7 +394,7 @@ def run_velocyto_func(**context):
       feature_type = \
         analysis_entry.get('feature_type')
       feature_type = \
-        feature_type.replace(' ','_').lower()
+        feature_type.replace(' ', '_').lower()
       if feature_type == 'gene_expression':
         reference_path = \
           analysis_entry.get('reference')
