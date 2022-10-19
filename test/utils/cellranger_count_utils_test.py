@@ -47,7 +47,7 @@ class Cellranger_count_utils_testA(unittest.TestCase):
       fp.write('a')
     with open(os.path.join(output_path, 'vdj/filtered_contig_annotations.csv'), 'w') as fp:
       fp.write('a')
-    with open(os.path.join(output_path, 'vdj/sample_vloupe.vloupe'), 'w') as fp:
+    with open(os.path.join(output_path, 'vdj/vloupe.vloupe'), 'w') as fp:
       fp.write('a')
     with open(os.path.join(output_path, 'vdj_t/filtered_contig_annotations.csv'), 'w') as fp:
       fp.write('a')
@@ -55,7 +55,7 @@ class Cellranger_count_utils_testA(unittest.TestCase):
       fp.write('a')
     with open(os.path.join(output_path, 'vdj_b/filtered_contig_annotations.csv'), 'w') as fp:
       fp.write('a')
-    with open(os.path.join(output_path, 'vdj_b/sample_vloupe.vloupe'), 'w') as fp:
+    with open(os.path.join(output_path, 'vdj_b/vloupe.vloupe'), 'w') as fp:
       fp.write('a')
 
   def tearDown(self):
