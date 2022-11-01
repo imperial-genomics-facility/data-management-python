@@ -417,12 +417,79 @@ def prepare_nfcore_rnaseq_input(
       f"Failed to create input for NFCore smrnaseq pipeline, error: {e}")
 
 
+def _make_nfcore_methylseq_input(
+      sample_metadata: dict,
+      fastq_df: pd.DataFrame,
+      sample_id_input_column: str = 'sample_igf_id',
+      run_id_input_column: str = 'run_igf_id',
+      fastq_file_input_column: str = 'file_path') -> \
+          list:
+  try:
+    fastq1_pattern = \
+      re.compile('\S+_R1_001.fastq.gz')
+    fastq2_pattern = \
+      re.compile('\S+_R2_001.fastq.gz')
+    if sample_id_input_column not in fastq_df.columns or \
+       run_id_input_column not in fastq_df.columns or \
+       fastq_file_input_column not in fastq_df.columns:
+      raise KeyError(
+        "Missing required columns in fastq list")
+    input_paths_list = list()
+    for sample_entry in sample_metadata.keys():
+      sample_df = \
+        fastq_df[fastq_df[sample_id_input_column]==sample_entry]
+      if len(sample_df.index) == 0:
+        raise ValueError(
+          f"Missing fastqs for sample {sample_entry}")
+      for run_id, r_data in sample_df.groupby(run_id_input_column):
+        fastqs = \
+          r_data[fastq_file_input_column].values.tolist()
+        fastq1 = ''
+        fastq2 = ''
+        for f in fastqs:
+          if re.search(fastq1_pattern, f):
+            fastq1 = f
+          if re.search(fastq2_pattern, f):
+            fastq2 = f
+        if fastq1 == "":
+          raise ValueError(
+            f"Missing fastq1 for sample {sample_entry}")
+        fastq_list = [fastq1]
+        if fastq2 != "":
+          fastq_list.append(fastq2)
+        input_paths_list.\
+          append([sample_entry, fastq_list])
+    if len(input_paths_list) == 0:
+      raise ValueError("No sample input_paths found")
+    return input_paths_list
+  except Exception as e:
+    raise ValueError(
+      f"Failed to get input paths for NFcore methylseq pipeline, error: {e}")
+
+
 def prepare_nfcore_methylseq_input(
       runner_template_file: str,
       config_template_file: str,
+      project_name: str,
+      hpc_data_dir: str,
       dbconf_file: str,
       sample_metadata: dict,
-      analysis_metadata: dict) \
+      analysis_metadata: dict,
+      nfcore_pipeline_name: str = 'nf-core/methylseq',
+      exclude_nf_param_list: list = [
+        '-resume',
+        '-profile',
+        '-c',
+        '-config',
+        '--input',
+        '--outdir',
+        '-with-report',
+        '-with-timeline',
+        '-with-dag',
+        '-with-tower',
+        '-w',
+        '-work-dir',
+        '-with-notification']) \
         -> Tuple[str, str]:
   """
   :param runner_template_file
@@ -439,7 +506,71 @@ def prepare_nfcore_methylseq_input(
                "--genome GRCm38"]}
   """
   try:
-    pass
+    ## get fastq df
+    fastq_df = \
+      parse_sample_metadata_and_fetch_fastq(
+        sample_metadata=sample_metadata,
+        dbconf_file=dbconf_file)
+    ## get template and extend it and dump it as bash script
+    work_dir = \
+      get_temp_dir(use_ephemeral_space=True)                     ## get work dir
+    project_data_dir = \
+      os.path.join(
+        hpc_data_dir,
+        project_name)
+    check_file_path(project_data_dir)                            ## get and check project data dir on hpc
+    ## prepare input path list, e.g., ['sampleA', ['sampleA_R1.fastq.gz', 'sampleA_R2.fast.gz']]
+    input_paths = \
+      _make_nfcore_methylseq_input(
+        sample_metadata=sample_metadata,
+        fastq_df=fastq_df)
+    formatted_config_file = \
+      format_nextflow_conf(
+        config_template_file=config_template_file,
+        singularity_bind_dir_list=[project_data_dir, work_dir],
+        output_dir=work_dir,
+        input_paths=input_paths)                                     ## get formatted config file for NextFlow run
+    nextflow_version = \
+      analysis_metadata.get('NXF_VER')                           ## get nextflow version from analysis design and its required
+    if nextflow_version is None:
+      raise KeyError("NXF_VER is missing from NextFlow analysis design")
+    nextflow_params = \
+      analysis_metadata.get('nextflow_params')                   ## get nextflow_params list and its optional
+    nextflow_params_list = list()
+    if nextflow_params is not None and \
+       isinstance(nextflow_params, list):
+      for i in nextflow_params:
+        param_flag = i.split(' ')                                ## only check param flag if its separate by space from param value
+        if param_flag not in exclude_nf_param_list:
+          nextflow_params_list.\
+            append(i)
+    ## add required params
+    nextflow_params_list.\
+      append(f"--outdir {work_dir}")
+    nextflow_params_list.\
+      append(f"-with-report {os.path.join(work_dir, 'report.html')}")
+    nextflow_params_list.\
+      append(f"-with-dag {os.path.join(work_dir, 'dag.html')}")
+    nextflow_params_list.\
+      append(f"-with-timeline {os.path.join(work_dir, 'timeline.html')}")
+    nextflow_params_list = \
+      " ".join(nextflow_params_list)
+    ## dump command file
+    runner_file = \
+      os.path.join(
+        work_dir,
+        os.path.basename(runner_template_file))
+    _create_output_from_jinja_template(
+      template_file=runner_template_file,
+      output_file=runner_file,
+      autoescape_list=['xml',],
+      data={
+        "NEXTFLOW_VERSION": nextflow_version,
+        "NFCORE_PIPELINE_NAME": nfcore_pipeline_name,
+        "NEXTFLOW_CONF": formatted_config_file,
+        "NEXTFLOW_PARAMS": nextflow_params_list
+      })
+    return work_dir, runner_file
   except Exception as e:
     raise ValueError(
       f"Failed to create input for NFCore smrnaseq pipeline, error: {e}")

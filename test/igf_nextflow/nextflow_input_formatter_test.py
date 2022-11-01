@@ -24,6 +24,8 @@ from igf_nextflow.nextflow_utils.nextflow_input_formatter import format_nextflow
 from igf_nextflow.nextflow_utils.nextflow_input_formatter import prepare_nfcore_smrnaseq_input
 from igf_nextflow.nextflow_utils.nextflow_input_formatter import prepare_nfcore_rnaseq_input
 from igf_nextflow.nextflow_utils.nextflow_input_formatter import _make_nfcore_rnaseq_input
+from igf_nextflow.nextflow_utils.nextflow_input_formatter import _make_nfcore_methylseq_input
+from igf_nextflow.nextflow_utils.nextflow_input_formatter import prepare_nfcore_methylseq_input
 
 class Prepare_nfcore_input_testA(unittest.TestCase):
   def setUp(self):
@@ -262,7 +264,7 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
         config_template_file=self.config_template_file,
         singularity_bind_dir_list=['/path/input', '/path/output'],
         output_dir=self.temp_dir,
-        input_paths=['sampleA', ['sampleA_R1.fastq.gz', 'sampleA_R2.fastq.gz']])
+        input_paths=[['sampleA', ['sampleA_R1.fastq.gz', 'sampleA_R2.fastq.gz']]])
     self.assertTrue(os.path.exists(formatted_config_file))
     singularity_bind_line = ''
     input_paths_line = ''
@@ -270,12 +272,12 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
       for f in fp:
         if 'runOptions =' in f:
           singularity_bind_line = f.strip()
-        if 'input_paths' in f:
+        if 'input_paths' in f and not 'schema_ignore_params' in f:
           input_paths_line = f.strip()
     self.assertTrue(singularity_bind_line != '')
     self.assertTrue('/path/input,' in singularity_bind_line)
     self.assertTrue('/path/output,' in singularity_bind_line)
-    self.assertTrue("['sampleA', ['sampleA_R1.fastq.gz', 'sampleA_R2.fastq.gz']]" in input_paths_line)
+    self.assertEqual("input_paths  = [['sampleA', ['sampleA_R1.fastq.gz', 'sampleA_R2.fastq.gz']]]", input_paths_line)
     formatted_config_file = \
       format_nextflow_conf(
         config_template_file=self.config_template_file,
@@ -444,6 +446,82 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
         if extra_params in f.strip():
           check_extra_params = True
     self.assertTrue(check_input_file)
+    self.assertTrue(check_config_file)
+    self.assertTrue(check_extra_params)
+
+  def test_make_nfcore_methylseq_input(self):
+    sample_metadata = {
+      "sampleA": "",
+      "sampleB": ""
+    }
+    fastq_df = \
+      parse_sample_metadata_and_fetch_fastq(
+        sample_metadata=sample_metadata,
+        dbconf_file=self.dbconfig)
+    input_paths_list = \
+      _make_nfcore_methylseq_input(
+        sample_metadata=sample_metadata,
+        fastq_df=fastq_df)
+    self.assertEqual(len(input_paths_list), 4)
+    sampleA_count = 0
+    for i in input_paths_list:
+      if i[0] == 'sampleA':
+        sampleA_count += 1
+    self.assertEqual(sampleA_count, 3)
+    sampleB_count = 0
+    sampleB_fastqs = []
+    for i in input_paths_list:
+      if i[0] == 'sampleB':
+        sampleB_count += 1
+        sampleB_fastqs = i[1]
+    self.assertEqual(sampleB_count, 1)
+    self.assertEqual(len(sampleB_fastqs), 2)
+    self.assertEqual('/path/sampleB_S1_L001_R2_001.fastq.gz', sampleB_fastqs[1])
+
+  def test_prepare_nfcore_methylseq_input(self):
+    sample_metadata = {
+      "sampleA": "",
+      "sampleB": ""
+    }
+    analysis_metadata = { 
+      "NXF_VER": "x.y.z",
+      "nextflow_params": [
+        "-profile singularity",
+        "-r 2.0.0",
+        "--aligner bismark",
+        "--genome GRCm38"]}
+    hpc_data_dir = \
+      os.path.join(
+        self.temp_dir, 
+        'hpc_data_dir')
+    os.makedirs(
+      os.path.join(
+        self.temp_dir, 
+        'hpc_data_dir',
+        'projectA'))
+    work_dir, runner_file = \
+      prepare_nfcore_methylseq_input(
+        runner_template_file=self.runner_template_file,
+        config_template_file=self.config_template_file,
+        project_name='projectA',
+        hpc_data_dir=hpc_data_dir,
+        dbconf_file=self.dbconfig,
+        sample_metadata=sample_metadata,
+        analysis_metadata=analysis_metadata)
+    self.assertTrue(os.path.exists(runner_file))
+    self.assertTrue(os.path.exists(work_dir))
+    check_config_file = False
+    config_file_path = \
+      f'-c {work_dir}/{os.path.basename(self.config_template_file)}'
+    check_extra_params = False
+    extra_params = \
+      "--aligner bismark"
+    with open(runner_file, 'r') as fp:
+      for f in fp:
+        if config_file_path in f.strip():
+          check_config_file = True
+        if extra_params in f.strip():
+          check_extra_params = True
     self.assertTrue(check_config_file)
     self.assertTrue(check_extra_params)
 
