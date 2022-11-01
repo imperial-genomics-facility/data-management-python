@@ -261,16 +261,33 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
       format_nextflow_conf(
         config_template_file=self.config_template_file,
         singularity_bind_dir_list=['/path/input', '/path/output'],
-        output_dir=self.temp_dir)
+        output_dir=self.temp_dir,
+        input_paths=['sampleA', ['sampleA_R1.fastq.gz', 'sampleA_R2.fastq.gz']])
     self.assertTrue(os.path.exists(formatted_config_file))
     singularity_bind_line = ''
+    input_paths_line = ''
     with open(formatted_config_file, 'r') as fp:
       for f in fp:
         if 'runOptions =' in f:
           singularity_bind_line = f.strip()
+        if 'input_paths' in f:
+          input_paths_line = f.strip()
     self.assertTrue(singularity_bind_line != '')
     self.assertTrue('/path/input,' in singularity_bind_line)
     self.assertTrue('/path/output,' in singularity_bind_line)
+    self.assertTrue("['sampleA', ['sampleA_R1.fastq.gz', 'sampleA_R2.fastq.gz']]" in input_paths_line)
+    formatted_config_file = \
+      format_nextflow_conf(
+        config_template_file=self.config_template_file,
+        singularity_bind_dir_list=['/path/input', '/path/output'],
+        output_dir=self.temp_dir
+      )
+    input_paths_line = ''
+    with open(formatted_config_file, 'r') as fp:
+      for f in fp:
+        if 'input_paths' in f:
+          input_paths_line = f.strip()
+    self.assertEqual(input_paths_line, "")
 
   def test_prepare_nfcore_smrnaseq_input(self):
     sample_metadata = {

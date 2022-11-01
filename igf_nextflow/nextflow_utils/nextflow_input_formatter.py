@@ -42,7 +42,8 @@ def parse_sample_metadata_and_fetch_fastq(
 def format_nextflow_conf(
       config_template_file: str,
       singularity_bind_dir_list: list,
-      output_dir: str) -> \
+      output_dir: str,
+      input_paths: str = '') -> \
         str:
   try:
     check_file_path(output_dir)
@@ -60,7 +61,8 @@ def format_nextflow_conf(
       output_file=output_file,
       autoescape_list=['xml',],
       data={
-        "DIR_LIST": singularity_bind_dir_list
+        "DIR_LIST": singularity_bind_dir_list,
+        "INPUT_PATHS": input_paths
       })
     return output_file
   except Exception as e:
