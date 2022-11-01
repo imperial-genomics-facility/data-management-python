@@ -584,6 +584,9 @@ def prepare_nfcore_isoseq_input(
       analysis_metadata: dict) \
         -> Tuple[str, str]:
   """
+  TO DO: This pipeline requires BAM and BAM.PBI as input
+  Currently we have no example data for these file types for test run
+
   :param runner_template_file
   :param config_template_file
   :param sample_metadata
@@ -603,12 +606,114 @@ def prepare_nfcore_isoseq_input(
       f"Failed to create input for NFCore smrnaseq pipeline, error: {e}")
 
 
+def _make_nfcore_sarek_input(
+      sample_metadata: dict,
+      fastq_df: pd.DataFrame,
+      output_dir: str,
+      output_file_path: str = 'input.csv',
+      sample_id_input_column: str = 'sample_igf_id',
+      run_id_input_column: str = 'run_igf_id',
+      flowcell_id_input_column: str = 'flowcell_id',
+      lane_id_input_column: str = 'lane_number',
+      fastq_file_input_column: str = 'file_path',
+      output_sample_column: str = 'sample',
+      output_lane_column: str = 'lane',
+      output_fastq1_column: str = 'fastq_1',
+      output_fastq2_column: str = 'fastq_2') -> \
+        str:
+  try:
+    fastq1_pattern = \
+      re.compile('\S+_R1_001.fastq.gz')
+    fastq2_pattern = \
+      re.compile('\S+_R2_001.fastq.gz')
+    input_csv_file_path = \
+      os.path.join(output_dir, output_file_path)
+    if os.path.exists(input_csv_file_path):
+      raise ValueError(
+        f"File {input_csv_file_path} is already present")
+    if sample_id_input_column not in fastq_df.columns or \
+       run_id_input_column not in fastq_df.columns or \
+       flowcell_id_input_column not in fastq_df.columns or \
+       lane_id_input_column not in fastq_df.columns or \
+       fastq_file_input_column not in fastq_df.columns:
+      raise KeyError(
+        "Missing required columns in fastq list")
+    final_csv_data = list()
+    for sample_entry in sample_metadata.keys():
+      sample_df = \
+        fastq_df[fastq_df[sample_id_input_column]==sample_entry]
+      if len(sample_df.index) == 0:
+        raise ValueError(
+          f"Missing fastqs for sample {sample_entry}")
+      for run_id, r_data in sample_df.groupby(run_id_input_column):
+        fastqs = \
+          r_data[fastq_file_input_column].values.tolist()
+        fastq1 = ''
+        fastq2 = ''
+        for f in fastqs:
+          if re.search(fastq1_pattern, f):
+            fastq1 = f
+          if re.search(fastq2_pattern, f):
+            fastq2 = f
+        if fastq1 == "":
+          raise ValueError(
+            f"Missing fastq1 for sample {sample_entry}")
+        lane_ids = \
+          r_data[lane_id_input_column].values.tolist()
+        flowcell_ids = \
+          r_data[flowcell_id_input_column].values.tolist()
+        if len(lane_ids) == 0 or \
+           len(flowcell_ids) == 0:
+          raise ValueError(
+            f"Flowcell or lane info not found for sample {sample_entry}")
+        lane_entry = \
+          f"{flowcell_ids[0]}_{lane_ids[0]}"
+        row_data = {
+          output_sample_column: sample_entry,
+          output_lane_column: lane_entry,
+          output_fastq1_column: fastq1,
+          output_fastq2_column: fastq2,
+        }
+        extra_metadata = \
+          sample_metadata[sample_entry]
+        if isinstance(extra_metadata, dict):
+          row_data.\
+            update(**extra_metadata)
+        final_csv_data.\
+          append(row_data)
+    final_csv_df = \
+      pd.DataFrame(final_csv_data)
+    final_csv_df.\
+      to_csv(input_csv_file_path, index=False)
+    return input_csv_file_path
+  except Exception as e:
+    raise ValueError(
+      f"Failed to get input file for NFcore sarek, error: {e}")
+
+
 def prepare_nfcore_sarek_input(
       runner_template_file: str,
       config_template_file: str,
+      project_name: str,
+      hpc_data_dir: str,
       dbconf_file: str,
       sample_metadata: dict,
-      analysis_metadata: dict) \
+      analysis_metadata: dict,
+      nfcore_pipeline_name: str = 'nf-core/sarek',
+      exclude_nf_param_list: list = [
+        '-resume',
+        '-profile',
+        '-c',
+        '-config',
+        '--input',
+        '--outdir',
+        '-with-report',
+        '-with-timeline',
+        '-with-dag',
+        '-with-tower',
+        '-w',
+        '-work-dir',
+        '-with-notification']) \
         -> Tuple[str, str]:
   """
   :param runner_template_file
@@ -631,7 +736,74 @@ def prepare_nfcore_sarek_input(
                "--genome GRCh38"]}
   """
   try:
-    pass
+    ## get fastq df
+    fastq_df = \
+      parse_sample_metadata_and_fetch_fastq(
+        sample_metadata=sample_metadata,
+        dbconf_file=dbconf_file)
+    ## get template and extend it and dump it as bash script
+    work_dir = \
+      get_temp_dir(use_ephemeral_space=True)                     ## get work dir
+    project_data_dir = \
+      os.path.join(
+        hpc_data_dir,
+        project_name)
+    check_file_path(project_data_dir)                            ## get and check project data dir on hpc
+    formatted_config_file = \
+      format_nextflow_conf(
+        config_template_file=config_template_file,
+        singularity_bind_dir_list=[project_data_dir, work_dir],
+        output_dir=work_dir)                                     ## get formatted config file for NextFlow run
+    nextflow_version = \
+      analysis_metadata.get('NXF_VER')                           ## get nextflow version from analysis design and its required
+    if nextflow_version is None:
+      raise KeyError(
+        "NXF_VER is missing from NextFlow analysis design")
+    nextflow_params = \
+      analysis_metadata.get('nextflow_params')                   ## get nextflow_params list and its optional
+    nextflow_params_list = list()
+    if nextflow_params is not None and \
+       isinstance(nextflow_params, list):
+      for i in nextflow_params:
+        param_flag = i.split(' ')                                ## only check param flag if its separate by space from param value
+        if param_flag not in exclude_nf_param_list:
+          nextflow_params_list.\
+            append(i)
+    ## add required params
+    ## prepare input file
+    input_file = \
+      _make_nfcore_sarek_input(
+        sample_metadata=sample_metadata,
+        fastq_df=fastq_df,
+        output_dir=work_dir)
+    nextflow_params_list.\
+      append(f'--input {input_file}')
+    nextflow_params_list.\
+      append(f"--outdir {work_dir}")
+    nextflow_params_list.\
+      append(f"-with-report {os.path.join(work_dir, 'report.html')}")
+    nextflow_params_list.\
+      append(f"-with-dag {os.path.join(work_dir, 'dag.html')}")
+    nextflow_params_list.\
+      append(f"-with-timeline {os.path.join(work_dir, 'timeline.html')}")
+    nextflow_params_list = \
+      " ".join(nextflow_params_list)
+    ## dump command file
+    runner_file = \
+      os.path.join(
+        work_dir,
+        os.path.basename(runner_template_file))
+    _create_output_from_jinja_template(
+      template_file=runner_template_file,
+      output_file=runner_file,
+      autoescape_list=['xml',],
+      data={
+        "NEXTFLOW_VERSION": nextflow_version,
+        "NFCORE_PIPELINE_NAME": nfcore_pipeline_name,
+        "NEXTFLOW_CONF": formatted_config_file,
+        "NEXTFLOW_PARAMS": nextflow_params_list
+      })
+    return work_dir, runner_file
   except Exception as e:
     raise ValueError(
       f"Failed to create input for NFCore smrnaseq pipeline, error: {e}")

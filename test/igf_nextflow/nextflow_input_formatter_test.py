@@ -26,6 +26,8 @@ from igf_nextflow.nextflow_utils.nextflow_input_formatter import prepare_nfcore_
 from igf_nextflow.nextflow_utils.nextflow_input_formatter import _make_nfcore_rnaseq_input
 from igf_nextflow.nextflow_utils.nextflow_input_formatter import _make_nfcore_methylseq_input
 from igf_nextflow.nextflow_utils.nextflow_input_formatter import prepare_nfcore_methylseq_input
+from igf_nextflow.nextflow_utils.nextflow_input_formatter import prepare_nfcore_sarek_input
+from igf_nextflow.nextflow_utils.nextflow_input_formatter import _make_nfcore_sarek_input
 
 class Prepare_nfcore_input_testA(unittest.TestCase):
   def setUp(self):
@@ -524,6 +526,115 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
           check_extra_params = True
     self.assertTrue(check_config_file)
     self.assertTrue(check_extra_params)
+
+  def test_make_nfcore_sarek_input(self):
+    sample_metadata = {
+      "sampleA": {
+        "patient": 1,
+        "sex": "XX",
+        "status": 0
+      },
+      "sampleB": {
+        "patient": 2,
+        "sex": "XY",
+        "status": 1
+      }
+    }
+    fastq_df = \
+      parse_sample_metadata_and_fetch_fastq(
+        sample_metadata=sample_metadata,
+        dbconf_file=self.dbconfig)
+    input_csv_file_path = \
+      _make_nfcore_sarek_input(
+        sample_metadata=sample_metadata,
+        fastq_df=fastq_df,
+        output_dir=self.temp_dir)
+    self.assertTrue(os.path.exists(input_csv_file_path))
+    csv_data = pd.read_csv(input_csv_file_path, sep=",", header=0)
+    sampleA = \
+      csv_data[csv_data['sample']=='sampleA']
+    self.assertEqual(len(sampleA.index), 3)
+    sampleA_fastq1s = \
+      sampleA['fastq_1'].values.tolist()
+    self.assertTrue( '/path/sampleA_S1_L001_R1_001.fastq.gz' in sampleA_fastq1s)
+    sampleA_fastq2s = \
+      sampleA['fastq_2'].values.tolist()
+    self.assertTrue( '/path/sampleA_S1_L001_R2_001.fastq.gz' in sampleA_fastq2s)
+    sampleA_sex = \
+      sampleA['sex'].drop_duplicates().values.tolist()
+    self.assertEqual(sampleA_sex[0], 'XX')
+    sampleB = \
+      csv_data[csv_data['sample']=='sampleB']
+    self.assertEqual(len(sampleB.index), 1)
+    sampleB_fastq1s = \
+      sampleB['fastq_1'].values.tolist()
+    self.assertTrue( '/path/sampleB_S1_L001_R1_001.fastq.gz' in sampleB_fastq1s)
+    sampleB_fastq2s = \
+      sampleB['fastq_2'].values.tolist()
+    self.assertTrue( '/path/sampleB_S1_L001_R2_001.fastq.gz' in sampleB_fastq2s)
+
+  def test_prepare_nfcore_sarek_input(self):
+    sample_metadata = {
+      "sampleA": {
+        "patient": 1,
+        "sex": "XX",
+        "status": 0
+      },
+      "sampleB": {
+        "patient": 2,
+        "sex": "XY",
+        "status": 1
+      }
+    }
+    analysis_metadata = { 
+      "NXF_VER": "x.y.z",
+      "nextflow_params":  [
+        "-profile singularity",
+        "-r 3.0.2",
+        "--step mapping"
+        "--genome GRCh38"
+      ]}
+    hpc_data_dir = \
+      os.path.join(
+        self.temp_dir, 
+        'hpc_data_dir')
+    os.makedirs(
+      os.path.join(
+        self.temp_dir, 
+        'hpc_data_dir',
+        'projectA'))
+    work_dir, runner_file = \
+      prepare_nfcore_sarek_input(
+        runner_template_file=self.runner_template_file,
+        config_template_file=self.config_template_file,
+        project_name='projectA',
+        hpc_data_dir=hpc_data_dir,
+        dbconf_file=self.dbconfig,
+        sample_metadata=sample_metadata,
+        analysis_metadata=analysis_metadata)
+    self.assertTrue(os.path.exists(runner_file))
+    self.assertTrue(os.path.exists(work_dir))
+    check_config_file = False
+    config_file_path = \
+      f'-c {work_dir}/{os.path.basename(self.config_template_file)}'
+    check_input_file = False
+    input_file_path = \
+      f'--input {os.path.join(work_dir, "input.csv")}'
+    check_extra_params = False
+    extra_params = \
+      "--step mapping"
+    with open(runner_file, 'r') as fp:
+      for f in fp:
+        if config_file_path in f.strip():
+          check_config_file = True
+        if input_file_path in f.strip():
+          check_input_file = True
+        if extra_params in f.strip():
+          check_extra_params = True
+    self.assertTrue(check_input_file)
+    self.assertTrue(check_config_file)
+    self.assertTrue(check_extra_params)
+
 
 if __name__=='__main__':
   unittest.main()
