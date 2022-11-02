@@ -30,7 +30,10 @@ from igf_nextflow.nextflow_utils.nextflow_input_formatter import prepare_nfcore_
 from igf_nextflow.nextflow_utils.nextflow_input_formatter import _make_nfcore_sarek_input
 from igf_nextflow.nextflow_utils.nextflow_input_formatter import _make_nfcore_ampliseq_input
 from igf_nextflow.nextflow_utils.nextflow_input_formatter import prepare_nfcore_ampliseq_input
-
+from igf_nextflow.nextflow_utils.nextflow_input_formatter import _make_nfcore_atacseq_input
+from igf_nextflow.nextflow_utils.nextflow_input_formatter import prepare_nfcore_atacseq_input
+from igf_nextflow.nextflow_utils.nextflow_input_formatter import _make_nfcore_chipseq_input
+from igf_nextflow.nextflow_utils.nextflow_input_formatter import prepare_nfcore_chipseq_input
 
 class Prepare_nfcore_input_testA(unittest.TestCase):
   def setUp(self):
@@ -740,6 +743,185 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
     self.assertTrue(check_config_file)
     self.assertTrue(check_extra_params)
     self.assertTrue(check_metadata_file)
+
+
+  def test_make_nfcore_atacseq_input(self):
+    sample_metadata = {
+      "sampleA": {
+        "group": "control1",
+        "replicate": 1},
+      "sampleB": {
+        "group": "control2",
+        "replicate": 2}
+    }
+    fastq_df = \
+      parse_sample_metadata_and_fetch_fastq(
+        sample_metadata=sample_metadata,
+        dbconf_file=self.dbconfig)
+    input_file = \
+      _make_nfcore_atacseq_input(
+        sample_metadata=sample_metadata,
+        fastq_df=fastq_df,
+        output_dir=self.temp_dir)
+    self.assertTrue(os.path.exists(input_file))
+    csv_data = \
+      pd.read_csv(input_file, sep=",", header=0)
+    self.assertTrue('fastq_1' in csv_data)
+    self.assertTrue('fastq_2' in csv_data)
+    self.assertTrue('group' in csv_data)
+    self.assertTrue('replicate' in csv_data)
+    control1 = \
+      csv_data[csv_data['group']=='control1']
+    self.assertEqual(len(control1.index), 3)
+    self.assertTrue('/path/sampleA_S1_L001_R1_001.fastq.gz' in control1['fastq_1'].values.tolist())
+    self.assertTrue('/path/sampleA_S1_L001_R2_001.fastq.gz' in control1['fastq_2'].values.tolist())
+
+  def test_prepare_nfcore_atacseq_input(self):
+    sample_metadata = {
+      "sampleA": {
+        "group": "control1",
+        "replicate": 1},
+      "sampleB": {
+        "group": "control2",
+        "replicate": 2}
+    }
+    analysis_metadata = { 
+      "NXF_VER": "x.y.z",
+      "nextflow_params":  [
+        "-profile singularity",
+        "-r 1.2.2",
+        "--genome GRCh38"
+      ]}
+    hpc_data_dir = \
+      os.path.join(
+        self.temp_dir, 
+        'hpc_data_dir')
+    os.makedirs(
+      os.path.join(
+        self.temp_dir, 
+        'hpc_data_dir',
+        'projectA'))
+    work_dir, runner_file = \
+      prepare_nfcore_atacseq_input(
+        runner_template_file=self.runner_template_file,
+        config_template_file=self.config_template_file,
+        project_name='projectA',
+        hpc_data_dir=hpc_data_dir,
+        dbconf_file=self.dbconfig,
+        sample_metadata=sample_metadata,
+        analysis_metadata=analysis_metadata)
+    self.assertTrue(os.path.exists(runner_file))
+    self.assertTrue(os.path.exists(work_dir))
+    check_config_file = False
+    config_file_path = \
+      f'-c {work_dir}/{os.path.basename(self.config_template_file)}'
+    check_input_file = False
+    input_file_path = \
+      f'--input {os.path.join(work_dir, "input.csv")}'
+    check_extra_params = False
+    extra_params = \
+      "--genome GRCh38"
+    with open(runner_file, 'r') as fp:
+      for f in fp:
+        if config_file_path in f.strip():
+          check_config_file = True
+        if input_file_path in f.strip():
+          check_input_file = True
+        if extra_params in f.strip():
+          check_extra_params = True
+    self.assertTrue(check_input_file)
+    self.assertTrue(check_config_file)
+    self.assertTrue(check_extra_params)
+
+
+  def test_make_nfcore_chipseq_input(self):
+    sample_metadata = {
+      "sampleA": {
+        "antibody": "BCATENIN",
+        "control": "sampleB"},
+      "sampleB": {
+        "antibody": "",
+        "control": ""}
+    }
+    fastq_df = \
+      parse_sample_metadata_and_fetch_fastq(
+        sample_metadata=sample_metadata,
+        dbconf_file=self.dbconfig)
+    input_file = \
+      _make_nfcore_chipseq_input(
+        sample_metadata=sample_metadata,
+        fastq_df=fastq_df,
+        output_dir=self.temp_dir)
+    self.assertTrue(os.path.exists(input_file))
+    csv_data = \
+      pd.read_csv(input_file, sep=",", header=0)
+    self.assertTrue('fastq_1' in csv_data)
+    self.assertTrue('fastq_2' in csv_data)
+    self.assertTrue('control' in csv_data)
+    self.assertTrue('antibody' in csv_data)
+    self.assertTrue('sample' in csv_data)
+    control1 = \
+      csv_data[csv_data['sample']=='sampleA']
+    self.assertEqual(len(control1.index), 3)
+    self.assertTrue('/path/sampleA_S1_L001_R1_001.fastq.gz' in control1['fastq_1'].values.tolist())
+    self.assertTrue('/path/sampleA_S1_L001_R2_001.fastq.gz' in control1['fastq_2'].values.tolist())
+
+  def test_prepare_nfcore_chipseq_input(self):
+    sample_metadata = {
+      "sampleA": {
+        "antibody": "BCATENIN",
+        "control": "sampleB"},
+      "sampleB": {
+        "antibody": "",
+        "control": ""}
+    }
+    analysis_metadata = { 
+      "NXF_VER": "x.y.z",
+      "nextflow_params":  [
+        "-profile singularity",
+        "-r 2.0.0",
+        "--genome GRCh38"
+      ]}
+    hpc_data_dir = \
+      os.path.join(
+        self.temp_dir, 
+        'hpc_data_dir')
+    os.makedirs(
+      os.path.join(
+        self.temp_dir, 
+        'hpc_data_dir',
+        'projectA'))
+    work_dir, runner_file = \
+      prepare_nfcore_chipseq_input(
+        runner_template_file=self.runner_template_file,
+        config_template_file=self.config_template_file,
+        project_name='projectA',
+        hpc_data_dir=hpc_data_dir,
+        dbconf_file=self.dbconfig,
+        sample_metadata=sample_metadata,
+        analysis_metadata=analysis_metadata)
+    self.assertTrue(os.path.exists(runner_file))
+    self.assertTrue(os.path.exists(work_dir))
+    check_config_file = False
+    config_file_path = \
+      f'-c {work_dir}/{os.path.basename(self.config_template_file)}'
+    check_input_file = False
+    input_file_path = \
+      f'--input {os.path.join(work_dir, "input.csv")}'
+    check_extra_params = False
+    extra_params = \
+      "--genome GRCh38"
+    with open(runner_file, 'r') as fp:
+      for f in fp:
+        if config_file_path in f.strip():
+          check_config_file = True
+        if input_file_path in f.strip():
+          check_input_file = True
+        if extra_params in f.strip():
+          check_extra_params = True
+    self.assertTrue(check_input_file)
+    self.assertTrue(check_config_file)
+    self.assertTrue(check_extra_params)
 
 if __name__=='__main__':
   unittest.main()
