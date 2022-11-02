@@ -1703,9 +1703,26 @@ def prepare_nfcore_cutandrun_input(
 def prepare_nfcore_bactmap_input(
       runner_template_file: str,
       config_template_file: str,
+      project_name: str,
+      hpc_data_dir: str,
       dbconf_file: str,
       sample_metadata: dict,
-      analysis_metadata: dict) \
+      analysis_metadata: dict,
+      nfcore_pipeline_name: str = 'nf-core/bactmap',
+      exclude_nf_param_list: list = [
+        '-resume',
+        '-profile',
+        '-c',
+        '-config',
+        '--input',
+        '--outdir',
+        '-with-report',
+        '-with-timeline',
+        '-with-dag',
+        '-with-tower',
+        '-w',
+        '-work-dir',
+        '-with-notification']) \
         -> Tuple[str, str]:
   """
   :param runner_template_file
@@ -1721,7 +1738,18 @@ def prepare_nfcore_bactmap_input(
                "--reference path"]}
   """
   try:
-    pass
+    work_dir, runner_file = \
+      prepare_nfcore_smrnaseq_input(
+        runner_template_file=runner_template_file,
+        config_template_file=config_template_file,
+        project_name=project_name,
+        hpc_data_dir=hpc_data_dir,
+        dbconf_file=dbconf_file,
+        sample_metadata=sample_metadata,
+        analysis_metadata=analysis_metadata,
+        nfcore_pipeline_name=nfcore_pipeline_name,
+        exclude_nf_param_list=exclude_nf_param_list)
+    return work_dir, runner_file
   except Exception as e:
     raise ValueError(
       f"Failed to create input for NFCore smrnaseq pipeline, error: {e}")
