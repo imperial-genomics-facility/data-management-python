@@ -132,7 +132,6 @@ def prepare_nfcore_smrnaseq_input(
       nfcore_pipeline_name: str = 'nf-core/smrnaseq',
       exclude_nf_param_list: list = [
         '-resume',
-        '-profile',
         '-c',
         '-config',
         '--input',
@@ -204,13 +203,17 @@ def prepare_nfcore_smrnaseq_input(
     nextflow_params_list.\
       append(f'--input {input_file}')
     nextflow_params_list.\
-      append(f"--outdir {work_dir}")
+      append('-resume')
     nextflow_params_list.\
-      append(f"-with-report {os.path.join(work_dir, 'report.html')}")
+      append(f"--outdir {os.path.join(work_dir, 'results')}")
     nextflow_params_list.\
-      append(f"-with-dag {os.path.join(work_dir, 'dag.html')}")
+      append(f"-work-dir {work_dir}")
     nextflow_params_list.\
-      append(f"-with-timeline {os.path.join(work_dir, 'timeline.html')}")
+      append(f"-with-report {os.path.join(work_dir, 'results', 'report.html')}")
+    nextflow_params_list.\
+      append(f"-with-dag {os.path.join(work_dir, 'results', 'dag.html')}")
+    nextflow_params_list.\
+      append(f"-with-timeline {os.path.join(work_dir, 'results', 'timeline.html')}")
     nextflow_params_list = \
       " ".join(nextflow_params_list)
     ## dump command file
@@ -314,7 +317,6 @@ def prepare_nfcore_rnaseq_input(
       nfcore_pipeline_name: str = 'nf-core/rnaseq',
       exclude_nf_param_list: list = [
         '-resume',
-        '-profile',
         '-c',
         '-config',
         '--input',
@@ -387,13 +389,17 @@ def prepare_nfcore_rnaseq_input(
     nextflow_params_list.\
       append(f'--input {input_file}')
     nextflow_params_list.\
-      append(f"--outdir {work_dir}")
+      append(f"--outdir {os.path.join(work_dir, 'results')}")
     nextflow_params_list.\
-      append(f"-with-report {os.path.join(work_dir, 'report.html')}")
+      append(f"-work-dir {work_dir}")
     nextflow_params_list.\
-      append(f"-with-dag {os.path.join(work_dir, 'dag.html')}")
+      append('-resume')
     nextflow_params_list.\
-      append(f"-with-timeline {os.path.join(work_dir, 'timeline.html')}")
+      append(f"-with-report {os.path.join(work_dir, 'results', 'report.html')}")
+    nextflow_params_list.\
+      append(f"-with-dag {os.path.join(work_dir, 'results', 'dag.html')}")
+    nextflow_params_list.\
+      append(f"-with-timeline {os.path.join(work_dir, 'results', 'timeline.html')}")
     nextflow_params_list = \
       " ".join(nextflow_params_list)
     ## dump command file
@@ -478,7 +484,6 @@ def prepare_nfcore_methylseq_input(
       nfcore_pipeline_name: str = 'nf-core/methylseq',
       exclude_nf_param_list: list = [
         '-resume',
-        '-profile',
         '-c',
         '-config',
         '--input',
@@ -546,13 +551,17 @@ def prepare_nfcore_methylseq_input(
             append(i)
     ## add required params
     nextflow_params_list.\
-      append(f"--outdir {work_dir}")
+      append(f"--outdir {os.path.join(work_dir, 'results')}")
     nextflow_params_list.\
-      append(f"-with-report {os.path.join(work_dir, 'report.html')}")
+      append(f"-work-dir {work_dir}")
     nextflow_params_list.\
-      append(f"-with-dag {os.path.join(work_dir, 'dag.html')}")
+      append('-resume')
     nextflow_params_list.\
-      append(f"-with-timeline {os.path.join(work_dir, 'timeline.html')}")
+      append(f"-with-report {os.path.join(work_dir, 'results', 'report.html')}")
+    nextflow_params_list.\
+      append(f"-with-dag {os.path.join(work_dir, 'results', 'dag.html')}")
+    nextflow_params_list.\
+      append(f"-with-timeline {os.path.join(work_dir, 'results', 'timeline.html')}")
     nextflow_params_list = \
       " ".join(nextflow_params_list)
     ## dump command file
@@ -702,7 +711,6 @@ def prepare_nfcore_sarek_input(
       nfcore_pipeline_name: str = 'nf-core/sarek',
       exclude_nf_param_list: list = [
         '-resume',
-        '-profile',
         '-c',
         '-config',
         '--input',
@@ -779,13 +787,17 @@ def prepare_nfcore_sarek_input(
     nextflow_params_list.\
       append(f'--input {input_file}')
     nextflow_params_list.\
-      append(f"--outdir {work_dir}")
+      append(f"--outdir {os.path.join(work_dir, 'results')}")
     nextflow_params_list.\
-      append(f"-with-report {os.path.join(work_dir, 'report.html')}")
+      append(f"-work-dir {work_dir}")
     nextflow_params_list.\
-      append(f"-with-dag {os.path.join(work_dir, 'dag.html')}")
+      append('-resume')
     nextflow_params_list.\
-      append(f"-with-timeline {os.path.join(work_dir, 'timeline.html')}")
+      append(f"-with-report {os.path.join(work_dir, 'results', 'report.html')}")
+    nextflow_params_list.\
+      append(f"-with-dag {os.path.join(work_dir, 'results', 'dag.html')}")
+    nextflow_params_list.\
+      append(f"-with-timeline {os.path.join(work_dir, 'results', 'timeline.html')}")
     nextflow_params_list = \
       " ".join(nextflow_params_list)
     ## dump command file
@@ -915,7 +927,6 @@ def prepare_nfcore_ampliseq_input(
       nfcore_pipeline_name: str = 'nf-core/ampliseq',
       exclude_nf_param_list: list = [
         '-resume',
-        '-profile',
         '-c',
         '-config',
         '--input',
@@ -988,15 +999,19 @@ def prepare_nfcore_ampliseq_input(
     nextflow_params_list.\
       append(f'--input {input_file}')
     nextflow_params_list.\
+      append('-resume')
+    nextflow_params_list.\
       append(f'--metadata {metadata_file}')
     nextflow_params_list.\
-      append(f"--outdir {work_dir}")
+      append(f"-work-dir {work_dir}")
     nextflow_params_list.\
-      append(f"-with-report {os.path.join(work_dir, 'report.html')}")
+      append(f"--outdir {os.path.join(work_dir, 'results')}")
     nextflow_params_list.\
-      append(f"-with-dag {os.path.join(work_dir, 'dag.html')}")
+      append(f"-with-report {os.path.join(work_dir, 'results', 'report.html')}")
     nextflow_params_list.\
-      append(f"-with-timeline {os.path.join(work_dir, 'timeline.html')}")
+      append(f"-with-dag {os.path.join(work_dir, 'results', 'dag.html')}")
+    nextflow_params_list.\
+      append(f"-with-timeline {os.path.join(work_dir, 'results', 'timeline.html')}")
     nextflow_params_list = \
       " ".join(nextflow_params_list)
     ## dump command file
@@ -1031,7 +1046,6 @@ def prepare_nfcore_rnafusion_input(
       nfcore_pipeline_name: str = 'nf-core/rnafusion',
       exclude_nf_param_list: list = [
         '-resume',
-        '-profile',
         '-c',
         '-config',
         '--input',
@@ -1089,7 +1103,6 @@ def prepare_nfcore_rnavar_input(
       nfcore_pipeline_name: str = 'nf-core/rnavar',
       exclude_nf_param_list: list = [
         '-resume',
-        '-profile',
         '-c',
         '-config',
         '--input',
@@ -1136,6 +1149,7 @@ def prepare_nfcore_rnavar_input(
   except Exception as e:
     raise ValueError(
       f"Failed to create input for NFCore smrnaseq pipeline, error: {e}")
+
 
 def _make_nfcore_atacseq_input(sample_metadata: dict,
       fastq_df: pd.DataFrame,
@@ -1219,7 +1233,6 @@ def prepare_nfcore_atacseq_input(
       nfcore_pipeline_name: str = 'nf-core/atacseq',
       exclude_nf_param_list: list = [
         '-resume',
-        '-profile',
         '-c',
         '-config',
         '--input',
@@ -1293,13 +1306,17 @@ def prepare_nfcore_atacseq_input(
     nextflow_params_list.\
       append(f'--input {input_file}')
     nextflow_params_list.\
-      append(f"--outdir {work_dir}")
+      append(f"--outdir {os.path.join(work_dir, 'results')}")
     nextflow_params_list.\
-      append(f"-with-report {os.path.join(work_dir, 'report.html')}")
+      append('-resume')
     nextflow_params_list.\
-      append(f"-with-dag {os.path.join(work_dir, 'dag.html')}")
+      append(f"-work-dir {work_dir}")
     nextflow_params_list.\
-      append(f"-with-timeline {os.path.join(work_dir, 'timeline.html')}")
+      append(f"-with-report {os.path.join(work_dir, 'results', 'report.html')}")
+    nextflow_params_list.\
+      append(f"-with-dag {os.path.join(work_dir, 'results', 'dag.html')}")
+    nextflow_params_list.\
+      append(f"-with-timeline {os.path.join(work_dir, 'results', 'timeline.html')}")
     nextflow_params_list = \
       " ".join(nextflow_params_list)
     ## dump command file
@@ -1407,7 +1424,6 @@ def prepare_nfcore_chipseq_input(
       nfcore_pipeline_name: str = 'nf-core/chipseq',
       exclude_nf_param_list: list = [
         '-resume',
-        '-profile',
         '-c',
         '-config',
         '--input',
@@ -1481,13 +1497,17 @@ def prepare_nfcore_chipseq_input(
     nextflow_params_list.\
       append(f'--input {input_file}')
     nextflow_params_list.\
-      append(f"--outdir {work_dir}")
+      append(f"--outdir {os.path.join(work_dir, 'results')}")
     nextflow_params_list.\
-      append(f"-with-report {os.path.join(work_dir, 'report.html')}")
+      append('-resume')
     nextflow_params_list.\
-      append(f"-with-dag {os.path.join(work_dir, 'dag.html')}")
+      append(f"-work-dir {work_dir}")
     nextflow_params_list.\
-      append(f"-with-timeline {os.path.join(work_dir, 'timeline.html')}")
+      append(f"-with-report {os.path.join(work_dir, 'results', 'report.html')}")
+    nextflow_params_list.\
+      append(f"-with-dag {os.path.join(work_dir, 'results', 'dag.html')}")
+    nextflow_params_list.\
+      append(f"-with-timeline {os.path.join(work_dir, 'results', 'timeline.html')}")
     nextflow_params_list = \
       " ".join(nextflow_params_list)
     ## dump command file
@@ -1594,7 +1614,6 @@ def prepare_nfcore_cutandrun_input(
       nfcore_pipeline_name: str = 'nf-core/atacseq',
       exclude_nf_param_list: list = [
         '-resume',
-        '-profile',
         '-c',
         '-config',
         '--input',
@@ -1670,13 +1689,17 @@ def prepare_nfcore_cutandrun_input(
     nextflow_params_list.\
       append(f'--input {input_file}')
     nextflow_params_list.\
-      append(f"--outdir {work_dir}")
+      append(f"--outdir {os.path.join(work_dir, 'results')}")
     nextflow_params_list.\
-      append(f"-with-report {os.path.join(work_dir, 'report.html')}")
+      append('-resume')
     nextflow_params_list.\
-      append(f"-with-dag {os.path.join(work_dir, 'dag.html')}")
+      append(f"-work-dir {work_dir}")
     nextflow_params_list.\
-      append(f"-with-timeline {os.path.join(work_dir, 'timeline.html')}")
+      append(f"-with-report {os.path.join(work_dir, 'results', 'report.html')}")
+    nextflow_params_list.\
+      append(f"-with-dag {os.path.join(work_dir, 'results', 'dag.html')}")
+    nextflow_params_list.\
+      append(f"-with-timeline {os.path.join(work_dir, 'results', 'timeline.html')}")
     nextflow_params_list = \
       " ".join(nextflow_params_list)
     ## dump command file
@@ -1711,7 +1734,6 @@ def prepare_nfcore_bactmap_input(
       nfcore_pipeline_name: str = 'nf-core/bactmap',
       exclude_nf_param_list: list = [
         '-resume',
-        '-profile',
         '-c',
         '-config',
         '--input',

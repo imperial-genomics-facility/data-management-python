@@ -344,6 +344,15 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
     check_extra_params = False
     extra_params = \
       "--three_prime_adapter AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC"
+    check_work_dir = False
+    work_dir_path = \
+      f"-work-dir {work_dir}"
+    check_output_dir = False
+    output_dir = \
+      f"--outdir {os.path.join(work_dir, 'results')}"
+    check_report = False
+    report_path = \
+      f"-with-report {os.path.join(work_dir, 'results', 'report.html')}"
     with open(runner_file, 'r') as fp:
       for f in fp:
         if config_file_path in f.strip():
@@ -352,9 +361,19 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
           check_input_file = True
         if extra_params in f.strip():
           check_extra_params = True
+        if work_dir_path in f.strip():
+          check_work_dir = True
+        if output_dir in f.strip():
+          check_output_dir = True
+        if report_path in f.strip():
+          check_report = True
     self.assertTrue(check_input_file)
     self.assertTrue(check_config_file)
     self.assertTrue(check_extra_params)
+    self.assertTrue(check_work_dir)
+    self.assertTrue(check_output_dir)
+    self.assertTrue(check_report)
+
 
 
   def test_make_nfcore_rnaseq_input(self):
@@ -447,6 +466,15 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
     check_extra_params = False
     extra_params = \
       "--aligner star_rsem"
+    check_work_dir = False
+    work_dir_path = \
+      f"-work-dir {work_dir}"
+    check_output_dir = False
+    output_dir = \
+      f"--outdir {os.path.join(work_dir, 'results')}"
+    check_report = False
+    report_path = \
+      f"-with-report {os.path.join(work_dir, 'results', 'report.html')}"
     with open(runner_file, 'r') as fp:
       for f in fp:
         if config_file_path in f.strip():
@@ -455,9 +483,19 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
           check_input_file = True
         if extra_params in f.strip():
           check_extra_params = True
+        if work_dir_path in f.strip():
+          check_work_dir = True
+        if output_dir in f.strip():
+          check_output_dir = True
+        if report_path in f.strip():
+          check_report = True
     self.assertTrue(check_input_file)
     self.assertTrue(check_config_file)
     self.assertTrue(check_extra_params)
+    self.assertTrue(check_work_dir)
+    self.assertTrue(check_output_dir)
+    self.assertTrue(check_report)
+
 
   def test_make_nfcore_methylseq_input(self):
     sample_metadata = {
@@ -526,14 +564,32 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
     check_extra_params = False
     extra_params = \
       "--aligner bismark"
+    check_work_dir = False
+    work_dir_path = \
+      f"-work-dir {work_dir}"
+    check_output_dir = False
+    output_dir = \
+      f"--outdir {os.path.join(work_dir, 'results')}"
+    check_report = False
+    report_path = \
+      f"-with-report {os.path.join(work_dir, 'results', 'report.html')}"
     with open(runner_file, 'r') as fp:
       for f in fp:
         if config_file_path in f.strip():
           check_config_file = True
         if extra_params in f.strip():
           check_extra_params = True
+        if work_dir_path in f.strip():
+          check_work_dir = True
+        if output_dir in f.strip():
+          check_output_dir = True
+        if report_path in f.strip():
+          check_report = True
     self.assertTrue(check_config_file)
     self.assertTrue(check_extra_params)
+    self.assertTrue(check_work_dir)
+    self.assertTrue(check_output_dir)
+    self.assertTrue(check_report)
 
   def test_make_nfcore_sarek_input(self):
     sample_metadata = {
@@ -631,6 +687,15 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
     check_extra_params = False
     extra_params = \
       "--step mapping"
+    check_work_dir = False
+    work_dir_path = \
+      f"-work-dir {work_dir}"
+    check_output_dir = False
+    output_dir = \
+      f"--outdir {os.path.join(work_dir, 'results')}"
+    check_report = False
+    report_path = \
+      f"-with-report {os.path.join(work_dir, 'results', 'report.html')}"
     with open(runner_file, 'r') as fp:
       for f in fp:
         if config_file_path in f.strip():
@@ -639,9 +704,18 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
           check_input_file = True
         if extra_params in f.strip():
           check_extra_params = True
+        if work_dir_path in f.strip():
+          check_work_dir = True
+        if output_dir in f.strip():
+          check_output_dir = True
+        if report_path in f.strip():
+          check_report = True
     self.assertTrue(check_input_file)
     self.assertTrue(check_config_file)
     self.assertTrue(check_extra_params)
+    self.assertTrue(check_work_dir)
+    self.assertTrue(check_output_dir)
+    self.assertTrue(check_report)
 
 
   def test_make_nfcore_ampliseq_input(self):
@@ -731,6 +805,15 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
     check_extra_params = False
     extra_params = \
       "--FW_primer GTGYCAGCMGCCGCGGTAA"
+    check_work_dir = False
+    work_dir_path = \
+      f"-work-dir {work_dir}"
+    check_output_dir = False
+    output_dir = \
+      f"--outdir {os.path.join(work_dir, 'results')}"
+    check_report = False
+    report_path = \
+      f"-with-report {os.path.join(work_dir, 'results', 'report.html')}"
     with open(runner_file, 'r') as fp:
       for f in fp:
         if config_file_path in f.strip():
@@ -741,10 +824,19 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
           check_metadata_file = True
         if extra_params in f.strip():
           check_extra_params = True
+        if work_dir_path in f.strip():
+          check_work_dir = True
+        if output_dir in f.strip():
+          check_output_dir = True
+        if report_path in f.strip():
+          check_report = True
     self.assertTrue(check_input_file)
     self.assertTrue(check_config_file)
     self.assertTrue(check_extra_params)
     self.assertTrue(check_metadata_file)
+    self.assertTrue(check_work_dir)
+    self.assertTrue(check_output_dir)
+    self.assertTrue(check_report)
 
 
   def test_make_nfcore_atacseq_input(self):
@@ -823,6 +915,15 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
     check_extra_params = False
     extra_params = \
       "--genome GRCh38"
+    check_work_dir = False
+    work_dir_path = \
+      f"-work-dir {work_dir}"
+    check_output_dir = False
+    output_dir = \
+      f"--outdir {os.path.join(work_dir, 'results')}"
+    check_report = False
+    report_path = \
+      f"-with-report {os.path.join(work_dir, 'results', 'report.html')}"
     with open(runner_file, 'r') as fp:
       for f in fp:
         if config_file_path in f.strip():
@@ -831,9 +932,18 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
           check_input_file = True
         if extra_params in f.strip():
           check_extra_params = True
+        if work_dir_path in f.strip():
+          check_work_dir = True
+        if output_dir in f.strip():
+          check_output_dir = True
+        if report_path in f.strip():
+          check_report = True
     self.assertTrue(check_input_file)
     self.assertTrue(check_config_file)
     self.assertTrue(check_extra_params)
+    self.assertTrue(check_work_dir)
+    self.assertTrue(check_output_dir)
+    self.assertTrue(check_report)
 
 
   def test_make_nfcore_chipseq_input(self):
@@ -913,6 +1023,15 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
     check_extra_params = False
     extra_params = \
       "--genome GRCh38"
+    check_work_dir = False
+    work_dir_path = \
+      f"-work-dir {work_dir}"
+    check_output_dir = False
+    output_dir = \
+      f"--outdir {os.path.join(work_dir, 'results')}"
+    check_report = False
+    report_path = \
+      f"-with-report {os.path.join(work_dir, 'results', 'report.html')}"
     with open(runner_file, 'r') as fp:
       for f in fp:
         if config_file_path in f.strip():
@@ -921,9 +1040,19 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
           check_input_file = True
         if extra_params in f.strip():
           check_extra_params = True
+        if work_dir_path in f.strip():
+          check_work_dir = True
+        if output_dir in f.strip():
+          check_output_dir = True
+        if report_path in f.strip():
+          check_report = True
     self.assertTrue(check_input_file)
     self.assertTrue(check_config_file)
     self.assertTrue(check_extra_params)
+    self.assertTrue(check_work_dir)
+    self.assertTrue(check_output_dir)
+    self.assertTrue(check_report)
+
 
   def test_make_nfcore_cutandrun_input(self):
     sample_metadata = {
@@ -1007,6 +1136,15 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
     check_extra_params = False
     extra_params = \
       "--genome GRCh38"
+    check_work_dir = False
+    work_dir_path = \
+      f"-work-dir {work_dir}"
+    check_output_dir = False
+    output_dir = \
+      f"--outdir {os.path.join(work_dir, 'results')}"
+    check_report = False
+    report_path = \
+      f"-with-report {os.path.join(work_dir, 'results', 'report.html')}"
     with open(runner_file, 'r') as fp:
       for f in fp:
         if config_file_path in f.strip():
@@ -1015,9 +1153,18 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
           check_input_file = True
         if extra_params in f.strip():
           check_extra_params = True
+        if work_dir_path in f.strip():
+          check_work_dir = True
+        if output_dir in f.strip():
+          check_output_dir = True
+        if report_path in f.strip():
+          check_report = True
     self.assertTrue(check_input_file)
     self.assertTrue(check_config_file)
     self.assertTrue(check_extra_params)
+    self.assertTrue(check_work_dir)
+    self.assertTrue(check_output_dir)
+    self.assertTrue(check_report)
 
 if __name__=='__main__':
   unittest.main()
