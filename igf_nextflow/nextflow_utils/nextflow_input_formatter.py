@@ -7,6 +7,165 @@ from igf_data.utils.fileutils import get_temp_dir
 from igf_data.utils.analysis_fastq_fetch_utils import get_fastq_and_run_for_samples
 from igf_airflow.utils.dag22_bclconvert_demult_utils import _create_output_from_jinja_template
 
+def prepare_input_for_multiple_nfcore_pipeline(
+      runner_template_file: str,
+      config_template_file: str,
+      project_name: str,
+      hpc_data_dir: str,
+      dbconf_file: str,
+      sample_metadata: dict,
+      analysis_metadata: dict,
+      nfcore_pipeline_name: str,
+      supported_nfcore_pipelines: list = [
+        'nf-core/smrnaseq',
+        'nf-core/rnaseq',
+        'nf-core/methylseq',
+        'nf-core/sarek',
+        'nf-core/ampliseq',
+        'nf-core/rnafusion',
+        'nf-core/rnavar',
+        'nf-core/atacseq',
+        'nf-core/chipseq',
+        'nf-core/cutandrun',
+        'nf-core/bactmap'
+      ]) -> \
+        Tuple[str, str]:
+  try:
+    if nfcore_pipeline_name not in supported_nfcore_pipelines:
+      raise KeyError(
+        f"NFCore pipeline {nfcore_pipeline_name} is not supported yet")
+    work_dir = None
+    runner_file = None
+    if nfcore_pipeline_name == 'nf-core/smrnaseq':
+      work_dir, runner_file = \
+        prepare_nfcore_smrnaseq_input(
+          runner_template_file=runner_template_file,
+          config_template_file=config_template_file,
+          project_name=project_name,
+          hpc_data_dir=hpc_data_dir,
+          dbconf_file=dbconf_file,
+          sample_metadata=sample_metadata,
+          analysis_metadata=analysis_metadata,
+          nfcore_pipeline_name=nfcore_pipeline_name)
+    if nfcore_pipeline_name == 'nf-core/rnaseq':
+      work_dir, runner_file = \
+        prepare_nfcore_rnaseq_input(
+          runner_template_file=runner_template_file,
+          config_template_file=config_template_file,
+          project_name=project_name,
+          hpc_data_dir=hpc_data_dir,
+          dbconf_file=dbconf_file,
+          sample_metadata=sample_metadata,
+          analysis_metadata=analysis_metadata,
+          nfcore_pipeline_name=nfcore_pipeline_name)
+    if nfcore_pipeline_name == 'nf-core/methylseq':
+      work_dir, runner_file = \
+        prepare_nfcore_methylseq_input(
+          runner_template_file=runner_template_file,
+          config_template_file=config_template_file,
+          project_name=project_name,
+          hpc_data_dir=hpc_data_dir,
+          dbconf_file=dbconf_file,
+          sample_metadata=sample_metadata,
+          analysis_metadata=analysis_metadata,
+          nfcore_pipeline_name=nfcore_pipeline_name)
+    if nfcore_pipeline_name == 'nf-core/sarek':
+      work_dir, runner_file = \
+        prepare_nfcore_sarek_input(
+          runner_template_file=runner_template_file,
+          config_template_file=config_template_file,
+          project_name=project_name,
+          hpc_data_dir=hpc_data_dir,
+          dbconf_file=dbconf_file,
+          sample_metadata=sample_metadata,
+          analysis_metadata=analysis_metadata,
+          nfcore_pipeline_name=nfcore_pipeline_name)
+    if nfcore_pipeline_name == 'nf-core/ampliseq':
+      work_dir, runner_file = \
+        prepare_nfcore_ampliseq_input(
+          runner_template_file=runner_template_file,
+          config_template_file=config_template_file,
+          project_name=project_name,
+          hpc_data_dir=hpc_data_dir,
+          dbconf_file=dbconf_file,
+          sample_metadata=sample_metadata,
+          analysis_metadata=analysis_metadata,
+          nfcore_pipeline_name=nfcore_pipeline_name)
+    if nfcore_pipeline_name == 'nf-core/rnafusion':
+      work_dir, runner_file = \
+        prepare_nfcore_rnafusion_input(
+          runner_template_file=runner_template_file,
+          config_template_file=config_template_file,
+          project_name=project_name,
+          hpc_data_dir=hpc_data_dir,
+          dbconf_file=dbconf_file,
+          sample_metadata=sample_metadata,
+          analysis_metadata=analysis_metadata,
+          nfcore_pipeline_name=nfcore_pipeline_name)
+    if nfcore_pipeline_name == 'nf-core/rnavar':
+      work_dir, runner_file = \
+        prepare_nfcore_rnavar_input(
+          runner_template_file=runner_template_file,
+          config_template_file=config_template_file,
+          project_name=project_name,
+          hpc_data_dir=hpc_data_dir,
+          dbconf_file=dbconf_file,
+          sample_metadata=sample_metadata,
+          analysis_metadata=analysis_metadata,
+          nfcore_pipeline_name=nfcore_pipeline_name)
+    if nfcore_pipeline_name == 'nf-core/atacseq':
+      work_dir, runner_file = \
+        prepare_nfcore_atacseq_input(
+          runner_template_file=runner_template_file,
+          config_template_file=config_template_file,
+          project_name=project_name,
+          hpc_data_dir=hpc_data_dir,
+          dbconf_file=dbconf_file,
+          sample_metadata=sample_metadata,
+          analysis_metadata=analysis_metadata,
+          nfcore_pipeline_name=nfcore_pipeline_name)
+    if nfcore_pipeline_name == 'nf-core/chipseq':
+      work_dir, runner_file = \
+        prepare_nfcore_chipseq_input(
+          runner_template_file=runner_template_file,
+          config_template_file=config_template_file,
+          project_name=project_name,
+          hpc_data_dir=hpc_data_dir,
+          dbconf_file=dbconf_file,
+          sample_metadata=sample_metadata,
+          analysis_metadata=analysis_metadata,
+          nfcore_pipeline_name=nfcore_pipeline_name)
+    if nfcore_pipeline_name == 'nf-core/cutandrun':
+      work_dir, runner_file = \
+        prepare_nfcore_cutandrun_input(
+          runner_template_file=runner_template_file,
+          config_template_file=config_template_file,
+          project_name=project_name,
+          hpc_data_dir=hpc_data_dir,
+          dbconf_file=dbconf_file,
+          sample_metadata=sample_metadata,
+          analysis_metadata=analysis_metadata,
+          nfcore_pipeline_name=nfcore_pipeline_name)
+    if nfcore_pipeline_name == 'nf-core/bactmap':
+      work_dir, runner_file = \
+        prepare_nfcore_bactmap_input(
+          runner_template_file=runner_template_file,
+          config_template_file=config_template_file,
+          project_name=project_name,
+          hpc_data_dir=hpc_data_dir,
+          dbconf_file=dbconf_file,
+          sample_metadata=sample_metadata,
+          analysis_metadata=analysis_metadata,
+          nfcore_pipeline_name=nfcore_pipeline_name)
+    if work_dir is None or \
+       runner_file is None:
+      raise TypeError(
+        f"Failed to get work-dir or runner-file for {nfcore_pipeline_name}")
+    return work_dir, runner_file
+  except Exception as e:
+    raise ValueError(
+      f"Error in NFCore pipeline input generation, error: {e}")
+
 
 def parse_sample_metadata_and_fetch_fastq(
       sample_metadata: dict,
@@ -1611,7 +1770,7 @@ def prepare_nfcore_cutandrun_input(
       dbconf_file: str,
       sample_metadata: dict,
       analysis_metadata: dict,
-      nfcore_pipeline_name: str = 'nf-core/atacseq',
+      nfcore_pipeline_name: str = 'nf-core/cutandrun',
       exclude_nf_param_list: list = [
         '-resume',
         '-c',
