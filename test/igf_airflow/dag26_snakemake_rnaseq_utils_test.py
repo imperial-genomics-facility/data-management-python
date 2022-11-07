@@ -24,7 +24,7 @@ from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.igfdb.analysisadaptor import AnalysisAdaptor
 from igf_data.utils.analysis_fastq_fetch_utils import get_fastq_and_run_for_samples
 from igf_airflow.utils.dag26_snakemake_rnaseq_utils import parse_design_and_build_inputs_for_snakemake_rnaseq
-from igf_airflow.utils.dag26_snakemake_rnaseq_utils import parse_analysus_design_and_get_metadata
+from igf_airflow.utils.dag26_snakemake_rnaseq_utils import parse_analysis_design_and_get_metadata
 from igf_airflow.utils.dag26_snakemake_rnaseq_utils import prepare_sample_and_units_tsv_for_snakemake_rnaseq
 from igf_airflow.utils.dag26_snakemake_rnaseq_utils import check_and_seed_analysis_pipeline
 from igf_airflow.utils.dag26_snakemake_rnaseq_utils import fetch_analysis_design
@@ -205,7 +205,7 @@ class TestDag26_snakemake_rnaseq_utilsA(unittest.TestCase):
 
   def test_parse_analysus_design_and_get_metadata(self):
     sample_metadata, analysis_metadata = \
-      parse_analysus_design_and_get_metadata(
+      parse_analysis_design_and_get_metadata(
         input_design_yaml=self.yaml_data)
     self.assertTrue('sampleA' in sample_metadata)
     self.assertTrue(isinstance(sample_metadata.get('sampleA'), dict))
@@ -214,7 +214,7 @@ class TestDag26_snakemake_rnaseq_utilsA(unittest.TestCase):
 
   def test_prepare_sample_and_units_tsv_for_snakemake_rnaseq(self):
     sample_metadata, analysis_metadata = \
-      parse_analysus_design_and_get_metadata(
+      parse_analysis_design_and_get_metadata(
         input_design_yaml=self.yaml_data)
     fastq_list = \
       get_fastq_and_run_for_samples(

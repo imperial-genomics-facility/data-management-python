@@ -233,7 +233,7 @@ def parse_design_and_build_inputs_for_snakemake_rnaseq(
     check_file_path(dbconfig_file)
     check_file_path(work_dir)
     sample_metadata, analysis_metadata = \
-      parse_analysus_design_and_get_metadata(
+      parse_analysis_design_and_get_metadata(
         input_design_yaml=input_design_yaml)
     if sample_metadata is None or \
        analysis_metadata is None:
@@ -304,7 +304,7 @@ def parse_design_and_build_inputs_for_snakemake_rnaseq(
       f"Failed to parse analysis design and generate snakemake input, error: {e}")
 
 
-def parse_analysus_design_and_get_metadata(
+def parse_analysis_design_and_get_metadata(
       input_design_yaml: str,
       sample_metadata_key: str = 'sample_metadata',
       analysis_metadata_key: str = 'analysis_metadata') \
@@ -566,9 +566,11 @@ def load_analysis_to_disk_func(**context):
       os.path.join(work_dir, reports_html)
     target_report_path = \
       os.path.join(result_dir, reports_html)
-    copy_local_file(
-      source_report_path,
-      target_report_path)
+    if os.path.exists(source_report_path) and \
+       not os.path.exists(target_report_path):
+      copy_local_file(
+        source_report_path,
+        target_report_path)
     ## load analysis
     date_tag = get_date_stamp_for_file_name()
     if collection_type is None:
