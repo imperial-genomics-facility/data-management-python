@@ -36,6 +36,7 @@ from igf_nextflow.nextflow_utils.nextflow_input_formatter import _make_nfcore_ch
 from igf_nextflow.nextflow_utils.nextflow_input_formatter import prepare_nfcore_chipseq_input
 from igf_nextflow.nextflow_utils.nextflow_input_formatter import _make_nfcore_cutandrun_input
 from igf_nextflow.nextflow_utils.nextflow_input_formatter import prepare_nfcore_cutandrun_input
+from igf_nextflow.nextflow_utils.nextflow_input_formatter import prepare_input_for_multiple_nfcore_pipeline
 
 class Prepare_nfcore_input_testA(unittest.TestCase):
   def setUp(self):
@@ -373,6 +374,56 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
     self.assertTrue(check_work_dir)
     self.assertTrue(check_output_dir)
     self.assertTrue(check_report)
+    work_dir, runner_file = \
+      prepare_input_for_multiple_nfcore_pipeline(
+        runner_template_file=self.runner_template_file,
+        config_template_file=self.config_template_file,
+        project_name='projectA',
+        hpc_data_dir=hpc_data_dir,
+        dbconf_file=self.dbconfig,
+        sample_metadata=sample_metadata,
+        analysis_metadata=analysis_metadata,
+        nfcore_pipeline_name='nf-core/smrnaseq')
+    self.assertTrue(os.path.exists(runner_file))
+    self.assertTrue(os.path.exists(work_dir))
+    check_config_file = False
+    config_file_path = \
+      f'-c {work_dir}/{os.path.basename(self.config_template_file)}'
+    check_input_file = False
+    input_file_path = \
+      f'--input {os.path.join(work_dir, "input.csv")}'
+    check_extra_params = False
+    extra_params = \
+      "--three_prime_adapter AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC"
+    check_work_dir = False
+    work_dir_path = \
+      f"-work-dir {work_dir}"
+    check_output_dir = False
+    output_dir = \
+      f"--outdir {os.path.join(work_dir, 'results')}"
+    check_report = False
+    report_path = \
+      f"-with-report {os.path.join(work_dir, 'results', 'report.html')}"
+    with open(runner_file, 'r') as fp:
+      for f in fp:
+        if config_file_path in f.strip():
+          check_config_file = True
+        if input_file_path in f.strip():
+          check_input_file = True
+        if extra_params in f.strip():
+          check_extra_params = True
+        if work_dir_path in f.strip():
+          check_work_dir = True
+        if output_dir in f.strip():
+          check_output_dir = True
+        if report_path in f.strip():
+          check_report = True
+    self.assertTrue(check_input_file)
+    self.assertTrue(check_config_file)
+    self.assertTrue(check_extra_params)
+    self.assertTrue(check_work_dir)
+    self.assertTrue(check_output_dir)
+    self.assertTrue(check_report)
 
 
 
@@ -455,6 +506,56 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
         dbconf_file=self.dbconfig,
         sample_metadata=sample_metadata,
         analysis_metadata=analysis_metadata)
+    self.assertTrue(os.path.exists(runner_file))
+    self.assertTrue(os.path.exists(work_dir))
+    check_config_file = False
+    config_file_path = \
+      f'-c {work_dir}/{os.path.basename(self.config_template_file)}'
+    check_input_file = False
+    input_file_path = \
+      f'--input {os.path.join(work_dir, "input.csv")}'
+    check_extra_params = False
+    extra_params = \
+      "--aligner star_rsem"
+    check_work_dir = False
+    work_dir_path = \
+      f"-work-dir {work_dir}"
+    check_output_dir = False
+    output_dir = \
+      f"--outdir {os.path.join(work_dir, 'results')}"
+    check_report = False
+    report_path = \
+      f"-with-report {os.path.join(work_dir, 'results', 'report.html')}"
+    with open(runner_file, 'r') as fp:
+      for f in fp:
+        if config_file_path in f.strip():
+          check_config_file = True
+        if input_file_path in f.strip():
+          check_input_file = True
+        if extra_params in f.strip():
+          check_extra_params = True
+        if work_dir_path in f.strip():
+          check_work_dir = True
+        if output_dir in f.strip():
+          check_output_dir = True
+        if report_path in f.strip():
+          check_report = True
+    self.assertTrue(check_input_file)
+    self.assertTrue(check_config_file)
+    self.assertTrue(check_extra_params)
+    self.assertTrue(check_work_dir)
+    self.assertTrue(check_output_dir)
+    self.assertTrue(check_report)
+    work_dir, runner_file = \
+      prepare_input_for_multiple_nfcore_pipeline(
+        runner_template_file=self.runner_template_file,
+        config_template_file=self.config_template_file,
+        project_name='projectA',
+        hpc_data_dir=hpc_data_dir,
+        dbconf_file=self.dbconfig,
+        sample_metadata=sample_metadata,
+        analysis_metadata=analysis_metadata,
+        nfcore_pipeline_name='nf-core/rnaseq')
     self.assertTrue(os.path.exists(runner_file))
     self.assertTrue(os.path.exists(work_dir))
     check_config_file = False
@@ -590,6 +691,50 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
     self.assertTrue(check_work_dir)
     self.assertTrue(check_output_dir)
     self.assertTrue(check_report)
+    work_dir, runner_file = \
+      prepare_input_for_multiple_nfcore_pipeline(
+        runner_template_file=self.runner_template_file,
+        config_template_file=self.config_template_file,
+        project_name='projectA',
+        hpc_data_dir=hpc_data_dir,
+        dbconf_file=self.dbconfig,
+        sample_metadata=sample_metadata,
+        analysis_metadata=analysis_metadata,
+        nfcore_pipeline_name='nf-core/methylseq')
+    self.assertTrue(os.path.exists(runner_file))
+    self.assertTrue(os.path.exists(work_dir))
+    check_config_file = False
+    config_file_path = \
+      f'-c {work_dir}/{os.path.basename(self.config_template_file)}'
+    check_extra_params = False
+    extra_params = \
+      "--aligner bismark"
+    check_work_dir = False
+    work_dir_path = \
+      f"-work-dir {work_dir}"
+    check_output_dir = False
+    output_dir = \
+      f"--outdir {os.path.join(work_dir, 'results')}"
+    check_report = False
+    report_path = \
+      f"-with-report {os.path.join(work_dir, 'results', 'report.html')}"
+    with open(runner_file, 'r') as fp:
+      for f in fp:
+        if config_file_path in f.strip():
+          check_config_file = True
+        if extra_params in f.strip():
+          check_extra_params = True
+        if work_dir_path in f.strip():
+          check_work_dir = True
+        if output_dir in f.strip():
+          check_output_dir = True
+        if report_path in f.strip():
+          check_report = True
+    self.assertTrue(check_config_file)
+    self.assertTrue(check_extra_params)
+    self.assertTrue(check_work_dir)
+    self.assertTrue(check_output_dir)
+    self.assertTrue(check_report)
 
   def test_make_nfcore_sarek_input(self):
     sample_metadata = {
@@ -676,6 +821,56 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
         dbconf_file=self.dbconfig,
         sample_metadata=sample_metadata,
         analysis_metadata=analysis_metadata)
+    self.assertTrue(os.path.exists(runner_file))
+    self.assertTrue(os.path.exists(work_dir))
+    check_config_file = False
+    config_file_path = \
+      f'-c {work_dir}/{os.path.basename(self.config_template_file)}'
+    check_input_file = False
+    input_file_path = \
+      f'--input {os.path.join(work_dir, "input.csv")}'
+    check_extra_params = False
+    extra_params = \
+      "--step mapping"
+    check_work_dir = False
+    work_dir_path = \
+      f"-work-dir {work_dir}"
+    check_output_dir = False
+    output_dir = \
+      f"--outdir {os.path.join(work_dir, 'results')}"
+    check_report = False
+    report_path = \
+      f"-with-report {os.path.join(work_dir, 'results', 'report.html')}"
+    with open(runner_file, 'r') as fp:
+      for f in fp:
+        if config_file_path in f.strip():
+          check_config_file = True
+        if input_file_path in f.strip():
+          check_input_file = True
+        if extra_params in f.strip():
+          check_extra_params = True
+        if work_dir_path in f.strip():
+          check_work_dir = True
+        if output_dir in f.strip():
+          check_output_dir = True
+        if report_path in f.strip():
+          check_report = True
+    self.assertTrue(check_input_file)
+    self.assertTrue(check_config_file)
+    self.assertTrue(check_extra_params)
+    self.assertTrue(check_work_dir)
+    self.assertTrue(check_output_dir)
+    self.assertTrue(check_report)
+    work_dir, runner_file = \
+      prepare_input_for_multiple_nfcore_pipeline(
+        runner_template_file=self.runner_template_file,
+        config_template_file=self.config_template_file,
+        project_name='projectA',
+        hpc_data_dir=hpc_data_dir,
+        dbconf_file=self.dbconfig,
+        sample_metadata=sample_metadata,
+        analysis_metadata=analysis_metadata,
+        nfcore_pipeline_name='nf-core/sarek')
     self.assertTrue(os.path.exists(runner_file))
     self.assertTrue(os.path.exists(work_dir))
     check_config_file = False
@@ -837,6 +1032,62 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
     self.assertTrue(check_work_dir)
     self.assertTrue(check_output_dir)
     self.assertTrue(check_report)
+    work_dir, runner_file = \
+      prepare_input_for_multiple_nfcore_pipeline(
+        runner_template_file=self.runner_template_file,
+        config_template_file=self.config_template_file,
+        project_name='projectA',
+        hpc_data_dir=hpc_data_dir,
+        dbconf_file=self.dbconfig,
+        sample_metadata=sample_metadata,
+        analysis_metadata=analysis_metadata,
+        nfcore_pipeline_name='nf-core/ampliseq')
+    self.assertTrue(os.path.exists(runner_file))
+    self.assertTrue(os.path.exists(work_dir))
+    check_config_file = False
+    config_file_path = \
+      f'-c {work_dir}/{os.path.basename(self.config_template_file)}'
+    check_input_file = False
+    input_file_path = \
+      f'--input {os.path.join(work_dir, "input.csv")}'
+    check_metadata_file = False
+    metadata_file_path = \
+      f'--metadata {os.path.join(work_dir, "metadata.csv")}'
+    check_extra_params = False
+    extra_params = \
+      "--FW_primer GTGYCAGCMGCCGCGGTAA"
+    check_work_dir = False
+    work_dir_path = \
+      f"-work-dir {work_dir}"
+    check_output_dir = False
+    output_dir = \
+      f"--outdir {os.path.join(work_dir, 'results')}"
+    check_report = False
+    report_path = \
+      f"-with-report {os.path.join(work_dir, 'results', 'report.html')}"
+    with open(runner_file, 'r') as fp:
+      for f in fp:
+        if config_file_path in f.strip():
+          check_config_file = True
+        if input_file_path in f.strip():
+          check_input_file = True
+        if metadata_file_path in f.strip():
+          check_metadata_file = True
+        if extra_params in f.strip():
+          check_extra_params = True
+        if work_dir_path in f.strip():
+          check_work_dir = True
+        if output_dir in f.strip():
+          check_output_dir = True
+        if report_path in f.strip():
+          check_report = True
+    self.assertTrue(check_input_file)
+    self.assertTrue(check_config_file)
+    self.assertTrue(check_extra_params)
+    self.assertTrue(check_metadata_file)
+    self.assertTrue(check_work_dir)
+    self.assertTrue(check_output_dir)
+    self.assertTrue(check_report)
 
 
   def test_make_nfcore_atacseq_input(self):
@@ -904,6 +1155,56 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
         dbconf_file=self.dbconfig,
         sample_metadata=sample_metadata,
         analysis_metadata=analysis_metadata)
+    self.assertTrue(os.path.exists(runner_file))
+    self.assertTrue(os.path.exists(work_dir))
+    check_config_file = False
+    config_file_path = \
+      f'-c {work_dir}/{os.path.basename(self.config_template_file)}'
+    check_input_file = False
+    input_file_path = \
+      f'--input {os.path.join(work_dir, "input.csv")}'
+    check_extra_params = False
+    extra_params = \
+      "--genome GRCh38"
+    check_work_dir = False
+    work_dir_path = \
+      f"-work-dir {work_dir}"
+    check_output_dir = False
+    output_dir = \
+      f"--outdir {os.path.join(work_dir, 'results')}"
+    check_report = False
+    report_path = \
+      f"-with-report {os.path.join(work_dir, 'results', 'report.html')}"
+    with open(runner_file, 'r') as fp:
+      for f in fp:
+        if config_file_path in f.strip():
+          check_config_file = True
+        if input_file_path in f.strip():
+          check_input_file = True
+        if extra_params in f.strip():
+          check_extra_params = True
+        if work_dir_path in f.strip():
+          check_work_dir = True
+        if output_dir in f.strip():
+          check_output_dir = True
+        if report_path in f.strip():
+          check_report = True
+    self.assertTrue(check_input_file)
+    self.assertTrue(check_config_file)
+    self.assertTrue(check_extra_params)
+    self.assertTrue(check_work_dir)
+    self.assertTrue(check_output_dir)
+    self.assertTrue(check_report)
+    work_dir, runner_file = \
+      prepare_input_for_multiple_nfcore_pipeline(
+        runner_template_file=self.runner_template_file,
+        config_template_file=self.config_template_file,
+        project_name='projectA',
+        hpc_data_dir=hpc_data_dir,
+        dbconf_file=self.dbconfig,
+        sample_metadata=sample_metadata,
+        analysis_metadata=analysis_metadata,
+        nfcore_pipeline_name='nf-core/atacseq')
     self.assertTrue(os.path.exists(runner_file))
     self.assertTrue(os.path.exists(work_dir))
     check_config_file = False
@@ -1052,6 +1353,56 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
     self.assertTrue(check_work_dir)
     self.assertTrue(check_output_dir)
     self.assertTrue(check_report)
+    work_dir, runner_file = \
+      prepare_input_for_multiple_nfcore_pipeline(
+        runner_template_file=self.runner_template_file,
+        config_template_file=self.config_template_file,
+        project_name='projectA',
+        hpc_data_dir=hpc_data_dir,
+        dbconf_file=self.dbconfig,
+        sample_metadata=sample_metadata,
+        analysis_metadata=analysis_metadata,
+        nfcore_pipeline_name='nf-core/chipseq')
+    self.assertTrue(os.path.exists(runner_file))
+    self.assertTrue(os.path.exists(work_dir))
+    check_config_file = False
+    config_file_path = \
+      f'-c {work_dir}/{os.path.basename(self.config_template_file)}'
+    check_input_file = False
+    input_file_path = \
+      f'--input {os.path.join(work_dir, "input.csv")}'
+    check_extra_params = False
+    extra_params = \
+      "--genome GRCh38"
+    check_work_dir = False
+    work_dir_path = \
+      f"-work-dir {work_dir}"
+    check_output_dir = False
+    output_dir = \
+      f"--outdir {os.path.join(work_dir, 'results')}"
+    check_report = False
+    report_path = \
+      f"-with-report {os.path.join(work_dir, 'results', 'report.html')}"
+    with open(runner_file, 'r') as fp:
+      for f in fp:
+        if config_file_path in f.strip():
+          check_config_file = True
+        if input_file_path in f.strip():
+          check_input_file = True
+        if extra_params in f.strip():
+          check_extra_params = True
+        if work_dir_path in f.strip():
+          check_work_dir = True
+        if output_dir in f.strip():
+          check_output_dir = True
+        if report_path in f.strip():
+          check_report = True
+    self.assertTrue(check_input_file)
+    self.assertTrue(check_config_file)
+    self.assertTrue(check_extra_params)
+    self.assertTrue(check_work_dir)
+    self.assertTrue(check_output_dir)
+    self.assertTrue(check_report)
 
 
   def test_make_nfcore_cutandrun_input(self):
@@ -1125,6 +1476,56 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
         dbconf_file=self.dbconfig,
         sample_metadata=sample_metadata,
         analysis_metadata=analysis_metadata)
+    self.assertTrue(os.path.exists(runner_file))
+    self.assertTrue(os.path.exists(work_dir))
+    check_config_file = False
+    config_file_path = \
+      f'-c {work_dir}/{os.path.basename(self.config_template_file)}'
+    check_input_file = False
+    input_file_path = \
+      f'--input {os.path.join(work_dir, "input.csv")}'
+    check_extra_params = False
+    extra_params = \
+      "--genome GRCh38"
+    check_work_dir = False
+    work_dir_path = \
+      f"-work-dir {work_dir}"
+    check_output_dir = False
+    output_dir = \
+      f"--outdir {os.path.join(work_dir, 'results')}"
+    check_report = False
+    report_path = \
+      f"-with-report {os.path.join(work_dir, 'results', 'report.html')}"
+    with open(runner_file, 'r') as fp:
+      for f in fp:
+        if config_file_path in f.strip():
+          check_config_file = True
+        if input_file_path in f.strip():
+          check_input_file = True
+        if extra_params in f.strip():
+          check_extra_params = True
+        if work_dir_path in f.strip():
+          check_work_dir = True
+        if output_dir in f.strip():
+          check_output_dir = True
+        if report_path in f.strip():
+          check_report = True
+    self.assertTrue(check_input_file)
+    self.assertTrue(check_config_file)
+    self.assertTrue(check_extra_params)
+    self.assertTrue(check_work_dir)
+    self.assertTrue(check_output_dir)
+    self.assertTrue(check_report)
+    work_dir, runner_file = \
+      prepare_input_for_multiple_nfcore_pipeline(
+        runner_template_file=self.runner_template_file,
+        config_template_file=self.config_template_file,
+        project_name='projectA',
+        hpc_data_dir=hpc_data_dir,
+        dbconf_file=self.dbconfig,
+        sample_metadata=sample_metadata,
+        analysis_metadata=analysis_metadata,
+        nfcore_pipeline_name='nf-core/cutandrun')
     self.assertTrue(os.path.exists(runner_file))
     self.assertTrue(os.path.exists(work_dir))
     check_config_file = False
