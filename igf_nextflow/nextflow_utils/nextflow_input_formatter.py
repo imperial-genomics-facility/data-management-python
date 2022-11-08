@@ -221,7 +221,8 @@ def format_nextflow_conf(
       autoescape_list=['xml',],
       data={
         "DIR_LIST": singularity_bind_dir_list,
-        "INPUT_PATHS": input_paths
+        "INPUT_PATHS": input_paths,
+        "WORKDIR": output_dir
       })
     return output_file
   except Exception as e:

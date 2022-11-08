@@ -106,8 +106,6 @@ def prepare_nfcore_pipeline_inputs(**context):
          analysis_metadata.get(key_name) is None:
         raise KeyError(
           f"Missing required analysis metadata key {key_name}")
-    work_dir = \
-      get_temp_dir(use_ephemeral_space=True)
     nfcore_pipeline_name = \
       analysis_metadata.get('nfcore_pipeline')
     try:

@@ -14,6 +14,8 @@
 ## IMPORT ENV
 source /project/tgu/resources/pipeline_resource/nextflow/env.sh
 
+cd {{ WORKDIR }}
+
 ## SET NXF_VER FOR PIPELINE RUN
 export NXF_VER={{ NEXTFLOW_VERSION }}
 
