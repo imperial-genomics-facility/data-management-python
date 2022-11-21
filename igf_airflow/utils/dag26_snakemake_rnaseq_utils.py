@@ -682,6 +682,19 @@ def load_analysis_and_build_collection(
     project_igf_id = \
       aa.fetch_project_igf_id_for_analysis_id(
         analysis_id=analysis_id)
+    analysis_name = None
+    analysis_entry = \
+      aa.fetch_analysis_records_analysis_id(
+        analysis_id=analysis_id,
+        output_mode='one_or_none')
+    if analysis_entry is None:
+      raise ValueError(
+        f"No entry found for analysis {analysis_id} in db")
+    analysis_name = \
+      analysis_entry.analysis_name
+    if analysis_name is None:
+      raise ValueError(
+        f"No analysis_name found for analysis {analysis_id} in db")
     aa.close_session()
     ## move analysis to hpc. This can take long time.
     target_dir_path = \
@@ -690,6 +703,7 @@ def load_analysis_and_build_collection(
         project_igf_id,
         analysis_dir_prefix,
         pipeline_name,
+        analysis_name,
         date_tag,
         os.path.basename(result_dir))
     if os.path.exists(target_dir_path):
@@ -799,6 +813,19 @@ def copy_analysis_to_globus_dir(
     project_igf_id = \
       aa.fetch_project_igf_id_for_analysis_id(
         analysis_id=analysis_id)
+    analysis_name = None
+    analysis_entry = \
+      aa.fetch_analysis_records_analysis_id(
+        analysis_id=analysis_id,
+        output_mode='one_or_none')
+    if analysis_entry is None:
+      raise ValueError(
+        f"No entry found for analysis {analysis_id} in db")
+    analysis_name = \
+      analysis_entry.analysis_name
+    if analysis_name is None:
+      raise ValueError(
+        f"No analysis_name found for analysis {analysis_id} in db")
     aa.close_session()
     ## get globus target path
     target_dir_path = \
@@ -807,6 +834,7 @@ def copy_analysis_to_globus_dir(
         project_igf_id,
         analysis_dir_prefix,
         pipeline_name,
+        analysis_name,
         date_tag,
         os.path.basename(analysis_dir))
     if os.path.exists(target_dir_path):

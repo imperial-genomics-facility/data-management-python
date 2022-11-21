@@ -470,7 +470,7 @@ class TestDag26_snakemake_rnaseq_utilsC(unittest.TestCase):
       AnalysisAdaptor(**{'session': base.session})
     analysis_data = [{
       'project_igf_id': 'projectA',
-      'analysis_name': 'analysis 1 (day=23)',
+      'analysis_name': 'analysis_1(day=23)',
       'analysis_type': 'pipeline_1',
       'analysis_description': '{"analysis_design":""}'}]
     aa.store_analysis_data(
@@ -556,6 +556,7 @@ class TestDag26_snakemake_rnaseq_utilsC(unittest.TestCase):
         'projectA',
         'analysis',
         'pipeline_1',
+        'analysis_1(day=23)',
         '2022_01_01',
         os.path.basename(target_dir_path) )
     )
