@@ -636,7 +636,7 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
       "NXF_VER": "x.y.z",
       "nextflow_params": [
         "-profile singularity",
-        "-r 2.0.0",
+        "-r 1.6.0",
         "--aligner bismark",
         "--genome GRCm38"]}
     hpc_data_dir = \
@@ -718,6 +718,9 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
     check_report = False
     report_path = \
       f"-with-report {os.path.join(work_dir, 'results', 'report.html')}"
+    check_input_file = False
+    input_file_path = \
+      f'--input {os.path.join(work_dir, "input.csv")}'
     with open(runner_file, 'r') as fp:
       for f in fp:
         if config_file_path in f.strip():
@@ -730,11 +733,42 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
           check_output_dir = True
         if report_path in f.strip():
           check_report = True
+        if input_file_path in f.strip():
+          check_input_file = True
     self.assertTrue(check_config_file)
     self.assertTrue(check_extra_params)
     self.assertTrue(check_work_dir)
     self.assertTrue(check_output_dir)
     self.assertTrue(check_report)
+    self.assertFalse(check_input_file)
+    analysis_metadata = { 
+      "NXF_VER": "x.y.z",
+      "nextflow_params": [
+        "-profile singularity",
+        "-r 2.0.0",
+        "--aligner bismark",
+        "--genome GRCm38"]}
+    work_dir, runner_file = \
+      prepare_nfcore_methylseq_input(
+        runner_template_file=self.runner_template_file,
+        config_template_file=self.config_template_file,
+        project_name='projectA',
+        hpc_data_dir=hpc_data_dir,
+        dbconf_file=self.dbconfig,
+        sample_metadata=sample_metadata,
+        analysis_metadata=analysis_metadata)
+    input_file_path = \
+      f'--input {os.path.join(work_dir, "input.csv")}'
+    with open(runner_file, 'r') as fp:
+      for f in fp:
+        if input_file_path in f.strip():
+          check_input_file = True
+    self.assertTrue(check_input_file)
+    df = pd.read_csv(os.path.join(work_dir, "input.csv"))
+    self.assertEqual(len(df.columns), 3)
+    self.assertTrue('sample' in df.columns)
+    self.assertTrue('fastq_1' in df.columns)
+    self.assertTrue('fastq_2' in df.columns)
 
   def test_make_nfcore_sarek_input(self):
     sample_metadata = {

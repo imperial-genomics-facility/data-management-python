@@ -671,74 +671,100 @@ def prepare_nfcore_methylseq_input(
                "--genome GRCm38"]}
   """
   try:
-    ## get fastq df
-    fastq_df = \
-      parse_sample_metadata_and_fetch_fastq(
-        sample_metadata=sample_metadata,
-        dbconf_file=dbconf_file)
-    ## get template and extend it and dump it as bash script
-    work_dir = \
-      get_temp_dir(use_ephemeral_space=True)                     ## get work dir
-    project_data_dir = \
-      os.path.join(
-        hpc_data_dir,
-        project_name)
-    check_file_path(project_data_dir)                            ## get and check project data dir on hpc
-    ## prepare input path list, e.g., ['sampleA', ['sampleA_R1.fastq.gz', 'sampleA_R2.fast.gz']]
-    input_paths = \
-      _make_nfcore_methylseq_input(
-        sample_metadata=sample_metadata,
-        fastq_df=fastq_df)
-    formatted_config_file = \
-      format_nextflow_conf(
-        config_template_file=config_template_file,
-        singularity_bind_dir_list=[project_data_dir, work_dir],
-        output_dir=work_dir,
-        input_paths=input_paths)                                     ## get formatted config file for NextFlow run
-    nextflow_version = \
-      analysis_metadata.get('NXF_VER')                           ## get nextflow version from analysis design and its required
-    if nextflow_version is None:
-      raise KeyError("NXF_VER is missing from NextFlow analysis design")
-    nextflow_params = \
-      analysis_metadata.get('nextflow_params')                   ## get nextflow_params list and its optional
-    nextflow_params_list = list()
+    ## get pipeline version
+    pipeline_version = None
+    nextflow_params = analysis_metadata.get('nextflow_params')
     if nextflow_params is not None and \
        isinstance(nextflow_params, list):
       for i in nextflow_params:
-        param_flag = i.split(' ')                                ## only check param flag if its separate by space from param value
-        if param_flag not in exclude_nf_param_list:
-          nextflow_params_list.\
-            append(i)
-    ## add required params
-    nextflow_params_list.\
-      append(f"--outdir {os.path.join(work_dir, 'results')}")
-    nextflow_params_list.\
-      append(f"-work-dir {work_dir}")
-    nextflow_params_list.\
-      append('-resume')
-    nextflow_params_list.\
-      append(f"-with-report {os.path.join(work_dir, 'results', 'report.html')}")
-    nextflow_params_list.\
-      append(f"-with-dag {os.path.join(work_dir, 'results', 'dag.html')}")
-    nextflow_params_list.\
-      append(f"-with-timeline {os.path.join(work_dir, 'results', 'timeline.html')}")
-    nextflow_params_list = \
-      " ".join(nextflow_params_list)
-    ## dump command file
-    runner_file = \
-      os.path.join(
-        work_dir,
-        os.path.basename(runner_template_file))
-    _create_output_from_jinja_template(
-      template_file=runner_template_file,
-      output_file=runner_file,
-      autoescape_list=['xml',],
-      data={
-        "NEXTFLOW_VERSION": nextflow_version,
-        "NFCORE_PIPELINE_NAME": nfcore_pipeline_name,
-        "NEXTFLOW_CONF": formatted_config_file,
-        "NEXTFLOW_PARAMS": nextflow_params_list
-      })
+        if '-r' in i:
+          pipeline_version = \
+              i.replace('-r', '').strip()
+    ## use rnaseq wrapper for >= 2.0.0
+    if pipeline_version is None or \
+       (pipeline_version is not None and \
+        isinstance(pipeline_version, str) and \
+        int(pipeline_version.split('.')[0]) >= 2):
+      work_dir, runner_file = \
+        prepare_nfcore_rnaseq_input(
+          runner_template_file=runner_template_file,
+          config_template_file=config_template_file,
+          project_name=project_name,
+          hpc_data_dir=hpc_data_dir,
+          dbconf_file=dbconf_file,
+          sample_metadata=sample_metadata,
+          analysis_metadata=analysis_metadata,
+          nfcore_pipeline_name=nfcore_pipeline_name,
+          exclude_nf_param_list=exclude_nf_param_list)
+    else:
+      ## get fastq df
+      fastq_df = \
+        parse_sample_metadata_and_fetch_fastq(
+          sample_metadata=sample_metadata,
+          dbconf_file=dbconf_file)
+      ## get template and extend it and dump it as bash script
+      work_dir = \
+        get_temp_dir(use_ephemeral_space=True)                     ## get work dir
+      project_data_dir = \
+        os.path.join(
+          hpc_data_dir,
+          project_name)
+      check_file_path(project_data_dir)                            ## get and check project data dir on hpc
+      ## prepare input path list, e.g., ['sampleA', ['sampleA_R1.fastq.gz', 'sampleA_R2.fast.gz']]
+      input_paths = \
+        _make_nfcore_methylseq_input(
+          sample_metadata=sample_metadata,
+          fastq_df=fastq_df)
+      formatted_config_file = \
+        format_nextflow_conf(
+          config_template_file=config_template_file,
+          singularity_bind_dir_list=[project_data_dir, work_dir],
+          output_dir=work_dir,
+          input_paths=input_paths)                                     ## get formatted config file for NextFlow run
+      nextflow_version = \
+        analysis_metadata.get('NXF_VER')                           ## get nextflow version from analysis design and its required
+      if nextflow_version is None:
+        raise KeyError("NXF_VER is missing from NextFlow analysis design")
+      nextflow_params = \
+        analysis_metadata.get('nextflow_params')                   ## get nextflow_params list and its optional
+      nextflow_params_list = list()
+      if nextflow_params is not None and \
+         isinstance(nextflow_params, list):
+        for i in nextflow_params:
+          param_flag = i.split(' ')                                ## only check param flag if its separate by space from param value
+          if param_flag not in exclude_nf_param_list:
+            nextflow_params_list.\
+              append(i)
+      ## add required params
+      nextflow_params_list.\
+        append(f"--outdir {os.path.join(work_dir, 'results')}")
+      nextflow_params_list.\
+        append(f"-work-dir {work_dir}")
+      nextflow_params_list.\
+        append('-resume')
+      nextflow_params_list.\
+        append(f"-with-report {os.path.join(work_dir, 'results', 'report.html')}")
+      nextflow_params_list.\
+        append(f"-with-dag {os.path.join(work_dir, 'results', 'dag.html')}")
+      nextflow_params_list.\
+        append(f"-with-timeline {os.path.join(work_dir, 'results', 'timeline.html')}")
+      nextflow_params_list = \
+        " ".join(nextflow_params_list)
+      ## dump command file
+      runner_file = \
+        os.path.join(
+          work_dir,
+          os.path.basename(runner_template_file))
+      _create_output_from_jinja_template(
+        template_file=runner_template_file,
+        output_file=runner_file,
+        autoescape_list=['xml',],
+        data={
+          "NEXTFLOW_VERSION": nextflow_version,
+          "NFCORE_PIPELINE_NAME": nfcore_pipeline_name,
+          "NEXTFLOW_CONF": formatted_config_file,
+          "NEXTFLOW_PARAMS": nextflow_params_list
+        })
     return work_dir, runner_file
   except Exception as e:
     raise ValueError(
