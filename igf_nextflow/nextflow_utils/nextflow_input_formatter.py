@@ -389,7 +389,8 @@ def prepare_nfcore_smrnaseq_input(
         "NEXTFLOW_VERSION": nextflow_version,
         "NFCORE_PIPELINE_NAME": nfcore_pipeline_name,
         "NEXTFLOW_CONF": formatted_config_file,
-        "NEXTFLOW_PARAMS": nextflow_params_list
+        "NEXTFLOW_PARAMS": nextflow_params_list,
+        "WORKDIR": work_dir
       })
     return work_dir, runner_file
   except Exception as e:
@@ -575,7 +576,8 @@ def prepare_nfcore_rnaseq_input(
         "NEXTFLOW_VERSION": nextflow_version,
         "NFCORE_PIPELINE_NAME": nfcore_pipeline_name,
         "NEXTFLOW_CONF": formatted_config_file,
-        "NEXTFLOW_PARAMS": nextflow_params_list
+        "NEXTFLOW_PARAMS": nextflow_params_list,
+        "WORKDIR": work_dir
       })
     return work_dir, runner_file
   except Exception as e:
@@ -763,7 +765,8 @@ def prepare_nfcore_methylseq_input(
           "NEXTFLOW_VERSION": nextflow_version,
           "NFCORE_PIPELINE_NAME": nfcore_pipeline_name,
           "NEXTFLOW_CONF": formatted_config_file,
-          "NEXTFLOW_PARAMS": nextflow_params_list
+          "NEXTFLOW_PARAMS": nextflow_params_list,
+          "WORKDIR": work_dir
         })
     return work_dir, runner_file
   except Exception as e:
@@ -999,7 +1002,8 @@ def prepare_nfcore_sarek_input(
         "NEXTFLOW_VERSION": nextflow_version,
         "NFCORE_PIPELINE_NAME": nfcore_pipeline_name,
         "NEXTFLOW_CONF": formatted_config_file,
-        "NEXTFLOW_PARAMS": nextflow_params_list
+        "NEXTFLOW_PARAMS": nextflow_params_list,
+        "WORKDIR": work_dir
       })
     return work_dir, runner_file
   except Exception as e:
@@ -1213,7 +1217,8 @@ def prepare_nfcore_ampliseq_input(
         "NEXTFLOW_VERSION": nextflow_version,
         "NFCORE_PIPELINE_NAME": nfcore_pipeline_name,
         "NEXTFLOW_CONF": formatted_config_file,
-        "NEXTFLOW_PARAMS": nextflow_params_list
+        "NEXTFLOW_PARAMS": nextflow_params_list,
+        "WORKDIR": work_dir
       })
     return work_dir, runner_file
   except Exception as e:
@@ -1518,7 +1523,8 @@ def prepare_nfcore_atacseq_input(
         "NEXTFLOW_VERSION": nextflow_version,
         "NFCORE_PIPELINE_NAME": nfcore_pipeline_name,
         "NEXTFLOW_CONF": formatted_config_file,
-        "NEXTFLOW_PARAMS": nextflow_params_list
+        "NEXTFLOW_PARAMS": nextflow_params_list,
+        "WORKDIR": work_dir
       })
     return work_dir, runner_file
   except Exception as e:
@@ -1709,7 +1715,8 @@ def prepare_nfcore_chipseq_input(
         "NEXTFLOW_VERSION": nextflow_version,
         "NFCORE_PIPELINE_NAME": nfcore_pipeline_name,
         "NEXTFLOW_CONF": formatted_config_file,
-        "NEXTFLOW_PARAMS": nextflow_params_list
+        "NEXTFLOW_PARAMS": nextflow_params_list,
+        "WORKDIR": work_dir
       })
     return work_dir, runner_file
   except Exception as e:
@@ -1901,7 +1908,8 @@ def prepare_nfcore_cutandrun_input(
         "NEXTFLOW_VERSION": nextflow_version,
         "NFCORE_PIPELINE_NAME": nfcore_pipeline_name,
         "NEXTFLOW_CONF": formatted_config_file,
-        "NEXTFLOW_PARAMS": nextflow_params_list
+        "NEXTFLOW_PARAMS": nextflow_params_list,
+        "WORKDIR": work_dir
       })
     return work_dir, runner_file
   except Exception as e:

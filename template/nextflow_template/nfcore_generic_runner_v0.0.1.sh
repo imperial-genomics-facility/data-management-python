@@ -9,7 +9,7 @@
 ##  * NEXTFLOW_CONF: Nextflow config file for the run
 ##  * NEXTFLOW_VERSION: Nextflow version for the tool
 ##  * NFCORE_PIPELINE_NAME: NF-Core pipeline name
-##
+##  * WORKDIR: Work dir path
 
 ## IMPORT ENV
 source /project/tgu/resources/pipeline_resource/nextflow/env.sh
