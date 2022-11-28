@@ -3321,6 +3321,12 @@ def copy_fastqs_for_sample_to_globus_dir(
       os.path.join(
         globus_dir_for_index_group,
         "md5_manifest.tsv")
+    records['file_path'] = \
+      records['file_path'].\
+        map(lambda x:
+          os.path.join(
+            os.path.basename(os.path.dirname(x)),
+            os.path.basename(x)))
     records[['md5', 'file_path']].\
       to_csv(
         target_md5_manifest_path,
