@@ -21,7 +21,7 @@ class ProcessSingleCellDualIndexSamplesheet:
   :param workflow_group: A dictionary containing the I5 index tag for different platforms, default
       (('HISEQ4000', 'index2_workflow_b(i5)'),
       ('NEXTSEQ', 'index2_workflow_b(i5)'),
-      ('NOVASEQ6000', 'index2_workflow_a(i5)'),
+      ('NOVASEQ6000', 'index2_workflow_b(i5)'),
       ('NEXTSEQ2000', 'index2_workflow_a(i5)'),
       ('MISEQ', 'index2_workflow_a(i5)'))
   '''
@@ -39,7 +39,7 @@ class ProcessSingleCellDualIndexSamplesheet:
         workflow_group: Any = \
           (('HISEQ4000', 'index2_workflow_b(i5)'),
            ('NEXTSEQ', 'index2_workflow_b(i5)'),
-           ('NOVASEQ6000', 'index2_workflow_a(i5)'),
+           ('NOVASEQ6000', 'index2_workflow_b(i5)'),
            ('NEXTSEQ2000', 'index2_workflow_a(i5)'),
            ('MISEQ', 'index2_workflow_a(i5)'))) -> None:
     self.samplesheet_file = samplesheet_file
