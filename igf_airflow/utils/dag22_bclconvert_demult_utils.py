@@ -5326,7 +5326,9 @@ def _get_formatted_samplesheets(
       samplesheet_output_dir: str,
       singlecell_barcode_json: str,
       singlecell_dual_barcode_json: str,
-      tenx_sc_tag: str='10X',
+      tenx_sc_tag: str = '10X',
+      platform: str = 'MISEQ',
+      index2_rule: str = 'NOCHANGE',
       override_cycles: str = '') \
         -> list:
   try:
@@ -5344,8 +5346,8 @@ def _get_formatted_samplesheets(
       ProcessSingleCellDualIndexSamplesheet(
         samplesheet_file=samplesheet_file,
         singlecell_dual_index_barcode_json=singlecell_dual_barcode_json,
-        platform='MISEQ',
-        index2_rule='NOCHANGE')
+        platform=platform,
+        index2_rule=index2_rule)
     temp_sc_dual_conv_samplesheet_file = \
       os.path.join(temp_dir, 'sc_dual_index_samplesheet.csv')
     sc_dual_process.\

@@ -205,13 +205,20 @@ def format_samplesheet_func(**context):
       samplesheet_info.get(override_cycles_key)
     if override_cycles is None:
       override_cycles = ''
-    # get runinfor path
+    # get runinfo path
     run_info_xml = \
       os.path.join(
         HPC_SEQRUN_BASE_PATH,
         seqrun_id,
         run_info_filname)
     check_file_path(run_info_xml)
+    # get platform name
+    platform_name, flowcell_id  = \
+      get_platform_name_and_flowcell_id_for_seqrun(
+        seqrun_igf_id=seqrun_id,
+        db_config_file=DATABASE_CONFIG_FILE)
+    if platform_name != 'NOVASEQ6000':              # hack for Novaseq 10x dual index
+      platform_name = 'MISEQ'
     # get formatte samplesheets for pipeline
     formatted_samplesheet_dir = \
       get_temp_dir(use_ephemeral_space=True)
@@ -223,7 +230,8 @@ def format_samplesheet_func(**context):
         singlecell_barcode_json=SINGLECELL_BARCODE_JSON,
         singlecell_dual_barcode_json=SINGLECELL_DUAL_BARCODE_JSON,
         tenx_sc_tag=tenx_sc_tag,
-        override_cycles=override_cycles)
+        override_cycles=override_cycles,
+        platform=platform_name)
     sample_groups = \
       _get_sample_group_info_for_formatted_samplesheets(
         samplesheets=samplesheets)
