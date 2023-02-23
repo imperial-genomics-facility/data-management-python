@@ -27,7 +27,8 @@ def prepare_input_for_multiple_nfcore_pipeline(
         'nf-core/atacseq',
         'nf-core/chipseq',
         'nf-core/cutandrun',
-        'nf-core/bactmap'
+        'nf-core/bactmap',
+        'nf-core/hic'
       ]) -> \
         Tuple[str, str]:
   try:
@@ -149,6 +150,17 @@ def prepare_input_for_multiple_nfcore_pipeline(
     if nfcore_pipeline_name == 'nf-core/bactmap':
       work_dir, runner_file = \
         prepare_nfcore_bactmap_input(
+          runner_template_file=runner_template_file,
+          config_template_file=config_template_file,
+          project_name=project_name,
+          hpc_data_dir=hpc_data_dir,
+          dbconf_file=dbconf_file,
+          sample_metadata=sample_metadata,
+          analysis_metadata=analysis_metadata,
+          nfcore_pipeline_name=nfcore_pipeline_name)
+    if nfcore_pipeline_name == 'nf-core/hic':
+      work_dir, runner_file = \
+        prepare_nfcore_hic_input(
           runner_template_file=runner_template_file,
           config_template_file=config_template_file,
           project_name=project_name,
@@ -1225,6 +1237,60 @@ def prepare_nfcore_ampliseq_input(
     raise ValueError(
       f"Failed to create input for NFCore smrnaseq pipeline, error: {e}")
 
+def prepare_nfcore_hic_input(
+      runner_template_file: str,
+      config_template_file: str,
+      project_name: str,
+      hpc_data_dir: str,
+      dbconf_file: str,
+      sample_metadata: dict,
+      analysis_metadata: dict,
+      nfcore_pipeline_name: str = 'nf-core/hic',
+      exclude_nf_param_list: list = [
+        '-resume',
+        '-c',
+        '-config',
+        '--input',
+        '--outdir',
+        '-with-report',
+        '-with-timeline',
+        '-with-dag',
+        '-with-tower',
+        '-w',
+        '-work-dir',
+        '-with-notification']) \
+        -> Tuple[str, str]:
+  """
+  :param runner_template_file
+  :param config_template_file
+  :param sample_metadata
+             {sample1: "",
+             sample2: ""}
+  :param analysis_metadata
+            {NXF_VER: x.y.z,
+             nextflow_base_params:
+              ["-profile singularity",
+               "-r 2.0.0",
+               "--genome GRCh38",
+               "--genomes_base path"]
+  """
+  try:
+    work_dir, runner_file = \
+      prepare_nfcore_rnaseq_input(
+      runner_template_file=runner_template_file,
+      config_template_file=config_template_file,
+      project_name=project_name,
+      hpc_data_dir=hpc_data_dir,
+      dbconf_file=dbconf_file,
+      sample_metadata=sample_metadata,
+      analysis_metadata=analysis_metadata,
+      nfcore_pipeline_name=nfcore_pipeline_name,
+      exclude_nf_param_list=exclude_nf_param_list)
+    return work_dir, runner_file
+  except Exception as e:
+    raise ValueError(
+      f"Failed to create input for NFCore HiC pipeline, error: {e}")
+
 
 def prepare_nfcore_rnafusion_input(
       runner_template_file: str,
@@ -1280,7 +1346,7 @@ def prepare_nfcore_rnafusion_input(
     return work_dir, runner_file
   except Exception as e:
     raise ValueError(
-      f"Failed to create input for NFCore smrnaseq pipeline, error: {e}")
+      f"Failed to create input for NFCore rnafusion pipeline, error: {e}")
 
 
 def prepare_nfcore_rnavar_input(
