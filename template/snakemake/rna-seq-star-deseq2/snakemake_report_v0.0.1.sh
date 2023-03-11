@@ -24,7 +24,7 @@ cd {{ SNAKEMAKE_WORK_DIR }}
 snakemake \
   --configfile {{ CONFIG_YAML_PATH }} \
   --snakefile $SNAKEFILE \
-  --report report.html
+  --report results/report.html
 
 
 
