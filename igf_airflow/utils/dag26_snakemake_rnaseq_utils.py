@@ -485,7 +485,8 @@ def prepare_snakemake_inputs_func(**context):
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=f"project_igf_id: {project_igf_id}, snakemake_workdir_key: {snakemake_workdir_key}",
+      project_id=project_igf_id,
+      comment=f"Finished pipeline run, temp snakemake work dir: {snakemake_workdir_key}",
       reaction='pass')
   except Exception as e:
     log.error(e)
@@ -604,13 +605,19 @@ def load_analysis_to_disk_func(**context):
     ti.xcom_push(
       key=analysis_collection_dir_key,
       value=target_dir_path)
+    ## get project name
+    project_igf_id = \
+      get_project_igf_id_for_analysis(
+        analysis_id=analysis_id,
+        dbconfig_file=DATABASE_CONFIG_FILE)
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
+      project_id=project_igf_id,
       comment=f"Analysis finished. Output path: {target_dir_path}",
-      reaction='success')
+      reaction='pass')
     ti.xcom_push(
       key=date_tag_key,
       value=date_tag)
