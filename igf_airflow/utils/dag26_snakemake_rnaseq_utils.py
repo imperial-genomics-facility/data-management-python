@@ -480,6 +480,13 @@ def prepare_snakemake_inputs_func(**context):
     ti.xcom_push(
       key=snakemake_workdir_key,
       value=work_dir)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=f"project_igf_id: {project_igf_id}, snakemake_workdir_key: {snakemake_workdir_key}",
+      reaction='pass')
   except Exception as e:
     log.error(e)
     send_log_to_channels(

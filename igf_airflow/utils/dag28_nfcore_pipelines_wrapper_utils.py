@@ -126,6 +126,13 @@ def prepare_nfcore_pipeline_inputs(**context):
       ti.xcom_push(
         key=nextflow_workdir_key,
         value=work_dir)
+      send_log_to_channels(
+        slack_conf=SLACK_CONF,
+        ms_teams_conf=MS_TEAMS_CONF,
+        task_id=context['task'].task_id,
+        dag_id=context['task'].dag_id,
+        comment=f"project_igf_id: {project_igf_id}, nextflow_workdir: {work_dir}",
+        reaction='pass')
       return [next_task,]
     except:
       return [last_task,]
