@@ -229,7 +229,7 @@ class ProjectAdaptor(BaseAdaptor):
               "Failed to check project records, error: {0}".format(e))
 
 
-  def fetch_project_records_igf_id(self, project_igf_id, target_column_name='project_igf_id'):
+  def fetch_project_records_igf_id(self, project_igf_id, target_column_name='project_igf_id', output_mode='one'):
     '''
     A method for fetching data for Project table
 
@@ -246,7 +246,7 @@ class ProjectAdaptor(BaseAdaptor):
           table=Project,
           column_name=column,
           column_id=project_igf_id,
-          output_mode='one')
+          output_mode=output_mode)
       return project
     except Exception as e:
       raise ValueError(
