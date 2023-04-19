@@ -102,7 +102,7 @@ class PipelineAdaptor(BaseAdaptor):
 
   def fetch_pipeline_seed(
         self,pipeline_id,seed_id,seed_table,
-        target_column_name=('pipeline_id', 'seed_id','seed_table')):
+        target_column_name=('pipeline_id', 'seed_id','seed_table'), output_mode='one'):
     '''
     A method for fetching unique pipeline seed using pipeline_id, seed_id and seed_table
 
@@ -118,19 +118,29 @@ class PipelineAdaptor(BaseAdaptor):
           list(target_column_name)
       column_list = [
         column
-          for column in Collection.__table__.columns \
+          for column in Pipeline_seed.__table__.columns \
             if column.key in target_column_name]
       column_data = \
         dict(zip(column_list,[pipeline_id, seed_id, seed_table]))
+      # pipe_seed = \
+      #   self.fetch_records_by_multiple_column(
+      #     table=Pipeline_seed,
+      #     column_data=column_data,
+      #     output_mode=output_mode)
+      query = \
+        self.session.\
+          query(Pipeline_seed).\
+          filter(Pipeline_seed.seed_id==seed_id).\
+          filter(Pipeline_seed.pipeline_id==pipeline_id).\
+          filter(Pipeline_seed.seed_table==seed_table)
       pipe_seed = \
-        self.fetch_records_by_multiple_column(
-          table=Pipeline_seed,
-          column_data=column_data,
-          output_mode='one')
+        self.fetch_records(
+          query=query,
+          output_mode=output_mode)
       return pipe_seed
     except Exception as e:
       raise ValueError(
-              'Failed to fetch pipeline seeds, error: {0}'.format(e))
+        f'Failed to fetch pipeline seeds, error: {e}')
 
 
   def __map_seed_data_to_foreign_table(self,data):
