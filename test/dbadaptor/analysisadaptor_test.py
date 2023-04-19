@@ -79,5 +79,38 @@ class Analysisadaptor_test1(unittest.TestCase):
     self.assertEqual(analysis_records.analysis_name,'analysis_1')
     self.assertEqual(analysis_records.analysis_type,'type_1')
 
+  def test_check_analysis_record_by_analysis_name_and_project_id(self):
+    project_data = [{'project_igf_id':'IGFP0001_test_22-8-2017_rna'}]
+    pa = ProjectAdaptor(**{'session_class':self.base.get_session_class()})
+    pa.start_session()
+    pa.store_project_and_attribute_data(data=project_data)
+    pa.close_session()
+    analysis_data = [{
+      'project_igf_id':'IGFP0001_test_22-8-2017_rna',
+      'analysis_name':'analysis_1',
+      'analysis_type':'type_1',
+      'analysis_description':'[{"sample_igf_id":"IGFS001"}]'}]
+    aa = \
+      AnalysisAdaptor(**{'session_class':self.base.get_session_class()})
+    aa.start_session()
+    aa.store_analysis_data(data=analysis_data)
+    aa.close_session()
+    base = self.base
+    base.start_session()
+    aa = \
+      AnalysisAdaptor(**{'session': base.session})
+    test1 = \
+      aa.check_analysis_record_by_analysis_name_and_project_id(
+        analysis_name='analysis_1',
+        project_id=1,
+        output_mode='one_or_none')
+    self.assertIsNotNone(test1)
+    test2 = \
+      aa.check_analysis_record_by_analysis_name_and_project_id(
+        analysis_name='analysis_2',
+        project_id=1,
+        output_mode='one_or_none')
+    self.assertIsNone(test2)
+
 if __name__ == '__main__':
   unittest.main()
