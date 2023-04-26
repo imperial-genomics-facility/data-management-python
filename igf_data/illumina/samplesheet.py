@@ -528,6 +528,7 @@ class SampleSheet:
       self, bases_mask, min_trimmed_length=8, mask_short_read=8, trim_umi=0):
     try:
       bclconv_settings = {
+        'BarcodeMismatchesIndex1': 1,
         'CreateFastqForIndexReads': 1,
         'MinimumTrimmedReadLength': min_trimmed_length,
         'FastqCompressionFormat': 'gzip',
