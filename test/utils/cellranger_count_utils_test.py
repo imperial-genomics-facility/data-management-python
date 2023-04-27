@@ -35,28 +35,23 @@ class Cellranger_count_utils_testA(unittest.TestCase):
     os.makedirs(os.path.join(output_path, 'vdj'))
     os.makedirs(os.path.join(output_path, 'vdj_b'))
     os.makedirs(os.path.join(output_path, 'vdj_t'))
-    with open(os.path.join(output_path, 'web_summary.html'),'w') as fp:
-      fp.write('a')
-    with open(os.path.join(output_path, 'metrics_summary.csv'),'w') as fp:
-      fp.write('a')
-    with open(os.path.join(output_path, 'count/sample_filtered_feature_bc_matrix.h5'), 'w') as fp:
-      fp.write('a')
-    with open(os.path.join(output_path, 'count/sample_alignments.bam'), 'w') as fp:
-      fp.write('a')
-    with open(os.path.join(output_path, 'count/sample_cloupe.cloupe'), 'w') as fp:
-      fp.write('a')
-    with open(os.path.join(output_path, 'vdj/filtered_contig_annotations.csv'), 'w') as fp:
-      fp.write('a')
-    with open(os.path.join(output_path, 'vdj/vloupe.vloupe'), 'w') as fp:
-      fp.write('a')
-    with open(os.path.join(output_path, 'vdj_t/filtered_contig_annotations.csv'), 'w') as fp:
-      fp.write('a')
-    with open(os.path.join(output_path, 'vdj_t/sample_vloupe.vloupe'), 'w') as fp:
-      fp.write('a')
-    with open(os.path.join(output_path, 'vdj_b/filtered_contig_annotations.csv'), 'w') as fp:
-      fp.write('a')
-    with open(os.path.join(output_path, 'vdj_b/vloupe.vloupe'), 'w') as fp:
-      fp.write('a')
+    file_list = [
+      'web_summary.html',
+      'metrics_summary.csv',
+      'count/sample_filtered_feature_bc_matrix.h5',
+      'count/sample_alignments.bam',
+      'count/sample_cloupe.cloupe',
+      'vdj/filtered_contig_annotations.csv',
+      'vdj/vloupe.vloupe',
+      'vdj_t/filtered_contig_annotations.csv',
+      'vdj_t/sample_vloupe.vloupe',
+      'vdj_b/filtered_contig_annotations.csv',
+      'vdj_t/vloupe.vloupe',
+      'vdj_b/vloupe.vloupe'
+    ]
+    for f in file_list:
+      with open(os.path.join(output_path, f),'w') as fp:
+        fp.write('a')
 
   def tearDown(self):
     remove_dir(self.work_dir)
