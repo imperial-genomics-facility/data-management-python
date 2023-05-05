@@ -228,9 +228,16 @@ def check_and_register_new_analysis_data(
           f'Failed to get any valid pipeline for id {pipeline_id}')
       analysis_type = pipeline.pipeline_name
       ## convert yaml to json
-      analysis_json = \
-        json.dumps(
-          load(analysis_yaml, Loader=Loader))
+      if isinstance(analysis_yaml, str):
+        analysis_json = \
+          json.dumps(
+            load(analysis_yaml, Loader=Loader))
+      elif isinstance(analysis_yaml, dict):
+        analysis_json = \
+          json.dumps(analysis_yaml)
+      else:
+        raise TypeError(
+          f"Expecting a yaml string or dictionary, but got {type(analysis_yaml)}")
       ## store new analysis
       data = [{
         "project_igf_id": project_igf_id,
