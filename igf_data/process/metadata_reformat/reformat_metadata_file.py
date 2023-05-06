@@ -71,7 +71,7 @@ EXPERIMENT_TYPE_LOOKUP = \
  {'library_preparation': 'FINISHING', 'library_type': 'FINISHING',
   'library_strategy': 'FINISHING', 'experiment_type': 'FINISHING', 'library_source': 'GENOMIC','biomaterial_type':'UNKNOWN'},
  {'library_preparation': 'CHIP SEQUENCING - SAMPLE', 'library_type': 'CHIP SEQ',
-  'library_strategy': 'CHIP-SEQ', 'experiment_type': 'CHIP-SEQ', 'library_source': 'GENOMIC','biomaterial_type':'UNKNOWN'},
+  'library_strategy': 'CHIP-SEQ', 'experiment_type': 'TF', 'library_source': 'GENOMIC','biomaterial_type':'UNKNOWN'},
  {'library_preparation': 'CHIP SEQUENCING - INPUT', 'library_type': 'CHIP SEQ - INPUT',
   'library_strategy': 'CHIP-SEQ', 'experiment_type': 'CHIP-INPUT', 'library_source': 'GENOMIC','biomaterial_type':'UNKNOWN'},
  {'library_preparation': 'CHIP SEQUENCING - TF', 'library_type': 'CHIP SEQ - TF',
