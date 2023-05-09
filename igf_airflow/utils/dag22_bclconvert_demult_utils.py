@@ -2905,7 +2905,8 @@ def register_experiment_and_runs_to_db(
           'sample_igf_id': sample_id,
           'library_name': library_id,
           'experiment_igf_id': experiment_id,
-          'library_layout': library_layout
+          'library_layout': library_layout,
+          'platform_name': platform_name
         })
         run_data.append({
           'experiment_igf_id': experiment_id,
