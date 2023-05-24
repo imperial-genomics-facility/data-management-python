@@ -8,14 +8,13 @@ Dear {{ customerName }}, {% if not send_email_to_user %}EMAIL FOR {{ customerEma
 
 We would like to update you that the fastq files from a recent sequencing run "{{ flowcellId }} - {{ projectRunDate }}" is now available for your project {{ projectName }}.
 
-Data access:
-  - Check the "Data Access" section from our help page for a list of available methods for data transfer
-      https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html
-  - We are changing our default process for data distribution and currently support only these three options:
-    - Imperial College's RDS storage
-    - Globus data share
-    - Basespace share
-  Please check our help page for further instructions and send us required information for data share (within 30 DAYS from the date of this e-mail).
+Data access via Globus:
+  - Send us your Globus username (or Imperial Colleges username) within 30 DAYS from the date of this e-mail
+  - Check the "Globus based transfer" section from our help page for further information about Globus transfer
+      https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html#globus-based-transfer
+
+  Please check our help page for a list of alternative data transfer options:
+    https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html
 
 QC Report pages:
   - Project home:
