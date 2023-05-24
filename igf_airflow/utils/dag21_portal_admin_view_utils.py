@@ -190,7 +190,7 @@ def prepare_storage_plot_func(**context):
     igfportal_root_data = \
       ti.xcom_pull(task_ids=igfportal_data)
     igfportal_root_data = \
-      _convert_base64_to_ascii(woolf_data2_data)
+      _convert_base64_to_ascii(igfportal_root_data)
     hpc_rds_data = \
       ti.xcom_pull(task_ids=hpc_rds)
     data_dict = {
