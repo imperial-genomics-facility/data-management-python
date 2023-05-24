@@ -136,6 +136,8 @@ def prepare_storage_plot_func(**context):
       context['params'].get('woolf_data2')
     nextseq1_data = \
       context['params'].get('nextseq1_data')
+    igfportal_data = \
+      context['params'].get('igfportal_data')
     hpc_rds = \
       context['params'].get('hpc_rds')
     xcom_key = \
@@ -185,6 +187,10 @@ def prepare_storage_plot_func(**context):
       ti.xcom_pull(task_ids=woolf_data2)
     woolf_data2_data = \
       _convert_base64_to_ascii(woolf_data2_data)
+    igfportal_root_data = \
+      ti.xcom_pull(task_ids=igfportal_data)
+    igfportal_root_data = \
+      _convert_base64_to_ascii(woolf_data2_data)
     hpc_rds_data = \
       ti.xcom_pull(task_ids=hpc_rds)
     data_dict = {
@@ -199,6 +205,7 @@ def prepare_storage_plot_func(**context):
       'woolf_data1': woolf_data1_data,
       'woolf_data2': woolf_data2_data,
       'hpc_rds': hpc_rds_data,
+      'igfportal_root': igfportal_root_data,
       'NextSeq_1': nextseq1_data_data
     }
     plot_data = \
