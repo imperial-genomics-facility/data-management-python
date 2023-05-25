@@ -5330,7 +5330,8 @@ def _get_formatted_samplesheets(
       tenx_sc_tag: str = '10X',
       platform: str = 'MISEQ',
       index2_rule: str = 'NOCHANGE',
-      override_cycles: str = '') \
+      override_cycles: str = '',
+      mismatches: int = 1) \
         -> list:
   try:
     check_file_path(samplesheet_file)
@@ -5446,7 +5447,9 @@ def _get_formatted_samplesheets(
                 bases_mask = override_cycles
               ig_final_sa = SampleSheet(ig_samplesheet_temp_path)
               ig_final_sa.\
-                set_header_for_bclconvert_run(bases_mask=bases_mask)
+                set_header_for_bclconvert_run(
+                  bases_mask=bases_mask,
+                  barcode_mismatches=mismatches)
               ig_final_sa.\
                 print_sampleSheet(ig_samplesheet_path)
               ## get sample counts

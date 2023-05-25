@@ -1,6 +1,7 @@
 import os, re, copy, sys,json
 import pandas as pd
 import numpy as np
+from typing import Union
 from jsonschema import Draft4Validator
 from collections import defaultdict, deque
 
@@ -12,7 +13,10 @@ class SampleSheet:
   :param data_header_name: name of the data section, default Data
   '''
 
-  def __init__(self, infile, data_header_name=('Data', 'BCLConvert_Data')):
+  def __init__(
+        self,
+        infile: str,
+        data_header_name: list = ('Data', 'BCLConvert_Data')) -> None:
     self.infile = infile
     self.data_header_name = data_header_name
     self._sample_data = self._read_samplesheet()                                # reading samplesheet data
@@ -27,12 +31,15 @@ class SampleSheet:
                     "index2", "Sample_Project", "Description")
 
   @property
-  def samplesheet_version(self):
+  def samplesheet_version(self) -> None:
     return self._samplesheet_version
 
 
   @staticmethod
-  def _check_samplesheet_data_row(data_series, single_cell_flag='10X'):
+  def _check_samplesheet_data_row(
+        data_series: pd.Series,
+        single_cell_flag: str = '10X') \
+          -> Union[str, None]:
     '''
     An internal static method for additional validation of samplesheet data
 
@@ -72,15 +79,18 @@ class SampleSheet:
         err.append("Found I_5 index(2) for single cell sample {0}".\
                    format(data_series['Sample_ID']))
       if len(err) == 0:
-        err_str = np.nan
+        err_str = None
       else:
         err_str = '\n'.join(err)
       return err_str
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+        f"Failed to check samplesheet row, error: {e}")
 
 
-  def validate_samplesheet_data(self, schema_json):
+  def validate_samplesheet_data(
+        self,
+        schema_json: str) -> list:
     '''
     A method for validation of samplesheet data
 
@@ -117,11 +127,12 @@ class SampleSheet:
             append('Unknown column {0} found on samplesheet'.\
                      format(c))
       return error_list
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+        f"Failed to validate samplesheet data, error: {e}")
 
 
-  def group_data_by_index_length(self):
+  def group_data_by_index_length(self) -> defaultdict:
     '''
     Function for grouping samplesheet rows based on the combined length of index columns
     By default, this function removes Ns from the index
@@ -151,11 +162,12 @@ class SampleSheet:
         self_tmp._data = data_group[index_length]
         data_group[index_length] = self_tmp
       return data_group
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+        f"Failed to grpup samples by index length, error: {e}")
 
 
-  def _get_index_columns(self):
+  def _get_index_columns(self) -> list:
     '''
     An internal function for retrieving the index column names
 
@@ -177,11 +189,15 @@ class SampleSheet:
                 'samplesheet {0} doesn\'t have unique index column names'.\
                   format(self.infile))
       return index_columns
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+        f"Failed to get index columns, error: {e}")
 
 
-  def get_project_names(self, tag='sample_project'):
+  def get_project_names(
+        self,
+        tag: str = 'sample_project') \
+          -> list:
     '''
     Function for retrieving unique project names from samplesheet.
     If there are multiple matching headers, the first column will be used
@@ -207,11 +223,16 @@ class SampleSheet:
                 'no project name found for samplesheet {0}, column {1}'.\
                   format(self.infile, project_header))
       return project_names
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+        f"Failed to get project names, error: {e}")
 
 
-  def get_project_and_lane(self, project_tag='Sample_Project', lane_tag='Lane'):
+  def get_project_and_lane(
+        self,
+        project_tag: str = 'Sample_Project',
+        lane_tag: str = 'Lane') \
+          -> list:
     '''
     A method for fetching project and lane information from samplesheet
 
@@ -234,11 +255,12 @@ class SampleSheet:
           project_lane = ' : '.join(project_lane)                               # for hiseq samplesheet
         project_list.append(project_lane)
       return project_list
-    except:
-        raise
+    except Exception as e:
+        raise ValueError(
+          f"Failed to get project and lane info, error: {e}")
 
 
-  def get_index_count(self):
+  def get_index_count(self) -> defaultdict:
     '''
     A function for getting index length counts
 
@@ -258,11 +280,12 @@ class SampleSheet:
             len(row[field].replace('N','').replace('n',''))
           index_count[field][index_len] += 1
       return index_count
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+        f"Failed to get index count, error: {e}")
 
 
-  def get_indexes(self):
+  def get_indexes(self) -> list:
     '''
     A method for retrieving the indexes from the samplesheet
 
@@ -288,11 +311,14 @@ class SampleSheet:
               index_val = '{0}+{1}'.format(index_val,index_seq)
         indexes.append(index_val)
       return indexes
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+        f"Failed to get indices, error: {e}")
 
 
-  def add_pseudo_lane_for_miseq(self, lane='1'):
+  def add_pseudo_lane_for_miseq(
+        self,
+        lane: str = '1') -> None:
     '''
     A method for adding pseudo lane information for the nextseq platform
 
@@ -306,11 +332,14 @@ class SampleSheet:
         temp_row['PseudoLane'] = lane
         newdata.append(temp_row)
       self._data = newdata
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+        f"Failed to add pseudo lane for miseq, error: {e}")
 
 
-  def add_pseudo_lane_for_nextseq(self, lanes=('1','2','3','4')):
+  def add_pseudo_lane_for_nextseq(
+        self,
+        lanes: list = ('1','2','3','4')) -> None:
     '''
     A method for adding pseudo lane information for the nextseq platform
 
@@ -329,12 +358,15 @@ class SampleSheet:
           temp_row['PseudoLane'] = lane
           newdata.append(temp_row)
       self._data = newdata
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+        f"Failed to add pseudo lane for nextseq, error: {e}")
 
 
   def _reformat_project_and_description(
-        self, project_field='Sample_Project', description_field='Description'):
+        self,
+        project_field: str = 'Sample_Project',
+        description_field: str = 'Description') -> None:
     '''
     A Function for removing the user information from Project field and
     converting ':' to '-' in the description field
@@ -359,11 +391,14 @@ class SampleSheet:
         row[description_field] = \
           description.replace(':','-').upper()
       self._data = data
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+        f"Failed to reformat project and description field, error: {e}")
 
 
-  def get_reverse_complement_index(self, index_field='index2'):
+  def get_reverse_complement_index(
+        self,
+        index_field: str = 'index2') -> None:
     '''
     A function for changing the I5_index present in the index2 field of the
     samplesheet to intsreverse complement base
@@ -381,11 +416,15 @@ class SampleSheet:
               translate(
                 str.maketrans('ACGT','TGCA'))[::-1]
       self._data = data
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+        f"Failed to get reverse complement indices, error: {e}")
 
 
-  def get_platform_name(self, section='Header'):
+  def get_platform_name(
+        self,
+        section: str = 'Header') \
+          -> str:
     '''
     Function for getting platform details from samplesheet header
 
@@ -410,11 +449,16 @@ class SampleSheet:
         raise ValueError(
                 'samplesheet {0} doesn\'t have the field {1}'.\
                   format(self.infile, field))
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+        f"Failed to get platform name, error: {e}")
 
 
-  def get_lane_count(self, lane_field='Lane', target_platforms=('HiSeq','NovaSeq')):
+  def get_lane_count(
+        self,
+        lane_field: str = 'Lane',
+        target_platforms: list = ('HiSeq','NovaSeq')) \
+          -> list:
     '''
     Function for getting the lane information for HiSeq runs
     It will return 1 for both MiSeq and NextSeq runs
@@ -445,11 +489,17 @@ class SampleSheet:
       if match_count == 0:
         lane.add(1)
       return list(lane)
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+        f"Failed to get lane count, error: {e}")
 
 
-  def check_sample_header(self, section, condition_key, return_values=False):
+  def check_sample_header(
+        self,
+        section: str,
+        condition_key: str,
+        return_values: bool = False) \
+          -> Union[list, int]:
     '''
     Function for checking SampleSheet header
 
@@ -462,7 +512,7 @@ class SampleSheet:
       header_data = self._header_data
       if not condition_key or not section:
         raise ValueError(
-                'section and condition_key are required for sample header check')
+          'section and condition_key are required for sample header check')
       exists = list()
       pattern = \
         re.compile(
@@ -470,16 +520,23 @@ class SampleSheet:
           re.IGNORECASE)
       exists = \
         [row for row in header_data[section] \
-               if re.search(pattern, row.split(',')[0])]
+          if re.search(pattern, row.split(',')[0])]
       if return_values:
         return exists
       else:
         return len(exists)
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+        f"Failed to check samplesheet header, error; {e}")
 
 
-  def modify_sample_header(self, section, type, condition_key, condition_value=''):
+  def modify_sample_header(
+        self,
+        section: str,
+        type: str,
+        condition_key: str,
+        condition_value: str = '') \
+          -> None:
     '''
     Function for modifying SampleSheet header
 
@@ -493,18 +550,15 @@ class SampleSheet:
       if ( type.lower().strip() == 'add' ):
         # check if condition key is already present
         if (self.check_sample_header(section=section, condition_key=condition_key)):
-           raise ValueError(
-                  'condition_key {} already present for section {}'.\
-                    format(condition_key, section))
+          raise ValueError(
+            f'condition_key {condition_key} already present for section {section}')
         # can't use the default condition_value
         if not condition_value:
           raise ValueError(
-                  'condition_value is required for type {} and key {}'.\
-                    format(type, condition_key))
+            f'condition_value is required for type {type} and key {condition_key}')
         else:
           header_data[section].\
-            append('{0},{1}'.\
-              format(condition_key, condition_value))
+            append(f'{condition_key},{condition_value}')
       elif ( type.lower().strip() == 'remove' ):
         filtered_header_section = list()
         pattern = \
@@ -521,19 +575,50 @@ class SampleSheet:
         raise ValueError('type {} not supported'.format(type))
       # resetting the header
       self._header_data = header_data
-    except:
-      raise
+    except Exception as e:
+      raise ValueError(
+        f"Failed to modify samplesheet error, error: {e}")
+
+
+  def _check_dual_index_samplesheet(
+        self,
+        index2_col: str = 'index2') \
+          -> bool:
+    try:
+      df = pd.DataFrame(self._data)
+      if index2_col not in df.columns:
+        return False
+      df[index2_col].fillna('', inplace=True)
+      if len(df[df['index2'] !=''].index) > 0:
+        return True
+      else:
+        return False
+    except Exception as e:
+      raise ValueError(
+        f"Failed to check index type, error: {e}")
+
 
   def set_header_for_bclconvert_run(
-      self, bases_mask, min_trimmed_length=8, mask_short_read=8, trim_umi=0):
+      self,
+      bases_mask: str,
+      barcode_mismatches: int = 1,
+      min_trimmed_length: int = 8,
+      mask_short_read: int = 8,
+      trim_umi: int = 0) -> None:
     try:
       bclconv_settings = {
-        'BarcodeMismatchesIndex1': 1,
+        'BarcodeMismatchesIndex1': barcode_mismatches,
         'CreateFastqForIndexReads': 1,
         'MinimumTrimmedReadLength': min_trimmed_length,
         'FastqCompressionFormat': 'gzip',
         'MaskShortReads': mask_short_read,
         'OverrideCycles': bases_mask}
+      ## add settings for index2 if its present in the samplesheet
+      index2_exists = \
+        self._check_dual_index_samplesheet()
+      if index2_exists:
+        bclconv_settings.\
+          update({'BarcodeMismatchesIndex2': barcode_mismatches})
       ## trim umi is only valid if U is present in the bases mask
       if 'U' in bases_mask:
         bclconv_settings.\

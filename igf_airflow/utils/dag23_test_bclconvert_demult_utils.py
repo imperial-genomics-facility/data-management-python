@@ -652,7 +652,8 @@ def calculate_override_bases_mask_func(**context):
     mod_sa = SampleSheet(samplesheet_file_path)
     mod_sa.\
       set_header_for_bclconvert_run(
-        bases_mask=override_cycles)
+        bases_mask=override_cycles,
+        barcode_mismatches=0)
     mod_sa.\
       print_sampleSheet(new_samplesheet_path)
     # add new samplesheet to xcom
