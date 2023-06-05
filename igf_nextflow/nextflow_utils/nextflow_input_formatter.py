@@ -241,6 +241,32 @@ def format_nextflow_conf(
     raise ValueError(
       f"Failed to create config file, error: {e}")
 
+def _check_and_set_col_order_for_nf_samplesheet(
+        col_list: list,
+        nf_col_list: list,
+        skip_extra_cols: bool = True) \
+          -> list:
+  try:
+    output_col_list = list()
+    missing_col_list = list()
+    for col_name in nf_col_list:
+      if col_name in col_list:
+        output_col_list.append(col_name)
+      else:
+        missing_col_list.append(col_name)
+      if len(output_col_list) != len(col_list):
+        extra_col_list = list(set(col_list).difference(set(output_col_list)))
+        if not skip_extra_cols:
+          output_col_list.extend(extra_col_list)
+    if len(missing_col_list) > 0:
+      raise ValueError(
+        f"Missing required columns: {','.join(output_col_list)}")
+    else:
+      return output_col_list
+  except Exception as e:
+    raise ValueError(
+      f"Failed to check col order for nf samplesheet, error: {e}")
+
 
 def _make_nfcore_smrnaseq_input(
       sample_metadata: dict,
@@ -250,7 +276,8 @@ def _make_nfcore_smrnaseq_input(
       sample_id_input_column: str = 'sample_igf_id',
       fastq_file_input_column: str = 'file_path',
       sample_id_output_column: str = 'sample',
-      fastq1_output_column: str = 'fastq_1') -> \
+      fastq1_output_column: str = 'fastq_1',
+      nf_samplesheet_header: list = ("sample", "fastq_1")) -> \
         str:
   try:
     fastq1_pattern = \
@@ -285,6 +312,14 @@ def _make_nfcore_smrnaseq_input(
             fastq1_output_column: r1_fastq})
     final_csv_df = \
       pd.DataFrame(final_csv_data)
+    ## get correct col order
+    output_col_list = \
+      _check_and_set_col_order_for_nf_samplesheet(
+        col_list=final_csv_df.columns.tolist(),
+        nf_col_list=nf_samplesheet_header)
+    ## reorder df
+    final_csv_df = \
+      final_csv_df[output_col_list]
     final_csv_df.\
       to_csv(input_csv_file_path, index=False)
     return input_csv_file_path
@@ -302,6 +337,7 @@ def prepare_nfcore_smrnaseq_input(
       sample_metadata: dict,
       analysis_metadata: dict,
       nfcore_pipeline_name: str = 'nf-core/smrnaseq',
+      nf_samplesheet_header: list = ("sample", "fastq_1"),
       exclude_nf_param_list: list = [
         '-resume',
         '-c',
@@ -371,7 +407,8 @@ def prepare_nfcore_smrnaseq_input(
       _make_nfcore_smrnaseq_input(
         sample_metadata=sample_metadata,
         fastq_df=fastq_df,
-        output_dir=work_dir)
+        output_dir=work_dir,
+        nf_samplesheet_header=nf_samplesheet_header)
     nextflow_params_list.\
       append(f'--input {input_file}')
     nextflow_params_list.\
@@ -420,7 +457,8 @@ def _make_nfcore_rnaseq_input(
       fastq_file_input_column: str = 'file_path',
       output_sample_column: str = 'sample',
       output_fastq1_column: str = 'fastq_1',
-      output_fastq2_column: str = 'fastq_2') -> \
+      output_fastq2_column: str = 'fastq_2',
+      nf_samplesheet_header: list = ("sample", "fastq_1", "fastq_2", "strandedness")) -> \
         str:
   try:
     fastq1_pattern = \
@@ -471,6 +509,14 @@ def _make_nfcore_rnaseq_input(
           append(row_data)
     final_csv_df = \
       pd.DataFrame(final_csv_data)
+    ## get correct col order
+    output_col_list = \
+      _check_and_set_col_order_for_nf_samplesheet(
+        col_list=final_csv_df.columns.tolist(),
+        nf_col_list=nf_samplesheet_header)
+    ## reorder df
+    final_csv_df = \
+      final_csv_df[output_col_list]
     final_csv_df.\
       to_csv(input_csv_file_path, index=False)
     return input_csv_file_path
@@ -488,6 +534,7 @@ def prepare_nfcore_rnaseq_input(
       sample_metadata: dict,
       analysis_metadata: dict,
       nfcore_pipeline_name: str = 'nf-core/rnaseq',
+      nf_samplesheet_header: list = ("sample", "fastq_1", "fastq_2", "strandedness"),
       exclude_nf_param_list: list = [
         '-resume',
         '-c',
@@ -558,7 +605,8 @@ def prepare_nfcore_rnaseq_input(
       _make_nfcore_rnaseq_input(
         sample_metadata=sample_metadata,
         fastq_df=fastq_df,
-        output_dir=work_dir)
+        output_dir=work_dir,
+        nf_samplesheet_header=nf_samplesheet_header)
     nextflow_params_list.\
       append(f'--input {input_file}')
     nextflow_params_list.\
@@ -656,6 +704,7 @@ def prepare_nfcore_methylseq_input(
       sample_metadata: dict,
       analysis_metadata: dict,
       nfcore_pipeline_name: str = 'nf-core/methylseq',
+      nf_samplesheet_header: list = ("sample", "fastq_1", "fastq_2"),
       exclude_nf_param_list: list = [
         '-resume',
         '-c',
@@ -709,7 +758,8 @@ def prepare_nfcore_methylseq_input(
           sample_metadata=sample_metadata,
           analysis_metadata=analysis_metadata,
           nfcore_pipeline_name=nfcore_pipeline_name,
-          exclude_nf_param_list=exclude_nf_param_list)
+          exclude_nf_param_list=exclude_nf_param_list,
+          nf_samplesheet_header=nf_samplesheet_header)
     else:
       ## get fastq df
       fastq_df = \
@@ -828,6 +878,7 @@ def _make_nfcore_sarek_input(
       fastq_file_input_column: str = 'file_path',
       output_sample_column: str = 'sample',
       output_lane_column: str = 'lane',
+      nf_samplesheet_header: list = ("patient", "sex", "status", "sample",  "fastq_1", "fastq_2"),
       output_fastq1_column: str = 'fastq_1',
       output_fastq2_column: str = 'fastq_2') -> \
         str:
@@ -893,6 +944,14 @@ def _make_nfcore_sarek_input(
           append(row_data)
     final_csv_df = \
       pd.DataFrame(final_csv_data)
+    ## get correct col order
+    output_col_list = \
+      _check_and_set_col_order_for_nf_samplesheet(
+        col_list=final_csv_df.columns.tolist(),
+        nf_col_list=nf_samplesheet_header)
+    ## reorder df
+    final_csv_df = \
+      final_csv_df[output_col_list]
     final_csv_df.\
       to_csv(input_csv_file_path, index=False)
     return input_csv_file_path
@@ -910,6 +969,7 @@ def prepare_nfcore_sarek_input(
       sample_metadata: dict,
       analysis_metadata: dict,
       nfcore_pipeline_name: str = 'nf-core/sarek',
+      nf_samplesheet_header: list = ("patient", "sex", "status", "sample",  "fastq_1", "fastq_2"),
       exclude_nf_param_list: list = [
         '-resume',
         '-c',
@@ -984,7 +1044,8 @@ def prepare_nfcore_sarek_input(
       _make_nfcore_sarek_input(
         sample_metadata=sample_metadata,
         fastq_df=fastq_df,
-        output_dir=work_dir)
+        output_dir=work_dir,
+        nf_samplesheet_header=nf_samplesheet_header)
     nextflow_params_list.\
       append(f'--input {input_file}')
     nextflow_params_list.\
@@ -1246,6 +1307,7 @@ def prepare_nfcore_hic_input(
       sample_metadata: dict,
       analysis_metadata: dict,
       nfcore_pipeline_name: str = 'nf-core/hic',
+      nf_samplesheet_header: list = ("sample", "fastq_1", "fastq_2"),
       exclude_nf_param_list: list = [
         '-resume',
         '-c',
@@ -1285,7 +1347,8 @@ def prepare_nfcore_hic_input(
       sample_metadata=sample_metadata,
       analysis_metadata=analysis_metadata,
       nfcore_pipeline_name=nfcore_pipeline_name,
-      exclude_nf_param_list=exclude_nf_param_list)
+      exclude_nf_param_list=exclude_nf_param_list,
+      nf_samplesheet_header=nf_samplesheet_header)
     return work_dir, runner_file
   except Exception as e:
     raise ValueError(
@@ -1301,6 +1364,7 @@ def prepare_nfcore_rnafusion_input(
       sample_metadata: dict,
       analysis_metadata: dict,
       nfcore_pipeline_name: str = 'nf-core/rnafusion',
+      nf_samplesheet_header: list = ("sample", "fastq_1", "fastq_2", "strandedness"),
       exclude_nf_param_list: list = [
         '-resume',
         '-c',
@@ -1342,7 +1406,8 @@ def prepare_nfcore_rnafusion_input(
       sample_metadata=sample_metadata,
       analysis_metadata=analysis_metadata,
       nfcore_pipeline_name=nfcore_pipeline_name,
-      exclude_nf_param_list=exclude_nf_param_list)
+      exclude_nf_param_list=exclude_nf_param_list,
+      nf_samplesheet_header=nf_samplesheet_header)
     return work_dir, runner_file
   except Exception as e:
     raise ValueError(
@@ -1358,6 +1423,7 @@ def prepare_nfcore_rnavar_input(
       sample_metadata: dict,
       analysis_metadata: dict,
       nfcore_pipeline_name: str = 'nf-core/rnavar',
+      nf_samplesheet_header: list = ("sample", "fastq_1", "fastq_2"),
       exclude_nf_param_list: list = [
         '-resume',
         '-c',
@@ -1401,7 +1467,8 @@ def prepare_nfcore_rnavar_input(
       sample_metadata=sample_metadata,
       analysis_metadata=analysis_metadata,
       nfcore_pipeline_name=nfcore_pipeline_name,
-      exclude_nf_param_list=exclude_nf_param_list)
+      exclude_nf_param_list=exclude_nf_param_list,
+      nf_samplesheet_header=nf_samplesheet_header)
     return work_dir, runner_file
   except Exception as e:
     raise ValueError(
@@ -1417,8 +1484,9 @@ def _make_nfcore_atacseq_input(sample_metadata: dict,
       fastq_file_input_column: str = 'file_path',
       output_fastq1_column: str = 'fastq_1',
       output_fastq2_column: str = 'fastq_2',
-      output_group_column: str = 'group',
-      output_replicate_column: str = 'replicate') -> \
+      output_group_column: str = 'sample',
+      output_replicate_column: str = 'replicate',
+      nf_samplesheet_header: list = ("sample", "fastq_1", "fastq_2", "replicate")) -> \
         str:
   try:
     fastq1_pattern = \
@@ -1472,6 +1540,14 @@ def _make_nfcore_atacseq_input(sample_metadata: dict,
        output_replicate_column not in final_csv_df.columns:
       raise KeyError(
         f"Missing {output_group_column} or {output_replicate_column} in sample_metadata")
+    ## get correct col order
+    output_col_list = \
+      _check_and_set_col_order_for_nf_samplesheet(
+        col_list=final_csv_df.columns.tolist(),
+        nf_col_list=nf_samplesheet_header)
+    ## reorder df
+    final_csv_df = \
+      final_csv_df[output_col_list]
     final_csv_df.\
       to_csv(input_csv_file_path, index=False)
     return input_csv_file_path
@@ -1488,6 +1564,7 @@ def prepare_nfcore_atacseq_input(
       sample_metadata: dict,
       analysis_metadata: dict,
       nfcore_pipeline_name: str = 'nf-core/atacseq',
+      nf_samplesheet_header: list = ("sample", "fastq_1", "fastq_2", "replicate"),
       exclude_nf_param_list: list = [
         '-resume',
         '-c',
@@ -1559,7 +1636,8 @@ def prepare_nfcore_atacseq_input(
       _make_nfcore_atacseq_input(
         sample_metadata=sample_metadata,
         fastq_df=fastq_df,
-        output_dir=work_dir)
+        output_dir=work_dir,
+        nf_samplesheet_header=nf_samplesheet_header)
     nextflow_params_list.\
       append(f'--input {input_file}')
     nextflow_params_list.\
@@ -1609,7 +1687,8 @@ def _make_nfcore_chipseq_input(sample_metadata: dict,
       output_fastq1_column: str = 'fastq_1',
       output_fastq2_column: str = 'fastq_2',
       output_control_column: str = 'control',
-      output_antibody_column: str = 'antibody') -> \
+      output_antibody_column: str = 'antibody',
+      nf_samplesheet_header: list = ("sample", "fastq_1", "fastq_2", "antibody", "control")) -> \
         str:
   try:
     fastq1_pattern = \
@@ -1664,6 +1743,14 @@ def _make_nfcore_chipseq_input(sample_metadata: dict,
        output_antibody_column not in final_csv_df.columns:
       raise KeyError(
         f"Missing {output_control_column} or {output_antibody_column} in sample_metadata")
+    ## get correct col order
+    output_col_list = \
+      _check_and_set_col_order_for_nf_samplesheet(
+        col_list=final_csv_df.columns.tolist(),
+        nf_col_list=nf_samplesheet_header)
+    ## reorder df
+    final_csv_df = \
+      final_csv_df[output_col_list]
     final_csv_df.\
       to_csv(input_csv_file_path, index=False)
     return input_csv_file_path
@@ -1680,6 +1767,7 @@ def prepare_nfcore_chipseq_input(
       sample_metadata: dict,
       analysis_metadata: dict,
       nfcore_pipeline_name: str = 'nf-core/chipseq',
+      nf_samplesheet_header: list = ("sample", "fastq_1", "fastq_2", "antibody", "control"),
       exclude_nf_param_list: list = [
         '-resume',
         '-c',
@@ -1751,7 +1839,8 @@ def prepare_nfcore_chipseq_input(
       _make_nfcore_chipseq_input(
         sample_metadata=sample_metadata,
         fastq_df=fastq_df,
-        output_dir=work_dir)
+        output_dir=work_dir,
+        nf_samplesheet_header=nf_samplesheet_header)
     nextflow_params_list.\
       append(f'--input {input_file}')
     nextflow_params_list.\
@@ -1799,8 +1888,9 @@ def _make_nfcore_cutandrun_input(sample_metadata: dict,
       output_fastq1_column: str = 'fastq_1',
       output_fastq2_column: str = 'fastq_2',
       output_group_column: str = 'group',
-      output_control_column: str = 'control',
-      output_replicate_column: str = 'replicate') -> \
+      output_control_column: str = 'control_group',
+      output_replicate_column: str = 'replicate',
+      nf_samplesheet_header: list = ("group", "replicate", "control_group", "fastq_1", "fastq_2")) -> \
         str:
   try:
     fastq1_pattern = \
@@ -1855,6 +1945,14 @@ def _make_nfcore_cutandrun_input(sample_metadata: dict,
        output_replicate_column not in final_csv_df.columns:
       raise KeyError(
         f"Missing {output_group_column} or {output_replicate_column} or {output_control_column} in sample_metadata")
+    ## get correct col order
+    output_col_list = \
+      _check_and_set_col_order_for_nf_samplesheet(
+        col_list=final_csv_df.columns.tolist(),
+        nf_col_list=nf_samplesheet_header)
+    ## reorder df
+    final_csv_df = \
+      final_csv_df[output_col_list]
     final_csv_df.\
       to_csv(input_csv_file_path, index=False)
     return input_csv_file_path
@@ -1871,6 +1969,7 @@ def prepare_nfcore_cutandrun_input(
       sample_metadata: dict,
       analysis_metadata: dict,
       nfcore_pipeline_name: str = 'nf-core/cutandrun',
+      nf_samplesheet_header: list = ("group", "replicate", "control_group", "fastq_1", "fastq_2"),
       exclude_nf_param_list: list = [
         '-resume',
         '-c',
@@ -1944,7 +2043,8 @@ def prepare_nfcore_cutandrun_input(
       _make_nfcore_cutandrun_input(
         sample_metadata=sample_metadata,
         fastq_df=fastq_df,
-        output_dir=work_dir)
+        output_dir=work_dir,
+        nf_samplesheet_header=nf_samplesheet_header)
     nextflow_params_list.\
       append(f'--input {input_file}')
     nextflow_params_list.\
@@ -1992,6 +2092,7 @@ def prepare_nfcore_bactmap_input(
       sample_metadata: dict,
       analysis_metadata: dict,
       nfcore_pipeline_name: str = 'nf-core/bactmap',
+      nf_samplesheet_header: list = ('sample', 'fastq_1', 'fastq_2'),
       exclude_nf_param_list: list = [
         '-resume',
         '-c',
@@ -2030,7 +2131,8 @@ def prepare_nfcore_bactmap_input(
         sample_metadata=sample_metadata,
         analysis_metadata=analysis_metadata,
         nfcore_pipeline_name=nfcore_pipeline_name,
-        exclude_nf_param_list=exclude_nf_param_list)
+        exclude_nf_param_list=exclude_nf_param_list,
+        nf_samplesheet_header=nf_samplesheet_header)
     return work_dir, runner_file
   except Exception as e:
     raise ValueError(

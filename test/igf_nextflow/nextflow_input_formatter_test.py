@@ -18,25 +18,28 @@ from igf_data.utils.dbutils import read_json_data
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.utils.fileutils import get_temp_dir
 from igf_data.utils.fileutils import remove_dir
-from igf_nextflow.nextflow_utils.nextflow_input_formatter import parse_sample_metadata_and_fetch_fastq
-from igf_nextflow.nextflow_utils.nextflow_input_formatter import _make_nfcore_smrnaseq_input
-from igf_nextflow.nextflow_utils.nextflow_input_formatter import format_nextflow_conf
-from igf_nextflow.nextflow_utils.nextflow_input_formatter import prepare_nfcore_smrnaseq_input
-from igf_nextflow.nextflow_utils.nextflow_input_formatter import prepare_nfcore_rnaseq_input
-from igf_nextflow.nextflow_utils.nextflow_input_formatter import _make_nfcore_rnaseq_input
-from igf_nextflow.nextflow_utils.nextflow_input_formatter import _make_nfcore_methylseq_input
-from igf_nextflow.nextflow_utils.nextflow_input_formatter import prepare_nfcore_methylseq_input
-from igf_nextflow.nextflow_utils.nextflow_input_formatter import prepare_nfcore_sarek_input
-from igf_nextflow.nextflow_utils.nextflow_input_formatter import _make_nfcore_sarek_input
-from igf_nextflow.nextflow_utils.nextflow_input_formatter import _make_nfcore_ampliseq_input
-from igf_nextflow.nextflow_utils.nextflow_input_formatter import prepare_nfcore_ampliseq_input
-from igf_nextflow.nextflow_utils.nextflow_input_formatter import _make_nfcore_atacseq_input
-from igf_nextflow.nextflow_utils.nextflow_input_formatter import prepare_nfcore_atacseq_input
-from igf_nextflow.nextflow_utils.nextflow_input_formatter import _make_nfcore_chipseq_input
-from igf_nextflow.nextflow_utils.nextflow_input_formatter import prepare_nfcore_chipseq_input
-from igf_nextflow.nextflow_utils.nextflow_input_formatter import _make_nfcore_cutandrun_input
-from igf_nextflow.nextflow_utils.nextflow_input_formatter import prepare_nfcore_cutandrun_input
-from igf_nextflow.nextflow_utils.nextflow_input_formatter import prepare_input_for_multiple_nfcore_pipeline
+from igf_nextflow.nextflow_utils.nextflow_input_formatter import (
+    parse_sample_metadata_and_fetch_fastq,
+    _make_nfcore_smrnaseq_input,
+    format_nextflow_conf,
+    prepare_nfcore_smrnaseq_input,
+    prepare_nfcore_rnaseq_input,
+    _make_nfcore_rnaseq_input,
+    _make_nfcore_methylseq_input,
+    prepare_nfcore_methylseq_input,
+    prepare_nfcore_sarek_input,
+    _make_nfcore_sarek_input,
+    _make_nfcore_ampliseq_input,
+    prepare_nfcore_ampliseq_input,
+    _make_nfcore_atacseq_input,
+    prepare_nfcore_atacseq_input,
+    _make_nfcore_chipseq_input,
+    prepare_nfcore_chipseq_input,
+    _make_nfcore_cutandrun_input,
+    prepare_nfcore_cutandrun_input,
+    prepare_input_for_multiple_nfcore_pipeline,
+    _check_and_set_col_order_for_nf_samplesheet
+  )
 
 class Prepare_nfcore_input_testA(unittest.TestCase):
   def setUp(self):
@@ -1127,10 +1130,10 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
   def test_make_nfcore_atacseq_input(self):
     sample_metadata = {
       "sampleA": {
-        "group": "control1",
+        "sample": "control1",
         "replicate": 1},
       "sampleB": {
-        "group": "control2",
+        "sample": "control2",
         "replicate": 2}
     }
     fastq_df = \
@@ -1147,10 +1150,10 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
       pd.read_csv(input_file, sep=",", header=0)
     self.assertTrue('fastq_1' in csv_data)
     self.assertTrue('fastq_2' in csv_data)
-    self.assertTrue('group' in csv_data)
+    self.assertTrue('sample' in csv_data)
     self.assertTrue('replicate' in csv_data)
     control1 = \
-      csv_data[csv_data['group']=='control1']
+      csv_data[csv_data['sample']=='control1']
     self.assertEqual(len(control1.index), 3)
     self.assertTrue('/path/sampleA_S1_L001_R1_001.fastq.gz' in control1['fastq_1'].values.tolist())
     self.assertTrue('/path/sampleA_S1_L001_R2_001.fastq.gz' in control1['fastq_2'].values.tolist())
@@ -1158,10 +1161,10 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
   def test_prepare_nfcore_atacseq_input(self):
     sample_metadata = {
       "sampleA": {
-        "group": "control1",
+        "sample": "control1",
         "replicate": 1},
       "sampleB": {
-        "group": "control2",
+        "sample": "control2",
         "replicate": 2}
     }
     analysis_metadata = { 
@@ -1444,11 +1447,11 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
       "sampleA": {
         "group": "h3k27me3",
         "replicate": 1,
-        "control": "igg_ctrl"},
+        "control_group": "igg_ctrl"},
       "sampleB": {
         "group": "igg_ctrl",
         "replicate": 1,
-        "control": ""}
+        "control_group": ""}
     }
     fastq_df = \
       parse_sample_metadata_and_fetch_fastq(
@@ -1466,7 +1469,7 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
     self.assertTrue('fastq_2' in csv_data)
     self.assertTrue('group' in csv_data)
     self.assertTrue('replicate' in csv_data)
-    self.assertTrue('control' in csv_data)
+    self.assertTrue('control_group' in csv_data)
     control1 = \
       csv_data[csv_data['group']=='h3k27me3']
     self.assertEqual(len(control1.index), 3)
@@ -1479,11 +1482,11 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
       "sampleA": {
         "group": "h3k27me3",
         "replicate": 1,
-        "control": "igg_ctrl"},
+        "control_group": "igg_ctrl"},
       "sampleB": {
         "group": "igg_ctrl",
         "replicate": 1,
-        "control": ""}
+        "control_group": ""}
     }
     analysis_metadata = { 
       "NXF_VER": "x.y.z",
