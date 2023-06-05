@@ -1447,11 +1447,11 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
       "sampleA": {
         "group": "h3k27me3",
         "replicate": 1,
-        "control_group": "igg_ctrl"},
+        "control": "igg_ctrl"},
       "sampleB": {
         "group": "igg_ctrl",
         "replicate": 1,
-        "control_group": ""}
+        "control": ""}
     }
     fastq_df = \
       parse_sample_metadata_and_fetch_fastq(
@@ -1469,7 +1469,7 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
     self.assertTrue('fastq_2' in csv_data)
     self.assertTrue('group' in csv_data)
     self.assertTrue('replicate' in csv_data)
-    self.assertTrue('control_group' in csv_data)
+    self.assertTrue('control' in csv_data)
     control1 = \
       csv_data[csv_data['group']=='h3k27me3']
     self.assertEqual(len(control1.index), 3)
@@ -1482,11 +1482,11 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
       "sampleA": {
         "group": "h3k27me3",
         "replicate": 1,
-        "control_group": "igg_ctrl"},
+        "control": "igg_ctrl"},
       "sampleB": {
         "group": "igg_ctrl",
         "replicate": 1,
-        "control_group": ""}
+        "control": ""}
     }
     analysis_metadata = { 
       "NXF_VER": "x.y.z",

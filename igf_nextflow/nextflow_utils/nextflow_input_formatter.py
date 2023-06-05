@@ -1888,9 +1888,9 @@ def _make_nfcore_cutandrun_input(sample_metadata: dict,
       output_fastq1_column: str = 'fastq_1',
       output_fastq2_column: str = 'fastq_2',
       output_group_column: str = 'group',
-      output_control_column: str = 'control_group',
+      output_control_column: str = 'control',
       output_replicate_column: str = 'replicate',
-      nf_samplesheet_header: list = ("group", "replicate", "control_group", "fastq_1", "fastq_2")) -> \
+      nf_samplesheet_header: list = ("group", "replicate", "fastq_1", "fastq_2", "control")) -> \
         str:
   try:
     fastq1_pattern = \
@@ -1969,7 +1969,7 @@ def prepare_nfcore_cutandrun_input(
       sample_metadata: dict,
       analysis_metadata: dict,
       nfcore_pipeline_name: str = 'nf-core/cutandrun',
-      nf_samplesheet_header: list = ("group", "replicate", "control_group", "fastq_1", "fastq_2"),
+      nf_samplesheet_header: list = ("group", "replicate", "fastq_1", "fastq_2", "control"),
       exclude_nf_param_list: list = [
         '-resume',
         '-c',
