@@ -442,7 +442,7 @@ def check_progress_for_run_func(**context):
       dag_id=context['task'].dag_id,
       comment=comment,
       reaction='pass')
-    if index_cycle_status is 'complete':
+    if index_cycle_status == 'complete':
       job_list = \
         ['{0}_{1}'.format(next_job_prefix,run_index_number)]
     return job_list

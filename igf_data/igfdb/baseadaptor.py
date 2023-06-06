@@ -285,7 +285,7 @@ class BaseAdaptor(DBConnect):
         data = pd.DataFrame(data)                                               # convert dictionary to dataframe
 
       session = self.session
-      if mode is 'serial':
+      if mode == 'serial':
         data.\
           apply(
             lambda x: \
@@ -293,7 +293,7 @@ class BaseAdaptor(DBConnect):
                 table=table,
                 data=x),
               axis=1)                                                           # load data in serial mode
-      elif mode is 'bulk':
+      elif mode == 'bulk':
         self._store_record_bulk(
           table=table,data=data)                                                # load data in bulk mode
       session.flush()

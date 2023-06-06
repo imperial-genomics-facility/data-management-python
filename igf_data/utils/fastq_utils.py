@@ -114,7 +114,7 @@ def count_fastq_lines(fastq_file):
           buf = read_f(buf_size)
 
     elif re.match(unzipped_pattern,fastq_file):                                 # read unzipped file
-      with open(filename, 'rb') as f:
+      with open(fastq_file, 'rb') as f:
         buf_size = 1024 * 1024
         read_f = f.raw.read
         buf = read_f(buf_size)

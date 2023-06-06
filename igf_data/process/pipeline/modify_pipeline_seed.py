@@ -179,7 +179,7 @@ class Modify_pipeline_seed:
     '''
     try:
       if not os.path.exists(igf_id_list):
-        raise IOError('File {0} not found'.format(seqrun_igf_list))
+        raise IOError('File {0} not found'.format(igf_id_list))
 
       id_list=list()                                                            # define an empty list of igf ids
       with open(igf_id_list,'r') as fp:

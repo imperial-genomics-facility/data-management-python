@@ -1,5 +1,6 @@
 import pandas as pd
 from bioservices import biomart
+from io import StringIO
 
 def fetch_rRNA_genes_from_biomart(org,host='www.ensembl.org'):
   '''

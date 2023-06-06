@@ -87,7 +87,7 @@ class AlignmentSeedFactory(IGFBaseJobFactory):
         self.post_message_to_ms_team(
           message=message,
           reaction='sleep')
-    except:
+    except Exception as e:
       message = \
         'Error in {0},{1}: {2}'.\
           format(
