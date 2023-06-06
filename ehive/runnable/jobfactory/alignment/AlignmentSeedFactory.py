@@ -1,5 +1,6 @@
 import pandas as pd
 from ehive.runnable.IGFBaseJobFactory import IGFBaseJobFactory
+from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 
 class AlignmentSeedFactory(IGFBaseJobFactory):
   '''
@@ -18,7 +19,7 @@ class AlignmentSeedFactory(IGFBaseJobFactory):
   def run(self):
     '''
     Run method for the seed job factory class of the alignment pipeline
-    
+
     :param igf_session_class: A database session class
     :param pipeline_name: Name of the pipeline
     :param seed_id_label: A text label for the seed_id, default seed_id
@@ -36,7 +37,7 @@ class AlignmentSeedFactory(IGFBaseJobFactory):
       running_label = self.param_required('running_label')
       experiment_id_label = self.param_required('experiment_id_label')
       seed_status_label = self.param_required('seed_status_label')
-      
+
       pa = PipelineAdaptor(**{'session_class':igf_session_class})               # get db adaptor
       pa.start_session()                                                        # connect to db
       (pipeseeds_data,table_data) = \
@@ -70,7 +71,7 @@ class AlignmentSeedFactory(IGFBaseJobFactory):
         pa.update_pipeline_seed(data=pipeseeds_data.to_dict(orient='records'))  # set pipeline seeds as running
 
         message='Total {0} new job found for {1}, pipeline: {2}'.\
-                 format(len(seed_data),self.__class__.__name__,pipeline_name)   # format msg for slack
+                 format(len(dataflow_seed_data),self.__class__.__name__,pipeline_name)   # format msg for slack
         self.post_message_to_slack(message,reaction='pass')                     # send update to slack
         self.post_message_to_ms_team(
           message=message,
