@@ -108,7 +108,7 @@
   psycopg2-binary==2.8.5
   pycparser==2.21
   pygments==2.10.0
-  pyjwt==2.4.0
+  pyjwt
   pymysql==1.0.2
   pynacl==1.4.0
   pyparsing==2.4.7
