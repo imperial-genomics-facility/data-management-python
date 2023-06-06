@@ -52,7 +52,7 @@ class AnalysisAdaptor(BaseAdaptor):
       if autosave:
         self.rollback_session()
       raise ValueError(
-              'Failed to store analysis data, error: {0}'.format(e))
+        f'Failed to store analysis data, error: {e}')
 
 
   def fetch_project_igf_id_for_analysis_id(self,analysis_id):
@@ -75,8 +75,7 @@ class AnalysisAdaptor(BaseAdaptor):
       return result.project_igf_id
     except Exception as e:
       raise ValueError(
-              'Failed to fetch project id for abalysis {0},error: {1}'.\
-                format(analysis_id,e))
+        f'Failed to fetch project id for analysis {analysis_id},error: {e}')
 
 
   def fetch_analysis_records_analysis_id(
@@ -93,6 +92,7 @@ class AnalysisAdaptor(BaseAdaptor):
       query = \
         session.\
         query(
+          Analysis.analysis_id,
           Analysis.analysis_name,
           Analysis.analysis_type,
           Analysis.analysis_description).\
@@ -104,7 +104,8 @@ class AnalysisAdaptor(BaseAdaptor):
       return results
     except Exception as e:
       raise ValueError(
-              'Failed to fetch analysis record, error: {0}'.format(e))
+        f'Failed to fetch analysis record, error: {e}')
+
 
   def fetch_analysis_records_project_igf_id(
         self,project_igf_id,output_mode='dataframe'):
@@ -132,7 +133,8 @@ class AnalysisAdaptor(BaseAdaptor):
       return results
     except Exception as e:
       raise ValueError(
-              'Failed to fetch analysis record, error: {0}'.format(e))
+        f'Failed to fetch analysis record, error: {e}')
+
 
   def fetch_analysis_record_by_analysis_name_and_project_igf_id(
         self, analysis_name, project_igf_id, output_mode='dataframe'):
@@ -156,5 +158,24 @@ class AnalysisAdaptor(BaseAdaptor):
       return results
     except Exception as e:
       raise ValueError(
-              "Failed to fetch analysis for {0} and {1}, error: {2}".\
-                format(analysis_name, project_igf_id, e))
+        f"Failed to fetch analysis for {analysis_name} and {project_igf_id}, error: {e}")
+
+
+  def check_analysis_record_by_analysis_name_and_project_id(
+        self, analysis_name, project_id, output_mode='one_or_none'):
+    try:
+      session = self.session
+      query = \
+        session.\
+          query(
+            Analysis.analysis_id).\
+          filter(Analysis.project_id==project_id).\
+          filter(Analysis.analysis_name==analysis_name)
+      results = \
+        self.fetch_records(
+          query=query,
+          output_mode=output_mode)
+      return results
+    except Exception as e:
+      raise ValueError(
+        f"Failed to fetch analysis for {analysis_name} and {project_id}, error: {e}")

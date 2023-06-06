@@ -347,6 +347,12 @@ class Dag22_bclconvert_demult_utils_testD(unittest.TestCase):
         'RunInfo.xml')
     with open(self.runinfo_xml, 'w') as fp:
       fp.write('A')
+    self.runParameters_xml = \
+      os.path.join(
+        self.seqrun_dir,
+        'runParameters.xml')
+    with open(self.runParameters_xml, 'w') as fp:
+      fp.write('A')
     self.reports_dir = get_temp_dir()
     self.index_metrics_file = \
       os.path.join(
@@ -1664,10 +1670,12 @@ class Dag22_bclconvert_demult_utils_testL(unittest.TestCase):
       data=run_data)
     # file collection
     files = [
-      os.path.join(self.data_dir, 'IGF1_S1_L001_R1_001.fastq.gz'),
-      os.path.join(self.data_dir, 'IGF1_S1_L001_R2_001.fastq.gz'),
-      os.path.join(self.data_dir, 'IGF2_S2_L001_R1_001.fastq.gz'),
-      os.path.join(self.data_dir, 'IGF2_S2_L001_R2_001.fastq.gz')]
+      os.path.join(self.data_dir, 'IGF1', 'IGF1_S1_L001_R1_001.fastq.gz'),
+      os.path.join(self.data_dir, 'IGF1', 'IGF1_S1_L001_R2_001.fastq.gz'),
+      os.path.join(self.data_dir, 'IGF2', 'IGF2_S2_L001_R1_001.fastq.gz'),
+      os.path.join(self.data_dir, 'IGF2', 'IGF2_S2_L001_R2_001.fastq.gz')]
+    os.makedirs(os.path.join(self.data_dir, 'IGF1'), exist_ok=True)
+    os.makedirs(os.path.join(self.data_dir, 'IGF2'), exist_ok=True)
     for f in files:
       with open(f , 'w') as fp:
         fp.write('A')
@@ -1675,22 +1683,22 @@ class Dag22_bclconvert_demult_utils_testL(unittest.TestCase):
       'name' : 'IGF1_MISEQ_000000000-D0YLK_1',
       'type' : 'demultiplexed_fastq',
       'table' : 'run',
-      'file_path' : os.path.join(self.data_dir, 'IGF1_S1_L001_R1_001.fastq.gz'),
+      'file_path' : os.path.join(self.data_dir, 'IGF1', 'IGF1_S1_L001_R1_001.fastq.gz'),
       'location' : 'HPC_PROJECT'}, {
       'name' : 'IGF1_MISEQ_000000000-D0YLK_1',
       'type' : 'demultiplexed_fastq',
       'table' : 'run',
-      'file_path' : os.path.join(self.data_dir, 'IGF1_S1_L001_R2_001.fastq.gz'),
+      'file_path' : os.path.join(self.data_dir, 'IGF1', 'IGF1_S1_L001_R2_001.fastq.gz'),
       'location' : 'HPC_PROJECT'}, {
       'name' : 'IGF2_MISEQ_000000000-D0YLK_1',
       'type' : 'demultiplexed_fastq',
       'table' : 'run',
-      'file_path' : os.path.join(self.data_dir, 'IGF2_S2_L001_R1_001.fastq.gz'),
+      'file_path' : os.path.join(self.data_dir, 'IGF2', 'IGF2_S2_L001_R1_001.fastq.gz'),
       'location' : 'HPC_PROJECT'}, {
       'name' : 'IGF2_MISEQ_000000000-D0YLK_1',
       'type' : 'demultiplexed_fastq',
       'table' : 'run',
-      'file_path' : os.path.join(self.data_dir, 'IGF2_S2_L001_R2_001.fastq.gz'),
+      'file_path' : os.path.join(self.data_dir, 'IGF2', 'IGF2_S2_L001_R2_001.fastq.gz'),
       'location' : 'HPC_PROJECT'}]
     ca = \
       CollectionAdaptor(**{'session':base.session})
@@ -1727,6 +1735,20 @@ class Dag22_bclconvert_demult_utils_testL(unittest.TestCase):
           self.globus_dir,
           'IGF2',
           'IGF2_S2_L001_R1_001.fastq.gz')))
+    self.assertTrue(
+      os.path.exists(
+        os.path.join(
+          self.globus_dir,
+          "md5_manifest.tsv")))
+    df = \
+        pd.read_csv(
+            os.path.join(
+              self.globus_dir,
+              "md5_manifest.tsv"),
+            sep="\t")
+    self.assertTrue(
+      os.path.join('IGF1', 'IGF1_S1_L001_R1_001.fastq.gz') in df['file_path'].values)
+
 
 class Dag22_bclconvert_demult_utils_testM(unittest.TestCase):
   def setUp(self):

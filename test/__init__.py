@@ -115,6 +115,12 @@ def full_suite():
   from .igf_portal.test_metadata_utils import Metadata_dump_test, Metadata_load_test
   from .process.find_and_process_new_project_data_from_portal_db_test import Find_and_register_new_project_data_from_portal_db_test1
   from .igf_airflow.dag23_test_bclconvert_demult_utils_test import Dag23_test_bclconvert_demult_utils_testA
+  from .igf_airflow.dag25_copy_seqruns_to_hpc_utils_test import TestDag25_copy_seqruns_to_hpc_utilsA
+  from .igf_airflow.dag25_copy_seqruns_to_hpc_utils_test import TestDag25_copy_seqruns_to_hpc_utilsB
+  from .igf_airflow.dag26_snakemake_rnaseq_utils_test import TestDag26_snakemake_rnaseq_utilsA
+  from .igf_airflow.dag26_snakemake_rnaseq_utils_test import TestDag26_snakemake_rnaseq_utilsB
+  from .igf_airflow.dag26_snakemake_rnaseq_utils_test import TestDag26_snakemake_rnaseq_utilsC
+  from .igf_airflow.dag27_cleanup_demultiplexing_output_utils_test import TestDag27_cleanup_demultiplexing_output_utilsA
 
   return unittest.TestSuite([
     unittest.TestLoader().loadTestsFromTestCase(t)
@@ -234,6 +240,12 @@ def full_suite():
         Dag22_bclconvert_demult_utils_testK,
         Dag22_bclconvert_demult_utils_testL,
         Dag22_bclconvert_demult_utils_testM,
-        Dag23_test_bclconvert_demult_utils_testA
+        Dag23_test_bclconvert_demult_utils_testA,
+        TestDag26_snakemake_rnaseq_utilsA,
+        TestDag26_snakemake_rnaseq_utilsB,
+        TestDag26_snakemake_rnaseq_utilsC,
+        TestDag25_copy_seqruns_to_hpc_utilsA,
+        TestDag25_copy_seqruns_to_hpc_utilsB,
+        TestDag27_cleanup_demultiplexing_output_utilsA
       ]
     ])

@@ -36,10 +36,12 @@ def post_request(
   try:
     files = None
     if file_attachment is not None:
-      files = {
-        'file': (
-          os.path.join(file_attachment),
-          open(file_attachment, 'rb'), 'application/json')}
+      check_file_path(file_attachment)
+      # files = {
+      #   'file': (
+      #     os.path.join(file_attachment),
+      #     open(file_attachment, 'rb'), 'application/json')}
+      files = {'file': open(file_attachment, 'rb')}
     res = \
       requests.post(
         url=url,
@@ -54,7 +56,8 @@ def post_request(
       res = res.json()
     return res
   except Exception as e:
-    raise
+    raise ValueError(
+      f"Failed to send post request, error: {e}")
 
 
 def get_login_token(
@@ -135,6 +138,7 @@ def upload_files_to_portal(
       portal_config_file: str,
       file_path: str,
       url_suffix: str,
+      data: Any = None,
       verify: bool = False,
       jsonify: bool = True) \
         -> Any:
@@ -154,7 +158,7 @@ def upload_files_to_portal(
     res = \
       post_request(
         url=url,
-        data=None,
+        data=data,
         headers={"accept": "application/json", "Authorization": f"Bearer {token}"},
         file_attachment=file_path,
         verify=verify,

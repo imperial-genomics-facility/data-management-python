@@ -39,9 +39,8 @@ REMOTE_SERVER_USERNAME = Variable.get('seqrun_server_user', default_var=None)
 def _fetch_samplesheet_for_run(
       portal_conf: str,
       seqrun_id: str,
-      override_cycles_key: str = 'override_cycle',
       samplesheet_id_key: str = 'samplesheet_id') \
-        -> Tuple[str, str, str, int]:
+        -> Tuple[str, str, int]:
   try:
     temp_dir = \
       get_temp_dir(use_ephemeral_space=True)
@@ -76,20 +75,20 @@ def _fetch_samplesheet_for_run(
     if samplesheet_tag is None:
       raise ValueError(f"Failed to get samplesheet from portal")
     ## fetch override cycles
-    res = \
-      get_data_from_portal(
-        url_suffix=f"/api/v1/raw_seqrun/get_run_override_cycle/{seqrun_id}",
-        portal_config_file=portal_conf,
-        request_mode='post',
-        verify=False,
-        jsonify=False)
-    if res.status_code != 200:
-      raise ValueError('Failed to get override cycls from portal')
-    data = res.content.decode('utf-8')
-    json_data = json.loads(data)
-    if override_cycles_key not in json_data:
-      raise KeyError(f'Missing key {override_cycles_key}')
-    override_cycles = json_data.get(override_cycles_key)
+    # res = \
+    #   get_data_from_portal(
+    #     url_suffix=f"/api/v1/raw_seqrun/get_run_override_cycle/{seqrun_id}",
+    #     portal_config_file=portal_conf,
+    #     request_mode='post',
+    #     verify=False,
+    #     jsonify=False)
+    # if res.status_code != 200:
+    #   raise ValueError('Failed to get override cycls from portal')
+    # data = res.content.decode('utf-8')
+    # json_data = json.loads(data)
+    # if override_cycles_key not in json_data:
+    #   raise KeyError(f'Missing key {override_cycles_key}')
+    # override_cycles = json_data.get(override_cycles_key)
     ## fetch samplesheet id
     res = \
       get_data_from_portal(
@@ -105,7 +104,7 @@ def _fetch_samplesheet_for_run(
     if samplesheet_id_key not in json_data:
       raise KeyError(f'Missing key {samplesheet_id_key}')
     samplesheet_id = json_data.get(samplesheet_id_key)
-    return samplesheet_file, samplesheet_tag, override_cycles, samplesheet_id
+    return samplesheet_file, samplesheet_tag, samplesheet_id
   except Exception as e:
     raise ValueError(
       f'Failed to get samplesheet for seqrun_id: {seqrun_id}, error: {e}')
@@ -120,14 +119,20 @@ def fetch_seqrun_data_from_portal_func(**context):
     dag_run = context.get('dag_run')
     # get seqrun id
     seqrun_id = None
+    override_cycles = None
+    mismatches = None
     if dag_run is not None and \
        dag_run.conf is not None and \
        dag_run.conf.get('seqrun_id') is not None:
       seqrun_id = dag_run.conf.get('seqrun_id')
-    if seqrun_id is None:
-      raise ValueError('seqrun_id is not provided')
+      override_cycles = dag_run.conf.get('override_cycles')
+      mismatches = dag_run.conf.get('mismatches')
+    if seqrun_id is None or \
+       override_cycles is None or \
+       mismatches is None:
+      raise ValueError('seqrun_id or override_cycles or mismatches is missing')
     ## get samplesheet info from portal
-    samplesheet_file, samplesheet_tag, override_cycles, samplesheet_id = \
+    samplesheet_file, samplesheet_tag, samplesheet_id = \
       _fetch_samplesheet_for_run(
         portal_conf=IGF_PORTAL_CONF,
         seqrun_id=seqrun_id)
@@ -136,6 +141,7 @@ def fetch_seqrun_data_from_portal_func(**context):
       'samplesheet_file': samplesheet_file,
       'samplesheet_tag': samplesheet_tag,
       'override_cycles': override_cycles,
+      'mismatches': mismatches,
       'samplesheet_id': samplesheet_id}
     ti.xcom_push(
       key=samplesheet_info_key,
@@ -168,6 +174,9 @@ def format_samplesheet_func(**context):
     override_cycles_key = \
       context['params'].\
         get('override_cycles_key', 'override_cycles')
+    mismatches_key = \
+      context['params'].\
+        get('mismatches_key', 'mismatches')
     tenx_sc_tag = \
       context['params'].\
         get('tenx_sc_tag', '10X')
@@ -205,13 +214,24 @@ def format_samplesheet_func(**context):
       samplesheet_info.get(override_cycles_key)
     if override_cycles is None:
       override_cycles = ''
-    # get runinfor path
+    mismatches = \
+      samplesheet_info.get(mismatches_key)
+    if mismatches is None:
+      mismatches = 1
+    # get runinfo path
     run_info_xml = \
       os.path.join(
         HPC_SEQRUN_BASE_PATH,
         seqrun_id,
         run_info_filname)
     check_file_path(run_info_xml)
+    # get platform name
+    platform_name, flowcell_id  = \
+      get_platform_name_and_flowcell_id_for_seqrun(
+        seqrun_igf_id=seqrun_id,
+        db_config_file=DATABASE_CONFIG_FILE)
+    if platform_name != 'NOVASEQ6000':              # hack for Novaseq 10x dual index
+      platform_name = 'MISEQ'
     # get formatte samplesheets for pipeline
     formatted_samplesheet_dir = \
       get_temp_dir(use_ephemeral_space=True)
@@ -223,7 +243,9 @@ def format_samplesheet_func(**context):
         singlecell_barcode_json=SINGLECELL_BARCODE_JSON,
         singlecell_dual_barcode_json=SINGLECELL_DUAL_BARCODE_JSON,
         tenx_sc_tag=tenx_sc_tag,
-        override_cycles=override_cycles)
+        override_cycles=override_cycles,
+        mismatches=mismatches,
+        platform=platform_name)
     sample_groups = \
       _get_sample_group_info_for_formatted_samplesheets(
         samplesheets=samplesheets)

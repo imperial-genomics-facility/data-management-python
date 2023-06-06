@@ -134,13 +134,13 @@ class ProcessSingleCellDualIndexSamplesheetA(unittest.TestCase):
     self.assertEqual(
       df[df['Sample_ID']=='IGF0009']['index'].values[0],'GTGGCCTCAT')
     self.assertEqual(
-      df[df['Sample_ID']=='IGF0009']['index2'].values[0],'TCGAAAGTGA')
+      df[df['Sample_ID']=='IGF0009']['index2'].values[0],'TCACTTTCGA')
     self.assertEqual(
       df[df['Sample_ID']=='IGF0009']['Description'].values[0],'')
     self.assertEqual(
       df[df['Sample_ID']=='IGF00010']['index'].values[0],'CACGGTGAAT')
     self.assertEqual(
-      df[df['Sample_ID']=='IGF00010']['index2'].values[0],'GTTCGTCACA')
+      df[df['Sample_ID']=='IGF00010']['index2'].values[0],'TGTGACGAAC')
     self.assertEqual(
       df[df['Sample_ID']=='IGF00010']['Description'].values[0],'')
 

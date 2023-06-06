@@ -111,9 +111,9 @@ def _check_cellranger_multi_output(cellranger_output, library_csv, sample_id):
       'gene_expression': [
         'per_sample_outs/{0}/web_summary.html'.format(sample_id),
         'per_sample_outs/{0}/metrics_summary.csv'.format(sample_id),
-        'per_sample_outs/{0}/count/sample_feature_bc_matrix.h5'.format(sample_id),
+        'per_sample_outs/{0}/count/sample_filtered_feature_bc_matrix.h5'.format(sample_id),
         'per_sample_outs/{0}/count/sample_alignments.bam'.format(sample_id),
-        'per_sample_outs/{0}/count/cloupe.cloupe'.format(sample_id)],
+        'per_sample_outs/{0}/count/sample_cloupe.cloupe'.format(sample_id)],
       'vdj': [
         'per_sample_outs/{0}/web_summary.html'.format(sample_id),
         'per_sample_outs/{0}/vdj/filtered_contig_annotations.csv'.format(sample_id),

@@ -110,6 +110,54 @@ def get_seqrun_counts_func(**context):
       reaction='fail')
     raise
 
+def prepare_storage_plot_generic(**context):
+  try:
+    ti = context.get('ti')
+    xcom_key = \
+      context['params'].get('xcom_key')
+    hpc_rds = \
+      context['params'].get('hpc_rds')
+    ## get all upstream tasks
+    all_task_ids = \
+      context['task'].\
+      get_direct_relative_ids(upstream=True)
+    ## collect xcom from all tasks
+    data_dict = dict()
+    for task_name in all_task_ids:
+      ## hpc xcoms are not encodes
+      if task_name == hpc_rds:
+        data = \
+          ti.xcom_pull(task_ids=task_name)
+        data_dict.update({task_name: data})
+      else:
+        data = \
+          ti.xcom_pull(task_ids=task_name)
+        data = \
+          _convert_base64_to_ascii(data)
+        data_dict.update({task_name: data})
+    ## generate plot
+    plot_data = \
+      _get_storage_plot(data_dict=data_dict)
+    temp_dir = get_temp_dir(use_ephemeral_space=True)
+    json_dump = os.path.join(temp_dir, 'storage_stat.json')
+    with open(json_dump, 'w') as fp:
+      json.dump(plot_data, fp)
+    ti.xcom_push(
+      key=xcom_key,
+      value=json_dump)
+  except Exception as e:
+    logging.error(e)
+    message = \
+      'Failed metadata dump, error: {0}'.\
+        format(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=message,
+      reaction='fail')
+    raise
 
 def prepare_storage_plot_func(**context):
   try:
@@ -134,6 +182,10 @@ def prepare_storage_plot_func(**context):
       context['params'].get('woolf_data1')
     woolf_data2 = \
       context['params'].get('woolf_data2')
+    nextseq1_data = \
+      context['params'].get('nextseq1_data')
+    igfportal_data = \
+      context['params'].get('igfportal_data')
     hpc_rds = \
       context['params'].get('hpc_rds')
     xcom_key = \
@@ -151,6 +203,10 @@ def prepare_storage_plot_func(**context):
       ti.xcom_pull(task_ids=wells_data)
     wells_data_data = \
       _convert_base64_to_ascii(wells_data_data)
+    nextseq1_data_data = \
+      ti.xcom_pull(task_ids=nextseq1_data)
+    nextseq1_data_data = \
+      _convert_base64_to_ascii(nextseq1_data_data)
     eliot_root_data = \
       ti.xcom_pull(task_ids=eliot_root)
     eliot_root_data = \
@@ -179,6 +235,10 @@ def prepare_storage_plot_func(**context):
       ti.xcom_pull(task_ids=woolf_data2)
     woolf_data2_data = \
       _convert_base64_to_ascii(woolf_data2_data)
+    igfportal_root_data = \
+      ti.xcom_pull(task_ids=igfportal_data)
+    igfportal_root_data = \
+      _convert_base64_to_ascii(igfportal_root_data)
     hpc_rds_data = \
       ti.xcom_pull(task_ids=hpc_rds)
     data_dict = {
@@ -192,7 +252,9 @@ def prepare_storage_plot_func(**context):
       'woolf_root': woolf_root_data,
       'woolf_data1': woolf_data1_data,
       'woolf_data2': woolf_data2_data,
-      'hpc_rds': hpc_rds_data
+      'hpc_rds': hpc_rds_data,
+      'igfportal_root': igfportal_root_data,
+      'NextSeq_1': nextseq1_data_data
     }
     plot_data = \
       _get_storage_plot(data_dict=data_dict)

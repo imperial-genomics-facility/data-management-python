@@ -1,4 +1,5 @@
 import pandas as pd
+from typing import Tuple, Union
 from sqlalchemy import update
 from sqlalchemy.sql import column
 from igf_data.igfdb.baseadaptor import BaseAdaptor
@@ -29,7 +30,7 @@ class PipelineAdaptor(BaseAdaptor):
 
 
   def fetch_pipeline_records_pipeline_name(
-        self,pipeline_name,target_column_name='pipeline_name'):
+        self,pipeline_name,target_column_name='pipeline_name',output_mode='one'):
     '''
     A method for fetching data for Pipeline table
 
@@ -47,7 +48,7 @@ class PipelineAdaptor(BaseAdaptor):
           table=Pipeline,
           column_name=column,
           column_id=pipeline_name,
-          output_mode='one')
+          output_mode=output_mode)
       return pipeline
     except Exception as e:
       raise ValueError(
@@ -73,9 +74,35 @@ class PipelineAdaptor(BaseAdaptor):
         f'Failed to check pipeline using pipeline name, error: {e}')
 
 
+  def check_existing_pipeseed(
+        self,
+        seed_id: int,
+        seed_table: str,
+        pipeline_name: str) \
+          -> Union[str, None]:
+    try:
+      query = \
+        self.session.\
+          query(Pipeline_seed.status).\
+          join(Pipeline, Pipeline.pipeline_id==Pipeline_seed.pipeline_id).\
+          filter(Pipeline_seed.seed_id==seed_id).\
+          filter(Pipeline_seed.seed_table==seed_table)
+      pipeseed_record = \
+        self.fetch_records(
+          query=query,
+          output_mode='one_or_none')
+      if pipeseed_record is not None:
+        pipeseed_record = \
+          pipeseed_record.status
+      return pipeseed_record
+    except Exception as e:
+      raise ValueError(
+        f"Failed to get pipeseed for seed {seed_id} and pipeline {pipeline_name}")
+
+
   def fetch_pipeline_seed(
         self,pipeline_id,seed_id,seed_table,
-        target_column_name=('pipeline_id', 'seed_id','seed_table')):
+        target_column_name=('pipeline_id', 'seed_id','seed_table'), output_mode='one'):
     '''
     A method for fetching unique pipeline seed using pipeline_id, seed_id and seed_table
 
@@ -91,19 +118,29 @@ class PipelineAdaptor(BaseAdaptor):
           list(target_column_name)
       column_list = [
         column
-          for column in Collection.__table__.columns \
+          for column in Pipeline_seed.__table__.columns \
             if column.key in target_column_name]
       column_data = \
         dict(zip(column_list,[pipeline_id, seed_id, seed_table]))
+      # pipe_seed = \
+      #   self.fetch_records_by_multiple_column(
+      #     table=Pipeline_seed,
+      #     column_data=column_data,
+      #     output_mode=output_mode)
+      query = \
+        self.session.\
+          query(Pipeline_seed).\
+          filter(Pipeline_seed.seed_id==seed_id).\
+          filter(Pipeline_seed.pipeline_id==pipeline_id).\
+          filter(Pipeline_seed.seed_table==seed_table)
       pipe_seed = \
-        self.fetch_records_by_multiple_column(
-          table=Pipeline_seed,
-          column_data=column_data,
-          output_mode='one')
+        self.fetch_records(
+          query=query,
+          output_mode=output_mode)
       return pipe_seed
     except Exception as e:
       raise ValueError(
-              'Failed to fetch pipeline seeds, error: {0}'.format(e))
+        f'Failed to fetch pipeline seeds, error: {e}')
 
 
   def __map_seed_data_to_foreign_table(self,data):
@@ -369,8 +406,14 @@ class PipelineAdaptor(BaseAdaptor):
 
 
   def create_or_update_pipeline_seed(
-        self,seed_id,pipeline_name,new_status,seed_table,
-        no_change_status=None,autosave=True):
+        self,
+        seed_id: int,
+        pipeline_name: str,
+        new_status: str,
+        seed_table: str,
+        no_change_status: Union[str, list, None] = None,
+        autosave: bool = True) \
+          -> bool:
     try:
       change_status = False
       query = \
@@ -408,12 +451,37 @@ class PipelineAdaptor(BaseAdaptor):
           autosave=autosave)
         change_status = True
       else:
-        if pipeseed_entry.status != no_change_status:
+        ## if no_change_status is None, change it anyway
+        if no_change_status is None:
           pipeseed_data = [{
-            'seed_id':seed_id,
-            'seed_table':seed_table,
-            'pipeline_id':pipeline_id,
-            'status':new_status}]
+            'seed_id': seed_id,
+            'seed_table': seed_table,
+            'pipeline_id': pipeline_id,
+            'status': new_status}]
+          self.update_pipeline_seed(
+            data=pipeseed_data,
+            autosave=autosave)
+          change_status = True
+        ## if no_change_status is string
+        elif isinstance(no_change_status, str) and \
+           pipeseed_entry.status != no_change_status:
+          pipeseed_data = [{
+            'seed_id': seed_id,
+            'seed_table': seed_table,
+            'pipeline_id': pipeline_id,
+            'status': new_status}]
+          self.update_pipeline_seed(
+            data=pipeseed_data,
+            autosave=autosave)
+          change_status = True
+        ## if no_change_status is a list
+        elif isinstance(no_change_status, list) and \
+          pipeseed_entry.status not in no_change_status:
+          pipeseed_data = [{
+            'seed_id': seed_id,
+            'seed_table': seed_table,
+            'pipeline_id': pipeline_id,
+            'status': new_status}]
           self.update_pipeline_seed(
             data=pipeseed_data,
             autosave=autosave)

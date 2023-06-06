@@ -263,6 +263,86 @@ def copy_report_to_rds_func(**context):
       reaction='fail')
     raise
 
+def upload_report_to_portal_func(**context):
+  try:
+    ti = context.get('ti')
+    dag_run = context.get('dag_run')
+    # get demult report
+    demult_report_key = \
+      context['params'].\
+      get(
+        'demult_report_key',
+        'demult_report')
+    demult_report_task = \
+      context['params'].\
+      get('demult_report_task')
+    demult_report = \
+      ti.xcom_pull(
+        task_ids=demult_report_task,
+        key=demult_report_key)
+    check_file_path(demult_report)
+    # get seqrun id
+    seqrun_id = None
+    samplesheet_tag = None
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('seqrun_id') is not None:
+      seqrun_id = dag_run.conf.get('seqrun_id')
+      samplesheet_tag = dag_run.conf.get('samplesheet_tag')
+    if seqrun_id is None:
+      raise ValueError('seqrun_id is not provided')
+    if samplesheet_tag is None:
+      raise ValueError('samplesheet_tag is not provided')
+    # get formatted samplesheets
+    formatted_samplesheet_xcom_key = \
+      context['params'].\
+      get(
+        'formatted_samplesheet_xcom_key',
+        'formatted_samplesheet_data')
+    formatted_samplesheet_xcom_task = \
+      context['params'].\
+      get(
+        'formatted_samplesheet_xcom_task',
+        'get_formatted_samplesheets')
+    samplesheet_index = \
+      context['params'].\
+      get('samplesheet_index')
+    index_column = \
+      context['params'].\
+      get('index_column', 'index')
+    lane_column = \
+      context['params'].\
+      get('lane_column', 'lane')
+    tag_column = \
+      context['params'].\
+      get('tag_column', 'tag')
+    filtered_df = \
+      _fetch_formatted_samplesheet_info_from_task_instance(
+        ti=ti,
+        samplesheet_index=samplesheet_index,
+        index_column=index_column,
+        samplesheet_key=formatted_samplesheet_xcom_key,
+        samplesheet_task=formatted_samplesheet_xcom_task)
+    lane_id = filtered_df[lane_column].values[0]
+    tag = filtered_df[tag_column].values[0]
+    # upload file to portal
+    _ = \
+      upload_files_to_portal(
+        portal_config_file=IGF_PORTAL_CONF,
+        file_path=demult_report,
+        data={"run_name": seqrun_id, "samplesheet_tag": f"{samplesheet_tag}_{str(lane_id)}_{str(tag)}"},
+        url_suffix='/api/v1/predemultiplexing_data/add_report')
+  except Exception as e:
+    log.error(e)
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=e,
+      reaction='fail')
+    raise
+
 
 def upload_report_to_box_func(**context):
   try:
@@ -652,7 +732,8 @@ def calculate_override_bases_mask_func(**context):
     mod_sa = SampleSheet(samplesheet_file_path)
     mod_sa.\
       set_header_for_bclconvert_run(
-        bases_mask=override_cycles)
+        bases_mask=override_cycles,
+        barcode_mismatches=0)
     mod_sa.\
       print_sampleSheet(new_samplesheet_path)
     # add new samplesheet to xcom

@@ -510,9 +510,83 @@ class Pipelineadaptor_test4(unittest.TestCase):
         output_mode='one_or_none')
     self.assertEqual(pipeseed_entry.status,'RUNNING')
     self.assertTrue(status)
+    status = \
+      pl.create_or_update_pipeline_seed(
+        seed_id=2,
+        pipeline_name='analysys_pipeline_1',
+        new_status='FAILED',
+        seed_table='analysis',
+        no_change_status=None)
+    self.assertTrue(status)
+    query = \
+      pl.session.\
+        query(Pipeline_seed).\
+        filter(Pipeline_seed.seed_id==2).\
+        filter(Pipeline_seed.pipeline_id==1).\
+        filter(Pipeline_seed.seed_table=='analysis')
+    pipeseed_entry = \
+      pl.fetch_records(
+        query=query,
+        output_mode='one_or_none')
+    self.assertEqual(pipeseed_entry.status, 'FAILED')
+    status = \
+      pl.create_or_update_pipeline_seed(
+        seed_id=2,
+        pipeline_name='analysys_pipeline_1',
+        new_status='SEEDED',
+        seed_table='analysis',
+        no_change_status=['FAILED', 'RUNNING'])
+    self.assertFalse(status)
+    query = \
+      pl.session.\
+        query(Pipeline_seed).\
+        filter(Pipeline_seed.seed_id==2).\
+        filter(Pipeline_seed.pipeline_id==1).\
+        filter(Pipeline_seed.seed_table=='analysis')
+    pipeseed_entry = \
+      pl.fetch_records(
+        query=query,
+        output_mode='one_or_none')
+    self.assertEqual(pipeseed_entry.status, 'FAILED')
+    status = \
+      pl.create_or_update_pipeline_seed(
+        seed_id=2,
+        pipeline_name='analysys_pipeline_1',
+        new_status='SEEDED',
+        seed_table='analysis',
+        no_change_status=['FINISHED', 'RUNNING'])
+    self.assertTrue(status)
+    query = \
+      pl.session.\
+        query(Pipeline_seed).\
+        filter(Pipeline_seed.seed_id==2).\
+        filter(Pipeline_seed.pipeline_id==1).\
+        filter(Pipeline_seed.seed_table=='analysis')
+    pipeseed_entry = \
+      pl.fetch_records(
+        query=query,
+        output_mode='one_or_none')
+    self.assertEqual(pipeseed_entry.status, 'SEEDED')
     pl.close_session()
-    
 
+  def test_check_existing_pipeseed(self):
+    pl = \
+      PipelineAdaptor(**{
+        'session_class': self.session_class})
+    pl.start_session()
+    pipeseed_status = \
+      pl.check_existing_pipeseed(
+        seed_id=1,
+        seed_table='analysis',
+        pipeline_name="analysys_pipeline_1")
+    self.assertIsNotNone(pipeseed_status)
+    self.assertEqual(pipeseed_status, 'SEEDED')
+    pipeseed_status = \
+      pl.check_existing_pipeseed(
+        seed_id=2,
+        seed_table='analysis',
+        pipeline_name="analysys_pipeline_1")
+    self.assertIsNone(pipeseed_status)
 
 if __name__ == '__main__':
   unittest.main()

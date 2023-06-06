@@ -21,7 +21,7 @@ class ProcessSingleCellDualIndexSamplesheet:
   :param workflow_group: A dictionary containing the I5 index tag for different platforms, default
       (('HISEQ4000', 'index2_workflow_b(i5)'),
       ('NEXTSEQ', 'index2_workflow_b(i5)'),
-      ('NOVASEQ6000', 'index2_workflow_a(i5)'),
+      ('NOVASEQ6000', 'index2_workflow_b(i5)'),
       ('NEXTSEQ2000', 'index2_workflow_a(i5)'),
       ('MISEQ', 'index2_workflow_a(i5)'))
   '''
@@ -39,7 +39,7 @@ class ProcessSingleCellDualIndexSamplesheet:
         workflow_group: Any = \
           (('HISEQ4000', 'index2_workflow_b(i5)'),
            ('NEXTSEQ', 'index2_workflow_b(i5)'),
-           ('NOVASEQ6000', 'index2_workflow_a(i5)'),
+           ('NOVASEQ6000', 'index2_workflow_b(i5)'),
            ('NEXTSEQ2000', 'index2_workflow_a(i5)'),
            ('MISEQ', 'index2_workflow_a(i5)'))) -> None:
     self.samplesheet_file = samplesheet_file
@@ -85,8 +85,8 @@ class ProcessSingleCellDualIndexSamplesheet:
       df = pd.DataFrame(sa._data)
       df[self.sample_description_column] = \
         df[self.sample_description_column].map(lambda x: x.strip().upper())             # convert sample description to upper case
-      df = \
-        df.apply(
+      #df = \
+      df.apply(
           lambda series: self._replace_sc_dual_barcodes(series),
           result_type='reduce',
           axis=1)

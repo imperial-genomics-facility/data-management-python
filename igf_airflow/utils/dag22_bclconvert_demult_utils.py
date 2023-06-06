@@ -10,6 +10,7 @@ import logging
 import fnmatch
 import subprocess
 from typing import Tuple
+from typing import Union
 from typing import List
 from typing import Any
 import smtplib
@@ -2904,7 +2905,8 @@ def register_experiment_and_runs_to_db(
           'sample_igf_id': sample_id,
           'library_name': library_id,
           'experiment_igf_id': experiment_id,
-          'library_layout': library_layout
+          'library_layout': library_layout,
+          'platform_name': platform_name
         })
         run_data.append({
           'experiment_igf_id': experiment_id,
@@ -3320,6 +3322,12 @@ def copy_fastqs_for_sample_to_globus_dir(
       os.path.join(
         globus_dir_for_index_group,
         "md5_manifest.tsv")
+    records['file_path'] = \
+      records['file_path'].\
+        map(lambda x:
+          os.path.join(
+            os.path.basename(os.path.dirname(x)),
+            os.path.basename(x)))
     records[['md5', 'file_path']].\
       to_csv(
         target_md5_manifest_path,
@@ -4043,10 +4051,10 @@ def load_bclconvert_report_func(**context):
       get("formatted_samplesheets")
     xcom_key_for_reports = \
       context['params'].\
-      get('xcom_key_for_reports', 'bclconvert_reports')
+      get('xcom_key_for_bclconvert_reports', 'bclconvert_reports')
     xcom_task_for_reports = \
       context['params'].\
-      get('xcom_task_for_reports')
+      get('xcom_task_for_bclconvert_reports')
     bclconvert_reports_path = \
       ti.xcom_pull(
         key=xcom_key_for_reports,
@@ -4183,6 +4191,18 @@ def generate_bclconvert_report(
     copy_local_file(
       runinfo_xml,
       os.path.join(temp_run_dir, 'RunInfo.xml'))
+    run_parameters_xml_file = \
+      os.path.join(seqrun_path, 'RunParameters.xml')
+    if not os.path.exists(run_parameters_xml_file):
+      run_parameters_xml_file = \
+        os.path.join(seqrun_path, 'runParameters.xml')
+      copy_local_file(
+        run_parameters_xml_file,
+        os.path.join(temp_run_dir, 'runParameters.xml'))
+    else:
+      copy_local_file(
+        run_parameters_xml_file,
+        os.path.join(temp_run_dir, 'RunParameters.xml'))
     copy_local_file(
       index_metric_bin,
       os.path.join(
@@ -5307,8 +5327,11 @@ def _get_formatted_samplesheets(
       samplesheet_output_dir: str,
       singlecell_barcode_json: str,
       singlecell_dual_barcode_json: str,
-      tenx_sc_tag: str='10X',
-      override_cycles: str = '') \
+      tenx_sc_tag: str = '10X',
+      platform: str = 'MISEQ',
+      index2_rule: str = 'NOCHANGE',
+      override_cycles: str = '',
+      mismatches: int = 1) \
         -> list:
   try:
     check_file_path(samplesheet_file)
@@ -5325,8 +5348,8 @@ def _get_formatted_samplesheets(
       ProcessSingleCellDualIndexSamplesheet(
         samplesheet_file=samplesheet_file,
         singlecell_dual_index_barcode_json=singlecell_dual_barcode_json,
-        platform='MISEQ',
-        index2_rule='NOCHANGE')
+        platform=platform,
+        index2_rule=index2_rule)
     temp_sc_dual_conv_samplesheet_file = \
       os.path.join(temp_dir, 'sc_dual_index_samplesheet.csv')
     sc_dual_process.\
@@ -5424,7 +5447,9 @@ def _get_formatted_samplesheets(
                 bases_mask = override_cycles
               ig_final_sa = SampleSheet(ig_samplesheet_temp_path)
               ig_final_sa.\
-                set_header_for_bclconvert_run(bases_mask=bases_mask)
+                set_header_for_bclconvert_run(
+                  bases_mask=bases_mask,
+                  barcode_mismatches=mismatches)
               ig_final_sa.\
                 print_sampleSheet(ig_samplesheet_path)
               ## get sample counts
@@ -5854,7 +5879,7 @@ def _check_and_seed_seqrun_pipeline(
     dbconf_json_path: str,
     seed_status: str = 'SEEDED',
     seed_table: str ='seqrun',
-    no_change_status: str = 'RUNNING',
+    no_change_status: Union[list, str] = 'RUNNING',
     check_all_pipelines_for_seed_id: bool = False) -> bool:
   try:
     dbconf = read_dbconf_json(dbconf_json_path)
