@@ -1,6 +1,8 @@
 import re, os, warnings
 from collections import defaultdict
 from bs4 import BeautifulSoup
+from lxml.html.soupparser import fromstring
+from lxml.etree import tostring
 
 class RunInfo_xml:
   '''
@@ -79,6 +81,8 @@ class RunInfo_xml:
       xml_file = self.xml_file
       with open(xml_file, 'r') as fp:
         soup = BeautifulSoup(fp, "html5lib")
+        #data = fp.read()
+        #soup = fromstring(data)
       self._soup = soup
     except Exception as e:
       raise ValueError(f"Failed to read xml file {xml_file}, error: {e}")

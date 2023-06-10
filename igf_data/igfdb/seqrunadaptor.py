@@ -289,8 +289,8 @@ class SeqrunAdaptor(BaseAdaptor):
         join(Seqrun,Seqrun.platform_id==Platform.platform_id).\
         filter(Seqrun.seqrun_igf_id==seqrun_igf_id)
       platform_name = \
-        self.fetch_records(query=query,output_mode='one_or_none')
-      if isinstance(platform_name,tuple):
+        self.fetch_records(query=query, output_mode='one_or_none')
+      if platform_name is not None:
         platform_name = platform_name[0]
       return platform_name
     except Exception as e:

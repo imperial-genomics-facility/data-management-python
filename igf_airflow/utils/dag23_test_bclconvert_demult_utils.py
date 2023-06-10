@@ -3,6 +3,7 @@ import stat
 import json
 import logging
 import pandas as pd
+import numpy as np
 from typing import Tuple, Any
 from airflow.models import Variable
 from airflow.models import taskinstance
@@ -802,7 +803,7 @@ def _format_samplesheet_per_index_group(
     # convert index2 based on rules
     if index2_rule == 'REVCOMP':
       df[index2_column] = \
-        pd.np.where(
+        np.where(
           df[description_column]!=singlecell_tag,
           df[index2_column].map(lambda x: rev_comp(x)),
           df[index2_column])

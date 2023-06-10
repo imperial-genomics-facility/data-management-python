@@ -84,24 +84,47 @@ class Experiment_metadata_updator_test(unittest.TestCase):
     self.assertEqual(exp3.library_source,'TRANSCRIPTOMIC_SINGLE_CELL')
     ea.close_session()
 
-  def test_update_metadta_from_sample_attribute2(self):
-    ea=ExperimentAdaptor(**{'session_class':self.session_class})
+  def test_update_metadata_from_sample_attribute2(self):
+    ea = \
+      ExperimentAdaptor(
+        **{'session_class':self.session_class})
     ea.start_session()
-    exp1=ea.fetch_experiment_records_id(experiment_igf_id='IGF00001_HISEQ4000')
-    self.assertEqual(exp1.library_strategy,'UNKNOWN')
-    exp2=ea.fetch_experiment_records_id(experiment_igf_id='IGF00003_HISEQ4000')
-    self.assertEqual(exp2.library_source,'UNKNOWN')
+    exp1 = \
+      ea.fetch_experiment_records_id(
+        experiment_igf_id='IGF00001_HISEQ4000')
+    self.assertEqual(
+      exp1.library_strategy, 'UNKNOWN')
+    exp2 = \
+      ea.fetch_experiment_records_id(
+        experiment_igf_id='IGF00003_HISEQ4000')
+    self.assertEqual(
+      exp2.library_source, 'UNKNOWN')
     ea.close_session()
-    emu=Experiment_metadata_updator(dbconfig_file=self.dbconfig,
-                                    log_slack=False)
-    emu.update_metadta_from_sample_attribute(experiment_igf_id='IGF00001_HISEQ4000')
-    emu.update_metadta_from_sample_attribute(experiment_igf_id='IGF00004_HISEQ4000')
-    ea=ExperimentAdaptor(**{'session_class':self.session_class})
+    emu = \
+      Experiment_metadata_updator(
+        dbconfig_file=self.dbconfig,
+        log_slack=False)
+    emu.\
+      update_metadta_from_sample_attribute(
+        experiment_igf_id='IGF00001_HISEQ4000')
+    emu.\
+      update_metadta_from_sample_attribute(
+        experiment_igf_id='IGF00004_HISEQ4000')
+    ea = \
+      ExperimentAdaptor(**{'session_class':self.session_class})
     ea.start_session()
-    exp1=ea.fetch_experiment_records_id(experiment_igf_id='IGF00001_HISEQ4000')
-    self.assertEqual(exp1.library_strategy,'RNA-SEQ')
-    exp2=ea.fetch_experiment_records_id(experiment_igf_id='IGF00003_HISEQ4000')
-    self.assertEqual(exp2.library_source,'UNKNOWN')
+    exp1 = \
+      ea.\
+        fetch_experiment_records_id(
+          experiment_igf_id='IGF00001_HISEQ4000')
+    self.assertEqual(
+      exp1.library_strategy, 'RNA-SEQ')
+    exp2 = \
+      ea.\
+        fetch_experiment_records_id(
+          experiment_igf_id='IGF00003_HISEQ4000')
+    self.assertEqual(
+      exp2.library_source, 'UNKNOWN')
     ea.close_session()
 
 if __name__=='__main__':

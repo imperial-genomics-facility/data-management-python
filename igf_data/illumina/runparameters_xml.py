@@ -18,7 +18,7 @@ class RunParameter_xml:
     try:
       xml_file = self.xml_file
       with open(xml_file, 'r') as fp:
-        soup = BeautifulSoup(fp, "html5lib")
+        soup = BeautifulSoup(fp, features="html5lib")
       self._soup = soup
     except Exception as e:
       raise ValueError(
