@@ -10,7 +10,6 @@ We would like to update you that the fastq files from a recent sequencing run "{
 
 Data access via Globus (FILES AVAILABLE FOR 30 DAYS):
   For first run of any project:
-    - We create separate Globus collection for each project
     - Send us your Globus username (or Imperial College username) for creating a new collection (we don't create it by default)
     - Check Globus collection and download data
 
