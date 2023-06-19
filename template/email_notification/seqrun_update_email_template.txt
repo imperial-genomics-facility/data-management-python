@@ -9,17 +9,24 @@ Dear {{ customerName }}, {% if not send_email_to_user %}EMAIL FOR {{ customerEma
 We would like to update you that the fastq files from a recent sequencing run "{{ flowcellId }} - {{ projectRunDate }}" is now available for your project {{ projectName }}.
 
 Data access via Globus (FILES AVAILABLE FOR 30 DAYS):
-  - Check the Globus collection directory linked to your project OR
-  - Send us your Globus username (or Imperial College username) for creating a new one
-  - More information about Globus based transfer
-      https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html#globus-based-transfer
+  For first run of any project:
+    - We create separate Globus collection for each project
+    - Send us your Globus username (or Imperial College username) for creating a new collection (we don't create it by default)
+    - Check Globus collection and download data
 
-  Please check our help page for a list of alternative data transfer options:
-    https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html
+  For additional run of any project:
+  - Check the Globus collection directory linked to your project 
+  - Check Globus collection and download data
+
+  More information about Globus based transfer
+      https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html#globus-based-transfer
 
 Fastq file validation:
   - Validate file MD5 checksum after transferring files to your own storage
       https://imperial-genomics-facility.github.io/igf-pipeline-help/demultiplexing.html#bclconvert-fastq-file-validation
+
+List of alternative data transfer options:
+    https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html
 
 QC Report pages:
   - Project home:
