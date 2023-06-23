@@ -5,6 +5,7 @@ amqp==5.1.1
 anyio==3.7.0
 apache-airflow==2.6.1
 apache-airflow-providers-celery==3.2.0
+apache-airflow-providers-ssh==3.7.0
 apache-airflow-providers-cncf-kubernetes==7.0.0
 apache-airflow-providers-common-sql==1.5.1
 apache-airflow-providers-ftp==3.4.1
@@ -179,3 +180,4 @@ wrapt==1.15.0
 WTForms==3.0.1
 yarl==1.9.2
 zipp==3.15.0
+tox==4.6.0
