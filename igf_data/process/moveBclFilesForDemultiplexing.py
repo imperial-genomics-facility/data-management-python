@@ -50,10 +50,10 @@ class moveBclFilesForDemultiplexing:
       samplesheet_data = SampleSheet(infile=self.samplesheet)
       if self.platform_model is None:
         # set pattern for HiSeq platforms
-        hiseq_pattern = re.compile('^HISEQ', re.IGNORECASE)
-        nextseq_pattern = re.compile('^NEXTSEQ', re.IGNORECASE)
-        miseq_pattern = re.compile('^FASTQ Only', re.IGNORECASE)
-        novaseq_pattern = re.compile('^NOVASEQ', re.IGNORECASE)
+        hiseq_pattern = re.compile(r'^HISEQ', re.IGNORECASE)
+        nextseq_pattern = re.compile(r'^NEXTSEQ', re.IGNORECASE)
+        miseq_pattern = re.compile(r'^FASTQ Only', re.IGNORECASE)
+        novaseq_pattern = re.compile(r'^NOVASEQ', re.IGNORECASE)
         # read the samplesheet info
         platform_name = samplesheet_data.get_platform_name()
         runinfo_data = RunInfo_xml(xml_file=self.run_info_xml)

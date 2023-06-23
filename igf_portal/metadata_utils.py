@@ -124,9 +124,9 @@ def _get_metadata_csv_files_from_metadata_dir(metadata_dir: str) -> dict:
   try:
     check_file_path(metadata_dir)
     samplesheet_pattern = \
-      re.compile('\S+_SampleSheet\S+', re.IGNORECASE)
+      re.compile(r'\S+_SampleSheet\S+', re.IGNORECASE)
     reformatted_pattern = \
-      re.compile('\S+_reformatted\S+', re.IGNORECASE)
+      re.compile(r'\S+_reformatted\S+', re.IGNORECASE)
     formatted_csv_files = dict()
     raw_csv_files = dict()
     for root, _, files in os.walk(metadata_dir):

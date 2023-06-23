@@ -283,8 +283,8 @@ def prepare_storage_plot_func(**context):
 def _get_storage_plot(data_dict: dict) -> dict:
   try:
     storage_data = list()
-    storage_pattern = re.compile('(\d+)\s+(\d+)\s+(\S+)')
-    hpc_storage_pattern = re.compile('(\d+)\.(\d+)TB\s+(\d+)\.(\d+)TB')         # expecting used data in TBs
+    storage_pattern = re.compile(r'(\d+)\s+(\d+)\s+(\S+)')
+    hpc_storage_pattern = re.compile(r'(\d+)\.(\d+)TB\s+(\d+)\.(\d+)TB')         # expecting used data in TBs
     for key, value in data_dict.items():
       if re.match(storage_pattern, value):
         used, available, name = \
