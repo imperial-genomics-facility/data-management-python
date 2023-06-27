@@ -18,6 +18,7 @@ argcomplete==3.1.1
 asana==3.2.1
 asgiref==3.7.2
 async-timeout==4.0.2
+atlassian-python-api==3.38.0
 attrs==23.1.0
 Babel==2.12.1
 bcrypt==4.0.1
