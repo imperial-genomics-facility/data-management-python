@@ -5,6 +5,6 @@
 #PBS -l walltime=01:00:00
 #PBS -l select=1:ncpus=4:mem=4gb
 
-source /rds/general/user/igf/home/data2/airflow_v2/secrets/hpc_env.sh
+source /rds/general/user/igf/home/data2/airflow_v3/secrets/hpc_env.sh
 
 airflow scheduler --pid ${TMPDIR}/pid
