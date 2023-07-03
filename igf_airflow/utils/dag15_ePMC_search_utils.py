@@ -5,6 +5,8 @@ from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_data.utils.epmc_utils import search_epmc_for_keyword
 from igf_data.utils.confluence_utils import update_confluence_page
 
+logger = logging.getLogger(__name__)
+
 CONFLUENCE_CONFIG_FILE = Variable.get('confluence_config', default_var=None)
 SLACK_CONF = Variable.get('slack_conf', default_var=None)
 MS_TEAMS_CONF = Variable.get('ms_teams_conf', default_var=None)
@@ -47,7 +49,7 @@ def update_wiki_publication_page_func(**context):
       comment=message,
       reaction='pass')
   except Exception as e:
-    logging.error(e)
+    logger.error(e)
     message = \
       'Wiki update error: {0}'.\
         format(e)
@@ -58,3 +60,4 @@ def update_wiki_publication_page_func(**context):
       dag_id=context['task'].dag_id,
       comment=message,
       reaction='fail')
+    raise
