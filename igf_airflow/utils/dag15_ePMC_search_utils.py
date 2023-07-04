@@ -52,7 +52,7 @@ def update_wiki_publication_page_func(**context):
   except Exception as e:
     logger.error(e)
     message = \
-      f'Wiki update error: {e}, Log: {ti.log_url}, Try no.: {ti.try_number}'
+      f'Wiki update error: {e}, Log: {ti.dag_id}/{ti.task_id}/{ti.execution_date}/{ti.try_number}'
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
