@@ -138,12 +138,14 @@ def generate_merged_report_func(**context):
     #    demult_data = all_demult_info)
   except Exception as e:
     log.error(e)
+    message = \
+      f'{e}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise
 
@@ -255,12 +257,14 @@ def copy_report_to_rds_func(**context):
           stat.S_IXGRP)
   except Exception as e:
     log.error(e)
+    message = \
+      f'{e}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise
 
@@ -335,12 +339,14 @@ def upload_report_to_portal_func(**context):
         url_suffix='/api/v1/predemultiplexing_data/add_report')
   except Exception as e:
     log.error(e)
+    message = \
+      f'{e}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise
 
@@ -421,12 +427,14 @@ def upload_report_to_box_func(**context):
       upload_dir=box_dir)
   except Exception as e:
     log.error(e)
+    message = \
+      f'{e}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise
 
@@ -505,12 +513,14 @@ def generate_report_func(**context):
       value=report_dest_path)
   except Exception as e:
     log.error(e)
+    message = \
+      f'{e}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise
 
@@ -618,12 +628,14 @@ def bcl_convert_run_func(**context):
       value=demult_info)
   except Exception as e:
     log.error(e)
+    message = \
+      f'{e}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise
 
@@ -743,12 +755,14 @@ def calculate_override_bases_mask_func(**context):
       value=new_samplesheet_path)
   except Exception as e:
     log.error(e)
+    message = \
+      f'{e}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise
 
@@ -933,7 +947,8 @@ def _format_samplesheet_per_index_group(
           'samplesheet_file': samplesheet_file})
     return formatted_samplesheets
   except Exception as e:
-    raise ValueError(f"Failed to format samplesheet per index group, error: {e}")
+    raise ValueError(
+      f"Failed to format samplesheet per index group, error: {e}")
 
 
 def get_formatted_samplesheets_func(**context):
@@ -1031,12 +1046,14 @@ def get_formatted_samplesheets_func(**context):
     return task_list
   except Exception as e:
     log.error(e)
+    message = \
+      f'{e}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise
 
@@ -1071,12 +1088,14 @@ def mark_seqrun_status_func(**context):
       return [last_task]
   except Exception as e:
     log.error(e)
+    message = \
+      f'{e}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise
 
@@ -1135,11 +1154,13 @@ def get_samplesheet_from_portal_func(**context):
       value={'samplesheet_tag': samplesheet_tag, 'samplesheet_file': samplesheet_file})
   except Exception as e:
     log.error(e)
+    message = \
+      f'{e}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise
