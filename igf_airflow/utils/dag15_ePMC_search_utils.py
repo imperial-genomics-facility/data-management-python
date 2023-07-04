@@ -15,6 +15,7 @@ WIKI_PUBLICATION_PAGE_TITLE = Variable.get('wiki_publication_page_title', defaul
 
 def update_wiki_publication_page_func(**context):
   try:
+    ti = context.get('ti')
     all_data = \
       search_epmc_for_keyword(
         search_term="\"Imperial BRC Genomics Facility\"")
@@ -51,8 +52,7 @@ def update_wiki_publication_page_func(**context):
   except Exception as e:
     logger.error(e)
     message = \
-      'Wiki update error: {0}'.\
-        format(e)
+      f'Wiki update error: {e}, Log: {ti.log_url}, Try no.: {ti.try_number}'
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
