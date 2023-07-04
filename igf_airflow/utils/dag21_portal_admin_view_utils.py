@@ -12,6 +12,8 @@ from igf_data.utils.fileutils import copy_local_file, check_file_path
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_portal.api_utils import upload_files_to_portal
 
+logger = logging.getLogger(__name__)
+
 DATABASE_CONFIG_FILE = \
   Variable.get('database_config_file', default_var=None)
 SLACK_CONF = \
@@ -97,10 +99,11 @@ def get_seqrun_counts_func(**context):
       key=xcom_key,
       value=seqrun_stats_json)
   except Exception as e:
-    logging.error(e)
+    logger.error(e)
     message = \
-      'Failed metadata dump, error: {0}'.\
-        format(e)
+      f'Failed metadata dump, error: {e}'
+    message = \
+      f'{message}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
@@ -146,10 +149,11 @@ def prepare_storage_plot_generic(**context):
       key=xcom_key,
       value=json_dump)
   except Exception as e:
-    logging.error(e)
+    logger.error(e)
     message = \
-      'Failed metadata dump, error: {0}'.\
-        format(e)
+      f'Failed metadata dump, error: {e}'
+    message = \
+      f'{message}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
@@ -266,10 +270,11 @@ def prepare_storage_plot_func(**context):
       key=xcom_key,
       value=json_dump)
   except Exception as e:
-    logging.error(e)
+    logger.error(e)
     message = \
-      'Failed metadata dump, error: {0}'.\
-        format(e)
+      f'Failed metadata dump, error: {e}'
+    message = \
+      f'{message}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
@@ -403,10 +408,11 @@ def get_pipeline_stats_func(**context):
       key=xcom_key,
       value=pipeline_stats)
   except Exception as e:
-    logging.error(e)
+    logger.error(e)
     message = \
-      'Failed metadata dump, error: {0}'.\
-        format(e)
+      f'Failed metadata dump, error: {e}'
+    message = \
+      f'{message}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
@@ -479,10 +485,11 @@ def create_merged_json_and_upload_to_portal_func(**context):
         file_path=json_file,
         url_suffix='/api/v1/admin_home/update_admin_view_data')
   except Exception as e:
-    logging.error(e)
+    logger.error(e)
     message = \
-      'Failed metadata dump, error: {0}'.\
-        format(e)
+      f'Failed metadata dump, error: {e}'
+    message = \
+      f'{message}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
