@@ -79,12 +79,14 @@ def get_new_run_id_for_copy(**context):
       return [next_task]
   except Exception as e:
     log.error(e)
+    message = \
+      f'{e}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise
 
@@ -142,12 +144,14 @@ def register_run_to_db_and_portal_func(**context):
         jsonify=False)
   except Exception as e:
     log.error(e)
+    message = \
+      f'{e}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise
 
