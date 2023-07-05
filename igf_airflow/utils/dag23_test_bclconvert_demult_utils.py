@@ -1060,6 +1060,7 @@ def get_formatted_samplesheets_func(**context):
 
 def mark_seqrun_status_func(**context):
   try:
+    ti = context.get('ti')
     dag_run = context.get('dag_run')
     next_task = context['params'].get('next_task')
     last_task = context['params'].get('last_task')
