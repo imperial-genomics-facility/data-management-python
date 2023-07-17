@@ -72,6 +72,7 @@ def singularity_run(
         if isinstance(messages, list):
           messages = '\n'.join(messages)
         with open(log_file,'w') as fp:
+          fp.write(f'Command: {singularity_run_cmd} \n')
           fp.write(messages)
         raise ValueError(
                 'Failed to run command for task id: {0}, log dir: {1}'.\
@@ -135,6 +136,7 @@ def execute_singuarity_cmd(
       if isinstance(message, list):
         message = '\n'.join(message)
       with open(log_file, 'w') as fp:
+        fp.write(f'Command: {singularity_cmd} \n')
         fp.write(message)
       raise ValueError(
               'Failed to run command for task id: {0}, log dir: {1}'.\
