@@ -43,3 +43,14 @@ snakemake \
   --latency-wait 60
 
 ## TO DO: ADD `--cluster-cancel` TO SNAKEMAKE
+
+### unlock snakemake pipeline dir before rerun
+##-------------------------------------------------------------------------------------
+##
+## module load anaconda3/personal
+## source activate snakemake
+## cd {{ SNAKEMAKE_WORK_DIR }}
+## export SNAKEFILE=/project/tgu/resources/pipeline_resource/snakemake/workflow/rna-seq-star-deseq2/workflow/Snakefile
+## snakemake --snakefile $SNAKEFILE --configfile {{ CONFIG_YAML_PATH }} --unlock
+##
+##--------------------------------------------------------------------------------------
