@@ -703,7 +703,8 @@ def mark_analysis_finished(
            dag_run.conf is not None and \
            dag_run.conf.get('analysis_id') is not None:
             analysis_id = \
-                dag_run.conf.get('analysis_id')if analysis_id is None:
+                dag_run.conf.get('analysis_id')
+        if analysis_id is None:
             raise ValueError('analysis_id not found in dag_run.conf')
         ## pipeline_name is context['task'].dag_id
         pipeline_name = context['task'].dag_id
