@@ -38,17 +38,15 @@ from igf_data.igfdb.analysisadaptor import AnalysisAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
-from igf_airflow.utils.dag22_bclconvert_demult_utils import (
-    _create_output_from_jinja_template,
+from igf_airflow.utils.dag22_bclconvert_demult_utils import _create_output_from_jinja_template
+from igf_airflow.utils.dag26_snakemake_rnaseq_utils import (
     fetch_analysis_design,
     parse_analysis_design_and_get_metadata,
     get_project_igf_id_for_analysis,
+    calculate_analysis_name,
+    load_analysis_and_build_collection,
+    copy_analysis_to_globus_dir,
     check_and_seed_analysis_pipeline)
-from igf_airflow.utils.dag26_snakemake_rnaseq_utils import (
-     calculate_analysis_name,
-     load_analysis_and_build_collection,
-     copy_analysis_to_globus_dir
-)
 from airflow.operators.python import get_current_context
 from airflow.decorators import task
 
@@ -138,6 +136,30 @@ def no_work() -> None:
 		raise ValueError(e)
 
 
+def fetch_analysis_yaml_and_dump_to_a_file(
+        analysis_id: int,
+        pipeline_name: str,
+        dbconfig_file: str) -> str:
+    try:
+        ## get analysis design
+        input_design_yaml = \
+	        fetch_analysis_design(
+		        analysis_id=analysis_id,
+                pipeline_name=pipeline_name,
+		        dbconfig_file=dbconfig_file)
+        temp_dir = \
+	        get_temp_dir(use_ephemeral_space=True)
+        temp_yaml_file = \
+            os.path.join(temp_dir, 'analysis_design.yaml')
+        ## dump it in a text file for next task
+        with open(temp_yaml_file, 'w') as fp:
+            fp.write(input_design_yaml)
+        return temp_yaml_file
+    except Exception as e:
+        raise ValueError(
+            f"Failed to get yaml, error: {e}")
+
+
 ## TASK
 @task(
 	task_id="fetch_analysis_design",
@@ -159,20 +181,12 @@ def fetch_analysis_design_from_db() -> dict:
             raise ValueError('analysis_id not found in dag_run.conf')
         ## pipeline_name is context['task'].dag_id
         pipeline_name = context['task'].dag_id
-        ## get analysis design
-        input_design_yaml = \
-	        fetch_analysis_design(
-		        analysis_id=analysis_id,
-                pipeline_name=pipeline_name,
-		        dbconfig_file=DATABASE_CONFIG_FILE)
-        temp_dir = \
-	        get_temp_dir(use_ephemeral_space=True)
+        ## get analysis design file
         temp_yaml_file = \
-            os.path.join(temp_dir, 'analysis_design.yaml')
-        ## analysis desing can be very long
-        ## dump it in a text file for next task
-        with open(temp_yaml_file, 'w') as fp:
-            fp.write(input_design_yaml)
+            fetch_analysis_yaml_and_dump_to_a_file(
+                analysis_id=analysis_id,
+                pipeline_name=pipeline_name,
+                dbconfig_file=DATABASE_CONFIG_FILE)
         return {'analysis_design': temp_yaml_file}
     except Exception as e:
         raise ValueError(e)
@@ -185,23 +199,30 @@ def extract_geomx_config_files_from_zip(zip_file: str) -> Tuple[str, str]:
         temp_dir = get_temp_dir(use_ephemeral_space=True)
         temp_zip_file = os.path.join(temp_dir, 'geomx_config.zip')
         ## get extract dir
-        extract_dir = os.path.join(temp_zip_file, 'extract')
+        extract_dir = os.path.join(temp_dir, 'extract')
+        os.makedirs(extract_dir)
         ## copy zip file to temp dir
         shutil.copy2(zip_file, temp_zip_file)
         ## extract zip file
-        with zipfile.ZipFile(extract_dir, 'r') as zip_ref:
+        with zipfile.ZipFile(temp_zip_file, 'r') as zip_ref:
             zip_ref.extractall(extract_dir)
-        config_file = None
-        labworksheet_file = None
+        config_file = list()
+        labworksheet_file = list()
         config_file = [
 		    os.path.join(extract_dir, f)
 	            for f in os.listdir(extract_dir)
 		            if f.endswith('.ini')]
+        if len(config_file) == 0:
+            raise ValueError(
+                f"No .ini file present in {zip_file}")
         config_file = config_file[0]
         labworksheet_file = [
 		    os.path.join(extract_dir, f)
 	            for f in os.listdir(extract_dir)
 		            if f.endswith('LabWorksheet.txt')]
+        if len(labworksheet_file) == 0:
+            raise ValueError(
+                f"No LabWorksheet.txt file present in {zip_file}")
         labworksheet_file = labworksheet_file[0]
         return config_file, labworksheet_file
     except Exception as e:
@@ -244,11 +265,14 @@ def check_and_process_config_file(design_file: str) -> dict:
     except Exception as e:
         raise ValueError(e)
 
-def get_fastq_for_samples_and_dump_in_json_file(design_file: str, db_config_file: str) -> str:
+
+def get_fastq_for_samples_and_dump_in_json_file(
+        design_file: str,
+        db_config_file: str) -> str:
     try:
         check_file_path(design_file)
         with open(design_file, 'r') as fp:
-            input_design_yaml = yaml.load(fp, yaml.Loader)
+            input_design_yaml=fp.read()
         sample_metadata, analysis_metadata = \
             parse_analysis_design_and_get_metadata(
                 input_design_yaml=input_design_yaml)
@@ -295,6 +319,7 @@ def fetch_fastq_file_path_from_db(design_file: str) -> str:
     except Exception as e:
         raise ValueError(e)
 
+
 def read_fastq_list_json_and_create_symlink_dir_for_geomx_ngs(
             fastq_list_json: str,
             required_columns: tuple = (
@@ -318,11 +343,11 @@ def read_fastq_list_json_and_create_symlink_dir_for_geomx_ngs(
             ## get symlink path
             symlink_dir = get_temp_dir(use_ephemeral_space=True)
             symlink_dict = dict()
+            pattern = \
+                re.compile(r'(\S+)_S(\d+)_(L00\d)_(R[1,2])_001.fastq.gz')
             if duplicate_rows > 0:
                 ## make filenames unique
                 counter = 999
-                pattern = \
-                    re.compile(r'(\S+)_S(\d+)_(L00\d)_(R[1,2])_001.fastq.gz')
                 for _, g_data in df.groupby(['sample_igf_id', 'run_igf_id', 'flowcell_id', 'lane_number']):
                     counter += 1
                     for r in g_data.to_dict(orient='records'):
@@ -339,7 +364,9 @@ def read_fastq_list_json_and_create_symlink_dir_for_geomx_ngs(
                     source_path = r['file_path']
                     dest_name = r['file_name']
                     dest_path = os.path.join(symlink_dir, dest_name)
-                    symlink_dict.update({source_path: dest_path})
+                    match = re.match(pattern, dest_name)
+                    if match:
+                        symlink_dict.update({source_path: dest_path})
             ## create symlink
             if len(symlink_dict) == 0:
                  raise ValueError(
@@ -350,6 +377,7 @@ def read_fastq_list_json_and_create_symlink_dir_for_geomx_ngs(
       except Exception as e:
             raise ValueError(
                 f"Failed to create symlink dir, error: {e}")
+
 
 ## TASK
 @task(
@@ -373,7 +401,7 @@ def create_sample_translation_file_for_geomx_script(
         ## check design file
         check_file_path(design_file)
         with open(design_file, 'r') as fp:
-            input_design_yaml = yaml.load(fp, yaml.Loader)
+            input_design_yaml = fp.read()
         sample_metadata, analysis_metadata = \
             parse_analysis_design_and_get_metadata(
                 input_design_yaml=input_design_yaml)
@@ -393,7 +421,8 @@ def create_sample_translation_file_for_geomx_script(
             get_temp_dir(use_ephemeral_space=True)
         translation_file = \
             os.path.join(temp_translation_dir, "translation.csv")
-        pd.DataFrame(translation_file_data).\
+        df = pd.DataFrame(translation_file_data)
+        df[['dsp_id', 'sample_id']].\
             to_csv(
                 translation_file,
                 index=False,
@@ -403,12 +432,15 @@ def create_sample_translation_file_for_geomx_script(
         raise ValueError(
             f"Failed to create translation file, error: {e}")
 
-def fetch_geomx_params_from_analysis_design(design_file: str, param_key: str = 'geomx_dcc_params') -> list:
+
+def fetch_geomx_params_from_analysis_design(
+        design_file: str,
+        param_key: str = 'geomx_dcc_params') -> list:
     try:
         ## check design file
         check_file_path(design_file)
         with open(design_file, 'r') as fp:
-            input_design_yaml = yaml.load(fp, yaml.Loader)
+            input_design_yaml = fp.read()
         sample_metadata, analysis_metadata = \
             parse_analysis_design_and_get_metadata(
                 input_design_yaml=input_design_yaml)
@@ -504,6 +536,7 @@ def prepare_geomx_dcc_run_script(
     except Exception as e:
         raise ValueError(e)
 
+
 ## TASK
 @task(
 	task_id="generate_dcc_count",
@@ -570,6 +603,7 @@ def calculate_md5sum_for_dcc(dcc_count_path: str) -> None:
             dir_path=dcc_count_path)
 	except Exception as e:
 		raise ValueError(e)
+
 
 def collect_analysis_dir(
         analysis_id: int,
@@ -676,6 +710,7 @@ def copy_data_to_globus(analysis_dir: str, date_tag: str) -> None:
     except Exception as e:
         raise ValueError(e)
 
+
 ## TASK
 @task(task_id="send_email_to_user")
 def send_email_to_user() -> None:
@@ -683,6 +718,7 @@ def send_email_to_user() -> None:
 		print('send email')
 	except Exception as e:
 		raise ValueError(e)
+
 
 ## TASK
 @task(
