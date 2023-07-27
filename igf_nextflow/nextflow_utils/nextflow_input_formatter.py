@@ -878,7 +878,7 @@ def _make_nfcore_sarek_input(
       fastq_file_input_column: str = 'file_path',
       output_sample_column: str = 'sample',
       output_lane_column: str = 'lane',
-      nf_samplesheet_header: list = ("patient", "sex", "status", "sample",  "fastq_1", "fastq_2"),
+      nf_samplesheet_header: list = ("patient", "sex", "status", "sample", "lane",  "fastq_1", "fastq_2"),
       output_fastq1_column: str = 'fastq_1',
       output_fastq2_column: str = 'fastq_2') -> \
         str:
@@ -969,7 +969,7 @@ def prepare_nfcore_sarek_input(
       sample_metadata: dict,
       analysis_metadata: dict,
       nfcore_pipeline_name: str = 'nf-core/sarek',
-      nf_samplesheet_header: list = ("patient", "sex", "status", "sample",  "fastq_1", "fastq_2"),
+      nf_samplesheet_header: list = ("patient", "sex", "status", "sample", "lane", "fastq_1", "fastq_2"),
       exclude_nf_param_list: list = [
         '-resume',
         '-c',
