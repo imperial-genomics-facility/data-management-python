@@ -126,6 +126,14 @@ def mark_analysis_running(
                 reaction='pass')
         return task_list
     except Exception as e:
+        send_log_to_channels(
+            slack_conf=SLACK_CONF,
+            ms_teams_conf=MS_TEAMS_CONF,
+            task_id=context['task'].task_id,
+            dag_id=context['task'].dag_id,
+            project_id=None,
+            comment=e,
+            reaction='fail')
         raise ValueError(e)
 
 ## TASK
@@ -162,8 +170,8 @@ def fetch_analysis_yaml_and_dump_to_a_file(
             fp.write(input_design_yaml)
         return temp_yaml_file
     except Exception as e:
-        raise ValueError(
-            f"Failed to get yaml, error: {e}")
+        message = f"Failed to get yaml, error: {e}"
+        raise ValueError(message)
 
 
 ## TASK
@@ -195,6 +203,14 @@ def fetch_analysis_design_from_db() -> dict:
                 dbconfig_file=DATABASE_CONFIG_FILE)
         return temp_yaml_file
     except Exception as e:
+        send_log_to_channels(
+            slack_conf=SLACK_CONF,
+            ms_teams_conf=MS_TEAMS_CONF,
+            task_id=context['task'].task_id,
+            dag_id=context['task'].dag_id,
+            project_id=None,
+            comment=e,
+            reaction='fail')
         raise ValueError(e)
 
 
@@ -269,6 +285,15 @@ def check_and_process_config_file(design_file: str) -> dict:
 		}
         return config_file_dict
     except Exception as e:
+        context = get_current_context()
+        send_log_to_channels(
+            slack_conf=SLACK_CONF,
+            ms_teams_conf=MS_TEAMS_CONF,
+            task_id=context['task'].task_id,
+            dag_id=context['task'].dag_id,
+            project_id=None,
+            comment=e,
+            reaction='fail')
         raise ValueError(e)
 
 
@@ -323,6 +348,15 @@ def fetch_fastq_file_path_from_db(design_file: str) -> str:
                 db_config_file=DATABASE_CONFIG_FILE)
         return fastq_list_json
     except Exception as e:
+        context = get_current_context()
+        send_log_to_channels(
+            slack_conf=SLACK_CONF,
+            ms_teams_conf=MS_TEAMS_CONF,
+            task_id=context['task'].task_id,
+            dag_id=context['task'].dag_id,
+            project_id=None,
+            comment=e,
+            reaction='fail')
         raise ValueError(e)
 
 
@@ -397,6 +431,15 @@ def create_temp_fastq_input_dir(fastq_list_json: list) -> str:
             read_fastq_list_json_and_create_symlink_dir_for_geomx_ngs(fastq_list_json)
         return symlink_dir
     except Exception as e:
+        context = get_current_context()
+        send_log_to_channels(
+            slack_conf=SLACK_CONF,
+            ms_teams_conf=MS_TEAMS_CONF,
+            task_id=context['task'].task_id,
+            dag_id=context['task'].dag_id,
+            project_id=None,
+            comment=e,
+            reaction='fail')
         raise ValueError(e)
 
 
@@ -540,6 +583,15 @@ def prepare_geomx_dcc_run_script(
                 config_file_dict=config_file_dict)
         return {'dcc_script_path': dcc_script_path, 'output_dir': output_dir}
     except Exception as e:
+        context = get_current_context()
+        send_log_to_channels(
+            slack_conf=SLACK_CONF,
+            ms_teams_conf=MS_TEAMS_CONF,
+            task_id=context['task'].task_id,
+            dag_id=context['task'].dag_id,
+            project_id=None,
+            comment=e,
+            reaction='fail')
         raise ValueError(e)
 
 
@@ -558,6 +610,15 @@ def generate_geomx_dcc_count(dcc_script_dict: dict) -> str:
                 script_path=script_path)
         return output_path
     except Exception as e:
+        context = get_current_context()
+        send_log_to_channels(
+            slack_conf=SLACK_CONF,
+            ms_teams_conf=MS_TEAMS_CONF,
+            task_id=context['task'].task_id,
+            dag_id=context['task'].dag_id,
+            project_id=None,
+            comment=e,
+            reaction='fail')
         raise ValueError(e)
 
 
@@ -568,10 +629,19 @@ def generate_geomx_dcc_count(dcc_script_dict: dict) -> str:
     retries=4,
     queue='hpc_4G')
 def generate_geomx_qc_report(dcc_count_path: str, design_file: str) -> None:
-	try:
-		print(dcc_count_path)
-	except Exception as e:
-		raise ValueError(e)
+    try:
+        print(dcc_count_path)
+    except Exception as e:
+        context = get_current_context()
+        send_log_to_channels(
+            slack_conf=SLACK_CONF,
+            ms_teams_conf=MS_TEAMS_CONF,
+            task_id=context['task'].task_id,
+            dag_id=context['task'].dag_id,
+            project_id=None,
+            comment=e,
+            reaction='fail')
+        raise ValueError(e)
 
 
 def calculate_md5sum_for_analysis_dir(dir_path: str) -> None:
@@ -606,11 +676,20 @@ def calculate_md5sum_for_analysis_dir(dir_path: str) -> None:
     retries=4,
     queue='hpc_8G')
 def calculate_md5sum_for_dcc(dcc_count_path: str) -> None:
-	try:
-		calculate_md5sum_for_analysis_dir(
+    try:
+        calculate_md5sum_for_analysis_dir(
             dir_path=dcc_count_path)
-	except Exception as e:
-		raise ValueError(e)
+    except Exception as e:
+        context = get_current_context()
+        send_log_to_channels(
+            slack_conf=SLACK_CONF,
+            ms_teams_conf=MS_TEAMS_CONF,
+            task_id=context['task'].task_id,
+            dag_id=context['task'].dag_id,
+            project_id=None,
+            comment=e,
+            reaction='fail')
+        raise ValueError(e)
 
 
 def collect_analysis_dir(
@@ -683,6 +762,15 @@ def load_dcc_count_to_db(
                 hpc_base_path=HPC_BASE_RAW_DATA_PATH)
         return {'target_dir_path': target_dir_path, 'date_tag': date_tag}
     except Exception as e:
+        context = get_current_context()
+        send_log_to_channels(
+            slack_conf=SLACK_CONF,
+            ms_teams_conf=MS_TEAMS_CONF,
+            task_id=context['task'].task_id,
+            dag_id=context['task'].dag_id,
+            project_id=None,
+            comment=e,
+            reaction='fail')
         raise ValueError(e)
 
 
@@ -718,16 +806,34 @@ def copy_data_to_globus(analysis_dir_dict: dict) -> None:
                 pipeline_name=pipeline_name,
                 date_tag=date_tag)
     except Exception as e:
+        context = get_current_context()
+        send_log_to_channels(
+            slack_conf=SLACK_CONF,
+            ms_teams_conf=MS_TEAMS_CONF,
+            task_id=context['task'].task_id,
+            dag_id=context['task'].dag_id,
+            project_id=None,
+            comment=e,
+            reaction='fail')
         raise ValueError(e)
 
 
 ## TASK
 @task(task_id="send_email_to_user")
 def send_email_to_user() -> None:
-	try:
-		print('send email')
-	except Exception as e:
-		raise ValueError(e)
+    try:
+        print('send email')
+    except Exception as e:
+        context = get_current_context()
+        send_log_to_channels(
+            slack_conf=SLACK_CONF,
+            ms_teams_conf=MS_TEAMS_CONF,
+            task_id=context['task'].task_id,
+            dag_id=context['task'].dag_id,
+            project_id=None,
+            comment=e,
+            reaction='fail')
+        raise ValueError(e)
 
 
 ## TASK
@@ -764,4 +870,13 @@ def mark_analysis_finished(
                 seed_table=seed_table,
                 no_change_status=no_change_status)
     except Exception as e:
+        context = get_current_context()
+        send_log_to_channels(
+            slack_conf=SLACK_CONF,
+            ms_teams_conf=MS_TEAMS_CONF,
+            task_id=context['task'].task_id,
+            dag_id=context['task'].dag_id,
+            project_id=None,
+            comment=e,
+            reaction='fail')
         raise ValueError(e)
