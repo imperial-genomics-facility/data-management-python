@@ -124,7 +124,7 @@ def mark_analysis_running(
                 project_id=None,
                 comment=f"No task for analysis: {analysis_id}, pipeline: {pipeline_name}",
                 reaction='pass')
-            return task_list
+        return task_list
     except Exception as e:
         raise ValueError(e)
 
