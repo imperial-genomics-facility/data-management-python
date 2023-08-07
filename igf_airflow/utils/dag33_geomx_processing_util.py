@@ -261,11 +261,11 @@ def check_and_process_config_file(design_dict: dict) -> dict:
     try:
         design_file = design_dict.get('analysis_design')
         check_file_path(design_file)
-        with open(design_file, 'r') as fp:
-            input_design_yaml = yaml.load(fp, yaml.Loader)
+        # with open(design_file, 'r') as fp:
+        #     input_design_yaml = yaml.load(fp, yaml.Loader)
         sample_metadata, analysis_metadata = \
             parse_analysis_design_and_get_metadata(
-                input_design_yaml=input_design_yaml)
+                input_design_yaml=design_file)
         if sample_metadata is None or \
 	       analysis_metadata is None:
             raise KeyError("Missing sample or analysis metadata")
