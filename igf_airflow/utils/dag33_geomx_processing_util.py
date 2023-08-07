@@ -201,7 +201,7 @@ def fetch_analysis_design_from_db() -> dict:
                 analysis_id=analysis_id,
                 pipeline_name=pipeline_name,
                 dbconfig_file=DATABASE_CONFIG_FILE)
-        return temp_yaml_file
+        return {'analysis_design': temp_yaml_file}
     except Exception as e:
         send_log_to_channels(
             slack_conf=SLACK_CONF,
@@ -257,8 +257,9 @@ def extract_geomx_config_files_from_zip(zip_file: str) -> Tuple[str, str]:
     retry_delay=timedelta(minutes=5),
     retries=4,
     queue='hpc_4G')
-def check_and_process_config_file(design_file: str) -> dict:
+def check_and_process_config_file(design_dict: dict) -> dict:
     try:
+        design_file = design_dict.get('analysis_design')
         check_file_path(design_file)
         with open(design_file, 'r') as fp:
             input_design_yaml = yaml.load(fp, yaml.Loader)
@@ -340,8 +341,9 @@ def get_fastq_for_samples_and_dump_in_json_file(
     retry_delay=timedelta(minutes=5),
     retries=4,
     queue='hpc_4G')
-def fetch_fastq_file_path_from_db(design_file: str) -> str:
+def fetch_fastq_file_path_from_db(design_dict: dict) -> str:
     try:
+        design_file = design_dict.get('analysis_design')
         fastq_list_json = \
             get_fastq_for_samples_and_dump_in_json_file(
                 design_file=design_file,
@@ -425,7 +427,7 @@ def read_fastq_list_json_and_create_symlink_dir_for_geomx_ngs(
     retry_delay=timedelta(minutes=5),
     retries=4,
     queue='hpc_4G')
-def create_temp_fastq_input_dir(fastq_list_json: list) -> str:
+def create_temp_fastq_input_dir(fastq_list_json: str) -> str:
     try:
         symlink_dir = \
             read_fastq_list_json_and_create_symlink_dir_for_geomx_ngs(fastq_list_json)
@@ -570,10 +572,11 @@ def create_geomx_dcc_run_script(
     retries=4,
     queue='hpc_4G')
 def prepare_geomx_dcc_run_script(
-		design_file: str,
+		design_dict: dict,
 		symlink_dir: str,
 		config_file_dict: dict) -> Tuple[str, str]:
     try:
+        design_file = design_dict.get('analysis_design')
         dcc_script_path, output_dir = \
             create_geomx_dcc_run_script(
                 geomx_script_template=GEOMX_SCRIPT_TEMPLATE,
@@ -628,7 +631,7 @@ def generate_geomx_dcc_count(dcc_script_dict: dict) -> str:
     retry_delay=timedelta(minutes=5),
     retries=4,
     queue='hpc_4G')
-def generate_geomx_qc_report(dcc_count_path: str, design_file: str) -> None:
+def generate_geomx_qc_report(dcc_count_path: str, design_dict: dict) -> None:
     try:
         print(dcc_count_path)
     except Exception as e:
