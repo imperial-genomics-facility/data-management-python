@@ -201,7 +201,7 @@ def fetch_analysis_design_from_db() -> dict:
                 analysis_id=analysis_id,
                 pipeline_name=pipeline_name,
                 dbconfig_file=DATABASE_CONFIG_FILE)
-        return {'design_file': temp_yaml_file}
+        return temp_yaml_file
     except Exception as e:
         send_log_to_channels(
             slack_conf=SLACK_CONF,
