@@ -84,7 +84,7 @@ def mark_analysis_running(
         last_task: str,
         seed_table: str = 'analysis',
         new_status: str = 'RUNNING',
-        no_change_status: list = ('RUNNING', 'FAILED', 'FINISHED', 'UNKNOWN')) -> list:
+        no_change_status: list = ['RUNNING', 'FAILED', 'FINISHED', 'UNKNOWN']) -> list:
     try:
         ## dag_run.conf should have analysis_id
         context = get_current_context()
@@ -110,12 +110,10 @@ def mark_analysis_running(
                 no_change_status=no_change_status)
         ## set next tasks
         task_list = list()
-        if seed_status and \
-           next_task is not None:
+        if seed_status:
             task_list.append(
                 next_task)
-        if not seed_status and \
-           last_task is not None:
+        else:
             task_list.append(
                 last_task)
             send_log_to_channels(
