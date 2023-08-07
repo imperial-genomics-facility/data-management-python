@@ -69,9 +69,9 @@ DEFAULT_EMAIL_USER = Variable.get("default_email_user", default_var=None)
 GLOBUS_ROOT_DIR = Variable.get("globus_root_dir", default_var=None)
 
 ## VARIABLES
-GEOMX_NGS_PIPELINE_EXE = ''
-GEOMX_SCRIPT_TEMPLATE = ''
-REPORT_TEMPLATE_FILE = ''
+GEOMX_NGS_PIPELINE_EXE = Variable.get("geomx_ngs_pipeline_exe", default_var=None)
+GEOMX_SCRIPT_TEMPLATE = Variable.get("geomx_script_template", default_var=None)
+REPORT_TEMPLATE_FILE = Variable.get("geomx_report_template_file", default_var=None)
 
 ## TASK
 @task.branch(
