@@ -187,7 +187,7 @@ def fetch_analysis_design_from_db() -> dict:
                 analysis_id=analysis_id,
                 pipeline_name=pipeline_name,
                 dbconfig_file=DATABASE_CONFIG_FILE)
-        return {'analysis_design': temp_yaml_file}
+        return temp_yaml_file
     except Exception as e:
         raise ValueError(e)
 
@@ -532,7 +532,7 @@ def prepare_geomx_dcc_run_script(
                 design_file=design_file,
                 symlink_dir=symlink_dir,
                 config_file_dict=config_file_dict)
-        return dcc_script_path, output_dir
+        return {'dcc_script_path': dcc_script_path, 'output_dir': output_dir}
     except Exception as e:
         raise ValueError(e)
 
@@ -543,7 +543,9 @@ def prepare_geomx_dcc_run_script(
     retry_delay=timedelta(minutes=5),
     retries=4,
     queue='hpc_64G16t')
-def generate_geomx_dcc_count(script_path: str, output_path: str) -> str:
+def generate_geomx_dcc_count(dcc_script_dict: dict) -> str:
+    script_path = dcc_script_dict.get('dcc_script_path')
+    output_path = dcc_script_dict.get('output_dir')
     try:
         stdout_file, stderr_file = \
             bash_script_wrapper(
@@ -673,7 +675,7 @@ def load_dcc_count_to_db(
                 dir_path=dcc_count_path,
                 db_config_file=DATABASE_CONFIG_FILE,
                 hpc_base_path=HPC_BASE_RAW_DATA_PATH)
-        return target_dir_path, date_tag
+        return {'target_dir_path': target_dir_path, 'date_tag': date_tag}
     except Exception as e:
         raise ValueError(e)
 
@@ -684,8 +686,10 @@ def load_dcc_count_to_db(
     retry_delay=timedelta(minutes=5),
     retries=4,
     queue='hpc_4G')
-def copy_data_to_globus(analysis_dir: str, date_tag: str) -> None:
+def copy_data_to_globus(analysis_dir_dict: dict) -> None:
     try:
+        analysis_dir = analysis_dir_dict.get('target_dir_path')
+        date_tag = analysis_dir_dict.get('date_tag')
 		## dag_run.conf should have analysis_id
         context = get_current_context()
         dag_run = context.get('dag_run')
