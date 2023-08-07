@@ -118,7 +118,15 @@ def mark_analysis_running(
            last_task is not None:
             task_list.append(
                 last_task)
-        return task_list
+            send_log_to_channels(
+                slack_conf=SLACK_CONF,
+                ms_teams_conf=MS_TEAMS_CONF,
+                task_id=context['task'].task_id,
+                dag_id=pipeline_name,
+                project_id=None,
+                comment=f"No task for analysis: {analysis_id}, pipeline: {pipeline_name}",
+                reaction='pass')
+            return task_list
     except Exception as e:
         raise ValueError(e)
 
