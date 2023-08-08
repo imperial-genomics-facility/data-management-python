@@ -102,8 +102,14 @@ def get_seqrun_counts_func(**context):
     logger.error(e)
     message = \
       f'Failed metadata dump, error: {e}'
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
     message = \
-      f'{message}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
+      f"Error: {message}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
@@ -152,8 +158,14 @@ def prepare_storage_plot_generic(**context):
     logger.error(e)
     message = \
       f'Failed metadata dump, error: {e}'
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
     message = \
-      f'{message}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
+      f"Error: {message}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
@@ -273,8 +285,14 @@ def prepare_storage_plot_func(**context):
     logger.error(e)
     message = \
       f'Failed metadata dump, error: {e}'
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
     message = \
-      f'{message}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
+      f"Error: {message}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
@@ -411,8 +429,14 @@ def get_pipeline_stats_func(**context):
     logger.error(e)
     message = \
       f'Failed metadata dump, error: {e}'
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
     message = \
-      f'{message}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
+      f"Error: {message}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
@@ -488,8 +512,14 @@ def create_merged_json_and_upload_to_portal_func(**context):
     logger.error(e)
     message = \
       f'Failed metadata dump, error: {e}'
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
     message = \
-      f'{message}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
+      f"Error: {message}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,

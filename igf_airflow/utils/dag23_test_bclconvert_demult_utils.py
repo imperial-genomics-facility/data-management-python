@@ -138,8 +138,14 @@ def generate_merged_report_func(**context):
     #    demult_data = all_demult_info)
   except Exception as e:
     log.error(e)
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
     message = \
-      f'{e}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
+      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
@@ -257,8 +263,14 @@ def copy_report_to_rds_func(**context):
           stat.S_IXGRP)
   except Exception as e:
     log.error(e)
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
     message = \
-      f'{e}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
+      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
@@ -267,6 +279,7 @@ def copy_report_to_rds_func(**context):
       comment=message,
       reaction='fail')
     raise
+
 
 def upload_report_to_portal_func(**context):
   try:
@@ -339,8 +352,15 @@ def upload_report_to_portal_func(**context):
         url_suffix='/api/v1/predemultiplexing_data/add_report')
   except Exception as e:
     log.error(e)
+    ti = context.get('ti')
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
     message = \
-      f'{e}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
+      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
@@ -427,8 +447,15 @@ def upload_report_to_box_func(**context):
       upload_dir=box_dir)
   except Exception as e:
     log.error(e)
+    ti = context.get('ti')
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
     message = \
-      f'{e}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
+      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
@@ -513,8 +540,15 @@ def generate_report_func(**context):
       value=report_dest_path)
   except Exception as e:
     log.error(e)
+    ti = context.get('ti')
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
     message = \
-      f'{e}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
+      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
@@ -628,8 +662,15 @@ def bcl_convert_run_func(**context):
       value=demult_info)
   except Exception as e:
     log.error(e)
+    ti = context.get('ti')
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
     message = \
-      f'{e}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
+      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
@@ -755,8 +796,15 @@ def calculate_override_bases_mask_func(**context):
       value=new_samplesheet_path)
   except Exception as e:
     log.error(e)
+    ti = context.get('ti')
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
     message = \
-      f'{e}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
+      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
@@ -1046,8 +1094,15 @@ def get_formatted_samplesheets_func(**context):
     return task_list
   except Exception as e:
     log.error(e)
+    ti = context.get('ti')
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
     message = \
-      f'{e}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
+      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
@@ -1089,8 +1144,15 @@ def mark_seqrun_status_func(**context):
       return [last_task]
   except Exception as e:
     log.error(e)
+    ti = context.get('ti')
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
     message = \
-      f'{e}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
+      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
@@ -1155,8 +1217,15 @@ def get_samplesheet_from_portal_func(**context):
       value={'samplesheet_tag': samplesheet_tag, 'samplesheet_file': samplesheet_file})
   except Exception as e:
     log.error(e)
+    ti = context.get('ti')
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
     message = \
-      f'{e}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
+      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,

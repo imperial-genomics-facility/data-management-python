@@ -148,12 +148,20 @@ def fetch_seqrun_data_from_portal_func(**context):
       value=xcom_data)
   except Exception as e:
     log.error(e)
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
+    message = \
+      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise
 
@@ -258,12 +266,21 @@ def format_samplesheet_func(**context):
       value=sample_groups)
   except Exception as e:
     log.error(e)
+    ti = context.get('ti')
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
+    message = \
+      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise
 
@@ -400,12 +417,20 @@ def generate_dynamic_dag_func(**context):
       value=dag_id)
   except Exception as e:
     log.error(e)
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
+    message = \
+      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise
 
@@ -461,12 +486,20 @@ def copy_dag_to_hpc_func(**context):
     copy_local_file(temp_dag_file, dest_file)
   except Exception as e:
     log.error(e)
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
+    message = \
+      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise
 
@@ -508,12 +541,20 @@ def copy_dag_to_remote_func(**context):
       ssh_key_file=HPC_SSH_KEY_FILE)
   except Exception as e:
     log.error(e)
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
+    message = \
+      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise
 
@@ -545,11 +586,19 @@ def register_pipeline_func(**context):
       dbconfig=DATABASE_CONFIG_FILE)
   except Exception as e:
     log.error(e)
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
+    message = \
+      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise

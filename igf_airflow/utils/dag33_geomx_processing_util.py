@@ -126,13 +126,22 @@ def mark_analysis_running(
                 reaction='pass')
         return task_list
     except Exception as e:
+        log.error(e)
+        log_file_path = [
+            os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+            f"dag_id={context['ti'].dag_id}",
+            f"run_id={context['ti'].run_id}",
+            f"task_id={context['ti'].task_id}",
+            f"attempt={context['ti'].try_number}.log"]
+        message = \
+            f"Error: {e}, Log: {os.path.join(*log_file_path)}"
         send_log_to_channels(
             slack_conf=SLACK_CONF,
             ms_teams_conf=MS_TEAMS_CONF,
             task_id=context['task'].task_id,
             dag_id=context['task'].dag_id,
             project_id=None,
-            comment=e,
+            comment=message,
             reaction='fail')
         raise ValueError(e)
 
@@ -203,13 +212,22 @@ def fetch_analysis_design_from_db() -> dict:
                 dbconfig_file=DATABASE_CONFIG_FILE)
         return {'analysis_design': temp_yaml_file}
     except Exception as e:
+        log.error(e)
+        log_file_path = [
+            os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+            f"dag_id={context['ti'].dag_id}",
+            f"run_id={context['ti'].run_id}",
+            f"task_id={context['ti'].task_id}",
+            f"attempt={context['ti'].try_number}.log"]
+        message = \
+            f"Error: {e}, Log: {os.path.join(*log_file_path)}"
         send_log_to_channels(
             slack_conf=SLACK_CONF,
             ms_teams_conf=MS_TEAMS_CONF,
             task_id=context['task'].task_id,
             dag_id=context['task'].dag_id,
             project_id=None,
-            comment=e,
+            comment=message,
             reaction='fail')
         raise ValueError(e)
 
@@ -287,13 +305,22 @@ def check_and_process_config_file(design_dict: dict) -> dict:
         return config_file_dict
     except Exception as e:
         context = get_current_context()
+        log.error(e)
+        log_file_path = [
+            os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+            f"dag_id={context['ti'].dag_id}",
+            f"run_id={context['ti'].run_id}",
+            f"task_id={context['ti'].task_id}",
+            f"attempt={context['ti'].try_number}.log"]
+        message = \
+            f"Error: {e}, Log: {os.path.join(*log_file_path)}"
         send_log_to_channels(
             slack_conf=SLACK_CONF,
             ms_teams_conf=MS_TEAMS_CONF,
             task_id=context['task'].task_id,
             dag_id=context['task'].dag_id,
             project_id=None,
-            comment=e,
+            comment=message,
             reaction='fail')
         raise ValueError(e)
 
@@ -351,13 +378,22 @@ def fetch_fastq_file_path_from_db(design_dict: dict) -> str:
         return fastq_list_json
     except Exception as e:
         context = get_current_context()
+        log.error(e)
+        log_file_path = [
+            os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+            f"dag_id={context['ti'].dag_id}",
+            f"run_id={context['ti'].run_id}",
+            f"task_id={context['ti'].task_id}",
+            f"attempt={context['ti'].try_number}.log"]
+        message = \
+            f"Error: {e}, Log: {os.path.join(*log_file_path)}"
         send_log_to_channels(
             slack_conf=SLACK_CONF,
             ms_teams_conf=MS_TEAMS_CONF,
             task_id=context['task'].task_id,
             dag_id=context['task'].dag_id,
             project_id=None,
-            comment=e,
+            comment=message,
             reaction='fail')
         raise ValueError(e)
 
@@ -434,13 +470,22 @@ def create_temp_fastq_input_dir(fastq_list_json: str) -> str:
         return symlink_dir
     except Exception as e:
         context = get_current_context()
+        log.error(e)
+        log_file_path = [
+            os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+            f"dag_id={context['ti'].dag_id}",
+            f"run_id={context['ti'].run_id}",
+            f"task_id={context['ti'].task_id}",
+            f"attempt={context['ti'].try_number}.log"]
+        message = \
+            f"Error: {e}, Log: {os.path.join(*log_file_path)}"
         send_log_to_channels(
             slack_conf=SLACK_CONF,
             ms_teams_conf=MS_TEAMS_CONF,
             task_id=context['task'].task_id,
             dag_id=context['task'].dag_id,
             project_id=None,
-            comment=e,
+            comment=message,
             reaction='fail')
         raise ValueError(e)
 
@@ -587,13 +632,22 @@ def prepare_geomx_dcc_run_script(
         return {'dcc_script_path': dcc_script_path, 'output_dir': output_dir}
     except Exception as e:
         context = get_current_context()
+        log.error(e)
+        log_file_path = [
+            os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+            f"dag_id={context['ti'].dag_id}",
+            f"run_id={context['ti'].run_id}",
+            f"task_id={context['ti'].task_id}",
+            f"attempt={context['ti'].try_number}.log"]
+        message = \
+            f"Error: {e}, Log: {os.path.join(*log_file_path)}"
         send_log_to_channels(
             slack_conf=SLACK_CONF,
             ms_teams_conf=MS_TEAMS_CONF,
             task_id=context['task'].task_id,
             dag_id=context['task'].dag_id,
             project_id=None,
-            comment=e,
+            comment=message,
             reaction='fail')
         raise ValueError(e)
 
@@ -614,13 +668,22 @@ def generate_geomx_dcc_count(dcc_script_dict: dict) -> str:
         return output_path
     except Exception as e:
         context = get_current_context()
+        log.error(e)
+        log_file_path = [
+            os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+            f"dag_id={context['ti'].dag_id}",
+            f"run_id={context['ti'].run_id}",
+            f"task_id={context['ti'].task_id}",
+            f"attempt={context['ti'].try_number}.log"]
+        message = \
+            f"Error: {e}, Log: {os.path.join(*log_file_path)}"
         send_log_to_channels(
             slack_conf=SLACK_CONF,
             ms_teams_conf=MS_TEAMS_CONF,
             task_id=context['task'].task_id,
             dag_id=context['task'].dag_id,
             project_id=None,
-            comment=e,
+            comment=message,
             reaction='fail')
         raise ValueError(e)
 
@@ -636,13 +699,22 @@ def generate_geomx_qc_report(dcc_count_path: str, design_dict: dict) -> None:
         print(dcc_count_path)
     except Exception as e:
         context = get_current_context()
+        log.error(e)
+        log_file_path = [
+            os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+            f"dag_id={context['ti'].dag_id}",
+            f"run_id={context['ti'].run_id}",
+            f"task_id={context['ti'].task_id}",
+            f"attempt={context['ti'].try_number}.log"]
+        message = \
+            f"Error: {e}, Log: {os.path.join(*log_file_path)}"
         send_log_to_channels(
             slack_conf=SLACK_CONF,
             ms_teams_conf=MS_TEAMS_CONF,
             task_id=context['task'].task_id,
             dag_id=context['task'].dag_id,
             project_id=None,
-            comment=e,
+            comment=message,
             reaction='fail')
         raise ValueError(e)
 
@@ -684,13 +756,22 @@ def calculate_md5sum_for_dcc(dcc_count_path: str) -> None:
             dir_path=dcc_count_path)
     except Exception as e:
         context = get_current_context()
+        log.error(e)
+        log_file_path = [
+            os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+            f"dag_id={context['ti'].dag_id}",
+            f"run_id={context['ti'].run_id}",
+            f"task_id={context['ti'].task_id}",
+            f"attempt={context['ti'].try_number}.log"]
+        message = \
+            f"Error: {e}, Log: {os.path.join(*log_file_path)}"
         send_log_to_channels(
             slack_conf=SLACK_CONF,
             ms_teams_conf=MS_TEAMS_CONF,
             task_id=context['task'].task_id,
             dag_id=context['task'].dag_id,
             project_id=None,
-            comment=e,
+            comment=message,
             reaction='fail')
         raise ValueError(e)
 
@@ -766,13 +847,22 @@ def load_dcc_count_to_db(
         return {'target_dir_path': target_dir_path, 'date_tag': date_tag}
     except Exception as e:
         context = get_current_context()
+        log.error(e)
+        log_file_path = [
+            os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+            f"dag_id={context['ti'].dag_id}",
+            f"run_id={context['ti'].run_id}",
+            f"task_id={context['ti'].task_id}",
+            f"attempt={context['ti'].try_number}.log"]
+        message = \
+            f"Error: {e}, Log: {os.path.join(*log_file_path)}"
         send_log_to_channels(
             slack_conf=SLACK_CONF,
             ms_teams_conf=MS_TEAMS_CONF,
             task_id=context['task'].task_id,
             dag_id=context['task'].dag_id,
             project_id=None,
-            comment=e,
+            comment=message,
             reaction='fail')
         raise ValueError(e)
 
@@ -810,31 +900,53 @@ def copy_data_to_globus(analysis_dir_dict: dict) -> None:
                 date_tag=date_tag)
     except Exception as e:
         context = get_current_context()
+        log.error(e)
+        log_file_path = [
+            os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+            f"dag_id={context['ti'].dag_id}",
+            f"run_id={context['ti'].run_id}",
+            f"task_id={context['ti'].task_id}",
+            f"attempt={context['ti'].try_number}.log"]
+        message = \
+            f"Error: {e}, Log: {os.path.join(*log_file_path)}"
         send_log_to_channels(
             slack_conf=SLACK_CONF,
             ms_teams_conf=MS_TEAMS_CONF,
             task_id=context['task'].task_id,
             dag_id=context['task'].dag_id,
             project_id=None,
-            comment=e,
+            comment=message,
             reaction='fail')
         raise ValueError(e)
 
 
 ## TASK
-@task(task_id="send_email_to_user")
+@task(
+    task_id="send_email_to_user",
+    retry_delay=timedelta(minutes=5),
+    retries=4,
+    queue='hpc_4G')
 def send_email_to_user() -> None:
     try:
         print('send email')
     except Exception as e:
         context = get_current_context()
+        log.error(e)
+        log_file_path = [
+            os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+            f"dag_id={context['ti'].dag_id}",
+            f"run_id={context['ti'].run_id}",
+            f"task_id={context['ti'].task_id}",
+            f"attempt={context['ti'].try_number}.log"]
+        message = \
+            f"Error: {e}, Log: {os.path.join(*log_file_path)}"
         send_log_to_channels(
             slack_conf=SLACK_CONF,
             ms_teams_conf=MS_TEAMS_CONF,
             task_id=context['task'].task_id,
             dag_id=context['task'].dag_id,
             project_id=None,
-            comment=e,
+            comment=message,
             reaction='fail')
         raise ValueError(e)
 
@@ -874,12 +986,21 @@ def mark_analysis_finished(
                 no_change_status=no_change_status)
     except Exception as e:
         context = get_current_context()
+        log.error(e)
+        log_file_path = [
+            os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+            f"dag_id={context['ti'].dag_id}",
+            f"run_id={context['ti'].run_id}",
+            f"task_id={context['ti'].task_id}",
+            f"attempt={context['ti'].try_number}.log"]
+        message = \
+            f"Error: {e}, Log: {os.path.join(*log_file_path)}"
         send_log_to_channels(
             slack_conf=SLACK_CONF,
             ms_teams_conf=MS_TEAMS_CONF,
             task_id=context['task'].task_id,
             dag_id=context['task'].dag_id,
             project_id=None,
-            comment=e,
+            comment=message,
             reaction='fail')
         raise ValueError(e)

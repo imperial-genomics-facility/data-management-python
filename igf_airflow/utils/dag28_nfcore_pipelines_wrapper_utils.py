@@ -139,11 +139,19 @@ def prepare_nfcore_pipeline_inputs(**context):
       return [last_task,]
   except Exception as e:
     log.error(e)
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
+    message = \
+      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise

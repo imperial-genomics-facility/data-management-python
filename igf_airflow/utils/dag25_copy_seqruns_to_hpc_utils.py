@@ -79,8 +79,14 @@ def get_new_run_id_for_copy(**context):
       return [next_task]
   except Exception as e:
     log.error(e)
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
     message = \
-      f'{e}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
+      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
@@ -144,8 +150,14 @@ def register_run_to_db_and_portal_func(**context):
         jsonify=False)
   except Exception as e:
     log.error(e)
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
     message = \
-      f'{e}, Log: {os.environ.get("AIRFLOW__LOGGING__BASE_LOG_FOLDER")}/dag_id={ti.dag_id}/run_id={ti.run_id}/task_id={ti.task_id}/attempt={ti.try_number}.log'
+      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
