@@ -31,6 +31,7 @@ from igf_airflow.utils.dag33_geomx_processing_util import (
     fetch_geomx_params_from_analysis_design,
     create_geomx_dcc_run_script,
     calculate_md5sum_for_analysis_dir,
+    compare_dcc_output_dir_with_design_file,
     collect_analysis_dir)
 
 class TestDag33_geomx_processing_util_utilsA(unittest.TestCase):
@@ -165,8 +166,10 @@ class TestDag33_geomx_processing_util_utilsB(unittest.TestCase):
   def test_extract_geomx_config_files_from_zip(self):
     config_file, labworksheet_file = \
       extract_geomx_config_files_from_zip(zip_file=self.zip_file)
-    self.assertEqual(os.path.basename(config_file), os.path.basename(self.ini_file))
-    self.assertEqual(os.path.basename(labworksheet_file), os.path.basename(self.lab_file))
+    #self.assertEqual(os.path.basename(config_file), os.path.basename(self.ini_file))
+    #self.assertEqual(os.path.basename(labworksheet_file), os.path.basename(self.lab_file))
+    self.assertEqual(os.path.basename(config_file), 'geomx_project.ini')
+    self.assertEqual(os.path.basename(labworksheet_file), 'geomx_project_LabWorksheet.txt')
     with open(config_file) as fp:
       config_file_data1 =  fp.read()
     with open(self.ini_file) as fp:
@@ -455,6 +458,37 @@ class TestDag33_geomx_processing_util_utilsC(unittest.TestCase):
     self.assertTrue(os.path.join(self.temp_dir, "geomx_ngs_pipeline_exe") in script_data)
     self.assertTrue(os.path.join(self.temp_dir, 'test.ini') in script_data)
     self.assertTrue(f'--out={output_dir}' in script_data)
+
+  def test_compare_dcc_output_dir_with_design_file(self):
+    design_file = os.path.join(self.temp_dir, 'test.yaml')
+    yaml_data = """
+    sample_metadata:
+      sampleA:
+        dsp_id: dsp1
+      sampleB:
+        dsp_id: dsp2
+    analysis_metadata:
+      geomx_dcc_params:
+        - "--threads=8"
+    """
+    with open(design_file, 'w') as fp:
+      fp.write(yaml_data)
+    output_dir = os.path.join(self.temp_dir, "output")
+    os.makedirs(output_dir)
+    for i in ('sampleA.dcc', 'sampleB.dcc'):
+      with open(os.path.join(output_dir, i), 'w') as fp:
+        fp.write('aaa')
+    self.assertIsNone(
+      compare_dcc_output_dir_with_design_file(
+        dcc_output_dir=output_dir,
+        design_file=design_file))
+    for i in ('sampleC.dcc',):
+      with open(os.path.join(output_dir, i), 'w') as fp:
+        fp.write('aaa')
+    with self.assertRaises(Exception):
+      compare_dcc_output_dir_with_design_file(
+        dcc_output_dir=output_dir,
+        design_file=design_file)
 
   def test_calculate_md5sum_for_analysis_dir(self):
     output_dir = os.path.join(self.temp_dir, "output")

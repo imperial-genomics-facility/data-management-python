@@ -264,7 +264,18 @@ def extract_geomx_config_files_from_zip(zip_file: str) -> Tuple[str, str]:
             raise ValueError(
                 f"No LabWorksheet.txt file present in {zip_file}")
         labworksheet_file = labworksheet_file[0]
-        return config_file, labworksheet_file
+        ## file name can contain white space or symbols. copy to a new file
+        new_config_file = \
+            os.path.join(extract_dir, 'geomx_project.ini')
+        new_labworksheet_file = \
+            os.path.join(extract_dir, 'geomx_project_LabWorksheet.txt')
+        if os.path.exists(new_config_file) or \
+           os.path.exists(new_labworksheet_file):
+            raise IOError(
+                f"{new_config_file} or {new_labworksheet_file} file is already present")
+        shutil.copy2(config_file, new_config_file)
+        shutil.copy2(labworksheet_file, new_labworksheet_file)
+        return new_config_file, new_labworksheet_file
     except Exception as e:
         raise ValueError(
 			f"Failed to get config file, error: {e}")
@@ -590,6 +601,10 @@ def create_geomx_dcc_run_script(
             get_temp_dir(use_ephemeral_space=True)
         output_dir = \
             get_temp_dir(use_ephemeral_space=True)
+        ## temp dir path is getting copied every where. adding a simple name
+        output_dir = \
+            os.path.join(output_dir, 'geomx_dcc_counts')
+        os.makedirs(output_dir, exist_ok=True)
         script_file = \
             os.path.join(work_dir, 'geomx_ngs_script.sh')
         _create_output_from_jinja_template(
@@ -652,19 +667,61 @@ def prepare_geomx_dcc_run_script(
         raise ValueError(e)
 
 
+def compare_dcc_output_dir_with_design_file(
+        dcc_output_dir: str,
+        design_file: str) -> None:
+    try:
+        ## check dcc output file path
+        dcc_files = [
+            f for f in os.listdir(dcc_output_dir)
+                if f.endswith('.dcc')]
+        if len(dcc_files) == 0:
+            raise ValueError(
+                f"No dcc file found in path {dcc_output_dir}")
+        ## check design file
+        check_file_path(design_file)
+        with open(design_file, 'r') as fp:
+            input_design_yaml = fp.read()
+        sample_metadata, analysis_metadata = \
+            parse_analysis_design_and_get_metadata(
+                input_design_yaml=input_design_yaml)
+        if sample_metadata is None or \
+           analysis_metadata is None:
+            raise KeyError("Missing sample or analysis metadata")
+        sample_list = list(sample_metadata.keys())
+        if len(dcc_files) != len(sample_list):
+            raise ValueError(
+                f"DCC file count: {len(dcc_files)}, sample count: {len(sample_list)}, path: {dcc_output_dir}")
+    except Exception as e:
+        raise ValueError(
+            f"Failed to check dcc files: {e}")
+
+
 ## TASK
 @task(
 	task_id="generate_dcc_count",
     retry_delay=timedelta(minutes=5),
     retries=4,
     queue='hpc_64G16t')
-def generate_geomx_dcc_count(dcc_script_dict: dict) -> str:
-    script_path = dcc_script_dict.get('dcc_script_path')
-    output_path = dcc_script_dict.get('output_dir')
+def generate_geomx_dcc_count(
+        design_dict: dict,
+        dcc_script_dict: dict) -> str:
     try:
-        stdout_file, stderr_file = \
-            bash_script_wrapper(
-                script_path=script_path)
+        script_path = dcc_script_dict.get('dcc_script_path')
+        output_path = dcc_script_dict.get('output_dir')
+        design_file = design_dict.get('analysis_design')
+        try:
+            stdout_file, stderr_file = \
+                bash_script_wrapper(
+                    script_path=script_path)
+        except Exception as e:
+            raise ValueError(
+                f"Script: {script_path}, error file: stderr_file stdout file{stdout_file}")
+        ## check output path and compare dcc files
+        ## with the number of samples mentioned in the design file
+        compare_dcc_output_dir_with_design_file(
+            dcc_output_dir=output_path,
+            design_file=design_file)
         return output_path
     except Exception as e:
         context = get_current_context()
@@ -694,9 +751,10 @@ def generate_geomx_dcc_count(dcc_script_dict: dict) -> str:
     retry_delay=timedelta(minutes=5),
     retries=4,
     queue='hpc_4G')
-def generate_geomx_qc_report(dcc_count_path: str, design_dict: dict) -> None:
+def generate_geomx_qc_report(dcc_count_path: str, design_dict: dict) -> str:
     try:
         print(dcc_count_path)
+        return 'report_path'
     except Exception as e:
         context = get_current_context()
         log.error(e)
@@ -719,7 +777,7 @@ def generate_geomx_qc_report(dcc_count_path: str, design_dict: dict) -> None:
         raise ValueError(e)
 
 
-def calculate_md5sum_for_analysis_dir(dir_path: str) -> None:
+def calculate_md5sum_for_analysis_dir(dir_path: str) -> str:
     try:
         temp_dir = \
             get_temp_dir(use_ephemeral_space=True)
@@ -739,6 +797,10 @@ def calculate_md5sum_for_analysis_dir(dir_path: str) -> None:
         stdout_file, stderr_file = \
             bash_script_wrapper(
                 script_path=script_path)
+        md5_sum_file = \
+            os.path.join(dir_path, 'file_manifest.md5')
+        check_file_path(md5_sum_file)
+        return md5_sum_file
     except Exception as e:
         raise ValueError(
             f"Failed to get md5sum for dir {dir_path}, error: {e}")
@@ -750,10 +812,12 @@ def calculate_md5sum_for_analysis_dir(dir_path: str) -> None:
     retry_delay=timedelta(minutes=5),
     retries=4,
     queue='hpc_8G')
-def calculate_md5sum_for_dcc(dcc_count_path: str) -> None:
+def calculate_md5sum_for_dcc(dcc_count_path: str) -> str:
     try:
-        calculate_md5sum_for_analysis_dir(
-            dir_path=dcc_count_path)
+        md5_sum_file = \
+            calculate_md5sum_for_analysis_dir(
+                dir_path=dcc_count_path)
+        return md5_sum_file
     except Exception as e:
         context = get_current_context()
         log.error(e)
@@ -822,7 +886,9 @@ def collect_analysis_dir(
     retries=4,
     queue='hpc_4G')
 def load_dcc_count_to_db(
-        dcc_count_path: str) -> str:
+        dcc_count_path: str,
+        md5_file: str,
+        report_file: str) -> str:
     try:
         ## dag_run.conf should have analysis_id
         context = get_current_context()
