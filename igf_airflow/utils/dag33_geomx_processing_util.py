@@ -712,13 +712,17 @@ def generate_geomx_dcc_count(
         script_path = dcc_script_dict.get('dcc_script_path')
         output_path = dcc_script_dict.get('output_dir')
         design_file = design_dict.get('analysis_design')
+        ## its not safe to assume that files can be overwritten without inspection
+        if len(os.listdir(output_path)) > 0:
+            raise ValueError(
+                f"Output path {output_path} is not empty. Clean-up manually before re-run.")
         try:
             stdout_file, stderr_file = \
                 bash_script_wrapper(
                     script_path=script_path)
         except Exception as e:
             raise ValueError(
-                f"Script: {script_path}, error file: stderr_file stdout file{stdout_file}")
+                f"Failed to run script, Script: {script_path}, error file: {e}")
         ## check output path and compare dcc files
         ## with the number of samples mentioned in the design file
         compare_dcc_output_dir_with_design_file(
