@@ -691,7 +691,7 @@ def compare_dcc_output_dir_with_design_file(
         sample_list = list(sample_metadata.keys())
         ## tool generates dcc file for sample if its present in the .ini
         ## but not listed in the fastq directory
-        if len(dcc_files) > len(sample_list):
+        if len(dcc_files) < len(sample_list):
             raise ValueError(
                 f"DCC file count: {len(dcc_files)}, sample count: {len(sample_list)}, path: {dcc_output_dir}")
     except Exception as e:
