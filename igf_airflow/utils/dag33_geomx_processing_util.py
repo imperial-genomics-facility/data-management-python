@@ -1026,7 +1026,63 @@ def send_email_to_user() -> None:
 def mark_analysis_finished(
         seed_table: str = 'analysis',
 	    new_status: str = 'FINISHED',
-        no_change_status: list = ('SEEDED', 'FAILED')) -> None:
+        no_change_status: list = ('SEEDED', )) -> None:
+    try:
+        ## dag_run.conf should have analysis_id
+        context = get_current_context()
+        dag_run = context.get('dag_run')
+        analysis_id = None
+        if dag_run is not None and \
+           dag_run.conf is not None and \
+           dag_run.conf.get('analysis_id') is not None:
+            analysis_id = \
+                dag_run.conf.get('analysis_id')
+        if analysis_id is None:
+            raise ValueError('analysis_id not found in dag_run.conf')
+        ## pipeline_name is context['task'].dag_id
+        pipeline_name = context['task'].dag_id
+        ## change seed status
+        seed_status = \
+            check_and_seed_analysis_pipeline(
+                analysis_id=analysis_id,
+                pipeline_name=pipeline_name,
+                dbconf_json_path=DATABASE_CONFIG_FILE,
+                new_status=new_status,
+                seed_table=seed_table,
+                no_change_status=no_change_status)
+    except Exception as e:
+        context = get_current_context()
+        log.error(e)
+        log_file_path = [
+            os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+            f"dag_id={context['ti'].dag_id}",
+            f"run_id={context['ti'].run_id}",
+            f"task_id={context['ti'].task_id}",
+            f"attempt={context['ti'].try_number}.log"]
+        message = \
+            f"Error: {e}, Log: {os.path.join(*log_file_path)}"
+        send_log_to_channels(
+            slack_conf=SLACK_CONF,
+            ms_teams_conf=MS_TEAMS_CONF,
+            task_id=context['task'].task_id,
+            dag_id=context['task'].dag_id,
+            project_id=None,
+            comment=message,
+            reaction='fail')
+        raise ValueError(e)
+
+
+## TASK
+@task(
+	task_id="mark_analysis_failed",
+    retry_delay=timedelta(minutes=5),
+    retries=4,
+    trigger_rule='all_failed',
+    queue='hpc_4G')
+def mark_analysis_failed(
+        seed_table: str = 'analysis',
+	    new_status: str = 'FAILED',
+        no_change_status: list = ('SEEDED', 'FINISHED')) -> None:
     try:
         ## dag_run.conf should have analysis_id
         context = get_current_context()
