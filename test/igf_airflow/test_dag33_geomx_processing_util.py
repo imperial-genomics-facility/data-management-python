@@ -13,6 +13,7 @@ from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.igfdb.platformadaptor import PlatformAdaptor
 from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
 from igf_data.igfdb.sampleadaptor import SampleAdaptor
+from igf_data.igfdb.useradaptor import UserAdaptor
 from igf_data.igfdb.experimentadaptor import ExperimentAdaptor
 from igf_data.igfdb.runadaptor import RunAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
@@ -32,7 +33,10 @@ from igf_airflow.utils.dag33_geomx_processing_util import (
     create_geomx_dcc_run_script,
     calculate_md5sum_for_analysis_dir,
     compare_dcc_output_dir_with_design_file,
-    collect_analysis_dir)
+    collect_analysis_dir,
+    fetch_analysis_name_for_analysis_id,
+    fetch_user_info_for_project_igf_id,
+    generate_email_text_for_analysis)
 
 class TestDag33_geomx_processing_util_utilsA(unittest.TestCase):
   def setUp(self):
@@ -49,6 +53,19 @@ class TestDag33_geomx_processing_util_utilsA(unittest.TestCase):
     project_data = [{'project_igf_id': 'projectA'}]
     pa = ProjectAdaptor(**{'session': base.session})
     pa.store_project_and_attribute_data(data=project_data)
+    user_data = [{
+      'name': 'UserA', 
+      'email_id': 'usera@ic.ac.uk', 
+      'username': 'usera',
+      'category': 'HPC_USER',
+      'password': 'BBB'}]
+    project_user_data = [{
+      'project_igf_id': 'projectA',
+      'email_id': 'usera@ic.ac.uk',
+      'data_authority': True}]
+    ua = UserAdaptor(**{'session': base.session})
+    ua.store_user_data(data=user_data)
+    pa.assign_user_to_project(data=project_user_data)
     ## add analysis data
     aa = \
       AnalysisAdaptor(**{'session': base.session})
@@ -145,6 +162,55 @@ class TestDag33_geomx_processing_util_utilsA(unittest.TestCase):
         hpc_base_path=hpc_dir)
     self.assertTrue(os.path.exists(target_dir_path))
     self.assertEqual('projectA', project_igf_id)
+
+  def test_fetch_analysis_name_for_analysis_id(self):
+    analysis_name = \
+      fetch_analysis_name_for_analysis_id(
+        analysis_id=1,
+        dbconfig_file=self.dbconfig)
+    self.assertEqual(analysis_name, 'analysis_1')
+
+  def test_fetch_user_info_for_project_igf_id(self):
+    user_name, login_name, user_email, hpcUser = \
+      fetch_user_info_for_project_igf_id(
+        project_igf_id='projectA',
+        dbconfig_file=self.dbconfig)
+    self.assertEqual(user_name, 'UserA')
+    self.assertEqual(login_name, 'usera')
+    self.assertEqual(user_email, 'usera@ic.ac.uk')
+    self.assertTrue(hpcUser)
+
+  def test_generate_email_text_for_analysis(self):
+    output_file, receivers = \
+      generate_email_text_for_analysis(
+        analysis_id=1,
+        template_path='template/email_notification/analysis_update_email_template.txt',
+        dbconfig_file=self.dbconfig,
+        default_email_user='default@ic.ac.uk',
+        send_email_to_user=True)
+    self.assertEqual(len(receivers), 2)
+    self.assertTrue('default@ic.ac.uk' in receivers)
+    self.assertTrue('usera@ic.ac.uk' in receivers)
+    with open(output_file, 'r') as fp:
+      email_data = fp.read()
+    self.assertTrue('Dear UserA' in email_data)
+    self.assertFalse('Dear UserA, EMAIL FOR usera@ic.ac.uk' in email_data)
+    self.assertTrue('projectA' in email_data)
+    self.assertTrue('analysis_1' in email_data)
+    output_file, receivers = \
+      generate_email_text_for_analysis(
+        analysis_id=1,
+        template_path='template/email_notification/analysis_update_email_template.txt',
+        dbconfig_file=self.dbconfig,
+        default_email_user='default@ic.ac.uk',
+        send_email_to_user=False)
+    self.assertEqual(len(receivers), 2)
+    self.assertTrue('default@ic.ac.uk' in receivers)
+    self.assertTrue('usera@ic.ac.uk' in receivers)
+    with open(output_file, 'r') as fp:
+      email_data = fp.read()
+    self.assertTrue('Dear UserA, EMAIL FOR usera@ic.ac.uk' in email_data)
+
 
 class TestDag33_geomx_processing_util_utilsB(unittest.TestCase):
   def setUp(self):
@@ -485,6 +551,12 @@ class TestDag33_geomx_processing_util_utilsC(unittest.TestCase):
     for i in ('sampleC.dcc',):
       with open(os.path.join(output_dir, i), 'w') as fp:
         fp.write('aaa')
+    self.assertIsNone(
+      compare_dcc_output_dir_with_design_file(
+        dcc_output_dir=output_dir,
+        design_file=design_file))
+    os.remove(os.path.join(output_dir, 'sampleB.dcc'))
+    os.remove(os.path.join(output_dir, 'sampleC.dcc'))
     with self.assertRaises(Exception):
       compare_dcc_output_dir_with_design_file(
         dcc_output_dir=output_dir,
@@ -504,7 +576,6 @@ class TestDag33_geomx_processing_util_utilsC(unittest.TestCase):
     self.assertTrue(os.path.join(output_dir, 'a.txt') in md5_data)
     self.assertTrue(os.path.join(output_dir, 'b.txt') in md5_data)
     self.assertTrue(os.path.join(output_dir, 'c.txt') in md5_data)
-
 
 
 if __name__=='__main__':

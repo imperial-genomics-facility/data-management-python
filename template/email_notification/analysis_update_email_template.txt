@@ -1,0 +1,36 @@
+To: {% if send_email_to_user %}{{ customerEmail }}; {{ defaultUser }}{% else %}{{ defaultUser }}{% endif %}
+Subject: {{ projectName }} - Analysis data available for download
+From: {{ defaultUser }}
+MIME-Version: 1.0
+Content-Type: text/plain
+
+Dear {{ customerName }}, {% if not send_email_to_user %}EMAIL FOR {{ customerEmail }}{% endif %}
+
+We would like to update you that the results from a recent analysis run "{{ analysisName }}" are now available for your project {{ projectName }}.
+
+Data access via Globus (FILES AVAILABLE FOR 30 DAYS):
+  - Have you already requested for a Globus collection for your project before?
+    - If YES, please check the existing collection for new data files.
+    - If NO, please let us know if we can share this data with you via Globus.
+        {% if hpcUser %}We need your approval before we can share this data with Globus username {{ customerUsername }}@ic.ac.uk.{% else %}Please send us your Globus username / Imperial College's username forthis share.{% endif %}
+
+  More information about Globus based transfer
+      https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html#globus-based-transfer
+
+Please note that you are responsible for long term storage of your data as we will keep them only for a short period of time.
+
+Subscribe to IGF mailing list for updates and announcements:
+https://mailman.ic.ac.uk/mailman/listinfo/igf-users
+
+Kind regards
+Imperial BRC Genomics Facility
+
+Imperial College London
+Burlington Danes Building
+Hammersmith Hospital Campus
+Du Cane Road
+London, W12 0NN
+United Kingdom
+phone +44 (0)20 7594 9107
+Twitter https://twitter.com/ImperialGF
+www.imperial.ac.uk/genomicsfacility

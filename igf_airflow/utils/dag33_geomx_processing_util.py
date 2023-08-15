@@ -33,12 +33,15 @@ from igf_data.utils.fileutils import (
     get_date_stamp_for_file_name)
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.igfdb.baseadaptor import BaseAdaptor
+from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.igfdb.analysisadaptor import AnalysisAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
-from igf_airflow.utils.dag22_bclconvert_demult_utils import _create_output_from_jinja_template
+from igf_airflow.utils.dag22_bclconvert_demult_utils import (
+    _create_output_from_jinja_template,
+    send_email_via_smtp)
 from igf_airflow.utils.dag26_snakemake_rnaseq_utils import (
     fetch_analysis_design,
     parse_analysis_design_and_get_metadata,
@@ -52,8 +55,8 @@ from airflow.decorators import task
 
 log = logging.getLogger(__name__)
 
-SLACK_CONF = Variable.get('slack_conf',default_var=None)
-MS_TEAMS_CONF = Variable.get('ms_teams_conf',default_var=None)
+SLACK_CONF = Variable.get('analysis_slack_conf',default_var=None)
+MS_TEAMS_CONF = Variable.get('analysis_ms_teams_conf',default_var=None)
 HPC_SSH_KEY_FILE = Variable.get('hpc_ssh_key_file', default_var=None)
 DATABASE_CONFIG_FILE = Variable.get('database_config_file', default_var=None)
 HPC_BASE_RAW_DATA_PATH = Variable.get('hpc_base_raw_data_path', default_var=None)
@@ -72,6 +75,10 @@ GLOBUS_ROOT_DIR = Variable.get("globus_root_dir", default_var=None)
 GEOMX_NGS_PIPELINE_EXE = Variable.get("geomx_ngs_pipeline_exe", default_var=None)
 GEOMX_SCRIPT_TEMPLATE = Variable.get("geomx_script_template", default_var=None)
 REPORT_TEMPLATE_FILE = Variable.get("geomx_report_template_file", default_var=None)
+
+## EMAIL CONFIG
+EMAIL_CONFIG = Variable.get("email_config", default_var=None)
+EMAIL_TEMPLATE = Variable.get("analysis_email_template", default_var=None)
 
 ## TASK
 @task.branch(
@@ -991,6 +998,103 @@ def copy_data_to_globus(analysis_dir_dict: dict) -> None:
             reaction='fail')
         raise ValueError(e)
 
+def fetch_analysis_name_for_analysis_id(
+        analysis_id: int,
+        dbconfig_file: str) -> str:
+    try:
+        dbconf = read_dbconf_json(dbconfig_file)
+        aa = AnalysisAdaptor(**dbconf)
+        aa.start_session()
+        analysis_entry = \
+          aa.fetch_analysis_records_analysis_id(
+            analysis_id=analysis_id,
+            output_mode='one_or_none')
+        aa.close_session()
+        if analysis_entry is None:
+            raise ValueError(
+                f"No entry found for analysis id {analysis_id}")
+        analysis_name = \
+            analysis_entry.analysis_name
+        if analysis_name is None:
+            raise ValueError(
+                f"Analysis name is None for id {analysis_id}")
+        return analysis_name
+    except Exception as e:
+        raise ValueError(
+            f"Failed to get analysis name for id {analysis_id}, error: {e}")
+
+
+def fetch_user_info_for_project_igf_id(
+        project_igf_id: str,
+        dbconfig_file: str) -> Tuple[str, str, str, bool]:
+    try:
+        dbconf = read_dbconf_json(dbconfig_file)
+        pa = ProjectAdaptor(**dbconf)
+        pa.start_session()
+        user_info = pa.get_project_user_info(project_igf_id=project_igf_id)
+        pa.close_session()
+        user_info = user_info[user_info['data_authority']=='T']
+        user_info = user_info.to_dict(orient='records')
+        if len(user_info) == 0:
+            raise ValueError(
+                f'No user found for project {project_igf_id}')
+        user_info = user_info[0]
+        user_name = user_info['name']
+        login_name = user_info['username']
+        user_email = user_info['email_id']
+        user_category = user_info['category']
+        hpcUser = False
+        if user_category=='HPC_USER':
+            hpcUser = True
+        return user_name, login_name, user_email, hpcUser
+    except Exception as e:
+        raise ValueError(
+            f"Failed to get user infor for projecty {project_igf_id}, error: {e}")
+
+
+def generate_email_text_for_analysis(
+        analysis_id: int,
+        template_path: str,
+        dbconfig_file: str,
+        default_email_user: str,
+        send_email_to_user: bool = True) -> Tuple[str, list]:
+    try:
+        ## get analysis name and project name
+        project_igf_id = \
+            get_project_igf_id_for_analysis(
+                analysis_id=analysis_id,
+                dbconfig_file=dbconfig_file)
+        analysis_name = \
+            fetch_analysis_name_for_analysis_id(
+                analysis_id=analysis_id,
+                dbconfig_file=dbconfig_file)
+        ## get user info
+        user_name, login_name, user_email, hpcUser = \
+            fetch_user_info_for_project_igf_id(
+                project_igf_id=project_igf_id,
+                dbconfig_file=dbconfig_file)
+        ## build email text file
+        temp_dir = get_temp_dir(use_ephemeral_space=True)
+        output_file = \
+            os.path.join(temp_dir, 'email.txt')
+        _create_output_from_jinja_template(
+            template_file=template_path,
+            output_file=output_file,
+            autoescape_list=['xml', 'html'],
+            data=dict(
+                customerEmail=user_email,
+                defaultUser=default_email_user,
+                projectName=project_igf_id,
+                analysisName=analysis_name,
+                customerName=user_name,
+                customerUsername=login_name,
+                hpcUser=hpcUser,
+                send_email_to_user=send_email_to_user))
+        return output_file, [user_email, default_email_user]
+    except Exception as e:
+        raise ValueError(
+            f"Failed to generate email body, error: {e}")
+
 
 ## TASK
 @task(
@@ -998,9 +1102,44 @@ def copy_data_to_globus(analysis_dir_dict: dict) -> None:
     retry_delay=timedelta(minutes=5),
     retries=4,
     queue='hpc_4G')
-def send_email_to_user() -> None:
+def send_email_to_user(
+        send_email: bool = False,
+        email_user_key: str = 'username') -> None:
     try:
-        print('send email')
+        ## dag_run.conf should have analysis_id
+        context = get_current_context()
+        dag_run = context.get('dag_run')
+        analysis_id = None
+        if dag_run is not None and \
+           dag_run.conf is not None and \
+           dag_run.conf.get('analysis_id') is not None:
+            analysis_id = \
+                dag_run.conf.get('analysis_id')
+        if analysis_id is None:
+            raise ValueError(
+                'analysis_id not found in dag_run.conf')
+        ## get default user from email config
+        email_config = \
+            read_json_data(EMAIL_CONFIG)
+        default_email_user = \
+            email_config.get(email_user_key)
+        if default_email_user is None:
+            raise KeyError(
+                f"Missing default user info in email config file {EMAIL_CONFIG}")
+        ## generate email text for analysis
+        email_text_file, receivers = \
+            generate_email_text_for_analysis(
+                analysis_id=analysis_id,
+                template_path=EMAIL_TEMPLATE,
+                dbconfig_file=DATABASE_CONFIG_FILE,
+                default_user=default_email_user,
+                send_email_to_user=send_email)
+        ## send email to user
+        send_email_via_smtp(
+            sender=default_email_user,
+            receivers=receivers,
+            email_config_json=EMAIL_CONFIG,
+            email_text_file=email_text_file)
     except Exception as e:
         context = get_current_context()
         log.error(e)

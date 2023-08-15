@@ -31,8 +31,8 @@ from igf_nextflow.nextflow_utils.nextflow_input_formatter import prepare_input_f
 
 log = logging.getLogger(__name__)
 
-SLACK_CONF = Variable.get('slack_conf',default_var=None)
-MS_TEAMS_CONF = Variable.get('ms_teams_conf',default_var=None)
+SLACK_CONF = Variable.get('analysis_slack_conf',default_var=None)
+MS_TEAMS_CONF = Variable.get('analysis_ms_teams_conf',default_var=None)
 HPC_SSH_KEY_FILE = Variable.get('hpc_ssh_key_file', default_var=None)
 DATABASE_CONFIG_FILE = Variable.get('database_config_file', default_var=None)
 HPC_BASE_RAW_DATA_PATH = Variable.get('hpc_base_raw_data_path', default_var=None)
