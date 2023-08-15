@@ -1121,6 +1121,8 @@ def send_email_to_user(
         ## get default user from email config
         email_config = \
             read_json_data(EMAIL_CONFIG)
+        if isinstance(email_config, list):
+            email_config = email_config[0]
         default_email_user = \
             email_config.get(email_user_key)
         if default_email_user is None:
