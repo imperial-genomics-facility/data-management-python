@@ -1134,7 +1134,7 @@ def send_email_to_user(
                 analysis_id=analysis_id,
                 template_path=EMAIL_TEMPLATE,
                 dbconfig_file=DATABASE_CONFIG_FILE,
-                default_user=default_email_user,
+                default_email_user=default_email_user,
                 send_email_to_user=send_email)
         ## send email to user
         send_email_via_smtp(
