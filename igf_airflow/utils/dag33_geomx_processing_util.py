@@ -760,6 +760,61 @@ def generate_geomx_dcc_count(
 
 ## TASK
 @task(
+	task_id="copy_geomx_config_file_to_output",
+    retry_delay=timedelta(minutes=5),
+    retries=4,
+    queue='hpc_64G16t')
+def copy_geomx_config_file_to_output(
+        design_dict: dict,
+        dcc_count_path: str) -> str:
+    try:
+        design_file = design_dict.get('analysis_design')
+        check_file_path(design_file)
+        with open(design_file, 'r') as fp:
+            input_design_yaml = fp.read()
+        sample_metadata, analysis_metadata = \
+            parse_analysis_design_and_get_metadata(
+                input_design_yaml=input_design_yaml)
+        if sample_metadata is None or \
+	       analysis_metadata is None:
+            raise KeyError("Missing sample or analysis metadata")
+        config_zip_file = \
+            analysis_metadata.get('config_zip_file')
+        check_file_path(config_zip_file)
+        target_path = \
+            os.path.join(
+                dcc_count_path, 'geomx_config.zip')
+        if os.path.exists(target_path):
+            raise IOError(
+                f"Config file {target_path} already exists. Remove it before restarting pipeline.")
+        copy_local_file(
+            config_zip_file,
+            target_path)
+        return target_path
+    except Exception as e:
+        context = get_current_context()
+        log.error(e)
+        log_file_path = [
+            os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+            f"dag_id={context['ti'].dag_id}",
+            f"run_id={context['ti'].run_id}",
+            f"task_id={context['ti'].task_id}",
+            f"attempt={context['ti'].try_number}.log"]
+        message = \
+            f"Error: {e}, Log: {os.path.join(*log_file_path)}"
+        send_log_to_channels(
+            slack_conf=SLACK_CONF,
+            ms_teams_conf=MS_TEAMS_CONF,
+            task_id=context['task'].task_id,
+            dag_id=context['task'].dag_id,
+            project_id=None,
+            comment=message,
+            reaction='fail')
+        raise ValueError(e)
+
+
+## TASK
+@task(
 	task_id="generate_qc_report",
     retry_delay=timedelta(minutes=5),
     retries=4,
@@ -901,7 +956,8 @@ def collect_analysis_dir(
 def load_dcc_count_to_db(
         dcc_count_path: str,
         md5_file: str,
-        report_file: str) -> str:
+        report_file: str,
+        geomx_config: str) -> str:
     try:
         ## dag_run.conf should have analysis_id
         context = get_current_context()
@@ -914,6 +970,11 @@ def load_dcc_count_to_db(
                 dag_run.conf.get('analysis_id')
         if analysis_id is None:
             raise ValueError('analysis_id not found in dag_run.conf')
+        ## check if path exists
+        check_file_path(geomx_config)
+        check_file_path(md5_file)
+        check_file_path(report_file)
+        ## load data to db
         ## pipeline_name is context['task'].dag_id
         pipeline_name = context['task'].dag_id
         target_dir_path, project_igf_id, date_tag = \
