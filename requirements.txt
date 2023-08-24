@@ -8,7 +8,7 @@
   apache-airflow-providers-celery==2.1.0
   apache-airflow-providers-ftp==2.0.1
   apache-airflow-providers-http==2.0.1
-  apache-airflow-providers-imap==2.0.1
+  apache-airflow-providers-imap==3.3.0
   apache-airflow-providers-sqlite==2.0.1
   apache-airflow-providers-ssh==2.3.0
   apispec==3.3.2
