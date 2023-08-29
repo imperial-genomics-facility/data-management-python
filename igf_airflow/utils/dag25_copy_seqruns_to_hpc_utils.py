@@ -132,8 +132,22 @@ def register_run_to_db_and_portal_func(**context):
     ## register seqrun id to portal db
     temp_dir = \
       get_temp_dir(use_ephemeral_space=True)
+    ## get read stats
+    runinfo_file_path = \
+      os.path.join(
+        HPC_SEQRUN_PATH,
+        seqrun_id,
+        'RunInfo.xml')
+    check_file_path(runinfo_file_path)
+    runinfo_data = \
+      RunInfo_xml(
+        xml_file=runinfo_file_path)
+    formatted_read_stats = \
+      runinfo_data.\
+        get_formatted_read_stats()
     json_data = {
-      "seqrun_id_list": [seqrun_id,]}
+      "seqrun_id_list": [seqrun_id,],
+      "run_config_list": [formatted_read_stats,]}
     new_run_list_json = \
       os.path.join(
         temp_dir,
