@@ -4167,7 +4167,7 @@ def generate_bclconvert_report(
       report_template: str,
       bclconvert_report_library_path: str,
       bclconvert_reports_path: str,
-      no_input: bool = False,
+      no_input: bool = True,
       dry_run: bool = False) \
         -> str:
   try:
