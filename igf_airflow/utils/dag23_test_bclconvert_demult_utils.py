@@ -513,7 +513,8 @@ def generate_report_func(**context):
         image_path=INTEROP_NOTEBOOK_IMAGE,
         report_template=BCLCONVERT_REPORT_TEMPLATE,
         bclconvert_report_library_path=BCLCONVERT_REPORT_LIBRARY,
-        bclconvert_reports_path=bclconvert_reports_path)
+        bclconvert_reports_path=bclconvert_reports_path,
+        no_input=True)
     report_dest_path = \
       os.path.join(
         temp_dir,

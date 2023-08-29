@@ -4167,6 +4167,7 @@ def generate_bclconvert_report(
       report_template: str,
       bclconvert_report_library_path: str,
       bclconvert_reports_path: str,
+      no_input: bool = False,
       dry_run: bool = False) \
         -> str:
   try:
@@ -4231,6 +4232,7 @@ def generate_bclconvert_report(
         singularity_options=['--no-home','-C', "--env", f"PYTHONPATH={bclconvert_report_library_path}"],
         allow_errors=False,
         singularity_image_path=image_path,
+        no_input=no_input,
         dry_run=dry_run)
     output_notebook_path, _ = \
       nb.execute_notebook_in_singularity()
