@@ -1,8 +1,6 @@
-import re, os, warnings
 from collections import defaultdict
 from bs4 import BeautifulSoup
-from lxml.html.soupparser import fromstring
-from lxml.etree import tostring
+
 
 class RunInfo_xml:
   '''
@@ -38,10 +36,35 @@ class RunInfo_xml:
             reads_stats[r[number_tag]][tag_name] = None
           match_count += 1
       if match_count == 0:
-        raise ValueError(f'no record found for {root_tag} in file {self.xml_file}')
+        raise ValueError(
+          f'no record found for {root_tag} in file {self.xml_file}')
       return reads_stats
     except Exception as e:
       raise ValueError(f"Failed to get reads stats, error: {e}")
+
+
+  def get_formatted_read_stats(self, root_tag='read', number_tag='number',
+                      tags=('isindexedread','numcycles', 'isreversecomplement')):
+    try:
+      reads_stats = \
+        self.get_reads_stats(
+          root_tag=root_tag,
+          number_tag=number_tag,
+          tags=tags)
+      read_info = list()
+      for read_id, read_data in reads_stats.items():
+        row = list()
+        row.append(f'Read: {read_id}')
+        for read_info_key, read_info_value in read_data.items():
+          if read_info_key=='numcycles':
+            row.append(f'Cycle: {read_info_value}')
+          if read_info_key=='isindexedread':
+            row.append(f'Index: {read_info_value}')
+        read_info.append(', '.join(row))
+      read_info = '; '.join(read_info)
+      return read_info
+    except Exception as e:
+      raise ValueError(f"Failed to get formatted reads stats, error: {e}")
 
 
   def get_platform_number(self):

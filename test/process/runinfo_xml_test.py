@@ -43,6 +43,10 @@ class Hiseq4000RunInfo(unittest.TestCase):
 
     self.assertEqual(index_count,2)
     self.assertEqual(read_count,2)
+    formatted_read_stats = \
+      self.get_formatted_read_stats()
+    self.assertTrue('Read: 1, Index: N, Cycle: 151;' in formatted_read_stats)
+    self.assertTrue('Read: 2, Index: Y, Cycle: 8;' in formatted_read_stats)
 
   def test_get_flowcell_name(self):
     runinfo_data=self.runinfo_data
