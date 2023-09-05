@@ -10,7 +10,7 @@ We would like to update you that the fastq files from a recent sequencing run "{
 
 Data access via Globus (FILES AVAILABLE FOR 30 DAYS):
   For first run of any project:
-    - Send us your Globus username (or Imperial College username) for creating a new collection (we don't create it by default)
+    - {% if hpcUser %}We need your approval before we can share this data with Globus username {{ customerUsername }}@ic.ac.uk.{% else %}Send us your Globus username (or Imperial College username) for creating a new collection (we don't create it by default).{% endif %}
     - Check Globus collection and download data
 
   For additional run of any project:
@@ -19,6 +19,8 @@ Data access via Globus (FILES AVAILABLE FOR 30 DAYS):
 
   More information about Globus based transfer
       https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html#globus-based-transfer
+
+Please note that you are responsible for long term storage of your data as we will keep these files only for a short period of time.
 
 Fastq file validation:
   - Validate file MD5 checksum after transferring files to your own storage
@@ -33,12 +35,10 @@ QC Report pages:
   - Flowcell home:
       http://eliot.med.ic.ac.uk/report/project/{{ projectName }}/{{ flowcellId }}
   - Login information (for QC page):
-      User Name: {{ customerUsername }}
-      {% if hpcUser %}Password: Your account password for Imperial College{% else %}Password: Your IGF account password (sent to you via a separate email){% endif %}
+      {% if hpcUser %}User Name: {{ customerUsername }}{% else %}User Name: {{ customerUsername }} (Let us know if you pefer to use your Imperial login credentials for QC pages).{% endif %}
+      {% if hpcUser %}Password: Your account password for Imperial College{% else %}Password: Your IGF account password (sent to you via a separate email).{% endif %}
 
 You can refer to the "samplesheet.csv" in the "Reports" dir for mapping facility sample ids to the original sample names.
-
-Please note that you are responsible for long term storage of your data as we will keep them only for a short period of time.
 
 Subscribe to IGF mailing list for updates and announcements:
 https://mailman.ic.ac.uk/mailman/listinfo/igf-users
@@ -52,6 +52,6 @@ Hammersmith Hospital Campus
 Du Cane Road
 London, W12 0NN
 United Kingdom
-phone +44 (0)20 7594 9107
+phone +44 (0)20 7594 6521
 Twitter https://twitter.com/ImperialGF
 www.imperial.ac.uk/genomicsfacility
