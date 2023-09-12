@@ -135,7 +135,15 @@ def prepare_nfcore_pipeline_inputs(**context):
         comment=f"Finished pipeline run, temp nextflow workdir: {work_dir}",
         reaction='pass')
       return [next_task,]
-    except:
+    except Exception as e:
+      send_log_to_channels(
+        slack_conf=SLACK_CONF,
+        ms_teams_conf=MS_TEAMS_CONF,
+        task_id=context['task'].task_id,
+        dag_id=context['task'].dag_id,
+        project_id=project_igf_id,
+        comment=f"Failed pipeline run, error: {e}",
+        reaction='fail')
       return [last_task,]
   except Exception as e:
     log.error(e)
