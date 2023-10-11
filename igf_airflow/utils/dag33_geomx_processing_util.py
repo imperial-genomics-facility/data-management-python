@@ -961,7 +961,8 @@ def build_qc_report_for_geomx(
                 f"{project_igf_id}_{os.path.basename(output_notebook_path)}")
         copy_local_file(
             output_notebook_path,
-            output_notebook)
+            output_notebook,
+            force=True)
         return output_notebook
     except Exception as e:
         raise ValueError(
