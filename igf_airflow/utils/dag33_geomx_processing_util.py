@@ -881,7 +881,7 @@ def generate_geomx_qc_report(
         target_path = \
             os.path.join(
                 output_path,
-                os.path.join(output_notebook))
+                os.path.basename(output_notebook))
         copy_local_file(
             output_notebook,
             target_path)
