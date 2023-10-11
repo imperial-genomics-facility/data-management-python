@@ -844,7 +844,7 @@ def generate_geomx_qc_report(
                 get('labworksheet_file')
         ## get output dir
         output_path = \
-            os.path.join(labworksheet_file, 'geomx_qc_report')
+            os.path.join(dcc_count_path, 'geomx_qc_report')
         os.makedirs(output_path, exist_ok=True)
         ## dag_run.conf should have analysis_id
         context = get_current_context()
