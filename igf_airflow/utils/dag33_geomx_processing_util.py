@@ -948,7 +948,7 @@ def build_qc_report_for_geomx(
                 container_paths=container_bind_dir_list,
                 kernel='python3',
                 use_ephemeral_space=True,
-                singularity_options=['--no-home','-C'],
+                singularity_options=['-C'],
                 allow_errors=False,
                 singularity_image_path=image_file,
                 timeout=timeout,
