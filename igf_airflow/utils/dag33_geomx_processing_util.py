@@ -925,7 +925,8 @@ def build_qc_report_for_geomx(
             image_file,
             dcc_dir_path,
             pkc_file_path,
-            annotation_file_path]
+            annotation_file_path,
+            f"/tmp:{work_dir}"]
         for f in input_list:
             check_file_path(f)
         container_bind_dir_list = [
