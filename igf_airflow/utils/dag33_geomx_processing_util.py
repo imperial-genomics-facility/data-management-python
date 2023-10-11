@@ -13,6 +13,7 @@ from datetime import timedelta
 from airflow.models import Variable
 from igf_data.utils.bashutils import bash_script_wrapper
 from igf_data.utils.analysis_fastq_fetch_utils import get_fastq_and_run_for_samples
+from igf_data.utils.jupyter_nbconvert_wrapper import Notebook_runner
 from jinja2 import Template
 from yaml import (
     Loader,
@@ -30,6 +31,7 @@ from igf_data.utils.fileutils import (
     copy_local_file,
     get_temp_dir,
     read_json_data,
+    get_date_stamp,
     get_date_stamp_for_file_name)
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.igfdb.baseadaptor import BaseAdaptor
@@ -71,10 +73,11 @@ DEFAULT_EMAIL_USER = Variable.get("default_email_user", default_var=None)
 ## GLOBUS
 GLOBUS_ROOT_DIR = Variable.get("globus_root_dir", default_var=None)
 
-## VARIABLES
+## GEOMX CONF VARIABLES
 GEOMX_NGS_PIPELINE_EXE = Variable.get("geomx_ngs_pipeline_exe", default_var=None)
 GEOMX_SCRIPT_TEMPLATE = Variable.get("geomx_script_template", default_var=None)
 REPORT_TEMPLATE_FILE = Variable.get("geomx_report_template_file", default_var=None)
+REPORT_IMAGE_FILE = Variable.get("geomx_report_image_file", default_var=None)
 
 ## EMAIL CONFIG
 EMAIL_CONFIG = Variable.get("email_config", default_var=None)
@@ -763,7 +766,7 @@ def generate_geomx_dcc_count(
 	task_id="copy_geomx_config_file_to_output",
     retry_delay=timedelta(minutes=5),
     retries=4,
-    queue='hpc_64G16t')
+    queue='hpc_4G')
 def copy_geomx_config_file_to_output(
         design_dict: dict,
         dcc_count_path: str) -> str:
@@ -818,11 +821,71 @@ def copy_geomx_config_file_to_output(
 	task_id="generate_qc_report",
     retry_delay=timedelta(minutes=5),
     retries=4,
-    queue='hpc_4G')
-def generate_geomx_qc_report(dcc_count_path: str, design_dict: dict) -> str:
+    queue='hpc_8G')
+def generate_geomx_qc_report(
+        dcc_count_path: str,
+        config_file_dict: dict,
+        design_dict: dict) -> str:
     try:
-        print(dcc_count_path)
-        return 'report_path'
+        design_file = design_dict.get('analysis_design')
+        check_file_path(design_file)
+        with open(design_file, 'r') as fp:
+            input_design_yaml = fp.read()
+        sample_metadata, analysis_metadata = \
+            parse_analysis_design_and_get_metadata(
+                input_design_yaml=input_design_yaml)
+        if sample_metadata is None or \
+	       analysis_metadata is None:
+            raise KeyError("Missing sample or analysis metadata")
+        geomx_pkc_file = \
+            analysis_metadata.get('geomx_pkc_file')
+        labworksheet_file = \
+            config_file_dict.\
+                get('labworksheet_file')
+        ## get output dir
+        output_path = \
+            os.path.join(labworksheet_file, 'geomx_qc_report')
+        os.makedirs(output_path, exist_ok=True)
+        ## dag_run.conf should have analysis_id
+        context = get_current_context()
+        dag_run = context.get('dag_run')
+        analysis_id = None
+        if dag_run is not None and \
+           dag_run.conf is not None and \
+           dag_run.conf.get('analysis_id') is not None:
+            analysis_id = \
+                dag_run.conf.get('analysis_id')
+        if analysis_id is None:
+            raise ValueError(
+                'analysis_id not found in dag_run.conf')
+        ## get analysis name and project name
+        project_igf_id = \
+            get_project_igf_id_for_analysis(
+                analysis_id=analysis_id,
+                dbconfig_file=DATABASE_CONFIG_FILE)
+        analysis_name = \
+            fetch_analysis_name_for_analysis_id(
+                analysis_id=analysis_id,
+                dbconfig_file=DATABASE_CONFIG_FILE)
+        ## build report
+        output_notebook = \
+            build_qc_report_for_geomx(
+                project_igf_id=project_igf_id,
+                analysis_name=analysis_name,
+                report_template=REPORT_TEMPLATE_FILE,
+                image_file=REPORT_IMAGE_FILE,
+                dcc_dir_path=dcc_count_path,
+                pkc_file_path=geomx_pkc_file,
+                annotation_file_path=labworksheet_file)
+        ## copy report to output dir
+        target_path = \
+            os.path.join(
+                output_path,
+                os.path.join(output_notebook))
+        copy_local_file(
+            output_notebook,
+            target_path)
+        return target_path
     except Exception as e:
         context = get_current_context()
         log.error(e)
@@ -844,6 +907,65 @@ def generate_geomx_qc_report(dcc_count_path: str, design_dict: dict) -> str:
             reaction='fail')
         raise ValueError(e)
 
+def build_qc_report_for_geomx(
+        project_igf_id: str,
+        analysis_name: str,
+        report_template: str,
+        image_file: str,
+        dcc_dir_path: str,
+        pkc_file_path: str,
+        annotation_file_path: str,
+        no_input: bool = True,
+        timeout: int = 1200) -> str:
+    try:
+        work_dir = \
+            get_temp_dir(use_ephemeral_space=True)
+        input_list = [
+            report_template,
+            image_file,
+            dcc_dir_path,
+            pkc_file_path,
+            annotation_file_path]
+        for f in input_list:
+            check_file_path(f)
+        container_bind_dir_list = [
+            dcc_dir_path,
+            os.path.dirname(pkc_file_path),
+            os.path.dirname(annotation_file_path)]
+        date_tag = get_date_stamp()
+        input_params = dict(
+            DATE_TAG=date_tag,
+            PROJECT_IGF_ID=project_igf_id,
+            ANALYSIS_NAME=analysis_name,
+            GEOMX_DCC_DIR=dcc_dir_path,
+            GEOMX_ANNOTATION_FILE=annotation_file_path,
+            GEOMX_PKC_FILE=pkc_file_path)
+        nb = \
+            Notebook_runner(
+                template_ipynb_path=report_template,
+                output_dir=work_dir,
+                input_param_map=input_params,
+                container_paths=container_bind_dir_list,
+                kernel='python3',
+                use_ephemeral_space=True,
+                singularity_options=['--no-home','-C'],
+                allow_errors=False,
+                singularity_image_path=image_file,
+                timeout=timeout,
+                no_input=no_input)
+        output_notebook_path, _ = \
+            nb.execute_notebook_in_singularity()
+        output_notebook = \
+            os.path.join(
+                work_dir,
+                f"{project_igf_id}_{os.path.basename(output_notebook_path)}")
+        copy_local_file(
+            output_notebook_path,
+            output_notebook)
+        return output_notebook
+    except Exception as e:
+        raise ValueError(
+            f"Failed to generate qc report. Error: {e}")
 
 def calculate_md5sum_for_analysis_dir(dir_path: str) -> str:
     try:
