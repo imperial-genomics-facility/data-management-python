@@ -6,7 +6,11 @@ import pandas as pd
 from igf_data.utils.fileutils import get_temp_dir
 from igf_data.utils.fileutils import check_file_path
 from igf_data.utils.fileutils import remove_dir
-from igf_airflow.utils.dag25_copy_seqruns_to_hpc_utils import register_new_seqrun_to_db
+from igf_airflow.utils.dag25_copy_seqruns_to_hpc_utils import (
+  register_new_seqrun_to_db,
+  _load_interop_data_to_db,
+  _load_interop_overview_data_to_seqrun_attribute,
+  _create_interop_report)
 from igf_data.igfdb.platformadaptor import PlatformAdaptor
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor

@@ -14,9 +14,16 @@ from igf_data.utils.fileutils import check_file_path
 from igf_data.illumina.runinfo_xml import RunInfo_xml
 from igf_data.igfdb.platformadaptor import PlatformAdaptor
 from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
-from igf_data.utils.fileutils import get_temp_dir
+from igf_data.igfdb.collectionadaptor import CollectionAdaptor
+from igf_data.utils.fileutils import (
+  get_temp_dir,
+  get_date_stamp,
+  copy_local_file)
 from igf_portal.api_utils import upload_files_to_portal
 from igf_data.illumina.runparameters_xml import RunParameter_xml
+from igf_airflow.utils.dag22_bclconvert_demult_utils import _create_output_from_jinja_template
+from igf_data.utils.jupyter_nbconvert_wrapper import Notebook_runner
+from igf_portal.api_utils import upload_files_to_portal
 
 log = logging.getLogger(__name__)
 
@@ -26,6 +33,9 @@ DATABASE_CONFIG_FILE = Variable.get('database_config_file', default_var=None)
 HPC_SEQRUN_PATH = Variable.get('hpc_seqrun_path', default_var=None)
 IGF_PORTAL_CONF = Variable.get('igf_portal_conf', default_var=None)
 PORTAL_ADD_SEQRUN_URL = "/api/v1/raw_seqrun/add_new_seqrun"
+HPC_INTEROP_PATH = Variable.get('hpc_interop_path', default_var=None)
+INTEROP_REPORT_TEMPLATE = Variable.get('interop_report_template', default_var=None)
+INTEROP_REPORT_IMAGE = Variable.get('interop_report_image', default_var=None)
 
 def get_new_run_id_for_copy(**context):
   try:
@@ -273,3 +283,159 @@ def register_new_seqrun_to_db(
     except Exception as e:
       raise ValueError(
         f"Failed to register new run on db. error: {e}")
+
+
+def _create_interop_report(
+    run_id: str,
+    run_dir_base_path: str,
+    report_template: str,
+    report_image: str,
+    timeout: int = 1200,
+    no_input: bool = True,
+    dry_run: bool = False
+    ) -> Tuple[str, str, str, str, str]:
+  try:
+    ## create a formated notebook using template
+    ## * run id
+    ## * run input dir
+    ## * output dir
+    ##
+    work_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    os.makedirs(work_dir, exist_ok=True)
+    run_dir = \
+      os.path.join(run_dir_base_path, run_id)
+    input_list = [
+      report_template,
+      report_image,
+      work_dir,
+      run_dir]
+    for f in input_list:
+      check_file_path(f)
+    overview_csv_output = \
+      os.path.join(
+        work_dir,
+        f"{run_id}_overview.csv")
+    tile_parquet_output = \
+      os.path.join(
+        work_dir,
+        f"{run_id}_tile.parquet")
+    metrics_dir = \
+      os.path.join(
+          work_dir,
+          'metrics')
+    os.makedirs(metrics_dir, exist_ok=True)
+    ##
+    ## execute notebook on server and create report
+    ## * input ipynb and output html
+    ## * can we save ipynb
+    ##
+    container_bind_dir_list = [
+      work_dir,
+      run_dir]
+    date_tag = get_date_stamp()
+    input_params = dict(
+      DATE_TAG=date_tag,
+      RUN_ID=run_id,
+      RUN_DIR=run_dir,
+      METRICS_DIR=metrics_dir,
+      OVERVIEW_CSV_OUTPUT=overview_csv_output,
+      TILE_PARQUET_OUTOUT=tile_parquet_output)
+    nb = \
+      Notebook_runner(
+        template_ipynb_path=report_template,
+        output_dir=work_dir,
+        input_param_map=input_params,
+        container_paths=container_bind_dir_list,
+        kernel='python3',
+        use_ephemeral_space=True,
+        allow_errors=False,
+        singularity_image_path=report_image,
+        timeout=timeout,
+        no_input=no_input,
+        dry_run=dry_run)
+    output_notebook_path, _ = \
+      nb.execute_notebook_in_singularity()
+    check_file_path(overview_csv_output)
+    check_file_path(tile_parquet_output)
+    check_file_path(output_notebook_path)
+    return output_notebook_path, metrics_dir, overview_csv_output, tile_parquet_output, work_dir
+  except Exception as e:
+    raise ValueError(
+      f"Failed to generate report, error: {e}")
+
+def _load_interop_data_to_db(
+      run_id: str,
+      interop_output_dir: str,
+      interop_report_base_path: str,
+      dbconfig_file: str,
+      collection_type: str = 'interop_metrics',
+      collection_table: str = 'seqrun') -> None:
+  try:
+    target_dir_path = \
+      os.path.join(interop_report_base_path, f"{run_id}_interop")
+    ## add fail safe
+    if os.path.exists(target_dir_path):
+      raise IOError(
+        f"Path {target_dir_path} already present. Check and remove old files before re-run.")
+    ## load data to disk
+    copy_local_file(
+      source_path=interop_output_dir,
+      destination_path=target_dir_path)
+    ## load analysis to db
+    collection_data_list = [{
+      'name': run_id,
+      'type': collection_type,
+      'table': collection_table,
+      'file_path': target_dir_path}]
+    dbconf = read_dbconf_json(dbconfig_file)
+    ca = CollectionAdaptor(**dbconf)
+    ca.start_session()
+    try:
+      ca.load_file_and_create_collection(
+        data=collection_data_list,
+        calculate_file_size_and_md5=False,
+        autosave=False)
+      ca.commit_session()
+      ca.close_session()
+    except:
+      ca.rollback_session()
+      ca.close_session()
+      raise
+  except Exception as e:
+    raise ValueError(
+      f"Failed to load interop report to db, error: {e}")
+
+def _load_interop_overview_data_to_seqrun_attribute(
+      seqrun_igf_id: str,
+      dbconfig_file: str,
+      interop_overview_file: str) -> None:
+  try:
+    check_file_path(interop_overview_file)
+    overview_df = \
+      pd.DataFrame(interop_overview_file)
+    overview_df['seqrun_igf_id'] = seqrun_igf_id
+    attribute_list = list()
+    for entry in overview_df.to_csv(orient='records'):
+      for attribute_name, attribute_value in entry.item():
+        attribute_list.append({
+          'attribute_name': attribute_name,
+          'attribute_value': attribute_value})
+    dbparam = \
+        read_dbconf_json(dbconfig_file)
+    sra = SeqrunAdaptor(**dbparam)
+    sra.start_session()
+    try:
+      sra.create_or_update_seqrun_attribute_records(
+        seqrun_igf_id=seqrun_igf_id,
+        attribute_list=attribute_list,
+        autosave=False)
+      sra.commit_session()
+      sra.close_session()
+    except:
+      sra.rollback_session()
+      sra.close_session()
+      raise
+  except Exception as e:
+    raise ValueError(
+      f"Failed to load overview data to seqrun attribute table, error: {e}")

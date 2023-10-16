@@ -1,6 +1,9 @@
 import unittest,json,os,shutil
 from sqlalchemy import create_engine
-from igf_data.igfdb.igfTables import Base
+from igf_data.igfdb.igfTables import (
+  Base,
+  Seqrun,
+  Seqrun_attribute)
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.platformadaptor import PlatformAdaptor
 from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
@@ -85,6 +88,136 @@ class SeqrunAdaptor_test1(unittest.TestCase):
       sr.get_flowcell_id_for_seqrun_id(
         seqrun_igf_id='171003_H00001_0089_TEST1')
     self.assertIsNone(flowcell_id)
+    sr.close_session()
+
+  def test_check_seqrun_attribute_ops(self):
+    sr = SeqrunAdaptor(**{'session_class': self.session_class})
+    sr.start_session()
+    record_exists = \
+      sr.check_seqrun_attribute_exists(
+        seqrun_igf_id='171003_H00001_0089_TEST',
+        attribute_name='yield')
+    self.assertFalse(record_exists)
+    seqrun = \
+      sr.fetch_seqrun_records_igf_id(
+        seqrun_igf_id='171003_H00001_0089_TEST')
+    self.assertEqual(
+      seqrun.seqrun_igf_id, '171003_H00001_0089_TEST')
+    sar = Seqrun_attribute(
+      seqrun_id=seqrun.seqrun_id,
+      attribute_name='yield',
+      attribute_value=1000)
+    sr.session.add(sar)
+    sr.session.flush()
+    sr.commit_session()
+    record_exists = \
+      sr.check_seqrun_attribute_exists(
+        seqrun_igf_id='171003_H00001_0089_TEST',
+        attribute_name='yield')
+    self.assertTrue(record_exists)
+    record_exists = \
+      sr.check_seqrun_attribute_exists(
+        seqrun_igf_id='171003_M00001_0089_000000000-TEST',
+        attribute_name='yield')
+    self.assertFalse(record_exists)
+    query = \
+      sr.session.\
+        query(
+          Seqrun.seqrun_igf_id,
+          Seqrun_attribute.attribute_name,
+          Seqrun_attribute.attribute_value).\
+        join(Seqrun_attribute,
+             Seqrun.seqrun_id==Seqrun_attribute.seqrun_id).\
+        filter(Seqrun.seqrun_igf_id=='171003_H00001_0089_TEST').\
+        filter(Seqrun_attribute.attribute_name=='yield')
+    seqrun_records = \
+      sr.fetch_records(query=query, output_mode='one_or_none')
+    self.assertIsNotNone(seqrun_records)
+    self.assertEqual(int(seqrun_records.attribute_value), 1000)
+    sr.session.\
+      query(Seqrun_attribute).\
+      filter(Seqrun_attribute.seqrun_id==seqrun.seqrun_id).\
+      filter(Seqrun_attribute.attribute_name=='yield').\
+      update({'attribute_value': 2000})
+    seqrun_records = \
+      sr.fetch_records(query=query, output_mode='one_or_none')
+    self.assertIsNotNone(seqrun_records)
+    self.assertEqual(int(seqrun_records.attribute_value), 2000)
+    record_exists = \
+      sr.check_seqrun_attribute_exists(
+        seqrun_igf_id='171003_H00001_0089_TEST',
+        attribute_name='yield1')
+    self.assertFalse(record_exists)
+    attribute_data = [{
+      'attribute_name': 'yield1',
+      'attribute_value': 3000}]
+    sr.store_seqrun_attributes(
+      data=attribute_data,
+      seqrun_id=seqrun.seqrun_id)
+    record_exists = \
+      sr.check_seqrun_attribute_exists(
+        seqrun_igf_id='171003_H00001_0089_TEST',
+        attribute_name='yield1')
+    self.assertTrue(record_exists)
+    query = \
+      sr.session.\
+        query(
+          Seqrun.seqrun_igf_id,
+          Seqrun_attribute.attribute_name,
+          Seqrun_attribute.attribute_value).\
+        join(Seqrun_attribute,
+             Seqrun.seqrun_id==Seqrun_attribute.seqrun_id).\
+        filter(Seqrun.seqrun_igf_id=='171003_H00001_0089_TEST').\
+        filter(Seqrun_attribute.attribute_name=='yield1')
+    seqrun_records = \
+      sr.fetch_records(query=query, output_mode='one_or_none')
+    self.assertIsNotNone(seqrun_records)
+    self.assertEqual(int(seqrun_records.attribute_value), 3000)
+    record_exists = \
+      sr.check_seqrun_attribute_exists(
+        seqrun_igf_id='171003_H00001_0089_TEST',
+        attribute_name='yield2')
+    self.assertFalse(record_exists)
+    sr.create_or_update_seqrun_attribute_records(
+        seqrun_igf_id='171003_H00001_0089_TEST',
+        attribute_list=[
+          {'attribute_name': 'yield1', 'attribute_value': 4000},
+          {'attribute_name': 'yield2', 'attribute_value': 1000}],
+        autosave=True)
+    record_exists = \
+      sr.check_seqrun_attribute_exists(
+        seqrun_igf_id='171003_H00001_0089_TEST',
+        attribute_name='yield2')
+    self.assertTrue(record_exists)
+    query = \
+      sr.session.\
+        query(
+          Seqrun.seqrun_igf_id,
+          Seqrun_attribute.attribute_name,
+          Seqrun_attribute.attribute_value).\
+        join(Seqrun_attribute,
+             Seqrun.seqrun_id==Seqrun_attribute.seqrun_id).\
+        filter(Seqrun.seqrun_igf_id=='171003_H00001_0089_TEST').\
+        filter(Seqrun_attribute.attribute_name=='yield1')
+    seqrun_records = \
+      sr.fetch_records(query=query, output_mode='one_or_none')
+    self.assertIsNotNone(seqrun_records)
+    self.assertEqual(int(seqrun_records.attribute_value), 4000)
+    query = \
+      sr.session.\
+        query(
+          Seqrun.seqrun_igf_id,
+          Seqrun_attribute.attribute_name,
+          Seqrun_attribute.attribute_value).\
+        join(Seqrun_attribute,
+             Seqrun.seqrun_id==Seqrun_attribute.seqrun_id).\
+        filter(Seqrun.seqrun_igf_id=='171003_H00001_0089_TEST').\
+        filter(Seqrun_attribute.attribute_name=='yield2')
+    seqrun_records = \
+      sr.fetch_records(query=query, output_mode='one_or_none')
+    self.assertIsNotNone(seqrun_records)
+    self.assertEqual(int(seqrun_records.attribute_value), 1000)
+    sr.close_session()
 
 if __name__=='__main__':
   unittest.main()
