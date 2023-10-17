@@ -4,7 +4,7 @@
   alembic==1.7.4
   amqp==5.0.6
   anyio==3.3.4
-  apache-airflow==2.2.2
+  apache-airflow==2.7.2
   apache-airflow-providers-celery==2.1.0
   apache-airflow-providers-ftp==2.0.1
   apache-airflow-providers-http==2.0.1
