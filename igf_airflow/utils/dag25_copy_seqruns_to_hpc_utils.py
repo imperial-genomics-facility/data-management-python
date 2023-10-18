@@ -285,15 +285,18 @@ def register_new_seqrun_to_db(
         f"Failed to register new run on db. error: {e}")
 
 
-def _create_interop_report(
+def  _create_interop_report(
     run_id: str,
     run_dir_base_path: str,
     report_template: str,
     report_image: str,
     timeout: int = 1200,
     no_input: bool = True,
-    dry_run: bool = False
-    ) -> Tuple[str, str, str, str, str]:
+    dry_run: bool = False,
+    num_cpu: int = 8,
+    ram_gb: int = 8,
+    use_singularity_execute: bool = True ) -> \
+      Tuple[str, str, str, str, str]:
   try:
     ## create a formated notebook using template
     ## * run id
@@ -340,7 +343,9 @@ def _create_interop_report(
       RUN_DIR=run_dir,
       METRICS_DIR=metrics_dir,
       OVERVIEW_CSV_OUTPUT=overview_csv_output,
-      TILE_PARQUET_OUTOUT=tile_parquet_output)
+      TILE_PARQUET_OUTOUT=tile_parquet_output,
+      NUM_CPU=num_cpu,
+      RAM_GB=ram_gb)
     nb = \
       Notebook_runner(
         template_ipynb_path=report_template,
@@ -353,6 +358,7 @@ def _create_interop_report(
         singularity_image_path=report_image,
         timeout=timeout,
         no_input=no_input,
+        use_singularity_execute=use_singularity_execute,
         dry_run=dry_run)
     output_notebook_path, _ = \
       nb.execute_notebook_in_singularity()

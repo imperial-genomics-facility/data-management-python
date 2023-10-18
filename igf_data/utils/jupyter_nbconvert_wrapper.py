@@ -3,9 +3,19 @@ from shutil import copytree
 from datetime import datetime
 from shlex import quote
 from typing import Union, Optional, Tuple
-from igf_data.utils.singularity_run_wrapper import singularity_run
-from igf_data.utils.fileutils import get_temp_dir,remove_dir,check_file_path,copy_local_file
-from jinja2 import Template,Environment,FileSystemLoader,select_autoescape
+from igf_data.utils.singularity_run_wrapper import (
+  singularity_run,
+  execute_singuarity_cmd)
+from igf_data.utils.fileutils import (
+  get_temp_dir,
+  remove_dir,
+  check_file_path,
+  copy_local_file)
+from jinja2 import (
+  Template,
+  Environment,
+  FileSystemLoader,
+  select_autoescape)
 
 class Notebook_runner:
   '''
@@ -41,6 +51,7 @@ class Notebook_runner:
     allow_errors: bool = False,
     jupyter_exe: str = 'jupyter',
     no_input: bool = False,
+    use_singularity_execute: bool = False,
     dry_run: bool = False) -> None:
     self.template_ipynb_path = template_ipynb_path
     self.output_dir = output_dir
@@ -56,6 +67,7 @@ class Notebook_runner:
     self.jupyter_exe = jupyter_exe
     self.singularity_options = singularity_options
     self.no_input = no_input
+    self.use_singularity_execute = use_singularity_execute
     self.temp_dir = \
       get_temp_dir(
         use_ephemeral_space=self.use_ephemeral_space)
@@ -127,13 +139,22 @@ class Notebook_runner:
         container_paths = [
           f'{container_tmp_dir}:/tmp',
           self.temp_dir]
-      cmd = \
-        singularity_run(
+      if self.use_singularity_execute:
+        cmd = \
+        execute_singuarity_cmd(
           image_path=self.singularity_image_path,
-          args_list=args_list,
+          command_string=" ".join(args_list),
           options=self.singularity_options,
           bind_dir_list=container_paths,
           dry_run=self.dry_run)
+      else:
+        cmd = \
+          singularity_run(
+            image_path=self.singularity_image_path,
+            args_list=args_list,
+            options=self.singularity_options,
+            bind_dir_list=container_paths,
+            dry_run=self.dry_run)
       temp_notebook_path = \
         formatted_notebook
       if self.output_format=='html':
