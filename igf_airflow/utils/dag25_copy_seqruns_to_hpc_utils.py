@@ -429,7 +429,7 @@ def _load_interop_overview_data_to_seqrun_attribute(
   try:
     check_file_path(interop_overview_file)
     overview_df = \
-      pd.DataFrame(interop_overview_file)
+      pd.read_csv(interop_overview_file, header=0)
     overview_df['seqrun_igf_id'] = seqrun_igf_id
     attribute_list = list()
     for entry in overview_df.to_csv(orient='records'):
