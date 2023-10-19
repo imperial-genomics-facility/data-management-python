@@ -4,7 +4,7 @@ import json
 import base64
 import logging
 import pandas as pd
-from typing import Tuple, Any
+from typing import Tuple, Any, Optional
 from airflow.models import Variable
 from airflow.models import taskinstance
 from igf_data.utils.dbutils import read_dbconf_json
@@ -295,7 +295,8 @@ def  _create_interop_report(
     dry_run: bool = False,
     num_cpu: int = 8,
     ram_gb: int = 8,
-    use_singularity_execute: bool = True ) -> \
+    use_singularity_execute: bool = True,
+    extra_container_dir_list: Optional[list] = None) -> \
       Tuple[str, str, str, str, str]:
   try:
     ## create a formated notebook using template
@@ -336,6 +337,10 @@ def  _create_interop_report(
     container_bind_dir_list = [
       work_dir,
       run_dir]
+    if extra_container_dir_list is not None and \
+       len(extra_container_dir_list) > 0:
+      container_bind_dir_list.extend(
+        extra_container_dir_list)
     date_tag = get_date_stamp()
     input_params = dict(
       DATE_TAG=date_tag,

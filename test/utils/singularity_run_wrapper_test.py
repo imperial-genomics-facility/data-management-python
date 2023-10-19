@@ -21,7 +21,7 @@ class Singularity_run_test1(unittest.TestCase):
         bind_dir_list=[self.temp_dir],
         args_list=['ls','-l','/home/vmuser'],
         dry_run=True)
-    self.assertTrue('{0} --bind {1} ls -l /home/vmuser'.\
+    self.assertTrue('{0} --bind {1} \'ls -l /home/vmuser\''.\
                        format(os.path.basename(self.image_path),[self.temp_dir]) \
                        in singularity_cmd)
 
