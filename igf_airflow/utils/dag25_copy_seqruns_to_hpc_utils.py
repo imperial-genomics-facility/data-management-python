@@ -18,7 +18,8 @@ from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.utils.fileutils import (
   get_temp_dir,
   get_date_stamp,
-  copy_local_file)
+  copy_local_file,
+  get_date_stamp_for_file_name)
 from igf_portal.api_utils import upload_files_to_portal
 from igf_data.illumina.runparameters_xml import RunParameter_xml
 from igf_airflow.utils.dag22_bclconvert_demult_utils import _create_output_from_jinja_template
@@ -383,8 +384,12 @@ def _load_interop_data_to_db(
       collection_type: str = 'interop_metrics',
       collection_table: str = 'seqrun') -> None:
   try:
+    date_stamp = \
+      get_date_stamp_for_file_name()
     target_dir_path = \
-      os.path.join(interop_report_base_path, f"{run_id}_interop")
+      os.path.join(
+        interop_report_base_path,
+        f"{run_id}_interop_{date_stamp}")
     ## add fail safe
     if os.path.exists(target_dir_path):
       raise IOError(
