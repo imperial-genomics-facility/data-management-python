@@ -433,7 +433,7 @@ def _load_interop_overview_data_to_seqrun_attribute(
     overview_df['seqrun_igf_id'] = seqrun_igf_id
     attribute_list = list()
     for entry in overview_df.to_dict(orient='records'):
-      for attribute_name, attribute_value in entry.item():
+      for attribute_name, attribute_value in entry.items():
         attribute_list.append({
           'attribute_name': attribute_name,
           'attribute_value': attribute_value})
