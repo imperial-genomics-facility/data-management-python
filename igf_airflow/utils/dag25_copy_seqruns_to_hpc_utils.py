@@ -432,7 +432,7 @@ def _load_interop_overview_data_to_seqrun_attribute(
       pd.read_csv(interop_overview_file, header=0)
     overview_df['seqrun_igf_id'] = seqrun_igf_id
     attribute_list = list()
-    for entry in overview_df.to_csv(orient='records'):
+    for entry in overview_df.to_dict(orient='records'):
       for attribute_name, attribute_value in entry.item():
         attribute_list.append({
           'attribute_name': attribute_name,
