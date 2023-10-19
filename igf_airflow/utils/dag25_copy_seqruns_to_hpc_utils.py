@@ -368,10 +368,18 @@ def  _create_interop_report(
         dry_run=dry_run)
     output_notebook_path, _ = \
       nb.execute_notebook_in_singularity()
+    output_new_notebook_path = \
+      os.path.join(
+        os.path.dirname(output_notebook_path),
+        f"{run_id}_interop_report.html")
+    ## rename report file
+    os.rename(
+      output_notebook_path,
+      output_new_notebook_path)
     check_file_path(overview_csv_output)
     check_file_path(tile_parquet_output)
-    check_file_path(output_notebook_path)
-    return output_notebook_path, metrics_dir, overview_csv_output, tile_parquet_output, work_dir
+    check_file_path(output_new_notebook_path)
+    return output_new_notebook_path, metrics_dir, overview_csv_output, tile_parquet_output, work_dir
   except Exception as e:
     raise ValueError(
       f"Failed to generate report, error: {e}")
