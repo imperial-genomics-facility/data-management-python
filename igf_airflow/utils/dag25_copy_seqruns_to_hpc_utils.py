@@ -34,9 +34,11 @@ DATABASE_CONFIG_FILE = Variable.get('database_config_file', default_var=None)
 HPC_SEQRUN_PATH = Variable.get('hpc_seqrun_path', default_var=None)
 IGF_PORTAL_CONF = Variable.get('igf_portal_conf', default_var=None)
 PORTAL_ADD_SEQRUN_URL = "/api/v1/raw_seqrun/add_new_seqrun"
+PORTAL_ADD_INTEROP_REPORT_URL = "/api/v1/interop_data/add_report"
 HPC_INTEROP_PATH = Variable.get('hpc_interop_path', default_var=None)
 INTEROP_REPORT_TEMPLATE = Variable.get('interop_report_template', default_var=None)
 INTEROP_REPORT_IMAGE = Variable.get('interop_report_image', default_var=None)
+INTEROP_REPORT_BASE_PATH = Variable.get('interop_report_base_path', default_var=None)
 
 def get_new_run_id_for_copy(**context):
   try:
@@ -284,6 +286,74 @@ def register_new_seqrun_to_db(
     except Exception as e:
       raise ValueError(
         f"Failed to register new run on db. error: {e}")
+
+
+def generate_interop_report_and_upload_to_portal_func(**context):
+  try:
+    ti = context.get('ti')
+    server_in_use = \
+      context['params'].get('server_in_use')
+    xcom_key = \
+      context['params'].get('xcom_key', 'seqrun_id')
+    wells_xcom_task = \
+      context['params'].get('wells_xcom_task', 'get_new_seqrun_id_from_wells')
+    orwell_xcom_task = \
+      context['params'].get('orwell_xcom_task', 'get_new_seqrun_id_from_orwell')
+    seqrun_id = None
+    if server_in_use.lower() == 'orwell':
+      seqrun_id = \
+        ti.xcom_pull(
+          task_ids=orwell_xcom_task,
+          key=xcom_key)
+    elif server_in_use.lower() == 'wells':
+      seqrun_id = \
+        ti.xcom_pull(
+          task_ids=wells_xcom_task,
+          key=xcom_key)
+    else:
+      raise ValueError(f"Invalide server name {server_in_use}")
+    if seqrun_id is None:
+      raise ValueError('Missing seqrun id')
+    output_notebook_path, metrics_dir, overview_csv_output, tile_parquet_output, work_dir = \
+      _create_interop_report(
+        run_id=seqrun_id,
+        run_dir_base_path=HPC_SEQRUN_PATH,
+        report_template=INTEROP_REPORT_TEMPLATE,
+        report_image=INTEROP_REPORT_IMAGE,
+        extra_container_dir_list=['/apps',])
+    _load_interop_data_to_db(
+      run_id=seqrun_id,
+      interop_output_dir=work_dir,
+      interop_report_base_path=INTEROP_REPORT_BASE_PATH,
+      dbconfig_file=DATABASE_CONFIG_FILE)
+    _load_interop_overview_data_to_seqrun_attribute(
+      seqrun_igf_id=seqrun_id,
+      dbconfig_file=DATABASE_CONFIG_FILE,
+      interop_overview_file=overview_csv_output)
+    res = \
+      upload_files_to_portal(
+        portal_config_file=IGF_PORTAL_CONF,
+        file_path=output_notebook_path,
+        data={"run_name": seqrun_id, "tag": "InterOp"},
+        url_suffix=PORTAL_ADD_INTEROP_REPORT_URL)
+  except Exception as e:
+    log.error(e)
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
+    message = \
+      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      comment=message,
+      reaction='fail')
+    raise
 
 
 def  _create_interop_report(
