@@ -256,24 +256,38 @@ def extract_geomx_config_files_from_zip(zip_file: str) -> Tuple[str, str]:
         ## extract zip file
         with zipfile.ZipFile(temp_zip_file, 'r') as zip_ref:
             zip_ref.extractall(extract_dir)
-        config_file = list()
-        labworksheet_file = list()
-        config_file = [
-		    os.path.join(extract_dir, f)
-	            for f in os.listdir(extract_dir)
-		            if f.endswith('.ini')]
-        if len(config_file) == 0:
+        # config_file = list()
+        # labworksheet_file = list()
+        config_file = None
+        labworksheet_file = None
+        for root, _, files in os.walk(extract_dir):
+            for f in files:
+                if f.endswith('.ini'):
+                    config_file = \
+                        os.path.join(extract_dir, f)
+                if f.endswith('LabWorksheet.txt'):
+                    labworksheet_file = \
+                        os.path.join(extract_dir, f)
+        if config_file is None or \
+           labworksheet_file is None:
             raise ValueError(
-                f"No .ini file present in {zip_file}")
-        config_file = config_file[0]
-        labworksheet_file = [
-		    os.path.join(extract_dir, f)
-	            for f in os.listdir(extract_dir)
-		            if f.endswith('LabWorksheet.txt')]
-        if len(labworksheet_file) == 0:
-            raise ValueError(
-                f"No LabWorksheet.txt file present in {zip_file}")
-        labworksheet_file = labworksheet_file[0]
+                f"No LabWorksheet.txt or config.ini file present in {zip_file}")
+        # config_file = [
+		#     os.path.join(extract_dir, f)
+	    #         for f in os.listdir(extract_dir)
+		#             if f.endswith('.ini')]
+        # if len(config_file) == 0:
+        #     raise ValueError(
+        #         f"No .ini file present in {zip_file}")
+        # config_file = config_file[0]
+        # labworksheet_file = [
+		#     os.path.join(extract_dir, f)
+	    #         for f in os.listdir(extract_dir)
+		#             if f.endswith('LabWorksheet.txt')]
+        # if len(labworksheet_file) == 0:
+        #     raise ValueError(
+        #         f"No LabWorksheet.txt file present in {zip_file}")
+        # labworksheet_file = labworksheet_file[0]
         ## file name can contain white space or symbols. copy to a new file
         new_config_file = \
             os.path.join(extract_dir, 'geomx_project.ini')
