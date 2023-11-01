@@ -264,10 +264,10 @@ def extract_geomx_config_files_from_zip(zip_file: str) -> Tuple[str, str]:
             for f in files:
                 if f.endswith('.ini'):
                     config_file = \
-                        os.path.join(extract_dir, f)
+                        os.path.join(root, f)
                 if f.endswith('LabWorksheet.txt'):
                     labworksheet_file = \
-                        os.path.join(extract_dir, f)
+                        os.path.join(root, f)
         if config_file is None or \
            labworksheet_file is None:
             raise ValueError(
