@@ -319,7 +319,7 @@ def parse_analysis_design_and_get_metadata(
       analysis_metadata_key: str = 'analysis_metadata') \
       -> Tuple[Union[dict, None], Union[dict, None]]:
   try:
-    yaml_data = yaml.load(input_design_yaml, Loader=Loader)
+    yaml_data = yaml.safe_load(input_design_yaml)
     sample_metadata = \
       yaml_data.get(sample_metadata_key)
     analysis_metadata = \
