@@ -76,6 +76,9 @@ GLOBUS_ROOT_DIR = Variable.get("globus_root_dir", default_var=None)
 EMAIL_CONFIG = Variable.get("email_config", default_var=None)
 EMAIL_TEMPLATE = Variable.get("analysis_email_template", default_var=None)
 
+## CELLRANGER
+CELLRANGER_SCRIPT_TEMPLATE = \
+  Variable.get("cellranger_run_script_template", default_var=None)
 ## TASK
 @task(
   task_id="get_analysis_group_list",
@@ -143,7 +146,15 @@ def prepare_cellranger_script(sample_group: str, design_dict: dict) -> dict:
     if sample_metadata is None or \
        analysis_metadata is None:
       raise KeyError("Missing sample or analysis metadata")
-    return {"run_script": f'run_script_{sample_group}.sh', "run_dir": f'run_dir_{sample_group}'}
+    work_dir = get_temp_dir(use_ephemeral_space=True)
+    library_csv_file, run_script_file = \
+      prepare_cellranger_run_dir_and_script_file(
+        sample_group=str(sample_group),
+        work_dir=work_dir,
+        design_file=design_file,
+        db_config_file=DATABASE_CONFIG_FILE,
+        run_script_template=CELLRANGER_SCRIPT_TEMPLATE)
+    return {"sample_group": sample_group, "run_script": run_script_file, "run_dir": work_dir}
   except Exception as e:
     context = get_current_context()
     log.error(e)
@@ -170,11 +181,13 @@ def prepare_cellranger_run_dir_and_script_file(
       work_dir: str,
       design_file: str,
       db_config_file: str,
+      run_script_template: str,
       library_csv_filename: str = 'library.csv') \
         -> str:
   try:
     check_file_path(design_file)
     check_file_path(work_dir)
+    check_file_path(run_script_template)
     with open(design_file, 'r') as fp:
       input_design_yaml=fp.read()
     sample_metadata, analysis_metadata = \
@@ -207,7 +220,21 @@ def prepare_cellranger_run_dir_and_script_file(
       fp.write('\n') ## add an empty line
       fp.write('[libraries]\n')
       fp.write(sample_library_csv)
-    return library_csv_file
+    ## create run script from template
+    script_file = \
+      os.path.join(
+        work_dir,
+        os.path.basename(run_script_template))
+    _create_output_from_jinja_template(
+      template_file=run_script_template,
+      output_file=script_file,
+      autoescape_list=['xml',],
+      data=dict(
+        CELLRANGER_MULTI_ID=str(sample_group),
+        CELLRANGER_MULTI_CSV=library_csv_file,
+        CELLRANGER_MULTI_OUTPUT_DIR=work_dir,
+        WORKDIR=work_dir))
+    return library_csv_file, script_file
   except Exception as e:
     raise ValueError(
       f"Failed to prepare cellranger script, error: {e}")

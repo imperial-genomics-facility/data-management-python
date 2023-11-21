@@ -259,12 +259,13 @@ class TestDag34_cellranger_multi_scRNA_utilA(unittest.TestCase):
 
   def test_prepare_cellranger_run_dir_and_script_file(self):
     temp_dir = get_temp_dir()
-    library_csv_file = \
+    library_csv_file, script_file = \
       prepare_cellranger_run_dir_and_script_file(
         sample_group="grp1",
         work_dir=temp_dir,
         design_file=self.yaml_file,
-        db_config_file=self.dbconfig)
+        db_config_file=self.dbconfig,
+        run_script_template='template/cellranger_template/cellranger_run_script_v1.sh')
     self.assertTrue(os.path.exists(library_csv_file))
     gene_expression_list = list()
     libraries_list = list()
@@ -291,6 +292,12 @@ class TestDag34_cellranger_multi_scRNA_utilA(unittest.TestCase):
     self.assertEqual(sample_id, 'IGFsampleA')
     self.assertEqual(fastq_dir, '/path/IGFSampleA')
     self.assertEqual(feature, 'Gene Expression')
+    self.assertTrue(os.path.exists(script_file))
+    with open(script_file, 'r') as fp:
+      data = fp.read()
+    self.assertTrue(f'--csv={library_csv_file}' in data)
+    self.assertTrue('--id=grp1' in data)
+    self.assertTrue(f'--output-dir={temp_dir}' in data)
 
 if __name__=='__main__':
   unittest.main()

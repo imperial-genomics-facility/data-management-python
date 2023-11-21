@@ -7,7 +7,7 @@
 ##
 ##  * CELLRANGER_MULTI_ID: Cellranger ID
 ##  * CELLRANGER_MULTI_CSV: Cellranger multi csv
-##  * CELLRANGER_MULTI_OUTPUT: Cellranger multi output dir
+##  * CELLRANGER_MULTI_OUTPUT_DIR: Cellranger multi output dir
 ##  * WORKDIR: Work dir path
 
 ## IMPORT ENV
@@ -19,7 +19,7 @@ cd {{ WORKDIR }}
 $CELLRANGER_EXE multi \
   --id={{ CELLRANGER_MULTI_ID }} \
   --csv={{ CELLRANGER_MULTI_CSV }} \
-  --output-dir={{ CELLRANGER_MULTI_OUTPUT }} \
+  --output-dir={{ CELLRANGER_MULTI_OUTPUT_DIR }} \
   --maxjobs=${CELLRANGER_MULTI_JOB_COUNTS} \
   --localcores=4 \
   --localmem=8 \
