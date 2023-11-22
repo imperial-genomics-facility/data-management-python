@@ -25,7 +25,8 @@ from igf_data.utils.fileutils import (
   remove_dir)
 from igf_airflow.utils.dag34_cellranger_multi_scRNA_utils import (
   prepare_cellranger_run_dir_and_script_file,
-  create_library_information_for_sample_group)
+  create_library_information_for_sample_group,
+  configure_cellranger_aggr)
 from igf_airflow.utils.dag26_snakemake_rnaseq_utils import (
     parse_analysis_design_and_get_metadata)
 
@@ -265,7 +266,7 @@ class TestDag34_cellranger_multi_scRNA_utilA(unittest.TestCase):
         work_dir=temp_dir,
         design_file=self.yaml_file,
         db_config_file=self.dbconfig,
-        run_script_template='template/cellranger_template/cellranger_run_script_v1.sh')
+        run_script_template='template/cellranger_template/cellranger_multi_run_script_v1.sh')
     self.assertTrue(os.path.exists(library_csv_file))
     gene_expression_list = list()
     libraries_list = list()
@@ -298,6 +299,57 @@ class TestDag34_cellranger_multi_scRNA_utilA(unittest.TestCase):
     self.assertTrue(f'--csv={library_csv_file}' in data)
     self.assertTrue('--id=grp1' in data)
     self.assertTrue(f'--output-dir={temp_dir}' in data)
+
+class TestDag34_cellranger_multi_scRNA_utilB(unittest.TestCase):
+  def setUp(self):
+    self.temp_dir = get_temp_dir()
+    self.template = 'template/cellranger_template/cellranger_aggr_run_script_v1.sh'
+    self.cellranger_output_dict = {
+      'sampleA': os.path.join(self.temp_dir, 'sampleA/outs/count'),
+      'sampleB': os.path.join(self.temp_dir, 'sampleB/outs/count'),
+      'sampleC': os.path.join(self.temp_dir, 'sampleC/outs/count')}
+    for _, dir_path in self.cellranger_output_dict.items():
+      file_path = \
+        os.path.join(
+          dir_path,
+          'sample_molecule_info.h5')
+      os.makedirs(dir_path, exist_ok=True)
+      with open(file_path, 'w') as fp:
+        fp.write('A')
+
+  def tearDown(self):
+    remove_dir(self.temp_dir)
+
+  def test_configure_cellranger_aggr(self):
+    output_dict = \
+      configure_cellranger_aggr(
+        run_script_template=self.template,
+        cellranger_output_dict=self.cellranger_output_dict)
+    self.assertTrue('sample_name' in output_dict)
+    self.assertEqual(output_dict.get("sample_name"), "ALL")
+    self.assertTrue('run_script' in output_dict)
+    run_script = output_dict.get("run_script")
+    self.assertTrue('library_csv' in output_dict)
+    library_csv = output_dict.get("library_csv")
+    self.assertTrue('run_dir' in output_dict)
+    run_dir = output_dict.get("run_dir")
+    self.assertTrue(os.path.exists(run_script))
+    with open(run_script, 'r') as fp:
+      script_data = fp.read()
+    self.assertTrue(f'--csv={library_csv}' in script_data)
+    self.assertTrue(f'--output-dir={run_dir}' in script_data)
+    self.assertTrue('--id=ALL' in script_data)
+    self.assertTrue(os.path.exists(library_csv))
+    df = pd.read_csv(library_csv, header=0)
+    self.assertTrue('sample_id' in df.columns)
+    self.assertTrue('molecule_h5' in df.columns)
+    self.assertEqual(len(df.index), 3)
+    self.assertTrue('sampleA' in df['sample_id'].values)
+    self.assertEqual(
+      df[df['sample_id']=='sampleA']['molecule_h5'].values[0],
+      os.path.join(
+        self.cellranger_output_dict.get('sampleA'),
+        'sample_molecule_info.h5'))
 
 if __name__=='__main__':
   unittest.main()
