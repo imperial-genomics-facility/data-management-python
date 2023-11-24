@@ -59,7 +59,8 @@ CELLRANGER_AGGR_SCRIPT_TEMPLATE = \
   task_id="get_analysis_group_list",
   retry_delay=timedelta(minutes=5),
   retries=4,
-  queue='hpc_4G')
+  queue='hpc_4G',
+  multiple_outputs=True)
 def get_analysis_group_list(design_dict: dict) -> dict:
   try:
     design_file = design_dict.get('analysis_design')
@@ -80,7 +81,7 @@ def get_analysis_group_list(design_dict: dict) -> dict:
       unique_sample_groups.add(grp_name)
     if len(unique_sample_groups) == 0:
       raise ValueError("No sample group found")
-    return list(unique_sample_groups)
+    return {"sample_groups": list(unique_sample_groups)}
   except Exception as e:
     context = get_current_context()
     log.error(e)
@@ -107,11 +108,12 @@ def get_analysis_group_list(design_dict: dict) -> dict:
   task_id="create_main_work_dir",
   retry_delay=timedelta(minutes=5),
   retries=4,
-  queue='hpc_4G')
+  queue='hpc_4G',
+  multiple_outputs=True)
 def create_main_work_dir() -> dict:
   try:
     main_work_dir = get_temp_dir(use_ephemeral_space=True)
-    return main_work_dir
+    return {"main_work_dir": main_work_dir}
   except Exception as e:
     context = get_current_context()
     log.error(e)
