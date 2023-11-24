@@ -159,6 +159,7 @@ def prepare_cellranger_script(sample_group: str, design_dict: dict) -> dict:
       prepare_cellranger_run_dir_and_script_file(
         sample_group=str(sample_group),
         work_dir=work_dir,
+        output_dir=os.path.join(work_dir, str(sample_group))
         design_file=design_file,
         db_config_file=DATABASE_CONFIG_FILE,
         run_script_template=CELLRANGER_MULTI_SCRIPT_TEMPLATE)
@@ -187,6 +188,7 @@ def prepare_cellranger_script(sample_group: str, design_dict: dict) -> dict:
 def prepare_cellranger_run_dir_and_script_file(
       sample_group: str,
       work_dir: str,
+      output_dir: str,
       design_file: str,
       db_config_file: str,
       run_script_template: str,
@@ -233,6 +235,8 @@ def prepare_cellranger_run_dir_and_script_file(
       os.path.join(
         work_dir,
         os.path.basename(run_script_template))
+    # output_dir = \
+    #    os.path.join(work_dir, str(sample_group))
     _create_output_from_jinja_template(
       template_file=run_script_template,
       output_file=script_file,
@@ -240,7 +244,7 @@ def prepare_cellranger_run_dir_and_script_file(
       data=dict(
         CELLRANGER_MULTI_ID=str(sample_group),
         CELLRANGER_MULTI_CSV=library_csv_file,
-        CELLRANGER_MULTI_OUTPUT_DIR=work_dir,
+        CELLRANGER_MULTI_OUTPUT_DIR=output_dir,
         WORKDIR=work_dir))
     return library_csv_file, script_file
   except Exception as e:
