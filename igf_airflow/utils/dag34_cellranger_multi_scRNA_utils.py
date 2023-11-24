@@ -159,7 +159,7 @@ def prepare_cellranger_script(sample_group: str, design_dict: dict) -> dict:
       prepare_cellranger_run_dir_and_script_file(
         sample_group=str(sample_group),
         work_dir=work_dir,
-        output_dir=os.path.join(work_dir, str(sample_group))
+        output_dir=os.path.join(work_dir, str(sample_group)),
         design_file=design_file,
         db_config_file=DATABASE_CONFIG_FILE,
         run_script_template=CELLRANGER_MULTI_SCRIPT_TEMPLATE)

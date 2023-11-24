@@ -264,6 +264,7 @@ class TestDag34_cellranger_multi_scRNA_utilA(unittest.TestCase):
       prepare_cellranger_run_dir_and_script_file(
         sample_group="grp1",
         work_dir=temp_dir,
+        output_dir=os.path.join(temp_dir, "grp1"),
         design_file=self.yaml_file,
         db_config_file=self.dbconfig,
         run_script_template='template/cellranger_template/cellranger_multi_run_script_v1.sh')
