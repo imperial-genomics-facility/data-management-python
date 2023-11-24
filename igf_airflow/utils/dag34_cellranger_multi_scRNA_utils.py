@@ -316,6 +316,13 @@ def run_cellranger_script(
     sample_group = script_dict.get('sample_group')
     run_script = script_dict.get('run_script')
     output_dir = script_dict.get('output_dir')
+    ## check for _lock file
+    lock_file = \
+      os.path.join(output_dir, '_lock')
+    if os.path.exists(lock_file):
+      raise ValueError(
+        f"""Lock file exists in cellranger run path: {output_dir}. \
+            Remove it to continue!""")
     try:
       stdout_file, stderr_file = \
         bash_script_wrapper(
