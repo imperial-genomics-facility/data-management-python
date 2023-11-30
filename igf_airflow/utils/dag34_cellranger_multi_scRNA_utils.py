@@ -492,9 +492,9 @@ def prepare_and_run_scanpy_notebook(
     #     for k,v in input_params.items()}
     ## check paths
     singularity_image = \
-      input_params.get("IMAGE_FILE")
+      scanpy_config.get("IMAGE_FILE")
     template_file = \
-      input_params.get("TEMPLATE_FILE")
+      scanpy_config.get("TEMPLATE_FILE")
     if singularity_image is None or \
        template_file is None:
       raise KeyError(
