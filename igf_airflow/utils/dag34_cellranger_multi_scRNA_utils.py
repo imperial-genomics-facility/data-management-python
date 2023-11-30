@@ -422,7 +422,7 @@ def run_single_sample_scanpy(
         scanpy_config=scanpy_config)
     output_dict = {
       "sample_group": sample_group,
-      "cellranger_output_dir": cellranger_counts_dir,
+      "cellranger_output_dir": cellranger_output_dir,
       "notebook_report": output_notebook_path,
       "scanpy_h5ad": scanpy_h5ad}
     return output_dict
