@@ -453,18 +453,33 @@ def prepare_and_run_scanpy_notebook(
       os.path.join(
         cellranger_output_dir,
         f'scanpy_{cellranger_group_id}.h5ad')
+    s_genes = scanpy_config.get('S_GENES')
+    if s_genes == '':
+      s_genes = None
+    g2m_genes = scanpy_config.get('G2M_GENES')
+    if g2m_genes == '':
+      g2m_genes = None
     input_params = {
       'DATE_TAG': get_date_stamp(),
       'PROJECT_IGF_ID': project_igf_id,
       'ANALYSIS_NAME': analysis_name,
       'SAMPLE_IGF_ID': cellranger_group_id,
       'CELLRANGER_COUNT_DIR': cellranger_output_dir,
-      'SCANPY_H5AD': scanpy_h5ad}
+      'SCANPY_H5AD': scanpy_h5ad,
+      'CELL_MARKER_LIST': scanpy_config.get('CELL_MARKER_LIST') or None,
+      'CELL_MARKER_SPECIES': scanpy_config.get('CELL_MARKER_SPECIES') or None,
+      'RUN_SCRUBLET': scanpy_config.get('RUN_SCRUBLET') or False,
+      'CELL_MARKER_MODE': scanpy_config.get('CELL_MARKER_MODE') or 'NON-VDJ',
+      'MITO_PREFIX': scanpy_config.get('MITO_PREFIX') or 'MT-',
+      'RUN_CELLCYCLE_SCORE': scanpy_config.get('RUN_CELLCYCLE_SCORE') or False,
+      'S_GENES':s_genes,
+      'G2M_GENES': g2m_genes
+      }
     ## update input params
-    input_params.update(scanpy_config)
-    input_params = {
-      k.upper():v
-        for k,v in input_params.items()}
+    #input_params.update(scanpy_config)
+    # input_params = {
+    #   k.upper():v
+    #     for k,v in input_params.items()}
     ## check paths
     singularity_image = \
       input_params.get("IMAGE_FILE")
