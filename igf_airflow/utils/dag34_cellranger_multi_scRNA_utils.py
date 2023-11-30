@@ -366,16 +366,15 @@ def run_single_sample_scanpy(
       cellranger_output_dir: str,
       design_dict: dict) -> dict:
   try:
-    ## set cellranger counts/sample_filtered_feature_bc_matrix dir
-    cellranger_counts_features_barcode_dir = \
+    ## set cellranger counts dir
+    cellranger_counts_dir = \
       os.path.join(
         cellranger_output_dir,
         'outs',
         'per_sample_outs',
         sample_group,
-        'count',
-        'sample_filtered_feature_bc_matrix')
-    check_file_path(cellranger_counts_features_barcode_dir)
+        'count')
+    check_file_path(cellranger_counts_dir)
     design_file = design_dict.get('analysis_design')
     check_file_path(design_file)
     with open(design_file, 'r') as fp:
@@ -419,11 +418,11 @@ def run_single_sample_scanpy(
         project_igf_id=project_igf_id,
         analysis_name=analysis_name,
         cellranger_group_id=str(sample_group),
-        cellranger_counts_features_barcode_dir=cellranger_counts_features_barcode_dir,
+        cellranger_counts_dir=cellranger_counts_dir,
         scanpy_config=scanpy_config)
     output_dict = {
       "sample_group": sample_group,
-      "cellranger_output_dir": cellranger_counts_features_barcode_dir,
+      "cellranger_output_dir": cellranger_counts_dir,
       "notebook_report": output_notebook_path,
       "scanpy_h5ad": scanpy_h5ad}
     return output_dict
@@ -453,7 +452,7 @@ def prepare_and_run_scanpy_notebook(
       project_igf_id: str,
       analysis_name: str,
       cellranger_group_id: str,
-      cellranger_counts_features_barcode_dir: str,
+      cellranger_counts_dir: str,
       scanpy_config: dict,
       timeout: int = 1200,
       kernel_name: str = 'python',
@@ -461,7 +460,7 @@ def prepare_and_run_scanpy_notebook(
   try:
     scanpy_h5ad = \
       os.path.join(
-        cellranger_counts_features_barcode_dir,
+        cellranger_counts_dir,
         f'scanpy_{cellranger_group_id}.h5ad')
     s_genes = scanpy_config.get('S_GENES')
     if s_genes == '':
@@ -474,7 +473,7 @@ def prepare_and_run_scanpy_notebook(
       'PROJECT_IGF_ID': project_igf_id,
       'ANALYSIS_NAME': analysis_name,
       'SAMPLE_IGF_ID': cellranger_group_id,
-      'CELLRANGER_COUNT_DIR': cellranger_counts_features_barcode_dir,
+      'CELLRANGER_COUNT_DIR': cellranger_counts_dir,
       'SCANPY_H5AD': scanpy_h5ad,
       'CELL_MARKER_LIST': scanpy_config.get('CELL_MARKER_LIST') or None,
       'CELL_MARKER_SPECIES': scanpy_config.get('CELL_MARKER_SPECIES') or None,
@@ -506,7 +505,7 @@ def prepare_and_run_scanpy_notebook(
     tmp_dir = \
       get_temp_dir(use_ephemeral_space=True)
     container_bind_dir_list = [
-      cellranger_counts_features_barcode_dir,
+      cellranger_counts_dir,
       tmp_dir]
     if 'CELL_MARKER_LIST' in input_params:
       container_bind_dir_list.\
@@ -521,7 +520,8 @@ def prepare_and_run_scanpy_notebook(
       singularity_options=['--no-home', '-C'],
       allow_errors=allow_errors,
       use_ephemeral_space=True,
-      singularity_image_path=singularity_image)
+      singularity_image_path=singularity_image,
+      no_input=True)
     output_notebook_path, _ = \
       nb.execute_notebook_in_singularity()
     check_file_path(scanpy_h5ad)
