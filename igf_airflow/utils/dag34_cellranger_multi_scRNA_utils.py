@@ -109,11 +109,11 @@ def get_analysis_group_list(design_dict: dict) -> dict:
   retry_delay=timedelta(minutes=5),
   retries=4,
   queue='hpc_4G',
-  multiple_outputs=True)
+  multiple_outputs=False)
 def create_main_work_dir() -> dict:
   try:
     main_work_dir = get_temp_dir(use_ephemeral_space=True)
-    return {"main_work_dir": main_work_dir}
+    return main_work_dir
   except Exception as e:
     context = get_current_context()
     log.error(e)
@@ -542,14 +542,15 @@ def move_single_sample_result_to_main_work_dir(
       main_work_dir: str,
       scanpy_output_dict: dict) -> dict:
   try:
-    check_file_path(main_work_dir)
+    main_work_dir_path = main_work_dir.get('main_work_dir')
+    check_file_path(main_work_dir_path)
     cellranger_output_dir = \
       scanpy_output_dict.get("cellranger_output_dir")
     sample_group = \
       scanpy_output_dict.get("sample_group")
     target_cellranger_output_dir = \
       os.path.join(
-        main_work_dir,
+        main_work_dir_path,
         os.path.basename(cellranger_output_dir))
     ## not safe to overwrite existing dir
     if os.path.exists(target_cellranger_output_dir):
@@ -559,7 +560,7 @@ def move_single_sample_result_to_main_work_dir(
           CLEAN UP and RESTART !!!""")
     shutil.move(
       cellranger_output_dir,
-      main_work_dir)
+      main_work_dir_path)
     output_dict = {
       "sample_group": sample_group,
       "cellranger_output_dir": target_cellranger_output_dir}
