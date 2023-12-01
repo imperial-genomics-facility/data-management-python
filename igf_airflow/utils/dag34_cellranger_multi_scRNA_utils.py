@@ -778,12 +778,19 @@ def merged_scanpy_report(
       fetch_analysis_name_for_analysis_id(
         analysis_id=analysis_id,
         dbconfig_file=DATABASE_CONFIG_FILE)
+    cellranger_aggr_counts_dir = \
+      os.path.join(
+        cellranger_aggr_output_dir,
+        'outs',
+        'per_sample_outs',
+        'ALL',
+        'count')
     output_notebook_path, scanpy_h5ad = \
       prepare_and_run_scanpy_notebook(
         project_igf_id=project_igf_id,
         analysis_name=analysis_name,
         cellranger_group_id=str(sample_group),
-        cellranger_output_dir=cellranger_aggr_output_dir,
+        cellranger_output_dir=cellranger_aggr_counts_dir,
         scanpy_config=scanpy_config)
     output_dict = {
       "sample_group": sample_group,
