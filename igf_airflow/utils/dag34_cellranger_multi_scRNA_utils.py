@@ -610,11 +610,16 @@ def configure_cellranger_aggr_run() -> dict:
         ## skipping failed runs
         cellranger_output_dict.update(
           {sample_group: cellranger_output_dir})
-    output_dict = \
-      configure_cellranger_aggr(
-        run_script_template=CELLRANGER_AGGR_SCRIPT_TEMPLATE,
-        cellranger_output_dict=cellranger_output_dict)
-    return output_dict
+    if len(cellranger_output_dict) == 0:
+      raise ValueError(f"No cellranger output found")
+    elif len(cellranger_output_dict) == 1:
+      return output_dict.update({'skip_aggr': True})
+    else:
+      output_dict = \
+        configure_cellranger_aggr(
+          run_script_template=CELLRANGER_AGGR_SCRIPT_TEMPLATE,
+          cellranger_output_dict=cellranger_output_dict)
+      return output_dict
   except Exception as e:
     context = get_current_context()
     log.error(e)
@@ -694,6 +699,9 @@ def configure_cellranger_aggr(
 def run_cellranger_aggr_script(
       script_dict: dict) -> str:
   try:
+    skip_aggr = script_dict.get('skip_aggr')
+    if skip_aggr is not None and skip_aggr:
+      return output_dir
     sample_name = script_dict.get('sample_name')
     run_script = script_dict.get('run_script')
     output_dir = script_dict.get('output_dir')
@@ -782,8 +790,6 @@ def merged_scanpy_report(
       os.path.join(
         cellranger_aggr_output_dir,
         'outs',
-        'per_sample_outs',
-        'ALL',
         'count')
     output_notebook_path, scanpy_h5ad = \
       prepare_and_run_scanpy_notebook(
