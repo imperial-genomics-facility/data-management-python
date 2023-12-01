@@ -670,7 +670,7 @@ def configure_cellranger_aggr(
       data=dict(
         CELLRANGER_AGGR_ID="ALL",
         CELLRANGER_AGGR_CSV=output_csv_file,
-        CELLRANGER_AGGR_OUTPUT_DIR=work_dir,
+        CELLRANGER_AGGR_OUTPUT_DIR=os.path.join(work_dir, 'ALL'),
         WORKDIR=work_dir))
     output_dict = {
       "sample_name": "ALL",
