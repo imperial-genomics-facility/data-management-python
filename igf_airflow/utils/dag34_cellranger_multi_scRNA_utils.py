@@ -11,6 +11,7 @@ from typing import (
     Tuple)
 from igf_data.utils.fileutils import (
   check_file_path,
+  copy_local_file,
   get_temp_dir,
   get_date_stamp)
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
@@ -103,6 +104,7 @@ def get_analysis_group_list(design_dict: dict) -> dict:
       reaction='fail')
     raise ValueError(e)
 
+
 ## TASK
 @task(
   task_id="create_main_work_dir",
@@ -110,9 +112,18 @@ def get_analysis_group_list(design_dict: dict) -> dict:
   retries=4,
   queue='hpc_4G',
   multiple_outputs=False)
-def create_main_work_dir() -> dict:
+def create_main_work_dir(task_tag: str = 'cellranger_multi_output') -> dict:
   try:
-    main_work_dir = get_temp_dir(use_ephemeral_space=True)
+    main_work_dir = \
+      get_temp_dir(
+        use_ephemeral_space=True) ## get base dir
+    main_work_dir = \
+      os.path.join(
+        main_work_dir,
+        task_tag) ## add a custom name
+    os.makedirs(
+      main_work_dir,
+      exist_ok=True) ## create path if its not present
     return main_work_dir
   except Exception as e:
     context = get_current_context()
@@ -309,7 +320,8 @@ def create_library_information_for_sample_group(
   retry_delay=timedelta(minutes=15),
   retries=10,
   queue='hpc_8G4t72hr',
-  pool='batch_job')
+  pool='batch_job',
+  multiple_outputs=False)
 def run_cellranger_script(
       script_dict: dict) -> str:
   try:
@@ -374,6 +386,15 @@ def run_single_sample_scanpy(
         'per_sample_outs',
         sample_group,
         'count')
+    ## set scanpy dir
+    scanpy_output_dir = \
+      os.path.join(
+        cellranger_output_dir,
+        'outs',
+        'per_sample_outs',
+        sample_group,
+        'scanpy')
+    os.makedirs(scanpy_output_dir, exist_ok=True)
     check_file_path(cellranger_counts_dir)
     design_file = design_dict.get('analysis_design')
     check_file_path(design_file)
@@ -420,11 +441,30 @@ def run_single_sample_scanpy(
         cellranger_group_id=str(sample_group),
         cellranger_counts_dir=cellranger_counts_dir,
         scanpy_config=scanpy_config)
+    ## copy output files to scanpy output dir
+    target_notebook_path = \
+      os.path.join(
+        scanpy_output_dir,
+        os.path.basename(output_notebook_path))
+    copy_local_file(
+      output_notebook_path,
+      target_notebook_path,
+      force=True)
+    target_scanpy_h5ad = \
+      os.path.join(
+        scanpy_output_dir,
+        os.path.basename(scanpy_h5ad))
+    copy_local_file(
+      scanpy_h5ad,
+      target_scanpy_h5ad,
+      force=True)
+    check_file_path(target_notebook_path)
+    check_file_path(target_scanpy_h5ad)
     output_dict = {
       "sample_group": sample_group,
       "cellranger_output_dir": cellranger_output_dir,
-      "notebook_report": output_notebook_path,
-      "scanpy_h5ad": scanpy_h5ad}
+      "notebook_report": target_notebook_path,
+      "scanpy_h5ad": target_scanpy_h5ad}
     return output_dict
   except Exception as e:
     context = get_current_context()
@@ -537,15 +577,14 @@ def move_single_sample_result_to_main_work_dir(
       main_work_dir: str,
       scanpy_output_dict: dict) -> dict:
   try:
-    main_work_dir_path = main_work_dir.get('main_work_dir')
-    check_file_path(main_work_dir_path)
+    check_file_path(main_work_dir)
     cellranger_output_dir = \
       scanpy_output_dict.get("cellranger_output_dir")
     sample_group = \
       scanpy_output_dict.get("sample_group")
     target_cellranger_output_dir = \
       os.path.join(
-        main_work_dir_path,
+        main_work_dir,
         os.path.basename(cellranger_output_dir))
     ## not safe to overwrite existing dir
     if os.path.exists(target_cellranger_output_dir):
@@ -555,7 +594,7 @@ def move_single_sample_result_to_main_work_dir(
           CLEAN UP and RESTART !!!""")
     shutil.move(
       cellranger_output_dir,
-      main_work_dir_path)
+      main_work_dir)
     output_dict = {
       "sample_group": sample_group,
       "cellranger_output_dir": target_cellranger_output_dir}
@@ -742,7 +781,8 @@ def configure_cellranger_aggr(
   retry_delay=timedelta(minutes=15),
   retries=10,
   queue='hpc_8G4t72hr',
-  pool='batch_job')
+  pool='batch_job',
+  multiple_outputs=False)
 def run_cellranger_aggr_script(
       script_dict: dict) -> str:
   try:
@@ -761,7 +801,7 @@ def run_cellranger_aggr_script(
         f"Failed to run script, Script: {run_script} for group: ALL, error file: {stderr_file}")
     ## check output dir exists
     check_file_path(output_dir)
-    return {'output_dir': output_dir}
+    return output_dir
   except Exception as e:
     context = get_current_context()
     log.error(e)
@@ -791,13 +831,13 @@ def run_cellranger_aggr_script(
   retries=4,
   queue='hpc_32G')
 def merged_scanpy_report(
-      cellranger_aggr_output_dict: dict,
+      cellranger_aggr_output_dir: str,
       design_dict: dict) -> dict:
   try:
     # skip_aggr = \
     #   cellranger_aggr_output_dict.get('skip_aggr')
-    cellranger_aggr_output_dir = \
-      cellranger_aggr_output_dict.get('output_dir')
+    # cellranger_aggr_output_dir = \
+    #   cellranger_aggr_output_dict.get('output_dir')
     # if skip_aggr is not None and skip_aggr:
     #   return {'skip_aggr': skip_aggr}
     sample_group = "ALL"
@@ -844,6 +884,12 @@ def merged_scanpy_report(
         cellranger_aggr_output_dir,
         'outs',
         'count')
+    scanpy_dir = \
+      os.path.join(
+        cellranger_aggr_output_dir,
+        'outs',
+        'scanpy')
+    os.makedirs(scanpy_dir, exist_ok=True)
     output_notebook_path, scanpy_h5ad = \
       prepare_and_run_scanpy_notebook(
         project_igf_id=project_igf_id,
@@ -851,11 +897,27 @@ def merged_scanpy_report(
         cellranger_group_id=str(sample_group),
         cellranger_output_dir=cellranger_aggr_counts_dir,
         scanpy_config=scanpy_config)
+    target_notebook = \
+      os.path.join(
+        scanpy_dir,
+        os.path.basename(output_notebook_path))
+    copy_local_file(
+      output_notebook_path,
+      target_notebook,
+      force=True)
+    target_h5ad = \
+      os.path.join(
+        scanpy_dir,
+        os.path.basename(scanpy_h5ad))
+    copy_local_file(
+      scanpy_h5ad,
+      target_h5ad,
+      force=True)
     output_dict = {
       "sample_group": sample_group,
       "cellranger_output_dir": cellranger_aggr_output_dir,
-      "notebook_report": output_notebook_path,
-      "scanpy_h5ad": scanpy_h5ad}
+      "notebook_report": target_notebook,
+      "scanpy_h5ad": target_h5ad}
     return output_dict
   except Exception as e:
     context = get_current_context()
