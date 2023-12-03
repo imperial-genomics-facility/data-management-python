@@ -483,13 +483,8 @@ def prepare_and_run_scanpy_notebook(
       'RUN_CELLCYCLE_SCORE': scanpy_config.get('RUN_CELLCYCLE_SCORE') or False,
       'S_GENES':s_genes,
       'G2M_GENES': g2m_genes
-      }
-    ## update input params
-    #input_params.update(scanpy_config)
-    # input_params = {
-    #   k.upper():v
-    #     for k,v in input_params.items()}
-    ## check paths
+    }
+    ## update input params and check paths
     singularity_image = \
       scanpy_config.get("IMAGE_FILE")
     template_file = \
@@ -588,12 +583,15 @@ def move_single_sample_result_to_main_work_dir(
 
 
 ## TASK
-@task(
-  task_id="configure_cellranger_aggr_run",
+@task.branch(
+  task_id="collect_and_branch",
   retry_delay=timedelta(minutes=5),
   retries=4,
   queue='hpc_4G')
-def configure_cellranger_aggr_run() -> dict:
+def collect_and_branch(
+      merge_step='configure_cellranger_aggr_run',
+      skip_step='calculate_md5sum_for_main_work_dir') \
+        -> list:
   try:
     cellranger_output_dict = dict()
     context = get_current_context()
@@ -613,7 +611,56 @@ def configure_cellranger_aggr_run() -> dict:
     if len(cellranger_output_dict) == 0:
       raise ValueError(f"No cellranger output found")
     elif len(cellranger_output_dict) == 1:
-      return output_dict.update({'skip_aggr': True})
+      ti.xcom_push(
+        key='cellranger_output_dict',
+        value=cellranger_output_dict)
+      return [skip_step]
+    else:
+      return [merge_step]
+  except Exception as e:
+    context = get_current_context()
+    log.error(e)
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={context['ti'].dag_id}",
+      f"run_id={context['ti'].run_id}",
+      f"task_id={context['ti'].task_id}",
+      f"attempt={context['ti'].try_number}.log"]
+    message = \
+      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
+    send_log_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      task_id=context['task'].task_id,
+      dag_id=context['task'].dag_id,
+      project_id=None,
+      comment=message,
+      reaction='fail')
+    raise ValueError(e)
+
+
+## TASK
+@task(
+  task_id="configure_cellranger_aggr_run",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_4G')
+def configure_cellranger_aggr_run(
+      xcom_pull_task_ids: str = 'collect_and_branch',
+      xcom_pull_task_key: str = 'cellranger_output_dict') \
+        -> dict:
+  try:
+    cellranger_output_dict = dict()
+    context = get_current_context()
+    ti = context.get('ti')
+    cellranger_output_dict = \
+      ti.xcom_pull(
+        task_ids=xcom_pull_task_ids,
+        key=xcom_pull_task_key)
+    if len(cellranger_output_dict) == 0:
+      raise ValueError(f"No cellranger output found")
+    elif len(cellranger_output_dict) == 1:
+      raise ValueError(f"Single cellranger output found. Can't merge it!")
     else:
       output_dict = \
         configure_cellranger_aggr(
@@ -699,9 +746,9 @@ def configure_cellranger_aggr(
 def run_cellranger_aggr_script(
       script_dict: dict) -> str:
   try:
-    skip_aggr = script_dict.get('skip_aggr')
-    if skip_aggr is not None and skip_aggr:
-      return output_dir
+    # skip_aggr = script_dict.get('skip_aggr')
+    # if skip_aggr is not None and skip_aggr:
+    #   return {'output_dir': None, 'skip_aggr': True}
     sample_name = script_dict.get('sample_name')
     run_script = script_dict.get('run_script')
     output_dir = script_dict.get('output_dir')
@@ -714,7 +761,7 @@ def run_cellranger_aggr_script(
         f"Failed to run script, Script: {run_script} for group: ALL, error file: {stderr_file}")
     ## check output dir exists
     check_file_path(output_dir)
-    return output_dir
+    return {'output_dir': output_dir}
   except Exception as e:
     context = get_current_context()
     log.error(e)
@@ -744,9 +791,15 @@ def run_cellranger_aggr_script(
   retries=4,
   queue='hpc_32G')
 def merged_scanpy_report(
-      cellranger_aggr_output_dir: str,
+      cellranger_aggr_output_dict: dict,
       design_dict: dict) -> dict:
   try:
+    # skip_aggr = \
+    #   cellranger_aggr_output_dict.get('skip_aggr')
+    cellranger_aggr_output_dir = \
+      cellranger_aggr_output_dict.get('output_dir')
+    # if skip_aggr is not None and skip_aggr:
+    #   return {'skip_aggr': skip_aggr}
     sample_group = "ALL"
     design_file = design_dict.get('analysis_design')
     check_file_path(design_file)
@@ -831,11 +884,17 @@ def merged_scanpy_report(
   task_id="move_aggr_result_to_main_work_dir",
   retry_delay=timedelta(minutes=5),
   retries=4,
-  queue='hpc_4G')
+  queue='hpc_4G',
+  multiple_outputs=False)
 def move_aggr_result_to_main_work_dir(
       main_work_dir: str,
-      scanpy_aggr_output_dict: dict) -> dict:
+      scanpy_aggr_output_dict: dict
+      ) -> dict:
   try:
+    # skip_aggr = \
+    #   scanpy_aggr_output_dict.get('skip_aggr')
+    # if skip_aggr is not None and skip_aggr:
+    #   return main_work_dir
     check_file_path(main_work_dir)
     cellranger_output_dir = \
       scanpy_aggr_output_dict.get("cellranger_output_dir")
@@ -880,7 +939,8 @@ def move_aggr_result_to_main_work_dir(
 	task_id="calculate_md5sum_for_main_work_dir",
   retry_delay=timedelta(minutes=5),
   retries=4,
-  queue='hpc_8G')
+  queue='hpc_8G',
+  multiple_outputs=False)
 def calculate_md5sum_for_main_work_dir(main_work_dir: str) -> str:
   try:
     md5_sum_file = \
