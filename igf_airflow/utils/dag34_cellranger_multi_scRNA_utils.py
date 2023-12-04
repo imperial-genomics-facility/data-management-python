@@ -896,7 +896,7 @@ def merged_scanpy_report(
         project_igf_id=project_igf_id,
         analysis_name=analysis_name,
         cellranger_group_id=str(sample_group),
-        cellranger_output_dir=cellranger_aggr_counts_dir,
+        cellranger_counts_dir=cellranger_aggr_counts_dir,
         scanpy_config=scanpy_config)
     target_notebook = \
       os.path.join(
