@@ -891,6 +891,21 @@ def merged_scanpy_report(
         'outs',
         'scanpy')
     os.makedirs(scanpy_dir, exist_ok=True)
+    ## set count matrix dir
+    aggr_filtered_feature_bc_matrix_dir = \
+      os.path.join(
+        cellranger_aggr_counts_dir,
+        'filtered_feature_bc_matrix')
+    multi_sample_filtered_feature_bc_matrix_dir = \
+      os.path.join(
+        cellranger_aggr_counts_dir,
+        'sample_filtered_feature_bc_matrix')
+    ## create a symlink if the multi style sample_filtered_feature_bc_matrix dir not pesent
+    if os.path.exists(aggr_filtered_feature_bc_matrix_dir) and \
+       not os.path.exists(multi_sample_filtered_feature_bc_matrix_dir):
+      os.symlink(
+        aggr_filtered_feature_bc_matrix_dir,
+        multi_sample_filtered_feature_bc_matrix_dir)
     output_notebook_path, scanpy_h5ad = \
       prepare_and_run_scanpy_notebook(
         project_igf_id=project_igf_id,
