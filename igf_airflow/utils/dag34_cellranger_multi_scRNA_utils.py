@@ -696,7 +696,8 @@ def configure_cellranger_aggr_run(
       ti.xcom_pull(
         task_ids=xcom_pull_task_ids,
         key=xcom_pull_task_key)
-    if len(cellranger_output_dict) == 0:
+    if cellranger_output_dict is None or \
+       (isinstance(cellranger_output_dict, dict) and len(cellranger_output_dict)) == 0:
       raise ValueError(f"No cellranger output found")
     elif len(cellranger_output_dict) == 1:
       raise ValueError(f"Single cellranger output found. Can't merge it!")
