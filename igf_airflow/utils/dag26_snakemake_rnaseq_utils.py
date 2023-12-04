@@ -708,6 +708,7 @@ def load_analysis_and_build_collection(
       result_dir: str,
       hpc_base_path: str,
       date_tag: str,
+      ignore_dangling_symlinks: bool = True,
       analysis_dir_prefix: str = 'analysis') \
         -> str:
   try:
@@ -750,7 +751,8 @@ def load_analysis_and_build_collection(
         f"Output path {target_dir_path} already present. Manually remove it before re-run.")
     copy_local_file(
       source_path=result_dir,
-      destination_path=target_dir_path)
+      destination_path=target_dir_path,
+      ignore_dangling_symlinks=ignore_dangling_symlinks)
     check_file_path(target_dir_path)
     ## load analysis to db
     collection_data_list = [{
