@@ -650,11 +650,11 @@ def collect_and_branch(
     if len(cellranger_output_dict) == 0:
       raise ValueError(f"No cellranger output found")
     elif len(cellranger_output_dict) == 1:
+      return [skip_step]
+    else:
       ti.xcom_push(
         key='cellranger_output_dict',
         value=cellranger_output_dict)
-      return [skip_step]
-    else:
       return [merge_step]
   except Exception as e:
     context = get_current_context()
