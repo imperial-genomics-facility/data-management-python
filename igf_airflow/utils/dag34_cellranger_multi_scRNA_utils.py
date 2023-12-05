@@ -372,7 +372,7 @@ def run_cellranger_script(
   task_id="run_single_sample_scanpy",
   retry_delay=timedelta(minutes=5),
   retries=4,
-  queue='hpc_4G')
+  queue='hpc_8G')
 def run_single_sample_scanpy(
       sample_group: str,
       cellranger_output_dir: str,
