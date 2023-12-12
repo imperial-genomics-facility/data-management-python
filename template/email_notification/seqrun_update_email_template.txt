@@ -17,6 +17,7 @@ Data access via Globus (FILES AVAILABLE FOR 30 DAYS):
   - Check the Globus collection directory linked to your project 
   - Check Globus collection and download data
 
+You can refer to the "samplesheet.csv" in the "Reports" dir for mapping facility sample ids to the original sample names.
 Please note that you are responsible for long term storage of your data as we will keep these files only for a short period of time.
 
 Important links:
@@ -26,20 +27,18 @@ Important links:
   - Fastq file validation after download:
       https://imperial-genomics-facility.github.io/igf-pipeline-help/demultiplexing.html#bclconvert-fastq-file-validation
 
-  - QC Project home:
+  - QC project home:
       http://eliot.med.ic.ac.uk/report/project/{{ projectName }}
 
-  - QC Run home:
+  - QC run home:
       http://eliot.med.ic.ac.uk/report/project/{{ projectName }}/{{ flowcellId }}
 
       Login information (for QC page):
         {% if hpcUser %}User Name: {{ customerUsername }}{% else %}User Name: {{ customerUsername }} (Let us know if you prefer to use your Imperial login credentials for QC pages).{% endif %}
         {% if hpcUser %}Password: Your account password for Imperial College{% else %}Password: Your IGF account password (sent to you via a separate email).{% endif %}
 
-  - We now support running analysis pipelines for our projects. A list of supported analysis pipelines can be found here:
+  - Analysis pipelines: We now support running analysis pipelines for our projects. A list of supported pipelines can be found here:
       https://imperial-genomics-facility.github.io/igf-pipeline-help/analysis_pipelines.html
-
-You can refer to the "samplesheet.csv" in the "Reports" dir for mapping facility sample ids to the original sample names.
 
 Subscribe to IGF mailing list for updates and announcements:
 https://mailman.ic.ac.uk/mailman/listinfo/igf-users
