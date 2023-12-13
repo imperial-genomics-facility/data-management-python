@@ -39,6 +39,8 @@ HPC_INTEROP_PATH = Variable.get('hpc_interop_path', default_var=None)
 INTEROP_REPORT_TEMPLATE = Variable.get('interop_report_template', default_var=None)
 INTEROP_REPORT_IMAGE = Variable.get('interop_report_image', default_var=None)
 INTEROP_REPORT_BASE_PATH = Variable.get('interop_report_base_path', default_var=None)
+INTEROP_PREDICTION_TEMPLATE = Variable.get('interop_prediction_template', default_var=None)
+NEXTSEQ2000_PREDICTION_MODEL = Variable.get('nextseq2000_prediction_model', default_var=None)
 
 def get_new_run_id_for_copy(**context):
   try:
@@ -336,6 +338,22 @@ def generate_interop_report_and_upload_to_portal_func(**context):
         file_path=output_notebook_path,
         data={"run_name": seqrun_id, "tag": "InterOp"},
         url_suffix=PORTAL_ADD_INTEROP_REPORT_URL)
+    ## get run pred result
+    prediction_notebook = \
+      _create_interop_pred_report(
+        run_id=seqrun_id,
+        model_path=NEXTSEQ2000_PREDICTION_MODEL,
+        tile_parquet_path=tile_parquet_output,
+        report_template=INTEROP_PREDICTION_TEMPLATE,
+        report_image=INTEROP_REPORT_IMAGE,
+        extra_container_dir_list=['/apps',])
+    ## upload prediction notebook to portal
+    res = \
+      upload_files_to_portal(
+        portal_config_file=IGF_PORTAL_CONF,
+        file_path=prediction_notebook,
+        data={"run_name": seqrun_id, "tag": "Prediction"},
+        url_suffix=PORTAL_ADD_INTEROP_REPORT_URL)
   except Exception as e:
     log.error(e)
     log_file_path = [
@@ -354,6 +372,67 @@ def generate_interop_report_and_upload_to_portal_func(**context):
       comment=message,
       reaction='fail')
     raise
+
+def _create_interop_pred_report(
+      run_id: str,
+      model_path: str,
+      tile_parquet_path: str,
+      report_template: str,
+      report_image: str,
+      timeout: int = 1200,
+      no_input: bool = True,
+      dry_run: bool = False,
+      num_cpu: int = 8,
+      ram_gb: int = 8,
+      use_singularity_execute: bool = True,
+      extra_container_dir_list: Optional[list] = None) -> str:
+  try:
+    work_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    date_tag = get_date_stamp()
+    container_bind_dir_list = [
+      work_dir,
+      tile_parquet_path,
+      os.path.dirname(model_path)]
+    if extra_container_dir_list is not None and \
+       len(extra_container_dir_list) > 0:
+      container_bind_dir_list.extend(
+        extra_container_dir_list)
+    input_params = dict(
+      DATE_TAG=date_tag,
+      RUN_ID=run_id,
+      MODEL_PATH=model_path,
+      PARQUET_PATH=tile_parquet_path,
+      NUM_CPU=num_cpu,
+      RAM_GB=ram_gb)
+    nb = \
+      Notebook_runner(
+        template_ipynb_path=report_template,
+        output_dir=work_dir,
+        input_param_map=input_params,
+        container_paths=container_bind_dir_list,
+        kernel='python3',
+        use_ephemeral_space=True,
+        allow_errors=False,
+        singularity_image_path=report_image,
+        timeout=timeout,
+        no_input=no_input,
+        use_singularity_execute=use_singularity_execute,
+        dry_run=dry_run)
+    output_notebook_path, _ = \
+      nb.execute_notebook_in_singularity()
+    output_new_notebook_path = \
+      os.path.join(
+        os.path.dirname(output_notebook_path),
+        f"{run_id}_interop_prediction.html")
+    ## rename report file
+    os.rename(
+      output_notebook_path,
+      output_new_notebook_path)
+    return output_new_notebook_path
+  except Exception as e:
+    raise ValueError(
+      f"Failed to generate prediction report, error: {e}")
 
 
 def  _create_interop_report(
