@@ -67,7 +67,6 @@ HPC_FILE_LOCATION = Variable.get("hpc_file_location", default_var="HPC_PROJECT")
 
 ## EMAIL CONFIG
 EMAIL_CONFIG = Variable.get("email_config", default_var=None)
-EMAIL_TEMPLATE = Variable.get("seqrun_email_template", default_var=None)
 DEFAULT_EMAIL_USER = Variable.get("default_email_user", default_var=None)
 
 ## GLOBUS
@@ -1301,7 +1300,7 @@ def generate_email_text_for_analysis(
     retries=4,
     queue='hpc_4G')
 def send_email_to_user(
-        send_email: bool = False,
+        send_email: bool = True,
         email_user_key: str = 'username') -> None:
     try:
         ## dag_run.conf should have analysis_id

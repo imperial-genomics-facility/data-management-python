@@ -14,10 +14,14 @@ Data access via Globus (FILES AVAILABLE FOR 30 DAYS):
         - If NO, please let us know if we can share this data with you via Globus.
             {% if hpcUser %}We need your approval before we can share this data with Globus username {{ customerUsername }}@ic.ac.uk.{% else %}Please send us your Globus username / Imperial College's username for this share.{% endif %}
 
-  More information about Globus based transfer
+Please note that you are responsible for long term storage of your data as we will keep these files only for a short period of time.
+
+Important links:
+  - Globus based transfer (LIMIT 30 DAYS):
       https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html#globus-based-transfer
 
-Please note that you are responsible for long term storage of your data as we will keep these files only for a short period of time.
+  - Analysis pipelines:
+      https://imperial-genomics-facility.github.io/igf-pipeline-help/analysis_pipelines.html
 
 Subscribe to IGF mailing list for updates and announcements:
 https://mailman.ic.ac.uk/mailman/listinfo/igf-users
