@@ -34,7 +34,6 @@ from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_airflow.utils.dag22_bclconvert_demult_utils import (
     _create_output_from_jinja_template,
     send_email_via_smtp)
-from igf_airflow.utils.dag33_geomx_processing_util import generate_email_text_for_analysis
 
 log = logging.getLogger(__name__)
 
