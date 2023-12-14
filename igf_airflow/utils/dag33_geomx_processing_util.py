@@ -51,7 +51,10 @@ from igf_airflow.utils.dag26_snakemake_rnaseq_utils import (
     calculate_analysis_name,
     load_analysis_and_build_collection,
     copy_analysis_to_globus_dir,
-    check_and_seed_analysis_pipeline)
+    check_and_seed_analysis_pipeline,
+    generate_email_text_for_analysis,
+    fetch_analysis_name_for_analysis_id,
+    fetch_user_info_for_project_igf_id)
 from airflow.operators.python import get_current_context
 from airflow.decorators import task
 
@@ -1194,104 +1197,6 @@ def copy_data_to_globus(analysis_dir_dict: dict) -> None:
             comment=message,
             reaction='fail')
         raise ValueError(e)
-
-def fetch_analysis_name_for_analysis_id(
-        analysis_id: int,
-        dbconfig_file: str) -> str:
-    try:
-        dbconf = read_dbconf_json(dbconfig_file)
-        aa = AnalysisAdaptor(**dbconf)
-        aa.start_session()
-        analysis_entry = \
-          aa.fetch_analysis_records_analysis_id(
-            analysis_id=analysis_id,
-            output_mode='one_or_none')
-        aa.close_session()
-        if analysis_entry is None:
-            raise ValueError(
-                f"No entry found for analysis id {analysis_id}")
-        analysis_name = \
-            analysis_entry.analysis_name
-        if analysis_name is None:
-            raise ValueError(
-                f"Analysis name is None for id {analysis_id}")
-        return analysis_name
-    except Exception as e:
-        raise ValueError(
-            f"Failed to get analysis name for id {analysis_id}, error: {e}")
-
-
-def fetch_user_info_for_project_igf_id(
-        project_igf_id: str,
-        dbconfig_file: str) -> Tuple[str, str, str, bool]:
-    try:
-        dbconf = read_dbconf_json(dbconfig_file)
-        pa = ProjectAdaptor(**dbconf)
-        pa.start_session()
-        user_info = pa.get_project_user_info(project_igf_id=project_igf_id)
-        pa.close_session()
-        user_info = user_info[user_info['data_authority']=='T']
-        user_info = user_info.to_dict(orient='records')
-        if len(user_info) == 0:
-            raise ValueError(
-                f'No user found for project {project_igf_id}')
-        user_info = user_info[0]
-        user_name = user_info['name']
-        login_name = user_info['username']
-        user_email = user_info['email_id']
-        user_category = user_info['category']
-        hpcUser = False
-        if user_category=='HPC_USER':
-            hpcUser = True
-        return user_name, login_name, user_email, hpcUser
-    except Exception as e:
-        raise ValueError(
-            f"Failed to get user infor for projecty {project_igf_id}, error: {e}")
-
-
-def generate_email_text_for_analysis(
-        analysis_id: int,
-        template_path: str,
-        dbconfig_file: str,
-        default_email_user: str,
-        send_email_to_user: bool = True) -> Tuple[str, list]:
-    try:
-        ## get analysis name and project name
-        project_igf_id = \
-            get_project_igf_id_for_analysis(
-                analysis_id=analysis_id,
-                dbconfig_file=dbconfig_file)
-        analysis_name = \
-            fetch_analysis_name_for_analysis_id(
-                analysis_id=analysis_id,
-                dbconfig_file=dbconfig_file)
-        ## get user info
-        user_name, login_name, user_email, hpcUser = \
-            fetch_user_info_for_project_igf_id(
-                project_igf_id=project_igf_id,
-                dbconfig_file=dbconfig_file)
-        ## build email text file
-        temp_dir = get_temp_dir(use_ephemeral_space=True)
-        output_file = \
-            os.path.join(temp_dir, 'email.txt')
-        _create_output_from_jinja_template(
-            template_file=template_path,
-            output_file=output_file,
-            autoescape_list=['xml', 'html'],
-            data=dict(
-                customerEmail=user_email,
-                defaultUser=default_email_user,
-                projectName=project_igf_id,
-                analysisName=analysis_name,
-                customerName=user_name,
-                customerUsername=login_name,
-                hpcUser=hpcUser,
-                send_email_to_user=send_email_to_user))
-        return output_file, [user_email, default_email_user]
-    except Exception as e:
-        raise ValueError(
-            f"Failed to generate email body, error: {e}")
-
 
 ## TASK
 @task(
