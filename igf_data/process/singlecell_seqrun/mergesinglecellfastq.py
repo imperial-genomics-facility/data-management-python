@@ -182,7 +182,7 @@ class MergeSingleCellFastq:
         project_id = sample_record.get('project_id')
         samples_info[sample_id]['sample_name'] = sample_name
         samples_info[sample_id]['project_id'] = project_id
-        sample_id_regex = re.compile('^{0}_\d$'.format(sample_id))              # regexp for sample id match
+        sample_id_regex = re.compile(r'^{0}_\d$'.format(sample_id))              # regexp for sample id match
         if use_sample_id_as_fastq_prefix:
           fastq_name_prefix = sample_id
         else:

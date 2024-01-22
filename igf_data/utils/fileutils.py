@@ -264,6 +264,7 @@ def copy_local_file(
       cd_to_dest: bool = True,
       force: bool = False,
       dirs_exist_ok: bool = True,
+      ignore_dangling_symlinks: bool = False,
       new_dir_mode: int = 0o770) \
         -> None:
   '''
@@ -273,6 +274,7 @@ def copy_local_file(
   :param destination_path: A destination file path, including the file name  ##FIX TYPO
   :param cd_to_dest: Change to destination dir before copy, default True
   :param force: Optional, set True to overwrite existing destination file, default is False
+  :param ignore_dangling_symlinks: Optional, set ignore_dangling_symlinks for copytree function, default False
   :param dirs_exist_ok: Optional, set True to allow existing directories, default is False
   :returns: None
   '''
@@ -307,7 +309,8 @@ def copy_local_file(
         remove_dir(destination_path)
       copytree(
         src=source_path,
-        dst=destination_path,)
+        dst=destination_path,
+        ignore_dangling_symlinks=ignore_dangling_symlinks)
         # dirs_exist_ok=dirs_exist_ok)                                            # copy dir for 3.8+
       check_file_path(destination_path)
     if cd_to_dest:

@@ -289,8 +289,8 @@ class SeqrunAdaptor(BaseAdaptor):
         join(Seqrun,Seqrun.platform_id==Platform.platform_id).\
         filter(Seqrun.seqrun_igf_id==seqrun_igf_id)
       platform_name = \
-        self.fetch_records(query=query,output_mode='one_or_none')
-      if isinstance(platform_name,tuple):
+        self.fetch_records(query=query, output_mode='one_or_none')
+      if platform_name is not None:
         platform_name = platform_name[0]
       return platform_name
     except Exception as e:
@@ -333,3 +333,79 @@ class SeqrunAdaptor(BaseAdaptor):
     except Exception as e:
       raise ValueError(
               'Failed to fetch barcode rules for seqrun, error: {0}'.format(e))
+
+
+  def check_seqrun_attribute_exists(
+        self,
+        seqrun_igf_id: str,
+        attribute_name: str) -> bool:
+    try:
+      query = \
+        self.session.\
+          query(
+            Seqrun.seqrun_igf_id,
+            Seqrun_attribute.attribute_name).\
+          join(Seqrun_attribute,
+               Seqrun.seqrun_id==Seqrun_attribute.seqrun_id).\
+          filter(Seqrun_attribute.attribute_name==attribute_name).\
+          filter(Seqrun.seqrun_igf_id==seqrun_igf_id)
+      attribute_record = \
+        self.fetch_records(
+          query=query,
+          output_mode='one_or_none')
+      if attribute_record is None:
+        return False
+      else:
+        return True
+    except Exception as e:
+      raise ValueError(
+        f"Failed to check seqrun attribute, error: {e}")
+
+
+  def create_or_update_seqrun_attribute_records(
+        self,
+        seqrun_igf_id: str,
+        attribute_list: list[dict],
+        autosave: bool = False) -> None:
+    try:
+      seqrun_exists = \
+        self.check_seqrun_exists(
+          seqrun_id=seqrun_igf_id)
+      if not seqrun_exists:
+        raise KeyError(f"Seqrun {seqrun_igf_id} is not in DB!")
+      seqrun = \
+        self.fetch_seqrun_records_igf_id(seqrun_igf_id=seqrun_igf_id)
+      seqrun_id = seqrun.seqrun_id
+      for entry in attribute_list:
+        attribute_name = entry.get('attribute_name')
+        attribute_value = entry.get('attribute_value')
+        if attribute_name is None or \
+           attribute_value is None:
+          raise KeyError(
+            f"attribute_name or attribute_value key is missing in attribute_list data")
+        attribute_exists = \
+          self.check_seqrun_attribute_exists(
+            seqrun_igf_id=seqrun_igf_id,
+            attribute_name=attribute_name)
+        if attribute_exists:
+          # update attribute
+          self.session.\
+          query(Seqrun_attribute).\
+          filter(Seqrun_attribute.seqrun_id==seqrun_id).\
+          filter(Seqrun_attribute.attribute_name==attribute_name).\
+          update({'attribute_value': attribute_value})
+        else:
+          # create attribute
+          attribute_data = [{
+            'attribute_name': attribute_name,
+            'attribute_value': attribute_value}]
+          self.store_seqrun_attributes(
+            data=attribute_data,
+            seqrun_id=seqrun_id)
+      if autosave:
+        self.commit_session()
+    except Exception as e:
+      if autosave:
+        self.rollback_session()
+      raise ValueError(
+        f"Failed to create attribute record, error {e}")

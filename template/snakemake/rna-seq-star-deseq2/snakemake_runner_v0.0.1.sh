@@ -30,7 +30,7 @@ cd {{ SNAKEMAKE_WORK_DIR }}
 snakemake \
   --use-singularity \
   --use-conda \
-  --singularity-args="-B {{ SINGULARITY_BIND_DIRS }},$CONDA_PREFIX_DIR,$SNAKEMAKE_OUTPUT_CACHE,$EPHEMERAL,$TMPDIR,$EPHEMERAL:/tmp,$EPHEMERAL:/var/tmp" \
+  --singularity-args="-B {{ SINGULARITY_BIND_DIRS }},$CONDA_PREFIX_DIR,$SNAKEMAKE_OUTPUT_CACHE,$EPHEMERAL,$EPHEMERAL:/tmp,$EPHEMERAL:/var/tmp" \
   --cluster-config $CLUSTER_CONFIG_JSON \
   -j $JOB_LIMIT \
   --cluster "qsub -V -o /dev/null -e /dev/null -lwalltime=08:00:00  -lselect=1:ncpus={cluster.ncpus}:mem={cluster.mem}gb" \
@@ -43,3 +43,14 @@ snakemake \
   --latency-wait 60
 
 ## TO DO: ADD `--cluster-cancel` TO SNAKEMAKE
+
+### unlock snakemake pipeline dir before rerun
+##-------------------------------------------------------------------------------------
+##
+## module load anaconda3/personal
+## source activate snakemake
+## cd {{ SNAKEMAKE_WORK_DIR }}
+## export SNAKEFILE=/project/tgu/resources/pipeline_resource/snakemake/workflow/rna-seq-star-deseq2/workflow/Snakefile
+## snakemake --snakefile $SNAKEFILE --configfile {{ CONFIG_YAML_PATH }} --unlock
+##
+##--------------------------------------------------------------------------------------

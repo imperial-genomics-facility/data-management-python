@@ -281,7 +281,7 @@ def _make_nfcore_smrnaseq_input(
         str:
   try:
     fastq1_pattern = \
-      re.compile('\S+_R1_001.fastq.gz')
+      re.compile(r'\S+_R1_001.fastq.gz')
     input_csv_file_path = \
       os.path.join(output_dir, output_file_path)
     if os.path.exists(input_csv_file_path):
@@ -462,9 +462,9 @@ def _make_nfcore_rnaseq_input(
         str:
   try:
     fastq1_pattern = \
-      re.compile('\S+_R1_001.fastq.gz')
+      re.compile(r'\S+_R1_001.fastq.gz')
     fastq2_pattern = \
-      re.compile('\S+_R2_001.fastq.gz')
+      re.compile(r'\S+_R2_001.fastq.gz')
     input_csv_file_path = \
       os.path.join(output_dir, output_file_path)
     if os.path.exists(input_csv_file_path):
@@ -654,9 +654,9 @@ def _make_nfcore_methylseq_input(
           list:
   try:
     fastq1_pattern = \
-      re.compile('\S+_R1_001.fastq.gz')
+      re.compile(r'\S+_R1_001.fastq.gz')
     fastq2_pattern = \
-      re.compile('\S+_R2_001.fastq.gz')
+      re.compile(r'\S+_R2_001.fastq.gz')
     if sample_id_input_column not in fastq_df.columns or \
        run_id_input_column not in fastq_df.columns or \
        fastq_file_input_column not in fastq_df.columns:
@@ -878,15 +878,15 @@ def _make_nfcore_sarek_input(
       fastq_file_input_column: str = 'file_path',
       output_sample_column: str = 'sample',
       output_lane_column: str = 'lane',
-      nf_samplesheet_header: list = ("patient", "sex", "status", "sample",  "fastq_1", "fastq_2"),
+      nf_samplesheet_header: list = ("patient", "sex", "status", "sample", "lane",  "fastq_1", "fastq_2"),
       output_fastq1_column: str = 'fastq_1',
       output_fastq2_column: str = 'fastq_2') -> \
         str:
   try:
     fastq1_pattern = \
-      re.compile('\S+_R1_001.fastq.gz')
+      re.compile(r'\S+_R1_001.fastq.gz')
     fastq2_pattern = \
-      re.compile('\S+_R2_001.fastq.gz')
+      re.compile(r'\S+_R2_001.fastq.gz')
     input_csv_file_path = \
       os.path.join(output_dir, output_file_path)
     if os.path.exists(input_csv_file_path):
@@ -969,7 +969,7 @@ def prepare_nfcore_sarek_input(
       sample_metadata: dict,
       analysis_metadata: dict,
       nfcore_pipeline_name: str = 'nf-core/sarek',
-      nf_samplesheet_header: list = ("patient", "sex", "status", "sample",  "fastq_1", "fastq_2"),
+      nf_samplesheet_header: list = ("patient", "sex", "status", "sample", "lane", "fastq_1", "fastq_2"),
       exclude_nf_param_list: list = [
         '-resume',
         '-c',
@@ -1103,9 +1103,9 @@ def _make_nfcore_ampliseq_input(
         Tuple[str, str]:
   try:
     fastq1_pattern = \
-      re.compile('\S+_R1_001.fastq.gz')
+      re.compile(r'\S+_R1_001.fastq.gz')
     fastq2_pattern = \
-      re.compile('\S+_R2_001.fastq.gz')
+      re.compile(r'\S+_R2_001.fastq.gz')
     input_csv_file_path = \
       os.path.join(output_dir, output_file_path)
     input_metadata_csv_file_path = \
@@ -1490,9 +1490,9 @@ def _make_nfcore_atacseq_input(sample_metadata: dict,
         str:
   try:
     fastq1_pattern = \
-      re.compile('\S+_R1_001.fastq.gz')
+      re.compile(r'\S+_R1_001.fastq.gz')
     fastq2_pattern = \
-      re.compile('\S+_R2_001.fastq.gz')
+      re.compile(r'\S+_R2_001.fastq.gz')
     input_csv_file_path = \
       os.path.join(output_dir, output_file_path)
     if os.path.exists(input_csv_file_path):
@@ -1692,9 +1692,9 @@ def _make_nfcore_chipseq_input(sample_metadata: dict,
         str:
   try:
     fastq1_pattern = \
-      re.compile('\S+_R1_001.fastq.gz')
+      re.compile(r'\S+_R1_001.fastq.gz')
     fastq2_pattern = \
-      re.compile('\S+_R2_001.fastq.gz')
+      re.compile(r'\S+_R2_001.fastq.gz')
     input_csv_file_path = \
       os.path.join(output_dir, output_file_path)
     if os.path.exists(input_csv_file_path):
@@ -1894,9 +1894,9 @@ def _make_nfcore_cutandrun_input(sample_metadata: dict,
         str:
   try:
     fastq1_pattern = \
-      re.compile('\S+_R1_001.fastq.gz')
+      re.compile(r'\S+_R1_001.fastq.gz')
     fastq2_pattern = \
-      re.compile('\S+_R2_001.fastq.gz')
+      re.compile(r'\S+_R2_001.fastq.gz')
     input_csv_file_path = \
       os.path.join(output_dir, output_file_path)
     if os.path.exists(input_csv_file_path):

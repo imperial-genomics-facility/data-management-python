@@ -52,7 +52,7 @@ class SampleSheet:
         raise AttributeError(type(data_series))
       single_cell_flag_pattern = \
         re.compile(
-          r'^{0}$'.format(single_cell_flag),
+          '^{0}$'.format(single_cell_flag),
           re.IGNORECASE)
       err = list()
       if ('Sample_ID' in data_series and 'Sample_Name' in data_series) and \
@@ -64,7 +64,7 @@ class SampleSheet:
         err.append("Missing I_5 index sequences for {0}".\
                    format(data_series['Sample_ID']))
       single_cell_index_pattern = \
-        re.compile(r'^SI-[GNT][ATN]-[A-Z][0-9]+')
+        re.compile('^SI-[GNT][ATN]-[A-Z][0-9]+')
       if re.search(single_cell_flag_pattern, data_series['Description']) and \
          not re.search(single_cell_index_pattern, data_series['index']):
         err.append("Required I_7 single cell indexes for 10X sample {0}".\
@@ -175,7 +175,7 @@ class SampleSheet:
     '''
     try:
       data_header = self._data_header
-      pattern = re.compile('^index', re.IGNORECASE)
+      pattern = re.compile(r'^index', re.IGNORECASE)
       index_columns = [
         header for header in data_header \
           if re.search(pattern, header)]

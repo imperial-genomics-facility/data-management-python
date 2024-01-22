@@ -1,5 +1,6 @@
 import os
 from spython.main import Client
+from shlex import quote
 from igf_data.utils.fileutils import check_file_path, copy_local_file, get_temp_dir, remove_dir
 
 def singularity_run(
@@ -43,7 +44,7 @@ def singularity_run(
         format(
           temp_image_path,
           bind_dir_list,
-          args)
+          quote(args))
     if dry_run:
       return singularity_run_cmd
     else:
@@ -72,6 +73,7 @@ def singularity_run(
         if isinstance(messages, list):
           messages = '\n'.join(messages)
         with open(log_file,'w') as fp:
+          fp.write(f'Command: {singularity_run_cmd} \n')
           fp.write(messages)
         raise ValueError(
                 'Failed to run command for task id: {0}, log dir: {1}'.\
@@ -135,6 +137,7 @@ def execute_singuarity_cmd(
       if isinstance(message, list):
         message = '\n'.join(message)
       with open(log_file, 'w') as fp:
+        fp.write(f'Command: {singularity_cmd} \n')
         fp.write(message)
       raise ValueError(
               'Failed to run command for task id: {0}, log dir: {1}'.\

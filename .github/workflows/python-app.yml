@@ -5,7 +5,7 @@ name: Python application
 
 on:
   push:
-    branches: [ "master" ]
+    branches: [ "master", "airflow_2.6.2" ]
   pull_request:
     branches: [ "master" ]
 
@@ -27,7 +27,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install flake8 pytest
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        if [ -f requirements_2.6.2.txt ]; then pip install -r requirements_2.6.2.txt; fi
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
@@ -37,4 +37,5 @@ jobs:
     - name: Test with pytest
       run: |
         #pytest
-        python setup.py test
+        #python setup.py test
+        pytest --cov=igf_data --cov=igf_airflow --cov=igf_portal --log-level=ERROR test

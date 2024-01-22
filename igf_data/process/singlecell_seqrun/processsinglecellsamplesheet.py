@@ -85,8 +85,8 @@ class ProcessSingleCellDualIndexSamplesheet:
       df = pd.DataFrame(sa._data)
       df[self.sample_description_column] = \
         df[self.sample_description_column].map(lambda x: x.strip().upper())             # convert sample description to upper case
-      #df = \
-      df.apply(
+      df = \
+        df.apply(
           lambda series: self._replace_sc_dual_barcodes(series),
           result_type='reduce',
           axis=1)

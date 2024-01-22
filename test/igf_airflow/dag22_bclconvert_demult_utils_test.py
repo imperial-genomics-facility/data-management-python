@@ -4,7 +4,6 @@ import json
 import re
 import subprocess
 import pandas as pd
-from pyrsistent import s
 from igf_data.igfdb.igfTables import Base, Seqrun, Seqrun_attribute
 from igf_data.igfdb.igfTables import Collection, Collection_group, File
 from igf_data.igfdb.baseadaptor import BaseAdaptor

@@ -17,7 +17,7 @@ samplesheet_data=SampleSheet(infile=samplesheet_file)
 platform_name=samplesheet_data.get_platform_name()
 sample_lane=samplesheet_data.get_lane_count()
 
-platform_pattern=re.compile('^HISEQ',re.IGNORECASE)
+platform_pattern=re.compile(r'^HISEQ',re.IGNORECASE)
 
 data_group=dict()
 

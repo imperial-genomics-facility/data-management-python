@@ -76,7 +76,7 @@ HPC_SSH_KEY_FILE = Variable.get('hpc_ssh_key_file', default_var=None)
 DATABASE_CONFIG_FILE = Variable.get('database_config_file', default_var=None)
 SINGLECELL_BARCODE_JSON = Variable.get('singlecell_barcode_json', default_var=None)
 SINGLECELL_DUAL_BARCODE_JSON = Variable.get('singlecell_dual_barcode_json', default_var=None)
-INTEROP_NOTEBOOK_IMAGE = Variable.get('interop_notebook_image_path', default_var=None)
+INTEROP_NOTEBOOK_IMAGE = Variable.get('bclconvert_report_image_path', default_var=None)
 HPC_BASE_RAW_DATA_PATH = Variable.get('hpc_base_raw_data_path', default_var=None)
 IGF_PORTAL_CONF = Variable.get('igf_portal_conf', default_var=None)
 HPC_FILE_LOCATION = Variable.get("hpc_file_location", default_var="HPC_PROJECT")
@@ -4167,6 +4167,7 @@ def generate_bclconvert_report(
       report_template: str,
       bclconvert_report_library_path: str,
       bclconvert_reports_path: str,
+      no_input: bool = True,
       dry_run: bool = False) \
         -> str:
   try:
@@ -4231,6 +4232,7 @@ def generate_bclconvert_report(
         singularity_options=['--no-home','-C', "--env", f"PYTHONPATH={bclconvert_report_library_path}"],
         allow_errors=False,
         singularity_image_path=image_path,
+        no_input=no_input,
         dry_run=dry_run)
     output_notebook_path, _ = \
       nb.execute_notebook_in_singularity()

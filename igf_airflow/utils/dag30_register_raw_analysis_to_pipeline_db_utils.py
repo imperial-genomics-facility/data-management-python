@@ -50,12 +50,20 @@ def fetch_raw_analysis_queue_func(**context):
         value=new_raw_analysis_list)
   except Exception as e:
     log.error(e)
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
+    message = \
+      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise
 
@@ -131,12 +139,21 @@ def process_raw_analysis_queue_func(**context):
           reaction='fail')
   except Exception as e:
     log.error(e)
+    ti = context.get('ti')
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
+    message = \
+      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise
 
@@ -165,6 +182,7 @@ def fetch_raw_analysis_yaml_data(
   except Exception as e:
     raise ValueError(
       f"Failed to fetch raw analysis yaml data, error: {e}")
+
 
 def mark_project_synched_on_portal(
       raw_analysis_id: int,

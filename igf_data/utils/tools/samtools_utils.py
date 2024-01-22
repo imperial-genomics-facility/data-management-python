@@ -363,23 +363,34 @@ def _parse_samtools_stats_output(stats_file):
   :returns: A list of dictionaries
   '''
   try:
-    data = \
-      pd.read_csv(
-        stats_file,
-        sep='\n',
-        header=None,
-        engine='python',
-        dtype=object,
-        comment='#')
-    sn_rows = \
-      data[data.get(0).map(lambda x: x.startswith('SN'))][0].\
-      map(lambda x: x.strip('SN\t')).values                                     # read SN fields from report
+    # data = \
+    #   pd.read_csv(
+    #     stats_file,
+    #     sep='\n',
+    #     header=None,
+    #     engine='python',
+    #     dtype=object,
+    #     comment='#')
+    # sn_rows = \
+    #   data[data.get(0).map(lambda x: x.startswith('SN'))][0].\
+    #   map(lambda x: x.strip('SN\t')).values                                     # read SN fields from report
+    with open(stats_file, 'r') as fp:
+      sn_rows = fp.read()
+    sn_rows = [i for i in sn_rows.split('\n') if i.startswith('SN')]
+    stats_data_list = list()
+    # for row in sn_rows:
+    #   stats_data_list.\
+    #   append(\
+    #     {'SAMTOOLS_STATS_{0}'.format(item.replace(' ','_')):row.split(':')[index+1].strip()
+    #         for index, item in enumerate(row.split(':'))
+    #           if index % 2 == 0
+    #     })
     stats_data_list = list()
     for row in sn_rows:
       stats_data_list.\
-      append(\
+      append(
         {'SAMTOOLS_STATS_{0}'.format(item.replace(' ','_')):row.split(':')[index+1].strip()
-            for index, item in enumerate(row.split(':'))
+            for index, item in enumerate(row.replace('SN\t', '').split(':\t'))
               if index % 2 == 0
         })                                                                         # append sn fields with minor formatting
     return stats_data_list

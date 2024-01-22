@@ -31,8 +31,8 @@ from igf_nextflow.nextflow_utils.nextflow_input_formatter import prepare_input_f
 
 log = logging.getLogger(__name__)
 
-SLACK_CONF = Variable.get('slack_conf',default_var=None)
-MS_TEAMS_CONF = Variable.get('ms_teams_conf',default_var=None)
+SLACK_CONF = Variable.get('analysis_slack_conf',default_var=None)
+MS_TEAMS_CONF = Variable.get('analysis_ms_teams_conf',default_var=None)
 HPC_SSH_KEY_FILE = Variable.get('hpc_ssh_key_file', default_var=None)
 DATABASE_CONFIG_FILE = Variable.get('database_config_file', default_var=None)
 HPC_BASE_RAW_DATA_PATH = Variable.get('hpc_base_raw_data_path', default_var=None)
@@ -135,15 +135,31 @@ def prepare_nfcore_pipeline_inputs(**context):
         comment=f"Finished pipeline run, temp nextflow workdir: {work_dir}",
         reaction='pass')
       return [next_task,]
-    except:
+    except Exception as e:
+      send_log_to_channels(
+        slack_conf=SLACK_CONF,
+        ms_teams_conf=MS_TEAMS_CONF,
+        task_id=context['task'].task_id,
+        dag_id=context['task'].dag_id,
+        project_id=project_igf_id,
+        comment=f"Failed pipeline run, error: {e}",
+        reaction='fail')
       return [last_task,]
   except Exception as e:
     log.error(e)
+    log_file_path = [
+      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+      f"dag_id={ti.dag_id}",
+      f"run_id={ti.run_id}",
+      f"task_id={ti.task_id}",
+      f"attempt={ti.try_number}.log"]
+    message = \
+      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
-      comment=e,
+      comment=message,
       reaction='fail')
     raise

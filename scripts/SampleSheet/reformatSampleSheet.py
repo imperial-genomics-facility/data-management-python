@@ -20,8 +20,8 @@ platform_name=samplesheet_data.get_platform_name()
 runinfo_data=RunInfo_xml(xml_file=runinfoxml_file)
 platform_series=runinfo_data.get_platform_number()
 
-hiseq_pattern=re.compile('^HISEQ',re.IGNORECASE)
-nextseq_pattern=re.compile('^NEXTSEQ',re.IGNORECASE)
+hiseq_pattern=re.compile(r'^HISEQ',re.IGNORECASE)
+nextseq_pattern=re.compile(r'^NEXTSEQ',re.IGNORECASE)
 
 if revcomp_index:
   if (re.search(hiseq_pattern, platform_name) and platform_series.startswith('K')):

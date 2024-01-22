@@ -121,6 +121,13 @@ def full_suite():
   from .igf_airflow.dag26_snakemake_rnaseq_utils_test import TestDag26_snakemake_rnaseq_utilsB
   from .igf_airflow.dag26_snakemake_rnaseq_utils_test import TestDag26_snakemake_rnaseq_utilsC
   from .igf_airflow.dag27_cleanup_demultiplexing_output_utils_test import TestDag27_cleanup_demultiplexing_output_utilsA
+  from .igf_airflow.test_dag33_geomx_processing_util import (
+    TestDag33_geomx_processing_util_utilsA,
+    TestDag33_geomx_processing_util_utilsB,
+    TestDag33_geomx_processing_util_utilsC)
+  from .igf_airflow.test_dag34_cellranger_multi_scRNA_utils import (
+    TestDag34_cellranger_multi_scRNA_utilA,
+    TestDag34_cellranger_multi_scRNA_utilB)
 
   return unittest.TestSuite([
     unittest.TestLoader().loadTestsFromTestCase(t)
@@ -246,6 +253,11 @@ def full_suite():
         TestDag26_snakemake_rnaseq_utilsC,
         TestDag25_copy_seqruns_to_hpc_utilsA,
         TestDag25_copy_seqruns_to_hpc_utilsB,
-        TestDag27_cleanup_demultiplexing_output_utilsA
+        TestDag27_cleanup_demultiplexing_output_utilsA,
+        TestDag33_geomx_processing_util_utilsA,
+        TestDag33_geomx_processing_util_utilsB,
+        TestDag33_geomx_processing_util_utilsC,
+        TestDag34_cellranger_multi_scRNA_utilA,
+        TestDag34_cellranger_multi_scRNA_utilB
       ]
     ])
