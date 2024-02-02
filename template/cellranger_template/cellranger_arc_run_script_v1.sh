@@ -30,4 +30,4 @@ $CELLRANGER_ARC_EXE count \
   --localmem=8 \
   --jobmode=pbspro \
   --disable-ui \
-  --reference={{ CELLRANGER_ARC_REFERENCE }} {{ CELLRANGER_ARC_CONFIG_PARAMS }} 
+  --reference={{ CELLRANGER_ARC_REFERENCE }} {{ CELLRANGER_ARC_CONFIG_PARAMS }}

@@ -140,7 +140,7 @@ def prepare_cellranger_arc_run_dir_and_script_file(
         library_csv_filename)
     sample_library_csv = \
       pd.DataFrame(sample_library_list).\
-      to_csv(sample_library_csv, index=False)
+      to_csv(library_csv_file, index=False)
     ## get cellranger arc conf
     cellranger_arc_config = \
       analysis_metadata.get("cellranger_arc_config")
@@ -194,13 +194,13 @@ def create_library_information_for_multiome_sample_group(
     sample_igf_id_list = list()
     for sample_igf_id, group in sample_metadata.items():
       grp_name = group.get('cellranger_group')
-      feature_types = group.get('feature_types')
-      if grp_name is None or feature_types is None:
+      library_type = group.get('library_type')
+      if grp_name is None or library_type is None:
         raise KeyError(
-          "Missing cellranger_group or feature_types in sample_metadata ")
+          "Missing cellranger_group or library_type in sample_metadata ")
       if str(grp_name) == str(sample_group):
         sample_igf_id_list.append(sample_igf_id)
-      sample_group_dict.update({ sample_igf_id: feature_types})
+      sample_group_dict.update({ sample_igf_id: library_type})
     ## get sample ids from metadata
     if len(sample_igf_id_list) == 0:
       raise ValueError("No sample id found in the metadata")
@@ -219,16 +219,16 @@ def create_library_information_for_multiome_sample_group(
       sample_igf_id = g_data['sample_igf_id'].values[0]
       fastq_file_path = g_data['file_path'].values[0]
       fastq_dir = os.path.dirname(fastq_file_path)
-      feature_types = sample_group_dict.get(sample_igf_id)
-      if feature_types is None:
+      library_type = sample_group_dict.get(sample_igf_id)
+      if library_type is None:
         raise KeyError(
-          f"No feature_types found for sample {sample_igf_id}")
+          f"No library_type found for sample {sample_igf_id}")
       fastq_id = \
         os.path.basename(fastq_file_path).split("_")[0]
       sample_library_list.append({
         "fastqs": fastq_dir,
         "sample": fastq_id,
-        "library_type": feature_types})
+        "library_type": library_type})
     return sample_library_list
   except Exception as e:
     raise ValueError(
