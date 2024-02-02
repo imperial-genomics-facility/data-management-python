@@ -128,6 +128,9 @@ def full_suite():
   from .igf_airflow.test_dag34_cellranger_multi_scRNA_utils import (
     TestDag34_cellranger_multi_scRNA_utilA,
     TestDag34_cellranger_multi_scRNA_utilB)
+  from .igf_airflow.test_dag36_cellranger_arc_scRNA_multiome_utils import (
+    TestDag36_cellranger_arc_scRNA_multiome_utilsA,
+    TestDag36_cellranger_arc_scRNA_multiome_utilsB)
 
   return unittest.TestSuite([
     unittest.TestLoader().loadTestsFromTestCase(t)
@@ -258,6 +261,8 @@ def full_suite():
         TestDag33_geomx_processing_util_utilsB,
         TestDag33_geomx_processing_util_utilsC,
         TestDag34_cellranger_multi_scRNA_utilA,
-        TestDag34_cellranger_multi_scRNA_utilB
+        TestDag34_cellranger_multi_scRNA_utilB,
+        TestDag36_cellranger_arc_scRNA_multiome_utilsA,
+        TestDag36_cellranger_arc_scRNA_multiome_utilsB
       ]
     ])
