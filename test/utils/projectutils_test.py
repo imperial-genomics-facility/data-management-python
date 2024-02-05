@@ -1,5 +1,6 @@
 import os, unittest
 import pandas as pd
+from datetime import datetime, timedelta
 from sqlalchemy import create_engine
 from igf_data.igfdb.igfTables import Base,Project,User,ProjectUser,Sample,Experiment,Run,Collection,Collection_group,File
 from igf_data.igfdb.baseadaptor import BaseAdaptor
@@ -8,13 +9,14 @@ from igf_data.igfdb.useradaptor import UserAdaptor
 from igf_data.igfdb.sampleadaptor import SampleAdaptor
 from igf_data.igfdb.experimentadaptor import ExperimentAdaptor
 from igf_data.igfdb.runadaptor import RunAdaptor
+from igf_data.igfdb.useradaptor import UserAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_data.igfdb.platformadaptor import PlatformAdaptor
 from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.utils.fileutils import get_temp_dir,remove_dir
-from igf_data.utils.projectutils import get_files_and_irods_path_for_project,mark_project_as_withdrawn
+from igf_data.utils.projectutils import get_files_and_irods_path_for_project,mark_project_as_withdrawn, find_projects_for_cleanup
 from igf_data.utils.projectutils import get_project_read_count,mark_project_barcode_check_off,get_seqrun_info_for_project,mark_project_and_list_files_for_cleanup
 
 class Projectutils_test1(unittest.TestCase):
@@ -389,6 +391,144 @@ class Projectutils_test1(unittest.TestCase):
 #     self.assertTrue(os.path.exists(file_list_path))
 #     self.assertTrue(os.path.exists(irods_file_path))
 #     remove_dir(work_dir)
+
+class Projectutils_test3(unittest.TestCase):
+  def setUp(self):
+    self.dbconfig = 'data/dbconfig.json'
+    dbparam = read_dbconf_json(self.dbconfig)
+    base = BaseAdaptor(**dbparam)
+    self.engine = base.engine
+    self.dbname = dbparam['dbname']
+    Base.metadata.create_all(self.engine)
+    self.session_class = base.get_session_class()
+    base.start_session()
+    platform_data = [{
+      "platform_igf_id" : "M03291",
+      "model_name" : "MISEQ",
+      "vendor_name" : "ILLUMINA",
+      "software_name" : "RTA",
+      "software_version" : "RTA1.18.54"}]
+    flowcell_rule_data = [{
+      "platform_igf_id": "M03291",
+      "flowcell_type": "MISEQ",
+      "index_1": "NO_CHANGE",
+      "index_2": "NO_CHANGE"}]
+    pl = PlatformAdaptor(**{'session':base.session})
+    pl.store_platform_data(data=platform_data)
+    pl.store_flowcell_barcode_rule(data=flowcell_rule_data)
+    seqrun_data = [{
+      'seqrun_igf_id': '180416_M03291_0139_000000000-BRN47',
+      'flowcell_id': '000000000-BRN47',
+      'platform_igf_id': 'M03291',
+      'date_created': datetime.now() - timedelta(weeks=17),
+      'flowcell': 'MISEQ'}, {
+      'seqrun_igf_id': '180416_M03291_0139_000000000-BRN471',
+      'flowcell_id': '000000000-BRN471',
+      'platform_igf_id': 'M03291',
+      'date_created': datetime.now() - timedelta(weeks=15),
+      'flowcell': 'MISEQ'}]
+    sra = SeqrunAdaptor(**{'session':base.session})
+    sra.store_seqrun_and_attribute_data(data=seqrun_data)
+    project_data = [
+      {'project_igf_id':'IGFQprojectA'},
+      {'project_igf_id':'IGFQprojectB'}]
+    pa = ProjectAdaptor(**{'session':base.session})
+    pa.store_project_and_attribute_data(data=project_data)
+    ###
+    user_data = [{
+      'name':'User1',
+      'email_id': 'user1@email.com',
+      'username': 'user1'
+    }, {
+      'name':'User2',
+      'email_id': 'user2@email.com',
+      'username': 'user2'
+    }]
+    ua = UserAdaptor(**{'session' : base.session})
+    ua.store_user_data(user_data)
+    project_user_data=[{
+      'project_igf_id': 'IGFQprojectA',
+      'email_id': 'user1@email.com',
+      'data_authority':True
+    }, {
+      'project_igf_id': 'IGFQprojectB',
+      'email_id': 'user2@email.com',
+      'data_authority':True}]
+    pa.assign_user_to_project(data=project_user_data)
+    ###
+    sample_data = [{
+      'sample_igf_id': 'IGFsampleA',
+      'project_igf_id': 'IGFQprojectA',
+      'species_name': 'HG38'
+    }, {
+      'sample_igf_id': 'IGFsampleB',
+      'project_igf_id': 'IGFQprojectB',
+      'species_name': 'UNKNOWN'
+    }]
+    sa = SampleAdaptor(**{'session':base.session})
+    sa.store_sample_and_attribute_data(data=sample_data)
+    experiment_data = [{
+      'project_igf_id': 'IGFQprojectA',
+      'sample_igf_id': 'IGFsampleA',
+      'experiment_igf_id': 'IGFsampleA_MISEQ',
+      'library_name': 'IGFsampleA',
+      'library_source': 'TRANSCRIPTOMIC',
+      'library_strategy': 'RNA-SEQ',
+      'experiment_type': 'POLYA-RNA',
+      'library_layout': 'PAIRED',
+      'platform_name': 'MISEQ',
+    }, {
+      'project_igf_id': 'IGFQprojectB',
+      'sample_igf_id': 'IGFsampleB',
+      'experiment_igf_id': 'IGFsampleB_MISEQ',
+      'library_name': 'IGFsampleB',
+      'library_source': 'UNKNOWN',
+      'library_strategy': 'UNKNOWN',
+      'experiment_type': 'UNKNOWN',
+      'library_layout': 'UNKNOWN',
+      'platform_name': 'MISEQ',
+    }]
+    ea = ExperimentAdaptor(**{'session':base.session})
+    ea.store_project_and_attribute_data(data=experiment_data)
+    run_data = [{
+      'experiment_igf_id': 'IGFsampleA_MISEQ',
+      'seqrun_igf_id': '180416_M03291_0139_000000000-BRN47',
+      'run_igf_id': 'IGFsampleA_MISEQ_000000000-BRN47_1',
+      'lane_number': '1'
+    }, {
+      'experiment_igf_id': 'IGFsampleB_MISEQ',
+      'seqrun_igf_id': '180416_M03291_0139_000000000-BRN471',
+      'run_igf_id': 'IGFsampleB_MISEQ_000000000-BRN471_1',
+      'lane_number': '1'
+    }]
+    ra = RunAdaptor(**{'session':base.session})
+    ra.store_run_and_attribute_data(data=run_data)
+    base.close_session()
+
+  def tearDown(self):
+    Base.metadata.drop_all(self.engine)
+    if os.path.exists(self.dbname):
+      os.remove(self.dbname)
+
+  def test_find_projects_for_cleanup(self):
+    cleanup_list = \
+      find_projects_for_cleanup(
+        dbconfig_file=self.dbconfig)
+    self.assertEqual(len(cleanup_list), 1)
+    entry = cleanup_list[0]
+    self.assertTrue(entry['email_id'] is not None)
+    self.assertTrue(entry['name'] is not None)
+    self.assertTrue(entry['projects'] is not None)
+    self.assertEqual(entry['email_id'], 'user1@email.com')
+    self.assertEqual(entry['name'], 'User1')
+    self.assertEqual(len(entry['projects']), 1)
+    self.assertTrue('IGFQprojectA' in entry['projects'])
+    cleanup_list = \
+      find_projects_for_cleanup(
+        dbconfig_file=self.dbconfig,
+        cutoff_weeks=14)
+    self.assertEqual(len(cleanup_list), 2)
+
 
 if __name__ == '__main__':
   unittest.main()

@@ -46,7 +46,7 @@ def full_suite():
   from .process.mergesinglecellfastq_test import MergeSingleCellFastq_testB
   from .utils.project_data_display_utils_test import Convert_project_data_gviz_data1
   from .utils.project_data_display_utils_test import Add_seqrun_path_info1
-  from .utils.projectutils_test import Projectutils_test1
+  from .utils.projectutils_test import Projectutils_test1, Projectutils_test3
   #from .utils.projectutils_test import Projectutils_test2
   from .dbadaptor.fileadaptor_test import Fileadaptor_test1
   from .process.reset_samplesheet_md5_test import Reset_samplesheet_md5_test1
@@ -181,6 +181,7 @@ def full_suite():
         Add_seqrun_path_info1,
         Projectutils_test1,
         #Projectutils_test2,
+        Projectutils_test3,
         Fileadaptor_test1,
         Reset_samplesheet_md5_test1,
         Modify_pipeline_seed_test1,

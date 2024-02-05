@@ -373,110 +373,174 @@ def mark_project_and_list_files_for_cleanup(
               format(project_igf_id,e))
 
 
+# def find_projects_for_cleanup(
+#       dbconfig_file,warning_note_weeks=24,all_warning_note=False):
+#   '''
+#   A function for finding old projects for cleanup
+
+#   :param dbconfig_file: A dbconfig file path
+#   :param warning_note_weeks: Number of weeks from last sequencing run to wait before sending warnings, default 24
+#   :param all_warning_note: A toggle for sending warning notes to all, default False
+#   :returns: A list containing warning lists, a list containing final note list and another list with clean up list
+#   '''
+#   try:
+#     final_note_weeks = 5
+#     cleanup_note_week = 2
+#     warning_note_list = list()
+#     final_note_list = list()
+#     cleanup_list = list() 
+#     check_file_path(dbconfig_file)
+#     dbparam = read_dbconf_json(dbconfig_file)
+#     base = ProjectAdaptor(**dbparam)
+#     base.start_session()
+#     query = \
+#       base.session.\
+#         query(
+#           Project.project_igf_id,
+#           User.name,
+#           User.email_id,
+#           Sample.sample_igf_id,
+#           Experiment.experiment_igf_id,
+#           Run.run_igf_id,
+#           Run.lane_number,
+#           Seqrun.seqrun_igf_id,
+#           Seqrun.date_created).\
+#         join(ProjectUser,Project.project_id==ProjectUser.project_id).\
+#         join(User,User.user_id==ProjectUser.user_id).\
+#         join(Sample,Project.project_id==Sample.project_id).\
+#         join(Experiment,Sample.sample_id==Experiment.sample_id).\
+#         join(Run,Experiment.experiment_id==Run.experiment_id).\
+#         join(Seqrun,Run.seqrun_id==Seqrun.seqrun_id).\
+#         filter(Project.status=='ACTIVE').\
+#         filter(Seqrun.reject_run=='N').\
+#         filter(ProjectUser.data_authority=='T')
+#     result = base.fetch_records(query=query)
+#     base.close_session()
+#     warning_note_delta = timedelta(weeks=warning_note_weeks)
+#     final_note_delta =  warning_note_delta + timedelta(weeks=final_note_weeks)
+#     cleanup_note_delta = final_note_delta + timedelta(weeks=cleanup_note_week)
+#     for user_email_id,u_data in result.groupby('email_id'):
+#       user_name = u_data['name'].values[0]
+#       project_warn_list = list()
+#       project_final_list = list()
+#       project_cleanup_list = list()
+#       for project,p_data in u_data.groupby('project_igf_id'):
+#         last_run_date = \
+#           p_data.date_created.drop_duplicates().sort_values().values[0]
+#         last_run_date = parse(str(last_run_date))
+#         last_run_delta  = datetime.today() - last_run_date
+#         if (last_run_delta >= warning_note_delta) and \
+#            (last_run_delta < final_note_delta):
+#           project_warn_list.append(project)                                     # warn users about project clean up after one month
+#         elif (last_run_delta >= warning_note_delta) and \
+#              (last_run_delta < cleanup_note_delta):
+#           project_final_list.append(project)                                    # notify about cleanup operation
+#         elif last_run_delta >= cleanup_note_delta:
+#           project_cleanup_list.append(project)                                  # silent list
+
+#       if len(project_warn_list) > 0:
+#         cleanup_date = datetime.now() + timedelta(weeks=final_note_weeks)
+#         cleanup_date = cleanup_date.strftime('%d-%b-%Y')
+#         warning_note_list.\
+#           append({
+#             'email_id':user_email_id,
+#             'name':user_name,
+#             'cleanup_date':cleanup_date,
+#             'projects':project_warn_list})
+#       if len(project_final_list) > 0:
+#         cleanup_date = datetime.now()
+#         cleanup_date = cleanup_date.strftime('%d-%b-%Y')
+#         final_note_list.\
+#           append({
+#           'email_id':user_email_id,
+#           'name':user_name,
+#           'cleanup_date':cleanup_date,
+#           'projects':project_final_list})
+#       if len(project_cleanup_list) > 0:
+#         cleanup_date = datetime.now()
+#         cleanup_date = cleanup_date.strftime('%d-%b-%Y')
+#         cleanup_list.\
+#           append({
+#             'email_id':user_email_id,
+#             'name':user_name,
+#             'cleanup_date':cleanup_date,
+#             'projects':project_cleanup_list})
+#       if all_warning_note:
+#         warning_note_list.\
+#           extend(final_note_list)
+#         final_note_list = list()
+#         warning_note_list.\
+#           extend(cleanup_list)
+#         cleanup_list = list()
+#     return warning_note_list,final_note_list,cleanup_list
+#   except Exception as e:
+#     raise ValueError(
+#             "Failed to get list of projects for cleanup, error: {0}".\
+#               format(e))
+
+
 def find_projects_for_cleanup(
-      dbconfig_file,warning_note_weeks=24,all_warning_note=False):
-  '''
-  A function for finding old projects for cleanup
-
-  :param dbconfig_file: A dbconfig file path
-  :param warning_note_weeks: Number of weeks from last sequencing run to wait before sending warnings, default 24
-  :param all_warning_note: A toggle for sending warning notes to all, default False
-  :returns: A list containing warning lists, a list containing final note list and another list with clean up list
-  '''
-  try:
-    final_note_weeks = 5
-    cleanup_note_week = 2
-    warning_note_list = list()
-    final_note_list = list()
-    cleanup_list = list() 
-    check_file_path(dbconfig_file)
-    dbparam = read_dbconf_json(dbconfig_file)
-    base = ProjectAdaptor(**dbparam)
-    base.start_session()
-    query = \
-      base.session.\
-        query(
-          Project.project_igf_id,
-          User.name,
-          User.email_id,
-          Sample.sample_igf_id,
-          Experiment.experiment_igf_id,
-          Run.run_igf_id,
-          Run.lane_number,
-          Seqrun.seqrun_igf_id,
-          Seqrun.date_created).\
-        join(ProjectUser,Project.project_id==ProjectUser.project_id).\
-        join(User,User.user_id==ProjectUser.user_id).\
-        join(Sample,Project.project_id==Sample.project_id).\
-        join(Experiment,Sample.sample_id==Experiment.sample_id).\
-        join(Run,Experiment.experiment_id==Run.experiment_id).\
-        join(Seqrun,Run.seqrun_id==Seqrun.seqrun_id).\
-        filter(Project.status=='ACTIVE').\
-        filter(Seqrun.reject_run=='N').\
-        filter(ProjectUser.data_authority=='T')
-    result = base.fetch_records(query=query)
-    base.close_session()
-    warning_note_delta = timedelta(weeks=warning_note_weeks)
-    final_note_delta =  warning_note_delta + timedelta(weeks=final_note_weeks)
-    cleanup_note_delta = final_note_delta + timedelta(weeks=cleanup_note_week)
-    for user_email_id,u_data in result.groupby('email_id'):
-      user_name = u_data['name'].values[0]
-      project_warn_list = list()
-      project_final_list = list()
-      project_cleanup_list = list()
-      for project,p_data in u_data.groupby('project_igf_id'):
-        last_run_date = \
-          p_data.date_created.drop_duplicates().sort_values().values[0]
-        last_run_date = parse(str(last_run_date))
-        last_run_delta  = datetime.today() - last_run_date
-        if (last_run_delta >= warning_note_delta) and \
-           (last_run_delta < final_note_delta):
-          project_warn_list.append(project)                                     # warn users about project clean up after one month
-        elif (last_run_delta >= warning_note_delta) and \
-             (last_run_delta < cleanup_note_delta):
-          project_final_list.append(project)                                    # notify about cleanup operation
-        elif last_run_delta >= cleanup_note_delta:
-          project_cleanup_list.append(project)                                  # silent list
-
-      if len(project_warn_list) > 0:
-        cleanup_date = datetime.now() + timedelta(weeks=final_note_weeks)
-        cleanup_date = cleanup_date.strftime('%d-%b-%Y')
-        warning_note_list.\
-          append({
-            'email_id':user_email_id,
-            'name':user_name,
-            'cleanup_date':cleanup_date,
-            'projects':project_warn_list})
-      if len(project_final_list) > 0:
-        cleanup_date = datetime.now()
-        cleanup_date = cleanup_date.strftime('%d-%b-%Y')
-        final_note_list.\
-          append({
-          'email_id':user_email_id,
-          'name':user_name,
-          'cleanup_date':cleanup_date,
-          'projects':project_final_list})
-      if len(project_cleanup_list) > 0:
-        cleanup_date = datetime.now()
-        cleanup_date = cleanup_date.strftime('%d-%b-%Y')
-        cleanup_list.\
-          append({
-            'email_id':user_email_id,
-            'name':user_name,
-            'cleanup_date':cleanup_date,
-            'projects':project_cleanup_list})
-      if all_warning_note:
-        warning_note_list.\
-          extend(final_note_list)
-        final_note_list = list()
-        warning_note_list.\
-          extend(cleanup_list)
-        cleanup_list = list()
-    return warning_note_list,final_note_list,cleanup_list
-  except Exception as e:
-    raise ValueError(
-            "Failed to get list of projects for cleanup, error: {0}".\
-              format(e))
+      dbconfig_file: str,
+      cutoff_weeks: int = 16) \
+        -> list:
+    try:
+      cleanup_list = list()
+      check_file_path(dbconfig_file)
+      dbparam = read_dbconf_json(dbconfig_file)
+      base = ProjectAdaptor(**dbparam)
+      base.start_session()
+      query = \
+        base.session.\
+          query(
+            Project.project_igf_id,
+            User.name,
+            User.email_id,
+            Sample.sample_igf_id,
+            Experiment.experiment_igf_id,
+            Run.run_igf_id,
+            Run.lane_number,
+            Seqrun.seqrun_igf_id,
+            Seqrun.date_created).\
+          join(ProjectUser, Project.project_id==ProjectUser.project_id).\
+          join(User, User.user_id==ProjectUser.user_id).\
+          join(Sample, Project.project_id==Sample.project_id).\
+          join(Experiment, Sample.sample_id==Experiment.sample_id).\
+          join(Run, Experiment.experiment_id==Run.experiment_id).\
+          join(Seqrun, Run.seqrun_id==Seqrun.seqrun_id).\
+          filter(Project.status=='ACTIVE').\
+          filter(Seqrun.reject_run=='N').\
+          filter(ProjectUser.data_authority=='T')
+      result = \
+        base.fetch_records(query=query)
+      base.close_session()
+      cutoff_weeks_delta = \
+        timedelta(weeks=cutoff_weeks)
+      for user_email_id, u_data in result.groupby('email_id'):
+        user_name = u_data['name'].values[0]
+        project_cleanup_list = list()
+        for project, p_data in u_data.groupby('project_igf_id'):
+          last_run_date = \
+            p_data['date_created'].\
+            drop_duplicates().\
+            sort_values().\
+            values[0]
+          last_run_date = \
+            parse(str(last_run_date))
+          last_run_delta  = \
+            datetime.today() - last_run_date
+          if last_run_delta >= cutoff_weeks_delta:
+            project_cleanup_list.\
+              append(project)
+        if len(project_cleanup_list) > 0:
+          cleanup_list.\
+            append({
+              'email_id': user_email_id,
+              'name': user_name,
+              'projects': project_cleanup_list})
+      return cleanup_list
+    except Exception as e:
+      raise ValueError(
+        f"Failed to get list of projects for cleanup, error: {e}")
 
 
 def notify_project_for_cleanup(
