@@ -382,7 +382,7 @@ def configure_cellranger_arc_aggr(
   retry_delay=timedelta(minutes=5),
   retries=4,
   queue='hpc_8G')
-def run_single_sample_scanpy(
+def run_single_sample_scanpy_for_arc(
       sample_group: str,
       cellranger_output_dir: str,
       design_dict: dict) -> dict:
