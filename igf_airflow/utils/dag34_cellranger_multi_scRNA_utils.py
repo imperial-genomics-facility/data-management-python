@@ -1018,7 +1018,6 @@ def move_aggr_result_to_main_work_dir(
   retry_delay=timedelta(minutes=5),
   retries=4,
   queue='hpc_8G',
-  trigger_rule="none_failed",
   multiple_outputs=False)
 def calculate_md5sum_for_main_work_dir(main_work_dir: str) -> str:
   try:
@@ -1053,7 +1052,6 @@ def calculate_md5sum_for_main_work_dir(main_work_dir: str) -> str:
   task_id="load_cellranger_results_to_db",
   retry_delay=timedelta(minutes=5),
   retries=4,
-  trigger_rule="none_failed_min_one_success",
   queue='hpc_4G')
 def load_cellranger_results_to_db(
       main_work_dir: str,

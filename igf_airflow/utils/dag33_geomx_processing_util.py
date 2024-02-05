@@ -1203,6 +1203,7 @@ def copy_data_to_globus(analysis_dir_dict: dict) -> None:
     task_id="send_email_to_user",
     retry_delay=timedelta(minutes=5),
     retries=4,
+    trigger_rule="none_failed_min_one_success",
     queue='hpc_4G')
 def send_email_to_user(
         send_email: bool = True,
