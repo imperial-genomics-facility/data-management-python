@@ -1053,6 +1053,7 @@ def calculate_md5sum_for_main_work_dir(main_work_dir: str) -> str:
   task_id="load_cellranger_results_to_db",
   retry_delay=timedelta(minutes=5),
   retries=4,
+  trigger_rule="none_failed_min_one_success",
   queue='hpc_4G')
 def load_cellranger_results_to_db(
       main_work_dir: str,
