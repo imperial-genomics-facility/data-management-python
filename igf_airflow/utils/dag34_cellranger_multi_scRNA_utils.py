@@ -8,7 +8,8 @@ from igf_data.utils.bashutils import bash_script_wrapper
 from igf_data.utils.analysis_fastq_fetch_utils import get_fastq_and_run_for_samples
 from igf_data.utils.jupyter_nbconvert_wrapper import Notebook_runner
 from typing import (
-    Tuple)
+    Tuple,
+    Optional)
 from igf_data.utils.fileutils import (
   check_file_path,
   copy_local_file,
@@ -1018,6 +1019,7 @@ def move_aggr_result_to_main_work_dir(
   retry_delay=timedelta(minutes=5),
   retries=4,
   queue='hpc_8G',
+  trigger_rule="none_failed_min_one_success",
   multiple_outputs=False)
 def calculate_md5sum_for_main_work_dir(main_work_dir: str) -> str:
   try:
