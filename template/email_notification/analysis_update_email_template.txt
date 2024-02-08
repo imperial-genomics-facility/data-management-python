@@ -20,7 +20,7 @@ Important links:
   - Globus based transfer (LIMIT 30 DAYS):
       https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html#globus-based-transfer
 
-  - Analysis pipelines:
+  - Help docs for analysis pipelines:
       https://imperial-genomics-facility.github.io/igf-pipeline-help/analysis_pipelines.html
 
 Subscribe to IGF mailing list for updates and announcements:
