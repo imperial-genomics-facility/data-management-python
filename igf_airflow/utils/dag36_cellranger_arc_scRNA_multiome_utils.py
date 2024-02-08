@@ -525,7 +525,7 @@ def run_single_sample_scanpy_for_arc(
     raise ValueError(e)
 
 @task(
-  task_id="merged_scanpy_report_for_arc",
+  task_id="merged_scanpy_report",
   retry_delay=timedelta(minutes=5),
   retries=4,
   queue='hpc_32G')
