@@ -75,7 +75,7 @@ def find_projects_for_cleanup(
     send_airflow_failed_logs_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
-      message_prefix='Error')
+      message_prefix=e)
     raise ValueError(e)
 
 
@@ -108,5 +108,5 @@ def upload_project_cleanup_data_to_portal(
     send_airflow_failed_logs_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
-      message_prefix='Error')
+      message_prefix=e)
     raise ValueError(e)
