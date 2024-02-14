@@ -2,6 +2,7 @@ import os
 import logging
 from datetime import timedelta
 from igf_data.utils.fileutils import (
+    get_temp_dir,
     check_file_path,
     read_json_data)
 from airflow.decorators import task
@@ -11,6 +12,7 @@ from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_airflow.utils.dag22_bclconvert_demult_utils import (
     send_email_via_smtp)
 from igf_airflow.utils.dag26_snakemake_rnaseq_utils import (
+    _create_output_from_jinja_template,
     generate_email_text_for_analysis)
 
 log = logging.getLogger(__name__)
@@ -82,3 +84,54 @@ def format_and_send_email_to_user(
   except Exception as e:
     raise ValueError(f"Failed to send email, error: {e}")
 
+
+def format_and_send_generic_email_to_user(
+      user_name: str,
+      user_email: str,
+      email_template: str,
+      email_config_file: str,
+      email_user_key: str = 'username',
+      send_email: bool = True,
+      email_data: dict = {}) \
+        -> None:
+  try:
+    check_file_path(email_template)
+    check_file_path(email_config_file)
+    ## get default user from email config
+    email_config = \
+      read_json_data(email_config_file)
+    if isinstance(email_config, list):
+      email_config = email_config[0]
+    default_email_user = \
+      email_config.get(email_user_key)
+    if default_email_user is None:
+      raise KeyError(
+        f"Missing default user info in email config file {email_config_file}")
+    ## generate email text
+    temp_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    output_file = \
+      os.path.join(temp_dir, 'email.txt')
+    email_template_data = \
+      dict(
+        user_email=user_email,
+        defaultUser=default_email_user,
+        user_name=user_name,
+        send_email_to_user=send_email)
+    if len(email_data) > 0:
+      email_template_data.\
+        update(**email_data)
+    _create_output_from_jinja_template(
+      template_file=email_template,
+      output_file=output_file,
+      autoescape_list=['xml', 'html'],
+      data=email_template_data)
+    ## send email to user
+    send_email_via_smtp(
+      sender=default_email_user,
+      receivers=[user_email, default_email_user],
+      email_config_json=email_config_file,
+      email_text_file=output_file)
+  except Exception as e:
+    raise ValueError(
+      f"Failed to send email, error: {e}")
