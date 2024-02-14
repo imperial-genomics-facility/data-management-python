@@ -1,9 +1,21 @@
 import os
 import logging
+from datetime import timedelta
+from igf_data.utils.fileutils import (
+    check_file_path,
+    read_json_data)
+from airflow.decorators import task
+from airflow.models import Variable
 from airflow.operators.python import get_current_context
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
+from igf_airflow.utils.dag22_bclconvert_demult_utils import (
+    send_email_via_smtp)
+from igf_airflow.utils.dag26_snakemake_rnaseq_utils import (
+    generate_email_text_for_analysis)
 
 log = logging.getLogger(__name__)
+
+DATABASE_CONFIG_FILE = Variable.get('database_config_file', default_var=None)
 
 def send_airflow_failed_logs_to_channels(
     slack_conf: str,
@@ -29,3 +41,44 @@ def send_airflow_failed_logs_to_channels(
       reaction='fail')
   except Exception as e:
     log.error(e)
+
+
+def format_and_send_email_to_user(
+      email_template: str,
+      email_config_file: str,
+      analysis_id: int,
+      database_config_file: str,
+      email_user_key: str = 'username',
+      send_email: bool = True) \
+        -> None:
+  try:
+    check_file_path(email_template)
+    check_file_path(email_config_file)
+    check_file_path(database_config_file)
+    ## get default user from email config
+    email_config = \
+      read_json_data(email_config_file)
+    if isinstance(email_config, list):
+      email_config = email_config[0]
+    default_email_user = \
+      email_config.get(email_user_key)
+    if default_email_user is None:
+      raise KeyError(
+        f"Missing default user info in email config file {email_config_file}")
+    ## generate email text for analysis
+    email_text_file, receivers = \
+      generate_email_text_for_analysis(
+        analysis_id=analysis_id,
+        template_path=email_template,
+        dbconfig_file=DATABASE_CONFIG_FILE,
+        default_email_user=default_email_user,
+        send_email_to_user=send_email)
+    ## send email to user
+    send_email_via_smtp(
+      sender=default_email_user,
+      receivers=receivers,
+      email_config_json=email_config_file,
+      email_text_file=email_text_file)
+  except Exception as e:
+    raise ValueError(f"Failed to send email, error: {e}")
+
