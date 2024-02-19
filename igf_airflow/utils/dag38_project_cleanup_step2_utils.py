@@ -28,9 +28,9 @@ MS_TEAMS_CONF = \
 IGF_PORTAL_CONF = \
   Variable.get('igf_portal_conf', default_var=None)
 PROJECT_CLEANUP_NOTIFY_USER_URI = \
-  Variable.get('project_cleanup_notify_user_uri', default_var=None)
+  Variable.get('portal_project_cleanup_notify_user_uri', default_var=None)
 PROJECT_CLEANUP_GET_DATA_URI = \
-  Variable.get('project_cleanup_get_data_uri', default_var=None)
+  Variable.get('portal_project_cleanup_get_data_uri', default_var=None)
 
 ## DB
 DATABASE_CONFIG_FILE = Variable.get('database_config_file', default_var=None)
