@@ -13,9 +13,6 @@ We would like to update you that the following old projects are now marked delet
 <li> {{ project_name }} </li>
 {% endfor %}
 </ul>
-<p/>
-It would be great if you could check and confirm by <span style='color:red'><b>{{ deletion_date }}</b></span>, if you need data backup for any of these projects. Otherwise, we will REMOVE the raw and analysis data for them after this deadline.
-<p/>
 Please let us know if you wish to remove any of your personal details or project information from our system following the GDPR regulation.
 <p/>
 Kind regards<p/>Imperial BRC Genomics Facility
