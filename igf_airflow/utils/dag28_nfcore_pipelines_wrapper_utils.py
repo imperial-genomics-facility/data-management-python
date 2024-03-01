@@ -132,7 +132,7 @@ def prepare_nfcore_pipeline_inputs(**context):
         task_id=context['task'].task_id,
         dag_id=context['task'].dag_id,
         project_id=project_igf_id,
-        comment=f"Finished pipeline run, temp nextflow workdir: {work_dir}",
+        comment=f"Created setup for nextflow run. Workdir: {work_dir}",
         reaction='pass')
       return [next_task,]
     except Exception as e:
