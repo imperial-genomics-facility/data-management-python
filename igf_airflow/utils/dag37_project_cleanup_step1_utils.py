@@ -52,7 +52,7 @@ def find_project_data_for_cleanup(
       temp_dir = \
         get_temp_dir(use_ephemeral_space=True)
       json_file = \
-        os.path.josn(
+        os.path.join(
           temp_dir,
           'project_cleanup_data.json')
       with open(json_file, 'w') as fp:
