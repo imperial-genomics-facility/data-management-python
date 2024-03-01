@@ -20,9 +20,9 @@ from igf_data.utils.projectutils import find_projects_for_cleanup
 log = logging.getLogger(__name__)
 
 SLACK_CONF = \
-  Variable.get('analysis_slack_conf',default_var=None)
+  Variable.get('slack_conf',default_var=None)
 MS_TEAMS_CONF = \
-  Variable.get('analysis_ms_teams_conf',default_var=None)
+  Variable.get('ms_teams_conf',default_var=None)
 DATABASE_CONFIG_FILE = \
   Variable.get('database_config_file', default_var=None)
 IGF_PORTAL_CONF = \
@@ -32,11 +32,11 @@ PORTAL_ADD_PROJECT_CLEANUP_DATA_URI = \
 
 ## TASK
 @task.branch(
-  task_id="find_projects_for_cleanup",
+  task_id="find_project_data_for_cleanup",
   retry_delay=timedelta(minutes=5),
   retries=4,
   queue='hpc_4G')
-def find_projects_for_cleanup(
+def find_project_data_for_cleanup(
       next_task: str,
       no_task: str,
       xcom_key: str,
