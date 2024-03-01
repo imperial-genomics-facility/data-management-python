@@ -8,8 +8,7 @@ Dear {{ user_name }}, {% if not send_email_to_user %}EMAIL FOR {{ user_email }}{
 <p/>
 We would like to inform you that we are preparing to remove data for the following old project(s) from our servers.
 <p/>
-<ul>
-{% for project_name in projectLists %}
+<ul>{% for project_name in projectLists %}
 <li> {{ project_name }} </li>
 {% endfor %}
 </ul>
