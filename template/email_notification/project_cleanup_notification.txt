@@ -15,8 +15,8 @@ We would like to inform you that we are preparing to remove data for the followi
 <p/>
 It would be great if you could check and confirm by <span style='color:red'><b>{{ deletionDate }}</b></span>, if you need data backup for any of these project(s). Otherwise, we will <span style='color:red'><b>REMOVE</b></span> the raw and analysis data for them after this deadline.
 <p/>
-Please follow the instructions for data transfer on our help docs:
-https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html
+Help docs for Globus based data transfer:
+https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html#globus-based-transfer
 <p/>
 Please note that, we will not be able to process this dataset via our production analysis pipelines after data removal, but our bioinformatics team can still work on this project if all the files are backed up in your RDS storage.
 <p/>
