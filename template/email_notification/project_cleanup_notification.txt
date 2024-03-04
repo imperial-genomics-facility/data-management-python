@@ -6,7 +6,7 @@ Content-Type: text/html; charset=UTF-8
 
 Dear {{ user_name }}, {% if not send_email_to_user %}EMAIL FOR {{ user_email }}{% endif %}
 <p/>
-We would like to inform you that we are preparing to remove data for the following old project(s) from our servers.
+We would like to inform you that we are preparing to remove data for the following old project(s) from IGF storage.
 <p/>
 <ul>{% for project_name in projectLists %}
 <li> {{ project_name }} </li>
@@ -17,6 +17,8 @@ It would be great if you could check and confirm by <span style='color:red'><b>{
 <p/>
 Please follow the instructions for data transfer on our help docs:
 https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html
+<p/>
+Please note that, we will not be able to process this dataset via our production analysis pipelines after data removal, but our bioinformatics team can still work on this project if all the files are backed up in your RDS storage.
 <p/>
 You need to confirm this before <span style='color:red'><b>{{ deletionDate }}</b></span>.
 <p/>
