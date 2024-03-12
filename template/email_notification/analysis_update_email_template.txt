@@ -23,7 +23,7 @@ Important links:
         https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html#globus-based-transfer
 
     - Help docs for analysis pipelines:
-        https://imperial-genomics-facility.github.io/igf-pipeline-help/analysis_pipelines.html
+        https://imperial-genomics-facility.github.io/igf-pipeline-help/analyses_pipelines.html
 
 Subscribe to IGF mailing list for updates and announcements:
 https://mailman.ic.ac.uk/mailman/listinfo/igf-users

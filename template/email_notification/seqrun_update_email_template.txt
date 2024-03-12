@@ -37,8 +37,9 @@ Important links:
         {% if hpcUser %}User Name: {{ customerUsername }}{% else %}User Name: {{ customerUsername }} (Let us know if you prefer to use your Imperial login credentials for QC pages).{% endif %}
         {% if hpcUser %}Password: Your account password for Imperial College{% else %}Password: Your IGF account password (sent to you via a separate email).{% endif %}
 
-  - Analysis pipelines: We now support running analysis pipelines for our projects. A list of supported pipelines can be found here:
-      https://imperial-genomics-facility.github.io/igf-pipeline-help/analysis_pipelines.html
+  - Analyses pipelines:
+      We now support running analyses pipelines for our projects. A list of supported pipelines can be found here:
+          https://imperial-genomics-facility.github.io/igf-pipeline-help/analyses_pipelines.html
 
 Subscribe to IGF mailing list for updates and announcements:
 https://mailman.ic.ac.uk/mailman/listinfo/igf-users
