@@ -58,7 +58,7 @@ def send_airflow_pipeline_logs_to_channels(
       f"task_id={context['ti'].task_id}",
       f"attempt={context['ti'].try_number}.log"]
     message = \
-      f"Error: {message_prefix}, Log: {os.path.join(*log_file_path)}"
+      f"Msg: {message_prefix}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=slack_conf,
       ms_teams_conf=ms_teams_conf,
