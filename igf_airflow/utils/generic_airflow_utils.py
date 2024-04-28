@@ -32,7 +32,7 @@ def send_airflow_failed_logs_to_channels(
       f"task_id={context['ti'].task_id}"]
     if str(context['ti'].map_index) != '-1':
       log_file_path.append(
-        f"map_index={context['ti'].task_id}")
+        f"map_index={context['ti'].map_index}")
     log_file_path.append(
       f"attempt={context['ti'].try_number}.log")
     message = \
@@ -59,8 +59,12 @@ def send_airflow_pipeline_logs_to_channels(
       os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
       f"dag_id={context['ti'].dag_id}",
       f"run_id={context['ti'].run_id}",
-      f"task_id={context['ti'].task_id}",
-      f"attempt={context['ti'].try_number}.log"]
+      f"task_id={context['ti'].task_id}"]
+    if str(context['ti'].map_index) != '-1':
+      log_file_path.append(
+        f"map_index={context['ti'].map_index}")
+    log_file_path.append(
+      f"attempt={context['ti'].try_number}.log")
     message = \
       f"Msg: {message_prefix}, Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
