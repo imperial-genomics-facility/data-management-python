@@ -21,7 +21,7 @@ DATA ACCESS (via Globus, FILES AVAILABLE FOR 30 DAYS):
     - Check Globus collection and download data
 
 PRIMARY ANALYSES:
-  Let us know if you or your bioinformatic team needs any help with the primary analyses for your project (e.g., alignment and gene count for RNA-Seq and Cellranger count metrics for 10X gene expression library). Now we support running a number of community developed (e.g., NF-core pipelines) or vendor provided (e.g., Cellranger from 10X Genomics) analyses pipelines for our users. A list of supported pipelines can be found here:
+  Let us know if you or your bioinformatics team needs any help with the primary analyses for your project (e.g., alignment and gene count for RNA-Seq and Cellranger count metrics for 10X gene expression library). Now we support running a number of community developed (e.g., NF-core pipelines) or vendor provided (e.g., Cellranger from 10X Genomics) analyses pipelines for our users. A list of supported pipelines can be found here:
     https://imperial-genomics-facility.github.io/igf-pipeline-help/analyses_pipelines.html
 
 QC WEBSITE:
