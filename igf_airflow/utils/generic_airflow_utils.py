@@ -161,9 +161,12 @@ def format_and_send_generic_email_to_user(
       autoescape_list=['xml', 'html'],
       data=email_template_data)
     ## send email to user
+    receivers = [default_email_user]
+    if not send_email:
+      receivers.append(user_email)
     send_email_via_smtp(
       sender=default_email_user,
-      receivers=[user_email, default_email_user],
+      receivers=receivers,
       email_config_json=email_config_file,
       email_text_file=output_file)
   except Exception as e:

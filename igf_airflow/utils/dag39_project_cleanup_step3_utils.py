@@ -145,6 +145,8 @@ def notify_user_about_project_cleanup_finished(
     user_email = json_data.get("user_email")
     ## TO DO: check project after getting json dump
     projects = json_data.get("projects")
+    if isinstance(projects, str):
+      projects = json.loads(projects)
     deletion_date = json_data.get("deletion_date")
     ## get default user from email config
     format_and_send_generic_email_to_user(
