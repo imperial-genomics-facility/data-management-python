@@ -55,6 +55,8 @@ def cleanup_old_project_in_db(
       json_data = json_data[0]
     ## TO DO: check project after getting json dump
     projects = json_data.get("projects")
+    if isinstance(projects, str):
+      projects = json.loads(projects)
     if not isinstance(projects, list) or \
        len(projects)==0:
       raise ValueError(f"No projects found for cleanup in {projects}")
