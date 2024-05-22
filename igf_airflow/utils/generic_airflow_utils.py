@@ -125,7 +125,7 @@ def format_and_send_generic_email_to_user(
       email_template: str,
       email_config_file: str,
       email_user_key: str = 'username',
-      send_email: bool = True,
+      send_email: bool = False,
       email_data: dict = {}) \
         -> None:
   try:
@@ -162,7 +162,7 @@ def format_and_send_generic_email_to_user(
       data=email_template_data)
     ## send email to user
     receivers = [default_email_user]
-    if not send_email:
+    if send_email:
       receivers.append(user_email)
     send_email_via_smtp(
       sender=default_email_user,
