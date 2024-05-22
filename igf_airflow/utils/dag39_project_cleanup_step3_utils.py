@@ -134,7 +134,7 @@ def mark_project_deleted_on_portal() -> None:
   queue='hpc_4G')
 def notify_user_about_project_cleanup_finished(
       project_cleanup_data_file: str,
-      send_email: bool = False,
+      send_email: bool = True,
       email_user_key: str = 'username') -> None:
   try:
     check_file_path(project_cleanup_data_file)
