@@ -8,11 +8,11 @@ Dear {{ user_name }}, {% if not send_email_to_user %}EMAIL FOR {{ user_email }}{
 <p/>
 We would like to update you that the following old projects are now marked deleted.<p/>
 <p/>
-<ul>
-{% for project_name in projectLists %}
+<ul>{% for project_name in projectLists %}
 <li> {{ project_name }} </li>
 {% endfor %}
 </ul>
+<p/>
 Please let us know if you wish to remove any of your personal details or project information from our system following the GDPR regulation.
 <p/>
 Kind regards<p/>Imperial BRC Genomics Facility
