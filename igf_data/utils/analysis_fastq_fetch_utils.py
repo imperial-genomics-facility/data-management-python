@@ -3,7 +3,15 @@ from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.experimentadaptor import ExperimentAdaptor
 from igf_data.utils.dbutils import read_dbconf_json
-from igf_data.igfdb.igfTables import File,Experiment,Run,Collection,Collection_group,Sample,Seqrun
+from igf_data.igfdb.igfTables import (
+  File,
+  Experiment,
+  Run,
+  Collection,
+  Collection_group,
+  Sample,
+  Seqrun,
+  Platform)
 
 def get_fastq_and_run_for_samples(
       dbconfig_file,sample_igf_id_list,active_status='ACTIVE',
@@ -29,11 +37,16 @@ def get_fastq_and_run_for_samples(
           Sample.sample_igf_id,
           Run.run_igf_id,
           Seqrun.flowcell_id,
+          Seqrun.seqrun_igf_id,
+          Platform.platform_igf_id,
+          Platform.model_name,
+          Platform.vendor_name,
           Run.lane_number,
           File.file_path).\
         join(Experiment, Sample.sample_id==Experiment.sample_id).\
         join(Run, Experiment.experiment_id==Run.experiment_id).\
         join(Seqrun, Seqrun.seqrun_id==Run.seqrun_id).\
+        join(Platform, Platform.platform_id==Seqrun.platform_id).\
         join(Collection, Collection.name==Run.run_igf_id).\
         join(Collection_group, Collection.collection_id==Collection_group.collection_id).\
         join(File, File.file_id==Collection_group.file_id).\
