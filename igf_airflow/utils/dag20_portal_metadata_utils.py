@@ -280,7 +280,7 @@ def create_raw_metadata_for_new_projects_func(**context):
     check_file_path(project_list)
     work_dir = \
       get_temp_dir(use_ephemeral_space=True)
-    temp_dir = get_temp_dir()
+    temp_dir = get_temp_dir(use_ephemeral_space=True)
     path_bind = [
       '{0}:/tmp'.format(temp_dir),
       work_dir,
