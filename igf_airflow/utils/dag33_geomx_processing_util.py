@@ -51,7 +51,7 @@ from igf_airflow.utils.dag26_snakemake_rnaseq_utils import (
     calculate_analysis_name,
     load_analysis_and_build_collection,
     copy_analysis_to_globus_dir,
-    check_and_seed_analysis_pipeline,
+    #check_and_seed_analysis_pipeline,
     generate_email_text_for_analysis,
     fetch_analysis_name_for_analysis_id,
     fetch_user_info_for_project_igf_id)
@@ -68,9 +68,9 @@ HPC_BASE_RAW_DATA_PATH = Variable.get('hpc_base_raw_data_path', default_var=None
 IGF_PORTAL_CONF = Variable.get('igf_portal_conf', default_var=None)
 HPC_FILE_LOCATION = Variable.get("hpc_file_location", default_var="HPC_PROJECT")
 
-## EMAIL CONFIG
-EMAIL_CONFIG = Variable.get("email_config", default_var=None)
-DEFAULT_EMAIL_USER = Variable.get("default_email_user", default_var=None)
+# ## EMAIL CONFIG
+# EMAIL_CONFIG = Variable.get("email_config", default_var=None)
+# DEFAULT_EMAIL_USER = Variable.get("default_email_user", default_var=None)
 
 ## GLOBUS
 GLOBUS_ROOT_DIR = Variable.get("globus_root_dir", default_var=None)
@@ -81,118 +81,120 @@ GEOMX_SCRIPT_TEMPLATE = Variable.get("geomx_script_template", default_var=None)
 REPORT_TEMPLATE_FILE = Variable.get("geomx_report_template_file", default_var=None)
 REPORT_IMAGE_FILE = Variable.get("geomx_report_image_file", default_var=None)
 
-## EMAIL CONFIG
-EMAIL_CONFIG = Variable.get("email_config", default_var=None)
-EMAIL_TEMPLATE = Variable.get("analysis_email_template", default_var=None)
 
-## TASK
-@task.branch(
-	task_id="mark_analysis_running",
-    retry_delay=timedelta(minutes=5),
-    retries=4,
-    queue='hpc_4G')
-def mark_analysis_running(
-        next_task: str,
-        last_task: str,
-        seed_table: str = 'analysis',
-        new_status: str = 'RUNNING',
-        no_change_status: list = ['RUNNING', 'FAILED', 'FINISHED', 'UNKNOWN']) -> list:
-    try:
-        ## dag_run.conf should have analysis_id
-        context = get_current_context()
-        dag_run = context.get('dag_run')
-        analysis_id = None
-        if dag_run is not None and \
-           dag_run.conf is not None and \
-           dag_run.conf.get('analysis_id') is not None:
-            analysis_id = \
-                dag_run.conf.get('analysis_id')
-        if analysis_id is None:
-            raise ValueError('analysis_id not found in dag_run.conf')
-        ## pipeline_name is context['task'].dag_id
-        pipeline_name = context['task'].dag_id
-        ## change seed status
-        seed_status = \
-            check_and_seed_analysis_pipeline(
-                analysis_id=analysis_id,
-                pipeline_name=pipeline_name,
-                dbconf_json_path=DATABASE_CONFIG_FILE,
-                new_status=new_status,
-                seed_table=seed_table,
-                no_change_status=no_change_status)
-        ## set next tasks
-        task_list = list()
-        if seed_status:
-            task_list.append(
-                next_task)
-        else:
-            task_list.append(
-                last_task)
-            send_log_to_channels(
-                slack_conf=SLACK_CONF,
-                ms_teams_conf=MS_TEAMS_CONF,
-                task_id=context['task'].task_id,
-                dag_id=pipeline_name,
-                project_id=None,
-                comment=f"No task for analysis: {analysis_id}, pipeline: {pipeline_name}",
-                reaction='pass')
-        return task_list
-    except Exception as e:
-        log.error(e)
-        log_file_path = [
-            os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
-            f"dag_id={context['ti'].dag_id}",
-            f"run_id={context['ti'].run_id}",
-            f"task_id={context['ti'].task_id}",
-            f"attempt={context['ti'].try_number}.log"]
-        message = \
-            f"Error: {e}, Log: {os.path.join(*log_file_path)}"
-        send_log_to_channels(
-            slack_conf=SLACK_CONF,
-            ms_teams_conf=MS_TEAMS_CONF,
-            task_id=context['task'].task_id,
-            dag_id=context['task'].dag_id,
-            project_id=None,
-            comment=message,
-            reaction='fail')
-        raise ValueError(e)
+# ## EMAIL CONFIG
+# DEFAULT_EMAIL_USER = Variable.get("default_email_user", default_var=None)
+# EMAIL_CONFIG = Variable.get("email_config", default_var=None)
+# EMAIL_TEMPLATE = Variable.get("analysis_email_template", default_var=None)
 
-## TASK
-## CHANGE ME: Once EmptyOperator has a decorator then remove this
-@task(
-    task_id="no_work",
-    retry_delay=timedelta(minutes=5),
-    retries=4,
-    queue='hpc_4G')
-def no_work() -> None:
-	try:
-		pass
-	except Exception as e:
-		raise ValueError(e)
+# ## TASK
+# @task.branch(
+# 	task_id="mark_analysis_running",
+#     retry_delay=timedelta(minutes=5),
+#     retries=4,
+#     queue='hpc_4G')
+# def mark_analysis_running(
+#         next_task: str,
+#         last_task: str,
+#         seed_table: str = 'analysis',
+#         new_status: str = 'RUNNING',
+#         no_change_status: list = ['RUNNING', 'FAILED', 'FINISHED', 'UNKNOWN']) -> list:
+#     try:
+#         ## dag_run.conf should have analysis_id
+#         context = get_current_context()
+#         dag_run = context.get('dag_run')
+#         analysis_id = None
+#         if dag_run is not None and \
+#            dag_run.conf is not None and \
+#            dag_run.conf.get('analysis_id') is not None:
+#             analysis_id = \
+#                 dag_run.conf.get('analysis_id')
+#         if analysis_id is None:
+#             raise ValueError('analysis_id not found in dag_run.conf')
+#         ## pipeline_name is context['task'].dag_id
+#         pipeline_name = context['task'].dag_id
+#         ## change seed status
+#         seed_status = \
+#             check_and_seed_analysis_pipeline(
+#                 analysis_id=analysis_id,
+#                 pipeline_name=pipeline_name,
+#                 dbconf_json_path=DATABASE_CONFIG_FILE,
+#                 new_status=new_status,
+#                 seed_table=seed_table,
+#                 no_change_status=no_change_status)
+#         ## set next tasks
+#         task_list = list()
+#         if seed_status:
+#             task_list.append(
+#                 next_task)
+#         else:
+#             task_list.append(
+#                 last_task)
+#             send_log_to_channels(
+#                 slack_conf=SLACK_CONF,
+#                 ms_teams_conf=MS_TEAMS_CONF,
+#                 task_id=context['task'].task_id,
+#                 dag_id=pipeline_name,
+#                 project_id=None,
+#                 comment=f"No task for analysis: {analysis_id}, pipeline: {pipeline_name}",
+#                 reaction='pass')
+#         return task_list
+#     except Exception as e:
+#         log.error(e)
+#         log_file_path = [
+#             os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+#             f"dag_id={context['ti'].dag_id}",
+#             f"run_id={context['ti'].run_id}",
+#             f"task_id={context['ti'].task_id}",
+#             f"attempt={context['ti'].try_number}.log"]
+#         message = \
+#             f"Error: {e}, Log: {os.path.join(*log_file_path)}"
+#         send_log_to_channels(
+#             slack_conf=SLACK_CONF,
+#             ms_teams_conf=MS_TEAMS_CONF,
+#             task_id=context['task'].task_id,
+#             dag_id=context['task'].dag_id,
+#             project_id=None,
+#             comment=message,
+#             reaction='fail')
+#         raise ValueError(e)
+
+# ## TASK
+# ## CHANGE ME: Once EmptyOperator has a decorator then remove this
+# @task(
+#     task_id="no_work",
+#     retry_delay=timedelta(minutes=5),
+#     retries=4,
+#     queue='hpc_4G')
+# def no_work() -> None:
+# 	try:
+# 		pass
+# 	except Exception as e:
+# 		raise ValueError(e)
 
 
-def fetch_analysis_yaml_and_dump_to_a_file(
-        analysis_id: int,
-        pipeline_name: str,
-        dbconfig_file: str) -> str:
-    try:
-        ## get analysis design
-        input_design_yaml = \
-	        fetch_analysis_design(
-		        analysis_id=analysis_id,
-                pipeline_name=pipeline_name,
-		        dbconfig_file=dbconfig_file)
-        temp_dir = \
-	        get_temp_dir(use_ephemeral_space=True)
-        temp_yaml_file = \
-            os.path.join(temp_dir, 'analysis_design.yaml')
-        ## dump it in a text file for next task
-        with open(temp_yaml_file, 'w') as fp:
-            fp.write(input_design_yaml)
-        return temp_yaml_file
-    except Exception as e:
-        message = f"Failed to get yaml, error: {e}"
-        raise ValueError(message)
+# def fetch_analysis_yaml_and_dump_to_a_file(
+#         analysis_id: int,
+#         pipeline_name: str,
+#         dbconfig_file: str) -> str:
+#     try:
+#         ## get analysis design
+#         input_design_yaml = \
+# 	        fetch_analysis_design(
+# 		        analysis_id=analysis_id,
+#                 pipeline_name=pipeline_name,
+# 		        dbconfig_file=dbconfig_file)
+#         temp_dir = \
+# 	        get_temp_dir(use_ephemeral_space=True)
+#         temp_yaml_file = \
+#             os.path.join(temp_dir, 'analysis_design.yaml')
+#         ## dump it in a text file for next task
+#         with open(temp_yaml_file, 'w') as fp:
+#             fp.write(input_design_yaml)
+#         return temp_yaml_file
+#     except Exception as e:
+#         message = f"Failed to get yaml, error: {e}"
+#         raise ValueError(message)
 
 
 ## TASK
@@ -1198,181 +1200,181 @@ def copy_data_to_globus(analysis_dir_dict: dict) -> None:
             reaction='fail')
         raise ValueError(e)
 
-## TASK
-@task(
-    task_id="send_email_to_user",
-    retry_delay=timedelta(minutes=5),
-    retries=4,
-    trigger_rule="none_failed_min_one_success",
-    queue='hpc_4G')
-def send_email_to_user(
-        send_email: bool = True,
-        email_user_key: str = 'username') -> None:
-    try:
-        ## dag_run.conf should have analysis_id
-        context = get_current_context()
-        dag_run = context.get('dag_run')
-        analysis_id = None
-        if dag_run is not None and \
-           dag_run.conf is not None and \
-           dag_run.conf.get('analysis_id') is not None:
-            analysis_id = \
-                dag_run.conf.get('analysis_id')
-        if analysis_id is None:
-            raise ValueError(
-                'analysis_id not found in dag_run.conf')
-        ## get default user from email config
-        email_config = \
-            read_json_data(EMAIL_CONFIG)
-        if isinstance(email_config, list):
-            email_config = email_config[0]
-        default_email_user = \
-            email_config.get(email_user_key)
-        if default_email_user is None:
-            raise KeyError(
-                f"Missing default user info in email config file {EMAIL_CONFIG}")
-        ## generate email text for analysis
-        email_text_file, receivers = \
-            generate_email_text_for_analysis(
-                analysis_id=analysis_id,
-                template_path=EMAIL_TEMPLATE,
-                dbconfig_file=DATABASE_CONFIG_FILE,
-                default_email_user=default_email_user,
-                send_email_to_user=send_email)
-        ## send email to user
-        send_email_via_smtp(
-            sender=default_email_user,
-            receivers=receivers,
-            email_config_json=EMAIL_CONFIG,
-            email_text_file=email_text_file)
-    except Exception as e:
-        context = get_current_context()
-        log.error(e)
-        log_file_path = [
-            os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
-            f"dag_id={context['ti'].dag_id}",
-            f"run_id={context['ti'].run_id}",
-            f"task_id={context['ti'].task_id}",
-            f"attempt={context['ti'].try_number}.log"]
-        message = \
-            f"Error: {e}, Log: {os.path.join(*log_file_path)}"
-        send_log_to_channels(
-            slack_conf=SLACK_CONF,
-            ms_teams_conf=MS_TEAMS_CONF,
-            task_id=context['task'].task_id,
-            dag_id=context['task'].dag_id,
-            project_id=None,
-            comment=message,
-            reaction='fail')
-        raise ValueError(e)
+# ## TASK
+# @task(
+#     task_id="send_email_to_user",
+#     retry_delay=timedelta(minutes=5),
+#     retries=4,
+#     trigger_rule="none_failed_min_one_success",
+#     queue='hpc_4G')
+# def send_email_to_user(
+#         send_email: bool = True,
+#         email_user_key: str = 'username') -> None:
+#     try:
+#         ## dag_run.conf should have analysis_id
+#         context = get_current_context()
+#         dag_run = context.get('dag_run')
+#         analysis_id = None
+#         if dag_run is not None and \
+#            dag_run.conf is not None and \
+#            dag_run.conf.get('analysis_id') is not None:
+#             analysis_id = \
+#                 dag_run.conf.get('analysis_id')
+#         if analysis_id is None:
+#             raise ValueError(
+#                 'analysis_id not found in dag_run.conf')
+#         ## get default user from email config
+#         email_config = \
+#             read_json_data(EMAIL_CONFIG)
+#         if isinstance(email_config, list):
+#             email_config = email_config[0]
+#         default_email_user = \
+#             email_config.get(email_user_key)
+#         if default_email_user is None:
+#             raise KeyError(
+#                 f"Missing default user info in email config file {EMAIL_CONFIG}")
+#         ## generate email text for analysis
+#         email_text_file, receivers = \
+#             generate_email_text_for_analysis(
+#                 analysis_id=analysis_id,
+#                 template_path=EMAIL_TEMPLATE,
+#                 dbconfig_file=DATABASE_CONFIG_FILE,
+#                 default_email_user=default_email_user,
+#                 send_email_to_user=send_email)
+#         ## send email to user
+#         send_email_via_smtp(
+#             sender=default_email_user,
+#             receivers=receivers,
+#             email_config_json=EMAIL_CONFIG,
+#             email_text_file=email_text_file)
+#     except Exception as e:
+#         context = get_current_context()
+#         log.error(e)
+#         log_file_path = [
+#             os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+#             f"dag_id={context['ti'].dag_id}",
+#             f"run_id={context['ti'].run_id}",
+#             f"task_id={context['ti'].task_id}",
+#             f"attempt={context['ti'].try_number}.log"]
+#         message = \
+#             f"Error: {e}, Log: {os.path.join(*log_file_path)}"
+#         send_log_to_channels(
+#             slack_conf=SLACK_CONF,
+#             ms_teams_conf=MS_TEAMS_CONF,
+#             task_id=context['task'].task_id,
+#             dag_id=context['task'].dag_id,
+#             project_id=None,
+#             comment=message,
+#             reaction='fail')
+#         raise ValueError(e)
 
 
-## TASK
-@task(
-	task_id="mark_analysis_finished",
-    retry_delay=timedelta(minutes=5),
-    retries=4,
-    queue='hpc_4G')
-def mark_analysis_finished(
-        seed_table: str = 'analysis',
-	    new_status: str = 'FINISHED',
-        no_change_status: list = ('SEEDED', )) -> None:
-    try:
-        ## dag_run.conf should have analysis_id
-        context = get_current_context()
-        dag_run = context.get('dag_run')
-        analysis_id = None
-        if dag_run is not None and \
-           dag_run.conf is not None and \
-           dag_run.conf.get('analysis_id') is not None:
-            analysis_id = \
-                dag_run.conf.get('analysis_id')
-        if analysis_id is None:
-            raise ValueError('analysis_id not found in dag_run.conf')
-        ## pipeline_name is context['task'].dag_id
-        pipeline_name = context['task'].dag_id
-        ## change seed status
-        seed_status = \
-            check_and_seed_analysis_pipeline(
-                analysis_id=analysis_id,
-                pipeline_name=pipeline_name,
-                dbconf_json_path=DATABASE_CONFIG_FILE,
-                new_status=new_status,
-                seed_table=seed_table,
-                no_change_status=no_change_status)
-    except Exception as e:
-        context = get_current_context()
-        log.error(e)
-        log_file_path = [
-            os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
-            f"dag_id={context['ti'].dag_id}",
-            f"run_id={context['ti'].run_id}",
-            f"task_id={context['ti'].task_id}",
-            f"attempt={context['ti'].try_number}.log"]
-        message = \
-            f"Error: {e}, Log: {os.path.join(*log_file_path)}"
-        send_log_to_channels(
-            slack_conf=SLACK_CONF,
-            ms_teams_conf=MS_TEAMS_CONF,
-            task_id=context['task'].task_id,
-            dag_id=context['task'].dag_id,
-            project_id=None,
-            comment=message,
-            reaction='fail')
-        raise ValueError(e)
+# ## TASK
+# @task(
+# 	task_id="mark_analysis_finished",
+#     retry_delay=timedelta(minutes=5),
+#     retries=4,
+#     queue='hpc_4G')
+# def mark_analysis_finished(
+#         seed_table: str = 'analysis',
+# 	    new_status: str = 'FINISHED',
+#         no_change_status: list = ('SEEDED', )) -> None:
+#     try:
+#         ## dag_run.conf should have analysis_id
+#         context = get_current_context()
+#         dag_run = context.get('dag_run')
+#         analysis_id = None
+#         if dag_run is not None and \
+#            dag_run.conf is not None and \
+#            dag_run.conf.get('analysis_id') is not None:
+#             analysis_id = \
+#                 dag_run.conf.get('analysis_id')
+#         if analysis_id is None:
+#             raise ValueError('analysis_id not found in dag_run.conf')
+#         ## pipeline_name is context['task'].dag_id
+#         pipeline_name = context['task'].dag_id
+#         ## change seed status
+#         seed_status = \
+#             check_and_seed_analysis_pipeline(
+#                 analysis_id=analysis_id,
+#                 pipeline_name=pipeline_name,
+#                 dbconf_json_path=DATABASE_CONFIG_FILE,
+#                 new_status=new_status,
+#                 seed_table=seed_table,
+#                 no_change_status=no_change_status)
+#     except Exception as e:
+#         context = get_current_context()
+#         log.error(e)
+#         log_file_path = [
+#             os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+#             f"dag_id={context['ti'].dag_id}",
+#             f"run_id={context['ti'].run_id}",
+#             f"task_id={context['ti'].task_id}",
+#             f"attempt={context['ti'].try_number}.log"]
+#         message = \
+#             f"Error: {e}, Log: {os.path.join(*log_file_path)}"
+#         send_log_to_channels(
+#             slack_conf=SLACK_CONF,
+#             ms_teams_conf=MS_TEAMS_CONF,
+#             task_id=context['task'].task_id,
+#             dag_id=context['task'].dag_id,
+#             project_id=None,
+#             comment=message,
+#             reaction='fail')
+#         raise ValueError(e)
 
 
-## TASK
-@task(
-	task_id="mark_analysis_failed",
-    retry_delay=timedelta(minutes=5),
-    retries=4,
-    trigger_rule='all_failed',
-    queue='hpc_4G')
-def mark_analysis_failed(
-        seed_table: str = 'analysis',
-	    new_status: str = 'FAILED',
-        no_change_status: list = ('SEEDED', 'FINISHED')) -> None:
-    try:
-        ## dag_run.conf should have analysis_id
-        context = get_current_context()
-        dag_run = context.get('dag_run')
-        analysis_id = None
-        if dag_run is not None and \
-           dag_run.conf is not None and \
-           dag_run.conf.get('analysis_id') is not None:
-            analysis_id = \
-                dag_run.conf.get('analysis_id')
-        if analysis_id is None:
-            raise ValueError('analysis_id not found in dag_run.conf')
-        ## pipeline_name is context['task'].dag_id
-        pipeline_name = context['task'].dag_id
-        ## change seed status
-        seed_status = \
-            check_and_seed_analysis_pipeline(
-                analysis_id=analysis_id,
-                pipeline_name=pipeline_name,
-                dbconf_json_path=DATABASE_CONFIG_FILE,
-                new_status=new_status,
-                seed_table=seed_table,
-                no_change_status=no_change_status)
-    except Exception as e:
-        context = get_current_context()
-        log.error(e)
-        log_file_path = [
-            os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
-            f"dag_id={context['ti'].dag_id}",
-            f"run_id={context['ti'].run_id}",
-            f"task_id={context['ti'].task_id}",
-            f"attempt={context['ti'].try_number}.log"]
-        message = \
-            f"Error: {e}, Log: {os.path.join(*log_file_path)}"
-        send_log_to_channels(
-            slack_conf=SLACK_CONF,
-            ms_teams_conf=MS_TEAMS_CONF,
-            task_id=context['task'].task_id,
-            dag_id=context['task'].dag_id,
-            project_id=None,
-            comment=message,
-            reaction='fail')
-        raise ValueError(e)
+# ## TASK
+# @task(
+# 	task_id="mark_analysis_failed",
+#     retry_delay=timedelta(minutes=5),
+#     retries=4,
+#     trigger_rule='all_failed',
+#     queue='hpc_4G')
+# def mark_analysis_failed(
+#         seed_table: str = 'analysis',
+# 	    new_status: str = 'FAILED',
+#         no_change_status: list = ('SEEDED', 'FINISHED')) -> None:
+#     try:
+#         ## dag_run.conf should have analysis_id
+#         context = get_current_context()
+#         dag_run = context.get('dag_run')
+#         analysis_id = None
+#         if dag_run is not None and \
+#            dag_run.conf is not None and \
+#            dag_run.conf.get('analysis_id') is not None:
+#             analysis_id = \
+#                 dag_run.conf.get('analysis_id')
+#         if analysis_id is None:
+#             raise ValueError('analysis_id not found in dag_run.conf')
+#         ## pipeline_name is context['task'].dag_id
+#         pipeline_name = context['task'].dag_id
+#         ## change seed status
+#         seed_status = \
+#             check_and_seed_analysis_pipeline(
+#                 analysis_id=analysis_id,
+#                 pipeline_name=pipeline_name,
+#                 dbconf_json_path=DATABASE_CONFIG_FILE,
+#                 new_status=new_status,
+#                 seed_table=seed_table,
+#                 no_change_status=no_change_status)
+#     except Exception as e:
+#         context = get_current_context()
+#         log.error(e)
+#         log_file_path = [
+#             os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
+#             f"dag_id={context['ti'].dag_id}",
+#             f"run_id={context['ti'].run_id}",
+#             f"task_id={context['ti'].task_id}",
+#             f"attempt={context['ti'].try_number}.log"]
+#         message = \
+#             f"Error: {e}, Log: {os.path.join(*log_file_path)}"
+#         send_log_to_channels(
+#             slack_conf=SLACK_CONF,
+#             ms_teams_conf=MS_TEAMS_CONF,
+#             task_id=context['task'].task_id,
+#             dag_id=context['task'].dag_id,
+#             project_id=None,
+#             comment=message,
+#             reaction='fail')
+#         raise ValueError(e)

@@ -35,6 +35,12 @@ from igf_airflow.utils.dag22_bclconvert_demult_utils import (
     _create_output_from_jinja_template,
     send_email_via_smtp)
 
+from igf_airflow.utils.generic_airflow_tasks import (
+  generate_email_text_for_analysis,
+  check_and_seed_analysis_pipeline,
+  get_project_igf_id_for_analysis,
+)
+
 log = logging.getLogger(__name__)
 
 SLACK_CONF = \
@@ -68,101 +74,101 @@ EMAIL_TEMPLATE = \
 GLOBUS_ROOT_DIR = \
   Variable.get("globus_root_dir", default_var=None)
 
-def fetch_analysis_name_for_analysis_id(
-        analysis_id: int,
-        dbconfig_file: str) -> str:
-    try:
-        dbconf = read_dbconf_json(dbconfig_file)
-        aa = AnalysisAdaptor(**dbconf)
-        aa.start_session()
-        analysis_entry = \
-          aa.fetch_analysis_records_analysis_id(
-            analysis_id=analysis_id,
-            output_mode='one_or_none')
-        aa.close_session()
-        if analysis_entry is None:
-            raise ValueError(
-                f"No entry found for analysis id {analysis_id}")
-        analysis_name = \
-            analysis_entry.analysis_name
-        if analysis_name is None:
-            raise ValueError(
-                f"Analysis name is None for id {analysis_id}")
-        return analysis_name
-    except Exception as e:
-        raise ValueError(
-            f"Failed to get analysis name for id {analysis_id}, error: {e}")
+# def fetch_analysis_name_for_analysis_id(
+#         analysis_id: int,
+#         dbconfig_file: str) -> str:
+#     try:
+#         dbconf = read_dbconf_json(dbconfig_file)
+#         aa = AnalysisAdaptor(**dbconf)
+#         aa.start_session()
+#         analysis_entry = \
+#           aa.fetch_analysis_records_analysis_id(
+#             analysis_id=analysis_id,
+#             output_mode='one_or_none')
+#         aa.close_session()
+#         if analysis_entry is None:
+#             raise ValueError(
+#                 f"No entry found for analysis id {analysis_id}")
+#         analysis_name = \
+#             analysis_entry.analysis_name
+#         if analysis_name is None:
+#             raise ValueError(
+#                 f"Analysis name is None for id {analysis_id}")
+#         return analysis_name
+#     except Exception as e:
+#         raise ValueError(
+#             f"Failed to get analysis name for id {analysis_id}, error: {e}")
 
-def fetch_user_info_for_project_igf_id(
-        project_igf_id: str,
-        dbconfig_file: str) -> Tuple[str, str, str, bool]:
-    try:
-        dbconf = read_dbconf_json(dbconfig_file)
-        pa = ProjectAdaptor(**dbconf)
-        pa.start_session()
-        user_info = pa.get_project_user_info(project_igf_id=project_igf_id)
-        pa.close_session()
-        user_info = user_info[user_info['data_authority']=='T']
-        user_info = user_info.to_dict(orient='records')
-        if len(user_info) == 0:
-            raise ValueError(
-                f'No user found for project {project_igf_id}')
-        user_info = user_info[0]
-        user_name = user_info['name']
-        login_name = user_info['username']
-        user_email = user_info['email_id']
-        user_category = user_info['category']
-        hpcUser = False
-        if user_category=='HPC_USER':
-            hpcUser = True
-        return user_name, login_name, user_email, hpcUser
-    except Exception as e:
-        raise ValueError(
-            f"Failed to get user infor for projecty {project_igf_id}, error: {e}")
+# def fetch_user_info_for_project_igf_id(
+#         project_igf_id: str,
+#         dbconfig_file: str) -> Tuple[str, str, str, bool]:
+#     try:
+#         dbconf = read_dbconf_json(dbconfig_file)
+#         pa = ProjectAdaptor(**dbconf)
+#         pa.start_session()
+#         user_info = pa.get_project_user_info(project_igf_id=project_igf_id)
+#         pa.close_session()
+#         user_info = user_info[user_info['data_authority']=='T']
+#         user_info = user_info.to_dict(orient='records')
+#         if len(user_info) == 0:
+#             raise ValueError(
+#                 f'No user found for project {project_igf_id}')
+#         user_info = user_info[0]
+#         user_name = user_info['name']
+#         login_name = user_info['username']
+#         user_email = user_info['email_id']
+#         user_category = user_info['category']
+#         hpcUser = False
+#         if user_category=='HPC_USER':
+#             hpcUser = True
+#         return user_name, login_name, user_email, hpcUser
+#     except Exception as e:
+#         raise ValueError(
+#             f"Failed to get user infor for projecty {project_igf_id}, error: {e}")
 
 
-def generate_email_text_for_analysis(
-        analysis_id: int,
-        template_path: str,
-        dbconfig_file: str,
-        default_email_user: str,
-        send_email_to_user: bool = True) -> Tuple[str, list]:
-    try:
-        ## get analysis name and project name
-        project_igf_id = \
-            get_project_igf_id_for_analysis(
-                analysis_id=analysis_id,
-                dbconfig_file=dbconfig_file)
-        analysis_name = \
-            fetch_analysis_name_for_analysis_id(
-                analysis_id=analysis_id,
-                dbconfig_file=dbconfig_file)
-        ## get user info
-        user_name, login_name, user_email, hpcUser = \
-            fetch_user_info_for_project_igf_id(
-                project_igf_id=project_igf_id,
-                dbconfig_file=dbconfig_file)
-        ## build email text file
-        temp_dir = get_temp_dir(use_ephemeral_space=True)
-        output_file = \
-            os.path.join(temp_dir, 'email.txt')
-        _create_output_from_jinja_template(
-            template_file=template_path,
-            output_file=output_file,
-            autoescape_list=['xml', 'html'],
-            data=dict(
-                customerEmail=user_email,
-                defaultUser=default_email_user,
-                projectName=project_igf_id,
-                analysisName=analysis_name,
-                customerName=user_name,
-                customerUsername=login_name,
-                hpcUser=hpcUser,
-                send_email_to_user=send_email_to_user))
-        return output_file, [user_email, default_email_user]
-    except Exception as e:
-        raise ValueError(
-            f"Failed to generate email body, error: {e}")
+# def generate_email_text_for_analysis(
+#         analysis_id: int,
+#         template_path: str,
+#         dbconfig_file: str,
+#         default_email_user: str,
+#         send_email_to_user: bool = True) -> Tuple[str, list]:
+#     try:
+#         ## get analysis name and project name
+#         project_igf_id = \
+#             get_project_igf_id_for_analysis(
+#                 analysis_id=analysis_id,
+#                 dbconfig_file=dbconfig_file)
+#         analysis_name = \
+#             fetch_analysis_name_for_analysis_id(
+#                 analysis_id=analysis_id,
+#                 dbconfig_file=dbconfig_file)
+#         ## get user info
+#         user_name, login_name, user_email, hpcUser = \
+#             fetch_user_info_for_project_igf_id(
+#                 project_igf_id=project_igf_id,
+#                 dbconfig_file=dbconfig_file)
+#         ## build email text file
+#         temp_dir = get_temp_dir(use_ephemeral_space=True)
+#         output_file = \
+#             os.path.join(temp_dir, 'email.txt')
+#         _create_output_from_jinja_template(
+#             template_file=template_path,
+#             output_file=output_file,
+#             autoescape_list=['xml', 'html'],
+#             data=dict(
+#                 customerEmail=user_email,
+#                 defaultUser=default_email_user,
+#                 projectName=project_igf_id,
+#                 analysisName=analysis_name,
+#                 customerName=user_name,
+#                 customerUsername=login_name,
+#                 hpcUser=hpcUser,
+#                 send_email_to_user=send_email_to_user))
+#         return output_file, [user_email, default_email_user]
+#     except Exception as e:
+#         raise ValueError(
+#             f"Failed to generate email body, error: {e}")
 
 
 def send_email_to_user_func(**context):
@@ -297,115 +303,115 @@ def change_analysis_seed_status_func(**context):
     raise
 
 
-def check_and_seed_analysis_pipeline(
-      analysis_id: int,
-      pipeline_name: str,
-      dbconf_json_path: str,
-      new_status: str,
-      seed_table: str = 'analysis',
-      create_new_pipeline_seed: bool = False,
-      no_change_status: Union[list, None] = None) \
-        -> bool:
-  try:
-    dbconf = read_dbconf_json(dbconf_json_path)
-    pa = PipelineAdaptor(**dbconf)
-    try:
-      pa.start_session()
-      ## check if pipeline exists
-      # pipeline_exists = \
-      #   pa.fetch_pipeline_records_pipeline_name(
-      #     pipeline_name=pipeline_name,
-      #     output_mode='one_or_none')
-      # if pipeline_exists is None:
-      #   raise ValueError(
-      #     f"Pipeline {pipeline_name} not registered in db")
-      pipeline_exists = \
-        pa.check_pipeline_using_pipeline_name(
-          pipeline_name=pipeline_name)
-      if not pipeline_exists:
-        raise ValueError(
-          f"Pipeline {pipeline_name} not registered in db")
-      ## check if analysis exists
-      aa = AnalysisAdaptor(**{'session': pa.session})
-      analysis_id_exists = \
-        aa.fetch_analysis_records_analysis_id(
-          analysis_id=analysis_id,
-          output_mode='one_or_none')
-      if analysis_id_exists is None:
-        raise ValueError(
-          f'Analysis id {analysis_id} not found in db')
-      ## check for existing analysis and pipeline seed combination
-      if not create_new_pipeline_seed:
-        existing_pipeline_seed = \
-          pa.check_existing_pipeseed(
-            seed_id=analysis_id,
-            seed_table=seed_table,
-            pipeline_name=pipeline_name)
-        if existing_pipeline_seed is None:
-          raise ValueError(
-            f"No existing pipeline seed found for analysis {analysis_id} and pipeline {pipeline_name}")
-      ## change seed status
-      seed_status = \
-        pa.create_or_update_pipeline_seed(
-          seed_id=analysis_id,
-          pipeline_name=pipeline_name,
-          new_status=new_status,
-          seed_table=seed_table,
-          no_change_status=no_change_status,
-          autosave=False)
-      pa.commit_session()
-      pa.close_session()
-    except:
-      pa.rollback_session()
-      pa.close_session()
-      raise
-    return seed_status
-  except Exception as e:
-    raise ValueError(
-      f"Failed to change analysis seed, error: {e}")
+# def check_and_seed_analysis_pipeline(
+#       analysis_id: int,
+#       pipeline_name: str,
+#       dbconf_json_path: str,
+#       new_status: str,
+#       seed_table: str = 'analysis',
+#       create_new_pipeline_seed: bool = False,
+#       no_change_status: Union[list, None] = None) \
+#         -> bool:
+#   try:
+#     dbconf = read_dbconf_json(dbconf_json_path)
+#     pa = PipelineAdaptor(**dbconf)
+#     try:
+#       pa.start_session()
+#       ## check if pipeline exists
+#       # pipeline_exists = \
+#       #   pa.fetch_pipeline_records_pipeline_name(
+#       #     pipeline_name=pipeline_name,
+#       #     output_mode='one_or_none')
+#       # if pipeline_exists is None:
+#       #   raise ValueError(
+#       #     f"Pipeline {pipeline_name} not registered in db")
+#       pipeline_exists = \
+#         pa.check_pipeline_using_pipeline_name(
+#           pipeline_name=pipeline_name)
+#       if not pipeline_exists:
+#         raise ValueError(
+#           f"Pipeline {pipeline_name} not registered in db")
+#       ## check if analysis exists
+#       aa = AnalysisAdaptor(**{'session': pa.session})
+#       analysis_id_exists = \
+#         aa.fetch_analysis_records_analysis_id(
+#           analysis_id=analysis_id,
+#           output_mode='one_or_none')
+#       if analysis_id_exists is None:
+#         raise ValueError(
+#           f'Analysis id {analysis_id} not found in db')
+#       ## check for existing analysis and pipeline seed combination
+#       if not create_new_pipeline_seed:
+#         existing_pipeline_seed = \
+#           pa.check_existing_pipeseed(
+#             seed_id=analysis_id,
+#             seed_table=seed_table,
+#             pipeline_name=pipeline_name)
+#         if existing_pipeline_seed is None:
+#           raise ValueError(
+#             f"No existing pipeline seed found for analysis {analysis_id} and pipeline {pipeline_name}")
+#       ## change seed status
+#       seed_status = \
+#         pa.create_or_update_pipeline_seed(
+#           seed_id=analysis_id,
+#           pipeline_name=pipeline_name,
+#           new_status=new_status,
+#           seed_table=seed_table,
+#           no_change_status=no_change_status,
+#           autosave=False)
+#       pa.commit_session()
+#       pa.close_session()
+#     except:
+#       pa.rollback_session()
+#       pa.close_session()
+#       raise
+#     return seed_status
+#   except Exception as e:
+#     raise ValueError(
+#       f"Failed to change analysis seed, error: {e}")
 
 
-def fetch_analysis_design(
-      analysis_id: int,
-      pipeline_name: str,
-      dbconfig_file: str) \
-        -> str:
-    try:
-      dbconf = read_dbconf_json(dbconfig_file)
-      aa = AnalysisAdaptor(**dbconf)
-      aa.start_session()
-      input_design_yaml = ''
-      try:
-        analysis_entry = \
-          aa.fetch_analysis_records_analysis_id(
-            analysis_id=analysis_id,
-            output_mode='one_or_none')
-        if analysis_entry is None:
-          raise ValueError(
-            f"No entry found for analysis {analysis_id} in db")
-        if analysis_entry.analysis_type is None or \
-           analysis_entry.analysis_type != pipeline_name:
-          raise ValueError(
-            f"Analysis name mismatch: {pipeline_name} != {analysis_entry.analysis_type}")
-        if analysis_entry.analysis_description is None:
-          raise ValueError(
-            f"Missing analysis_description for {analysis_id} and {pipeline_name}")
-        input_design_yaml = \
-          analysis_entry.analysis_description
-        if isinstance(input_design_yaml, str):
-          input_design_yaml = \
-            yaml.dump(json.loads(input_design_yaml))
-        if isinstance(input_design_yaml, dict):
-          input_design_yaml = \
-            yaml.dump(input_design_yaml)
-        aa.close_session()
-      except:
-        aa.close_session()
-        raise
-      return input_design_yaml
-    except Exception as e:
-      raise ValueError(
-        f"Failed to get analysis design for {analysis_id} and {pipeline_name}")
+# def fetch_analysis_design(
+#       analysis_id: int,
+#       pipeline_name: str,
+#       dbconfig_file: str) \
+#         -> str:
+#     try:
+#       dbconf = read_dbconf_json(dbconfig_file)
+#       aa = AnalysisAdaptor(**dbconf)
+#       aa.start_session()
+#       input_design_yaml = ''
+#       try:
+#         analysis_entry = \
+#           aa.fetch_analysis_records_analysis_id(
+#             analysis_id=analysis_id,
+#             output_mode='one_or_none')
+#         if analysis_entry is None:
+#           raise ValueError(
+#             f"No entry found for analysis {analysis_id} in db")
+#         if analysis_entry.analysis_type is None or \
+#            analysis_entry.analysis_type != pipeline_name:
+#           raise ValueError(
+#             f"Analysis name mismatch: {pipeline_name} != {analysis_entry.analysis_type}")
+#         if analysis_entry.analysis_description is None:
+#           raise ValueError(
+#             f"Missing analysis_description for {analysis_id} and {pipeline_name}")
+#         input_design_yaml = \
+#           analysis_entry.analysis_description
+#         if isinstance(input_design_yaml, str):
+#           input_design_yaml = \
+#             yaml.dump(json.loads(input_design_yaml))
+#         if isinstance(input_design_yaml, dict):
+#           input_design_yaml = \
+#             yaml.dump(input_design_yaml)
+#         aa.close_session()
+#       except:
+#         aa.close_session()
+#         raise
+#       return input_design_yaml
+#     except Exception as e:
+#       raise ValueError(
+#         f"Failed to get analysis design for {analysis_id} and {pipeline_name}")
 
 
 def parse_design_and_build_inputs_for_snakemake_rnaseq(
@@ -695,23 +701,23 @@ def prepare_snakemake_inputs_func(**context):
     raise
 
 
-def get_project_igf_id_for_analysis(
-      analysis_id: int,
-      dbconfig_file: str) \
-        -> str:
-  try:
-    check_file_path(dbconfig_file)
-    dbparams = read_dbconf_json(dbconfig_file)
-    aa = AnalysisAdaptor(**dbparams)
-    aa.start_session()
-    project_igf_id = \
-      aa.fetch_project_igf_id_for_analysis_id(
-        analysis_id=analysis_id)
-    aa.close_session()
-    return project_igf_id
-  except Exception as e:
-    raise ValueError(
-      f"Failed to get project_id for analysis {analysis_id}")
+# def get_project_igf_id_for_analysis(
+#       analysis_id: int,
+#       dbconfig_file: str) \
+#         -> str:
+#   try:
+#     check_file_path(dbconfig_file)
+#     dbparams = read_dbconf_json(dbconfig_file)
+#     aa = AnalysisAdaptor(**dbparams)
+#     aa.start_session()
+#     project_igf_id = \
+#       aa.fetch_project_igf_id_for_analysis_id(
+#         analysis_id=analysis_id)
+#     aa.close_session()
+#     return project_igf_id
+#   except Exception as e:
+#     raise ValueError(
+#       f"Failed to get project_id for analysis {analysis_id}")
 
 
 def load_analysis_to_disk_func(**context):
