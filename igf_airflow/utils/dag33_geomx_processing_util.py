@@ -825,279 +825,244 @@ def generate_geomx_qc_report(
     raise ValueError(e)
 
 def build_qc_report_for_geomx(
-        project_igf_id: str,
-        analysis_name: str,
-        report_template: str,
-        image_file: str,
-        dcc_dir_path: str,
-        pkc_file_path: str,
-        annotation_file_path: str,
-        no_input: bool = True,
-        timeout: int = 1200) -> str:
-    try:
-        work_dir = \
-            get_temp_dir(use_ephemeral_space=True)
-        input_list = [
-            report_template,
-            image_file,
-            dcc_dir_path,
-            pkc_file_path,
-            annotation_file_path]
-        for f in input_list:
-            check_file_path(f)
-        container_bind_dir_list = [
-            dcc_dir_path,
-            os.path.dirname(pkc_file_path),
-            os.path.dirname(annotation_file_path)]
-        date_tag = get_date_stamp()
-        input_params = dict(
-            DATE_TAG=date_tag,
-            PROJECT_IGF_ID=project_igf_id,
-            ANALYSIS_NAME=analysis_name,
-            GEOMX_DCC_DIR=dcc_dir_path,
-            GEOMX_ANNOTATION_FILE=annotation_file_path,
-            GEOMX_PKC_FILE=pkc_file_path)
-        nb = \
-            Notebook_runner(
-                template_ipynb_path=report_template,
-                output_dir=work_dir,
-                input_param_map=input_params,
-                container_paths=container_bind_dir_list,
-                kernel='python3',
-                use_ephemeral_space=True,
-                singularity_options=['-C'],
-                allow_errors=False,
-                singularity_image_path=image_file,
-                timeout=timeout,
-                no_input=no_input)
-        output_notebook_path, _ = \
-            nb.execute_notebook_in_singularity()
-        output_notebook = \
-            os.path.join(
-                work_dir,
-                f"{project_igf_id}_{os.path.basename(output_notebook_path)}")
-        copy_local_file(
-            output_notebook_path,
-            output_notebook,
-            force=True)
-        return output_notebook
-    except Exception as e:
-        raise ValueError(
-            f"Failed to generate qc report. Error: {e}")
+      project_igf_id: str,
+      analysis_name: str,
+      report_template: str,
+      image_file: str,
+      dcc_dir_path: str,
+      pkc_file_path: str,
+      annotation_file_path: str,
+      no_input: bool = True,
+      timeout: int = 1200) -> str:
+  try:
+    work_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    input_list = [
+      report_template,
+      image_file,
+      dcc_dir_path,
+      pkc_file_path,
+      annotation_file_path]
+    for f in input_list:
+      check_file_path(f)
+      container_bind_dir_list = [
+        dcc_dir_path,
+        os.path.dirname(pkc_file_path),
+        os.path.dirname(annotation_file_path)]
+    date_tag = get_date_stamp()
+    input_params = dict(
+      DATE_TAG=date_tag,
+      PROJECT_IGF_ID=project_igf_id,
+      ANALYSIS_NAME=analysis_name,
+      GEOMX_DCC_DIR=dcc_dir_path,
+      GEOMX_ANNOTATION_FILE=annotation_file_path,
+      GEOMX_PKC_FILE=pkc_file_path)
+    nb = \
+      Notebook_runner(
+        template_ipynb_path=report_template,
+        output_dir=work_dir,
+        input_param_map=input_params,
+        container_paths=container_bind_dir_list,
+        kernel='python3',
+        use_ephemeral_space=True,
+        singularity_options=['-C'],
+        allow_errors=False,
+        singularity_image_path=image_file,
+        timeout=timeout,
+        no_input=no_input)
+    output_notebook_path, _ = \
+      nb.execute_notebook_in_singularity()
+    output_notebook = \
+      os.path.join(
+        work_dir,
+        f"{project_igf_id}_{os.path.basename(output_notebook_path)}")
+    copy_local_file(
+      output_notebook_path,
+      output_notebook,
+      force=True)
+    return output_notebook
+  except Exception as e:
+    raise ValueError(
+      f"Failed to generate qc report. Error: {e}")
+
 
 def calculate_md5sum_for_analysis_dir(dir_path: str) -> str:
-    try:
-        temp_dir = \
-            get_temp_dir(use_ephemeral_space=True)
-        bash_template = \
-            Template("""set -eo pipefail;
-            cd {{ TMP_PATH }};
-            find {{ DIR_PATH }} -type f -exec md5sum {} \; > file_manifest.md5;
-            mv file_manifest.md5 {{ DIR_PATH }}""")
-        script_path = \
-            os.path.join(temp_dir, 'bash_script.sh')
-        rendered_template = \
-            bash_template.render(
-                TMP_PATH=temp_dir,
-                DIR_PATH=dir_path)
-        with open(script_path, 'w') as fp:
-            fp.write(rendered_template)
-        stdout_file, stderr_file = \
-            bash_script_wrapper(
-                script_path=script_path)
-        md5_sum_file = \
-            os.path.join(dir_path, 'file_manifest.md5')
-        check_file_path(md5_sum_file)
-        return md5_sum_file
-    except Exception as e:
-        raise ValueError(
-            f"Failed to get md5sum for dir {dir_path}, error: {e}")
+  try:
+    temp_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    bash_template = \
+      Template(
+        """set -eo pipefail;
+        cd {{ TMP_PATH }};
+        find {{ DIR_PATH }} -type f -exec md5sum {} \; > file_manifest.md5;
+        mv file_manifest.md5 {{ DIR_PATH }}""")
+    script_path = \
+      os.path.join(temp_dir, 'bash_script.sh')
+    rendered_template = \
+      bash_template.render(
+        TMP_PATH=temp_dir,
+        DIR_PATH=dir_path)
+    with open(script_path, 'w') as fp:
+      fp.write(rendered_template)
+    stdout_file, stderr_file = \
+      bash_script_wrapper(
+        script_path=script_path)
+    md5_sum_file = \
+      os.path.join(dir_path, 'file_manifest.md5')
+    check_file_path(md5_sum_file)
+    return md5_sum_file
+  except Exception as e:
+    raise ValueError(
+      f"Failed to get md5sum for dir {dir_path}, error: {e}")
 
 
 ## TASK
 @task(
-	task_id="calculate_md5sum_for_dcc",
-    retry_delay=timedelta(minutes=5),
-    retries=4,
-    queue='hpc_8G')
+  task_id="calculate_md5sum_for_dcc",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_8G')
 def calculate_md5sum_for_dcc(dcc_count_path: str) -> str:
-    try:
-        md5_sum_file = \
-            calculate_md5sum_for_analysis_dir(
-                dir_path=dcc_count_path)
-        return md5_sum_file
-    except Exception as e:
-        context = get_current_context()
-        log.error(e)
-        log_file_path = [
-            os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
-            f"dag_id={context['ti'].dag_id}",
-            f"run_id={context['ti'].run_id}",
-            f"task_id={context['ti'].task_id}",
-            f"attempt={context['ti'].try_number}.log"]
-        message = \
-            f"Error: {e}, Log: {os.path.join(*log_file_path)}"
-        send_log_to_channels(
-            slack_conf=SLACK_CONF,
-            ms_teams_conf=MS_TEAMS_CONF,
-            task_id=context['task'].task_id,
-            dag_id=context['task'].dag_id,
-            project_id=None,
-            comment=message,
-            reaction='fail')
-        raise ValueError(e)
+  try:
+    md5_sum_file = \
+      calculate_md5sum_for_analysis_dir(
+        dir_path=dcc_count_path)
+    return md5_sum_file
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
 
 
 def collect_analysis_dir(
-        analysis_id: int,
-        dag_name: str,
-        dir_path: str,
-        db_config_file:str,
-        hpc_base_path: str,
-        collection_table: str = 'analysis',
-        analysis_dir_prefix: str = 'analysis') -> Tuple[str, str, str]:
-    try:
-        date_tag = get_date_stamp_for_file_name()
-        collection_type = dag_name.upper()
-        collection_name = \
-        calculate_analysis_name(
-            analysis_id=analysis_id,
-            date_tag=date_tag,
-            dbconfig_file=db_config_file)
-        target_dir_path = \
-            load_analysis_and_build_collection(
-                collection_name=collection_name,
-                collection_type=collection_type,
-                collection_table=collection_table,
-                dbconfig_file=db_config_file,
-                analysis_id=analysis_id,
-                pipeline_name=dag_name,
-                result_dir=dir_path,
-                hpc_base_path=hpc_base_path,
-                analysis_dir_prefix=analysis_dir_prefix,
-                date_tag=date_tag)
-        ## get project name
-        project_igf_id = \
-            get_project_igf_id_for_analysis(
-                analysis_id=analysis_id,
-                dbconfig_file=db_config_file)
-        return target_dir_path, project_igf_id, date_tag
-    except Exception as e:
-        raise ValueError(
-            f"Failed to collect analysis dir, error: {e}")
+      analysis_id: int,
+      dag_name: str,
+      dir_path: str,
+      db_config_file:str,
+      hpc_base_path: str,
+      collection_table: str = 'analysis',
+      analysis_dir_prefix: str = 'analysis') -> Tuple[str, str, str]:
+  try:
+    date_tag = get_date_stamp_for_file_name()
+    collection_type = dag_name.upper()
+    collection_name = \
+      calculate_analysis_name(
+        analysis_id=analysis_id,
+        date_tag=date_tag,
+        dbconfig_file=db_config_file)
+    target_dir_path = \
+      load_analysis_and_build_collection(
+        collection_name=collection_name,
+        collection_type=collection_type,
+        collection_table=collection_table,
+        dbconfig_file=db_config_file,
+        analysis_id=analysis_id,
+        pipeline_name=dag_name,
+        result_dir=dir_path,
+        hpc_base_path=hpc_base_path,
+        analysis_dir_prefix=analysis_dir_prefix,
+        date_tag=date_tag)
+    ## get project name
+    project_igf_id = \
+      get_project_igf_id_for_analysis(
+        analysis_id=analysis_id,
+        dbconfig_file=db_config_file)
+    return target_dir_path, project_igf_id, date_tag
+  except Exception as e:
+    raise ValueError(
+      f"Failed to collect analysis dir, error: {e}")
 
 
 ## TASK
 @task(
-	task_id="load_dcc_count_to_db",
-    retry_delay=timedelta(minutes=5),
-    retries=4,
-    queue='hpc_4G')
+  task_id="load_dcc_count_to_db",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_4G')
 def load_dcc_count_to_db(
-        dcc_count_path: str,
-        md5_file: str,
-        report_file: str,
-        geomx_config: str) -> str:
-    try:
-        ## dag_run.conf should have analysis_id
-        context = get_current_context()
-        dag_run = context.get('dag_run')
-        analysis_id = None
-        if dag_run is not None and \
-           dag_run.conf is not None and \
-           dag_run.conf.get('analysis_id') is not None:
-            analysis_id = \
-                dag_run.conf.get('analysis_id')
-        if analysis_id is None:
-            raise ValueError('analysis_id not found in dag_run.conf')
-        ## check if path exists
-        check_file_path(geomx_config)
-        check_file_path(md5_file)
-        check_file_path(report_file)
-        ## load data to db
-        ## pipeline_name is context['task'].dag_id
-        pipeline_name = context['task'].dag_id
-        target_dir_path, project_igf_id, date_tag = \
-            collect_analysis_dir(
-                analysis_id=analysis_id,
-                dag_name=pipeline_name,
-                dir_path=dcc_count_path,
-                db_config_file=DATABASE_CONFIG_FILE,
-                hpc_base_path=HPC_BASE_RAW_DATA_PATH)
-        return {'target_dir_path': target_dir_path, 'date_tag': date_tag}
-    except Exception as e:
-        context = get_current_context()
-        log.error(e)
-        log_file_path = [
-            os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
-            f"dag_id={context['ti'].dag_id}",
-            f"run_id={context['ti'].run_id}",
-            f"task_id={context['ti'].task_id}",
-            f"attempt={context['ti'].try_number}.log"]
-        message = \
-            f"Error: {e}, Log: {os.path.join(*log_file_path)}"
-        send_log_to_channels(
-            slack_conf=SLACK_CONF,
-            ms_teams_conf=MS_TEAMS_CONF,
-            task_id=context['task'].task_id,
-            dag_id=context['task'].dag_id,
-            project_id=None,
-            comment=message,
-            reaction='fail')
-        raise ValueError(e)
+      dcc_count_path: str,
+      md5_file: str,
+      report_file: str,
+      geomx_config: str) -> str:
+  try:
+    ## dag_run.conf should have analysis_id
+    context = get_current_context()
+    dag_run = context.get('dag_run')
+    analysis_id = None
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('analysis_id') is not None:
+      analysis_id = \
+        dag_run.conf.get('analysis_id')
+    if analysis_id is None:
+      raise ValueError(
+        'analysis_id not found in dag_run.conf')
+    ## check if path exists
+    check_file_path(geomx_config)
+    check_file_path(md5_file)
+    check_file_path(report_file)
+    ## load data to db
+    ## pipeline_name is context['task'].dag_id
+    pipeline_name = context['task'].dag_id
+    target_dir_path, project_igf_id, date_tag = \
+      collect_analysis_dir(
+        analysis_id=analysis_id,
+        dag_name=pipeline_name,
+        dir_path=dcc_count_path,
+        db_config_file=DATABASE_CONFIG_FILE,
+        hpc_base_path=HPC_BASE_RAW_DATA_PATH)
+    return {'target_dir_path': target_dir_path, 'date_tag': date_tag}
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
 
 
 ## TASK
 @task(
-	task_id="copy_data_to_globus",
-    retry_delay=timedelta(minutes=5),
-    retries=4,
-    queue='hpc_4G')
+  task_id="copy_data_to_globus",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_4G')
 def copy_data_to_globus(analysis_dir_dict: dict) -> None:
-    try:
-        analysis_dir = analysis_dir_dict.get('target_dir_path')
-        date_tag = analysis_dir_dict.get('date_tag')
-		## dag_run.conf should have analysis_id
-        context = get_current_context()
-        dag_run = context.get('dag_run')
-        analysis_id = None
-        if dag_run is not None and \
-           dag_run.conf is not None and \
-           dag_run.conf.get('analysis_id') is not None:
-            analysis_id = \
-                dag_run.conf.get('analysis_id')
-        if analysis_id is None:
-            raise ValueError('analysis_id not found in dag_run.conf')
-        ## pipeline_name is context['task'].dag_id
-        pipeline_name = context['task'].dag_id
-        target_dir_path = \
-            copy_analysis_to_globus_dir(
-                globus_root_dir=GLOBUS_ROOT_DIR,
-                dbconfig_file=DATABASE_CONFIG_FILE,
-                analysis_id=analysis_id,
-                analysis_dir=analysis_dir,
-                pipeline_name=pipeline_name,
-                date_tag=date_tag)
-    except Exception as e:
-        context = get_current_context()
-        log.error(e)
-        log_file_path = [
-            os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
-            f"dag_id={context['ti'].dag_id}",
-            f"run_id={context['ti'].run_id}",
-            f"task_id={context['ti'].task_id}",
-            f"attempt={context['ti'].try_number}.log"]
-        message = \
-            f"Error: {e}, Log: {os.path.join(*log_file_path)}"
-        send_log_to_channels(
-            slack_conf=SLACK_CONF,
-            ms_teams_conf=MS_TEAMS_CONF,
-            task_id=context['task'].task_id,
-            dag_id=context['task'].dag_id,
-            project_id=None,
-            comment=message,
-            reaction='fail')
-        raise ValueError(e)
+  try:
+    analysis_dir = analysis_dir_dict.get('target_dir_path')
+    date_tag = analysis_dir_dict.get('date_tag')
+    ## dag_run.conf should have analysis_id
+    context = get_current_context()
+    dag_run = context.get('dag_run')
+    analysis_id = None
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('analysis_id') is not None:
+      analysis_id = \
+        dag_run.conf.get('analysis_id')
+    if analysis_id is None:
+      raise ValueError(
+        'analysis_id not found in dag_run.conf')
+    ## pipeline_name is context['task'].dag_id
+    pipeline_name = context['task'].dag_id
+    target_dir_path = \
+      copy_analysis_to_globus_dir(
+        globus_root_dir=GLOBUS_ROOT_DIR,
+        dbconfig_file=DATABASE_CONFIG_FILE,
+        analysis_id=analysis_id,
+        analysis_dir=analysis_dir,
+        pipeline_name=pipeline_name,
+        date_tag=date_tag)
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
 
 # ## TASK
 # @task(
