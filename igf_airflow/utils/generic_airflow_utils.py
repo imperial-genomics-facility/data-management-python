@@ -7,6 +7,7 @@ from typing import (
     Optional)
 from igf_data.utils.fileutils import (
     get_temp_dir,
+    copy_local_file,
     check_file_path,
     read_json_data)
 from igf_data.utils.dbutils import read_dbconf_json
@@ -18,6 +19,7 @@ from igf_airflow.utils.dag22_bclconvert_demult_utils import (
 from igf_data.igfdb.analysisadaptor import AnalysisAdaptor
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
+from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 
 log = logging.getLogger(__name__)
 
@@ -179,6 +181,42 @@ def fetch_analysis_name_for_analysis_id(
       raise ValueError(
         f"Analysis name is None for id {analysis_id}")
     return analysis_name
+  except Exception as e:
+    raise ValueError(
+      f"Failed to get analysis name for id {analysis_id}, error: {e}")
+
+
+def fetch_analysis_type_for_analysis_id(
+      analysis_id: int,
+      dbconfig_file: str) -> str:
+  """
+  Fetch analysis type for analysis id
+
+  Parameters:
+  analysis_id (int): Analysis id from analsis table
+  dbconfig_file (str): Database config file path
+
+  Returns:
+  analysis_type (str)
+  """
+  try:
+    dbconf = read_dbconf_json(dbconfig_file)
+    aa = AnalysisAdaptor(**dbconf)
+    aa.start_session()
+    analysis_entry = \
+      aa.fetch_analysis_records_analysis_id(
+        analysis_id=analysis_id,
+        output_mode='one_or_none')
+    aa.close_session()
+    if analysis_entry is None:
+      raise ValueError(
+        f"No entry found for analysis id {analysis_id}")
+    analysis_type = \
+      analysis_entry.analysis_type
+    if analysis_type is None:
+      raise ValueError(
+        f"Analysis type is None for id {analysis_id}")
+    return analysis_type
   except Exception as e:
     raise ValueError(
       f"Failed to get analysis name for id {analysis_id}, error: {e}")
@@ -567,3 +605,203 @@ def fetch_analysis_yaml_and_dump_to_a_file(
   except Exception as e:
     message = f"Failed to get yaml, error: {e}"
     raise ValueError(message)
+
+
+def load_analysis_and_build_collection(
+      collection_name: str,
+      collection_type: str,
+      collection_table: str,
+      dbconfig_file: str,
+      analysis_id: int,
+      pipeline_name: str,
+      result_dir: str,
+      hpc_base_path: str,
+      date_tag: str,
+      ignore_dangling_symlinks: bool = True,
+      analysis_dir_prefix: str = 'analysis') \
+        -> str:
+  """
+  A function for copying all the files present under a result directory to 
+  a directory structure and creating an entry in the collection-file table
+
+  Parameters:
+  collection_name (str): Name to use for file collection
+  collection_type (str): Type of the files
+  collection_table (str): DB table name to link to the file collection
+  dbconfig_file (str): Database config file path
+  analysis_id (int): Analysis id from the analysis table entry
+  pipeline_name (str): Pipeline name
+  result_dir (str): Input directory path
+  hpc_base_path (str): target base directory
+  date_tag (str): Date tag to mark unique dataset path
+  ignore_dangling_symlinks (bool): Ignore danglig symlink setting for `shutils.copytree`,
+                                   default is True
+  analysis_dir_prefix (str):  Specific tag for analysis directoy structure,
+                              default is 'analysis'
+
+  Returns:
+  target_dir_path (str)
+  """
+  try:
+    check_file_path(result_dir)
+    check_file_path(hpc_base_path)
+    check_file_path(dbconfig_file)
+    ## get project id
+    dbconf = read_dbconf_json(dbconfig_file)
+    aa = AnalysisAdaptor(**dbconf)
+    aa.start_session()
+    project_igf_id = \
+      aa.fetch_project_igf_id_for_analysis_id(
+        analysis_id=analysis_id)
+    analysis_name = None
+    analysis_entry = \
+      aa.fetch_analysis_records_analysis_id(
+        analysis_id=analysis_id,
+        output_mode='one_or_none')
+    if analysis_entry is None:
+      raise ValueError(
+        f"No entry found for analysis {analysis_id} in db")
+    analysis_name = \
+      analysis_entry.analysis_name
+    if analysis_name is None:
+      raise ValueError(
+        f"No analysis_name found for analysis {analysis_id} in db")
+    aa.close_session()
+    ## move analysis to hpc. This can take long time.
+    target_dir_path = \
+      os.path.join(
+        hpc_base_path,
+        project_igf_id,
+        analysis_dir_prefix,
+        pipeline_name,
+        analysis_name,
+        date_tag,
+        os.path.basename(result_dir))
+    if os.path.exists(target_dir_path):
+      raise ValueError(
+        f"Output path {target_dir_path} already present. Manually remove it before re-run.")
+    copy_local_file(
+      source_path=result_dir,
+      destination_path=target_dir_path,
+      ignore_dangling_symlinks=ignore_dangling_symlinks)
+    check_file_path(target_dir_path)
+    ## load analysis to db
+    collection_data_list = [{
+      'name': collection_name,
+      'type': collection_type,
+      'table': collection_table,
+      'file_path': target_dir_path}]
+    ca = CollectionAdaptor(**dbconf)
+    ca.start_session()
+    try:
+      ca.load_file_and_create_collection(
+        data=collection_data_list,
+        calculate_file_size_and_md5=False,
+        autosave=False)
+      ca.commit_session()
+      ca.close_session()
+    except:
+      ca.rollback_session()
+      ca.close_session()
+      raise
+    return target_dir_path
+  except Exception as e:
+    raise ValueError(
+      f"Failed to load analysis results from {result_dir}, error: {e}")
+
+
+def parse_analysis_design_and_get_metadata(
+      input_design_yaml: str,
+      sample_metadata_key: str = 'sample_metadata',
+      analysis_metadata_key: str = 'analysis_metadata') \
+      -> Tuple[Optional[dict], Optional[dict]]:
+  """
+  A function for parsing analysis design yaml string data
+  and fetching `sample_metadata` and `analysis_metadata` entries
+
+  Parameters:
+  input_design_yaml (str): YAML analysis design as string
+  sample_metadata_key (str): Name of the sample metadata key, default `sample_metadata`
+  analysis_metadata_key (str): Name of the analysis metadata key, default `analysis_metadata`
+
+  Returns:
+  sample_metadata (dict)
+  analysis_metadata (dict)
+  """
+  try:
+    yaml_data = yaml.safe_load(input_design_yaml)
+    sample_metadata = \
+      yaml_data.get(sample_metadata_key)
+    analysis_metadata = \
+      yaml_data.get(analysis_metadata_key)
+    return sample_metadata, analysis_metadata
+  except Exception as e:
+    raise ValueError(
+      f"Failed to parse analysis design, error: {e}")
+
+
+def copy_analysis_to_globus_dir(
+      globus_root_dir: str,
+      dbconfig_file: str,
+      analysis_id: int,
+      analysis_dir: str,
+      date_tag: str,
+      ignore_dangling_symlinks: bool = True,
+      analysis_dir_prefix: str = 'analysis') \
+        -> str:
+  """
+  A function for copying files to Globus analysis directory
+
+  Parameters:
+  globus_root_dir (str): Globus root directory path
+  dbconfig_file (str): Database config file path
+  analysis_id (int): Analysis id from the analysis table entry
+  analysis_dir (str): Analysis directory path for copy
+  date_tag (str): Date tag for unique target direcoty path
+  ignore_dangling_symlinks (bool): Ignore danglig symlink setting for `shutils.copytree`,
+                                   default is True
+  analysis_dir_prefix (str): Prefix for analysis directory, default is `analysis`
+
+  Returns:
+  target_dir_path (str)
+  """
+  try:
+    check_file_path(globus_root_dir)
+    ## get pipeline name
+    pipeline_name = \
+      fetch_analysis_type_for_analysis_id(
+        analysis_id=analysis_id,
+        dbconfig_file=dbconfig_file)
+    ## fetch analysis name
+    analysis_name = \
+      fetch_analysis_name_for_analysis_id(
+        analysis_id=analysis_id,
+        dbconfig_file=dbconfig_file)
+    ## get project name
+    project_igf_id = \
+      get_project_igf_id_for_analysis(
+        analysis_id=analysis_id,
+        dbconfig_file=dbconfig_file)
+    ## build target path
+    target_dir_path = \
+      os.path.join(
+        globus_root_dir,
+        project_igf_id,
+        analysis_dir_prefix,
+        pipeline_name,
+        analysis_name,
+        date_tag,
+        os.path.basename(analysis_dir))
+    if os.path.exists(target_dir_path):
+      raise ValueError(
+        f"Globus target dir {target_dir_path} already present")
+    ## copy directory
+    copy_local_file(
+      source_path=analysis_dir,
+      destination_path=target_dir_path,
+      ignore_dangling_symlinks=ignore_dangling_symlinks)
+    check_file_path(target_dir_path)
+    return target_dir_path
+  except Exception as e:
+    raise ValueError(
+      f"Failed to copy data to globus dir, error: {e}")

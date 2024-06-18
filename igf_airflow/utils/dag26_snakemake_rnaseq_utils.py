@@ -34,11 +34,16 @@ from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_airflow.utils.dag22_bclconvert_demult_utils import (
     _create_output_from_jinja_template,
     send_email_via_smtp)
-
 from igf_airflow.utils.generic_airflow_tasks import (
   generate_email_text_for_analysis,
   check_and_seed_analysis_pipeline,
   get_project_igf_id_for_analysis,
+  load_analysis_and_build_collection,
+  fetch_analysis_design,
+  parse_analysis_design_and_get_metadata,
+  copy_analysis_to_globus_dir,
+  fetch_analysis_name_for_analysis_id,
+  send_airflow_failed_logs_to_channels
 )
 
 log = logging.getLogger(__name__)
@@ -212,23 +217,11 @@ def send_email_to_user_func(**context):
       email_text_file=email_text_file)
   except Exception as e:
     log.error(e)
-    ti = context.get('ti')
-    log_file_path = [
-      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
-      f"dag_id={ti.dag_id}",
-      f"run_id={ti.run_id}",
-      f"task_id={ti.task_id}",
-      f"attempt={ti.try_number}.log"]
-    message = \
-      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
-    send_log_to_channels(
+    send_airflow_failed_logs_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
-      task_id=context['task'].task_id,
-      dag_id=context['task'].dag_id,
-      comment=message,
-      reaction='fail')
-    raise
+      message_prefix=e)
+    raise ValueError(e)
 
 
 def change_analysis_seed_status_func(**context):
@@ -284,23 +277,11 @@ def change_analysis_seed_status_func(**context):
     return task_list
   except Exception as e:
     log.error(e)
-    ti = context.get('ti')
-    log_file_path = [
-      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
-      f"dag_id={ti.dag_id}",
-      f"run_id={ti.run_id}",
-      f"task_id={ti.task_id}",
-      f"attempt={ti.try_number}.log"]
-    message = \
-      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
-    send_log_to_channels(
+    send_airflow_failed_logs_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
-      task_id=context['task'].task_id,
-      dag_id=context['task'].dag_id,
-      comment=message,
-      reaction='fail')
-    raise
+      message_prefix=e)
+    raise ValueError(e)
 
 
 # def check_and_seed_analysis_pipeline(
@@ -497,21 +478,21 @@ def parse_design_and_build_inputs_for_snakemake_rnaseq(
       f"Failed to parse analysis design and generate snakemake input, error: {e}")
 
 
-def parse_analysis_design_and_get_metadata(
-      input_design_yaml: str,
-      sample_metadata_key: str = 'sample_metadata',
-      analysis_metadata_key: str = 'analysis_metadata') \
-      -> Tuple[Union[dict, None], Union[dict, None]]:
-  try:
-    yaml_data = yaml.safe_load(input_design_yaml)
-    sample_metadata = \
-      yaml_data.get(sample_metadata_key)
-    analysis_metadata = \
-      yaml_data.get(analysis_metadata_key)
-    return sample_metadata, analysis_metadata
-  except Exception as e:
-    raise ValueError(
-      f"Failed to parse analysis design, error: {e}")
+# def parse_analysis_design_and_get_metadata(
+#       input_design_yaml: str,
+#       sample_metadata_key: str = 'sample_metadata',
+#       analysis_metadata_key: str = 'analysis_metadata') \
+#       -> Tuple[Union[dict, None], Union[dict, None]]:
+#   try:
+#     yaml_data = yaml.safe_load(input_design_yaml)
+#     sample_metadata = \
+#       yaml_data.get(sample_metadata_key)
+#     analysis_metadata = \
+#       yaml_data.get(analysis_metadata_key)
+#     return sample_metadata, analysis_metadata
+#   except Exception as e:
+#     raise ValueError(
+#       f"Failed to parse analysis design, error: {e}")
 
 
 def prepare_sample_and_units_tsv_for_snakemake_rnaseq(
@@ -683,22 +664,11 @@ def prepare_snakemake_inputs_func(**context):
       reaction='pass')
   except Exception as e:
     log.error(e)
-    log_file_path = [
-      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
-      f"dag_id={ti.dag_id}",
-      f"run_id={ti.run_id}",
-      f"task_id={ti.task_id}",
-      f"attempt={ti.try_number}.log"]
-    message = \
-      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
-    send_log_to_channels(
+    send_airflow_failed_logs_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
-      task_id=context['task'].task_id,
-      dag_id=context['task'].dag_id,
-      comment=message,
-      reaction='fail')
-    raise
+      message_prefix=e)
+    raise ValueError(e)
 
 
 # def get_project_igf_id_for_analysis(
@@ -824,22 +794,11 @@ def load_analysis_to_disk_func(**context):
       value=date_tag)
   except Exception as e:
     log.error(e)
-    log_file_path = [
-      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
-      f"dag_id={ti.dag_id}",
-      f"run_id={ti.run_id}",
-      f"task_id={ti.task_id}",
-      f"attempt={ti.try_number}.log"]
-    message = \
-      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
-    send_log_to_channels(
+    send_airflow_failed_logs_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
-      task_id=context['task'].task_id,
-      dag_id=context['task'].dag_id,
-      comment=message,
-      reaction='fail')
-    raise
+      message_prefix=e)
+    raise ValueError(e)
 
 
 def calculate_analysis_name(
@@ -849,19 +808,24 @@ def calculate_analysis_name(
         -> str:
   try:
     check_file_path(dbconfig_file)
-    dbconf = read_dbconf_json(dbconfig_file)
-    aa = AnalysisAdaptor(**dbconf)
-    aa.start_session()
-    analysis = \
-      aa.fetch_analysis_records_analysis_id(
-        analysis_id=analysis_id,
-        output_mode='one_or_none')
-    aa.close_session()
-    if analysis is None:
-      raise ValueError(
-        f"No entry found for analysis id {analysis_id}")
+    ## fetch analysis name
     analysis_name = \
-      analysis.analysis_name
+      fetch_analysis_name_for_analysis_id(
+        analysis_id=analysis_id,
+        dbconfig_file=dbconfig_file)
+    # dbconf = read_dbconf_json(dbconfig_file)
+    # aa = AnalysisAdaptor(**dbconf)
+    # aa.start_session()
+    # analysis = \
+    #   aa.fetch_analysis_records_analysis_id(
+    #     analysis_id=analysis_id,
+    #     output_mode='one_or_none')
+    # aa.close_session()
+    # if analysis is None:
+    #   raise ValueError(
+    #     f"No entry found for analysis id {analysis_id}")
+    # analysis_name = \
+    #   analysis.analysis_name
     ## clean analysis_name
     symbol_pattern = \
       re.compile(r"[!\"#$%&\[\]\\'()*\+,./:;<=>?@^`{|}~]")
@@ -882,85 +846,85 @@ def calculate_analysis_name(
       f"Failed to calculate analysis name for entry {analysis_id}, error: {e}")
 
 
-def load_analysis_and_build_collection(
-      collection_name: str,
-      collection_type: str,
-      collection_table: str,
-      dbconfig_file: str,
-      analysis_id: int,
-      pipeline_name: str,
-      result_dir: str,
-      hpc_base_path: str,
-      date_tag: str,
-      ignore_dangling_symlinks: bool = True,
-      analysis_dir_prefix: str = 'analysis') \
-        -> str:
-  try:
-    check_file_path(result_dir)
-    check_file_path(hpc_base_path)
-    check_file_path(dbconfig_file)
-    ## get project id
-    dbconf = read_dbconf_json(dbconfig_file)
-    aa = AnalysisAdaptor(**dbconf)
-    aa.start_session()
-    project_igf_id = \
-      aa.fetch_project_igf_id_for_analysis_id(
-        analysis_id=analysis_id)
-    analysis_name = None
-    analysis_entry = \
-      aa.fetch_analysis_records_analysis_id(
-        analysis_id=analysis_id,
-        output_mode='one_or_none')
-    if analysis_entry is None:
-      raise ValueError(
-        f"No entry found for analysis {analysis_id} in db")
-    analysis_name = \
-      analysis_entry.analysis_name
-    if analysis_name is None:
-      raise ValueError(
-        f"No analysis_name found for analysis {analysis_id} in db")
-    aa.close_session()
-    ## move analysis to hpc. This can take long time.
-    target_dir_path = \
-      os.path.join(
-        hpc_base_path,
-        project_igf_id,
-        analysis_dir_prefix,
-        pipeline_name,
-        analysis_name,
-        date_tag,
-        os.path.basename(result_dir))
-    if os.path.exists(target_dir_path):
-      raise ValueError(
-        f"Output path {target_dir_path} already present. Manually remove it before re-run.")
-    copy_local_file(
-      source_path=result_dir,
-      destination_path=target_dir_path,
-      ignore_dangling_symlinks=ignore_dangling_symlinks)
-    check_file_path(target_dir_path)
-    ## load analysis to db
-    collection_data_list = [{
-      'name': collection_name,
-      'type': collection_type,
-      'table': collection_table,
-      'file_path': target_dir_path}]
-    ca = CollectionAdaptor(**dbconf)
-    ca.start_session()
-    try:
-      ca.load_file_and_create_collection(
-        data=collection_data_list,
-        calculate_file_size_and_md5=False,
-        autosave=False)
-      ca.commit_session()
-      ca.close_session()
-    except:
-      ca.rollback_session()
-      ca.close_session()
-      raise
-    return target_dir_path
-  except Exception as e:
-    raise ValueError(
-      f"Failed to load analysis results from {result_dir}, error: {e}")
+# def load_analysis_and_build_collection(
+#       collection_name: str,
+#       collection_type: str,
+#       collection_table: str,
+#       dbconfig_file: str,
+#       analysis_id: int,
+#       pipeline_name: str,
+#       result_dir: str,
+#       hpc_base_path: str,
+#       date_tag: str,
+#       ignore_dangling_symlinks: bool = True,
+#       analysis_dir_prefix: str = 'analysis') \
+#         -> str:
+#   try:
+#     check_file_path(result_dir)
+#     check_file_path(hpc_base_path)
+#     check_file_path(dbconfig_file)
+#     ## get project id
+#     dbconf = read_dbconf_json(dbconfig_file)
+#     aa = AnalysisAdaptor(**dbconf)
+#     aa.start_session()
+#     project_igf_id = \
+#       aa.fetch_project_igf_id_for_analysis_id(
+#         analysis_id=analysis_id)
+#     analysis_name = None
+#     analysis_entry = \
+#       aa.fetch_analysis_records_analysis_id(
+#         analysis_id=analysis_id,
+#         output_mode='one_or_none')
+#     if analysis_entry is None:
+#       raise ValueError(
+#         f"No entry found for analysis {analysis_id} in db")
+#     analysis_name = \
+#       analysis_entry.analysis_name
+#     if analysis_name is None:
+#       raise ValueError(
+#         f"No analysis_name found for analysis {analysis_id} in db")
+#     aa.close_session()
+#     ## move analysis to hpc. This can take long time.
+#     target_dir_path = \
+#       os.path.join(
+#         hpc_base_path,
+#         project_igf_id,
+#         analysis_dir_prefix,
+#         pipeline_name,
+#         analysis_name,
+#         date_tag,
+#         os.path.basename(result_dir))
+#     if os.path.exists(target_dir_path):
+#       raise ValueError(
+#         f"Output path {target_dir_path} already present. Manually remove it before re-run.")
+#     copy_local_file(
+#       source_path=result_dir,
+#       destination_path=target_dir_path,
+#       ignore_dangling_symlinks=ignore_dangling_symlinks)
+#     check_file_path(target_dir_path)
+#     ## load analysis to db
+#     collection_data_list = [{
+#       'name': collection_name,
+#       'type': collection_type,
+#       'table': collection_table,
+#       'file_path': target_dir_path}]
+#     ca = CollectionAdaptor(**dbconf)
+#     ca.start_session()
+#     try:
+#       ca.load_file_and_create_collection(
+#         data=collection_data_list,
+#         calculate_file_size_and_md5=False,
+#         autosave=False)
+#       ca.commit_session()
+#       ca.close_session()
+#     except:
+#       ca.rollback_session()
+#       ca.close_session()
+#       raise
+#     return target_dir_path
+#   except Exception as e:
+#     raise ValueError(
+#       f"Failed to load analysis results from {result_dir}, error: {e}")
 
 
 def copy_analysis_to_globus_dir_func(**context):
@@ -1010,74 +974,63 @@ def copy_analysis_to_globus_dir_func(**context):
     return target_dir_path
   except Exception as e:
     log.error(e)
-    log_file_path = [
-      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
-      f"dag_id={ti.dag_id}",
-      f"run_id={ti.run_id}",
-      f"task_id={ti.task_id}",
-      f"attempt={ti.try_number}.log"]
-    message = \
-      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
-    send_log_to_channels(
+    send_airflow_failed_logs_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
-      task_id=context['task'].task_id,
-      dag_id=context['task'].dag_id,
-      comment=message,
-      reaction='fail')
-    raise
+      message_prefix=e)
+    raise ValueError(e)
 
 
-def copy_analysis_to_globus_dir(
-      globus_root_dir: str,
-      dbconfig_file: str,
-      analysis_id: int,
-      analysis_dir: str,
-      pipeline_name: str,
-      date_tag: str,
-      analysis_dir_prefix: str = 'analysis') \
-        -> str:
-  try:
-    check_file_path(globus_root_dir)
-    ## get project id
-    dbconf = read_dbconf_json(dbconfig_file)
-    aa = AnalysisAdaptor(**dbconf)
-    aa.start_session()
-    project_igf_id = \
-      aa.fetch_project_igf_id_for_analysis_id(
-        analysis_id=analysis_id)
-    analysis_name = None
-    analysis_entry = \
-      aa.fetch_analysis_records_analysis_id(
-        analysis_id=analysis_id,
-        output_mode='one_or_none')
-    if analysis_entry is None:
-      raise ValueError(
-        f"No entry found for analysis {analysis_id} in db")
-    analysis_name = \
-      analysis_entry.analysis_name
-    if analysis_name is None:
-      raise ValueError(
-        f"No analysis_name found for analysis {analysis_id} in db")
-    aa.close_session()
-    ## get globus target path
-    target_dir_path = \
-      os.path.join(
-        globus_root_dir,
-        project_igf_id,
-        analysis_dir_prefix,
-        pipeline_name,
-        analysis_name,
-        date_tag,
-        os.path.basename(analysis_dir))
-    if os.path.exists(target_dir_path):
-      raise ValueError(
-        f"Globus target dir {target_dir_path} already present")
-    copy_local_file(
-      source_path=analysis_dir,
-      destination_path=target_dir_path)
-    check_file_path(target_dir_path)
-    return target_dir_path
-  except Exception as e:
-    raise ValueError(
-      f"Failed to copy data to globus dir, error: {e}")
+# def copy_analysis_to_globus_dir(
+#       globus_root_dir: str,
+#       dbconfig_file: str,
+#       analysis_id: int,
+#       analysis_dir: str,
+#       pipeline_name: str,
+#       date_tag: str,
+#       analysis_dir_prefix: str = 'analysis') \
+#         -> str:
+#   try:
+#     check_file_path(globus_root_dir)
+#     ## get project id
+#     dbconf = read_dbconf_json(dbconfig_file)
+#     aa = AnalysisAdaptor(**dbconf)
+#     aa.start_session()
+#     project_igf_id = \
+#       aa.fetch_project_igf_id_for_analysis_id(
+#         analysis_id=analysis_id)
+#     analysis_name = None
+#     analysis_entry = \
+#       aa.fetch_analysis_records_analysis_id(
+#         analysis_id=analysis_id,
+#         output_mode='one_or_none')
+#     if analysis_entry is None:
+#       raise ValueError(
+#         f"No entry found for analysis {analysis_id} in db")
+#     analysis_name = \
+#       analysis_entry.analysis_name
+#     if analysis_name is None:
+#       raise ValueError(
+#         f"No analysis_name found for analysis {analysis_id} in db")
+#     aa.close_session()
+#     ## get globus target path
+#     target_dir_path = \
+#       os.path.join(
+#         globus_root_dir,
+#         project_igf_id,
+#         analysis_dir_prefix,
+#         pipeline_name,
+#         analysis_name,
+#         date_tag,
+#         os.path.basename(analysis_dir))
+#     if os.path.exists(target_dir_path):
+#       raise ValueError(
+#         f"Globus target dir {target_dir_path} already present")
+#     copy_local_file(
+#       source_path=analysis_dir,
+#       destination_path=target_dir_path)
+#     check_file_path(target_dir_path)
+#     return target_dir_path
+#   except Exception as e:
+#     raise ValueError(
+#       f"Failed to copy data to globus dir, error: {e}")
