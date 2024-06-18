@@ -13,6 +13,7 @@ from igf_data.utils.fileutils import (
 from igf_data.utils.dbutils import read_dbconf_json
 from airflow.operators.python import get_current_context
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
+from igf_data.utils.analysis_fastq_fetch_utils import get_fastq_and_run_for_samples
 from igf_airflow.utils.dag22_bclconvert_demult_utils import (
     _create_output_from_jinja_template,
     send_email_via_smtp)
@@ -805,3 +806,54 @@ def copy_analysis_to_globus_dir(
   except Exception as e:
     raise ValueError(
       f"Failed to copy data to globus dir, error: {e}")
+
+
+def get_fastq_for_samples_and_dump_in_json_file(
+      design_file: str,
+      db_config_file: str) -> str:
+  """
+  A function for fetching sample and fastq records for analysis design
+  Sample record includes sample_igf_id, run_igf_id, flowcell_id, lane_number and file_paths
+
+  Parameters:
+  design_file (str): Path of a analysis design yaml file
+  db_config_file (str): Database config path
+
+  Returns:
+  fastq_list_json (str)
+  """
+  try:
+    check_file_path(design_file)
+    with open(design_file, 'r') as fp:
+      input_design_yaml = fp.read()
+    sample_metadata, analysis_metadata = \
+      parse_analysis_design_and_get_metadata(
+        input_design_yaml=input_design_yaml)
+    if sample_metadata is None or \
+       analysis_metadata is None:
+      raise KeyError(
+        "Missing sample or analysis metadata")
+    ## get sample ids from metadata
+    sample_igf_id_list = \
+      list(sample_metadata.keys())
+    if len(sample_igf_id_list) == 0:
+      raise ValueError(
+        "No sample id found in the metadata")
+    ## get fastq files for all samples
+    fastq_list = \
+      get_fastq_and_run_for_samples(
+        dbconfig_file=db_config_file,
+        sample_igf_id_list=sample_igf_id_list)
+    if len(fastq_list) == 0:
+      raise ValueError(
+        f"No fastq file found for samples: {design_file}")
+    temp_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    fastq_list_json = \
+      os.path.join(temp_dir, 'fastq_list.json')
+    with open(fastq_list_json, 'w') as fp:
+      json.dump(fastq_list, fp)
+    return fastq_list_json
+  except Exception as e:
+    raise ValueError(
+      f"Failed to create fastq list json, error: {e}")
