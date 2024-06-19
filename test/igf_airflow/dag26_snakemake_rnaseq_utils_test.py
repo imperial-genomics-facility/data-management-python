@@ -545,7 +545,7 @@ class TestDag26_snakemake_rnaseq_utilsC(unittest.TestCase):
         dbconfig_file=self.dbconfig,
         analysis_id=1,
         analysis_dir=target_dir_path,
-        pipeline_name='pipeline_1',
+        #pipeline_name='pipeline_1',
         date_tag='2022_01_01',
         analysis_dir_prefix='analysis')
     self.assertTrue(os.path.exists(globus_analysis_dir))
