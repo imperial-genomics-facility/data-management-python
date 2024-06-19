@@ -618,10 +618,10 @@ def load_analysis_and_build_collection(
       collection_table: str,
       dbconfig_file: str,
       analysis_id: int,
-      pipeline_name: str,
       result_dir: str,
       hpc_base_path: str,
       date_tag: str,
+      pipeline_name: Optional[str] = None,
       ignore_dangling_symlinks: bool = True,
       analysis_dir_prefix: str = 'analysis') \
         -> str:
@@ -635,7 +635,7 @@ def load_analysis_and_build_collection(
   collection_table (str): DB table name to link to the file collection
   dbconfig_file (str): Database config file path
   analysis_id (int): Analysis id from the analysis table entry
-  pipeline_name (str): Pipeline name
+  pipeline_name (Optional[str]): Pipeline name
   result_dir (str): Input directory path
   hpc_base_path (str): target base directory
   date_tag (str): Date tag to mark unique dataset path
@@ -651,27 +651,40 @@ def load_analysis_and_build_collection(
     check_file_path(result_dir)
     check_file_path(hpc_base_path)
     check_file_path(dbconfig_file)
-    ## get project id
-    dbconf = read_dbconf_json(dbconfig_file)
-    aa = AnalysisAdaptor(**dbconf)
-    aa.start_session()
+    if pipeline_name is None:
+      pipeline_name = \
+        fetch_analysis_type_for_analysis_id(
+          analysis_id=analysis_id,
+          dbconfig_file=dbconfig_file)
     project_igf_id = \
-      aa.fetch_project_igf_id_for_analysis_id(
-        analysis_id=analysis_id)
-    analysis_name = None
-    analysis_entry = \
-      aa.fetch_analysis_records_analysis_id(
+      get_project_igf_id_for_analysis(
         analysis_id=analysis_id,
-        output_mode='one_or_none')
-    if analysis_entry is None:
-      raise ValueError(
-        f"No entry found for analysis {analysis_id} in db")
+        dbconfig_file=dbconfig_file)
     analysis_name = \
-      analysis_entry.analysis_name
-    if analysis_name is None:
-      raise ValueError(
-        f"No analysis_name found for analysis {analysis_id} in db")
-    aa.close_session()
+      fetch_analysis_name_for_analysis_id(
+        analysis_id=analysis_id,
+        dbconfig_file=dbconfig_file)
+    ## get project id
+    # dbconf = read_dbconf_json(dbconfig_file)
+    # aa = AnalysisAdaptor(**dbconf)
+    # aa.start_session()
+    # project_igf_id = \
+    #   aa.fetch_project_igf_id_for_analysis_id(
+    #     analysis_id=analysis_id)
+    # analysis_name = None
+    # analysis_entry = \
+    #   aa.fetch_analysis_records_analysis_id(
+    #     analysis_id=analysis_id,
+    #     output_mode='one_or_none')
+    # if analysis_entry is None:
+    #   raise ValueError(
+    #     f"No entry found for analysis {analysis_id} in db")
+    # analysis_name = \
+    #   analysis_entry.analysis_name
+    # if analysis_name is None:
+    #   raise ValueError(
+    #     f"No analysis_name found for analysis {analysis_id} in db")
+    # aa.close_session()
     ## move analysis to hpc. This can take long time.
     target_dir_path = \
       os.path.join(
@@ -696,6 +709,7 @@ def load_analysis_and_build_collection(
       'type': collection_type,
       'table': collection_table,
       'file_path': target_dir_path}]
+    dbconf = read_dbconf_json(dbconfig_file)
     ca = CollectionAdaptor(**dbconf)
     ca.start_session()
     try:

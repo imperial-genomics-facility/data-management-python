@@ -34,15 +34,16 @@ from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_airflow.utils.dag22_bclconvert_demult_utils import (
     _create_output_from_jinja_template,
     send_email_via_smtp)
+from igf_airflow.utils.generic_airflow_utils import (
+    get_project_igf_id_for_analysis,
+    load_analysis_and_build_collection,
+    parse_analysis_design_and_get_metadata,
+    copy_analysis_to_globus_dir,
+    calculate_analysis_name,
+    fetch_analysis_design)
 from igf_airflow.utils.generic_airflow_tasks import (
   generate_email_text_for_analysis,
   check_and_seed_analysis_pipeline,
-  get_project_igf_id_for_analysis,
-  load_analysis_and_build_collection,
-  fetch_analysis_design,
-  parse_analysis_design_and_get_metadata,
-  copy_analysis_to_globus_dir,
-  fetch_analysis_name_for_analysis_id,
   send_airflow_failed_logs_to_channels
 )
 
@@ -801,49 +802,49 @@ def load_analysis_to_disk_func(**context):
     raise ValueError(e)
 
 
-def calculate_analysis_name(
-      analysis_id: int,
-      date_tag: str,
-      dbconfig_file: str) \
-        -> str:
-  try:
-    check_file_path(dbconfig_file)
-    ## fetch analysis name
-    analysis_name = \
-      fetch_analysis_name_for_analysis_id(
-        analysis_id=analysis_id,
-        dbconfig_file=dbconfig_file)
-    # dbconf = read_dbconf_json(dbconfig_file)
-    # aa = AnalysisAdaptor(**dbconf)
-    # aa.start_session()
-    # analysis = \
-    #   aa.fetch_analysis_records_analysis_id(
-    #     analysis_id=analysis_id,
-    #     output_mode='one_or_none')
-    # aa.close_session()
-    # if analysis is None:
-    #   raise ValueError(
-    #     f"No entry found for analysis id {analysis_id}")
-    # analysis_name = \
-    #   analysis.analysis_name
-    ## clean analysis_name
-    symbol_pattern = \
-      re.compile(r"[!\"#$%&\[\]\\'()*\+,./:;<=>?@^`{|}~]")
-    white_space_pattern = \
-      re.compile(r'\s+')
-    double_underscore = \
-      re.compile(r'_+')
-    s1 = re.sub(symbol_pattern, '_', analysis_name)
-    s2 = re.sub(white_space_pattern, '_', s1)
-    analysis_name = re.sub(double_underscore, '_', s2)
-    collection_name = \
-      f"{analysis_name}_{str(analysis_id)}_{date_tag}"
-    collection_name = \
-      re.sub(double_underscore, '_', collection_name)
-    return collection_name
-  except Exception as e:
-    raise ValueError(
-      f"Failed to calculate analysis name for entry {analysis_id}, error: {e}")
+# def calculate_analysis_name(
+#       analysis_id: int,
+#       date_tag: str,
+#       dbconfig_file: str) \
+#         -> str:
+#   try:
+#     check_file_path(dbconfig_file)
+#     ## fetch analysis name
+#     analysis_name = \
+#       fetch_analysis_name_for_analysis_id(
+#         analysis_id=analysis_id,
+#         dbconfig_file=dbconfig_file)
+#     # dbconf = read_dbconf_json(dbconfig_file)
+#     # aa = AnalysisAdaptor(**dbconf)
+#     # aa.start_session()
+#     # analysis = \
+#     #   aa.fetch_analysis_records_analysis_id(
+#     #     analysis_id=analysis_id,
+#     #     output_mode='one_or_none')
+#     # aa.close_session()
+#     # if analysis is None:
+#     #   raise ValueError(
+#     #     f"No entry found for analysis id {analysis_id}")
+#     # analysis_name = \
+#     #   analysis.analysis_name
+#     ## clean analysis_name
+#     symbol_pattern = \
+#       re.compile(r"[!\"#$%&\[\]\\'()*\+,./:;<=>?@^`{|}~]")
+#     white_space_pattern = \
+#       re.compile(r'\s+')
+#     double_underscore = \
+#       re.compile(r'_+')
+#     s1 = re.sub(symbol_pattern, '_', analysis_name)
+#     s2 = re.sub(white_space_pattern, '_', s1)
+#     analysis_name = re.sub(double_underscore, '_', s2)
+#     collection_name = \
+#       f"{analysis_name}_{str(analysis_id)}_{date_tag}"
+#     collection_name = \
+#       re.sub(double_underscore, '_', collection_name)
+#     return collection_name
+#   except Exception as e:
+#     raise ValueError(
+#       f"Failed to calculate analysis name for entry {analysis_id}, error: {e}")
 
 
 # def load_analysis_and_build_collection(
@@ -969,7 +970,7 @@ def copy_analysis_to_globus_dir_func(**context):
         dbconfig_file=DATABASE_CONFIG_FILE,
         analysis_id=analysis_id,
         analysis_dir=analysis_dir,
-        pipeline_name=context['task'].dag_id,
+        #pipeline_name=context['task'].dag_id,
         date_tag=date_tag)
     return target_dir_path
   except Exception as e:
