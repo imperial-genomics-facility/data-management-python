@@ -41,32 +41,23 @@ from igf_data.igfdb.analysisadaptor import AnalysisAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
-from igf_airflow.utils.dag22_bclconvert_demult_utils import (
-    _create_output_from_jinja_template,
-    send_email_via_smtp)
-from igf_airflow.utils.dag26_snakemake_rnaseq_utils import (
-    fetch_analysis_design,
-    parse_analysis_design_and_get_metadata,
-    get_project_igf_id_for_analysis,
-    calculate_analysis_name,
-    load_analysis_and_build_collection,
-    #copy_analysis_to_globus_dir,
-    check_and_seed_analysis_pipeline,
-    generate_email_text_for_analysis,
-    #fetch_analysis_name_for_analysis_id,
-    fetch_user_info_for_project_igf_id)
+from igf_airflow.utils.dag22_bclconvert_demult_utils import _create_output_from_jinja_template
 from airflow.operators.python import get_current_context
 from airflow.decorators import task
 from igf_airflow.utils.generic_airflow_utils import (
+    get_project_igf_id_for_analysis,
     fetch_analysis_yaml_and_dump_to_a_file,
     fetch_analysis_name_for_analysis_id,
     get_fastq_for_samples_and_dump_in_json_file,
-    send_airflow_failed_logs_to_channels
+    send_airflow_failed_logs_to_channels,
+    collect_analysis_dir,
+    copy_analysis_to_globus_dir,
+    calculate_md5sum_for_analysis_dir,
+    fetch_user_info_for_project_igf_id,
+    generate_email_text_for_analysis,
+    parse_analysis_design_and_get_metadata
 )
 
-from igf_airflow.utils.generic_airflow_tasks import (
-    copy_analysis_to_globus_dir
-)
 
 log = logging.getLogger(__name__)
 
@@ -419,7 +410,7 @@ def read_fastq_list_json_and_create_symlink_dir_for_geomx_ngs(
     symlink_dir = get_temp_dir(use_ephemeral_space=True)
     symlink_dict = dict()
     pattern = \
-    re.compile(r'(\S+)_S(\d+)_(L00\d)_(R[1,2])_001.fastq.gz')
+      re.compile(r'(\S+)_S(\d+)_(L00\d)_(R[1,2])_001.fastq.gz')
     if duplicate_rows > 0:
       ## make filenames unique
       counter = 999
@@ -429,19 +420,19 @@ def read_fastq_list_json_and_create_symlink_dir_for_geomx_ngs(
           source_path = r['file_path']
           source_name = r['file_name']
           match = re.match(pattern, source_name)
-        if match:
-          (sample_id, s_id, l_id, r_id) = match.groups()
-          dest_name = f"{sample_id}_S{counter}_{l_id}_{r_id}_001.fastq.gz"
-          dest_path = os.path.join(symlink_dir, dest_name)
-          symlink_dict.update({source_path: dest_path})
+          if match:
+            (sample_id, s_id, l_id, r_id) = match.groups()
+            dest_name = f"{sample_id}_S{counter}_{l_id}_{r_id}_001.fastq.gz"
+            dest_path = os.path.join(symlink_dir, dest_name)
+            symlink_dict.update({source_path: dest_path})
     else:
       for r in df[['file_path', 'file_name']].to_dict(orient='records'):
         source_path = r['file_path']
         dest_name = r['file_name']
         dest_path = os.path.join(symlink_dir, dest_name)
         match = re.match(pattern, dest_name)
-      if match:
-        symlink_dict.update({source_path: dest_path})
+        if match:
+          symlink_dict.update({source_path: dest_path})
     ## create symlink
     if len(symlink_dict) == 0:
       raise ValueError(
@@ -886,34 +877,34 @@ def build_qc_report_for_geomx(
       f"Failed to generate qc report. Error: {e}")
 
 
-def calculate_md5sum_for_analysis_dir(dir_path: str) -> str:
-  try:
-    temp_dir = \
-      get_temp_dir(use_ephemeral_space=True)
-    bash_template = \
-      Template(
-        """set -eo pipefail;
-        cd {{ TMP_PATH }};
-        find {{ DIR_PATH }} -type f -exec md5sum {} \; > file_manifest.md5;
-        mv file_manifest.md5 {{ DIR_PATH }}""")
-    script_path = \
-      os.path.join(temp_dir, 'bash_script.sh')
-    rendered_template = \
-      bash_template.render(
-        TMP_PATH=temp_dir,
-        DIR_PATH=dir_path)
-    with open(script_path, 'w') as fp:
-      fp.write(rendered_template)
-    stdout_file, stderr_file = \
-      bash_script_wrapper(
-        script_path=script_path)
-    md5_sum_file = \
-      os.path.join(dir_path, 'file_manifest.md5')
-    check_file_path(md5_sum_file)
-    return md5_sum_file
-  except Exception as e:
-    raise ValueError(
-      f"Failed to get md5sum for dir {dir_path}, error: {e}")
+# def calculate_md5sum_for_analysis_dir(dir_path: str) -> str:
+#   try:
+#     temp_dir = \
+#       get_temp_dir(use_ephemeral_space=True)
+#     bash_template = \
+#       Template(
+#         """set -eo pipefail;
+#         cd {{ TMP_PATH }};
+#         find {{ DIR_PATH }} -type f -exec md5sum {} \; > file_manifest.md5;
+#         mv file_manifest.md5 {{ DIR_PATH }}""")
+#     script_path = \
+#       os.path.join(temp_dir, 'bash_script.sh')
+#     rendered_template = \
+#       bash_template.render(
+#         TMP_PATH=temp_dir,
+#         DIR_PATH=dir_path)
+#     with open(script_path, 'w') as fp:
+#       fp.write(rendered_template)
+#     stdout_file, stderr_file = \
+#       bash_script_wrapper(
+#         script_path=script_path)
+#     md5_sum_file = \
+#       os.path.join(dir_path, 'file_manifest.md5')
+#     check_file_path(md5_sum_file)
+#     return md5_sum_file
+#   except Exception as e:
+#     raise ValueError(
+#       f"Failed to get md5sum for dir {dir_path}, error: {e}")
 
 
 ## TASK
@@ -937,43 +928,43 @@ def calculate_md5sum_for_dcc(dcc_count_path: str) -> str:
     raise ValueError(e)
 
 
-def collect_analysis_dir(
-      analysis_id: int,
-      dag_name: str,
-      dir_path: str,
-      db_config_file:str,
-      hpc_base_path: str,
-      collection_table: str = 'analysis',
-      analysis_dir_prefix: str = 'analysis') -> Tuple[str, str, str]:
-  try:
-    date_tag = get_date_stamp_for_file_name()
-    collection_type = dag_name.upper()
-    collection_name = \
-      calculate_analysis_name(
-        analysis_id=analysis_id,
-        date_tag=date_tag,
-        dbconfig_file=db_config_file)
-    target_dir_path = \
-      load_analysis_and_build_collection(
-        collection_name=collection_name,
-        collection_type=collection_type,
-        collection_table=collection_table,
-        dbconfig_file=db_config_file,
-        analysis_id=analysis_id,
-        pipeline_name=dag_name,
-        result_dir=dir_path,
-        hpc_base_path=hpc_base_path,
-        analysis_dir_prefix=analysis_dir_prefix,
-        date_tag=date_tag)
-    ## get project name
-    project_igf_id = \
-      get_project_igf_id_for_analysis(
-        analysis_id=analysis_id,
-        dbconfig_file=db_config_file)
-    return target_dir_path, project_igf_id, date_tag
-  except Exception as e:
-    raise ValueError(
-      f"Failed to collect analysis dir, error: {e}")
+# def collect_analysis_dir(
+#       analysis_id: int,
+#       dag_name: str,
+#       dir_path: str,
+#       db_config_file:str,
+#       hpc_base_path: str,
+#       collection_table: str = 'analysis',
+#       analysis_dir_prefix: str = 'analysis') -> Tuple[str, str, str]:
+#   try:
+#     date_tag = get_date_stamp_for_file_name()
+#     collection_type = dag_name.upper()
+#     collection_name = \
+#       calculate_analysis_name(
+#         analysis_id=analysis_id,
+#         date_tag=date_tag,
+#         dbconfig_file=db_config_file)
+#     target_dir_path = \
+#       load_analysis_and_build_collection(
+#         collection_name=collection_name,
+#         collection_type=collection_type,
+#         collection_table=collection_table,
+#         dbconfig_file=db_config_file,
+#         analysis_id=analysis_id,
+#         pipeline_name=dag_name,
+#         result_dir=dir_path,
+#         hpc_base_path=hpc_base_path,
+#         analysis_dir_prefix=analysis_dir_prefix,
+#         date_tag=date_tag)
+#     ## get project name
+#     project_igf_id = \
+#       get_project_igf_id_for_analysis(
+#         analysis_id=analysis_id,
+#         dbconfig_file=db_config_file)
+#     return target_dir_path, project_igf_id, date_tag
+#   except Exception as e:
+#     raise ValueError(
+#       f"Failed to collect analysis dir, error: {e}")
 
 
 ## TASK

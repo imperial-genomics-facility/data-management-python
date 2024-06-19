@@ -1,4 +1,5 @@
 import os
+import re
 import json
 import yaml
 import logging
@@ -9,9 +10,12 @@ from igf_data.utils.fileutils import (
     get_temp_dir,
     copy_local_file,
     check_file_path,
-    read_json_data)
+    read_json_data,
+    get_date_stamp_for_file_name)
+from jinja2 import Template
 from igf_data.utils.dbutils import read_dbconf_json
 from airflow.operators.python import get_current_context
+from igf_data.utils.bashutils import bash_script_wrapper
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_data.utils.analysis_fastq_fetch_utils import get_fastq_and_run_for_samples
 from igf_airflow.utils.dag22_bclconvert_demult_utils import (
@@ -857,3 +861,114 @@ def get_fastq_for_samples_and_dump_in_json_file(
   except Exception as e:
     raise ValueError(
       f"Failed to create fastq list json, error: {e}")
+
+
+def calculate_analysis_name(
+      analysis_id: int,
+      date_tag: str,
+      dbconfig_file: str) \
+        -> str:
+  """
+  Calculate analysis name
+
+  Parameters:
+  analysis_id (int): Analysis id from analysis table
+  date_tag (str): Date tag
+  dbconfig_file (str): Database config file
+
+  Returns:
+  collection_name (str)
+  """
+  try:
+    check_file_path(dbconfig_file)
+    ## fetch analysis name
+    analysis_name = \
+      fetch_analysis_name_for_analysis_id(
+        analysis_id=analysis_id,
+        dbconfig_file=dbconfig_file)
+    symbol_pattern = \
+      re.compile(r"[!\"#$%&\[\]\\'()*\+,./:;<=>?@^`{|}~]")
+    white_space_pattern = \
+      re.compile(r'\s+')
+    double_underscore = \
+      re.compile(r'_+')
+    s1 = re.sub(symbol_pattern, '_', analysis_name)
+    s2 = re.sub(white_space_pattern, '_', s1)
+    analysis_name = re.sub(double_underscore, '_', s2)
+    collection_name = \
+      f"{analysis_name}_{str(analysis_id)}_{date_tag}"
+    collection_name = \
+      re.sub(double_underscore, '_', collection_name)
+    return collection_name
+  except Exception as e:
+    raise ValueError(
+      f"Failed to calculate analysis name for entry {analysis_id}, error: {e}")
+
+
+def collect_analysis_dir(
+      analysis_id: int,
+      dag_name: str,
+      dir_path: str,
+      db_config_file:str,
+      hpc_base_path: str,
+      collection_table: str = 'analysis',
+      analysis_dir_prefix: str = 'analysis') -> Tuple[str, str, str]:
+  try:
+    date_tag = get_date_stamp_for_file_name()
+    collection_type = dag_name.upper()
+    collection_name = \
+      calculate_analysis_name(
+        analysis_id=analysis_id,
+        date_tag=date_tag,
+        dbconfig_file=db_config_file)
+    target_dir_path = \
+      load_analysis_and_build_collection(
+        collection_name=collection_name,
+        collection_type=collection_type,
+        collection_table=collection_table,
+        dbconfig_file=db_config_file,
+        analysis_id=analysis_id,
+        pipeline_name=dag_name,
+        result_dir=dir_path,
+        hpc_base_path=hpc_base_path,
+        analysis_dir_prefix=analysis_dir_prefix,
+        date_tag=date_tag)
+    ## get project name
+    project_igf_id = \
+      get_project_igf_id_for_analysis(
+        analysis_id=analysis_id,
+        dbconfig_file=db_config_file)
+    return target_dir_path, project_igf_id, date_tag
+  except Exception as e:
+    raise ValueError(
+      f"Failed to collect analysis dir, error: {e}")
+
+
+def calculate_md5sum_for_analysis_dir(dir_path: str) -> str:
+  try:
+    temp_dir = \
+      get_temp_dir(use_ephemeral_space=True)
+    bash_template = \
+      Template(
+        """set -eo pipefail;
+        cd {{ TMP_PATH }};
+        find {{ DIR_PATH }} -type f -exec md5sum {} \; > file_manifest.md5;
+        mv file_manifest.md5 {{ DIR_PATH }}""")
+    script_path = \
+      os.path.join(temp_dir, 'bash_script.sh')
+    rendered_template = \
+      bash_template.render(
+        TMP_PATH=temp_dir,
+        DIR_PATH=dir_path)
+    with open(script_path, 'w') as fp:
+      fp.write(rendered_template)
+    stdout_file, stderr_file = \
+      bash_script_wrapper(
+        script_path=script_path)
+    md5_sum_file = \
+      os.path.join(dir_path, 'file_manifest.md5')
+    check_file_path(md5_sum_file)
+    return md5_sum_file
+  except Exception as e:
+    raise ValueError(
+      f"Failed to get md5sum for dir {dir_path}, error: {e}")

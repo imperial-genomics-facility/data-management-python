@@ -9,6 +9,8 @@ from igf_airflow.utils.generic_airflow_utils import (
   send_airflow_pipeline_logs_to_channels,
   send_airflow_failed_logs_to_channels,
   generate_email_text_for_analysis,
+  calculate_md5sum_for_analysis_dir,
+  collect_analysis_dir,
   send_email_via_smtp)
 from igf_data.utils.fileutils import (
     get_temp_dir,
@@ -22,7 +24,9 @@ log = logging.getLogger(__name__)
 SLACK_CONF = Variable.get('analysis_slack_conf',default_var=None)
 MS_TEAMS_CONF = Variable.get('analysis_ms_teams_conf',default_var=None)
 DATABASE_CONFIG_FILE = Variable.get('database_config_file', default_var=None)
-
+HPC_BASE_RAW_DATA_PATH = Variable.get('hpc_base_raw_data_path', default_var=None)
+## GLOBUS
+GLOBUS_ROOT_DIR = Variable.get("globus_root_dir", default_var=None)
 ## EMAIL CONFIG
 EMAIL_CONFIG = Variable.get("email_config", default_var=None)
 ANALYSES_EMAIL_CONFIG = Variable.get("analysis_email_template", default_var=None)
@@ -276,4 +280,69 @@ def no_work() -> None:
   try:
     pass
   except Exception as e:
+    raise ValueError(e)
+
+
+## TASK
+@task(
+	task_id="calculate_md5sum_for_result_work_dir",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_8G',
+  multiple_outputs=False)
+def calculate_md5sum_for_main_work_dir(main_work_dir: str) -> str:
+  try:
+    md5_sum_file = \
+      calculate_md5sum_for_analysis_dir(
+        dir_path=main_work_dir)
+    return main_work_dir
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
+
+
+## TASK
+@task(
+  task_id="load_cellranger_results_to_db",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_4G')
+def load_cellranger_results_to_db(
+      main_work_dir: str,
+      md5_file: str) -> str:
+  try:
+    ## dag_run.conf should have analysis_id
+    context = get_current_context()
+    dag_run = context.get('dag_run')
+    analysis_id = None
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('analysis_id') is not None:
+      analysis_id = \
+        dag_run.conf.get('analysis_id')
+    if analysis_id is None:
+      raise ValueError('analysis_id not found in dag_run.conf')
+    ## check if path exists
+    check_file_path(md5_file)
+    ## load data to db
+    ## pipeline_name is context['task'].dag_id
+    pipeline_name = context['task'].dag_id
+    target_dir_path, project_igf_id, date_tag = \
+    collect_analysis_dir(
+      analysis_id=analysis_id,
+      dag_name=pipeline_name,
+      dir_path=main_work_dir,
+      db_config_file=DATABASE_CONFIG_FILE,
+      hpc_base_path=HPC_BASE_RAW_DATA_PATH)
+    return {'target_dir_path': target_dir_path, 'date_tag': date_tag}
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
     raise ValueError(e)
