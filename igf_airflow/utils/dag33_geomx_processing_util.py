@@ -79,42 +79,42 @@ REPORT_TEMPLATE_FILE = Variable.get("geomx_report_template_file", default_var=No
 REPORT_IMAGE_FILE = Variable.get("geomx_report_image_file", default_var=None)
 
 
-## TASK
-@task(
-  task_id="fetch_analysis_design",
-  retry_delay=timedelta(minutes=5),
-  retries=4,
-  queue='hpc_4G')
-def fetch_analysis_design_from_db() -> dict:
-  try:
-    ## dag_run.conf should have analysis_id
-    context = get_current_context()
-    dag_run = context.get('dag_run')
-    analysis_id = None
-    if dag_run is not None and \
-       dag_run.conf is not None and \
-       dag_run.conf.get('analysis_id') is not None:
-      analysis_id = \
-        dag_run.conf.get('analysis_id')
-    if analysis_id is None:
-      raise ValueError(
-        'analysis_id not found in dag_run.conf')
-    ## pipeline_name is context['task'].dag_id
-    pipeline_name = context['task'].dag_id
-    ## get analysis design file
-    temp_yaml_file = \
-      fetch_analysis_yaml_and_dump_to_a_file(
-        analysis_id=analysis_id,
-        pipeline_name=pipeline_name,
-        dbconfig_file=DATABASE_CONFIG_FILE)
-    return {'analysis_design': temp_yaml_file}
-  except Exception as e:
-    log.error(e)
-    send_airflow_failed_logs_to_channels(
-      slack_conf=SLACK_CONF,
-      ms_teams_conf=MS_TEAMS_CONF,
-      message_prefix=e)
-    raise ValueError(e)
+# ## TASK
+# @task(
+#   task_id="fetch_analysis_design",
+#   retry_delay=timedelta(minutes=5),
+#   retries=4,
+#   queue='hpc_4G')
+# def fetch_analysis_design_from_db() -> dict:
+#   try:
+#     ## dag_run.conf should have analysis_id
+#     context = get_current_context()
+#     dag_run = context.get('dag_run')
+#     analysis_id = None
+#     if dag_run is not None and \
+#        dag_run.conf is not None and \
+#        dag_run.conf.get('analysis_id') is not None:
+#       analysis_id = \
+#         dag_run.conf.get('analysis_id')
+#     if analysis_id is None:
+#       raise ValueError(
+#         'analysis_id not found in dag_run.conf')
+#     ## pipeline_name is context['task'].dag_id
+#     pipeline_name = context['task'].dag_id
+#     ## get analysis design file
+#     temp_yaml_file = \
+#       fetch_analysis_yaml_and_dump_to_a_file(
+#         analysis_id=analysis_id,
+#         pipeline_name=pipeline_name,
+#         dbconfig_file=DATABASE_CONFIG_FILE)
+#     return {'analysis_design': temp_yaml_file}
+#   except Exception as e:
+#     log.error(e)
+#     send_airflow_failed_logs_to_channels(
+#       slack_conf=SLACK_CONF,
+#       ms_teams_conf=MS_TEAMS_CONF,
+#       message_prefix=e)
+#     raise ValueError(e)
 
 
 def extract_geomx_config_files_from_zip(zip_file: str) -> Tuple[str, str]:
@@ -782,47 +782,6 @@ def load_dcc_count_to_db(
         db_config_file=DATABASE_CONFIG_FILE,
         hpc_base_path=HPC_BASE_RAW_DATA_PATH)
     return {'target_dir_path': target_dir_path, 'date_tag': date_tag}
-  except Exception as e:
-    log.error(e)
-    send_airflow_failed_logs_to_channels(
-      slack_conf=SLACK_CONF,
-      ms_teams_conf=MS_TEAMS_CONF,
-      message_prefix=e)
-    raise ValueError(e)
-
-
-## TASK
-@task(
-  task_id="copy_data_to_globus",
-  retry_delay=timedelta(minutes=5),
-  retries=4,
-  queue='hpc_4G')
-def copy_data_to_globus(analysis_dir_dict: dict) -> None:
-  try:
-    analysis_dir = analysis_dir_dict.get('target_dir_path')
-    date_tag = analysis_dir_dict.get('date_tag')
-    ## dag_run.conf should have analysis_id
-    context = get_current_context()
-    dag_run = context.get('dag_run')
-    analysis_id = None
-    if dag_run is not None and \
-       dag_run.conf is not None and \
-       dag_run.conf.get('analysis_id') is not None:
-      analysis_id = \
-        dag_run.conf.get('analysis_id')
-    if analysis_id is None:
-      raise ValueError(
-        'analysis_id not found in dag_run.conf')
-    ## pipeline_name is context['task'].dag_id
-    pipeline_name = context['task'].dag_id
-    target_dir_path = \
-      copy_analysis_to_globus_dir(
-        globus_root_dir=GLOBUS_ROOT_DIR,
-        dbconfig_file=DATABASE_CONFIG_FILE,
-        analysis_id=analysis_id,
-        analysis_dir=analysis_dir,
-        pipeline_name=pipeline_name,
-        date_tag=date_tag)
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(

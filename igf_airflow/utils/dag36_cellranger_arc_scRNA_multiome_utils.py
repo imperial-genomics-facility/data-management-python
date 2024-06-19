@@ -17,13 +17,10 @@ from igf_data.utils.fileutils import (
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_airflow.utils.dag22_bclconvert_demult_utils import (
   _create_output_from_jinja_template)
-from igf_airflow.utils.dag26_snakemake_rnaseq_utils import (
+from igf_airflow.utils.generic_airflow_utils import (
   parse_analysis_design_and_get_metadata,
-  get_project_igf_id_for_analysis)
-from igf_airflow.utils.dag33_geomx_processing_util import (
-  fetch_analysis_name_for_analysis_id,
-  calculate_md5sum_for_analysis_dir,
-  collect_analysis_dir)
+  get_project_igf_id_for_analysis,
+  fetch_analysis_name_for_analysis_id)
 from igf_airflow.utils.dag34_cellranger_multi_scRNA_utils import (
   prepare_and_run_scanpy_notebook)
 from airflow.operators.python import get_current_context

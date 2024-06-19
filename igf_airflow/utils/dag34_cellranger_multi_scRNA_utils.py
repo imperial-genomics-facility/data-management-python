@@ -18,13 +18,13 @@ from igf_data.utils.fileutils import (
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_airflow.utils.dag22_bclconvert_demult_utils import (
   _create_output_from_jinja_template)
-from igf_airflow.utils.dag26_snakemake_rnaseq_utils import (
-  parse_analysis_design_and_get_metadata,
-  get_project_igf_id_for_analysis)
-from igf_airflow.utils.dag33_geomx_processing_util import (
-  fetch_analysis_name_for_analysis_id,
-  calculate_md5sum_for_analysis_dir,
-  collect_analysis_dir)
+from igf_airflow.utils.generic_airflow_utils import (
+    get_project_igf_id_for_analysis,
+    fetch_analysis_name_for_analysis_id,
+    send_airflow_failed_logs_to_channels,
+    collect_analysis_dir,
+    parse_analysis_design_and_get_metadata
+)
 from airflow.operators.python import get_current_context
 from airflow.decorators import task
 
@@ -84,48 +84,6 @@ def get_analysis_group_list(design_dict: dict) -> dict:
     if len(unique_sample_groups) == 0:
       raise ValueError("No sample group found")
     return list(unique_sample_groups)
-  except Exception as e:
-    context = get_current_context()
-    log.error(e)
-    log_file_path = [
-      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
-      f"dag_id={context['ti'].dag_id}",
-      f"run_id={context['ti'].run_id}",
-      f"task_id={context['ti'].task_id}",
-      f"attempt={context['ti'].try_number}.log"]
-    message = \
-      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
-    send_log_to_channels(
-      slack_conf=SLACK_CONF,
-      ms_teams_conf=MS_TEAMS_CONF,
-      task_id=context['task'].task_id,
-      dag_id=context['task'].dag_id,
-      project_id=None,
-      comment=message,
-      reaction='fail')
-    raise ValueError(e)
-
-
-## TASK
-@task(
-  task_id="create_main_work_dir",
-  retry_delay=timedelta(minutes=5),
-  retries=4,
-  queue='hpc_4G',
-  multiple_outputs=False)
-def create_main_work_dir(task_tag: str = 'cellranger_multi_output') -> dict:
-  try:
-    main_work_dir = \
-      get_temp_dir(
-        use_ephemeral_space=True) ## get base dir
-    main_work_dir = \
-      os.path.join(
-        main_work_dir,
-        task_tag) ## add a custom name
-    os.makedirs(
-      main_work_dir,
-      exist_ok=True) ## create path if its not present
-    return main_work_dir
   except Exception as e:
     context = get_current_context()
     log.error(e)
@@ -1011,4 +969,46 @@ def move_aggr_result_to_main_work_dir(
       project_id=None,
       comment=message,
       reaction='fail')
+    raise ValueError(e)
+
+## TASK
+@task(
+  task_id="load_cellranger_results_to_db",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_4G')
+def load_cellranger_results_to_db(
+      main_work_dir: str,
+      md5_file: str) -> str:
+  try:
+    ## dag_run.conf should have analysis_id
+    context = get_current_context()
+    dag_run = context.get('dag_run')
+    analysis_id = None
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('analysis_id') is not None:
+      analysis_id = \
+        dag_run.conf.get('analysis_id')
+    if analysis_id is None:
+      raise ValueError('analysis_id not found in dag_run.conf')
+    ## check if path exists
+    check_file_path(md5_file)
+    ## load data to db
+    ## pipeline_name is context['task'].dag_id
+    pipeline_name = context['task'].dag_id
+    target_dir_path, project_igf_id, date_tag = \
+    collect_analysis_dir(
+      analysis_id=analysis_id,
+      dag_name=pipeline_name,
+      dir_path=main_work_dir,
+      db_config_file=DATABASE_CONFIG_FILE,
+      hpc_base_path=HPC_BASE_RAW_DATA_PATH)
+    return {'target_dir_path': target_dir_path, 'date_tag': date_tag}
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
     raise ValueError(e)

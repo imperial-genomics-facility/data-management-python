@@ -11,7 +11,9 @@ from igf_airflow.utils.generic_airflow_utils import (
   generate_email_text_for_analysis,
   calculate_md5sum_for_analysis_dir,
   collect_analysis_dir,
-  send_email_via_smtp)
+  send_email_via_smtp,
+  copy_analysis_to_globus_dir,
+  fetch_analysis_yaml_and_dump_to_a_file)
 from igf_data.utils.fileutils import (
     get_temp_dir,
     check_file_path,
@@ -305,15 +307,55 @@ def calculate_md5sum_for_main_work_dir(main_work_dir: str) -> str:
     raise ValueError(e)
 
 
+
 ## TASK
 @task(
-  task_id="load_cellranger_results_to_db",
+  task_id="copy_data_to_globus",
   retry_delay=timedelta(minutes=5),
   retries=4,
   queue='hpc_4G')
-def load_cellranger_results_to_db(
-      main_work_dir: str,
-      md5_file: str) -> str:
+def copy_data_to_globus(analysis_dir_dict: dict) -> None:
+  try:
+    analysis_dir = analysis_dir_dict.get('target_dir_path')
+    date_tag = analysis_dir_dict.get('date_tag')
+    ## dag_run.conf should have analysis_id
+    context = get_current_context()
+    dag_run = context.get('dag_run')
+    analysis_id = None
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('analysis_id') is not None:
+      analysis_id = \
+        dag_run.conf.get('analysis_id')
+    if analysis_id is None:
+      raise ValueError(
+        'analysis_id not found in dag_run.conf')
+    ## pipeline_name is context['task'].dag_id
+    pipeline_name = context['task'].dag_id
+    target_dir_path = \
+      copy_analysis_to_globus_dir(
+        globus_root_dir=GLOBUS_ROOT_DIR,
+        dbconfig_file=DATABASE_CONFIG_FILE,
+        analysis_id=analysis_id,
+        analysis_dir=analysis_dir,
+        pipeline_name=pipeline_name,
+        date_tag=date_tag)
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
+
+
+## TASK
+@task(
+  task_id="fetch_analysis_design",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_4G')
+def fetch_analysis_design_from_db() -> dict:
   try:
     ## dag_run.conf should have analysis_id
     context = get_current_context()
@@ -325,20 +367,46 @@ def load_cellranger_results_to_db(
       analysis_id = \
         dag_run.conf.get('analysis_id')
     if analysis_id is None:
-      raise ValueError('analysis_id not found in dag_run.conf')
-    ## check if path exists
-    check_file_path(md5_file)
-    ## load data to db
+      raise ValueError(
+        'analysis_id not found in dag_run.conf')
     ## pipeline_name is context['task'].dag_id
     pipeline_name = context['task'].dag_id
-    target_dir_path, project_igf_id, date_tag = \
-    collect_analysis_dir(
-      analysis_id=analysis_id,
-      dag_name=pipeline_name,
-      dir_path=main_work_dir,
-      db_config_file=DATABASE_CONFIG_FILE,
-      hpc_base_path=HPC_BASE_RAW_DATA_PATH)
-    return {'target_dir_path': target_dir_path, 'date_tag': date_tag}
+    ## get analysis design file
+    temp_yaml_file = \
+      fetch_analysis_yaml_and_dump_to_a_file(
+        analysis_id=analysis_id,
+        pipeline_name=pipeline_name,
+        dbconfig_file=DATABASE_CONFIG_FILE)
+    return {'analysis_design': temp_yaml_file}
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
+
+
+## TASK
+@task(
+  task_id="create_main_work_dir",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_4G',
+  multiple_outputs=False)
+def create_main_work_dir(task_tag: str) -> str:
+  try:
+    main_work_dir = \
+      get_temp_dir(
+        use_ephemeral_space=True) ## get base dir
+    main_work_dir = \
+      os.path.join(
+        main_work_dir,
+        task_tag) ## add a custom name
+    os.makedirs(
+      main_work_dir,
+      exist_ok=True) ## create path if its not present
+    return main_work_dir
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
