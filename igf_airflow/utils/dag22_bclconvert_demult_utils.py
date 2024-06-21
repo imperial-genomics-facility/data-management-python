@@ -5444,7 +5444,7 @@ def _get_formatted_samplesheets(
                   _calculate_bases_mask(
                     samplesheet_file=ig_samplesheet_temp_path,
                     runinfoxml_file=runinfo_xml_file,
-                    read_offset_cutoff=29)
+                    read_offset_cutoff=50)
               else:
                 bases_mask = override_cycles
               ig_final_sa = SampleSheet(ig_samplesheet_temp_path)
@@ -5504,7 +5504,7 @@ def _get_formatted_samplesheets(
                 _calculate_bases_mask(
                   samplesheet_file=ig_samplesheet_temp_path,
                   runinfoxml_file=runinfo_xml_file,
-                  read_offset_cutoff=29)
+                  read_offset_cutoff=50)
             else:
               bases_mask = override_cycles
             ig_final_sa = SampleSheet(ig_samplesheet_temp_path)

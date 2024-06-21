@@ -46,7 +46,7 @@ def full_suite():
   from .process.mergesinglecellfastq_test import MergeSingleCellFastq_testB
   from .utils.project_data_display_utils_test import Convert_project_data_gviz_data1
   from .utils.project_data_display_utils_test import Add_seqrun_path_info1
-  from .utils.projectutils_test import Projectutils_test1
+  from .utils.projectutils_test import Projectutils_test1, Projectutils_test3
   #from .utils.projectutils_test import Projectutils_test2
   from .dbadaptor.fileadaptor_test import Fileadaptor_test1
   from .process.reset_samplesheet_md5_test import Reset_samplesheet_md5_test1
@@ -128,6 +128,9 @@ def full_suite():
   from .igf_airflow.test_dag34_cellranger_multi_scRNA_utils import (
     TestDag34_cellranger_multi_scRNA_utilA,
     TestDag34_cellranger_multi_scRNA_utilB)
+  from .igf_airflow.test_dag36_cellranger_arc_scRNA_multiome_utils import (
+    TestDag36_cellranger_arc_scRNA_multiome_utilsA,
+    TestDag36_cellranger_arc_scRNA_multiome_utilsB)
 
   return unittest.TestSuite([
     unittest.TestLoader().loadTestsFromTestCase(t)
@@ -178,6 +181,7 @@ def full_suite():
         Add_seqrun_path_info1,
         Projectutils_test1,
         #Projectutils_test2,
+        Projectutils_test3,
         Fileadaptor_test1,
         Reset_samplesheet_md5_test1,
         Modify_pipeline_seed_test1,
@@ -258,6 +262,8 @@ def full_suite():
         TestDag33_geomx_processing_util_utilsB,
         TestDag33_geomx_processing_util_utilsC,
         TestDag34_cellranger_multi_scRNA_utilA,
-        TestDag34_cellranger_multi_scRNA_utilB
+        TestDag34_cellranger_multi_scRNA_utilB,
+        TestDag36_cellranger_arc_scRNA_multiome_utilsA,
+        TestDag36_cellranger_arc_scRNA_multiome_utilsB
       ]
     ])

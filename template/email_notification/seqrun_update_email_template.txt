@@ -8,40 +8,46 @@ Dear {{ customerName }}, {% if not send_email_to_user %}EMAIL FOR {{ customerEma
 
 We would like to update you that the fastq files from a recent sequencing run "{{ flowcellId }} - {{ projectRunDate }}" is now available for your project {{ projectName }}.
 
-Data access via Globus (FILES AVAILABLE FOR 30 DAYS):
-  For first run of any project:
+DATA ACCESS (via Globus, FILES AVAILABLE FOR 30 DAYS):
+  - Help page (by Imperial's RCS team):
+    - https://icl-rcs-user-guide.readthedocs.io/en/latest/rds/transferringdata/globus/
+
+  - For FIRST run of any project
     - {% if hpcUser %}We need your approval before we can share this data with Globus username {{ customerUsername }}@ic.ac.uk.{% else %}Send us your Globus username (or Imperial College username) for creating a new collection (we don't create it by default).{% endif %}
     - Check Globus collection and download data
 
-  For additional run of any project:
-  - Check the Globus collection directory linked to your project 
-  - Check Globus collection and download data
+  - For ADDITIONAL runs:
+    - Check the Globus collection directory linked to your project 
+    - Check Globus collection and download data
 
-You can refer to the "samplesheet.csv" in the "Reports" dir for mapping facility sample ids to the original sample names.
-Please note that you are responsible for long term storage of your data as we will keep these files only for a short period of time.
+PRIMARY ANALYSES:
+  Let us know if you or your bioinformatics team needs any help with the primary analyses for your project (e.g., alignment and gene count for RNA-Seq and Cellranger count metrics for 10X gene expression library). Now we support running a number of community developed (e.g., NF-core pipelines) or vendor provided (e.g., Cellranger from 10X Genomics) analyses pipelines for our users. A list of supported pipelines can be found here:
+    https://imperial-genomics-facility.github.io/igf-pipeline-help/analyses_pipelines.html
 
-Important links:
-  - Globus based transfer (LIMIT 30 DAYS):
-      https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html#globus-based-transfer
+QC WEBSITE:
+  - URL: http://eliot.med.ic.ac.uk/report/project/{{ projectName }}
+  - Login information (for QC page):
+      {% if hpcUser %}User Name: {{ customerUsername }}{% else %}User Name: {{ customerUsername }} (Let us know if you prefer to use your Imperial login credentials for QC pages).{% endif %}
+      {% if hpcUser %}Password: Your account password for Imperial College{% else %}Password: Your IGF account password (sent to you via a separate email).{% endif %}
 
-  - Fastq file validation after download:
-      https://imperial-genomics-facility.github.io/igf-pipeline-help/demultiplexing.html#bclconvert-fastq-file-validation
-
-  - QC project home:
-      http://eliot.med.ic.ac.uk/report/project/{{ projectName }}
-
+OTHER INFORMATION:
   - QC run home:
       http://eliot.med.ic.ac.uk/report/project/{{ projectName }}/{{ flowcellId }}
 
-      Login information (for QC page):
-        {% if hpcUser %}User Name: {{ customerUsername }}{% else %}User Name: {{ customerUsername }} (Let us know if you prefer to use your Imperial login credentials for QC pages).{% endif %}
-        {% if hpcUser %}Password: Your account password for Imperial College{% else %}Password: Your IGF account password (sent to you via a separate email).{% endif %}
+  - IGF Globus help:
+      https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html#globus-based-transfer
 
-  - Analysis pipelines: We now support running analysis pipelines for our projects. A list of supported pipelines can be found here:
-      https://imperial-genomics-facility.github.io/igf-pipeline-help/analysis_pipelines.html
+  - Fastq file validation:
+      https://imperial-genomics-facility.github.io/igf-pipeline-help/demultiplexing.html#bclconvert-fastq-file-validation
 
-Subscribe to IGF mailing list for updates and announcements:
-https://mailman.ic.ac.uk/mailman/listinfo/igf-users
+  - Sample name mapping:
+      You can refer to the "samplesheet.csv" in the "Reports" dir for mapping facility sample ids to the original sample names.
+
+  - Data lifecycle:
+      Please note that you are responsible for long term storage of your data as we will keep these files only for a short period of time. We will contact you in few months time before removing this project from our backup storage.
+
+  - IGF mailing list:
+      https://mailman.ic.ac.uk/mailman/listinfo/igf-users
 
 Kind regards
 NIHR Imperial BRC Genomics Facility

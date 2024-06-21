@@ -27,7 +27,7 @@ def singularity_run(
       paths = d.split(':')
       check_file_path(paths[0])
     temp_dir = \
-      get_temp_dir(use_ephemeral_space=False)
+      get_temp_dir(use_ephemeral_space=True)
     temp_image_path = \
       os.path.join(
         temp_dir,

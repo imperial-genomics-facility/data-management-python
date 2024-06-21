@@ -1,0 +1,25 @@
+To: {% if send_email_to_user %}{{ user_email }}; {{ defaultUser }}{% else %}{{ defaultUser }}{% endif %}
+Subject: Removal of sequencing data from IGF facility
+From: {{ defaultUser }}
+MIME-Version: 1.0
+Content-Type: text/html; charset=UTF-8
+
+Dear {{ user_name }}, {% if not send_email_to_user %}EMAIL FOR {{ user_email }}{% endif %}
+<p/>
+We would like to inform you that we are preparing to remove data for the following old project(s) from IGF storage.
+<p/>
+<ul>{% for project_name in projectLists %}
+<li> {{ project_name }} </li>
+{% endfor %}
+</ul>
+<p/>
+It would be great if you could check and confirm by <span style='color:red'><b>{{ deletionDate }}</b></span>, if you need data backup for any of these project(s). Otherwise, we will <span style='color:red'><b>REMOVE</b></span> the raw and analysis data for them after this deadline.
+<p/>
+Help docs for Globus based data transfer:
+https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html#globus-based-transfer
+<p/>
+Please note that, we will not be able to process this dataset via our production analysis pipelines after data removal, but our bioinformatics team can still work on this project if all the files are backed up in your RDS storage.
+<p/>
+You need to confirm this before <span style='color:red'><b>{{ deletionDate }}</b></span>.
+<p/>
+Kind regards<p/>Imperial BRC Genomics Facility

@@ -340,8 +340,6 @@ def prepare_nfcore_smrnaseq_input(
       nf_samplesheet_header: list = ("sample", "fastq_1"),
       exclude_nf_param_list: list = [
         '-resume',
-        '-c',
-        '-config',
         '--input',
         '--outdir',
         '-with-report',
@@ -537,8 +535,6 @@ def prepare_nfcore_rnaseq_input(
       nf_samplesheet_header: list = ("sample", "fastq_1", "fastq_2", "strandedness"),
       exclude_nf_param_list: list = [
         '-resume',
-        '-c',
-        '-config',
         '--input',
         '--outdir',
         '-with-report',
@@ -707,8 +703,6 @@ def prepare_nfcore_methylseq_input(
       nf_samplesheet_header: list = ("sample", "fastq_1", "fastq_2"),
       exclude_nf_param_list: list = [
         '-resume',
-        '-c',
-        '-config',
         '--input',
         '--outdir',
         '-with-report',
@@ -972,8 +966,6 @@ def prepare_nfcore_sarek_input(
       nf_samplesheet_header: list = ("patient", "sex", "status", "sample", "lane", "fastq_1", "fastq_2"),
       exclude_nf_param_list: list = [
         '-resume',
-        '-c',
-        '-config',
         '--input',
         '--outdir',
         '-with-report',
@@ -1190,8 +1182,6 @@ def prepare_nfcore_ampliseq_input(
       nfcore_pipeline_name: str = 'nf-core/ampliseq',
       exclude_nf_param_list: list = [
         '-resume',
-        '-c',
-        '-config',
         '--input',
         '--metadata',
         '--outdir',
@@ -1310,8 +1300,6 @@ def prepare_nfcore_hic_input(
       nf_samplesheet_header: list = ("sample", "fastq_1", "fastq_2"),
       exclude_nf_param_list: list = [
         '-resume',
-        '-c',
-        '-config',
         '--input',
         '--outdir',
         '-with-report',
@@ -1367,8 +1355,6 @@ def prepare_nfcore_rnafusion_input(
       nf_samplesheet_header: list = ("sample", "fastq_1", "fastq_2", "strandedness"),
       exclude_nf_param_list: list = [
         '-resume',
-        '-c',
-        '-config',
         '--input',
         '--outdir',
         '-with-report',
@@ -1426,8 +1412,6 @@ def prepare_nfcore_rnavar_input(
       nf_samplesheet_header: list = ("sample", "fastq_1", "fastq_2"),
       exclude_nf_param_list: list = [
         '-resume',
-        '-c',
-        '-config',
         '--input',
         '--outdir',
         '-with-report',
@@ -1567,8 +1551,6 @@ def prepare_nfcore_atacseq_input(
       nf_samplesheet_header: list = ("sample", "fastq_1", "fastq_2", "replicate"),
       exclude_nf_param_list: list = [
         '-resume',
-        '-c',
-        '-config',
         '--input',
         '--outdir',
         '-with-report',
@@ -1770,8 +1752,6 @@ def prepare_nfcore_chipseq_input(
       nf_samplesheet_header: list = ("sample", "fastq_1", "fastq_2", "antibody", "control"),
       exclude_nf_param_list: list = [
         '-resume',
-        '-c',
-        '-config',
         '--input',
         '--outdir',
         '-with-report',
@@ -1972,8 +1952,6 @@ def prepare_nfcore_cutandrun_input(
       nf_samplesheet_header: list = ("group", "replicate", "fastq_1", "fastq_2", "control"),
       exclude_nf_param_list: list = [
         '-resume',
-        '-c',
-        '-config',
         '--input',
         '--outdir',
         '-with-report',
@@ -2095,8 +2073,6 @@ def prepare_nfcore_bactmap_input(
       nf_samplesheet_header: list = ('sample', 'fastq_1', 'fastq_2'),
       exclude_nf_param_list: list = [
         '-resume',
-        '-c',
-        '-config',
         '--input',
         '--outdir',
         '-with-report',
