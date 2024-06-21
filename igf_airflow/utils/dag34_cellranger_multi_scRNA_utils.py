@@ -85,24 +85,11 @@ def get_analysis_group_list(design_dict: dict) -> dict:
       raise ValueError("No sample group found")
     return list(unique_sample_groups)
   except Exception as e:
-    context = get_current_context()
     log.error(e)
-    log_file_path = [
-      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
-      f"dag_id={context['ti'].dag_id}",
-      f"run_id={context['ti'].run_id}",
-      f"task_id={context['ti'].task_id}",
-      f"attempt={context['ti'].try_number}.log"]
-    message = \
-      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
-    send_log_to_channels(
+    send_airflow_failed_logs_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
-      task_id=context['task'].task_id,
-      dag_id=context['task'].dag_id,
-      project_id=None,
-      comment=message,
-      reaction='fail')
+      message_prefix=e)
     raise ValueError(e)
 
 
@@ -135,24 +122,11 @@ def prepare_cellranger_script(sample_group: str, design_dict: dict) -> dict:
         run_script_template=CELLRANGER_MULTI_SCRIPT_TEMPLATE)
     return {"sample_group": sample_group, "run_script": run_script_file, "output_dir": os.path.join(work_dir, sample_group)}
   except Exception as e:
-    context = get_current_context()
     log.error(e)
-    log_file_path = [
-      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
-      f"dag_id={context['ti'].dag_id}",
-      f"run_id={context['ti'].run_id}",
-      f"task_id={context['ti'].task_id}",
-      f"attempt={context['ti'].try_number}.log"]
-    message = \
-      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
-    send_log_to_channels(
+    send_airflow_failed_logs_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
-      task_id=context['task'].task_id,
-      dag_id=context['task'].dag_id,
-      project_id=None,
-      comment=message,
-      reaction='fail')
+      message_prefix=e)
     raise ValueError(e)
 
 def prepare_cellranger_run_dir_and_script_file(
@@ -305,24 +279,11 @@ def run_cellranger_script(
     check_file_path(output_dir)
     return output_dir
   except Exception as e:
-    context = get_current_context()
     log.error(e)
-    log_file_path = [
-      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
-      f"dag_id={context['ti'].dag_id}",
-      f"run_id={context['ti'].run_id}",
-      f"task_id={context['ti'].task_id}",
-      f"attempt={context['ti'].try_number}.log"]
-    message = \
-      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
-    send_log_to_channels(
+    send_airflow_failed_logs_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
-      task_id=context['task'].task_id,
-      dag_id=context['task'].dag_id,
-      project_id=None,
-      comment=message,
-      reaction='fail')
+      message_prefix=e)
     raise ValueError(e)
 
 
@@ -426,24 +387,11 @@ def run_single_sample_scanpy(
       "scanpy_h5ad": target_scanpy_h5ad}
     return output_dict
   except Exception as e:
-    context = get_current_context()
     log.error(e)
-    log_file_path = [
-      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
-      f"dag_id={context['ti'].dag_id}",
-      f"run_id={context['ti'].run_id}",
-      f"task_id={context['ti'].task_id}",
-      f"attempt={context['ti'].try_number}.log"]
-    message = \
-      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
-    send_log_to_channels(
+    send_airflow_failed_logs_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
-      task_id=context['task'].task_id,
-      dag_id=context['task'].dag_id,
-      project_id=None,
-      comment=message,
-      reaction='fail')
+      message_prefix=e)
     raise ValueError(e)
 
 
@@ -559,24 +507,11 @@ def move_single_sample_result_to_main_work_dir(
       "cellranger_output_dir": target_cellranger_output_dir}
     return output_dict
   except Exception as e:
-    context = get_current_context()
     log.error(e)
-    log_file_path = [
-      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
-      f"dag_id={context['ti'].dag_id}",
-      f"run_id={context['ti'].run_id}",
-      f"task_id={context['ti'].task_id}",
-      f"attempt={context['ti'].try_number}.log"]
-    message = \
-      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
-    send_log_to_channels(
+    send_airflow_failed_logs_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
-      task_id=context['task'].task_id,
-      dag_id=context['task'].dag_id,
-      project_id=None,
-      comment=message,
-      reaction='fail')
+      message_prefix=e)
     raise ValueError(e)
 
 
@@ -616,24 +551,11 @@ def collect_and_branch(
         value=cellranger_output_dict)
       return [merge_step]
   except Exception as e:
-    context = get_current_context()
     log.error(e)
-    log_file_path = [
-      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
-      f"dag_id={context['ti'].dag_id}",
-      f"run_id={context['ti'].run_id}",
-      f"task_id={context['ti'].task_id}",
-      f"attempt={context['ti'].try_number}.log"]
-    message = \
-      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
-    send_log_to_channels(
+    send_airflow_failed_logs_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
-      task_id=context['task'].task_id,
-      dag_id=context['task'].dag_id,
-      project_id=None,
-      comment=message,
-      reaction='fail')
+      message_prefix=e)
     raise ValueError(e)
 
 
@@ -667,24 +589,11 @@ def configure_cellranger_aggr_run(
           cellranger_output_dict=cellranger_output_dict)
       return output_dict
   except Exception as e:
-    context = get_current_context()
     log.error(e)
-    log_file_path = [
-      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
-      f"dag_id={context['ti'].dag_id}",
-      f"run_id={context['ti'].run_id}",
-      f"task_id={context['ti'].task_id}",
-      f"attempt={context['ti'].try_number}.log"]
-    message = \
-      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
-    send_log_to_channels(
+    send_airflow_failed_logs_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
-      task_id=context['task'].task_id,
-      dag_id=context['task'].dag_id,
-      project_id=None,
-      comment=message,
-      reaction='fail')
+      message_prefix=e)
     raise ValueError(e)
 
 
@@ -763,24 +672,11 @@ def run_cellranger_aggr_script(
     check_file_path(output_dir)
     return output_dir
   except Exception as e:
-    context = get_current_context()
     log.error(e)
-    log_file_path = [
-      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
-      f"dag_id={context['ti'].dag_id}",
-      f"run_id={context['ti'].run_id}",
-      f"task_id={context['ti'].task_id}",
-      f"attempt={context['ti'].try_number}.log"]
-    message = \
-      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
-    send_log_to_channels(
+    send_airflow_failed_logs_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
-      task_id=context['task'].task_id,
-      dag_id=context['task'].dag_id,
-      project_id=None,
-      comment=message,
-      reaction='fail')
+      message_prefix=e)
     raise ValueError(e)
 
 
@@ -895,24 +791,11 @@ def merged_scanpy_report(
       "scanpy_h5ad": target_h5ad}
     return output_dict
   except Exception as e:
-    context = get_current_context()
     log.error(e)
-    log_file_path = [
-      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
-      f"dag_id={context['ti'].dag_id}",
-      f"run_id={context['ti'].run_id}",
-      f"task_id={context['ti'].task_id}",
-      f"attempt={context['ti'].try_number}.log"]
-    message = \
-      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
-    send_log_to_channels(
+    send_airflow_failed_logs_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
-      task_id=context['task'].task_id,
-      dag_id=context['task'].dag_id,
-      project_id=None,
-      comment=message,
-      reaction='fail')
+      message_prefix=e)
     raise ValueError(e)
 
 
@@ -951,25 +834,13 @@ def move_aggr_result_to_main_work_dir(
       main_work_dir)
     return main_work_dir
   except Exception as e:
-    context = get_current_context()
     log.error(e)
-    log_file_path = [
-      os.environ.get('AIRFLOW__LOGGING__BASE_LOG_FOLDER'),
-      f"dag_id={context['ti'].dag_id}",
-      f"run_id={context['ti'].run_id}",
-      f"task_id={context['ti'].task_id}",
-      f"attempt={context['ti'].try_number}.log"]
-    message = \
-      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
-    send_log_to_channels(
+    send_airflow_failed_logs_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
-      task_id=context['task'].task_id,
-      dag_id=context['task'].dag_id,
-      project_id=None,
-      comment=message,
-      reaction='fail')
+      message_prefix=e)
     raise ValueError(e)
+
 
 ## TASK
 @task(
