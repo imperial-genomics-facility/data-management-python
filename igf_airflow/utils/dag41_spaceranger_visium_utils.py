@@ -37,16 +37,8 @@ DATABASE_CONFIG_FILE = Variable.get('database_config_file', default_var=None)
 SPACERANGER_COUNT_SCRIPT_TEMPLATE = \
   Variable.get("spaceranger_count_script_template", default_var=None)
 
-## TASK
-@task(
-  task_id="get_spaceranger_analysis_group_list",
-  retry_delay=timedelta(minutes=5),
-  retries=4,
-  queue='hpc_4G',
-  multiple_outputs=False)
-def get_spaceranger_analysis_group_list(design_dict: dict) -> dict:
+def get_spaceranger_analysis_design_and_get_groups(design_file: str) -> list:
   try:
-    design_file = design_dict.get('analysis_design')
     check_file_path(design_file)
     with open(design_file, 'r') as fp:
       input_design_yaml = fp.read()
@@ -55,7 +47,8 @@ def get_spaceranger_analysis_group_list(design_dict: dict) -> dict:
           input_design_yaml=input_design_yaml)
     if sample_metadata is None or \
        analysis_metadata is None:
-      raise KeyError("Missing sample or analysis metadata")
+      raise KeyError(
+        "Missing sample or analysis metadata")
     unique_sample_groups = list()
     for sample_name, sample_data in sample_metadata.items():
       unique_sample_groups.\
@@ -65,6 +58,43 @@ def get_spaceranger_analysis_group_list(design_dict: dict) -> dict:
           "analysis_metadata": analysis_metadata})
     if len(unique_sample_groups) == 0:
       raise ValueError("No sample group found")
+    return unique_sample_groups
+  except Exception as e:
+    raise ValueError(
+      f"Failed to get groups for spaceranger analysis, error: {e}")
+
+
+## TASK
+@task(
+  task_id="get_spaceranger_analysis_group_list",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_4G',
+  multiple_outputs=False)
+def get_spaceranger_analysis_group_list(design_dict: dict) -> list:
+  try:
+    design_file = design_dict.get('analysis_design')
+    unique_sample_groups = \
+      get_spaceranger_analysis_design_and_get_groups(
+        design_file=design_file)
+    # check_file_path(design_file)
+    # with open(design_file, 'r') as fp:
+    #   input_design_yaml = fp.read()
+    #   sample_metadata, analysis_metadata = \
+    #     parse_analysis_design_and_get_metadata(
+    #       input_design_yaml=input_design_yaml)
+    # if sample_metadata is None or \
+    #    analysis_metadata is None:
+    #   raise KeyError("Missing sample or analysis metadata")
+    # unique_sample_groups = list()
+    # for sample_name, sample_data in sample_metadata.items():
+    #   unique_sample_groups.\
+    #     append({
+    #       "sample_metadata": {
+    #         sample_name: sample_data},
+    #       "analysis_metadata": analysis_metadata})
+    # if len(unique_sample_groups) == 0:
+    #   raise ValueError("No sample group found")
     return unique_sample_groups
   except Exception as e:
     log.error(e)
