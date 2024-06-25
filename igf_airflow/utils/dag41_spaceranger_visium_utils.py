@@ -92,7 +92,8 @@ def prepare_spaceranger_count_run_dir_and_script_file(
       analysis_metadata: dict,
       db_config_file: str,
       run_script_template: str,
-      spaceranger_config_key: str = "spaceranger_count_config") -> str:
+      spaceranger_config_key: str = "spaceranger_count_config") \
+        -> Tuple[str, str, str]:
   try:
     ## check if sample info is present
     sample_list = \
@@ -157,6 +158,8 @@ def prepare_spaceranger_count_run_dir_and_script_file(
       os.path.join(
         work_dir,
         os.path.basename(run_script_template))
+    output_dir = \
+      os.path.join(work_dir, sample_id)
     _create_output_from_jinja_template(
       template_file=run_script_template,
       output_file=script_file,
@@ -166,7 +169,7 @@ def prepare_spaceranger_count_run_dir_and_script_file(
         FASTQS=fastqs,
         SPACERANGER_PARAMS=spaceranger_params,
         WORKDIR=work_dir))
-    return script_file
+    return sample_id, script_file, output_dir
   except Exception as e:
     raise ValueError(
       f"Failed to create spaceranger count script and dir, error: {e}")
@@ -187,12 +190,118 @@ def prepare_spaceranger_count_script(analysis_entry: dict) \
       analysis_entry.get("sample_metadata")
     analysis_metadata = \
       analysis_entry.get("analysis_metadata")
-    run_script_file = \
+    sample_id, run_script_file, output_dir = \
       prepare_spaceranger_count_run_dir_and_script_file(
         sample_metadata=sample_metadata,
         analysis_metadata=analysis_metadata,
         db_config_file=DATABASE_CONFIG_FILE,
         run_script_template=SPACERANGER_COUNT_SCRIPT_TEMPLATE)
+    return {"sample_id": sample_id,
+            "script_file": run_script_file,
+            "output_dir": output_dir}
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
+
+
+## TASK
+@task(
+  task_id="run_spaceranger_count_script",
+  retry_delay=timedelta(minutes=15),
+  retries=10,
+  queue='hpc_8G4t72hr',
+  pool='batch_job',
+  multiple_outputs=False)
+def run_spaceranger_count_script(analysis_script_info: dict) \
+      -> dict:
+  try:
+    sample_id = analysis_script_info.get("sample_id")
+    script_file = analysis_script_info.get("script_file")
+    output_dir = analysis_script_info.get("output_dir")
+    ## check for _lock file
+    lock_file = \
+      os.path.join(output_dir, '_lock')
+    if os.path.exists(lock_file):
+      raise ValueError(
+        f"""Lock file exists in spaceranger run path: {output_dir}. \
+            Remove it to continue!""")
+    try:
+      _, _ = \
+        bash_script_wrapper(
+          script_path=script_file,
+          capture_stderr=False)
+    except Exception as e:
+      raise ValueError(
+        f"Failed to run spaceranger script, Script: {script_file} for sample: {sample_id}")
+    ## check output dir exists
+    check_file_path(output_dir)
+    return {"sample_id": sample_id,
+            "output_dir": output_dir}
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
+
+
+## TG1 TASK: run squidpy qc step
+## TASK
+@task(
+  task_id="run_squidpy_qc",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_4G')
+def run_squidpy_qc(analysis_output: dict) -> dict:
+  try:
+    sample_id = analysis_output.get("sample_id")
+    output = analysis_output.get("output")
+    ## generate report and move it to visium output directory
+    return {"sample_id": sample_id, "output": output}
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
+
+
+## TASK
+@task(
+  task_id="move_single_spaceranger_count_to_main_work_dir",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_4G')
+def move_single_spaceranger_count_to_main_work_dir(
+      work_dir: str,
+      analysis_output: dict) -> dict:
+  try:
+    check_file_path(work_dir)
+    sample_id = analysis_output.get("sample_id")
+    output = analysis_output.get("output")
+    target_spaceranger_count_dir = \
+      os.path.join(
+        work_dir,
+        os.path.basename(output))
+    ## not safe to overwrite existing dir
+    if os.path.exists(target_spaceranger_count_dir):
+      raise IOError(
+        f"""spaceranger output path for sample {sample_id}) already present. \
+          Path: {target_spaceranger_count_dir}. \
+          CLEAN UP and RESTART !!!""")
+    shutil.move(
+      output,
+      work_dir)
+    output_dict = {
+      "sample_id": sample_id,
+      "output": target_spaceranger_count_dir}
+    return output_dict
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(

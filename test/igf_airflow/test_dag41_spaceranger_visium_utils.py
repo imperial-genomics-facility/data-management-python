@@ -316,7 +316,7 @@ class TestDag41_spaceranger_visium_utilsA(unittest.TestCase):
     unique_sample_groups = \
       get_spaceranger_analysis_design_and_get_groups(
         self.yaml_file)
-    script_file = \
+    sample_id, script_file, output_dir = \
       prepare_spaceranger_count_run_dir_and_script_file(
         sample_metadata=unique_sample_groups[0].get("sample_metadata"),
         analysis_metadata=unique_sample_groups[0].get("analysis_metadata"),
@@ -325,9 +325,8 @@ class TestDag41_spaceranger_visium_utilsA(unittest.TestCase):
     self.assertTrue(os.path.exists(script_file))
     with open(script_file, 'r') as fp:
       script_rendered_data = fp.read()
-    print(script_rendered_data)
-    sample_id = \
-      list(unique_sample_groups[0].get("sample_metadata").keys())[0]
+    # sample_id = \
+    #   list(unique_sample_groups[0].get("sample_metadata").keys())[0]
     self.assertTrue(
       sample_id in ["IGFsampleA", "IGFsampleB"])
     self.assertTrue(f"--id={sample_id}" in script_rendered_data)
@@ -337,6 +336,7 @@ class TestDag41_spaceranger_visium_utilsA(unittest.TestCase):
     self.assertFalse(f"/path/IGFSampleC" in script_rendered_data)
     self.assertTrue("--image=/path/image" in script_rendered_data)
     self.assertFalse("--darkimage" in script_rendered_data)
+    self.assertEqual(os.path.basename(output_dir), sample_id)
 
 if __name__=='__main__':
   unittest.main()

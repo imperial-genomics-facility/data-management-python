@@ -269,12 +269,13 @@ def run_cellranger_script(
         f"""Lock file exists in cellranger run path: {output_dir}. \
             Remove it to continue!""")
     try:
-      stdout_file, stderr_file = \
+      _, _ = \
         bash_script_wrapper(
-          script_path=run_script)
+          script_path=run_script,
+          capture_stderr=False)
     except Exception as e:
       raise ValueError(
-        f"Failed to run script, Script: {run_script} for group: {sample_group}, error file: {stderr_file}")
+        f"Failed to run script, Script: {run_script} for group: {sample_group}")
     ## check output dir exists
     check_file_path(output_dir)
     return output_dir
