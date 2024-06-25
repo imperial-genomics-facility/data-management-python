@@ -24,6 +24,7 @@ from igf_data.utils.fileutils import (
   remove_dir)
 from igf_airflow.utils.dag41_spaceranger_visium_utils import (
     get_spaceranger_analysis_design_and_get_groups,
+    prepare_spaceranger_count_run_dir_and_script_file,
 )
 
 DESIGN_YAML = """sample_metadata:
@@ -44,7 +45,7 @@ DESIGN_YAML = """sample_metadata:
     area: null
     dapi-index: null
 analysis_metadata:
-  spaceranger_config:
+  spaceranger_count_config:
     - "--transcriptome=/path"
     - "--probe-set=/path"
     - "--filter-probes=true"
@@ -308,8 +309,34 @@ class TestDag41_spaceranger_visium_utilsA(unittest.TestCase):
     self.assertFalse(
       "IGFsampleC" in unique_sample_groups[0].get("sample_metadata") or \
       "IGFsampleC" in unique_sample_groups[1].get("sample_metadata"))
-    self.assertTrue("spaceranger_config" in unique_sample_groups[0].get("analysis_metadata"))
-    self.assertTrue("--transcriptome=/path" in unique_sample_groups[0].get("analysis_metadata").get("spaceranger_config"))
+    self.assertTrue("spaceranger_count_config" in unique_sample_groups[0].get("analysis_metadata"))
+    self.assertTrue("--transcriptome=/path" in unique_sample_groups[0].get("analysis_metadata").get("spaceranger_count_config"))
+
+  def test_prepare_spaceranger_count_run_dir_and_script_file(self):
+    unique_sample_groups = \
+      get_spaceranger_analysis_design_and_get_groups(
+        self.yaml_file)
+    script_file = \
+      prepare_spaceranger_count_run_dir_and_script_file(
+        sample_metadata=unique_sample_groups[0].get("sample_metadata"),
+        analysis_metadata=unique_sample_groups[0].get("analysis_metadata"),
+        db_config_file=self.dbconfig,
+        run_script_template="template/spaceranger_template/spaceranger_count_run_script_v1.sh")
+    self.assertTrue(os.path.exists(script_file))
+    with open(script_file, 'r') as fp:
+      script_rendered_data = fp.read()
+    print(script_rendered_data)
+    sample_id = \
+      list(unique_sample_groups[0].get("sample_metadata").keys())[0]
+    self.assertTrue(
+      sample_id in ["IGFsampleA", "IGFsampleB"])
+    self.assertTrue(f"--id={sample_id}" in script_rendered_data)
+    self.assertTrue(f"cd {os.path.basename(script_file)}")
+    self.assertTrue("--fastqs=/path/IGFSampleA" in script_rendered_data or \
+                    "--fastqs=/path/IGFSampleB" in script_rendered_data)
+    self.assertFalse(f"/path/IGFSampleC" in script_rendered_data)
+    self.assertTrue("--image=/path/image" in script_rendered_data)
+    self.assertFalse("--darkimage" in script_rendered_data)
 
 if __name__=='__main__':
   unittest.main()

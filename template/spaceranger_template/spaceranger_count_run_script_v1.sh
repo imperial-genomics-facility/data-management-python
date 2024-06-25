@@ -21,11 +21,11 @@ cd {{ WORKDIR }}
 
 ## SPACERANGER COUNT RUN CMD
 $SPACERANGER_EXE count \
-  --id={{ SPACERANGER_ID }} \
-  --fastqs={{ FASTQS }} \
-  --localcores=4 \
-  --localmem=8 \
-  --jobmode=pbspro \
-  --disable-ui \
-  --maxjobs=${SPACERANGER_MAX_JOB_COUNTS} \
-  {{ SPACERANGER_PARAMS }}
+--id={{ SPACERANGER_ID }} \
+--fastqs={{ FASTQS }} \
+--localcores=4 \
+--localmem=8 \
+--jobmode=pbspro \
+--disable-ui \
+--maxjobs=${SPACERANGER_MAX_JOB_COUNTS} \
+{{ SPACERANGER_PARAMS }}

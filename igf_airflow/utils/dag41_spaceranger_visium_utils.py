@@ -116,18 +116,25 @@ def prepare_spaceranger_count_run_dir_and_script_file(
     if len(fastq_list) == 0:
       raise ValueError(
         "No fastq file found for samples")
-    ## get fastqs
+    ## get fastq dirs
     df = pd.DataFrame(fastq_list)
+    df['fastqs'] = \
+      df['file_path'].\
+        map(lambda x: os.path.dirname(x))
     fastqs = \
-      df['file_path'].values.tolist()
+      df['fastqs'].\
+        drop_duplicates().\
+        values.\
+        tolist()
     fastqs = \
       ','.join(fastqs)
     # set parameters
     spaceranger_params = list()
     ## image parameters
     for param_key, param_val in sample_info.items():
-      spaceranger_params.\
-        append(f"--{param_key}={param_val}")
+      if param_val is not None:
+        spaceranger_params.\
+          append(f"--{param_key}={param_val}")
     if len(spaceranger_params) == 0:
       raise ValueError(
         f"No image param found for sample {sample_id}")
@@ -142,7 +149,7 @@ def prepare_spaceranger_count_run_dir_and_script_file(
     spaceranger_params.extend(
       spaceranger_count_config)
     spaceranger_params = \
-      ' '.join(spaceranger_params)
+      ' \\\n'.join(spaceranger_params)
     ## create run script from template
     work_dir = \
       get_temp_dir(use_ephemeral_space=True)
