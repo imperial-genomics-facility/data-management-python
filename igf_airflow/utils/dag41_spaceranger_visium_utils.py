@@ -182,7 +182,8 @@ def prepare_spaceranger_count_run_dir_and_script_file(
   task_id="prepare_spaceranger_count_script",
   retry_delay=timedelta(minutes=5),
   retries=4,
-  queue='hpc_4G')
+  queue='hpc_4G',
+  multiple_outputs=False)
 def prepare_spaceranger_count_script(analysis_entry: dict) \
       -> dict:
   try:
@@ -256,7 +257,8 @@ def run_spaceranger_count_script(analysis_script_info: dict) \
   task_id="run_squidpy_qc",
   retry_delay=timedelta(minutes=5),
   retries=4,
-  queue='hpc_4G')
+  queue='hpc_4G',
+  multiple_outputs=False)
 def run_squidpy_qc(analysis_output: dict) -> dict:
   try:
     sample_id = analysis_output.get("sample_id")
@@ -300,6 +302,239 @@ def move_single_spaceranger_count_to_main_work_dir(
       work_dir)
     output_dict = {
       "sample_id": sample_id,
+      "output": target_spaceranger_count_dir}
+    return output_dict
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
+
+
+## TASK: collect all analysis outputs
+@task(
+  task_id="collect_spaceranger_count_analysis",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_4G')
+def collect_spaceranger_count_analysis(
+      analysis_output_list: list) -> list:
+  try:
+    return analysis_output_list
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
+
+
+
+## TASK: switch to aggr if morethan one samples are 
+@task(
+  task_id="decide_aggr",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_4G')
+def decide_aggr(
+      analysis_output_list: list,
+      aggr_task: str = "prepare_spaceranger_aggr_script",
+      non_aggr_task: str = "calculate_md5_for_work_dir") -> list:
+  try:
+    if len(analysis_output_list) > 1:
+      return [aggr_task]
+    elif len(analysis_output_list) == 1:
+      return [non_aggr_task]
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
+
+
+## TASK: prep aggr run script
+@task(
+  task_id="prepare_spaceranger_aggr_script",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_4G',
+  multiple_outputs=False)
+def prepare_spaceranger_aggr_script(analysis_output_list: list) -> str:
+  try:
+    spaceranger_count_dict = dict()
+    for entry in analysis_output_list:
+      if entry is not None:
+        sample_id = entry.get("sample_id")
+        count_dir = entry.get("output")
+        spaceranger_count_dict.update({
+          sample_id: count_dir})
+    script_file, output_dir = \
+      prepare_spaceranger_aggr_run_dir_and_script(
+        spaceranger_count_dict)
+    return {"script_file": script_file, "output_dir": output_dir}
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
+
+
+def prepare_spaceranger_aggr_run_dir_and_script(
+    spaceranger_count_dict: dict,
+    spaceranger_aggr_script_template: str,
+    spaceranger_aggr_params: Optional[list] = None) \
+      -> Tuple[str, str]:
+  try:
+    required_fields = {
+      "molecule_h5": "outs/molecule_info.h5",
+      "cloupe_file": "outs/cloupe.cloupe",
+      "spatial_folder": "outs/spatial"}
+    aggr_csv_list = list()
+    for sample_id, count_dir_path in spaceranger_count_dict.item():
+      row_data = {"library_id": sample_id}
+      for required_field_name, required_field_val in required_fields.items():
+        required_field_path = \
+          os.path.join(
+            count_dir_path,
+            required_field_val)
+        row_data.update({
+          required_field_name: required_field_path})
+    ## check if any info is present or not
+    if len(aggr_csv_list) == 0:
+      raise ValueError(
+        f"No count dir info found in {spaceranger_count_dict}")
+    ## get work dir and create scripts
+    work_dir = \
+      get_temp_dir(
+        use_ephemeral_space=True)
+    ## aggr csv
+    aggr_csv_filepath = \
+      os.path.join(
+        work_dir,
+        "spaceranger_aggr_input.csv")
+    pd.DataFrame(aggr_csv_list).\
+      to_csv(
+        aggr_csv_filepath,
+        index=False)
+    ## script
+    aggr_script_path = \
+      os.path.join(
+        work_dir,
+        os.path.basename(
+          spaceranger_aggr_script_template))
+    output_dir = \
+      os.path.join(work_dir, "ALL")
+    if spaceranger_aggr_params is None:
+      spaceranger_aggr_params = list()
+    spaceranger_aggr_params = \
+      ' '.join(spaceranger_aggr_params)
+    _create_output_from_jinja_template(
+      template_file=spaceranger_aggr_script_template,
+      output_file=aggr_script_path,
+      autoescape_list=['xml',],
+      data=dict(
+        SPACERANGER_ID="ALL",
+        CAV_FILE=aggr_csv_filepath,
+        SPACERANGER_AGGR_PARAMS=spaceranger_aggr_params,
+        WORKDIR=work_dir))
+    return aggr_script_path, output_dir
+  except Exception as e:
+    raise ValueError(
+      f"Failed to create spaceranger aggr run script, error: {e}")
+
+
+## TASK
+@task(
+  task_id="run_spaceranger_aggr_script",
+  retry_delay=timedelta(minutes=15),
+  retries=10,
+  queue='hpc_8G4t72hr',
+  pool='batch_job',
+  multiple_outputs=False)
+def run_spaceranger_aggr_script(aggr_script_info: dict) \
+      -> str:
+  try:
+    script_file = aggr_script_info.get("script_file")
+    output_dir = aggr_script_info.get("output_dir")
+    ## check for _lock file
+    lock_file = \
+      os.path.join(output_dir, '_lock')
+    if os.path.exists(lock_file):
+      raise ValueError(
+        f"""Lock file exists in spaceranger run path: {output_dir}. \
+            Remove it to continue!""")
+    try:
+      _, _ = \
+        bash_script_wrapper(
+          script_path=script_file,
+          capture_stderr=False)
+    except Exception as e:
+      raise ValueError(
+        f"Failed to run spaceranger aggr script, Script: {script_file}")
+    ## check output dir exists
+    check_file_path(output_dir)
+    return output_dir
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
+
+
+## TASK
+@task(
+  task_id="squidpy_qc_for_aggr",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_4G',
+  multiple_outputs=False)
+def squidpy_qc_for_aggr(analysis_output_dir: str) -> str:
+  try:
+    return analysis_output_dir
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
+
+
+## TASK
+@task(
+  task_id="move_spaceranger_aggr_to_main_work_dir",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_4G')
+def move_spaceranger_aggr_to_main_work_dir(
+      work_dir: str,
+      analysis_output_dir: str) -> str:
+  try:
+    check_file_path(work_dir)
+    target_spaceranger_count_dir = \
+      os.path.join(
+        work_dir,
+        os.path.basename(analysis_output_dir))
+    ## not safe to overwrite existing dir
+    if os.path.exists(target_spaceranger_count_dir):
+      raise IOError(
+        f"""spaceranger aggr output path already present. \
+          Path: {target_spaceranger_count_dir}. \
+          CLEAN UP and RESTART !!!""")
+    shutil.move(
+      analysis_output_dir,
+      work_dir)
+    output_dict = {
+      "sample_id": "ALL",
       "output": target_spaceranger_count_dir}
     return output_dict
   except Exception as e:
