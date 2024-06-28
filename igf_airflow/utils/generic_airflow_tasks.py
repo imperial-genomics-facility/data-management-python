@@ -414,3 +414,41 @@ def create_main_work_dir(task_tag: str) -> str:
       ms_teams_conf=MS_TEAMS_CONF,
       message_prefix=e)
     raise ValueError(e)
+
+
+## TASK
+@task(
+  task_id="load_analysis_results_to_db",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_4G')
+def load_analysis_results_to_db(
+      main_work_dir: str) -> str:
+  try:
+    ## dag_run.conf should have analysis_id
+    context = get_current_context()
+    dag_run = context.get('dag_run')
+    analysis_id = None
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('analysis_id') is not None:
+      analysis_id = \
+        dag_run.conf.get('analysis_id')
+    if analysis_id is None:
+      raise ValueError('analysis_id not found in dag_run.conf')
+    ## load data to db
+    target_dir_path, project_igf_id, date_tag = \
+    collect_analysis_dir(
+      analysis_id=analysis_id,
+      dag_name=context['task'].dag_id,
+      dir_path=main_work_dir,
+      db_config_file=DATABASE_CONFIG_FILE,
+      hpc_base_path=HPC_BASE_RAW_DATA_PATH)
+    return {'target_dir_path': target_dir_path, 'date_tag': date_tag}
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
