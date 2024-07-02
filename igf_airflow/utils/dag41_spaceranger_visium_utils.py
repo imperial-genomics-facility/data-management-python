@@ -31,11 +31,16 @@ from airflow.decorators import task
 log = logging.getLogger(__name__)
 
 ## CONF
-SLACK_CONF = Variable.get('analysis_slack_conf',default_var=None)
-MS_TEAMS_CONF = Variable.get('analysis_ms_teams_conf',default_var=None)
-DATABASE_CONFIG_FILE = Variable.get('database_config_file', default_var=None)
+SLACK_CONF = \
+  Variable.get('analysis_slack_conf', default_var=None)
+MS_TEAMS_CONF = \
+  Variable.get('analysis_ms_teams_conf', default_var=None)
+DATABASE_CONFIG_FILE = \
+  Variable.get('database_config_file', default_var=None)
 SPACERANGER_COUNT_SCRIPT_TEMPLATE = \
   Variable.get("spaceranger_count_script_template", default_var=None)
+SPACERANGER_AGGR_SCRIPT_TEMPLATE = \
+  Variable.get("spaceranger_aggr_script_template", default_var=None)
 
 def get_spaceranger_analysis_design_and_get_groups(design_file: str) -> list:
   try:
@@ -375,7 +380,8 @@ def prepare_spaceranger_aggr_script(analysis_output_list: list) -> str:
           sample_id: count_dir})
     script_file, output_dir = \
       prepare_spaceranger_aggr_run_dir_and_script(
-        spaceranger_count_dict)
+        spaceranger_count_dict=spaceranger_count_dict,
+        spaceranger_aggr_script_template=SPACERANGER_AGGR_SCRIPT_TEMPLATE)
     return {"script_file": script_file, "output_dir": output_dir}
   except Exception as e:
     log.error(e)
