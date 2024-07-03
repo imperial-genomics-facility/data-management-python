@@ -403,7 +403,7 @@ def prepare_spaceranger_aggr_run_dir_and_script(
       "cloupe_file": "outs/cloupe.cloupe",
       "spatial_folder": "outs/spatial"}
     aggr_csv_list = list()
-    for sample_id, count_dir_path in spaceranger_count_dict.item():
+    for sample_id, count_dir_path in spaceranger_count_dict.items():
       row_data = {"library_id": sample_id}
       for required_field_name, required_field_val in required_fields.items():
         required_field_path = \
