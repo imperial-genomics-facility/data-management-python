@@ -338,7 +338,6 @@ def copy_data_to_globus(analysis_dir_dict: dict) -> None:
         dbconfig_file=DATABASE_CONFIG_FILE,
         analysis_id=analysis_id,
         analysis_dir=analysis_dir,
-        pipeline_name=pipeline_name,
         date_tag=date_tag)
   except Exception as e:
     log.error(e)
