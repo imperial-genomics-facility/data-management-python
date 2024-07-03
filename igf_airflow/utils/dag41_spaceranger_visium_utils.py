@@ -267,9 +267,9 @@ def run_spaceranger_count_script(analysis_script_info: dict) \
 def run_squidpy_qc(analysis_output: dict) -> dict:
   try:
     sample_id = analysis_output.get("sample_id")
-    output = analysis_output.get("output")
+    output_dir = analysis_output.get("output_dir")
     ## generate report and move it to visium output directory
-    return {"sample_id": sample_id, "output": output}
+    return {"sample_id": sample_id, "output_dir": output_dir}
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
@@ -291,11 +291,11 @@ def move_single_spaceranger_count_to_main_work_dir(
   try:
     check_file_path(work_dir)
     sample_id = analysis_output.get("sample_id")
-    output = analysis_output.get("output")
+    output_dir = analysis_output.get("output_dir")
     target_spaceranger_count_dir = \
       os.path.join(
         work_dir,
-        os.path.basename(output))
+        os.path.basename(output_dir))
     ## not safe to overwrite existing dir
     if os.path.exists(target_spaceranger_count_dir):
       raise IOError(
@@ -303,7 +303,7 @@ def move_single_spaceranger_count_to_main_work_dir(
           Path: {target_spaceranger_count_dir}. \
           CLEAN UP and RESTART !!!""")
     shutil.move(
-      output,
+      output_dir,
       work_dir)
     output_dict = {
       "sample_id": sample_id,
