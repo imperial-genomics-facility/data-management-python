@@ -448,7 +448,7 @@ def prepare_spaceranger_aggr_run_dir_and_script(
       autoescape_list=['xml',],
       data=dict(
         SPACERANGER_ID="ALL",
-        CAV_FILE=aggr_csv_filepath,
+        CSV_FILE=aggr_csv_filepath,
         SPACERANGER_AGGR_PARAMS=spaceranger_aggr_params,
         WORKDIR=work_dir))
     return aggr_script_path, output_dir
