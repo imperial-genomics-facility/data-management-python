@@ -412,6 +412,7 @@ def prepare_spaceranger_aggr_run_dir_and_script(
             required_field_val)
         row_data.update({
           required_field_name: required_field_path})
+      aggr_csv_list.append(row_data)
     ## check if any info is present or not
     if len(aggr_csv_list) == 0:
       raise ValueError(
