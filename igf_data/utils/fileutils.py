@@ -1,13 +1,14 @@
 #!/usr/bin/env python
 import json
 import pandas as pd
-import os,subprocess,hashlib,string,re, stat
+from typing import Optional
+import os, subprocess, hashlib, string, re, stat
 import tarfile,fnmatch
 from shlex import quote
 from datetime import datetime
 from dateutil.parser import parse
-from tempfile import mkdtemp,gettempdir
-from shutil import rmtree, move, copy2,copytree
+from tempfile import mkdtemp, gettempdir
+from shutil import rmtree, move, copy2, copytree
 
 def move_file(source_path,destination_path,cd_to_dest=False,force=False):
   '''
@@ -428,13 +429,16 @@ def calculate_file_checksum(filepath, hasher='md5'):
     raise ValueError("Failed to check file checksum, error: {0}".format(e))
 
 
-def get_temp_dir(work_dir=None, prefix='temp',use_ephemeral_space=False):
+def get_temp_dir(
+      work_dir: Optional[str] = None,
+      prefix: str = 'temp',
+      use_ephemeral_space: bool = True) -> str:
   '''
   A function for creating temp directory
 
   :param work_dir: A path for work directory, default None
   :param prefix: A prefix for directory path, default 'temp'
-  :param use_ephemeral_space: Use env variable $EPHEMERAL to get work directory, default False
+  :param use_ephemeral_space: Use env variable $EPHEMERAL to get work directory, default True
   :returns: A temp_dir
   '''
   try:
