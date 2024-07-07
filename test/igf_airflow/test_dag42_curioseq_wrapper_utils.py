@@ -24,21 +24,20 @@ from igf_data.utils.fileutils import (
   remove_dir)
 from igf_airflow.utils.dag42_curioseq_wrapper_utils import (
   merge_list_of_r1_and_r2_files,
-  fetch_and_merge_fastqs_for_samples
+  fetch_and_merge_fastqs_for_samples,
+  prepare_curioseeker_run_dir_and_script_file
 )
 
 DESIGN_YAML = """sample_metadata:
   IGFsampleA:
-    barcode_file: /path/image
+    barcode_file: /path/barcode1
     experiment_date: 2024-07-03
-    genome: GRCm39
   IGFsampleB:
-    barcode_file: /path/image
+    barcode_file: /path/barcode2
     experiment_date: 2024-07-03
-    genome: GRCm39
 analysis_metadata:
   curioseeker_config:
-    igenomes_base: /PATH/PIPELINE_RESOURCES/REF_GENOME/CURIOSEEKER
+    genome: GRCm39
     """
 
 class TestDag42_curioseq_wrapper_utilsA(unittest.TestCase):
@@ -472,6 +471,56 @@ class TestDag42_curioseq_wrapper_utilsA(unittest.TestCase):
     self.assertTrue(r1_fastq is not None and r2_fastq is not None)
     self.assertEqual(os.path.basename(r1_fastq), 'IGFsampleB_S2_L001_R1_001.fastq.gz')
     self.assertEqual(os.path.basename(r2_fastq), 'IGFsampleB_S2_L001_R2_001.fastq.gz')
+
+
+  def test_prepare_curioseeker_run_dir_and_script_file(self):
+    sample_metadata = {
+      "IGFsampleA": {
+        "barcode_file": "/path/barcode1",
+        "experiment_date": "2024-07-03"}}
+    analysis_metadata = {
+      "curioseeker_config": {
+        "genome": "GRCm39"}}
+    output_dict = \
+      fetch_and_merge_fastqs_for_samples(
+        sample_dict=sample_metadata,
+        db_config_file=self.dbconfig)
+    sample_ids, csv_file_path, nextflow_config_path, run_script_path, output_dir = \
+      prepare_curioseeker_run_dir_and_script_file(
+        sample_metadata=output_dict,
+        analysis_metadata=analysis_metadata,
+        run_script_template="template/nextflow_template/curioseeker_nf_runner_v0.0.1.sh",
+        nextflow_config_template="template/nextflow_template/curioseeker_nextflow_v0.0.1.conf")
+    self.assertEqual(sample_ids, "IGFsampleA")
+    self.assertTrue("IGFsampleA" in output_dict)
+    self.assertTrue("barcode_file" in output_dict.get("IGFsampleA"))
+    self.assertTrue("R1" in output_dict.get("IGFsampleA"))
+    self.assertTrue("R2" in output_dict.get("IGFsampleA"))
+    r1_fastq = output_dict.get("IGFsampleA").get("R1")
+    r2_fastq = output_dict.get("IGFsampleA").get("R2")
+    csv_file_df = pd.read_csv(csv_file_path, header=0)
+    self.assertTrue("barcode_file" in csv_file_df.columns)
+    self.assertEqual(
+      csv_file_df["barcode_file"].values.tolist()[0],
+      "/path/barcode1")
+    self.assertTrue("fastq_1" in csv_file_df.columns)
+    self.assertEqual(
+      csv_file_df["fastq_1"].values.tolist()[0],
+      r1_fastq)
+    self.assertTrue("fastq_2" in csv_file_df.columns)
+    self.assertEqual(
+      csv_file_df["fastq_2"].values.tolist()[0],
+      r2_fastq)
+    self.assertTrue("experiment_date" in csv_file_df.columns)
+    self.assertEqual(
+      csv_file_df["experiment_date"].values.tolist()[0],
+      "2024-07-03")
+    conf_data = open(nextflow_config_path, "r").read()
+    self.assertTrue(os.path.dirname(r1_fastq) in conf_data)
+    script_data = open(run_script_path, "r").read()
+    self.assertTrue(f"--input {csv_file_path}" in script_data)
+    self.assertTrue(f"--outdir {output_dir}" in script_data)
+    self.assertTrue(f"-config {nextflow_config_path}" in script_data)
 
 
 if __name__=='__main__':

@@ -47,11 +47,23 @@ CURIOSEEKER_TEMPLATE = \
 CURIOSEEKER_NF_CONFIG_TEMPLATE = \
   Variable.get('curioseeker_nf_config_template', default_var=None)
 
-
+## TASK
+@task(
+  task_id="merge_fastqs_for_analysis",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_4G',
+  multiple_outputs=False)
 def merge_fastqs_for_analysis(analysis_entry: dict) -> dict:
   try:
     sample_metadata = \
       analysis_entry.get("sample_metadata")
+    ## not filtering multiple samples at this stage
+    output_sample_metadata = \
+      fetch_and_merge_fastqs_for_samples(
+        sample_dict=sample_metadata,
+        db_config_file=DATABASE_CONFIG_FILE)
+    return  output_sample_metadata
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
@@ -161,3 +173,154 @@ def merge_list_of_r1_and_r2_files(
   except Exception as e:
     raise ValueError(
       f"Failed to merge fastqs, error: {e}")
+
+
+## TASK
+@task(
+  task_id="prepare_curioseeker_analysis_scripts",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_4G',
+  multiple_outputs=False)
+def prepare_curioseeker_analysis_scripts(
+      analysis_entry: dict,
+      modified_sample_metadata: dict) -> dict:
+  try:
+    analysis_metadata = \
+      analysis_entry.get("analysis_metadata")
+    sample_id, _, _, run_script_file, output_dir = \
+      prepare_curioseeker_run_dir_and_script_file(
+        sample_metadata=modified_sample_metadata,
+        analysis_metadata=analysis_metadata,
+        db_config_file=DATABASE_CONFIG_FILE,
+        run_script_template=CURIOSEEKER_TEMPLATE,
+        nextflow_config_template=CURIOSEEKER_NF_CONFIG_TEMPLATE)
+    return {"sample_id": sample_id,
+            "script_file": run_script_file,
+            "output_dir": output_dir}
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
+
+
+def prepare_curioseeker_run_dir_and_script_file(
+      sample_metadata: dict,
+      analysis_metadata: dict,
+      run_script_template: str,
+      nextflow_config_template: str,
+      r1_fastq_tag: str = "R1",
+      r2_fastq_tag: str = "R2",
+      barcode_file_tag: str = "barcode_file",
+      experiment_date_tag: str = "experiment_date",
+      curioseeker_config_tag: str = "curioseeker_config",
+      genome_tag: str = "genome",
+      sample_col: str = "sample",
+      experiment_date_col: str = "experiment_date",
+      barcode_file_col: str = "barcode_file",
+      fastq_1_col: str = "fastq_1",
+      fastq_2_col: str = "fastq_2",
+      genome_col: str = "genome",
+      samplesheet_filename: str = "samplesheet.csv",
+      result_dir_tag: str = "result"
+      ) -> Tuple[str, str, str]:
+  try:
+    ## get work dir
+    work_dir = get_temp_dir()
+    singularity_mount_dir_list = [work_dir,]
+    ## samplesheet
+    samplesheet_header = [
+      sample_col,
+      experiment_date_col,
+      barcode_file_col,
+      fastq_1_col,
+      fastq_2_col,
+      genome_col]
+    curioseeker_config = \
+      analysis_metadata.get(
+        curioseeker_config_tag)
+    if curioseeker_config is None:
+      raise KeyError(
+        f"""Missing {curioseeker_config_tag} in
+        analysis metadata: {analysis_metadata}""")
+    genome = \
+      curioseeker_config.get(genome_tag)
+    if genome is None:
+      raise KeyError(
+        f"Missing {genome_tag} in analysis metadata: {curioseeker_config}")
+    ## collected data for samplesheet csv file
+    csv_data = list()
+    sample_id_list = list()
+    for sample_id, sample_info in sample_metadata.items():
+      sample_id_list.append(sample_id)
+      fastq_1 = sample_info.get(r1_fastq_tag)
+      fastq_2 = sample_info.get(r2_fastq_tag)
+      barcode_file = sample_info.get(barcode_file_tag)
+      experiment_date = sample_info.get(experiment_date_tag)
+      if fastq_1 is None or \
+         fastq_2 is None or \
+         barcode_file is None or \
+         experiment_date is None:
+        raise KeyError(
+          f"""Missing required field in sample metadata for {sample_id}.
+          Required {samplesheet_header}
+          Metadata: {sample_info}""")
+      csv_data.append({
+        sample_col: sample_id,
+        experiment_date_col: experiment_date,
+        barcode_file_col: barcode_file,
+        fastq_1_col: fastq_1,
+        fastq_2_col: fastq_2,
+        genome_col: genome})
+      singularity_mount_dir_list.append(
+        os.path.dirname(fastq_1))
+      singularity_mount_dir_list.append(
+        os.path.dirname(barcode_file))
+    csv_file_path = \
+      os.path.join(
+        work_dir,
+        samplesheet_filename)
+    pd.DataFrame(csv_data).\
+      to_csv(
+        csv_file_path,
+        index=False,
+        columns=samplesheet_header)
+    # create nf config template
+    nextflow_config_path = \
+      os.path.join(
+        work_dir,
+        os.path.basename(nextflow_config_template))
+    singularity_mount_dir_list = \
+      list(set(singularity_mount_dir_list))
+    _create_output_from_jinja_template(
+      template_file=nextflow_config_template,
+      output_file=nextflow_config_path,
+      autoescape_list=['xml',],
+      data=dict(
+        DIR_LIST=singularity_mount_dir_list))
+    # create nf script
+    output_dir = \
+      os.path.join(
+        work_dir,
+        result_dir_tag)
+    run_script_path = \
+      os.path.join(
+        work_dir,
+        os.path.basename(run_script_template))
+    _create_output_from_jinja_template(
+      template_file=run_script_template,
+      output_file=run_script_path,
+      autoescape_list=['xml',],
+      data=dict(
+        WORKDIR=work_dir,
+        SAMPLESHEET_CSV=csv_file_path,
+        OUTPUT_DIR=output_dir,
+        CONFIG_FILE=nextflow_config_path))
+    sample_ids = " ".join(sample_id_list)
+    return sample_ids, csv_file_path, nextflow_config_path, run_script_path, output_dir
+  except Exception as e:
+    raise ValueError(
+      f"Failed to create script for curioseeker, error: {e}")
