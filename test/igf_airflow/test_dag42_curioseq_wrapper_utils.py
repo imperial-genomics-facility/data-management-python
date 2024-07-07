@@ -176,7 +176,7 @@ class TestDag42_curioseq_wrapper_utilsA(unittest.TestCase):
       {'file_path': os.path.join(self.temp_dir, 'IGFSampleA/IGFsampleA_S1_L002_I1_001.fastq.gz')},
       {'file_path': os.path.join(self.temp_dir, 'IGFSampleA/IGFsampleA_S1_L002_I2_001.fastq.gz')},
       {'file_path': os.path.join(self.temp_dir, 'IGFSampleB/IGFsampleB_S2_L001_R1_001.fastq.gz')},
-      {'file_path': os.path.join(self.temp_dir, 'IGFSampleB/IGFsampleB_S1_L001_R2_001.fastq.gz')},
+      {'file_path': os.path.join(self.temp_dir, 'IGFSampleB/IGFsampleB_S2_L001_R2_001.fastq.gz')},
       {'file_path': os.path.join(self.temp_dir, 'IGFSampleB/IGFsampleB_S2_L001_I1_001.fastq.gz')},
       {'file_path': os.path.join(self.temp_dir, 'IGFSampleB/IGFsampleB_S2_L001_I2_001.fastq.gz')},
       {'file_path': os.path.join(self.temp_dir, 'IGFSampleC/IGFsampleC_S1_L001_R1_001.fastq.gz')},
@@ -261,7 +261,7 @@ class TestDag42_curioseq_wrapper_utilsA(unittest.TestCase):
     }, {
       'name': 'IGFsampleB_MISEQ_000000000-BRN47_1',
       'type': 'demultiplexed_fastq',
-      'file_path': os.path.join(self.temp_dir, 'IGFSampleB/IGFsampleB_S1_L001_R2_001.fastq.gz')
+      'file_path': os.path.join(self.temp_dir, 'IGFSampleB/IGFsampleB_S2_L001_R2_001.fastq.gz')
     }, {
       'name': 'IGFsampleB_MISEQ_000000000-BRN47_1',
       'type': 'demultiplexed_fastq',
@@ -371,6 +371,59 @@ class TestDag42_curioseq_wrapper_utilsA(unittest.TestCase):
     self.assertTrue(
       "IGFsampleA_S1_L001_R2_001.fastq.gz" in r2_fastq_data and \
       "IGFsampleA_S1_L002_R2_001.fastq.gz" in r2_fastq_data)
+
+
+  def test_fetch_and_merge_fastqs_for_samples(self):
+    output_dict = \
+      fetch_and_merge_fastqs_for_samples(
+        sample_dict={"IGFsampleA": {"barcode_file": "/path"}},
+        db_config_file=self.dbconfig)
+    self.assertTrue("IGFsampleA" in output_dict)
+    self.assertTrue("barcode_file" in output_dict.get("IGFsampleA"))
+    self.assertTrue("R1" in output_dict.get("IGFsampleA"))
+    self.assertTrue("R2" in output_dict.get("IGFsampleA"))
+    r1_fastq = output_dict.get("IGFsampleA").get("R1")
+    r2_fastq = output_dict.get("IGFsampleA").get("R2")
+    self.assertTrue(r1_fastq is not None and r2_fastq is not None)
+    r1_fastq_length = \
+      subprocess.check_output(f"zcat {r1_fastq}|wc -l", shell=True)
+    self.assertEqual(int(r1_fastq_length.decode().strip()), 8)
+    r1_fastq_data = \
+      subprocess.check_output(f"zcat {r1_fastq}", shell=True)
+    r1_fastq_data = \
+      r1_fastq_data.decode()
+    self.assertTrue(
+      "IGFsampleA_S1_L001_R1_001.fastq.gz" in r1_fastq_data and \
+      "IGFsampleA_S1_L002_R1_001.fastq.gz" in r1_fastq_data)
+    self.assertFalse(
+      "IGFsampleA_S1_L001_R2_001.fastq.gz" in r1_fastq_data or \
+      "IGFsampleA_S1_L002_R2_001.fastq.gz" in r1_fastq_data)
+    r2_fastq_length = \
+      subprocess.check_output(f"zcat {r2_fastq}|wc -l", shell=True)
+    self.assertEqual(int(r2_fastq_length.decode().strip()), 8)
+    r2_fastq_data = \
+      subprocess.check_output(f"zcat {r2_fastq}", shell=True)
+    r2_fastq_data = \
+      r2_fastq_data.decode()
+    self.assertFalse(
+      "IGFsampleA_S1_L001_R1_001.fastq.gz" in r2_fastq_data or \
+      "IGFsampleA_S1_L002_R1_001.fastq.gz" in r2_fastq_data)
+    self.assertTrue(
+      "IGFsampleA_S1_L001_R2_001.fastq.gz" in r2_fastq_data and \
+      "IGFsampleA_S1_L002_R2_001.fastq.gz" in r2_fastq_data)
+    output_dict = \
+      fetch_and_merge_fastqs_for_samples(
+        sample_dict={"IGFsampleB": {"barcode_file": "/path"}},
+        db_config_file=self.dbconfig)
+    self.assertTrue("IGFsampleB" in output_dict)
+    self.assertTrue("barcode_file" in output_dict.get("IGFsampleB"))
+    self.assertTrue("R1" in output_dict.get("IGFsampleB"))
+    self.assertTrue("R2" in output_dict.get("IGFsampleB"))
+    r1_fastq = output_dict.get("IGFsampleB").get("R1")
+    r2_fastq = output_dict.get("IGFsampleB").get("R2")
+    self.assertTrue(r1_fastq is not None and r2_fastq is not None)
+    self.assertEqual(os.path.basename(r1_fastq), 'IGFsampleB_S2_L001_R1_001.fastq.gz')
+    self.assertEqual(os.path.basename(r2_fastq), 'IGFsampleB_S2_L001_R2_001.fastq.gz')
 
 
 if __name__=='__main__':
