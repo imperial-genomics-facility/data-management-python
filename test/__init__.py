@@ -132,7 +132,8 @@ def full_suite():
     TestDag36_cellranger_arc_scRNA_multiome_utilsA,
     TestDag36_cellranger_arc_scRNA_multiome_utilsB)
   from .igf_airflow.test_dag41_spaceranger_visium_utils import (
-    TestDag41_spaceranger_visium_utilsA)
+    TestDag41_spaceranger_visium_utilsA,
+    TestDag41_spaceranger_visium_utilsB)
   from .igf_airflow.test_dag42_curioseq_wrapper_utils import (
     TestDag42_curioseq_wrapper_utilsA)
 
@@ -270,6 +271,7 @@ def full_suite():
         TestDag36_cellranger_arc_scRNA_multiome_utilsA,
         TestDag36_cellranger_arc_scRNA_multiome_utilsB,
         TestDag41_spaceranger_visium_utilsA,
+        TestDag41_spaceranger_visium_utilsB,
         TestDag42_curioseq_wrapper_utilsA
       ]
     ])
