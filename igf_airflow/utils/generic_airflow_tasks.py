@@ -1,4 +1,5 @@
 import os
+import shutil
 import logging
 from datetime import timedelta
 from airflow.decorators import task
@@ -444,6 +445,64 @@ def load_analysis_results_to_db(
       db_config_file=DATABASE_CONFIG_FILE,
       hpc_base_path=HPC_BASE_RAW_DATA_PATH)
     return {'target_dir_path': target_dir_path, 'date_tag': date_tag}
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
+
+
+## TASK
+@task(
+  task_id="move_per_sample_analysis_to_main_work_dir",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_4G')
+def move_per_sample_analysis_to_main_work_dir(
+      work_dir: str,
+      analysis_output: dict) -> dict:
+  try:
+    check_file_path(work_dir)
+    sample_id = analysis_output.get("sample_id")
+    output_dir = analysis_output.get("output_dir")
+    target_analysis_dir = \
+      os.path.join(
+        work_dir,
+        os.path.basename(output_dir))
+    ## not safe to overwrite existing dir
+    if os.path.exists(target_analysis_dir):
+      raise IOError(
+        f"""Output path for sample {sample_id}) already present. \
+          Path: {target_analysis_dir}. \
+          CLEAN UP and RESTART !!!""")
+    shutil.move(
+      output_dir,
+      work_dir)
+    output_dict = {
+      "sample_id": sample_id,
+      "output": target_analysis_dir}
+    return output_dict
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
+
+
+## TASK: collect all analysis outputs
+@task(
+  task_id="collect_all_analysis",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_4G')
+def collect_all_analysis(
+      analysis_output_list: list) -> list:
+  try:
+    return analysis_output_list
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
