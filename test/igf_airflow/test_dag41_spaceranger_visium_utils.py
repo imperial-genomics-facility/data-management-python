@@ -23,7 +23,7 @@ from igf_data.utils.fileutils import (
   get_temp_dir,
   remove_dir)
 from igf_airflow.utils.dag41_spaceranger_visium_utils import (
-    get_spaceranger_analysis_design_and_get_groups,
+    get_per_sample_analysis_groups,
     prepare_spaceranger_count_run_dir_and_script_file,
 )
 
@@ -297,7 +297,7 @@ class TestDag41_spaceranger_visium_utilsA(unittest.TestCase):
 
   def test_get_spaceranger_analysis_design_and_get_groups(self):
     unique_sample_groups = \
-      get_spaceranger_analysis_design_and_get_groups(self.yaml_file)
+      get_per_sample_analysis_groups(self.yaml_file)
     self.assertEqual(len(unique_sample_groups), 2)
     self.assertEqual(type(unique_sample_groups[0]), dict)
     self.assertTrue(
@@ -314,7 +314,7 @@ class TestDag41_spaceranger_visium_utilsA(unittest.TestCase):
 
   def test_prepare_spaceranger_count_run_dir_and_script_file(self):
     unique_sample_groups = \
-      get_spaceranger_analysis_design_and_get_groups(
+      get_per_sample_analysis_groups(
         self.yaml_file)
     sample_id, script_file, output_dir = \
       prepare_spaceranger_count_run_dir_and_script_file(
