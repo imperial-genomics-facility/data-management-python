@@ -5,6 +5,7 @@
 # * SAMPLESHEET_CSV
 # * OUTPUT_DIR
 # * CONFIG_FILE
+# * NEXTFLOW_PARAMS (Optional)
 #
 ## REQUIRED ENVS
 #
@@ -31,4 +32,8 @@ $NEXTFLOW_EXE run $CURIOSEEKER_SOFTWARE_PATH/curioseeker-v3.0.0/main.nf \
   -profile singularity \
   --input {{ SAMPLESHEET_CSV }} \
   --outdir {{ OUTPUT_DIR }} \
-  -config {{ CONFIG_FILE }}
+  -work-dir {{ WORKDIR }} \
+  -with-report {{ OUTPUT_DIR }}/report.html \
+  -with-dag  {{ OUTPUT_DIR }}/dag.html \
+  -with-timeline {{ OUTPUT_DIR }}/timeline.html \
+  -config {{ CONFIG_FILE }} {{ NEXTFLOW_PARAMS }}
