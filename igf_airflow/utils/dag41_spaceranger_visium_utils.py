@@ -15,13 +15,14 @@ from igf_data.utils.fileutils import (
   copy_local_file,
   get_temp_dir,
   get_date_stamp)
-from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_airflow.utils.dag22_bclconvert_demult_utils import (
   _create_output_from_jinja_template)
 from igf_airflow.utils.generic_airflow_utils import (
     get_project_igf_id_for_analysis,
     fetch_analysis_name_for_analysis_id,
     send_airflow_failed_logs_to_channels,
+    send_airflow_pipeline_logs_to_channels,
+    get_per_sample_analysis_groups,
     collect_analysis_dir,
     parse_analysis_design_and_get_metadata
 )
@@ -31,37 +32,42 @@ from airflow.decorators import task
 log = logging.getLogger(__name__)
 
 ## CONF
-SLACK_CONF = Variable.get('analysis_slack_conf',default_var=None)
-MS_TEAMS_CONF = Variable.get('analysis_ms_teams_conf',default_var=None)
-DATABASE_CONFIG_FILE = Variable.get('database_config_file', default_var=None)
+SLACK_CONF = \
+  Variable.get('analysis_slack_conf', default_var=None)
+MS_TEAMS_CONF = \
+  Variable.get('analysis_ms_teams_conf', default_var=None)
+DATABASE_CONFIG_FILE = \
+  Variable.get('database_config_file', default_var=None)
 SPACERANGER_COUNT_SCRIPT_TEMPLATE = \
   Variable.get("spaceranger_count_script_template", default_var=None)
+SPACERANGER_AGGR_SCRIPT_TEMPLATE = \
+  Variable.get("spaceranger_aggr_script_template", default_var=None)
 
-def get_spaceranger_analysis_design_and_get_groups(design_file: str) -> list:
-  try:
-    check_file_path(design_file)
-    with open(design_file, 'r') as fp:
-      input_design_yaml = fp.read()
-      sample_metadata, analysis_metadata = \
-        parse_analysis_design_and_get_metadata(
-          input_design_yaml=input_design_yaml)
-    if sample_metadata is None or \
-       analysis_metadata is None:
-      raise KeyError(
-        "Missing sample or analysis metadata")
-    unique_sample_groups = list()
-    for sample_name, sample_data in sample_metadata.items():
-      unique_sample_groups.\
-        append({
-          "sample_metadata": {
-            sample_name: sample_data},
-          "analysis_metadata": analysis_metadata})
-    if len(unique_sample_groups) == 0:
-      raise ValueError("No sample group found")
-    return unique_sample_groups
-  except Exception as e:
-    raise ValueError(
-      f"Failed to get groups for spaceranger analysis, error: {e}")
+# def get_spaceranger_analysis_design_and_get_groups(design_file: str) -> list:
+#   try:
+#     check_file_path(design_file)
+#     with open(design_file, 'r') as fp:
+#       input_design_yaml = fp.read()
+#       sample_metadata, analysis_metadata = \
+#         parse_analysis_design_and_get_metadata(
+#           input_design_yaml=input_design_yaml)
+#     if sample_metadata is None or \
+#        analysis_metadata is None:
+#       raise KeyError(
+#         "Missing sample or analysis metadata")
+#     unique_sample_groups = list()
+#     for sample_name, sample_data in sample_metadata.items():
+#       unique_sample_groups.\
+#         append({
+#           "sample_metadata": {
+#             sample_name: sample_data},
+#           "analysis_metadata": analysis_metadata})
+#     if len(unique_sample_groups) == 0:
+#       raise ValueError("No sample group found")
+#     return unique_sample_groups
+#   except Exception as e:
+#     raise ValueError(
+#       f"Failed to get groups for spaceranger analysis, error: {e}")
 
 
 ## TASK
@@ -75,7 +81,7 @@ def get_spaceranger_analysis_group_list(design_dict: dict) -> list:
   try:
     design_file = design_dict.get('analysis_design')
     unique_sample_groups = \
-      get_spaceranger_analysis_design_and_get_groups(
+      get_per_sample_analysis_groups(
         design_file=design_file)
     return unique_sample_groups
   except Exception as e:
@@ -230,6 +236,11 @@ def run_spaceranger_count_script(analysis_script_info: dict) \
       raise ValueError(
         f"""Lock file exists in spaceranger run path: {output_dir}. \
             Remove it to continue!""")
+    send_airflow_pipeline_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=\
+        f"Started spaceranger count for sample: {sample_id}, script: {script_file}")
     try:
       _, _ = \
         bash_script_wrapper(
@@ -240,6 +251,11 @@ def run_spaceranger_count_script(analysis_script_info: dict) \
         f"Failed to run spaceranger script, Script: {script_file} for sample: {sample_id}")
     ## check output dir exists
     check_file_path(output_dir)
+    send_airflow_pipeline_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=\
+        f"Finished spaceranger count for sample: {sample_id}, script: {script_file}")
     return {"sample_id": sample_id,
             "output_dir": output_dir}
   except Exception as e:
@@ -262,9 +278,9 @@ def run_spaceranger_count_script(analysis_script_info: dict) \
 def run_squidpy_qc(analysis_output: dict) -> dict:
   try:
     sample_id = analysis_output.get("sample_id")
-    output = analysis_output.get("output")
+    output_dir = analysis_output.get("output_dir")
     ## generate report and move it to visium output directory
-    return {"sample_id": sample_id, "output": output}
+    return {"sample_id": sample_id, "output_dir": output_dir}
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
@@ -286,11 +302,11 @@ def move_single_spaceranger_count_to_main_work_dir(
   try:
     check_file_path(work_dir)
     sample_id = analysis_output.get("sample_id")
-    output = analysis_output.get("output")
+    output_dir = analysis_output.get("output_dir")
     target_spaceranger_count_dir = \
       os.path.join(
         work_dir,
-        os.path.basename(output))
+        os.path.basename(output_dir))
     ## not safe to overwrite existing dir
     if os.path.exists(target_spaceranger_count_dir):
       raise IOError(
@@ -298,7 +314,7 @@ def move_single_spaceranger_count_to_main_work_dir(
           Path: {target_spaceranger_count_dir}. \
           CLEAN UP and RESTART !!!""")
     shutil.move(
-      output,
+      output_dir,
       work_dir)
     output_dict = {
       "sample_id": sample_id,
@@ -375,7 +391,8 @@ def prepare_spaceranger_aggr_script(analysis_output_list: list) -> str:
           sample_id: count_dir})
     script_file, output_dir = \
       prepare_spaceranger_aggr_run_dir_and_script(
-        spaceranger_count_dict)
+        spaceranger_count_dict=spaceranger_count_dict,
+        spaceranger_aggr_script_template=SPACERANGER_AGGR_SCRIPT_TEMPLATE)
     return {"script_file": script_file, "output_dir": output_dir}
   except Exception as e:
     log.error(e)
@@ -397,7 +414,7 @@ def prepare_spaceranger_aggr_run_dir_and_script(
       "cloupe_file": "outs/cloupe.cloupe",
       "spatial_folder": "outs/spatial"}
     aggr_csv_list = list()
-    for sample_id, count_dir_path in spaceranger_count_dict.item():
+    for sample_id, count_dir_path in spaceranger_count_dict.items():
       row_data = {"library_id": sample_id}
       for required_field_name, required_field_val in required_fields.items():
         required_field_path = \
@@ -406,6 +423,7 @@ def prepare_spaceranger_aggr_run_dir_and_script(
             required_field_val)
         row_data.update({
           required_field_name: required_field_path})
+      aggr_csv_list.append(row_data)
     ## check if any info is present or not
     if len(aggr_csv_list) == 0:
       raise ValueError(
@@ -441,7 +459,7 @@ def prepare_spaceranger_aggr_run_dir_and_script(
       autoescape_list=['xml',],
       data=dict(
         SPACERANGER_ID="ALL",
-        CAV_FILE=aggr_csv_filepath,
+        CSV_FILE=aggr_csv_filepath,
         SPACERANGER_AGGR_PARAMS=spaceranger_aggr_params,
         WORKDIR=work_dir))
     return aggr_script_path, output_dir

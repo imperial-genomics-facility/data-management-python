@@ -986,3 +986,30 @@ def calculate_md5sum_for_analysis_dir(dir_path: str) -> str:
   except Exception as e:
     raise ValueError(
       f"Failed to get md5sum for dir {dir_path}, error: {e}")
+
+
+def get_per_sample_analysis_groups(design_file: str) -> list:
+  try:
+    check_file_path(design_file)
+    with open(design_file, 'r') as fp:
+      input_design_yaml = fp.read()
+      sample_metadata, analysis_metadata = \
+        parse_analysis_design_and_get_metadata(
+          input_design_yaml=input_design_yaml)
+    if sample_metadata is None or \
+       analysis_metadata is None:
+      raise KeyError(
+        "Missing sample or analysis metadata")
+    unique_sample_groups = list()
+    for sample_name, sample_data in sample_metadata.items():
+      unique_sample_groups.\
+        append({
+          "sample_metadata": {
+            sample_name: sample_data},
+          "analysis_metadata": analysis_metadata})
+    if len(unique_sample_groups) == 0:
+      raise ValueError("No sample group found")
+    return unique_sample_groups
+  except Exception as e:
+    raise ValueError(
+      f"Failed to get groups for analysis, error: {e}")

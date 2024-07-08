@@ -23,8 +23,9 @@ from igf_data.utils.fileutils import (
   get_temp_dir,
   remove_dir)
 from igf_airflow.utils.dag41_spaceranger_visium_utils import (
-    get_spaceranger_analysis_design_and_get_groups,
+    get_per_sample_analysis_groups,
     prepare_spaceranger_count_run_dir_and_script_file,
+    prepare_spaceranger_aggr_run_dir_and_script
 )
 
 DESIGN_YAML = """sample_metadata:
@@ -297,7 +298,7 @@ class TestDag41_spaceranger_visium_utilsA(unittest.TestCase):
 
   def test_get_spaceranger_analysis_design_and_get_groups(self):
     unique_sample_groups = \
-      get_spaceranger_analysis_design_and_get_groups(self.yaml_file)
+      get_per_sample_analysis_groups(self.yaml_file)
     self.assertEqual(len(unique_sample_groups), 2)
     self.assertEqual(type(unique_sample_groups[0]), dict)
     self.assertTrue(
@@ -314,7 +315,7 @@ class TestDag41_spaceranger_visium_utilsA(unittest.TestCase):
 
   def test_prepare_spaceranger_count_run_dir_and_script_file(self):
     unique_sample_groups = \
-      get_spaceranger_analysis_design_and_get_groups(
+      get_per_sample_analysis_groups(
         self.yaml_file)
     sample_id, script_file, output_dir = \
       prepare_spaceranger_count_run_dir_and_script_file(
@@ -337,6 +338,41 @@ class TestDag41_spaceranger_visium_utilsA(unittest.TestCase):
     self.assertTrue("--image=/path/image" in script_rendered_data)
     self.assertFalse("--darkimage" in script_rendered_data)
     self.assertEqual(os.path.basename(output_dir), sample_id)
+
+
+class TestDag41_spaceranger_visium_utilsB(unittest.TestCase):
+  def setUp(self):
+    self.temp_dir = get_temp_dir()
+    sampleA_dir = os.path.join(self.temp_dir, "sampleA")
+    os.makedirs(os.path.join(sampleA_dir, "outs", "spatial"), exist_ok=True)
+    for f in ["molecule_info.h5", "cloupe.cloupe"]:
+      f_path = os.path.join(sampleA_dir, "outs", f)
+      with open(f_path, "w") as fp:
+        fp.write("AAA")
+    sampleB_dir = os.path.join(self.temp_dir, "sampleB")
+    os.makedirs(os.path.join(sampleB_dir, "outs", "spatial"), exist_ok=True)
+    for f in ["molecule_info.h5", "cloupe.cloupe"]:
+      f_path = os.path.join(sampleB_dir, "outs", f)
+      with open(f_path, "w") as fp:
+        fp.write("AAA")
+    self.spaceranger_count_dict = {
+      "sampleA": sampleA_dir,
+      "sampleB": sampleB_dir}
+
+
+  def tearDown(self):
+    remove_dir(self.temp_dir)
+
+  def test_prepare_spaceranger_aggr_run_dir_and_script(self):
+    aggr_script_path, output_dir = \
+      prepare_spaceranger_aggr_run_dir_and_script(
+        spaceranger_count_dict=self.spaceranger_count_dict,
+        spaceranger_aggr_script_template="template/spaceranger_template/spaceranger_aggr_run_script_v1.sh")
+    self.assertTrue(os.path.exists(aggr_script_path))
+    self.assertTrue(os.path.exists(os.path.dirname(output_dir)))
+    script_data = open(aggr_script_path, "r").read()
+    self.assertTrue("--id=ALL" in script_data)
+    self.assertTrue(f"cd {os.path.dirname(output_dir)}" in script_data)
 
 if __name__=='__main__':
   unittest.main()
