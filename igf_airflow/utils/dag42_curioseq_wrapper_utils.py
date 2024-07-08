@@ -319,6 +319,8 @@ def prepare_curioseeker_run_dir_and_script_file(
         os.path.basename(nextflow_config_template))
     singularity_mount_dir_list = \
       list(set(singularity_mount_dir_list))
+    singularity_mount_dir_list = \
+      ",".join(singularity_mount_dir_list)
     _create_output_from_jinja_template(
       template_file=nextflow_config_template,
       output_file=nextflow_config_path,
