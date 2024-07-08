@@ -136,6 +136,8 @@ def full_suite():
     TestDag41_spaceranger_visium_utilsB)
   from .igf_airflow.test_dag42_curioseq_wrapper_utils import (
     TestDag42_curioseq_wrapper_utilsA)
+  from .igf_airflow.test_generic_airflow_tasks import (
+    TestgGneric_airflow_tasksA)
 
   return unittest.TestSuite([
     unittest.TestLoader().loadTestsFromTestCase(t)
@@ -272,6 +274,7 @@ def full_suite():
         TestDag36_cellranger_arc_scRNA_multiome_utilsB,
         TestDag41_spaceranger_visium_utilsA,
         TestDag41_spaceranger_visium_utilsB,
-        TestDag42_curioseq_wrapper_utilsA
+        TestDag42_curioseq_wrapper_utilsA,
+        TestgGneric_airflow_tasksA
       ]
     ])
