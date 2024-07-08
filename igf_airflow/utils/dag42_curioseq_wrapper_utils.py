@@ -17,13 +17,14 @@ from igf_data.utils.fileutils import (
   copy_local_file,
   get_temp_dir,
   get_date_stamp)
-from igf_airflow.logging.upload_log_msg import send_log_to_channels
 from igf_airflow.utils.dag22_bclconvert_demult_utils import (
   _create_output_from_jinja_template)
 from igf_airflow.utils.generic_airflow_utils import (
     get_project_igf_id_for_analysis,
     fetch_analysis_name_for_analysis_id,
     send_airflow_failed_logs_to_channels,
+    send_airflow_pipeline_logs_to_channels,
+    get_per_sample_analysis_groups,
     collect_analysis_dir,
     parse_analysis_design_and_get_metadata
 )
@@ -46,6 +47,29 @@ CURIOSEEKER_TEMPLATE = \
   Variable.get('curioseeker_template', default_var=None)
 CURIOSEEKER_NF_CONFIG_TEMPLATE = \
   Variable.get('curioseeker_nf_config_template', default_var=None)
+
+## TASK
+@task(
+  task_id="get_curioseeker_analysis_group_list",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_4G',
+  multiple_outputs=False)
+def get_curioseeker_analysis_group_list(design_dict: dict) -> list:
+  try:
+    design_file = design_dict.get('analysis_design')
+    unique_sample_groups = \
+      get_per_sample_analysis_groups(
+        design_file=design_file)
+    return unique_sample_groups
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
+
 
 ## TASK
 @task(
@@ -331,3 +355,89 @@ def prepare_curioseeker_run_dir_and_script_file(
   except Exception as e:
     raise ValueError(
       f"Failed to create script for curioseeker, error: {e}")
+
+
+## TASK
+@task(
+  task_id="run_curioseeker_nf_script",
+  retry_delay=timedelta(minutes=15),
+  retries=10,
+  queue='hpc_8G4t72hr',
+  pool='batch_job',
+  multiple_outputs=False)
+def run_curioseeker_nf_script(analysis_script_info: dict) \
+      -> dict:
+  try:
+    sample_id = analysis_script_info.get("sample_id")
+    script_file = analysis_script_info.get("script_file")
+    output_dir = analysis_script_info.get("output_dir")
+    send_airflow_pipeline_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=\
+        f"Started Curioseeker pipeline for sample: {sample_id}, NF script: {script_file}")
+    try:
+      _, _ = \
+        bash_script_wrapper(
+          script_path=script_file,
+          capture_stderr=False)
+    except Exception as e:
+      raise ValueError(
+        f"Failed to run spaceranger script, Script: {script_file} for sample: {sample_id}")
+    ## check output dir exists
+    check_file_path(output_dir)
+    send_airflow_pipeline_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=\
+        f"Finished Curioseeker pipeline for sample: {sample_id}, NF script: {script_file}")
+    return {"sample_id": sample_id,
+            "output_dir": output_dir}
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
+
+
+## TASK
+@task(
+  task_id="run_scanpy_qc",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_4G',
+  multiple_outputs=False)
+def run_scanpy_qc(analysis_output: dict) -> dict:
+  try:
+    sample_id = analysis_output.get("sample_id")
+    output_dir = analysis_output.get("output_dir")
+    ## generate report and move it to visium output directory
+    return {"sample_id": sample_id, "output_dir": output_dir}
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
+
+
+## TASK
+@task(
+  task_id="run_scanpy_qc_for_all_samples",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_4G',
+  multiple_outputs=False)
+def run_scanpy_qc_for_all_samples(analysis_output_list: list) -> str:
+  try:
+    return "to do"
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
