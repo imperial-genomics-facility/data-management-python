@@ -216,7 +216,6 @@ def prepare_curioseeker_analysis_scripts(
       prepare_curioseeker_run_dir_and_script_file(
         sample_metadata=modified_sample_metadata,
         analysis_metadata=analysis_metadata,
-        db_config_file=DATABASE_CONFIG_FILE,
         run_script_template=CURIOSEEKER_TEMPLATE,
         nextflow_config_template=CURIOSEEKER_NF_CONFIG_TEMPLATE)
     return {"sample_id": sample_id,
