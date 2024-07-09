@@ -248,7 +248,6 @@ def prepare_curioseeker_run_dir_and_script_file(
       fastq_2_col: str = "fastq_2",
       genome_col: str = "genome",
       samplesheet_filename: str = "samplesheet.csv",
-      result_dir_tag: str = "result",
       nextflow_params: Optional[list] = None,
       ) -> Tuple[str, str, str,str, str]:
   try:
@@ -333,10 +332,11 @@ def prepare_curioseeker_run_dir_and_script_file(
       nextflow_params = list()
     nextflow_params = \
       " ".join(nextflow_params)
+    sample_ids = "_".join(sample_id_list)
     output_dir = \
       os.path.join(
         work_dir,
-        result_dir_tag)
+        sample_ids)
     run_script_path = \
       os.path.join(
         work_dir,
@@ -351,7 +351,6 @@ def prepare_curioseeker_run_dir_and_script_file(
         OUTPUT_DIR=output_dir,
         CONFIG_FILE=nextflow_config_path,
         NEXTFLOW_PARAMS=nextflow_params))
-    sample_ids = " ".join(sample_id_list)
     return sample_ids, csv_file_path, nextflow_config_path, run_script_path, output_dir
   except Exception as e:
     raise ValueError(
