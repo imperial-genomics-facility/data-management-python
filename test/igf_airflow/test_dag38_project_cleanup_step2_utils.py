@@ -9,7 +9,6 @@ from igf_airflow.utils.dag38_project_cleanup_step2_utils import (
   fetch_project_cleanup_data,
   notify_user_about_project_cleanup,
   mark_user_notified_on_portal,
-
 )
 
 class TestDag38_project_cleanup_step2_utilsA(unittest.TestCase):
@@ -54,6 +53,19 @@ class TestDag38_project_cleanup_step2_utilsA(unittest.TestCase):
         project_cleanup_data_file=json_file)
     format_and_send_generic_email_to_user.\
       assert_called_once()
+
+  @patch("igf_airflow.utils.dag38_project_cleanup_step2_utils.get_data_from_portal")
+  @patch("igf_airflow.utils.dag38_project_cleanup_step2_utils.get_current_context")
+  def test_mark_user_notified_on_portal(
+        self,
+        get_data_from_portal,
+        get_current_context):
+    mark_user_notified_on_portal.\
+      function()
+    get_current_context.assert_called_once()
+    get_data_from_portal.assert_called_once()
+
+
 
 if __name__=='__main__':
   unittest.main()
