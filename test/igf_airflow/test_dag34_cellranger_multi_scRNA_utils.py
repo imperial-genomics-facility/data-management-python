@@ -4,6 +4,7 @@ import yaml
 import zipfile
 import unittest
 import pandas as pd
+from unittest.mock import patch
 from yaml import Loader, Dumper
 from igf_data.igfdb.igfTables import Base
 from igf_data.igfdb.baseadaptor import BaseAdaptor
@@ -23,12 +24,24 @@ from igf_data.utils.fileutils import (
   get_temp_dir,
   check_file_path,
   remove_dir)
+from igf_airflow.utils.dag26_snakemake_rnaseq_utils import (
+    parse_analysis_design_and_get_metadata)
 from igf_airflow.utils.dag34_cellranger_multi_scRNA_utils import (
   prepare_cellranger_run_dir_and_script_file,
   create_library_information_for_sample_group,
-  configure_cellranger_aggr)
-from igf_airflow.utils.dag26_snakemake_rnaseq_utils import (
-    parse_analysis_design_and_get_metadata)
+  configure_cellranger_aggr,
+  get_analysis_group_list,
+  prepare_cellranger_script,
+  run_cellranger_script,
+  run_single_sample_scanpy,
+  prepare_and_run_scanpy_notebook,
+  move_single_sample_result_to_main_work_dir,
+  collect_and_branch,
+  run_cellranger_aggr_script,
+  merged_scanpy_report,
+  move_aggr_result_to_main_work_dir,
+  load_cellranger_results_to_db)
+
 
 DESIGN_YAML = """sample_metadata:
   IGFsampleA:
@@ -301,6 +314,17 @@ class TestDag34_cellranger_multi_scRNA_utilA(unittest.TestCase):
     self.assertTrue('--id=grp1' in data)
     self.assertTrue(f'--output-dir={temp_dir}' in data)
 
+  def test_get_analysis_group_list(self):
+    design_dict = {
+      "analysis_design": self.yaml_file}
+    unique_sample_groups = \
+      get_analysis_group_list.function(
+        design_dict=design_dict)
+    self.assertEqual(len(unique_sample_groups), 2)
+    self.assertIn("grp1", unique_sample_groups)
+
+
+
 class TestDag34_cellranger_multi_scRNA_utilB(unittest.TestCase):
   def setUp(self):
     self.temp_dir = get_temp_dir()
@@ -352,5 +376,6 @@ class TestDag34_cellranger_multi_scRNA_utilB(unittest.TestCase):
         self.cellranger_output_dict.get('sampleA'),
         'sample_molecule_info.h5'))
 
+  
 if __name__=='__main__':
   unittest.main()
