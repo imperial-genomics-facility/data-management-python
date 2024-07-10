@@ -138,6 +138,8 @@ def full_suite():
     TestDag42_curioseq_wrapper_utilsA)
   from .igf_airflow.test_generic_airflow_tasks import (
     TestgGneric_airflow_tasksA)
+  from .igf_airflow.test_dag37_project_cleanup_step1_utils import (
+    TestDag37_project_cleanup_step1_utilsA)
 
   return unittest.TestSuite([
     unittest.TestLoader().loadTestsFromTestCase(t)
@@ -275,6 +277,7 @@ def full_suite():
         TestDag41_spaceranger_visium_utilsA,
         TestDag41_spaceranger_visium_utilsB,
         TestDag42_curioseq_wrapper_utilsA,
-        TestgGneric_airflow_tasksA
+        TestgGneric_airflow_tasksA,
+        TestDag37_project_cleanup_step1_utilsA
       ]
     ])
