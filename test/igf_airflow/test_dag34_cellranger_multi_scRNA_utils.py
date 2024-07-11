@@ -72,7 +72,7 @@ analysis_metadata:
     - "[samples]"
     - "sample_id,cmo_ids"
     - "IGF3,CMO3"
-  scanpy:
+  scanpy_config:
     active: true
     mito_prefix: MT-
     run_scrublet: true
@@ -323,6 +323,199 @@ class TestDag34_cellranger_multi_scRNA_utilA(unittest.TestCase):
     self.assertEqual(len(unique_sample_groups), 2)
     self.assertIn("grp1", unique_sample_groups)
 
+  def test_prepare_cellranger_script(self):
+    design_dict = {
+      "analysis_design": self.yaml_file}
+    with patch("igf_airflow.utils.dag34_cellranger_multi_scRNA_utils.DATABASE_CONFIG_FILE",
+               self.dbconfig):
+      with patch("igf_airflow.utils.dag34_cellranger_multi_scRNA_utils.CELLRANGER_MULTI_SCRIPT_TEMPLATE",
+                 'template/cellranger_template/cellranger_multi_run_script_v1.sh'):
+        output_dict = \
+          prepare_cellranger_script.\
+            function(
+              sample_group='grp1',
+              design_dict=design_dict)
+        script_file = output_dict.get("run_script")
+        output_dir = output_dict.get("output_dir")
+        sample_group = output_dict.get("sample_group")
+        self.assertTrue(os.path.exists(script_file))
+        with open(script_file, 'r') as fp:
+          data = fp.read()
+        self.assertIn(f'--id={sample_group}', data)
+        self.assertEqual(sample_group, "grp1")
+
+  @patch("igf_airflow.utils.dag34_cellranger_multi_scRNA_utils.bash_script_wrapper",
+         return_value=["A", "B"])
+  def test_run_cellranger_script(
+        self,
+        bash_script_wrapper):
+    script_dict = {
+      "sample_group": "AAA",
+      "run_script": "BBB",
+      "output_dir": self.temp_dir}
+    run_cellranger_script.\
+      function(
+        script_dict=script_dict)
+    bash_script_wrapper.\
+      assert_called_once()
+
+  @patch("igf_airflow.utils.dag34_cellranger_multi_scRNA_utils.get_current_context")
+  @patch("igf_airflow.utils.dag34_cellranger_multi_scRNA_utils.get_project_igf_id_for_analysis",
+        return_value="A")
+  @patch("igf_airflow.utils.dag34_cellranger_multi_scRNA_utils.fetch_analysis_name_for_analysis_id",
+         return_value="A")
+  def test_run_single_sample_scanpy(
+        self,
+        get_current_context,
+        get_project_igf_id_for_analysis,
+        fetch_analysis_name_for_analysis_id):
+    design_dict = {
+      "analysis_design": self.yaml_file}
+    os.makedirs(
+      os.path.join(
+        self.temp_dir,
+        'outs',
+        'per_sample_outs',
+        'grp1',
+        'count'))
+    output_notebook_path = \
+      os.path.join(
+        self.temp_dir,
+        "notebook.ipynb")
+    scanpy_h5ad = \
+      os.path.join(
+        self.temp_dir,
+        "scanpy.h5")
+    for f in [output_notebook_path, scanpy_h5ad]:
+      with open(f, "w") as fp:
+        fp.write("A")
+    with patch("igf_airflow.utils.dag34_cellranger_multi_scRNA_utils.prepare_and_run_scanpy_notebook",
+               return_value=[output_notebook_path, scanpy_h5ad]):
+      design_dict = \
+        run_single_sample_scanpy.\
+          function(
+            sample_group='grp1',
+            cellranger_output_dir=self.temp_dir,
+            design_dict=design_dict)
+      notebook_report = design_dict.get("notebook_report")
+      self.assertEqual(
+        os.path.basename(notebook_report),
+        os.path.basename(output_notebook_path))
+      get_current_context.\
+        assert_called_once()
+      get_project_igf_id_for_analysis.\
+        assert_called_once()
+      fetch_analysis_name_for_analysis_id.\
+        assert_called_once()
+
+  def test_prepare_and_run_scanpy_notebook(self):
+    output_notebook_path = \
+      os.path.join(
+        self.temp_dir,
+        "notebook.ipynb")
+    scanpy_h5ad = \
+      os.path.join(
+        self.temp_dir,
+        'scanpy_A.h5ad')
+    template_file = \
+      os.path.join(
+        self.temp_dir,
+        "template")
+    image_file = \
+      os.path.join(
+        self.temp_dir,
+        "image")
+    for f in [output_notebook_path,
+              scanpy_h5ad,
+              image_file,
+              template_file]:
+      with open(f, "w") as fp:
+        fp.write("A")
+    from igf_airflow.utils.dag34_cellranger_multi_scRNA_utils import Notebook_runner
+    with patch.object(
+      Notebook_runner,
+      "execute_notebook_in_singularity", return_value=[output_notebook_path, "A"]):
+      t_output_notebook_path, t_scanpy_h5ad = \
+        prepare_and_run_scanpy_notebook(
+          project_igf_id="A",
+          analysis_name="A",
+          cellranger_group_id="A",
+          cellranger_counts_dir=self.temp_dir,
+          scanpy_config={
+            "IMAGE_FILE": image_file,
+            "TEMPLATE_FILE": template_file})
+      self.assertEqual(t_output_notebook_path, output_notebook_path)
+
+  def test_move_single_sample_result_to_main_work_dir(self):
+    cellranger_output_dir = \
+      os.path.join(self.temp_dir, "source")
+    os.makedirs(cellranger_output_dir)
+    with open(os.path.join(cellranger_output_dir, "a.txt"), "w") as fp:
+      fp.write("A")
+    main_work_dir = \
+      os.path.join(self.temp_dir, "work")
+    os.makedirs(main_work_dir)
+    scanpy_output_dict = {
+      "cellranger_output_dir": cellranger_output_dir,
+      "sample_group": "A"}
+    move_single_sample_result_to_main_work_dir.\
+      function(
+      main_work_dir=main_work_dir,
+      scanpy_output_dict=scanpy_output_dict)
+    self.assertTrue(
+      os.path.exists(
+        os.path.join(
+          main_work_dir,
+          "source")))
+
+  @patch("igf_airflow.utils.dag34_cellranger_multi_scRNA_utils.get_current_context")
+  @patch("igf_airflow.utils.dag34_cellranger_multi_scRNA_utils.get_project_igf_id_for_analysis",
+        return_value="A")
+  @patch("igf_airflow.utils.dag34_cellranger_multi_scRNA_utils.fetch_analysis_name_for_analysis_id",
+         return_value="A")
+  def test_merged_scanpy_report(
+        self,
+        get_current_context,
+        get_project_igf_id_for_analysis,
+        fetch_analysis_name_for_analysis_id):
+    design_dict = {
+      "analysis_design": self.yaml_file}
+    os.makedirs(
+      os.path.join(
+        self.temp_dir,
+        'outs',
+        'per_sample_outs',
+        'grp1',
+        'count'))
+    output_notebook_path = \
+      os.path.join(
+        self.temp_dir,
+        "notebook.ipynb")
+    scanpy_h5ad = \
+      os.path.join(
+        self.temp_dir,
+        "scanpy.h5")
+    for f in [output_notebook_path, scanpy_h5ad]:
+      with open(f, "w") as fp:
+        fp.write("A")
+    with patch("igf_airflow.utils.dag34_cellranger_multi_scRNA_utils.prepare_and_run_scanpy_notebook",
+               return_value=[output_notebook_path, scanpy_h5ad]):
+      design_dict = \
+        merged_scanpy_report.\
+          function(
+            cellranger_aggr_output_dir=self.temp_dir,
+            design_dict=design_dict)
+      notebook_report = design_dict.get("notebook_report")
+      self.assertEqual(
+        os.path.basename(notebook_report),
+        os.path.basename(output_notebook_path))
+      get_current_context.\
+        assert_called_once()
+      get_project_igf_id_for_analysis.\
+        assert_called_once()
+      fetch_analysis_name_for_analysis_id.\
+        assert_called_once()
+
 
 
 class TestDag34_cellranger_multi_scRNA_utilB(unittest.TestCase):
@@ -376,6 +569,6 @@ class TestDag34_cellranger_multi_scRNA_utilB(unittest.TestCase):
         self.cellranger_output_dict.get('sampleA'),
         'sample_molecule_info.h5'))
 
-  
+
 if __name__=='__main__':
   unittest.main()
