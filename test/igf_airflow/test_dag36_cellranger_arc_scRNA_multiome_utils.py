@@ -4,6 +4,8 @@ import yaml
 import zipfile
 import unittest
 import pandas as pd
+from airflow.models.taskinstance import TaskInstance
+from unittest.mock import patch
 from yaml import load, dump, SafeLoader, Dumper
 from igf_data.igfdb.igfTables import Base
 from igf_data.igfdb.baseadaptor import BaseAdaptor
@@ -27,7 +29,10 @@ from igf_airflow.utils.dag26_snakemake_rnaseq_utils import (
 from igf_airflow.utils.dag36_cellranger_arc_scRNA_multiome_utils import (
     prepare_cellranger_arc_run_dir_and_script_file,
     create_library_information_for_multiome_sample_group,
-    configure_cellranger_arc_aggr)
+    configure_cellranger_arc_aggr,
+    prepare_cellranger_arc_script,
+    run_single_sample_scanpy_for_arc,
+    merged_scanpy_report_for_arc)
 
 DESIGN_YAML = """sample_metadata:
   IGFsampleA:
@@ -358,6 +363,79 @@ class TestDag36_cellranger_arc_scRNA_multiome_utilsA(unittest.TestCase):
       df[df['fastqs']=='/path/IGFSampleB']['library_type'].values[0],
       'Chromatin Accessibility')
 
+  def test_prepare_cellranger_arc_script(self):
+    design_dict = {
+      'analysis_design': self.yaml_file}
+    with patch("igf_airflow.utils.dag36_cellranger_arc_scRNA_multiome_utils.DATABASE_CONFIG_FILE",
+               self.dbconfig):
+      with patch("igf_airflow.utils.dag36_cellranger_arc_scRNA_multiome_utils.CELLRANGER_ARC_SCRIPT_TEMPLATE",
+                 "template/cellranger_template/cellranger_arc_run_script_v1.sh"):
+        output_dict = \
+          prepare_cellranger_arc_script.function(
+            sample_group='GRP1',
+            design_dict=design_dict)
+        self.assertIn("sample_group", output_dict)
+        self.assertIn("run_script", output_dict)
+        self.assertIn("output_dir", output_dict)
+        self.assertEqual(output_dict.get("sample_group"), 'GRP1')
+        self.assertTrue(os.path.exists(output_dict.get("run_script")))
+
+  @patch("igf_airflow.utils.dag36_cellranger_arc_scRNA_multiome_utils.get_current_context")
+  @patch("igf_airflow.utils.dag36_cellranger_arc_scRNA_multiome_utils.get_project_igf_id_for_analysis",
+         return_value="AAA")
+  @patch("igf_airflow.utils.dag36_cellranger_arc_scRNA_multiome_utils.fetch_analysis_name_for_analysis_id",
+         return_value="BBB")
+  def test_run_single_sample_scanpy_for_arc(self, *args):
+    design_dict = {
+      'analysis_design': self.yaml_file}
+    output_notebook_path = os.path.join(self.temp_dir, 'source.ipynb')
+    scanpy_h5ad = os.path.join(self.temp_dir, 'source.h5a')
+    os.makedirs(os.path.join(self.temp_dir, "outs"))
+    with open(output_notebook_path, "w") as fp:
+      fp.write("A")
+    with open(scanpy_h5ad, "w") as fp:
+      fp.write("A")
+    with patch("igf_airflow.utils.dag36_cellranger_arc_scRNA_multiome_utils.prepare_and_run_scanpy_notebook",
+         return_value=(output_notebook_path, scanpy_h5ad)):
+      output_dict = \
+        run_single_sample_scanpy_for_arc.function(
+          sample_group='GRP1',
+          cellranger_output_dir=self.temp_dir,
+          design_dict=design_dict)
+      self.assertIn("sample_group", output_dict)
+      self.assertIn("cellranger_output_dir", output_dict)
+      self.assertIn("notebook_report", output_dict)
+      self.assertIn("scanpy_h5ad", output_dict)
+
+
+  @patch("igf_airflow.utils.dag36_cellranger_arc_scRNA_multiome_utils.get_current_context")
+  @patch("igf_airflow.utils.dag36_cellranger_arc_scRNA_multiome_utils.get_project_igf_id_for_analysis",
+         return_value="AAA")
+  @patch("igf_airflow.utils.dag36_cellranger_arc_scRNA_multiome_utils.fetch_analysis_name_for_analysis_id",
+         return_value="BBB")
+  def test_merged_scanpy_report_for_arc(self, *args):
+    design_dict = {
+      'analysis_design': self.yaml_file}
+    output_notebook_path = os.path.join(self.temp_dir, 'source.ipynb')
+    scanpy_h5ad = os.path.join(self.temp_dir, 'source.h5a')
+    os.makedirs(os.path.join(self.temp_dir, "outs"))
+    with open(output_notebook_path, "w") as fp:
+      fp.write("A")
+    with open(scanpy_h5ad, "w") as fp:
+      fp.write("A")
+    with patch("igf_airflow.utils.dag36_cellranger_arc_scRNA_multiome_utils.prepare_and_run_scanpy_notebook",
+         return_value=(output_notebook_path, scanpy_h5ad)):
+      output_dict = \
+        merged_scanpy_report_for_arc.function(
+          cellranger_aggr_output_dir=self.temp_dir,
+          design_dict=design_dict)
+      self.assertIn("sample_group", output_dict)
+      self.assertIn("cellranger_output_dir", output_dict)
+      self.assertIn("notebook_report", output_dict)
+      self.assertIn("scanpy_h5ad", output_dict)
+
+
+
 class TestDag36_cellranger_arc_scRNA_multiome_utilsB(unittest.TestCase):
   def setUp(self):
     self.temp_dir = get_temp_dir()
@@ -427,6 +505,7 @@ class TestDag36_cellranger_arc_scRNA_multiome_utilsB(unittest.TestCase):
     self.assertTrue('run_dir' in output_dict)
     self.assertTrue('output_dir' in output_dict)
     self.assertEqual(output_dict['sample_name'], 'ALL')
+
 
 
 if __name__=='__main__':

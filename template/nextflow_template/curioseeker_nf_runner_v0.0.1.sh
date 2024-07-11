@@ -30,6 +30,7 @@ $NEXTFLOW_EXE run $CURIOSEEKER_SOFTWARE_PATH/curioseeker-v3.0.0/main.nf \
   -with-tower $NEXTFLOW_TOWER \
   -resume \
   -profile singularity \
+  --igenomes_base $CURIOSEEKER_IGENOME_PATH \
   --input {{ SAMPLESHEET_CSV }} \
   --outdir {{ OUTPUT_DIR }} \
   -work-dir {{ WORKDIR }} \

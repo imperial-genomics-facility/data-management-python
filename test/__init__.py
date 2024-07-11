@@ -136,6 +136,14 @@ def full_suite():
     TestDag41_spaceranger_visium_utilsB)
   from .igf_airflow.test_dag42_curioseq_wrapper_utils import (
     TestDag42_curioseq_wrapper_utilsA)
+  from .igf_airflow.test_generic_airflow_tasks import (
+    TestgGneric_airflow_tasksA)
+  from .igf_airflow.test_dag37_project_cleanup_step1_utils import (
+    TestDag37_project_cleanup_step1_utilsA)
+  from .igf_airflow.test_dag38_project_cleanup_step2_utils import(
+    TestDag38_project_cleanup_step2_utilsA)
+  from .igf_airflow.test_dag39_project_cleanup_step3_utils import (
+    TestDag39_project_cleanup_step3_utilsA)
 
   return unittest.TestSuite([
     unittest.TestLoader().loadTestsFromTestCase(t)
@@ -272,6 +280,10 @@ def full_suite():
         TestDag36_cellranger_arc_scRNA_multiome_utilsB,
         TestDag41_spaceranger_visium_utilsA,
         TestDag41_spaceranger_visium_utilsB,
-        TestDag42_curioseq_wrapper_utilsA
+        TestDag42_curioseq_wrapper_utilsA,
+        TestgGneric_airflow_tasksA,
+        TestDag37_project_cleanup_step1_utilsA,
+        TestDag38_project_cleanup_step2_utilsA,
+        TestDag39_project_cleanup_step3_utilsA
       ]
     ])
