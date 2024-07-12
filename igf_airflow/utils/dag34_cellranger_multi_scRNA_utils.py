@@ -884,3 +884,26 @@ def load_cellranger_results_to_db(
       ms_teams_conf=MS_TEAMS_CONF,
       message_prefix=e)
     raise ValueError(e)
+
+## TASK: switch to aggr if morethan one samples are 
+@task(
+  task_id="decide_aggr",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_4G')
+def decide_aggr(
+      analysis_output_list: list,
+      aggr_task: str = "prepare_spaceranger_aggr_script",
+      non_aggr_task: str = "calculate_md5_for_work_dir") -> list:
+  try:
+    if len(analysis_output_list) > 1:
+      return [aggr_task]
+    elif len(analysis_output_list) == 1:
+      return [non_aggr_task]
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      slack_conf=SLACK_CONF,
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
