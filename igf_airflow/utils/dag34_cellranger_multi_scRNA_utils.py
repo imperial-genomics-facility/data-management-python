@@ -63,7 +63,10 @@ CELLRANGER_AGGR_SCRIPT_TEMPLATE = \
   retries=4,
   queue='hpc_4G',
   multiple_outputs=False)
-def get_analysis_group_list(design_dict: dict) -> dict:
+def get_analysis_group_list(
+      design_dict: dict,
+      required_tag_name: Optional[str] = None,
+      required_tag_value: Optional[str] = None) -> dict:
   try:
     design_file = design_dict.get('analysis_design')
     check_file_path(design_file)
@@ -76,14 +79,35 @@ def get_analysis_group_list(design_dict: dict) -> dict:
        analysis_metadata is None:
       raise KeyError("Missing sample or analysis metadata")
     unique_sample_groups = set()
+    required_tag_list = list()
     for _, group in sample_metadata.items():
       grp_name = group.get('cellranger_group')
       if grp_name is None:
         raise KeyError("Missing cellranger_group in sample_metadata")
       unique_sample_groups.add(grp_name)
+      if required_tag_name is not None and \
+         required_tag_value is not None:
+        required_tag_list.append({
+          "name": grp_name,
+          required_tag_name: group.get(required_tag_name)})
     if len(unique_sample_groups) == 0:
       raise ValueError("No sample group found")
-    return list(unique_sample_groups)
+    unique_sample_groups = \
+      list(unique_sample_groups)
+    ## check for required tags
+    if required_tag_name is not None and \
+         required_tag_value is not None:
+      required_tag_df = \
+        pd.DataFrame(required_tag_list)
+      for g in unique_sample_groups:
+        g_tag_values = \
+          required_tag_df[required_tag_df['name']==g][required_tag_name].\
+            values.\
+            tolist()
+        if required_tag_value not in g_tag_values:
+          raise KeyError(
+            f"No {required_tag_value} found for group {g}")
+    return unique_sample_groups
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(

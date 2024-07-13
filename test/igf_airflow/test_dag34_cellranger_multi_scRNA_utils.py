@@ -322,6 +322,12 @@ class TestDag34_cellranger_multi_scRNA_utilA(unittest.TestCase):
         design_dict=design_dict)
     self.assertEqual(len(unique_sample_groups), 2)
     self.assertIn("grp1", unique_sample_groups)
+    with self.assertRaises(Exception):
+      unique_sample_groups = \
+      get_analysis_group_list.function(
+        design_dict=design_dict,
+        required_tag_name="feature_types",
+        required_tag_value="Gene Expression")
 
   def test_prepare_cellranger_script(self):
     design_dict = {
