@@ -36,7 +36,6 @@ from igf_airflow.utils.dag34_cellranger_multi_scRNA_utils import (
   run_single_sample_scanpy,
   prepare_and_run_scanpy_notebook,
   move_single_sample_result_to_main_work_dir,
-  collect_and_branch,
   run_cellranger_aggr_script,
   merged_scanpy_report,
   move_aggr_result_to_main_work_dir,

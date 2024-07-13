@@ -540,79 +540,69 @@ def move_single_sample_result_to_main_work_dir(
     raise ValueError(e)
 
 
-## TASK
-@task.branch(
-  task_id="collect_and_branch",
-  retry_delay=timedelta(minutes=5),
-  retries=4,
-  queue='hpc_4G')
-def collect_and_branch(
-      merge_step='configure_cellranger_aggr_run',
-      skip_step='calculate_md5sum_for_main_work_dir') \
-        -> list:
-  try:
-    cellranger_output_dict = dict()
-    context = get_current_context()
-    ti = context.get('ti')
-    all_lazy_task_ids = \
-      context['task'].\
-      get_direct_relative_ids(upstream=True)
-    lazy_xcom = ti.xcom_pull(task_ids=all_lazy_task_ids)
-    for entry in lazy_xcom:
-      sample_group = entry.get("sample_group")
-      cellranger_output_dir = entry.get("cellranger_output_dir")
-      if sample_group is not None and \
-         cellranger_output_dir is not None:
-        ## skipping failed runs
-        cellranger_output_dict.update(
-          {sample_group: cellranger_output_dir})
-    if len(cellranger_output_dict) == 0:
-      raise ValueError(f"No cellranger output found")
-    elif len(cellranger_output_dict) == 1:
-      return [skip_step]
-    else:
-      ti.xcom_push(
-        key='cellranger_output_dict',
-        value=cellranger_output_dict)
-      return [merge_step]
-  except Exception as e:
-    log.error(e)
-    send_airflow_failed_logs_to_channels(
-      slack_conf=SLACK_CONF,
-      ms_teams_conf=MS_TEAMS_CONF,
-      message_prefix=e)
-    raise ValueError(e)
+# ## TASK
+# @task.branch(
+#   task_id="collect_and_branch",
+#   retry_delay=timedelta(minutes=5),
+#   retries=4,
+#   queue='hpc_4G')
+# def collect_and_branch(
+#       merge_step='configure_cellranger_aggr_run',
+#       skip_step='calculate_md5sum_for_main_work_dir') \
+#         -> list:
+#   try:
+#     cellranger_output_dict = dict()
+#     context = get_current_context()
+#     ti = context.get('ti')
+#     all_lazy_task_ids = \
+#       context['task'].\
+#       get_direct_relative_ids(upstream=True)
+#     lazy_xcom = ti.xcom_pull(task_ids=all_lazy_task_ids)
+#     for entry in lazy_xcom:
+#       sample_group = entry.get("sample_group")
+#       cellranger_output_dir = entry.get("cellranger_output_dir")
+#       if sample_group is not None and \
+#          cellranger_output_dir is not None:
+#         ## skipping failed runs
+#         cellranger_output_dict.update(
+#           {sample_group: cellranger_output_dir})
+#     if len(cellranger_output_dict) == 0:
+#       raise ValueError(f"No cellranger output found")
+#     elif len(cellranger_output_dict) == 1:
+#       return [skip_step]
+#     else:
+#       ti.xcom_push(
+#         key='cellranger_output_dict',
+#         value=cellranger_output_dict)
+#       return [merge_step]
+#   except Exception as e:
+#     log.error(e)
+#     send_airflow_failed_logs_to_channels(
+#       slack_conf=SLACK_CONF,
+#       ms_teams_conf=MS_TEAMS_CONF,
+#       message_prefix=e)
+#     raise ValueError(e)
 
-
-## TASK
 @task(
   task_id="configure_cellranger_aggr_run",
   retry_delay=timedelta(minutes=5),
   retries=4,
   queue='hpc_4G')
 def configure_cellranger_aggr_run(
-      xcom_pull_task_ids: str = 'collect_and_branch',
-      xcom_pull_task_key: str = 'cellranger_output_dict') \
-        -> dict:
+      analysis_output_list: list) -> dict:
   try:
-    cellranger_output_dict = dict()
-    context = get_current_context()
-    ti = context.get('ti')
-    cellranger_output_dict = \
-      ti.xcom_pull(
-        task_ids=xcom_pull_task_ids,
-        key=xcom_pull_task_key)
-    if cellranger_output_dict is None or \
-       (isinstance(cellranger_output_dict, dict) and len(cellranger_output_dict)) == 0:
-      raise ValueError(f"No cellranger output found")
-    elif len(cellranger_output_dict) == 1:
-      raise ValueError(f"Single cellranger output found. Can't merge it!")
-    else:
-      output_dict = \
-        configure_cellranger_aggr(
-          run_script_template=CELLRANGER_AGGR_SCRIPT_TEMPLATE,
-          cellranger_output_dict=cellranger_output_dict)
-      return output_dict
+    cellranger_multi_dict = dict()
+    for entry in analysis_output_list:
+      if entry is not None:
+        sample_id = entry.get("sample_id")
+        output_dir = entry.get("output")
+        cellranger_multi_dict.update({
+          sample_id: output_dir})
+    output_dict = \
+      configure_cellranger_aggr(
+        run_script_template=CELLRANGER_AGGR_SCRIPT_TEMPLATE,
+          cellranger_output_dict=cellranger_multi_dict)
+    return output_dict
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
@@ -620,6 +610,43 @@ def configure_cellranger_aggr_run(
       ms_teams_conf=MS_TEAMS_CONF,
       message_prefix=e)
     raise ValueError(e)
+
+# ## TASK
+# @task(
+#   task_id="configure_cellranger_aggr_run",
+#   retry_delay=timedelta(minutes=5),
+#   retries=4,
+#   queue='hpc_4G')
+# def configure_cellranger_aggr_run(
+#       xcom_pull_task_ids: str = 'collect_and_branch',
+#       xcom_pull_task_key: str = 'cellranger_output_dict') \
+#         -> dict:
+#   try:
+#     cellranger_output_dict = dict()
+#     context = get_current_context()
+#     ti = context.get('ti')
+#     cellranger_output_dict = \
+#       ti.xcom_pull(
+#         task_ids=xcom_pull_task_ids,
+#         key=xcom_pull_task_key)
+#     if cellranger_output_dict is None or \
+#        (isinstance(cellranger_output_dict, dict) and len(cellranger_output_dict)) == 0:
+#       raise ValueError(f"No cellranger output found")
+#     elif len(cellranger_output_dict) == 1:
+#       raise ValueError(f"Single cellranger output found. Can't merge it!")
+#     else:
+#       output_dict = \
+#         configure_cellranger_aggr(
+#           run_script_template=CELLRANGER_AGGR_SCRIPT_TEMPLATE,
+#           cellranger_output_dict=cellranger_output_dict)
+#       return output_dict
+#   except Exception as e:
+#     log.error(e)
+#     send_airflow_failed_logs_to_channels(
+#       slack_conf=SLACK_CONF,
+#       ms_teams_conf=MS_TEAMS_CONF,
+#       message_prefix=e)
+#     raise ValueError(e)
 
 
 
@@ -917,7 +944,7 @@ def load_cellranger_results_to_db(
   queue='hpc_4G')
 def decide_aggr(
       analysis_output_list: list,
-      aggr_task: str = "prepare_spaceranger_aggr_script",
+      aggr_task: str = "configure_cellranger_aggr_run",
       non_aggr_task: str = "calculate_md5_for_work_dir") -> list:
   try:
     if len(analysis_output_list) > 1:
