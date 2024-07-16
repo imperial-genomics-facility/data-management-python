@@ -22,6 +22,7 @@ from igf_airflow.utils.generic_airflow_utils import (
     get_project_igf_id_for_analysis,
     fetch_analysis_name_for_analysis_id,
     send_airflow_failed_logs_to_channels,
+    send_airflow_pipeline_logs_to_channels,
     collect_analysis_dir,
     parse_analysis_design_and_get_metadata
 )
@@ -297,6 +298,11 @@ def run_cellranger_script(
         f"""Lock file exists in cellranger run path: {output_dir}. \
             Remove it to continue!""")
     try:
+      send_airflow_pipeline_logs_to_channels(
+        slack_conf=SLACK_CONF,
+        ms_teams_conf=MS_TEAMS_CONF,
+        message_prefix=\
+          f"Started Cellranger for sample: {sample_group}, script: {run_script}")
       _, _ = \
         bash_script_wrapper(
           script_path=run_script,
@@ -306,6 +312,11 @@ def run_cellranger_script(
         f"Failed to run script, Script: {run_script} for group: {sample_group}")
     ## check output dir exists
     check_file_path(output_dir)
+    send_airflow_pipeline_logs_to_channels(
+        slack_conf=SLACK_CONF,
+        ms_teams_conf=MS_TEAMS_CONF,
+        message_prefix=\
+          f"Finished Cellranger for sample: {sample_group}")
     return output_dir
   except Exception as e:
     log.error(e)

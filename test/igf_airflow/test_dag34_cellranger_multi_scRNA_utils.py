@@ -349,11 +349,13 @@ class TestDag34_cellranger_multi_scRNA_utilA(unittest.TestCase):
         self.assertIn(f'--id={sample_group}', data)
         self.assertEqual(sample_group, "grp1")
 
+  @patch("igf_airflow.utils.dag34_cellranger_multi_scRNA_utils.send_airflow_pipeline_logs_to_channels")
   @patch("igf_airflow.utils.dag34_cellranger_multi_scRNA_utils.bash_script_wrapper",
          return_value=["A", "B"])
   def test_run_cellranger_script(
         self,
-        bash_script_wrapper):
+        bash_script_wrapper,
+        send_airflow_pipeline_logs_to_channels):
     script_dict = {
       "sample_group": "AAA",
       "run_script": "BBB",
