@@ -215,17 +215,14 @@ def create_library_information_for_multiome_sample_group(
     raise ValueError(
       f"Failed to prepare cellranger script, error: {e}")
 
-
-## TASK
 @task(
   task_id="configure_cellranger_arc_aggr_run",
   retry_delay=timedelta(minutes=5),
   retries=4,
   queue='hpc_4G')
 def configure_cellranger_arc_aggr_run(
-      design_dict: dict,
-      xcom_pull_task_ids: str = 'collect_and_branch',
-      xcom_pull_task_key: str = 'cellranger_output_dict') \
+      analysis_output_list: list,
+      design_dict: dict) \
         -> dict:
   try:
     design_file = design_dict.get('analysis_design')
@@ -246,7 +243,8 @@ def configure_cellranger_arc_aggr_run(
     cellranger_arc_aggr_config_ref = \
       cellranger_arc_aggr_config.get("reference")
     if cellranger_arc_aggr_config_ref is None:
-      raise KeyError("Missing cellranger_arc_aggr_config reference in analysis design")
+      raise KeyError(
+        "Missing cellranger_arc_aggr_config reference in analysis design")
     cellranger_arc_aggr_config_params = \
       cellranger_arc_aggr_config.get("parameters")
     if cellranger_arc_aggr_config_params is None:
@@ -254,29 +252,22 @@ def configure_cellranger_arc_aggr_run(
     if cellranger_arc_aggr_config_params is not None and \
        not isinstance(cellranger_arc_aggr_config_params, list):
         raise TypeError(
-          f"cellranger_arc_aggr_config_params are not list: {type(cellranger_arc_aggr_config_params)}")
-    ## configure arc aggr
-    cellranger_output_dict = dict()
-    context = get_current_context()
-    ti = context.get('ti')
-    cellranger_output_dict = \
-      ti.xcom_pull(
-        task_ids=xcom_pull_task_ids,
-        key=xcom_pull_task_key)
-    if cellranger_output_dict is None or \
-       (isinstance(cellranger_output_dict, dict) and \
-       len(cellranger_output_dict)) == 0:
-      raise ValueError(f"No cellranger output found")
-    elif len(cellranger_output_dict) == 1:
-      raise ValueError(f"Single cellranger output found. Can't merge it!")
-    else:
-      output_dict = \
-        configure_cellranger_arc_aggr(
-          run_script_template=CELLRANGER_ARC_AGGR_SCRIPT_TEMPLATE,
-          cellranger_arc_aggr_config_ref=cellranger_arc_aggr_config_ref,
-          cellranger_arc_aggr_config_params=cellranger_arc_aggr_config_params,
-          cellranger_output_dict=cellranger_output_dict)
-      return output_dict
+          f"""cellranger_arc_aggr_config_params are not list:
+          {type(cellranger_arc_aggr_config_params)}""")
+    cellranger_arc_dict = dict()
+    for entry in analysis_output_list:
+      if entry is not None:
+        sample_id = entry.get("sample_id")
+        output_dir = entry.get("output")
+        cellranger_arc_dict.update({
+          sample_id: output_dir})
+    output_dict = \
+      configure_cellranger_arc_aggr(
+        run_script_template=CELLRANGER_ARC_AGGR_SCRIPT_TEMPLATE,
+        cellranger_arc_aggr_config_ref=cellranger_arc_aggr_config_ref,
+        cellranger_arc_aggr_config_params=cellranger_arc_aggr_config_params,
+        cellranger_output_dict=cellranger_arc_dict)
+    return output_dict
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
@@ -284,6 +275,75 @@ def configure_cellranger_arc_aggr_run(
       ms_teams_conf=MS_TEAMS_CONF,
       message_prefix=e)
     raise ValueError(e)
+
+# ## TASK
+# @task(
+#   task_id="configure_cellranger_arc_aggr_run",
+#   retry_delay=timedelta(minutes=5),
+#   retries=4,
+#   queue='hpc_4G')
+# def configure_cellranger_arc_aggr_run(
+#       design_dict: dict,
+#       xcom_pull_task_ids: str = 'collect_and_branch',
+#       xcom_pull_task_key: str = 'cellranger_output_dict') \
+#         -> dict:
+#   try:
+#     design_file = design_dict.get('analysis_design')
+#     check_file_path(design_file)
+#     with open(design_file, 'r') as fp:
+#       input_design_yaml = fp.read()
+#       sample_metadata, analysis_metadata = \
+#         parse_analysis_design_and_get_metadata(
+#           input_design_yaml=input_design_yaml)
+#     if sample_metadata is None or \
+#        analysis_metadata is None:
+#       raise KeyError("Missing sample or analysis metadata")
+#     ## get cellranger arc aggr conf
+#     cellranger_arc_aggr_config = \
+#       analysis_metadata.get("cellranger_arc_aggr_config")
+#     if cellranger_arc_aggr_config is None:
+#       raise KeyError("Missing cellranger_arc_aggr_config in analysis design")
+#     cellranger_arc_aggr_config_ref = \
+#       cellranger_arc_aggr_config.get("reference")
+#     if cellranger_arc_aggr_config_ref is None:
+#       raise KeyError("Missing cellranger_arc_aggr_config reference in analysis design")
+#     cellranger_arc_aggr_config_params = \
+#       cellranger_arc_aggr_config.get("parameters")
+#     if cellranger_arc_aggr_config_params is None:
+#        cellranger_arc_aggr_config_params = []
+#     if cellranger_arc_aggr_config_params is not None and \
+#        not isinstance(cellranger_arc_aggr_config_params, list):
+#         raise TypeError(
+#           f"cellranger_arc_aggr_config_params are not list: {type(cellranger_arc_aggr_config_params)}")
+#     ## configure arc aggr
+#     cellranger_output_dict = dict()
+#     context = get_current_context()
+#     ti = context.get('ti')
+#     cellranger_output_dict = \
+#       ti.xcom_pull(
+#         task_ids=xcom_pull_task_ids,
+#         key=xcom_pull_task_key)
+#     if cellranger_output_dict is None or \
+#        (isinstance(cellranger_output_dict, dict) and \
+#        len(cellranger_output_dict)) == 0:
+#       raise ValueError(f"No cellranger output found")
+#     elif len(cellranger_output_dict) == 1:
+#       raise ValueError(f"Single cellranger output found. Can't merge it!")
+#     else:
+#       output_dict = \
+#         configure_cellranger_arc_aggr(
+#           run_script_template=CELLRANGER_ARC_AGGR_SCRIPT_TEMPLATE,
+#           cellranger_arc_aggr_config_ref=cellranger_arc_aggr_config_ref,
+#           cellranger_arc_aggr_config_params=cellranger_arc_aggr_config_params,
+#           cellranger_output_dict=cellranger_output_dict)
+#       return output_dict
+#   except Exception as e:
+#     log.error(e)
+#     send_airflow_failed_logs_to_channels(
+#       slack_conf=SLACK_CONF,
+#       ms_teams_conf=MS_TEAMS_CONF,
+#       message_prefix=e)
+#     raise ValueError(e)
 
 
 def configure_cellranger_arc_aggr(

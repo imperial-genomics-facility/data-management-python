@@ -33,6 +33,7 @@ from igf_airflow.utils.dag36_cellranger_arc_scRNA_multiome_utils import (
     prepare_cellranger_arc_script,
     run_single_sample_scanpy_for_arc,
     merged_scanpy_report_for_arc)
+from igf_airflow.utils.dag34_cellranger_multi_scRNA_utils import get_analysis_group_list
 
 DESIGN_YAML = """sample_metadata:
   IGFsampleA:
@@ -47,6 +48,9 @@ DESIGN_YAML = """sample_metadata:
   IGFsampleD:
     library_type: Chromatin Accessibility
     cellranger_group: GRP2
+  IGFsampleE:
+    library_type: Chromatin Accessibility
+    cellranger_group: GRP3
 analysis_metadata:
   scanpy_config:
     TEMPLATE_FILE: /path/scanpy_single_sample_analysis_v0.0.6.3.ipynb
@@ -315,6 +319,21 @@ class TestDag36_cellranger_arc_scRNA_multiome_utilsA(unittest.TestCase):
     Base.metadata.drop_all(self.engine)
     if os.path.exists(self.dbname):
       os.remove(self.dbname)
+
+  def test_get_analysis_group_list(self):
+    design_dict = {
+      "analysis_design": self.yaml_file}
+    unique_sample_groups = \
+      get_analysis_group_list.function(
+        design_dict=design_dict)
+    self.assertEqual(len(unique_sample_groups), 3)
+    self.assertIn("GRP3", unique_sample_groups)
+    with self.assertRaises(Exception):
+      unique_sample_groups = \
+      get_analysis_group_list.function(
+        design_dict=design_dict,
+        required_tag_name="library_types",
+        required_tag_value="Gene Expression")
 
   def test_prepare_cellranger_arc_run_dir_and_script_file(self):
     temp_dir = get_temp_dir()
