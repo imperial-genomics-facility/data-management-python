@@ -144,7 +144,11 @@ def prepare_cellranger_script(sample_group: str, design_dict: dict) -> dict:
         design_file=design_file,
         db_config_file=DATABASE_CONFIG_FILE,
         run_script_template=CELLRANGER_MULTI_SCRIPT_TEMPLATE)
-    return {"sample_group": sample_group, "run_script": run_script_file, "output_dir": os.path.join(work_dir, sample_group)}
+    analysis_script_info = {
+      "sample_group": sample_group,
+      "run_script": run_script_file,
+      "output_dir": os.path.join(work_dir, sample_group)}
+    return analysis_script_info
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
