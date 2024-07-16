@@ -39,8 +39,8 @@ from igf_airflow.utils.dag34_cellranger_multi_scRNA_utils import (
   run_cellranger_aggr_script,
   merged_scanpy_report,
   move_aggr_result_to_main_work_dir,
-  load_cellranger_results_to_db)
-
+  load_cellranger_results_to_db,
+  decide_aggr)
 
 DESIGN_YAML = """sample_metadata:
   IGFsampleA:
@@ -521,6 +521,60 @@ class TestDag34_cellranger_multi_scRNA_utilA(unittest.TestCase):
       fetch_analysis_name_for_analysis_id.\
         assert_called_once()
 
+  @patch("igf_airflow.utils.dag34_cellranger_multi_scRNA_utils.bash_script_wrapper",
+         return_value=[None, None])
+  def test_run_cellranger_aggr_script(self, bash_script_wrapper):
+    script_dict = {
+      "sample_name": "ALL",
+      "run_script": "",
+      "output_dir": self.temp_dir}
+    output_dir = \
+      run_cellranger_aggr_script.\
+        function(
+          script_dict=script_dict)
+    bash_script_wrapper.\
+      assert_called_once()
+
+  def test_move_aggr_result_to_main_work_dir(self):
+    # move_aggr_result_to_main_work_dir
+    main_work_dir = os.path.join(self.temp_dir, "work")
+    os.makedirs(main_work_dir)
+    source_dir = os.path.join(self.temp_dir, "source")
+    os.makedirs(source_dir)
+    with open(os.path.join(source_dir, "t"), "w") as fp:
+      fp.write("A")
+    m = \
+      move_aggr_result_to_main_work_dir.\
+        function(
+          main_work_dir=main_work_dir,
+          scanpy_aggr_output_dict={"cellranger_output_dir": source_dir})
+    self.assertEqual(m, main_work_dir)
+
+  @patch("igf_airflow.utils.dag34_cellranger_multi_scRNA_utils.get_current_context")
+  @patch("igf_airflow.utils.dag34_cellranger_multi_scRNA_utils.collect_analysis_dir",
+         return_value=["A", "B", "C"])
+  def test_load_cellranger_results_to_db(
+        self,
+        get_current_context,
+        collect_analysis_dir):
+    out = \
+      load_cellranger_results_to_db.\
+        function(
+          main_work_dir=self.temp_dir,
+          md5_file=self.temp_dir)
+    collect_analysis_dir.\
+      assert_called_once()
+    get_current_context.\
+      assert_called_once()
+
+
+  def test_decide_aggr(self):
+    task_name = \
+      decide_aggr.function(analysis_output_list=["A", "B"])
+    self.assertEqual(task_name[0], "configure_cellranger_aggr_run")
+    task_name = \
+      decide_aggr.function(analysis_output_list=["A",])
+    self.assertEqual(task_name[0], "calculate_md5_for_work_dir")
 
 
 class TestDag34_cellranger_multi_scRNA_utilB(unittest.TestCase):
