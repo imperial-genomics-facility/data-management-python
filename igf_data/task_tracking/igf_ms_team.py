@@ -82,7 +82,7 @@ class IGF_ms_team:
         elif reaction == 'sleep':
           reaction = 'default'
       if reaction == '':
-        reaction = 'default' 
+        reaction = 'default'
       #json_data = {
       #  "@context": "https://schema.org/extensions",
       #  "@type": "MessageText",
@@ -120,31 +120,43 @@ class IGF_ms_team:
               format(e,image_path))
 
 
-  def post_message_to_team(self,message,reaction=''):
+  def post_message_to_team(self, message, reaction=''):
     try:
       webhook_url = self.webhook_conf.get('webhook_url')
-      formatted_message = ''
-      themeColor = '#FFFFFF'
+      header_msg = ''
       if reaction !='' or reaction is not None:
         if reaction == 'pass':
-          reaction =  '&#x1f7e2;'
-          themeColor = '#00cc44'
-        elif reaction == 'fail':
-          reaction = '&#x1f534;'
-          themeColor = '#DC143C'
+          reaction = 'good'
+          header_msg = '**Message**'
+        elif reaction == 'fail': 
+          reaction = 'attention'
+          header_msg = '**Error**'
         elif reaction == 'sleep':
-          reaction = '&#128564'
-          themeColor = '#000080'
-        formatted_message = "{0}; {1}".format(reaction,message)
-      else:
-        formatted_message = message
+          reaction = 'default'
+      if reaction == '':
+        reaction = 'default'
       json_data = {
-        "@context": "https://schema.org/extensions",
-        "@type": "MessageText",
-        "themeColor": themeColor,
-        "TextFormat":"markdown",
-        "text": formatted_message}
-      r = requests.post(url=webhook_url,json=json_data)
+        "type":"message",
+        "attachments":[{
+          "contentType":"application/vnd.microsoft.card.adaptive",
+          "content":{
+            "$schema":"http://adaptivecards.io/schemas/adaptive-card.json",
+            "type":"AdaptiveCard",
+            "version":"1.4",
+            "body":[{
+              "type": "TextBlock",
+              "text": header_msg,
+              "wrap": True,
+              "color": reaction,
+              "style": "heading",
+              "size": "bolder" },{
+              "type": "TextBlock",
+              "text": message,
+              "wrap": True}]
+          }
+        }]
+      }
+      r = requests.post(url=webhook_url, json=json_data)
       if r.status_code != 200:
         raise ValueError(
           "Failed to post message to team, error code: {0},{1}".\
