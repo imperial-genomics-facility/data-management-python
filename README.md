@@ -32,7 +32,7 @@ This repository contains the core Python library developed and maintained by the
     * Analysis data validation
 
 ## Requirements
-•	Python v3.9
+•	Python v3.10
 
 ## Installation
 **1. Clone the Repository**
@@ -44,13 +44,36 @@ git clone https://github.com/imperial-genomics-facility/data-management-python.g
 Install required Python libraries:
 
 ```bash
-pip install -r requirements_2.6.2.txt  # For compatibility with Apache Airflow v2.6.2  
+pip install -r requirements_2.10.4.txt  # For compatibility with Apache Airflow v2.10.4
 ```
 
 **3. Update PYTHONPATH**
 Add the core library path to PYTHONPATH:
 ```bash
 export PYTHONPATH=/PATH/data-management-python
+```
+
+## Update Airflow version
+**1. Set env variables**
+```bash
+export AIRFLOW_VERSION=VERSION
+export PYTHON_VERSION=VERSION
+export CONSTRAINT_URL="https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt"
+```
+
+**2. Install core Airflow libraries**
+```bash
+pip install "apache-airflow[celery,postgres,redis,graphviz,pandas,apache-spark,airbyte,amazon,slack,singularity,ssh,sftp,smtp]==VERSION" --constraint ${CONSTRAINT_URL}
+```
+
+**3. Install additional libraries**
+```bash
+pip install asana gviz-api html5lib matplotlib PyMySQL  pytest pytest-cov tox slackclient --constraint ${CONSTRAINT_URL}
+```
+
+**4. List Python library versons in the requirements file**
+```bash
+pip freeze > requirements_vVERSION.txt
 ```
 
 ## License
