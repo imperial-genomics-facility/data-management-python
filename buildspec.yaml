@@ -1,0 +1,14 @@
+version: 0.2
+
+phases: 
+    install:
+	on-failure: ABORT
+        runtime-versions:
+            python: 3.10
+        commands:
+		- python -m venv /root/venv
+      		- . /root/venv/bin/activate
+		- pip install -r requirements_v2.10.4.txt
+    build:
+        commands:
+            - pytest --cov=igf_data --cov=igf_airflow --cov=igf_portal --log-level=ERROR test
