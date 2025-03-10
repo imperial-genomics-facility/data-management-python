@@ -18,7 +18,7 @@
 # * CURIOSEEKER_SINGULARIITY_FILE
 #
 ## IMPORT ENV
-source /project/tgu/resources/pipeline_resource/nextflow/curioseeker_env.sh
+source /rds/general/project/genomics-facility-archive-2019/live/tgu/resources/pipeline_resource/nextflow/curioseeker_env.sh
 export TMPDIR=$EPHEMERAL
 ## SET NXF_VER FOR PIPELINE RUN
 # export NXF_VER={{ NEXTFLOW_VERSION }}
