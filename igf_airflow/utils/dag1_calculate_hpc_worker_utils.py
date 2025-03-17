@@ -108,10 +108,10 @@ def combine_celery_and_hpc_worker_info(
       ## process hpc output
       hpc_jobs_df = pd.DataFrame()
       if hpc_worker_info != "":
-        hpc_jobs_df = pd.read_csv(StringIO(hpc_worker_info), header=None)
+        hpc_jobs_df = pd.read_csv(StringIO(hpc_worker_info), sep=",", header=None)
         if len(hpc_jobs_df.columns) != 3:
           raise ValueError(
-            f'Expected 3 columns in the hpc wortker info, got {len(hpc_jobs_df.columns)}')
+            f'Expected 3 columns in the hpc worker info, got {len(hpc_jobs_df.columns)}')
         hpc_jobs_df.columns = [
           'job_id',
           'queue_name',
