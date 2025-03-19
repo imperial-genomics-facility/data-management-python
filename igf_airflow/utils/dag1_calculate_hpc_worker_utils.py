@@ -3,8 +3,10 @@ import numpy as np
 from io import StringIO
 import requests, json, redis
 from typing import List, Tuple
+from yaml import load, SafeLoader
 from igf_data.utils.dbutils import read_json_data
 from requests.auth import HTTPBasicAuth
+from igf_data.utils.fileutils import check_file_path
 
 def get_celery_flower_workers(
       celery_flower_config_file: str,
@@ -476,5 +478,46 @@ def terminate_celery_workers(
       f'Failed to terminate celery workers, error: {e}')
 
 
-def prepare_scale_out_workers():
-    pass
+def prepare_scale_out_workers(
+      hpc_worker_config: str,
+      scaled_worker_data: List[dict]) -> List[dict]:
+  """
+  A function for preparing scale out workers
+
+  :param hpc_worker_config: A yaml file containing hpc worker config
+  :param scaled_worker_data: A list of dictionaries with queue_name and scale_out_ops
+  :returns: A list of dictionaries with queue_name, airflow_queue, new_tasks and pbs_resource
+  """
+  try:
+    check_file_path(hpc_worker_config)
+    with open(hpc_worker_config, 'r') as fp:
+      hpc_queue_data = load(fp, Loader=SafeLoader)
+    scaled_worker_df = pd.DataFrame(scaled_worker_data)
+    required_scaled_worker_columns = [
+      "queue_name",
+      "scale_out_ops"]
+    for c in required_scaled_worker_columns:
+      if c not in scaled_worker_df.columns:
+        raise KeyError(
+          f'Column {c} is missing from input dataframe')
+    scale_out_workers = \
+      scaled_worker_df[scaled_worker_df["scale_out_ops"] > 0][["queue_name", "scale_out_ops"]].\
+      to_dict(orient='records')
+    scale_out_workers_conf = list()
+    for entry in scale_out_workers:
+      queue_name = entry.get('queue_name')
+      scale_out_counts = entry.get('scale_out_ops')
+      if queue_name not in hpc_queue_data or \
+         "airflow_queue" not in hpc_queue_data.get(queue_name) or \
+          "pbs_resource" not in hpc_queue_data.get(queue_name):
+        raise ValueError(
+          f'Queue {queue_name} not found or not correctly configured in hpc worker config')
+      scale_out_workers_conf.append({
+        'queue_name': queue_name,
+        'airflow_queue': hpc_queue_data.get(queue_name).get("airflow_queue"),
+        'new_tasks': scale_out_counts,
+        'pbs_resource': hpc_queue_data.get(queue_name).get("pbs_resource")})
+    return scale_out_workers_conf
+  except Exception as e:
+    raise ValueError(
+      f'Failed to prepare scale out workers, error: {e}')

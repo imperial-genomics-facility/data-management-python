@@ -20,7 +20,8 @@ from igf_airflow.utils.dag1_calculate_hpc_worker_utils import (
   fetch_queue_list_from_redis_server,
   check_celery_workers_are_active,
   filter_scale_in_workers,
-  terminate_celery_workers)
+  terminate_celery_workers,
+  prepare_scale_out_workers)
 
 class Test_dag1_calculate_hpc_worker_utils(unittest.TestCase):
   def setUp(self):
@@ -231,6 +232,45 @@ class Test_dag1_calculate_hpc_worker_utils(unittest.TestCase):
         celery_worker_list=['worker1', 'worker2'])
     self.assertEqual(len(deleted_workers), 1)
     self.assertEqual(deleted_workers[0], 'worker2')
+
+  def test_prepare_scale_out_workers(self):
+    temp_dir = get_temp_dir()
+    hpc_queue_data = {
+      'hpc_4G': {
+        'pbs_resource': '-lselect=1:ncpus=1:mem=4gb -lwalltime=12:00:00',
+        'airflow_queue': 'hpc_4G'},
+      'hpc_8G8t': {
+        'pbs_resource': '-lselect=1:ncpus=8:mem=8gb -lwalltime=12:00:00',
+        'airflow_queue': 'hpc_4G,hpc_8G8t'}}
+    hpc_worker_config = \
+      os.path.join(self.temp_dir, 'hpc_worker_config.yaml')
+    with open(hpc_worker_config, 'w') as hpc_config:
+      yaml.dump(hpc_queue_data, hpc_config)
+    scaled_worker_data = [
+      {'queue_name':'hpc_64G16t','scale_out_ops':0},
+      {'queue_name':'hpc_8G8t','scale_out_ops':2},
+      {'queue_name':'hpc_4G','scale_out_ops':1}]
+    scale_out_workers_conf = \
+      prepare_scale_out_workers(
+        hpc_worker_config=hpc_worker_config,
+        scaled_worker_data=scaled_worker_data)
+    self.assertEqual(len(scale_out_workers_conf), 2)
+    df = pd.DataFrame(scale_out_workers_conf)
+    self.assertTrue('queue_name' in df.columns)
+    self.assertTrue('pbs_resource' in df.columns)
+    self.assertTrue('airflow_queue' in df.columns)
+    self.assertTrue('new_tasks' in df.columns)
+    self.assertTrue('hpc_8G8t' in df['queue_name'].values.tolist())
+    self.assertTrue('hpc_4G' in df['queue_name'].values.tolist())
+    self.assertEqual(df[df["queue_name"] == "hpc_8G8t"]["new_tasks"].values[0], 2)
+    self.assertEqual(
+      df[df["queue_name"] == "hpc_8G8t"]["pbs_resource"].values[0],
+      '-lselect=1:ncpus=8:mem=8gb -lwalltime=12:00:00')
+    self.assertEqual(
+      df[df["queue_name"] == "hpc_8G8t"]["airflow_queue"].values[0],
+      'hpc_4G,hpc_8G8t')
+    self.assertEqual(df[df["queue_name"] == "hpc_4G"]["new_tasks"].values[0], 1)
+
 
 if __name__=='__main__':
   unittest.main()
