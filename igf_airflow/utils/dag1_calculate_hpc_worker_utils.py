@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from io import StringIO
 import requests, json, redis
-from typing import List
+from typing import List, Tuple
 from igf_data.utils.dbutils import read_json_data
 from requests.auth import HTTPBasicAuth
 
@@ -315,14 +315,44 @@ def calculate_scale_out_scale_in_ops(
     raise ValueError(
       f'Failed to calculate scale out and scale in ops, error: {e}')
 
-def scale_hpc_workers():
-    pass
 
-def filter_scale_in_workers():
-    pass
+def check_celery_workers_are_active(
+    flower_config_file: str,
+    worker_id_list: List[str]) -> Tuple[List[str], List[str]]:
+  """
+  A function for checking if celery workers are active
 
-def check_celery_worker_status():
-    pass
+  :param flower_config_file: A json file containing celery flower config
+  :param worker_id_list: A list of worker ids to check
+  :returns: A list of active and inactive worker ids
+  """
+  try:
+    flower_config = \
+      read_json_data(flower_config_file)
+    flower_config = flower_config[0]
+    celery_url = \
+      f'{flower_config.get("flower_url")}/api/workers?refresh=True'
+    res = \
+      requests.get(
+        celery_url,
+        auth=HTTPBasicAuth(
+          flower_config.get("flower_user"),
+          flower_config.get("flower_pass")))
+    if res.status_code != 200:
+      raise ValueError('Failed to get celery flower workers.')
+    data = res.content.decode()
+    data = json.loads(data)
+    inactive_workers = list()
+    active_workers = list()
+    for worker_id in worker_id_list:
+      if worker_id in data and data[worker_id].get('active'):
+        active_workers.append(worker_id)
+      else:
+        inactive_workers.append(worker_id)
+    return active_workers, inactive_workers
+  except Exception as e:
+    raise ValueError(
+      f'Failed to check celery workers are active, error: {e}')
 
 def prepare_scale_out_workers():
     pass

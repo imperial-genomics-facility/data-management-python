@@ -15,13 +15,10 @@ from igf_data.utils.fileutils import (
 from igf_airflow.utils.dag1_calculate_hpc_worker_utils import (
   get_celery_flower_workers,
   get_redis_queue_tasks,
-  scale_hpc_workers,
-  filter_scale_in_workers,
-  check_celery_worker_status,
-  prepare_scale_out_workers,
   combine_celery_and_hpc_worker_info,
   calculate_scale_out_scale_in_ops,
-  fetch_queue_list_from_redis_server)
+  fetch_queue_list_from_redis_server,
+  check_celery_workers_are_active)
 
 class Test_dag1_calculate_hpc_worker_utils(unittest.TestCase):
   def setUp(self):
@@ -35,7 +32,7 @@ class Test_dag1_calculate_hpc_worker_utils(unittest.TestCase):
   @patch('igf_airflow.utils.dag1_calculate_hpc_worker_utils.read_json_data',
          return_value=[{'flower_url':'http://hostname','flower_user':'B','flower_pass':'C'}])
   @responses.activate
-  def test_get_celery_flower_workers(self,*args):
+  def test_get_celery_flower_workers(self, *args):
     responses.add(
       responses.GET,
       'http://hostname/api/workers?refresh=True',
@@ -158,6 +155,25 @@ class Test_dag1_calculate_hpc_worker_utils(unittest.TestCase):
     self.assertEqual(scaled_df[scaled_df["queue_name"] == "hpc_64G16t"]["scale_out_ops"].values[0], 0)
 
 
+  @patch('igf_airflow.utils.dag1_calculate_hpc_worker_utils.read_json_data',
+         return_value=[{'flower_url':'http://hostname','flower_user':'B','flower_pass':'C'}])
+  @responses.activate
+  def test_check_celery_workers_are_active(self, *args):
+    responses.add(
+      responses.GET,
+      'http://hostname/api/workers?refresh=True',
+      status=200,
+      json={
+        'worker1': {'active':[1,], 'active_queues': [{'name': 'A'}]},
+        'worker2': {'active':[], 'active_queues': []}})
+    active_workers, inactive_workers = \
+      check_celery_workers_are_active(
+        flower_config_file='A',
+        worker_id_list=['worker1', 'worker2'])
+    self.assertEqual(len(active_workers), 1)
+    self.assertEqual(len(inactive_workers), 1)
+    self.assertEqual(active_workers[0], 'worker1')
+    self.assertEqual(inactive_workers[0], 'worker2')
 
 
 
