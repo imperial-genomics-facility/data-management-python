@@ -1,3 +1,4 @@
+import logging
 import pandas as pd
 import numpy as np
 from io import StringIO
@@ -7,6 +8,26 @@ from yaml import load, SafeLoader
 from igf_data.utils.dbutils import read_json_data
 from requests.auth import HTTPBasicAuth
 from igf_data.utils.fileutils import check_file_path
+from datetime import timedelta
+from airflow.models import Variable
+from airflow.operators.python import get_current_context
+from airflow.decorators import task
+from igf_airflow.utils.generic_airflow_utils import send_airflow_failed_logs_to_channels
+
+log = logging.getLogger(__name__)
+
+MS_TEAMS_CONF = \
+  Variable.get(
+    'ms_teams_conf', default_var=None)
+CELERY_FLOWER_CONFIG_FILE = \
+  Variable.get(
+    'celery_flower_config', default_var=None)
+HPC_QUEUE_LIST = \
+  Variable.get(
+    'hpc_queue_list_yaml', default_var=None)
+REDIS_CONF_FILE = \
+  Variable.get(
+      'redis_conn_file', default_var=None)
 
 def get_celery_flower_workers(
       celery_flower_config_file: str,
@@ -55,15 +76,20 @@ def get_celery_flower_workers(
 
 
 def fetch_queue_list_from_redis_server(
-      url: str) -> List[dict]:
+      redis_conf_file: str) -> List[dict]:
   """
   A function for fetching pending job counts from redis db
 
-  :param url: A redis db connection URL
+  :param redis_conf_file: A json file containing redis_db as key and redis db connection URL as value
   :returns: A list of dictionaries with queue name as key and pending job counts as the value
   """
   try:
     queue_list = list()
+    with open(redis_conf_file,'r') as jp:
+      json_data = json.load(jp)
+    if 'redis_db' not in json_data:
+      raise ValueError('redis_db key not present in the conf file')
+    url = json_data.get('redis_db')
     r = redis.from_url(url)
     for i in r.keys():
       if not isinstance(i, str):
@@ -521,3 +547,44 @@ def prepare_scale_out_workers(
   except Exception as e:
     raise ValueError(
       f'Failed to prepare scale out workers, error: {e}')
+
+
+## TASK
+@task(
+  task_id="celery_flower_workers",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='generic',
+  multiple_outputs=False)
+def celery_flower_workers():
+  try:
+    worker_list = \
+      get_celery_flower_workers(
+        celery_flower_config_file=CELERY_FLOWER_CONFIG_FILE)
+    return worker_list
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
+
+## TASK
+@task(
+  task_id="redis_queue_workers",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='generic',
+  multiple_outputs=False)
+def redis_queue_workers():
+  try:
+    worker_list = \
+      get_celery_flower_workers(
+        celery_flower_config_file=CELERY_FLOWER_CONFIG_FILE)
+    return worker_list
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)

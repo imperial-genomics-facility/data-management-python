@@ -64,22 +64,31 @@ class Test_dag1_calculate_hpc_worker_utils(unittest.TestCase):
     self.assertEqual(workers[0]['active_jobs'], 1)
     self.assertEqual(workers[0]['queue_lists'], ['A'])
 
+
   @patch('igf_airflow.utils.dag1_calculate_hpc_worker_utils.redis')
   def test_fetch_queue_list_from_redis_server(self,redis_mock):
     r = redis_mock.from_url.return_value
     r.keys.return_value = {'A': 'a', 'B': 'b', 'unacked1': 'c', '_unacked2': 'd'}
     r.llen.side_effect = [1,2]
-    queue_list = fetch_queue_list_from_redis_server('A')
+    temp_dir = get_temp_dir()
+    redis_config_file = os.path.join(temp_dir, 'redis_config.json')
+    with open(redis_config_file, 'w') as json_data:
+      json.dump({'redis_db': 'A'}, json_data)
+    queue_list = fetch_queue_list_from_redis_server(redis_config_file)
     self.assertEqual(len(queue_list), 2)
     self.assertEqual(queue_list[0], {'A':1})
     self.assertEqual(queue_list[1], {'B':2})
 
-  @patch('igf_airflow.utils.dag1_calculate_hpc_worker_utils.read_json_data',
-         return_value=[{'redis_db':'A'}])
+
   @patch('igf_airflow.utils.dag1_calculate_hpc_worker_utils.fetch_queue_list_from_redis_server',
          return_value=[{'A':1}])
   def test_get_redis_queue_tasks(self, *args):
-    queue_list = get_redis_queue_tasks('A')
+    temp_dir = get_temp_dir()
+    redis_config_file = os.path.join(temp_dir, 'redis_config.json')
+    with open(redis_config_file, 'w') as json_data:
+      json.dump({'redis_db': 'A'}, json_data)
+    queue_list = \
+      get_redis_queue_tasks(redis_conf_file=redis_config_file)
     self.assertEqual(len(queue_list), 1)
     self.assertEqual(queue_list[0], {'A':1})
 
