@@ -19,7 +19,8 @@ from igf_airflow.utils.dag1_calculate_hpc_worker_utils import (
   calculate_scale_out_scale_in_ops,
   fetch_queue_list_from_redis_server,
   check_celery_workers_are_active,
-  filter_scale_in_workers)
+  filter_scale_in_workers,
+  terminate_celery_workers)
 
 class Test_dag1_calculate_hpc_worker_utils(unittest.TestCase):
   def setUp(self):
@@ -208,6 +209,28 @@ class Test_dag1_calculate_hpc_worker_utils(unittest.TestCase):
     self.assertEqual(len(filter_scale_in_workers_list), 1)
     self.assertEqual(filter_scale_in_workers_list[0], 'celery@834801.pbs-hpc_8G8t')
 
+
+  @patch('igf_airflow.utils.dag1_calculate_hpc_worker_utils.read_json_data',
+         return_value=[{'flower_url':'http://hostname','flower_user':'B','flower_pass':'C'}])
+  @responses.activate
+  def test_terminate_celery_workers(self, *args):
+    responses.add(
+      responses.GET,
+      'http://hostname/api/workers?refresh=True',
+      status=200,
+      json={
+        'worker1': {'active':[1,], 'active_queues': [{'name': 'A'}]},
+        'worker2': {'active':[], 'active_queues': []}})
+    responses.add(
+      responses.POST,
+      'http://hostname/api/worker/shutdown/worker2',
+      status=200)
+    deleted_workers = \
+      terminate_celery_workers(
+        flower_config_file='A',
+        celery_worker_list=['worker1', 'worker2'])
+    self.assertEqual(len(deleted_workers), 1)
+    self.assertEqual(deleted_workers[0], 'worker2')
 
 if __name__=='__main__':
   unittest.main()

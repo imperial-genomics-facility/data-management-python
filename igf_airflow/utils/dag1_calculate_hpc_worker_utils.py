@@ -23,14 +23,19 @@ def get_celery_flower_workers(
   try:
     flower_config = read_json_data(celery_flower_config_file)
     flower_config = flower_config[0]
-    flower_user = flower_config.get(flower_user_key)
-    flower_pass = flower_config.get(flower_pass_key)
-    flower_url = flower_config.get(flower_url_key)
-    celery_url = f'{flower_url}/api/workers?refresh=True'
+    if flower_user_key not in flower_config or \
+       flower_url_key not in flower_config or \
+       flower_pass_key not in flower_config:
+      raise KeyError(
+        'Missing flower config in the config file')
+    celery_url = \
+      f'{flower_config.get(flower_url_key)}/api/workers?refresh=True'
     res = \
       requests.get(
         celery_url,
-        auth=HTTPBasicAuth(flower_user, flower_pass))
+        auth=HTTPBasicAuth(
+          flower_config.get(flower_user_key),
+          flower_config.get(flower_pass_key)))
     if res.status_code != 200:
       raise ValueError('Failed to get celery flower workers.')
     data = res.content.decode()
@@ -317,8 +322,12 @@ def calculate_scale_out_scale_in_ops(
 
 
 def check_celery_workers_are_active(
-    flower_config_file: str,
-    worker_id_list: List[str]) -> Tuple[List[str], List[str]]:
+      flower_config_file: str,
+      worker_id_list: List[str],
+      flower_url_key: str = 'flower_url',
+      flower_user_key: str = 'flower_user',
+      flower_pass_key: str = 'flower_pass') \
+        -> Tuple[List[str], List[str]]:
   """
   A function for checking if celery workers are active
 
@@ -330,14 +339,19 @@ def check_celery_workers_are_active(
     flower_config = \
       read_json_data(flower_config_file)
     flower_config = flower_config[0]
+    if flower_url_key not in flower_config or \
+       flower_user_key not in flower_config or \
+       flower_pass_key not in flower_config:
+      raise KeyError(
+        'Missing flower config in the config file')
     celery_url = \
-      f'{flower_config.get("flower_url")}/api/workers?refresh=True'
+      f'{flower_config.get(flower_url_key)}/api/workers?refresh=True'
     res = \
       requests.get(
         celery_url,
         auth=HTTPBasicAuth(
-          flower_config.get("flower_user"),
-          flower_config.get("flower_pass")))
+          flower_config.get(flower_user_key),
+          flower_config.get(flower_pass_key)))
     if res.status_code != 200:
       raise ValueError('Failed to get celery flower workers.')
     data = res.content.decode()
@@ -412,6 +426,55 @@ def filter_scale_in_workers(
   except Exception as e:
     raise ValueError(
       f'Failed to filter scale in workers, error: {e}')
+
+
+def terminate_celery_workers(
+      flower_config_file: str,
+      celery_worker_list: List[str],
+      flower_url_key: str = 'flower_url',
+      flower_user_key: str = 'flower_user',
+      flower_pass_key: str = 'flower_pass') -> List[str]:
+  """
+  A function for terminating celery workers
+
+  :param flower_config_file: A json file containing celery flower config
+  :param celery_worker_list: A list of worker ids to terminate
+  :returns: A list of deleted worker ids
+  """
+  try:
+    flower_config = \
+      read_json_data(flower_config_file)
+    flower_config = flower_config[0]
+    if flower_url_key not in flower_config or \
+       flower_user_key not in flower_config or \
+       flower_pass_key not in flower_config:
+      raise KeyError(
+        'Missing flower config in the config file')
+    celery_url = \
+      f'{flower_config.get(flower_url_key)}/api/worker/shutdown'
+    ## final checking before termination
+    _, inactive_workers = \
+      check_celery_workers_are_active(
+        flower_config_file=flower_config_file,
+        worker_id_list=celery_worker_list)
+    deleted_workers = list()
+    for worker_id in inactive_workers:
+      celery_shutdown_url = f'{celery_url}/{worker_id}'
+      res = \
+        requests.post(
+          celery_shutdown_url,
+          auth=HTTPBasicAuth(
+            flower_config.get(flower_user_key),
+            flower_config.get(flower_pass_key)))
+      if res.status_code != 200:
+        raise ValueError(
+          f'Failed to delete worker {worker_id}')
+      deleted_workers.append(worker_id)
+    return deleted_workers
+  except Exception as e:
+    raise ValueError(
+      f'Failed to terminate celery workers, error: {e}')
+
 
 def prepare_scale_out_workers():
     pass
