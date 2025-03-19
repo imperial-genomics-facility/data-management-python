@@ -118,25 +118,13 @@ def get_redis_queue_tasks(redis_conf_file: str) -> List[dict]:
       f'Failed to get redis queue tasks, error: {e}')
 
 
-def merge_worker_info_and_scale_workers(
-    hpc_worker_info: str,
-    celery_flower_worker_info: List[str],
-    redis_queue_info: List[dict],
-    max_items_in_queue: int = 3,
-    total_hpc_jobs: int = 30) -> List[dict]:
-  try:
-    pass
-  except Exception as e:
-    raise ValueError(f'Failed to merge worker info and scale workers, error: {e}')
-
-
 def combine_celery_and_hpc_worker_info(
     hpc_worker_info: str,
     celery_flower_worker_info: List[dict],
     redis_queue_info: List[dict],
     generic_queue_name: str = 'generic',
     max_items_in_queue: int = 3,
-    total_hpc_jobs: int = 30)-> List[dict]:
+    total_hpc_jobs: int = 30)-> Tuple[List[dict], List[dict]]:
     try:
       ## process hpc output
       hpc_jobs_df = pd.DataFrame()
@@ -267,7 +255,7 @@ def combine_celery_and_hpc_worker_info(
             input_df=final_agg_df,
             max_items_in_queue=max_items_in_queue,
             total_hpc_jobs=total_hpc_jobs)
-        return scaled_df.to_dict(orient='records')
+        return scaled_df.to_dict(orient='records'), filt_merged_data.to_dict(orient='records')
     except Exception as e:
       raise ValueError(
         f'Failed to combine celery and hpc worker info, error: {e}')
@@ -578,10 +566,121 @@ def celery_flower_workers():
   multiple_outputs=False)
 def redis_queue_workers():
   try:
-    worker_list = \
-      get_celery_flower_workers(
-        celery_flower_config_file=CELERY_FLOWER_CONFIG_FILE)
-    return worker_list
+    queue_list = \
+      get_redis_queue_tasks(
+        redis_conf_file=REDIS_CONF_FILE)
+    return queue_list
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
+
+## TASK
+@task(
+  task_id="calculate_workers",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='generic',
+  multiple_outputs=True)
+def calculate_workers(
+    hpc_worker_info: str,
+    celery_flower_worker_info: List[str],
+    redis_queue_info: List[dict],
+    max_items_in_queue: int = 3,
+    generic_queue_name: str = 'generic',
+    total_hpc_jobs: int = 50) -> List[dict]:
+  try:
+    scaled_worker_data, raw_worker_data = \
+      combine_celery_and_hpc_worker_info(
+        hpc_worker_info=hpc_worker_info,
+        celery_flower_worker_info=celery_flower_worker_info,
+        redis_queue_info=redis_queue_info,
+        generic_queue_name=generic_queue_name,
+        max_items_in_queue=max_items_in_queue,
+        total_hpc_jobs=total_hpc_jobs)
+    return scaled_worker_data, raw_worker_data
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
+
+
+
+@task.branch(
+  task_id="decide_scale_out_scale_in_ops",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='generic',
+  multiple_outputs=False)
+def decide_scale_out_scale_in_ops(
+      scaled_workers_data: List[dict],
+      scale_in_task: str = 'scale_in_hpc_workers',
+      scale_out_task: str = 'prep_scale_out_hpc_workers',
+      scale_in_ops_key: str = 'scale_in_ops',
+      scale_out_ops_key: str = 'scale_out_ops') -> List[str]:
+  try:
+    df = pd.DataFrame(scaled_workers_data)
+    df_scale_in = df[df[scale_in_ops_key]>0].copy()
+    df_scale_out = df[df[scale_out_ops_key]>0].copy()
+    if len(df_scale_in.index) > 0 and len(df_scale_out.index) > 0 :
+      return [scale_in_task, scale_out_task]
+    elif len(df_scale_in.index) > 0 and len(df_scale_out.index) == 0 :
+      return [scale_in_task]
+    elif len(df_scale_in.index) == 0 and len(df_scale_out.index) > 0 :
+      return [scale_out_task]
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
+
+## TASK
+@task(
+  task_id="scale_in_hpc_workers",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='generic',
+  multiple_outputs=False)
+def scale_in_hpc_workers(
+      scaled_worker_data: List[dict],
+      raw_worker_data: List[dict]) -> List[str]:
+  try:
+    scale_in_workers_list = \
+      filter_scale_in_workers(
+        scaled_worker_data=scaled_worker_data,
+        raw_worker_data=raw_worker_data)
+    deleted_workers = \
+      terminate_celery_workers(
+        flower_config_file=CELERY_FLOWER_CONFIG_FILE,
+        celery_worker_list=scale_in_workers_list)
+    return deleted_workers
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
+
+## TASK
+@task(
+  task_id="prep_scale_out_hpc_workers",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='generic',
+  multiple_outputs=False)
+def prep_scale_out_hpc_workers(
+      scaled_worker_data: List[dict]) -> List[dict]:
+  try:
+    scale_out_workers_conf = \
+      prepare_scale_out_workers(
+        hpc_worker_config=HPC_QUEUE_LIST,
+        scaled_worker_data=scaled_worker_data)
+    return scale_out_workers_conf
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(

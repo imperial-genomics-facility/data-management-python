@@ -150,14 +150,14 @@ class Test_dag1_calculate_hpc_worker_utils(unittest.TestCase):
       {'worker_id':'celery@834895.pbs-hpc_4G ','active_jobs':1,'queue_lists':['hpc_4G']},
       {'worker_id':'celery@834896.pbs-hpc_4G','active_jobs':1,'queue_lists':['hpc_4G']}]
     redis_queue_info = [{'hpc_4G':7}]
-    scaled_workers = \
+    scaled_workers, raw_workers = \
       combine_celery_and_hpc_worker_info(
         hpc_worker_info=hpc_worker_info,
         celery_flower_worker_info=celery_flower_worker_info,
         redis_queue_info=redis_queue_info,
         max_items_in_queue=3,
         total_hpc_jobs=30)
-    scaled_df = pd.DataFrame(scaled_workers)
+    scaled_df  = pd.DataFrame(scaled_workers)
     self.assertTrue('queue_name' in scaled_df.columns)
     self.assertTrue('scale_out_ops' in scaled_df.columns)
     self.assertTrue('scale_in_ops' in scaled_df.columns)
