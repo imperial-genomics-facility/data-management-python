@@ -18,7 +18,8 @@ from igf_airflow.utils.dag1_calculate_hpc_worker_utils import (
   combine_celery_and_hpc_worker_info,
   calculate_scale_out_scale_in_ops,
   fetch_queue_list_from_redis_server,
-  check_celery_workers_are_active)
+  check_celery_workers_are_active,
+  filter_scale_in_workers)
 
 class Test_dag1_calculate_hpc_worker_utils(unittest.TestCase):
   def setUp(self):
@@ -175,6 +176,37 @@ class Test_dag1_calculate_hpc_worker_utils(unittest.TestCase):
     self.assertEqual(active_workers[0], 'worker1')
     self.assertEqual(inactive_workers[0], 'worker2')
 
+
+  def test_filter_scale_in_workers(self):
+    scaled_worker_data = [
+      {'queue_name':'hpc_64G16t','scale_in_ops':0},
+      {'queue_name':'hpc_8G8t','scale_in_ops':1}]
+    raw_worker_data = [
+      {
+        'job_id': '834752.pbs',
+        'queue_name': 'hpc_8G8t',
+        'hpc_r': 1,
+        'task_i': 0,
+        'active_jobs': 1,
+        'worker_id': 'celery@834752.pbs-hpc_8G8t'},{
+        'job_id': '834801.pbs',
+        'queue_name': 'hpc_8G8t',
+        'hpc_r': 1,
+        'task_i': 1,
+        'active_jobs': 0,
+        'worker_id': 'celery@834801.pbs-hpc_8G8t'},{
+        'job_id': '834876.pbs',
+        'queue_name': 'hpc_64G16t',
+        'hpc_r': 1,
+        'task_i': 0,
+        'active_jobs': 1,
+        'worker_id': 'celery@834876.pbs-hpc_64G16t'}]
+    filter_scale_in_workers_list = \
+      filter_scale_in_workers(
+        scaled_worker_data=scaled_worker_data,
+        raw_worker_data=raw_worker_data)
+    self.assertEqual(len(filter_scale_in_workers_list), 1)
+    self.assertEqual(filter_scale_in_workers_list[0], 'celery@834801.pbs-hpc_8G8t')
 
 
 if __name__=='__main__':

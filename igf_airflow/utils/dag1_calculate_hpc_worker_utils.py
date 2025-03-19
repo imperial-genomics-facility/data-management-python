@@ -354,5 +354,64 @@ def check_celery_workers_are_active(
     raise ValueError(
       f'Failed to check celery workers are active, error: {e}')
 
+
+def filter_scale_in_workers(
+      scaled_worker_data: List[dict],
+      raw_worker_data: List[dict]) -> List[str]:
+  """
+  A function for filtering scale in workers
+
+  :param scaled_worker_data: A list of dictionaries with queue_name and scale_in_ops
+  :param raw_worker_data: A list of dictionaries with job_id, queue_name, hpc_r, task_i, active_jobs, worker_id
+  :returns: A list of worker ids for scale in operations
+  """
+  try:
+    scaled_worker_df = \
+      pd.DataFrame(scaled_worker_data)
+    raw_worker_df = \
+      pd.DataFrame(raw_worker_data)
+    required_scaled_worker_columns = [
+      "queue_name",
+      "scale_in_ops"]
+    required_raw_worker_columns = [
+      "job_id",
+      "queue_name",
+      "hpc_r",
+      "task_i",
+      "active_jobs",
+      "worker_id"]
+    for c in required_scaled_worker_columns:
+      if c not in scaled_worker_df.columns:
+        raise KeyError(
+          f'Column {c} is missing from input dataframe')
+    for c in required_raw_worker_columns:
+      if c not in raw_worker_df.columns:
+        raise KeyError(
+          f'Column {c} is missing from input dataframe')
+    queue_list = \
+      scaled_worker_df[scaled_worker_df["scale_in_ops"] > 0]["queue_name"].\
+        values.tolist()
+    scale_in_workers_list = list()
+    for queue_name in queue_list:
+      scale_in_workers = \
+        raw_worker_df[
+          (raw_worker_df["queue_name"]==queue_name)&\
+          (raw_worker_df["active_jobs"]==0)&\
+          (raw_worker_df["hpc_r"]==1)&\
+          (raw_worker_df["task_i"]==1)]["worker_id"].\
+          values.tolist()
+      scale_in_counts = \
+        scaled_worker_df[scaled_worker_df["queue_name"]==queue_name]["scale_in_ops"].values
+      if len(scale_in_counts) > 0:
+        ## we should have only one row per queue
+        scale_in_counts = scale_in_counts[0]
+      while scale_in_counts and scale_in_workers:
+        scale_in_workers_list.append(scale_in_workers.pop())
+        scale_in_counts -= 1
+    return scale_in_workers_list
+  except Exception as e:
+    raise ValueError(
+      f'Failed to filter scale in workers, error: {e}')
+
 def prepare_scale_out_workers():
     pass
