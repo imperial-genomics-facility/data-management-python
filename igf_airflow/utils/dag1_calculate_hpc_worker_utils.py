@@ -600,7 +600,7 @@ def calculate_workers(
         generic_queue_name=generic_queue_name,
         max_items_in_queue=max_items_in_queue,
         total_hpc_jobs=total_hpc_jobs)
-    return scaled_worker_data, raw_worker_data
+    return {"scaled_worker_data": scaled_worker_data, "raw_worker_data": raw_worker_data}
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
