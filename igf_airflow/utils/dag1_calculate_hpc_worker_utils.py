@@ -560,6 +560,7 @@ def prepare_scale_out_workers(
   retry_delay=timedelta(minutes=5),
   retries=4,
   queue='generic',
+  pool='generic_pool',
   multiple_outputs=False)
 def celery_flower_workers():
   """
@@ -585,6 +586,7 @@ def celery_flower_workers():
   retry_delay=timedelta(minutes=5),
   retries=4,
   queue='generic',
+  pool='generic_pool',
   multiple_outputs=False)
 def redis_queue_workers():
   """
@@ -610,6 +612,7 @@ def redis_queue_workers():
   retry_delay=timedelta(minutes=5),
   retries=4,
   queue='generic',
+  pool='generic_pool',
   multiple_outputs=True)
 def calculate_workers(
     hpc_worker_info: str,
@@ -653,6 +656,7 @@ def calculate_workers(
   retry_delay=timedelta(minutes=5),
   retries=4,
   queue='generic',
+  pool='generic_pool',
   multiple_outputs=False)
 def decide_scale_out_scale_in_ops(
       scaled_workers_data: List[dict],
@@ -705,6 +709,7 @@ def decide_scale_out_scale_in_ops(
   retry_delay=timedelta(minutes=5),
   retries=4,
   queue='generic',
+  pool='generic_pool',
   multiple_outputs=False)
 def scale_in_hpc_workers(
       scaled_worker_data: List[dict],
@@ -739,6 +744,7 @@ def scale_in_hpc_workers(
   retry_delay=timedelta(minutes=5),
   retries=4,
   queue='generic',
+  pool='generic_pool',
   multiple_outputs=False)
 def prep_scale_out_hpc_workers(
       scaled_worker_data: List[dict]) -> List[dict]:
