@@ -107,6 +107,12 @@ def fetch_queue_list_from_redis_server(
 
 
 def get_redis_queue_tasks(redis_conf_file: str) -> List[dict]:
+  """
+  A function for getting redis queue tasks from the redis server
+
+  :param redis_conf_file: A json file containing redis_db as key and redis db connection URL as value
+  :returns: A list of dictionaries with queue name as key and pending job counts as the value
+  """
   try:
     redis_conf = read_json_data(redis_conf_file)
     redis_conf = redis_conf[0]
@@ -125,6 +131,17 @@ def combine_celery_and_hpc_worker_info(
     generic_queue_name: str = 'generic',
     max_items_in_queue: int = 3,
     total_hpc_jobs: int = 30)-> Tuple[List[dict], List[dict]]:
+    """
+    A function for combining celery and hpc worker info for scaling operations
+
+    :param hpc_worker_info: A string containing hpc worker info
+    :param celery_flower_worker_info: A list of dictionaries with worker_id, active_jobs and queue_lists
+    :param redis_queue_info: A list of dictionaries with queue name as key and pending job counts as the value
+    :param generic_queue_name: A string for generic queue name
+    :param max_items_in_queue: Maximum number of items allowed in the queue
+    :param total_hpc_jobs: Total number of hpc jobs allowed
+    :returns: A tuple of scaled worker data and raw worker data
+    """
     try:
       ## process hpc output
       hpc_jobs_df = pd.DataFrame()
@@ -545,6 +562,11 @@ def prepare_scale_out_workers(
   queue='generic',
   multiple_outputs=False)
 def celery_flower_workers():
+  """
+  A task for fetching celery flower workers from the celery flower server
+
+  :returns: A list of dictionaries with worker_id, active_jobs and queue_lists
+  """
   try:
     worker_list = \
       get_celery_flower_workers(
@@ -565,6 +587,11 @@ def celery_flower_workers():
   queue='generic',
   multiple_outputs=False)
 def redis_queue_workers():
+  """
+  A task for fetching pending job counts from redis db
+
+  :returns: A list of dictionaries with queue name as key and pending job counts as the value
+  """
   try:
     queue_list = \
       get_redis_queue_tasks(
@@ -591,6 +618,17 @@ def calculate_workers(
     max_items_in_queue: int = 3,
     generic_queue_name: str = 'generic',
     total_hpc_jobs: int = 50) -> List[dict]:
+  """
+  A task for combining celery and hpc worker info for scaling operations
+
+  :param hpc_worker_info: A string containing hpc worker info
+  :param celery_flower_worker_info: A list of dictionaries with worker_id, active_jobs and queue_lists
+  :param redis_queue_info: A list of dictionaries with queue name as key and pending job counts as the value
+  :param generic_queue_name: A string for generic queue name
+  :param max_items_in_queue: Maximum number of items allowed in the queue
+  :param total_hpc_jobs: Total number of hpc jobs allowed
+  :returns: A list of dictionaries with scaled_worker_data and raw_worker_data
+  """
   try:
     scaled_worker_data, raw_worker_data = \
       combine_celery_and_hpc_worker_info(
@@ -622,6 +660,16 @@ def decide_scale_out_scale_in_ops(
       scale_out_task: str = 'prep_scale_out_hpc_workers',
       scale_in_ops_key: str = 'scale_in_ops',
       scale_out_ops_key: str = 'scale_out_ops') -> List[str]:
+  """
+  A function for deciding scale out and scale in operations
+
+  :param scaled_workers_data: A list of dictionaries with queue_name, hpc_r, hpc_q, task_r, task_i, queued
+  :param scale_in_task: A string for scale in task name
+  :param scale_out_task: A string for scale out task name
+  :param scale_in_ops_key: A string for scale in ops key
+  :param scale_out_ops_key: A string for scale out ops key
+  :returns: A list of tasks to be executed
+  """
   try:
     df = pd.DataFrame(scaled_workers_data)
     if scale_in_ops_key not in df.columns or \
@@ -661,6 +709,13 @@ def decide_scale_out_scale_in_ops(
 def scale_in_hpc_workers(
       scaled_worker_data: List[dict],
       raw_worker_data: List[dict]) -> List[str]:
+  """
+  A function for scaling in hpc workers
+
+  :param scaled_worker_data: A list of dictionaries with queue_name and scale_in_ops
+  :param raw_worker_data: A list of dictionaries with job_id, queue_name, hpc_r, task_i, active_jobs, worker_id
+  :returns: A list of deleted worker ids
+  """
   try:
     scale_in_workers_list = \
       filter_scale_in_workers(
@@ -687,6 +742,12 @@ def scale_in_hpc_workers(
   multiple_outputs=False)
 def prep_scale_out_hpc_workers(
       scaled_worker_data: List[dict]) -> List[dict]:
+  """
+  A function for preparing scale out workers
+
+  :param scaled_worker_data: A list of dictionaries with queue_name and scale_out_ops
+  :returns: A list of dictionaries with queue_name, airflow_queue, new_tasks and pbs_resource
+  """
   try:
     scale_out_workers_conf = \
       prepare_scale_out_workers(
