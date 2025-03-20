@@ -615,12 +615,12 @@ def redis_queue_workers():
   pool='generic_pool',
   multiple_outputs=True)
 def calculate_workers(
-    hpc_worker_info: str,
-    celery_flower_worker_info: List[str],
-    redis_queue_info: List[dict],
-    max_items_in_queue: int = 3,
-    generic_queue_name: str = 'generic',
-    total_hpc_jobs: int = 50) -> List[dict]:
+      hpc_worker_info: str,
+      celery_flower_worker_info: List[str],
+      redis_queue_info: List[dict],
+      max_items_in_queue: int = 3,
+      generic_queue_name: str = 'generic',
+      total_hpc_jobs: int = 50) -> List[dict]:
   """
   A task for combining celery and hpc worker info for scaling operations
 
