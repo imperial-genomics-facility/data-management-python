@@ -21,7 +21,13 @@ from igf_airflow.utils.dag1_calculate_hpc_worker_utils import (
   check_celery_workers_are_active,
   filter_scale_in_workers,
   terminate_celery_workers,
-  prepare_scale_out_workers)
+  prepare_scale_out_workers,
+  celery_flower_workers,
+  redis_queue_workers,
+  calculate_workers,
+  decide_scale_out_scale_in_ops,
+  scale_in_hpc_workers,
+  prep_scale_out_hpc_workers)
 
 class Test_dag1_calculate_hpc_worker_utils(unittest.TestCase):
   def setUp(self):
@@ -279,6 +285,107 @@ class Test_dag1_calculate_hpc_worker_utils(unittest.TestCase):
       df[df["queue_name"] == "hpc_8G8t"]["airflow_queue"].values[0],
       'hpc_4G,hpc_8G8t')
     self.assertEqual(df[df["queue_name"] == "hpc_4G"]["new_tasks"].values[0], 1)
+
+
+  @patch("igf_airflow.utils.dag1_calculate_hpc_worker_utils.get_current_context")
+  @patch("igf_airflow.utils.dag1_calculate_hpc_worker_utils.Variable")
+  @patch('igf_airflow.utils.dag1_calculate_hpc_worker_utils.get_celery_flower_workers',
+        return_value=[{'worker_id':'worker1','active_jobs':1,'queue_lists':['A']}])
+  def test_celery_flower_workers(
+        self,
+        get_celery_flower_workers,
+        *args):
+    celery_worker_config = os.path.join(self.temp_dir, 'celery_worker_config.json')
+    with open(celery_worker_config, 'w') as json_data:
+      json.dump({'flower_url':'A', 'flower_user':'B', 'flower_pass':'C'}, json_data)
+    with patch("igf_airflow.utils.dag1_calculate_hpc_worker_utils.CELERY_FLOWER_CONFIG_FILE", celery_worker_config):
+      worker_list = celery_flower_workers.function()
+      get_celery_flower_workers.assert_called_once()
+      self.assertEqual(len(worker_list), 1)
+      self.assertEqual(worker_list[0]['worker_id'], 'worker1')
+
+  @patch('igf_airflow.utils.dag1_calculate_hpc_worker_utils.get_redis_queue_tasks',
+         return_value=[{'A':1}])
+  def test_redis_queue_workers(self, *args):
+    redis_db_conf = os.path.join(self.temp_dir, 'redis_db_conf.json')
+    with open(redis_db_conf, 'w') as json_data:
+      json.dump({'A': 'B'}, json_data)
+    with patch("igf_airflow.utils.dag1_calculate_hpc_worker_utils.REDIS_CONF_FILE", redis_db_conf):
+      queue_list = redis_queue_workers.function()
+      self.assertEqual(len(queue_list), 1)
+      self.assertEqual(queue_list[0], {'A':1})
+
+  @patch('igf_airflow.utils.dag1_calculate_hpc_worker_utils.combine_celery_and_hpc_worker_info',
+         return_value=['A', 'B'])
+  def test_calculate_workers(self, mock_combine_celery_and_hpc_worker_info):
+    workers = \
+      calculate_workers.function(
+        hpc_worker_info='a',
+        celery_flower_worker_info='b',
+        redis_queue_info='c')
+    mock_combine_celery_and_hpc_worker_info.assert_called_once()
+    self.assertEqual(workers["scaled_worker_data"], 'A')
+    self.assertEqual(workers["raw_worker_data"], 'B')
+
+
+  def test_decide_scale_out_scale_in_ops(self):
+    scaled_workers_data = [
+      {'queue_name':'hpc_4G','scale_out_ops':0, 'scale_in_ops':0}]
+    next_tasks = \
+      decide_scale_out_scale_in_ops.function(
+        scaled_workers_data,
+        scale_in_task='scale_in_task',
+        scale_out_task='scale_out_task')
+    self.assertEqual(next_tasks, [])
+    scaled_workers_data = [
+      {'queue_name':'hpc_8G','scale_out_ops':1, 'scale_in_ops': 0}]
+    next_tasks = \
+      decide_scale_out_scale_in_ops.function(
+        scaled_workers_data,
+        scale_in_task='scale_in_task',
+        scale_out_task='scale_out_task')
+    self.assertEqual(next_tasks, ['scale_out_task'])
+    scaled_workers_data = [
+      {'queue_name':'hpc_16G','scale_out_ops':0, 'scale_in_ops': 1}]
+    next_tasks = \
+      decide_scale_out_scale_in_ops.function(
+        scaled_workers_data,
+        scale_in_task='scale_in_task',
+        scale_out_task='scale_out_task')
+    self.assertEqual(next_tasks, ['scale_in_task'])
+
+
+  @patch('igf_airflow.utils.dag1_calculate_hpc_worker_utils.filter_scale_in_workers',
+          return_value=['A'])
+  @patch('igf_airflow.utils.dag1_calculate_hpc_worker_utils.terminate_celery_workers',
+          return_value=['B'])
+  def test_scale_in_hpc_workers(
+        self,
+        terminate_celery_workers,
+        filter_scale_in_workers):
+    with patch("igf_airflow.utils.dag1_calculate_hpc_worker_utils.CELERY_FLOWER_CONFIG_FILE",
+               'C'):
+      deleted_workers = \
+        scale_in_hpc_workers.function(
+          scaled_worker_data=[{'queue_name':'hpc_4G','scale_in_ops':1}],
+          raw_worker_data=[{'worker_id':'worker1','active_jobs':1,'queue_lists':['A']}])
+      filter_scale_in_workers.assert_called_once()
+      terminate_celery_workers.assert_called_once()
+      self.assertEqual(deleted_workers, ['B'])
+
+
+  @patch('igf_airflow.utils.dag1_calculate_hpc_worker_utils.prepare_scale_out_workers',
+          return_value='A')
+  def test_prep_scale_out_hpc_workers(
+        self,
+        prepare_scale_out_workers):
+    with patch('igf_airflow.utils.dag1_calculate_hpc_worker_utils.HPC_QUEUE_LIST',
+               'B'):
+      scale_out_workers_conf = \
+        prep_scale_out_hpc_workers.function(
+          scaled_worker_data='C')
+      self.assertEqual(scale_out_workers_conf, 'A')
+      prepare_scale_out_workers.assert_called_once()
 
 
 if __name__=='__main__':

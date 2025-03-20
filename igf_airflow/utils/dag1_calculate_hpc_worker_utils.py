@@ -624,14 +624,26 @@ def decide_scale_out_scale_in_ops(
       scale_out_ops_key: str = 'scale_out_ops') -> List[str]:
   try:
     df = pd.DataFrame(scaled_workers_data)
-    df_scale_in = df[df[scale_in_ops_key]>0].copy()
-    df_scale_out = df[df[scale_out_ops_key]>0].copy()
-    if len(df_scale_in.index) > 0 and len(df_scale_out.index) > 0 :
+    if scale_in_ops_key not in df.columns or \
+       scale_out_ops_key not in df.columns:
+      raise KeyError(
+        f'Missing {scale_in_ops_key} or {scale_out_ops_key} \
+          in the input dataframe')
+    df_scale_in = \
+      df[df[scale_in_ops_key]>0].copy()
+    df_scale_out = \
+      df[df[scale_out_ops_key]>0].copy()
+    if len(df_scale_in.index) > 0 and \
+      len(df_scale_out.index) > 0 :
       return [scale_in_task, scale_out_task]
-    elif len(df_scale_in.index) > 0 and len(df_scale_out.index) == 0 :
+    elif len(df_scale_in.index) > 0 and \
+      len(df_scale_out.index) == 0 :
       return [scale_in_task]
-    elif len(df_scale_in.index) == 0 and len(df_scale_out.index) > 0 :
+    elif len(df_scale_in.index) == 0 and \
+      len(df_scale_out.index) > 0 :
       return [scale_out_task]
+    else:
+      return []
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
