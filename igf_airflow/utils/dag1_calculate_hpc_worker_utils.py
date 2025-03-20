@@ -106,22 +106,19 @@ def fetch_queue_list_from_redis_server(
       f'Failed to fetch from redis server, error: {e}')
 
 
-def get_redis_queue_tasks(redis_conf_file: str) -> List[dict]:
-  """
-  A function for getting redis queue tasks from the redis server
+# def get_redis_queue_tasks(redis_conf_file: str) -> List[dict]:
+#   """
+#   A function for getting redis queue tasks from the redis server
 
-  :param redis_conf_file: A json file containing redis_db as key and redis db connection URL as value
-  :returns: A list of dictionaries with queue name as key and pending job counts as the value
-  """
-  try:
-    redis_conf = read_json_data(redis_conf_file)
-    redis_conf = redis_conf[0]
-    url = redis_conf.get('redis_db')
-    queue_list = fetch_queue_list_from_redis_server(url=url)
-    return queue_list
-  except Exception as e:
-    raise ValueError(
-      f'Failed to get redis queue tasks, error: {e}')
+#   :param redis_conf_file: A json file containing redis_db as key and redis db connection URL as value
+#   :returns: A list of dictionaries with queue name as key and pending job counts as the value
+#   """
+#   try:
+#     queue_list = fetch_queue_list_from_redis_server(redis_conf_file=redis_conf_file)
+#     return queue_list
+#   except Exception as e:
+#     raise ValueError(
+#       f'Failed to get redis queue tasks, error: {e}')
 
 
 def combine_celery_and_hpc_worker_info(
@@ -596,7 +593,7 @@ def redis_queue_workers():
   """
   try:
     queue_list = \
-      get_redis_queue_tasks(
+      fetch_queue_list_from_redis_server(
         redis_conf_file=REDIS_CONF_FILE)
     return queue_list
   except Exception as e:

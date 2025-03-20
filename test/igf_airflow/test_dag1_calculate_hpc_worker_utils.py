@@ -14,7 +14,7 @@ from igf_data.utils.fileutils import (
   remove_dir)
 from igf_airflow.utils.dag1_calculate_hpc_worker_utils import (
   get_celery_flower_workers,
-  get_redis_queue_tasks,
+  # get_redis_queue_tasks,
   combine_celery_and_hpc_worker_info,
   calculate_scale_out_scale_in_ops,
   fetch_queue_list_from_redis_server,
@@ -86,17 +86,17 @@ class Test_dag1_calculate_hpc_worker_utils(unittest.TestCase):
     self.assertEqual(queue_list[1], {'B':2})
 
 
-  @patch('igf_airflow.utils.dag1_calculate_hpc_worker_utils.fetch_queue_list_from_redis_server',
-         return_value=[{'A':1}])
-  def test_get_redis_queue_tasks(self, *args):
-    temp_dir = get_temp_dir()
-    redis_config_file = os.path.join(temp_dir, 'redis_config.json')
-    with open(redis_config_file, 'w') as json_data:
-      json.dump({'redis_db': 'A'}, json_data)
-    queue_list = \
-      get_redis_queue_tasks(redis_conf_file=redis_config_file)
-    self.assertEqual(len(queue_list), 1)
-    self.assertEqual(queue_list[0], {'A':1})
+  # @patch('igf_airflow.utils.dag1_calculate_hpc_worker_utils.fetch_queue_list_from_redis_server',
+  #        return_value=[{'A':1}])
+  # def test_get_redis_queue_tasks(self, *args):
+  #   temp_dir = get_temp_dir()
+  #   redis_config_file = os.path.join(temp_dir, 'redis_config.json')
+  #   with open(redis_config_file, 'w') as json_data:
+  #     json.dump({'redis_db': 'A'}, json_data)
+  #   queue_list = \
+  #     get_redis_queue_tasks(redis_conf_file=redis_config_file)
+  #   self.assertEqual(len(queue_list), 1)
+  #   self.assertEqual(queue_list[0], {'A':1})
 
 
   def test_calculate_scale_out_scale_in_ops(self):
@@ -304,7 +304,7 @@ class Test_dag1_calculate_hpc_worker_utils(unittest.TestCase):
       self.assertEqual(len(worker_list), 1)
       self.assertEqual(worker_list[0]['worker_id'], 'worker1')
 
-  @patch('igf_airflow.utils.dag1_calculate_hpc_worker_utils.get_redis_queue_tasks',
+  @patch('igf_airflow.utils.dag1_calculate_hpc_worker_utils.fetch_queue_list_from_redis_server',
          return_value=[{'A':1}])
   def test_redis_queue_workers(self, *args):
     redis_db_conf = os.path.join(self.temp_dir, 'redis_db_conf.json')
