@@ -32,10 +32,10 @@ log = logging.getLogger(__name__)
 
 
 def send_generic_logs_to_channels(
-      slack_conf: str,
       ms_teams_conf: str,
       message_prefix: str,
-      reaction: str) -> None:
+      reaction: str,
+      slack_conf: Optional[str] = None) -> None:
   """
   A function for sending generic logs to Slack and Teams along with the Airflow task log filepath
 
@@ -75,9 +75,9 @@ def send_generic_logs_to_channels(
 
 
 def send_airflow_failed_logs_to_channels(
-    slack_conf: str,
     ms_teams_conf: str,
-    message_prefix: str) -> None:
+    message_prefix: str,
+    slack_conf: Optional[str] = None) -> None:
   """
   A function for sending failed logs to Slack and Teams along with the Airflow task log filepath
 
@@ -101,9 +101,9 @@ def send_airflow_failed_logs_to_channels(
 
 
 def send_airflow_pipeline_logs_to_channels(
-    slack_conf: str,
     ms_teams_conf: str,
-    message_prefix: str) -> None:
+    message_prefix: str,
+    slack_conf: Optional[str] = None) -> None:
   """
   A function for sending logs to Slack and Teams along with the Airflow task log filepath
 
