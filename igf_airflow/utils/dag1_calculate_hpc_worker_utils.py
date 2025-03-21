@@ -268,7 +268,12 @@ def combine_celery_and_hpc_worker_info(
         ## count the number of jobs per queue
         ## setting queue_name as the index
         agg_df = \
-          filt_merged_data.\
+          filt_merged_data[[
+            "queue_name",
+            "hpc_r",
+            "hpc_q",
+            "task_r",
+            "task_i"]].\
             groupby('queue_name').agg("sum")
       ## fix for empty hpc worker and queued jobs
       ## add the queue info from redis
