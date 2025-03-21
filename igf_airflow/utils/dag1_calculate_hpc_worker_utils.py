@@ -1,4 +1,5 @@
 import logging
+import base64
 import pandas as pd
 import numpy as np
 from io import StringIO
@@ -106,28 +107,14 @@ def fetch_queue_list_from_redis_server(
       f'Failed to fetch from redis server, error: {e}')
 
 
-# def get_redis_queue_tasks(redis_conf_file: str) -> List[dict]:
-#   """
-#   A function for getting redis queue tasks from the redis server
-
-#   :param redis_conf_file: A json file containing redis_db as key and redis db connection URL as value
-#   :returns: A list of dictionaries with queue name as key and pending job counts as the value
-#   """
-#   try:
-#     queue_list = fetch_queue_list_from_redis_server(redis_conf_file=redis_conf_file)
-#     return queue_list
-#   except Exception as e:
-#     raise ValueError(
-#       f'Failed to get redis queue tasks, error: {e}')
-
-
 def combine_celery_and_hpc_worker_info(
-    hpc_worker_info: str,
-    celery_flower_worker_info: List[dict],
-    redis_queue_info: List[dict],
-    generic_queue_name: str = 'generic',
-    max_items_in_queue: int = 3,
-    total_hpc_jobs: int = 30)-> Tuple[List[dict], List[dict]]:
+      hpc_worker_info: str,
+      celery_flower_worker_info: List[dict],
+      redis_queue_info: List[dict],
+      generic_queue_name: str = 'generic',
+      max_items_in_queue: int = 3,
+      total_hpc_jobs: int = 30) -> \
+        Tuple[List[dict], List[dict]]:
     """
     A function for combining celery and hpc worker info for scaling operations
 
@@ -141,8 +128,22 @@ def combine_celery_and_hpc_worker_info(
     """
     try:
       ## process hpc output
-      hpc_jobs_df = pd.DataFrame()
-      if hpc_worker_info != "":
+      hpc_jobs_df = \
+        pd.DataFrame([{}],
+          columns = [
+            'job_id',
+            'queue_name',
+            'job_status']).dropna()
+      if isinstance(hpc_worker_info, str):
+        hpc_worker_info = \
+          base64.b64decode(
+            hpc_worker_info.encode('ascii')).\
+          decode('utf-8').\
+          strip()
+      elif isinstance(hpc_worker_info, bytes):
+        hpc_worker_info = hpc_worker_info.decode('utf-8')
+      if hpc_worker_info != "" and \
+         hpc_worker_info is not None:
         hpc_jobs_df = pd.read_csv(StringIO(hpc_worker_info), sep=",", header=None)
         if len(hpc_jobs_df.columns) != 3:
           raise ValueError(
@@ -172,18 +173,40 @@ def combine_celery_and_hpc_worker_info(
       filt_worker_df["worker_info"] = \
         filt_worker_df["worker_id"].\
           map(lambda x: x.replace("celery@", "").split("-"))
-      filt_worker_df[["job_id", "queue_name_tag"]] = \
-        pd.DataFrame(
-          filt_worker_df['worker_info'].to_list(),
-          index=filt_worker_df.index)
-      filt_worker_df = \
-        filt_worker_df[[
-          "job_id",
-          "worker_id",
-          "queue_name",
-          "active_jobs"]]
+      if len(filt_worker_df.index) > 0:
+        filt_worker_df[["job_id", "queue_name_tag"]] = \
+          pd.DataFrame(
+            filt_worker_df['worker_info'].to_list(),
+            index=filt_worker_df.index)
+        filt_worker_df = \
+          filt_worker_df[[
+            "job_id",
+            "worker_id",
+            "queue_name",
+            "active_jobs"]]
       ## merge data
-      merged_data = pd.DataFrame()
+      filt_merged_data = \
+        pd.DataFrame(
+          [{}],
+          columns=[
+            'job_status',
+            "active_jobs",
+            'queue_name',
+            'hpc_r',
+            'hpc_q',
+            'task_r',
+            'task_i']).dropna()
+      agg_df = \
+        pd.DataFrame(
+          [{}],
+          columns=[
+            'queue_name',
+            'hpc_r',
+            'hpc_q',
+            'task_r',
+            'task_i']).dropna()
+      agg_df.set_index(
+        'queue_name', inplace=True)
       if len(hpc_jobs_df.index) > 0 and len(filt_worker_df.index) > 0:
         merged_data = \
           hpc_jobs_df.set_index(['job_id','queue_name']).\
@@ -235,41 +258,49 @@ def combine_celery_and_hpc_worker_info(
             'task_r',
             'task_i']].copy()
         ## count the number of jobs per queue
+        ## setting queue_name as the index
         agg_df = \
           filt_merged_data.\
             groupby('queue_name').agg("sum")
-        ## add the queue info from redis
-        if len(redis_queue_info) > 0:
-          queue_data = [
-            {'queue_name': queue_name, 'queued': queued_jobs}
-              for entry in redis_queue_info
-                for queue_name, queued_jobs in entry.items()]
-          queue_df = pd.DataFrame(queue_data)
-          final_agg_df = \
-            agg_df.join(
-              queue_df.set_index("queue_name"),
-              how="left")
-        else:
-          final_agg_df = agg_df.copy()
-          final_agg_df['queued'] = 0
-        ## format the final dataframe
+      ## fix for empty hpc worker and queued jobs
+      ## add the queue info from redis
+      if len(redis_queue_info) > 0:
+        queue_data = [
+          {'queue_name': queue_name, 'queued': queued_jobs}
+            for entry in redis_queue_info
+              for queue_name, queued_jobs in entry.items()]
+        queue_df = pd.DataFrame(queue_data)
+        ## filter the generic queue
+        queue_df = \
+          queue_df[queue_df["queue_name"] != generic_queue_name]
         final_agg_df = \
-          final_agg_df.\
-            fillna(0).\
-            astype({
-              'hpc_r': int,
-              'hpc_q': int,
-              'task_r': int,
-              'task_i': int,
-              'queued': int}).\
-            reset_index()
-        ## scale out and scale in operations
-        scaled_df = \
-          calculate_scale_out_scale_in_ops(
-            input_df=final_agg_df,
-            max_items_in_queue=max_items_in_queue,
-            total_hpc_jobs=total_hpc_jobs)
-        return scaled_df.to_dict(orient='records'), filt_merged_data.to_dict(orient='records')
+          agg_df.join(
+            queue_df.set_index("queue_name"),
+            how="outer")
+        ## fix for empty hpc worker
+        final_agg_df = \
+          final_agg_df.fillna(0)
+      else:
+        final_agg_df = agg_df.copy()
+        final_agg_df['queued'] = 0
+      ## format the final dataframe
+      final_agg_df = \
+        final_agg_df.\
+          fillna(0).\
+          astype({
+            'hpc_r': int,
+            'hpc_q': int,
+            'task_r': int,
+            'task_i': int,
+            'queued': int}).\
+          reset_index()
+      ## scale out and scale in operations
+      scaled_df = \
+        calculate_scale_out_scale_in_ops(
+          input_df=final_agg_df,
+          max_items_in_queue=max_items_in_queue,
+          total_hpc_jobs=total_hpc_jobs)
+      return scaled_df.to_dict(orient='records'), filt_merged_data.to_dict(orient='records')
     except Exception as e:
       raise ValueError(
         f'Failed to combine celery and hpc worker info, error: {e}')

@@ -85,20 +85,6 @@ class Test_dag1_calculate_hpc_worker_utils(unittest.TestCase):
     self.assertEqual(queue_list[0], {'A':1})
     self.assertEqual(queue_list[1], {'B':2})
 
-
-  # @patch('igf_airflow.utils.dag1_calculate_hpc_worker_utils.fetch_queue_list_from_redis_server',
-  #        return_value=[{'A':1}])
-  # def test_get_redis_queue_tasks(self, *args):
-  #   temp_dir = get_temp_dir()
-  #   redis_config_file = os.path.join(temp_dir, 'redis_config.json')
-  #   with open(redis_config_file, 'w') as json_data:
-  #     json.dump({'redis_db': 'A'}, json_data)
-  #   queue_list = \
-  #     get_redis_queue_tasks(redis_conf_file=redis_config_file)
-  #   self.assertEqual(len(queue_list), 1)
-  #   self.assertEqual(queue_list[0], {'A':1})
-
-
   def test_calculate_scale_out_scale_in_ops(self):
     input_data = [ {'queue_name':'hpc_4G','hpc_r':9,'hpc_q':0,'task_r':9,'task_i':0,'queued':7},
                    {'queue_name':'hpc_64G16t','hpc_r':2,'hpc_q':0,'task_r':2,'task_i':0,'queued':0},
@@ -127,21 +113,30 @@ class Test_dag1_calculate_hpc_worker_utils(unittest.TestCase):
     self.assertTrue('hpc_4G' in scaled_df['queue_name'].values.tolist())
     self.assertEqual(scaled_df[scaled_df["queue_name"] == "hpc_4G"]["scale_out_ops"].values[0], 0)
 
-
   def test_combine_celery_and_hpc_worker_info(self):
+    # hpc_worker_info = \
+    #   """834752.pbs,hpc_8G8t,R
+    #   834801.pbs,hpc_4G,R
+    #   834869.pbs,hpc_4G,R
+    #   834876.pbs,hpc_64G16t,R
+    #   834878.pbs,hpc_64G16t,R
+    #   834889.pbs,hpc_4G,R
+    #   834890.pbs,hpc_4G,R
+    #   834891.pbs,hpc_4G,R
+    #   834892.pbs,hpc_4G,R
+    #   834894.pbs,hpc_4G,R
+    #   834895.pbs,hpc_4G,R
+    #   834896.pbs,hpc_4G,R"""
     hpc_worker_info = \
-      """834752.pbs,hpc_8G8t,R
-      834801.pbs,hpc_4G,R
-      834869.pbs,hpc_4G,R
-      834876.pbs,hpc_64G16t,R
-      834878.pbs,hpc_64G16t,R
-      834889.pbs,hpc_4G,R
-      834890.pbs,hpc_4G,R
-      834891.pbs,hpc_4G,R
-      834892.pbs,hpc_4G,R
-      834894.pbs,hpc_4G,R
-      834895.pbs,hpc_4G,R
-      834896.pbs,hpc_4G,R"""
+      "ODM0NzUyLnBicyxocGNfOEc4dCxSCjgzND\
+      gwMS5wYnMsaHBjXzRHLFIKODM0ODY5LnBicy\
+      xocGNfNEcsUgo4MzQ4NzYucGJzLGhwY182NEc\
+      xNnQsUgo4MzQ4NzgucGJzLGhwY182NEcxNnQsU\
+      go4MzQ4ODkucGJzLGhwY180RyxSCjgzNDg5MC5\
+      wYnMsaHBjXzRHLFIKODM0ODkxLnBicyxocGNfNE\
+      csUgo4MzQ4OTIucGJzLGhwY180RyxSCjgzNDg5NC\
+      5wYnMsaHBjXzRHLFIKODM0ODk1LnBicyxocGNfNEc\
+      sUgo4MzQ4OTYucGJzLGhwY180RyxS"
     celery_flower_worker_info = [
       {'worker_id':'celery@834752.pbs-hpc_8G8t','active_jobs':1,'queue_lists':['hpc_8G8t']},
       {'worker_id':'celery@834801.pbs-hpc_4G','active_jobs':1,'queue_lists':['hpc_4G']},
@@ -171,6 +166,40 @@ class Test_dag1_calculate_hpc_worker_utils(unittest.TestCase):
     self.assertTrue('hpc_64G16t' in scaled_df['queue_name'].values.tolist())
     self.assertEqual(scaled_df[scaled_df["queue_name"] == "hpc_4G"]["scale_out_ops"].values[0], 7)
     self.assertEqual(scaled_df[scaled_df["queue_name"] == "hpc_64G16t"]["scale_out_ops"].values[0], 0)
+    hpc_worker_info = "ODc0Mzk0LnBicyxocGNfYWlyZmxvdzMsUQo="
+    celery_flower_worker_info = [
+      {'worker_id':'generic','active_jobs':1,'queue_lists':['generic']}]
+    redis_queue_info = [{'hpc_4G':1}]
+    scaled_workers, raw_workers = \
+      combine_celery_and_hpc_worker_info(
+        hpc_worker_info=hpc_worker_info,
+        celery_flower_worker_info=celery_flower_worker_info,
+        redis_queue_info=redis_queue_info,
+        max_items_in_queue=3,
+        total_hpc_jobs=30)
+    scaled_df  = pd.DataFrame(scaled_workers)
+    self.assertTrue('queue_name' in scaled_df.columns)
+    self.assertTrue('scale_out_ops' in scaled_df.columns)
+    self.assertTrue('scale_in_ops' in scaled_df.columns)
+    self.assertTrue('hpc_4G' in scaled_df['queue_name'].values.tolist())
+    self.assertEqual(scaled_df[scaled_df["queue_name"] == "hpc_4G"]["scale_out_ops"].values[0], 1)
+    hpc_worker_info = ""
+    celery_flower_worker_info = [
+      {'worker_id':'generic','active_jobs':1,'queue_lists':['generic']}]
+    redis_queue_info = [{'hpc_4G':1}]
+    scaled_workers, raw_workers = \
+      combine_celery_and_hpc_worker_info(
+        hpc_worker_info=hpc_worker_info,
+        celery_flower_worker_info=celery_flower_worker_info,
+        redis_queue_info=redis_queue_info,
+        max_items_in_queue=3,
+        total_hpc_jobs=30)
+    scaled_df  = pd.DataFrame(scaled_workers)
+    self.assertTrue('queue_name' in scaled_df.columns)
+    self.assertTrue('scale_out_ops' in scaled_df.columns)
+    self.assertTrue('scale_in_ops' in scaled_df.columns)
+    self.assertTrue('hpc_4G' in scaled_df['queue_name'].values.tolist())
+    self.assertEqual(scaled_df[scaled_df["queue_name"] == "hpc_4G"]["scale_out_ops"].values[0], 1)
 
 
   @patch('igf_airflow.utils.dag1_calculate_hpc_worker_utils.read_json_data',
