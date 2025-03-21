@@ -704,7 +704,7 @@ def decide_scale_out_scale_in_ops(
   """
   try:
     if scaled_workers_data is None or \
-      len(scaled_workers_data) < 1:
+      len(scaled_workers_data) == 0:
       return []
     df = pd.DataFrame(scaled_workers_data)
     if scale_in_ops_key not in df.columns or \
