@@ -189,6 +189,8 @@ def combine_celery_and_hpc_worker_info(
         pd.DataFrame(
           [{}],
           columns=[
+            'job_id',
+            'worker_id',
             'job_status',
             "active_jobs",
             'queue_name',
@@ -252,6 +254,8 @@ def combine_celery_and_hpc_worker_info(
         ## keep subset of columns
         filt_merged_data = \
           merged_data[[
+            'job_id',
+            'worker_id',
             'queue_name',
             'hpc_r',
             'hpc_q',

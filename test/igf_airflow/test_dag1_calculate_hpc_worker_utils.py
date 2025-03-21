@@ -166,6 +166,9 @@ class Test_dag1_calculate_hpc_worker_utils(unittest.TestCase):
     self.assertTrue('hpc_64G16t' in scaled_df['queue_name'].values.tolist())
     self.assertEqual(scaled_df[scaled_df["queue_name"] == "hpc_4G"]["scale_out_ops"].values[0], 7)
     self.assertEqual(scaled_df[scaled_df["queue_name"] == "hpc_64G16t"]["scale_out_ops"].values[0], 0)
+    raw_df = pd.DataFrame(raw_workers)
+    self.assertTrue('job_id' in raw_df.columns)
+    self.assertTrue('worker_id' in raw_df.columns)
     hpc_worker_info = "ODc0Mzk0LnBicyxocGNfYWlyZmxvdzMsUQo="
     celery_flower_worker_info = [
       {'worker_id':'generic','active_jobs':1,'queue_lists':['generic']}]
