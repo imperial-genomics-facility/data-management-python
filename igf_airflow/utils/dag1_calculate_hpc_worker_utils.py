@@ -216,12 +216,16 @@ def combine_celery_and_hpc_worker_info(
               filt_worker_df.set_index(['job_id','queue_name']),
               how='outer').\
             reset_index()
+        ## add missing values
         merged_data = \
-          merged_data.fillna({"worker_id":"U"})
-        merged_data['job_status'] = \
-          merged_data['job_status'].fillna('U')
-        merged_data['active_jobs'] = \
-          merged_data['active_jobs'].fillna(0)
+          merged_data.fillna({
+            "worker_id":"U",
+            "job_status": "U",
+            "active_jobs": 0})
+        # merged_data['job_status'] = \
+        #   merged_data['job_status'].fillna('U')
+        # merged_data['active_jobs'] = \
+        #   merged_data['active_jobs'].fillna(0)
         merged_data = \
           merged_data.astype({'active_jobs':int})
         merged_data = \
@@ -370,7 +374,8 @@ def calculate_scale_out_scale_in_ops(
         df.queued,
         df['scale_out_ops'])
     ## limit new tasks
-    if df['scale_out_ops'].sum() > allowed_tasks:
+    if df['scale_out_ops'].sum() > 0 and \
+       df['scale_out_ops'].sum() > allowed_tasks:
       requested_tasks = df['scale_out_ops'].values.tolist()
       new_requested_tasks = [0 for i in range(0, len(requested_tasks))]
       while allowed_tasks:
@@ -457,7 +462,7 @@ def filter_scale_in_workers(
       "queue_name",
       "hpc_r",
       "task_i",
-      "active_jobs",
+      "task_r",
       "worker_id"]
     for c in required_scaled_worker_columns:
       if c not in scaled_worker_df.columns:
@@ -475,7 +480,7 @@ def filter_scale_in_workers(
       scale_in_workers = \
         raw_worker_df[
           (raw_worker_df["queue_name"]==queue_name)&\
-          (raw_worker_df["active_jobs"]==0)&\
+          (raw_worker_df["task_r"]==0)&\
           (raw_worker_df["hpc_r"]==1)&\
           (raw_worker_df["task_i"]==1)]["worker_id"].\
           values.tolist()

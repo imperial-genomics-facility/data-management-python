@@ -236,13 +236,13 @@ class Test_dag1_calculate_hpc_worker_utils(unittest.TestCase):
         'queue_name': 'hpc_8G8t',
         'hpc_r': 1,
         'task_i': 0,
-        'active_jobs': 1,
+        'task_r': 1,
         'worker_id': 'celery@834752.pbs-hpc_8G8t'},{
         'job_id': '834801.pbs',
         'queue_name': 'hpc_8G8t',
         'hpc_r': 1,
         'task_i': 1,
-        'active_jobs': 0,
+        'task_r': 0,
         'worker_id': 'celery@834801.pbs-hpc_8G8t'},{
         'job_id': '834876.pbs',
         'queue_name': 'hpc_64G16t',
