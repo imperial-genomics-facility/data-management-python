@@ -703,7 +703,8 @@ def decide_scale_out_scale_in_ops(
   :returns: A list of tasks to be executed
   """
   try:
-    if len(scaled_workers_data) < 1:
+    if scaled_workers_data is None or \
+      len(scaled_workers_data) < 1:
       return []
     df = pd.DataFrame(scaled_workers_data)
     if scale_in_ops_key not in df.columns or \

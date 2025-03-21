@@ -389,6 +389,13 @@ class Test_dag1_calculate_hpc_worker_utils(unittest.TestCase):
         scale_in_task='scale_in_task',
         scale_out_task='scale_out_task')
     self.assertEqual(next_tasks, [])
+    scaled_workers_data = None
+    next_tasks = \
+      decide_scale_out_scale_in_ops.function(
+        scaled_workers_data,
+        scale_in_task='scale_in_task',
+        scale_out_task='scale_out_task')
+    self.assertEqual(next_tasks, [])
 
 
 
