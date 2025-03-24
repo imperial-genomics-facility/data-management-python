@@ -487,6 +487,7 @@ def filter_scale_in_workers(
           (raw_worker_df["queue_name"]==queue_name)&\
           (raw_worker_df["task_r"]==0)&\
           (raw_worker_df["hpc_r"]==1)&\
+          (raw_worker_df["worker_id"]!="U")&\
           (raw_worker_df["task_i"]==1)]["worker_id"].\
           values.tolist()
       scale_in_counts = \
