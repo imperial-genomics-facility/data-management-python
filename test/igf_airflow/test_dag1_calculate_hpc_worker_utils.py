@@ -169,6 +169,10 @@ class Test_dag1_calculate_hpc_worker_utils(unittest.TestCase):
     raw_df = pd.DataFrame(raw_workers)
     self.assertTrue('job_id' in raw_df.columns)
     self.assertTrue('worker_id' in raw_df.columns)
+    self.assertEqual(len(raw_df[raw_df["job_id"]=="834752.pbs"].index), 1)
+    self.assertEqual(
+      raw_df[raw_df["job_id"]=="834752.pbs"]['worker_id'].values[0],
+      'celery@834752.pbs-hpc_8G8t')
     hpc_worker_info = "ODc0Mzk0LnBicyxocGNfYWlyZmxvdzMsUQo="
     celery_flower_worker_info = [
       {'worker_id':'generic','active_jobs':1,'queue_lists':['generic']}]
@@ -203,6 +207,55 @@ class Test_dag1_calculate_hpc_worker_utils(unittest.TestCase):
     self.assertTrue('scale_in_ops' in scaled_df.columns)
     self.assertTrue('hpc_4G' in scaled_df['queue_name'].values.tolist())
     self.assertEqual(scaled_df[scaled_df["queue_name"] == "hpc_4G"]["scale_out_ops"].values[0], 1)
+    celery_flower_worker_info = [
+      {'active_jobs': 1, 'queue_lists': ['generic'], 'worker_id': 'celery@igf-lims'},
+      {'active_jobs': 0, 'queue_lists': ['hpc_4G'], 'worker_id': 'celery@301455.pbs-7-hpc_4G'},
+      {'active_jobs': 0, 'queue_lists': ['hpc_4G'], 'worker_id': 'celery@301452.pbs-7-hpc_4G'},
+      {'active_jobs': 0, 'queue_lists': ['hpc_4G'], 'worker_id': 'celery@301451.pbs-7-hpc_4G'},
+      {'active_jobs': 0, 'queue_lists': ['hpc_4G'], 'worker_id': 'celery@301453.pbs-7-hpc_4G'},
+      {'active_jobs': 0, 'queue_lists': ['hpc_4G'], 'worker_id': 'celery@301457.pbs-7-hpc_4G'},
+      {'active_jobs': 0, 'queue_lists': ['hpc_4G'], 'worker_id': 'celery@301456.pbs-7-hpc_4G'},
+      {'active_jobs': 0, 'queue_lists': ['hpc_4G'], 'worker_id': 'celery@301454.pbs-7-hpc_4G'},
+      {'active_jobs': 0, 'queue_lists': ['hpc_4G'], 'worker_id': 'celery@301450.pbs-7-hpc_4G'},
+      {'active_jobs': 0, 'queue_lists': ['hpc_4G'], 'worker_id': 'celery@301458.pbs-7-hpc_4G'},
+      {'active_jobs': 0, 'queue_lists': ['hpc_4G'], 'worker_id': 'celery@301534.pbs-7-hpc_4G'},
+      {'active_jobs': 0, 'queue_lists': ['hpc_4G'], 'worker_id': 'celery@301542.pbs-7-hpc_4G'},
+      {'active_jobs': 0, 'queue_lists': ['hpc_4G'], 'worker_id': 'celery@301535.pbs-7-hpc_4G'},
+      {'active_jobs': 0, 'queue_lists': ['hpc_4G'], 'worker_id': 'celery@301541.pbs-7-hpc_4G'},
+      {'active_jobs': 0, 'queue_lists': ['hpc_4G'], 'worker_id': 'celery@301543.pbs-7-hpc_4G'},
+      {'active_jobs': 0, 'queue_lists': ['hpc_4G'], 'worker_id': 'celery@301531.pbs-7-hpc_4G'},
+      {'active_jobs': 0, 'queue_lists': ['hpc_4G'], 'worker_id': 'celery@301540.pbs-7-hpc_4G'},
+      {'active_jobs': 0, 'queue_lists': ['hpc_4G'], 'worker_id': 'celery@301533.pbs-7-hpc_4G'},
+      {'active_jobs': 0, 'queue_lists': ['hpc_4G'], 'worker_id': 'celery@301539.pbs-7-hpc_4G'},
+      {'active_jobs': 0, 'queue_lists': ['hpc_4G'], 'worker_id': 'celery@301532.pbs-7-hpc_4G'},
+      {'active_jobs': 0, 'queue_lists': ['hpc_8G8t'], 'worker_id': 'celery@301548.pbs-7-hpc_8G8t'}]
+    hpc_worker_info = \
+      "MzAxNTMxLnBicy03LGhwY180RyxSCjMwMTUzMi5wYnMtNyxocGNfNEcsUgozMDE1MzMucGJzLTcsaHBjXzRHLFIKMzAx\
+       NTM0LnBicy03LGhwY180RyxSCjMwMTUzNS5wYnMtNyxocGNfNEcsUgozMDE1MzkucGJzLTcsaHBjXzRHLFIKMzAxNTQw\
+       LnBicy03LGhwY180RyxSCjMwMTU0MS5wYnMtNyxocGNfNEcsUgozMDE1NDIucGJzLTcsaHBjXzRHLFIKMzAxNTQzLn\
+       Bicy03LGhwY180RyxSCjMwMTU0OC5wYnMtNyxocGNfOEc4dCxSCg=="
+    redis_queue_info = [{
+      "generic": 1}]
+    scaled_workers, raw_workers = \
+      combine_celery_and_hpc_worker_info(
+        hpc_worker_info=hpc_worker_info,
+        celery_flower_worker_info=celery_flower_worker_info,
+        redis_queue_info=redis_queue_info,
+        max_items_in_queue=3,
+        total_hpc_jobs=30)
+    raw_df = pd.DataFrame(raw_workers)
+    self.assertTrue('job_id' in raw_df.columns)
+    self.assertTrue('worker_id' in raw_df.columns)
+    self.assertEqual(len(raw_df[raw_df["job_id"]=="301532.pbs-7"].index), 1)
+    self.assertEqual(
+      raw_df[raw_df["job_id"]=="301532.pbs-7"]['worker_id'].values[0],
+      'celery@301532.pbs-7-hpc_4G')
+    scaled_df  = pd.DataFrame(scaled_workers)
+    self.assertTrue('queue_name' in scaled_df.columns)
+    self.assertTrue('scale_out_ops' in scaled_df.columns)
+    self.assertTrue('scale_in_ops' in scaled_df.columns)
+    self.assertTrue('hpc_4G' in scaled_df['queue_name'].values.tolist())
+    self.assertEqual(scaled_df[scaled_df["queue_name"] == "hpc_4G"]["scale_in_ops"].values[0], 10)
 
 
   @patch('igf_airflow.utils.dag1_calculate_hpc_worker_utils.read_json_data',

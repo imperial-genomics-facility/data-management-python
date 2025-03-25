@@ -170,23 +170,9 @@ def combine_celery_and_hpc_worker_info(
       filt_worker_df["queue_name"] = \
         filt_worker_df["queue_lists"].\
           map(lambda x: x.split(",")[-1])
-      filt_worker_df["worker_info"] = \
+      filt_worker_df["job_id"] = \
         filt_worker_df["worker_id"].\
-          map(lambda x: x.replace("celery@", "").split("-"))
-      if len(filt_worker_df.index) > 0:
-        filt_worker_df["job_id"] = \
-          filt_worker_df['worker_info'].\
-            map(lambda x: x[0])
-        # filt_worker_df[["job_id", "queue_name_tag"]] = \
-        #   pd.DataFrame(
-        #     filt_worker_df['worker_info'].to_list(),
-        #     index=filt_worker_df.index)
-        filt_worker_df = \
-          filt_worker_df[[
-            "job_id",
-            "worker_id",
-            "queue_name",
-            "active_jobs"]]
+          map(lambda x: x.replace("celery@", "").split("-hpc_")[0])
       ## merge data
       filt_merged_data = \
         pd.DataFrame(
@@ -225,10 +211,6 @@ def combine_celery_and_hpc_worker_info(
             "worker_id":"U",
             "job_status": "U",
             "active_jobs": 0})
-        # merged_data['job_status'] = \
-        #   merged_data['job_status'].fillna('U')
-        # merged_data['active_jobs'] = \
-        #   merged_data['active_jobs'].fillna(0)
         merged_data = \
           merged_data.astype({'active_jobs':int})
         merged_data = \
