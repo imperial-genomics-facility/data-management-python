@@ -174,10 +174,13 @@ def combine_celery_and_hpc_worker_info(
         filt_worker_df["worker_id"].\
           map(lambda x: x.replace("celery@", "").split("-"))
       if len(filt_worker_df.index) > 0:
-        filt_worker_df[["job_id", "queue_name_tag"]] = \
-          pd.DataFrame(
-            filt_worker_df['worker_info'].to_list(),
-            index=filt_worker_df.index)
+        filt_worker_df["job_id"] = \
+          filt_worker_df['worker_info'].\
+            map(lambda x: x[0])
+        # filt_worker_df[["job_id", "queue_name_tag"]] = \
+        #   pd.DataFrame(
+        #     filt_worker_df['worker_info'].to_list(),
+        #     index=filt_worker_df.index)
         filt_worker_df = \
           filt_worker_df[[
             "job_id",
