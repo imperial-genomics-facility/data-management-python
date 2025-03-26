@@ -609,8 +609,8 @@ def configure_cellranger_aggr_run(
     cellranger_multi_dict = dict()
     for entry in analysis_output_list:
       if entry is not None:
-        sample_id = entry.get("sample_id")
-        output_dir = entry.get("output")
+        sample_id = entry.get("sample_group")
+        output_dir = entry.get("cellranger_output_dir")
         cellranger_multi_dict.update({
           sample_id: output_dir})
     output_dict = \

@@ -144,6 +144,9 @@ def full_suite():
     TestDag38_project_cleanup_step2_utilsA)
   from .igf_airflow.test_dag39_project_cleanup_step3_utils import (
     TestDag39_project_cleanup_step3_utilsA)
+  from .igf_airflow.test_dag1_calculate_hpc_worker_utils import (
+    Test_dag1_calculate_hpc_worker_utils)
+
 
   return unittest.TestSuite([
     unittest.TestLoader().loadTestsFromTestCase(t)
@@ -284,6 +287,7 @@ def full_suite():
         TestgGneric_airflow_tasksA,
         TestDag37_project_cleanup_step1_utilsA,
         TestDag38_project_cleanup_step2_utilsA,
-        TestDag39_project_cleanup_step3_utilsA
+        TestDag39_project_cleanup_step3_utilsA,
+        Test_dag1_calculate_hpc_worker_utils
       ]
     ])

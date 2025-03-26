@@ -322,7 +322,7 @@ def generate_interop_report_and_upload_to_portal_func(**context):
         run_dir_base_path=HPC_SEQRUN_PATH,
         report_template=INTEROP_REPORT_TEMPLATE,
         report_image=INTEROP_REPORT_IMAGE,
-        extra_container_dir_list=['/apps',])
+        extra_container_dir_list=[])#['/apps',])
     _load_interop_data_to_db(
       run_id=seqrun_id,
       interop_output_dir=work_dir,
@@ -346,7 +346,7 @@ def generate_interop_report_and_upload_to_portal_func(**context):
         tile_parquet_path=tile_parquet_output,
         report_template=INTEROP_PREDICTION_TEMPLATE,
         report_image=INTEROP_REPORT_IMAGE,
-        extra_container_dir_list=['/apps',])
+        extra_container_dir_list=[])#['/apps',])
     ## upload prediction notebook to portal
     res = \
       upload_files_to_portal(

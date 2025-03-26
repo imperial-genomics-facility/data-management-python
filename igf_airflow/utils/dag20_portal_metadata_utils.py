@@ -291,6 +291,7 @@ def create_raw_metadata_for_new_projects_func(**context):
       'spark-submit',
       '--master local[{0}]'.format(int(spark_threads)),
       '--executor-memory 7G',
+      '--conf spark.driver.bindAddress=127.0.0.1',
       '--conf spark.eventLog.enabled=false',
       '--conf spark.local.dir=/tmp',
       '--conf spark.sql.warehouse.dir=/tmp',

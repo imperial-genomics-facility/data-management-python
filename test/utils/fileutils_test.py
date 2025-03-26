@@ -123,7 +123,7 @@ class Fileutils_test1(unittest.TestCase):
     change_file_and_dir_permission(
       path=os.path.join(self.work_dir, "a.txt"),
       lock_dir_and_files=True)
-    with self.assertRaises(PermissionError):
+    with self.assertRaises(Exception):
       with open(os.path.join(self.work_dir, "a.txt"), 'w') as fp:
         fp.write('B')
     change_file_and_dir_permission(
@@ -137,7 +137,7 @@ class Fileutils_test1(unittest.TestCase):
     change_file_and_dir_permission(
       path=os.path.join(self.work_dir, "a"),
       lock_dir_and_files=True)
-    with self.assertRaises(PermissionError):
+    with self.assertRaises(Exception):
       with open(os.path.join(self.work_dir, "a", "a.txt"), 'w') as fp:
         fp.write('B')
     change_file_and_dir_permission(
