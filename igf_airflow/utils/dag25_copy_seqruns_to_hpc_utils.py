@@ -385,6 +385,7 @@ def _create_interop_pred_report(
       num_cpu: int = 8,
       ram_gb: int = 8,
       use_singularity_execute: bool = True,
+      singularity_options: Optional[list] = ["--no-home", "-C"],
       extra_container_dir_list: Optional[list] = None) -> str:
   try:
     work_dir = \
@@ -417,6 +418,7 @@ def _create_interop_pred_report(
         singularity_image_path=report_image,
         timeout=timeout,
         no_input=no_input,
+        singularity_options=singularity_options,
         use_singularity_execute=use_singularity_execute,
         dry_run=dry_run)
     output_notebook_path, _ = \
@@ -446,6 +448,7 @@ def  _create_interop_report(
     num_cpu: int = 8,
     ram_gb: int = 8,
     use_singularity_execute: bool = True,
+    singularity_options: Optional[list] = ["--no-home", "-C"],
     extra_container_dir_list: Optional[list] = None) -> \
       Tuple[str, str, str, str, str]:
   try:
@@ -513,6 +516,7 @@ def  _create_interop_report(
         singularity_image_path=report_image,
         timeout=timeout,
         no_input=no_input,
+        singularity_options=singularity_options,
         use_singularity_execute=use_singularity_execute,
         dry_run=dry_run)
     output_notebook_path, _ = \

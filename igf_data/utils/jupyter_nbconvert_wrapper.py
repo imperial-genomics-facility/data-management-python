@@ -43,7 +43,7 @@ class Notebook_runner:
     input_param_map: dict,
     container_paths: Optional[str] = None,
     singularity_image_path : Optional[str] = None,
-    use_ephemeral_space: bool = False,
+    use_ephemeral_space: bool = True,
     output_format: str = 'html',
     singularity_options: Optional[list] = None,
     timeout: int = 600,
