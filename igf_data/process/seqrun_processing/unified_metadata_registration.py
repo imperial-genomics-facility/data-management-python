@@ -1,12 +1,24 @@
-from typing import List, Dict, Any
+import os, json
+from typing import List, Dict, Any, Optional
 from abc import ABC, abstractmethod
+from igf_portal.api_utils import get_data_from_portal
+from igf_data.utils.fileutils import (
+  get_temp_dir,
+  remove_dir,
+  check_file_path)
 
 class MetadataContext:
   def __init__(
     self,
     portal_config_file: str,
-    samples_required: bool = False,
-    raw_metadata_list: List[list] = [],
+    fetch_metadata_url_suffix: str,
+    sync_metadata_url_suffix: str,
+    metadata_fetched: Optional[bool] = False,
+    metadata_validated: Optional[bool] = False,
+    metadata_added: Optional[bool] = False,
+    metadata_synced: Optional[bool] = False,
+    samples_required: Optional[bool] = False,
+    raw_metadata_dict: Dict[str, list] = {},
     table_columns: Dict[str, list] = {
       "project": ["project_igf_id", "deliverable"],
       "user": ["name", "email_id", "username"],
@@ -20,8 +32,14 @@ class MetadataContext:
     error_list: List[list] = []) \
       -> None:
     self.portal_config_file = portal_config_file
+    self.fetch_metadata_url_suffix = fetch_metadata_url_suffix
+    self.sync_metadata_url_suffix = sync_metadata_url_suffix
+    self.metadata_fetched = metadata_fetched
+    self.metadata_validated = metadata_validated
+    self.metadata_added = metadata_added
+    self.metadata_synced = metadata_synced
     self.samples_required = samples_required
-    self.raw_metadata_list = raw_metadata_list
+    self.raw_metadata_dict = raw_metadata_dict
     self.table_columns = table_columns
     self.project_metadata_list = project_metadata_list
     self.sample_metadata_list = sample_metadata_list
@@ -44,8 +62,20 @@ class FetchNewMetadataCommand(BaseCommand):
     """
     Fetch new metadata from the database and update the metadata contest.
     """
-    # Implementation to fetch new metadata
-    pass
+    try:
+      portal_config_file = metadata_context.portal_config_file
+      fetch_metadata_url_suffix = metadata_context.fetch_metadata_url_suffix
+      new_project_data_dict = \
+        get_data_from_portal(
+          url_suffix=fetch_metadata_url_suffix,
+          portal_config_file=portal_config_file)
+      if len(new_project_data_dict) > 0:
+        metadata_context.raw_metadata_dict = new_project_data_dict
+        metadata_context.metadata_fetched = True
+    except Exception as e:
+      raise ValueError(
+        f"Failed to fetch new metadata from portal: {e}")
+
 
 class ValidateAndCheckMetadataCommand(BaseCommand):
   def execute(self, metadata_context: MetadataContext) -> None:
