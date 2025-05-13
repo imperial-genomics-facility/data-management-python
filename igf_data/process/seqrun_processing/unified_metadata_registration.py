@@ -231,6 +231,22 @@ class ValidateMetadataCommand(BaseCommand):
       raise ValueError(
         f"Failed to validate metadata: {e}")
 
+class SplitMetadataCommand(BaseCommand):
+  def execute(self, metadata_context: MetadataContext) -> None:
+    """
+    Split the metadata into different tables.
+    """
+    # Implementation to add new metadata
+    pass
+
+class CheckExistingMetadataCommand(BaseCommand):
+  def execute(self, metadata_context: MetadataContext) -> None:
+    """
+    Check if the metadata already exists in the database.
+    """
+    # Implementation to add new metadata
+    pass
+
 class AddNewMetadataCommand(BaseCommand):
   def execute(self, metadata_context: MetadataContext) -> None:
     """
@@ -271,6 +287,8 @@ class UnifiedMetadataRegistration:
       FetchNewMetadataCommand(),
       CheckRawMetadataColumnsCommand(),
       ValidateMetadataCommand(),
+      SplitMetadataCommand(),
+      CheckExistingMetadataCommand(),
       AddNewMetadataCommand(),
       SyncMetadataCommand()]
     self.chain_command = ChainCommand(self.commands)
