@@ -147,6 +147,58 @@ class TestUnifiedMetadataRegistration(unittest.TestCase):
           metadata_validation_schema=self.metadata_validation_schema,
           metadata_id=1)
     self.assertEqual(len(errors), 0)
+    errors = \
+      validate.\
+        _validate_metadata(
+          metadata_entry=[{
+            "project_igf_id": "IGF001",
+            "deliverable": "COSMX",
+            "name": "Ba Da",
+            "email_id": "c@d.com",
+            "username": "aaa"}],
+          metadata_validation_schema=self.metadata_validation_schema,
+          metadata_id=1)
+    self.assertEqual(len(errors), 0)
+    errors = \
+      validate.\
+        _validate_metadata(
+          metadata_entry=[{
+            "project_igf_id": "IGF001",
+            "deliverable": "COSMX",
+            "name": "Ba Da",
+            "email_id": "c-d.com",
+            "username": "aaa"}],
+          metadata_validation_schema=self.metadata_validation_schema,
+          metadata_id=1)
+    self.assertEqual(len(errors), 1)
+
+  def test_ValidateMetadataCommand_execute(self):
+    validate = ValidateMetadataCommand()
+    metadata_context = MetadataContext(
+      portal_config_file=self.portal_config_file,
+      fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
+      sync_metadata_url_suffix=self.sync_metadata_url_suffix,
+      metadata_validation_schema=self.metadata_validation_schema,
+      error_list=[],
+      raw_metadata_dict={
+        1: [{
+          "project_igf_id": "IGF001",
+          "deliverable": "COSMX",
+          "name": "Ba Da",
+          "email_id": "c-d.com",
+          "username": "aaa"}],
+        2: [{
+          "project_igf_id": "IGF001",
+          "deliverable": "COSMX",
+          "name": "Ba Da",
+          "username": "aaa"}]},
+      checked_required_column_dict={1: True, 2: False})
+    validate.execute(metadata_context=metadata_context)
+    self.assertEqual(len(metadata_context.error_list), 1)
+    validated_metadata_dict = metadata_context.validated_metadata_dict
+    self.assertEqual(len(validated_metadata_dict), 1)
+    self.assertTrue(1 in validated_metadata_dict)
+    self.assertFalse(validated_metadata_dict.get(1))
 
 if __name__ == '__main__':
   unittest.main()
