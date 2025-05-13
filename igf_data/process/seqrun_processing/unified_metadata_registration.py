@@ -3,9 +3,13 @@ import pandas as pd
 from typing import List, Dict, Any, Optional
 from abc import ABC, abstractmethod
 from igf_portal.api_utils import get_data_from_portal
+from jsonschema import (
+  Draft4Validator,
+  ValidationError)
 from igf_data.utils.fileutils import (
   get_temp_dir,
   remove_dir,
+  read_json_data,
   check_file_path)
 
 class MetadataContext:
@@ -14,10 +18,8 @@ class MetadataContext:
     portal_config_file: str,
     fetch_metadata_url_suffix: str,
     sync_metadata_url_suffix: str,
+    metadata_validation_schema: str,
     metadata_fetched: Optional[bool] = False,
-    metadata_validated: Optional[bool] = False,
-    metadata_added: Optional[bool] = False,
-    metadata_synced: Optional[bool] = False,
     samples_required: Optional[bool] = False,
     raw_metadata_dict: Dict[str, list] = {},
     checked_required_column_dict: Dict[str, bool] = {},
@@ -38,9 +40,7 @@ class MetadataContext:
     self.sync_metadata_url_suffix = sync_metadata_url_suffix
     self.checked_required_column_dict = checked_required_column_dict
     self.metadata_fetched = metadata_fetched
-    self.metadata_validated = metadata_validated
-    self.metadata_added = metadata_added
-    self.metadata_synced = metadata_synced
+    self.metadata_validation_schema = metadata_validation_schema
     self.samples_required = samples_required
     self.raw_metadata_dict = raw_metadata_dict
     self.table_columns = table_columns
@@ -146,8 +146,90 @@ class CheckRawMetadataColumnsCommand(BaseCommand):
           checked_required_column_dict
     except Exception as e:
       raise ValueError(
-        f"Failed to validate and check metadata: {e}")
+        f"Failed to check metadata fields: {e}")
 
+
+class ValidateMetadataCommand(BaseCommand):
+  @staticmethod
+  def _validate_metadata(
+    metadata_id: int,
+    metadata_entry: List[Dict[str, Any]],
+    metadata_validation_schema: str) -> bool:
+    """
+    Validate the metadata against the schema.
+
+    :param metadata_id: ID of the metadata
+    :param metadata_list: List of metadata entries
+    :param metadata_validation_schema: Path to the validation schema
+    :return: A list of error messages if any validation errors are found
+    """
+    try:
+      error_list = []
+      schema = \
+        read_json_data(
+          metadata_validation_schema)
+      schema = \
+        schema[0]
+      metadata_validator = \
+        Draft4Validator(schema)
+      json_data = \
+        pd.DataFrame(metadata_entry).\
+          fillna('').\
+          to_dict(orient='records')
+      validation_errors = \
+        sorted(
+          metadata_validator.iter_errors(json_data),
+          key=lambda e: e.path)
+      for err in validation_errors:
+        if isinstance(err, str):
+          error_list.append(err)
+        else:
+          if len(err.schema_path) > 2:
+            error_list.append(
+              f"{err.schema_path[2]}: {err.message}")
+          else:
+            error_list.append(
+              f"{err.message}")
+      return error_list
+    except Exception as e:
+      raise ValueError(
+        f"Failed to validate metadata {metadata_id}: {e}")
+
+  def execute(self, metadata_context: MetadataContext) -> None:
+    """
+    Add new metadata to the contest.
+    """
+    try:
+      error_list = []
+      validated_metadata_dict = {}
+      checked_required_column_dict = \
+        metadata_context.checked_required_column_dict
+      raw_meatadata_dict = \
+        metadata_context.raw_metadata_dict
+      metadata_validation_schema = \
+        metadata_context.metadata_validation_schema
+      for metadata_id, validation_status in checked_required_column_dict.items():
+        if validation_status:
+          metadata_entry = \
+            raw_meatadata_dict.get(metadata_id)
+          if not metadata_entry:
+            raise ValueError(
+              f"Metadata entry not found for ID: {metadata_id}")
+          validation_error = \
+            self._validate_metadata(
+              metadata_id=metadata_id,
+              metadata_entry=metadata_entry,
+              metadata_validation_schema=metadata_validation_schema)
+          if len(validation_error) > 0:
+            error_list.append(validation_error)
+            validated_metadata_dict[metadata_id] = False
+          else:
+            validated_metadata_dict[metadata_id] = True
+      metadata_context.validated_metadata_dict = validated_metadata_dict
+      metadata_context.error_list.extend(error_list)
+    except Exception as e:
+      raise ValueError(
+        f"Failed to validate metadata: {e}")
 
 class AddNewMetadataCommand(BaseCommand):
   def execute(self, metadata_context: MetadataContext) -> None:
@@ -188,6 +270,7 @@ class UnifiedMetadataRegistration:
     self.commands = [
       FetchNewMetadataCommand(),
       CheckRawMetadataColumnsCommand(),
+      ValidateMetadataCommand(),
       AddNewMetadataCommand(),
       SyncMetadataCommand()]
     self.chain_command = ChainCommand(self.commands)

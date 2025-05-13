@@ -4,6 +4,7 @@ from igf_data.process.seqrun_processing.unified_metadata_registration import (
     UnifiedMetadataRegistration,
     FetchNewMetadataCommand,
     CheckRawMetadataColumnsCommand,
+    ValidateMetadataCommand,
     AddNewMetadataCommand,
     SyncMetadataCommand,
     ChainCommand,
@@ -14,6 +15,7 @@ class TestUnifiedMetadataRegistration(unittest.TestCase):
     self.portal_config_file = "test_config.json"
     self.fetch_metadata_url_suffix = "test_fetch_suffix"
     self.sync_metadata_url_suffix = "test_sync_suffix"
+    self.metadata_validation_schema = "data/validation_schema/minimal_metadata_validation.json"
 
 
   def test_MetadataContext(self):
@@ -21,6 +23,7 @@ class TestUnifiedMetadataRegistration(unittest.TestCase):
       portal_config_file=self.portal_config_file,
       fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
+      metadata_validation_schema=self.metadata_validation_schema
       )
     self.assertIsInstance(metadata_context, MetadataContext)
 
@@ -32,6 +35,7 @@ class TestUnifiedMetadataRegistration(unittest.TestCase):
       portal_config_file=self.portal_config_file,
       fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
+      metadata_validation_schema=self.metadata_validation_schema
       )
     fetch_command.execute(metadata_context=metadata_context)
     self.assertFalse(
@@ -45,6 +49,7 @@ class TestUnifiedMetadataRegistration(unittest.TestCase):
       portal_config_file=self.portal_config_file,
       fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
+      metadata_validation_schema=self.metadata_validation_schema
       )
     fetch_command.execute(metadata_context=metadata_context)
     self.assertTrue(
@@ -95,6 +100,7 @@ class TestUnifiedMetadataRegistration(unittest.TestCase):
       portal_config_file=self.portal_config_file,
       fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
+      metadata_validation_schema=self.metadata_validation_schema,
       metadata_fetched=True,
       raw_metadata_dict={}
       )
@@ -116,6 +122,7 @@ class TestUnifiedMetadataRegistration(unittest.TestCase):
       portal_config_file=self.portal_config_file,
       fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
+      metadata_validation_schema=self.metadata_validation_schema,
       metadata_fetched=True,
       raw_metadata_dict={1: [{"project_igf_id": "A", "deliverable": "COSMX", "name": "B", "email_id": "C", "username": "D"}]},
       samples_required=False)
@@ -125,6 +132,21 @@ class TestUnifiedMetadataRegistration(unittest.TestCase):
     self.assertEqual(metadata_context.checked_required_column_dict.get(1), True)
 
 
+  def test_ValidateMetadataCommand_validate_metadata(self):
+    validate = ValidateMetadataCommand()
+    errors = \
+      validate.\
+        _validate_metadata(
+          metadata_entry=[{
+            "project_igf_id": "IGF001",
+            "deliverable": "COSMX",
+            "name": "Ba Da",
+            "email_id": "c@d.com",
+            "username": "aaa",
+            "sample_igf_id": "IGF001"}],
+          metadata_validation_schema=self.metadata_validation_schema,
+          metadata_id=1)
+    self.assertEqual(len(errors), 0)
 
 if __name__ == '__main__':
   unittest.main()
