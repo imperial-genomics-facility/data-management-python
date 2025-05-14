@@ -2,7 +2,17 @@ import os, json
 import pandas as pd
 from typing import List, Dict, Any, Optional, Tuple
 from abc import ABC, abstractmethod
+from igf_data.igfdb.baseadaptor import BaseAdaptor
+from igf_data.igfdb.projectadaptor import ProjectAdaptor
+from igf_data.igfdb.sampleadaptor import SampleAdaptor
+from igf_data.igfdb.useradaptor import UserAdaptor
+from igf_data.utils.dbutils import read_dbconf_json
 from igf_portal.api_utils import get_data_from_portal
+from igf_data.igfdb.igfTables import (
+  Project,
+  User,
+  Sample,
+  ProjectUser)
 from jsonschema import (
   Draft4Validator,
   ValidationError)
@@ -12,6 +22,17 @@ from igf_data.utils.fileutils import (
   read_json_data,
   check_file_path)
 
+def _get_db_session_class(db_config_file: str) -> Any:
+  try:
+    check_file_path(db_config_file)
+    dbparams = read_dbconf_json(db_config_file)
+    base = BaseAdaptor(**dbparams)
+    return base.get_session_class()
+  except Exception as e:
+    raise ValueError(
+      f"Failed to get db session class: {e}")
+
+
 class MetadataContext:
   def __init__(
     self,
@@ -19,6 +40,7 @@ class MetadataContext:
     fetch_metadata_url_suffix: str,
     sync_metadata_url_suffix: str,
     metadata_validation_schema: str,
+    db_config_file: str,
     default_project_user_email: Optional[str] = None,
     metadata_fetched: Optional[bool] = False,
     samples_required: Optional[bool] = False,
@@ -39,11 +61,13 @@ class MetadataContext:
     self.validated_metadata_dict = validated_metadata_dict
     self.metadata_fetched = metadata_fetched
     self.metadata_validation_schema = metadata_validation_schema
+    self.session_class = _get_db_session_class(db_config_file)
     self.samples_required = samples_required
     self.raw_metadata_dict = raw_metadata_dict
     self.table_columns = table_columns
     self.default_project_user_email = default_project_user_email
     self.error_list = error_list
+
 
 class BaseCommand(ABC):
   @abstractmethod
@@ -266,6 +290,86 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
       raise ValueError(
         f"Failed to check existing metadata: {e}")
 
+  def _check_and_filter_existing_metadata(
+    self,
+    project_metadata_list: List[Dict[str, str]],
+    user_metadata_list: List[Dict[str, str]],
+    project_user_metadata_list: List[Dict[str, str]],
+    sample_metadata_list: List[Dict[str, str]],
+    session_class: Any) \
+      -> Tuple[List[Dict[str, str]], List[Dict[str, str]], List[Dict[str, str]], List[Dict[str, str]]]:
+    try:
+      # get unique project ids
+      project_igf_ids = \
+        list(set([metadata['project_igf_id'] for metadata in project_metadata_list]))
+      # get unique user names
+      user_emails = \
+        list(set([metadata['email_id'] for metadata in user_metadata_list]))
+      # get unique sample ids
+      sample_igf_ids = \
+        list(set([metadata['sample_igf_id'] for metadata in sample_metadata_list]))
+      ## 
+      base = \
+        BaseAdaptor(**{'session_class': session_class})
+      base.start_session()
+      project_query = \
+        base.session.\
+          query(Project.project_igf_id).\
+          filter(Project.project_igf_id.in_(project_igf_ids))
+      project_records = \
+        base.fetch_records(
+          query=project_query,
+          output_mode='object')
+      user_email_query = \
+        base.session.\
+          query(User.email_id).\
+          filter(User.email_id.in_(user_emails))
+      user_email_records = \
+        base.fetch_records(
+          query=user_email_query,
+          output_mode='object')
+      if len(sample_igf_ids) > 0:
+        sample_query = \
+          base.session.\
+            query(Sample.sample_igf_id).\
+            filter(Sample.sample_igf_id.in_(sample_igf_ids))
+        sample_records = \
+          base.fetch_records(
+            query=sample_query,
+            output_mode='object')
+      base.close_session()
+      # filter out existing project metadata
+      existing_project_igf_ids = \
+        [record.project_igf_id for record in project_records]
+      filtered_project_metadata = \
+        [metadata for metadata in project_metadata_list \
+          if metadata['project_igf_id'] not in existing_project_igf_ids]
+      # filter out existing user metadata
+      existing_user_emails = \
+        [record.email_id for record in user_email_records]
+      filtered_user_metadata = \
+        [metadata for metadata in user_metadata_list \
+          if metadata['email_id'] not in existing_user_emails]
+      # filter out existing sample metadata
+      filtered_sample_metadata = []
+      if len(sample_igf_ids) > 0:
+        existing_sample_igf_ids = \
+          [record.sample_igf_id for record in sample_records]
+        filtered_sample_metadata = \
+          [metadata for metadata in sample_metadata_list \
+            if metadata['sample_igf_id'] not in existing_sample_igf_ids]
+      # filter out existing project user metadata
+      filtered_project_user_metadata = \
+        [metadata for metadata in project_user_metadata_list \
+          if metadata['project_igf_id'] not in existing_project_igf_ids]
+      return (
+        filtered_project_metadata,
+        filtered_user_metadata,
+        filtered_project_user_metadata,
+        filtered_sample_metadata)
+    except Exception as e:
+      raise ValueError(
+        f"Failed to check existing metadata: {e}")
 
   def execute(self, metadata_context: MetadataContext) -> None:
     try:
@@ -292,6 +396,16 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
               metadata_entry=metadata_entry,
               table_columns=table_columns,
               samples_required=samples_required)
+          (filtered_project_metadata,
+           filtered_user_metadata,
+           filtered_project_user_metadata,
+           filtered_sample_metadata) = \
+            self._check_and_filter_existing_metadata(
+              project_metadata_list=project_metadata,
+              user_metadata_list=user_metadata,
+              project_user_metadata_list=project_user_metadata,
+              sample_metadata_list=sample_metadata,
+              session_class=metadata_context.session_class)
     except Exception as e:
       raise ValueError(
         f"Failed to split metadata: {e}")

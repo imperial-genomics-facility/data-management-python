@@ -1,14 +1,29 @@
-import unittest
+import os, unittest, json
 from unittest.mock import patch
+from igf_data.igfdb.igfTables import (
+  Base,
+  Project,
+  User,
+  Sample,
+  ProjectUser,
+  Project_attribute)
+from igf_data.utils.fileutils import (
+  get_temp_dir,
+  remove_dir)
+from igf_data.igfdb.baseadaptor import BaseAdaptor
+from igf_data.igfdb.projectadaptor import ProjectAdaptor
+from igf_data.igfdb.useradaptor import UserAdaptor
+from igf_data.igfdb.sampleadaptor import SampleAdaptor
 from igf_data.process.seqrun_processing.unified_metadata_registration import (
-    UnifiedMetadataRegistration,
-    FetchNewMetadataCommand,
-    CheckRawMetadataColumnsCommand,
-    ValidateMetadataCommand,
-    CheckAndRegisterMetadataCommand,
-    SyncMetadataCommand,
-    ChainCommand,
-    MetadataContext)
+  UnifiedMetadataRegistration,
+  FetchNewMetadataCommand,
+  CheckRawMetadataColumnsCommand,
+  ValidateMetadataCommand,
+  CheckAndRegisterMetadataCommand,
+  SyncMetadataCommand,
+  ChainCommand,
+  MetadataContext,
+  _get_db_session_class)
 
 class TestUnifiedMetadataRegistration(unittest.TestCase):
   def setUp(self):
@@ -16,11 +31,49 @@ class TestUnifiedMetadataRegistration(unittest.TestCase):
     self.fetch_metadata_url_suffix = "test_fetch_suffix"
     self.sync_metadata_url_suffix = "test_sync_suffix"
     self.metadata_validation_schema = "data/validation_schema/minimal_metadata_validation.json"
+    self.db_config_file = 'data/dbconfig.json'
     self.table_columns = {
       "project": ["project_igf_id", "deliverable"],
       "project_user": ["project_igf_id", "email_id"],
       "user": ["name", "email_id", "username"],
       "sample": ["sample_igf_id", "project_igf_id"]}
+    with open(self.db_config_file, 'r') as json_data:
+      dbparam = json.load(json_data)
+    base = BaseAdaptor(**dbparam)
+    self.engine = base.engine
+    self.dbname = dbparam['dbname']
+    if os.path.exists(self.dbname):
+      os.remove(self.dbname)
+    Base.metadata.create_all(self.engine)
+    self.session_class = base.session_class
+    base.start_session()
+    ua = UserAdaptor(**{'session':base.session})
+    user_data = [
+      {'name':'user1','email_id':'user1@ic.ac.uk','username':'user1'}]
+    ua.store_user_data(data=user_data)
+    project_data = [{
+      'project_igf_id':'IGFP0001_test_22-8-2017_rna'}]
+    pa = ProjectAdaptor(**{'session':base.session})
+    pa.store_project_and_attribute_data(data=project_data)
+    project_user_data = [{
+      'project_igf_id':'IGFP0001_test_22-8-2017_rna',
+      'email_id':'user1@ic.ac.uk',
+      'data_authority': True}]
+    pa.assign_user_to_project(data=project_user_data)
+    sample_data = [
+      {'sample_igf_id':'IGF00001','project_igf_id':'IGFP0001_test_22-8-2017_rna',},
+      {'sample_igf_id':'IGF00002','project_igf_id':'IGFP0001_test_22-8-2017_rna',},
+      {'sample_igf_id':'IGF00003','project_igf_id':'IGFP0001_test_22-8-2017_rna',},
+      {'sample_igf_id':'IGF00004','project_igf_id':'IGFP0001_test_22-8-2017_rna',},
+      {'sample_igf_id':'IGF00005','project_igf_id':'IGFP0001_test_22-8-2017_rna',}]
+    sa = SampleAdaptor(**{'session':base.session})
+    sa.store_sample_and_attribute_data(data=sample_data)
+    base.close_session()
+
+  def tearDown(self):
+    Base.metadata.drop_all(self.engine)
+    if os.path.exists(self.dbname):
+      os.remove(self.dbname)
 
 
   def test_MetadataContext(self):
@@ -28,7 +81,8 @@ class TestUnifiedMetadataRegistration(unittest.TestCase):
       portal_config_file=self.portal_config_file,
       fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
-      metadata_validation_schema=self.metadata_validation_schema
+      metadata_validation_schema=self.metadata_validation_schema,
+      db_config_file=self.db_config_file,
       )
     self.assertIsInstance(metadata_context, MetadataContext)
 
@@ -40,7 +94,8 @@ class TestUnifiedMetadataRegistration(unittest.TestCase):
       portal_config_file=self.portal_config_file,
       fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
-      metadata_validation_schema=self.metadata_validation_schema
+      metadata_validation_schema=self.metadata_validation_schema,
+      db_config_file=self.db_config_file,
       )
     fetch_command.execute(metadata_context=metadata_context)
     self.assertFalse(
@@ -54,7 +109,8 @@ class TestUnifiedMetadataRegistration(unittest.TestCase):
       portal_config_file=self.portal_config_file,
       fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
-      metadata_validation_schema=self.metadata_validation_schema
+      metadata_validation_schema=self.metadata_validation_schema,
+      db_config_file=self.db_config_file,
       )
     fetch_command.execute(metadata_context=metadata_context)
     self.assertTrue(
@@ -107,6 +163,7 @@ class TestUnifiedMetadataRegistration(unittest.TestCase):
       fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
       metadata_validation_schema=self.metadata_validation_schema,
+      db_config_file=self.db_config_file,
       metadata_fetched=True,
       raw_metadata_dict={}
       )
@@ -129,6 +186,7 @@ class TestUnifiedMetadataRegistration(unittest.TestCase):
       fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
       metadata_validation_schema=self.metadata_validation_schema,
+      db_config_file=self.db_config_file,
       metadata_fetched=True,
       raw_metadata_dict={1: [{"project_igf_id": "A", "deliverable": "COSMX", "name": "B", "email_id": "C", "username": "D"}]},
       samples_required=False)
@@ -185,6 +243,7 @@ class TestUnifiedMetadataRegistration(unittest.TestCase):
       fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
       metadata_validation_schema=self.metadata_validation_schema,
+      db_config_file=self.db_config_file,
       error_list=[],
       raw_metadata_dict={
         1: [{
@@ -213,6 +272,7 @@ class TestUnifiedMetadataRegistration(unittest.TestCase):
       fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
       metadata_validation_schema=self.metadata_validation_schema,
+      db_config_file=self.db_config_file,
       error_list=[],
       raw_metadata_dict={
         1: [{
@@ -251,6 +311,44 @@ class TestUnifiedMetadataRegistration(unittest.TestCase):
         table_columns=self.table_columns,
         samples_required=False)
     self.assertEqual(len(sample_metadata_list), 0)
+
+
+  def test_CheckAndRegisterMetadataCommand_check_and_filter_existing_metadata(self):
+    session_class = \
+      _get_db_session_class(
+        db_config_file=self.db_config_file)
+    check_and_register = \
+      CheckAndRegisterMetadataCommand()
+    (filtered_project_metadata,
+     filtered_user_metadata,
+     filtered_project_user_metadata,
+     filtered_sample_metadata) = \
+      check_and_register.\
+        _check_and_filter_existing_metadata(
+          project_metadata_list=[
+            {"project_igf_id": "IGFP0001_test_22-8-2017_rna"},
+            {"project_igf_id": "IGFP0002_test_22-8-2017_rna"}],
+          user_metadata_list=[
+            {"name": "DB DB", "email_id": "d@b.com", "username": "db"},
+            {"name": "user1", "email_id": "user1@ic.ac.uk", "username": "user1"}],
+          project_user_metadata_list=[
+            {"project_igf_id": "IGFP0001_test_22-8-2017_rna", "email_id": "user1@ic.ac.uk"},
+            {"project_igf_id": "IGFP0002_test_22-8-2017_rna", "email_id": "d@b.com"}],
+          sample_metadata_list=[{'sample_igf_id': 'IGF00001', "project_igf_id": "IGFP0001_test_22-8-2017_rna"}],
+          session_class=session_class)
+    self.assertEqual(len(filtered_project_metadata), 1)
+    self.assertEqual(len(filtered_user_metadata), 1)
+    self.assertEqual(len(filtered_project_user_metadata), 1)
+    self.assertEqual(len(filtered_sample_metadata), 0)
+    self.assertEqual(
+      filtered_project_metadata,
+        [{"project_igf_id": "IGFP0002_test_22-8-2017_rna"}])
+    self.assertEqual(
+      filtered_user_metadata,
+        [{"name": "DB DB", "email_id": "d@b.com", "username": "db"}])
+    self.assertEqual(
+      filtered_project_user_metadata,
+        [{"project_igf_id": "IGFP0002_test_22-8-2017_rna", "email_id": "d@b.com"}])
 
 
 if __name__ == '__main__':
