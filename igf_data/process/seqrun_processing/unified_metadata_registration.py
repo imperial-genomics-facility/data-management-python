@@ -1,6 +1,6 @@
 import os, json
 import pandas as pd
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 from abc import ABC, abstractmethod
 from igf_portal.api_utils import get_data_from_portal
 from jsonschema import (
@@ -19,37 +19,30 @@ class MetadataContext:
     fetch_metadata_url_suffix: str,
     sync_metadata_url_suffix: str,
     metadata_validation_schema: str,
+    default_project_user_email: Optional[str] = None,
     metadata_fetched: Optional[bool] = False,
     samples_required: Optional[bool] = False,
     raw_metadata_dict: Dict[str, list] = {},
     checked_required_column_dict: Dict[str, bool] = {},
+    validated_metadata_dict: Dict[str, bool] = {},
     table_columns: Dict[str, list] = {
       "project": ["project_igf_id", "deliverable"],
+      "project_user": ["project_igf_id", "email_id"],
       "user": ["name", "email_id", "username"],
-      "sample": ["sample_igf_id",]},
-    project_metadata_list: List[list] = [],
-    sample_metadata_list: List[list] = [],
-    user_metadata_list: List[list] = [],
-    valid_metadata_ids: List[list] = [],
-    registered_metadata_ids: List[list] = [],
-    portal_metadata_synced_ids: List[list] = [],
+      "sample": ["sample_igf_id", "project_igf_id"]},
     error_list: List[str] = []) \
       -> None:
     self.portal_config_file = portal_config_file
     self.fetch_metadata_url_suffix = fetch_metadata_url_suffix
     self.sync_metadata_url_suffix = sync_metadata_url_suffix
     self.checked_required_column_dict = checked_required_column_dict
+    self.validated_metadata_dict = validated_metadata_dict
     self.metadata_fetched = metadata_fetched
     self.metadata_validation_schema = metadata_validation_schema
     self.samples_required = samples_required
     self.raw_metadata_dict = raw_metadata_dict
     self.table_columns = table_columns
-    self.project_metadata_list = project_metadata_list
-    self.sample_metadata_list = sample_metadata_list
-    self.user_metadata_list = user_metadata_list
-    self.valid_metadata_ids = valid_metadata_ids
-    self.registered_metadata_ids = registered_metadata_ids
-    self.portal_metadata_synced_ids = portal_metadata_synced_ids
+    self.default_project_user_email = default_project_user_email
     self.error_list = error_list
 
 class BaseCommand(ABC):
@@ -231,29 +224,78 @@ class ValidateMetadataCommand(BaseCommand):
       raise ValueError(
         f"Failed to validate metadata: {e}")
 
-class SplitMetadataCommand(BaseCommand):
-  def execute(self, metadata_context: MetadataContext) -> None:
+
+class CheckAndRegisterMetadataCommand(BaseCommand):
+  def _split_metadata(
+    self,
+    metadata_entry: List[Dict[str, str]],
+    table_columns: Dict[str, list],
+    samples_required: bool) \
+      -> Tuple[List[str], List[str], List[str], List[str]]:
     """
     Split the metadata into different tables.
     """
-    # Implementation to add new metadata
-    pass
+    try:
+      project_metadata_list = []
+      sample_metadata_list = []
+      user_metadata_list = []
+      project_user_metadata = []
+      metadata_df = pd.DataFrame(metadata_entry)
+      metadata_df = \
+        metadata_df.fillna('').\
+        drop_duplicates()
+      for table_name, table_column_list in table_columns.items():
+        if table_name == 'project':
+          project_metadata_list.extend(
+            metadata_df[table_column_list].to_dict(orient='records'))
+        elif table_name == 'sample' and samples_required:
+          sample_metadata_list.extend(
+            metadata_df[table_column_list].to_dict(orient='records'))
+        elif table_name == 'user':
+          user_metadata_list.extend(
+            metadata_df[table_column_list].to_dict(orient='records'))
+        elif table_name == 'project_user':
+          project_user_metadata.extend(
+            metadata_df[table_column_list].to_dict(orient='records'))
+      return (
+        project_metadata_list,
+        user_metadata_list,
+        project_user_metadata,
+        sample_metadata_list)
+    except Exception as e:
+      raise ValueError(
+        f"Failed to check existing metadata: {e}")
 
-class CheckExistingMetadataCommand(BaseCommand):
-  def execute(self, metadata_context: MetadataContext) -> None:
-    """
-    Check if the metadata already exists in the database.
-    """
-    # Implementation to add new metadata
-    pass
 
-class AddNewMetadataCommand(BaseCommand):
   def execute(self, metadata_context: MetadataContext) -> None:
-    """
-    Add new metadata to the contest.
-    """
-    # Implementation to add new metadata
-    pass
+    try:
+      validated_metadata_dict = \
+        metadata_context.validated_metadata_dict
+      raw_meatadata_dict = \
+        metadata_context.raw_metadata_dict
+      table_columns = \
+        metadata_context.table_columns
+      samples_required = \
+        metadata_context.samples_required
+      for metadata_id, validation_status in validated_metadata_dict.items():
+        if validation_status:
+          metadata_entry = \
+            raw_meatadata_dict.get(metadata_id)
+          if not metadata_entry:
+            raise ValueError(
+              f"Metadata entry not found for ID: {metadata_id}")
+          (project_metadata,
+           user_metadata,
+           project_user_metadata,
+           sample_metadata) = \
+            self._split_metadata(
+              metadata_entry=metadata_entry,
+              table_columns=table_columns,
+              samples_required=samples_required)
+    except Exception as e:
+      raise ValueError(
+        f"Failed to split metadata: {e}")
+
 
 class SyncMetadataCommand(BaseCommand):
   def execute(self, metadata_context: MetadataContext) -> None:
@@ -287,9 +329,7 @@ class UnifiedMetadataRegistration:
       FetchNewMetadataCommand(),
       CheckRawMetadataColumnsCommand(),
       ValidateMetadataCommand(),
-      SplitMetadataCommand(),
-      CheckExistingMetadataCommand(),
-      AddNewMetadataCommand(),
+      CheckAndRegisterMetadataCommand(),
       SyncMetadataCommand()]
     self.chain_command = ChainCommand(self.commands)
 

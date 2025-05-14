@@ -5,7 +5,7 @@ from igf_data.process.seqrun_processing.unified_metadata_registration import (
     FetchNewMetadataCommand,
     CheckRawMetadataColumnsCommand,
     ValidateMetadataCommand,
-    AddNewMetadataCommand,
+    CheckAndRegisterMetadataCommand,
     SyncMetadataCommand,
     ChainCommand,
     MetadataContext)
@@ -16,6 +16,11 @@ class TestUnifiedMetadataRegistration(unittest.TestCase):
     self.fetch_metadata_url_suffix = "test_fetch_suffix"
     self.sync_metadata_url_suffix = "test_sync_suffix"
     self.metadata_validation_schema = "data/validation_schema/minimal_metadata_validation.json"
+    self.table_columns = {
+      "project": ["project_igf_id", "deliverable"],
+      "project_user": ["project_igf_id", "email_id"],
+      "user": ["name", "email_id", "username"],
+      "sample": ["sample_igf_id", "project_igf_id"]}
 
 
   def test_MetadataContext(self):
@@ -62,8 +67,9 @@ class TestUnifiedMetadataRegistration(unittest.TestCase):
   def test_CheckRawMetadataColumnsCommand_check_columns(self):
     table_columns_dict = {
       "project": ["project_igf_id"],
+      "project_user": ["project_igf_id", "email_id"],
       "user": ["name", "email_id", "username"],
-      "sample": ["sample_igf_id",]}
+      "sample": ["sample_igf_id", "project_igf_id"]}
     metadata_columns = ["project_igf_id", "name", "email_id", "username", "sample_igf_id"]
     sample_required = True
     errors = CheckRawMetadataColumnsCommand._check_columns(
@@ -199,6 +205,53 @@ class TestUnifiedMetadataRegistration(unittest.TestCase):
     self.assertEqual(len(validated_metadata_dict), 1)
     self.assertTrue(1 in validated_metadata_dict)
     self.assertFalse(validated_metadata_dict.get(1))
+
+
+  def test_CheckAndRegisterMetadataCommand_split_metadata(self):
+    metadata_context = MetadataContext(
+      portal_config_file=self.portal_config_file,
+      fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
+      sync_metadata_url_suffix=self.sync_metadata_url_suffix,
+      metadata_validation_schema=self.metadata_validation_schema,
+      error_list=[],
+      raw_metadata_dict={
+        1: [{
+          "project_igf_id": "IGF001",
+          "deliverable": "COSMX",
+          "name": "Ba Da",
+          "email_id": "c@d.com",
+          "sample_igf_id": "IGF0012",
+          "username": "aaa"}],
+        2: [{
+          "project_igf_id": "IGF001",
+          "deliverable": "COSMX",
+          "name": "Ba Da",
+          "username": "aaa"}]},
+      checked_required_column_dict={1: True, 2: False},
+      validated_metadata_dict={1: True})
+    check_and_register = CheckAndRegisterMetadataCommand()
+    (project_metadata_list,
+     user_metadata_list,
+     project_user_metadata,
+     sample_metadata_list) = \
+      check_and_register._split_metadata(
+        metadata_entry=metadata_context.raw_metadata_dict.get(1),
+        table_columns=self.table_columns,
+        samples_required=True)
+    self.assertEqual(len(project_metadata_list), 1)
+    self.assertEqual(len(project_user_metadata), 1)
+    self.assertEqual(len(user_metadata_list), 1)
+    self.assertEqual(len(sample_metadata_list), 1)
+    self.assertEqual(
+      project_metadata_list,
+        [{"project_igf_id": "IGF001", "deliverable": "COSMX"}])
+    (_, _, _, sample_metadata_list) = \
+      check_and_register._split_metadata(
+        metadata_entry=metadata_context.raw_metadata_dict.get(1),
+        table_columns=self.table_columns,
+        samples_required=False)
+    self.assertEqual(len(sample_metadata_list), 0)
+
 
 if __name__ == '__main__':
   unittest.main()
