@@ -1,4 +1,5 @@
-import os, json
+import os, json, time
+from urllib.parse import urljoin
 import pandas as pd
 from typing import List, Dict, Any, Optional, Tuple
 from abc import ABC, abstractmethod
@@ -48,6 +49,7 @@ class MetadataContext:
     checked_required_column_dict: Dict[str, bool] = {},
     validated_metadata_dict: Dict[str, bool] = {},
     registered_metadata_dict: Dict[str, bool] = {},
+    synced_metadata_dict: Dict[str, bool] = {},
     table_columns: Dict[str, list] = {
       "project": ["project_igf_id", "deliverable"],
       "project_user": ["project_igf_id", "email_id"],
@@ -61,6 +63,7 @@ class MetadataContext:
     self.checked_required_column_dict = checked_required_column_dict
     self.validated_metadata_dict = validated_metadata_dict
     self.registered_metadata_dict = registered_metadata_dict
+    self.synced_metadata_dict = synced_metadata_dict
     self.metadata_fetched = metadata_fetched
     self.metadata_validation_schema = metadata_validation_schema
     self.session_class = _get_db_session_class(db_config_file)
@@ -535,10 +538,33 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
 class SyncMetadataCommand(BaseCommand):
   def execute(self, metadata_context: MetadataContext) -> None:
     """
-    Sync metadata with the portal.
+    Mark registered metadata as synched in portal
     """
-    # Implementation to sync metadata
-    pass
+    try:
+      synced_metadata_dict = dict()
+      portal_config_file = \
+        metadata_context.portal_config_file
+      sync_metadata_url_suffix = \
+        metadata_context.sync_metadata_url_suffix
+      registered_metadata_dict = \
+        metadata_context.registered_metadata_dict
+      for metadata_id, metadata_status in registered_metadata_dict.items():
+        if metadata_status:
+          metadata_url = urljoin(sync_metadata_url_suffix, str(metadata_id))
+          _ = \
+            get_data_from_portal(
+              url_suffix=metadata_url,
+              portal_config_file=portal_config_file,
+              response_mode='post')
+          time.sleep(2) # wait before next call
+          synced_metadata_dict.update({metadata_id: True})
+        else:
+          synced_metadata_dict.update({metadata_id: False})
+      metadata_context.synced_metadata_dict = \
+        synced_metadata_dict
+    except Exception as e:
+      raise ValueError(
+        f"Failed to fetch new metadata from portal: {e}")
 
 class ChainCommand:
   def __init__(self, commands: List[BaseCommand]) -> None:

@@ -555,5 +555,26 @@ class TestUnifiedMetadataRegistration(unittest.TestCase):
     self.assertIsNotNone(records)
     self.assertIsNone(records.data_authority)
 
+
+  @patch("igf_data.process.seqrun_processing.unified_metadata_registration.get_data_from_portal", return_value=True)
+  def test_SyncMetadataCommand_execute(self, *args):
+    metadata_context = MetadataContext(
+      portal_config_file=self.portal_config_file,
+      fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
+      sync_metadata_url_suffix=self.sync_metadata_url_suffix,
+      metadata_validation_schema=self.metadata_validation_schema,
+      db_config_file=self.db_config_file,
+      default_project_user_email='c@c.com',
+      samples_required=False,
+      error_list=[],
+      registered_metadata_dict={1: True, 2: False})
+    sync_metadata = SyncMetadataCommand()
+    sync_metadata.execute(metadata_context=metadata_context)
+    self.assertEqual(len(metadata_context.synced_metadata_dict), 2)
+    self.assertTrue(1 in metadata_context.synced_metadata_dict)
+    self.assertTrue(2 in metadata_context.synced_metadata_dict)
+    self.assertTrue(metadata_context.synced_metadata_dict.get(1))
+    self.assertFalse(metadata_context.synced_metadata_dict.get(2))
+
 if __name__ == '__main__':
   unittest.main()
