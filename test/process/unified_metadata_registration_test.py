@@ -350,6 +350,51 @@ class TestUnifiedMetadataRegistration(unittest.TestCase):
       filtered_project_user_metadata,
         [{"project_igf_id": "IGFP0002_test_22-8-2017_rna", "email_id": "d@b.com"}])
 
+  def test_CheckAndRegisterMetadataCommand_register_update_projectuser_metadata(self):
+    check_and_register = \
+      CheckAndRegisterMetadataCommand()
+    updated_project_user_dataset = \
+      check_and_register.\
+        _update_projectuser_metadata(
+          project_user_metadata_list=[
+            {"project_igf_id": "IGFP0002_test_22-8-2017_rna", "email_id": "d@b.com"},
+            {"project_igf_id": "IGFP0002_test_22-8-2017_rna", "email_id": "a@a.com"},
+            {"project_igf_id": "IGFP0003_test_22-8-2017_rna", "email_id": "a@a.com"}],
+          secondary_user_email='c@c.com')
+    self.assertEqual(len(updated_project_user_dataset), 5)
+    self.assertTrue('data_authority' in updated_project_user_dataset[0])
+    self.assertTrue([e['data_authority'] for e in updated_project_user_dataset \
+                      if e["project_igf_id"]=="IGFP0002_test_22-8-2017_rna" and e["email_id"]=="d@b.com"][0])
+    self.assertFalse([e['data_authority'] for e in updated_project_user_dataset \
+                      if e["project_igf_id"]=="IGFP0002_test_22-8-2017_rna" and e["email_id"]=="a@a.com"][0])
+    self.assertTrue("c@c.com" in [e["email_id"] for e in updated_project_user_dataset \
+                      if e["project_igf_id"]=="IGFP0002_test_22-8-2017_rna"])
+    self.assertFalse([e['data_authority'] for e in updated_project_user_dataset \
+                      if e["project_igf_id"]=="IGFP0002_test_22-8-2017_rna" and e["email_id"]=="c@c.com"][0])
+    self.assertTrue([e['data_authority'] for e in updated_project_user_dataset \
+                      if e["project_igf_id"]=="IGFP0003_test_22-8-2017_rna" and e["email_id"]=="a@a.com"][0])
+
+
+
+  def test_CheckAndRegisterMetadataCommand_register_new_metadata(self):
+    session_class = \
+      _get_db_session_class(
+        db_config_file=self.db_config_file)
+    check_and_register = \
+      CheckAndRegisterMetadataCommand()
+    # status = \
+    #   check_and_register.\
+    #     _register_new_metadata(
+    #       project_metadata_list=[
+    #         {"project_igf_id": "IGFP0002_test_22-8-2017_rna"}],
+    #       user_metadata_list=[
+    #         {"name": "DB DB", "email_id": "d@b.com", "username": "db"}],
+    #       project_user_metadata_list=[
+    #         {"project_igf_id": "IGFP0002_test_22-8-2017_rna", "email_id": "d@b.com"}],
+    #       sample_metadata_list=[{'sample_igf_id': 'IGF00006', "project_igf_id": "IGFP0006_test_22-8-2017_rna"}],
+    #       session_class=session_class)
+    # self.assertEqual(status, True)
+
 
 if __name__ == '__main__':
   unittest.main()

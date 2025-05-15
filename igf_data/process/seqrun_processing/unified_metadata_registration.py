@@ -250,8 +250,8 @@ class ValidateMetadataCommand(BaseCommand):
 
 
 class CheckAndRegisterMetadataCommand(BaseCommand):
+  @staticmethod
   def _split_metadata(
-    self,
     metadata_entry: List[Dict[str, str]],
     table_columns: Dict[str, list],
     samples_required: bool) \
@@ -290,8 +290,8 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
       raise ValueError(
         f"Failed to check existing metadata: {e}")
 
+  @staticmethod
   def _check_and_filter_existing_metadata(
-    self,
     project_metadata_list: List[Dict[str, str]],
     user_metadata_list: List[Dict[str, str]],
     project_user_metadata_list: List[Dict[str, str]],
@@ -370,6 +370,98 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
     except Exception as e:
       raise ValueError(
         f"Failed to check existing metadata: {e}")
+
+  @staticmethod
+  def _update_projectuser_metadata(
+    project_user_metadata_list: List[Dict[str, str]],
+    secondary_user_email: str,
+    project_igf_id_col: str = 'project_igf_id',
+    email_id_col: str = 'email_id',
+    data_authority_column: str = 'data_authority') \
+      -> List[Dict[str, str]]:
+    """
+    A function for updating project user metadata with data authority column and secondary user
+
+    :param project_user_metadata_list: List of project user metadata
+    :param secondary_user_email: Secondary user email id
+    :param project_igf_id_col: Name of project col, default: 'project_igf_id'
+    :param email_id_col: name of the email id col, default 'email_id'
+    :param data_authority_column: Name of the data authority col, default 'data_authority'
+    :returns: A list of dictionaries in the format List[Dict[str, str]]
+    """
+    try:
+      df = pd.DataFrame(project_user_metadata_list)
+      # don't update if data authority column is already present
+      if data_authority_column not in df.columns:
+        # add data authority column and set first user as the data authority
+        df[data_authority_column] = \
+          df[email_id_col] == df.groupby(project_igf_id_col)[email_id_col].transform('first')
+      # add secondary user
+      merged_df = \
+        pd.concat([
+          df,
+          pd.DataFrame([{
+            project_igf_id_col: project,
+            email_id_col: secondary_user_email,
+            data_authority_column: False}
+              for project in df[project_igf_id_col].unique().tolist()])])
+      return merged_df.to_dict(orient="records")
+    except Exception as e:
+      raise ValueError(
+        f"Failed to update project user metadata: {e}")
+
+  @staticmethod
+  def _register_new_metadata(
+    project_metadata_list: List[Dict[str, str]],
+    user_metadata_list: List[Dict[str, str]],
+    project_user_metadata_list: List[Dict[str, str]],
+    sample_metadata_list: List[Dict[str, str]],
+    session_class: Any) -> Optional[bool]:
+    """
+    Register new metadata in the database.
+
+    :param project_metadata_list: List of project metadata
+    :param user_metadata_list: List of user metadata
+    :param project_user_metadata_list: List of project user metadata
+    :param sample_metadata_list: List of sample metadata
+    :param session_class: Session class for the database
+    :return: True if registration is successful, None otherwise
+    """
+    try:
+      base = \
+        BaseAdaptor(**{'session_class': session_class})
+      base.start_session()
+      pa = ProjectAdaptor(**{'session': base.session})
+      ua = UserAdaptor(**{'session': base.session})
+      sa = SampleAdaptor(**{'session': base.session})
+      try:
+        if len(project_metadata_list) > 0:
+          pa.store_project_and_attribute_data(
+            data=project_metadata_list,
+            autosave=False)
+        if len(user_metadata_list) > 0:
+          ua.store_user_data(
+            data=user_metadata_list,
+            autosave=False)
+        if len(project_user_metadata_list) > 0:
+          pa.assign_user_to_project(
+            data=project_user_metadata_list,
+            autosave=False)
+        if len(sample_metadata_list) > 0:
+          sa.store_sample_and_attribute_data(
+            data=sample_metadata_list,
+            autosave=False)
+        base.commit_session()
+        base.close_session()
+        return True
+      except Exception as e:
+        base.rollback_session()
+        base.close_session()
+        raise ValueError(
+          f"Failed to commit session: {e}")
+    except Exception as e:
+      raise ValueError(
+        f"Failed to register new metadata: {e}")
 
   def execute(self, metadata_context: MetadataContext) -> None:
     try:
