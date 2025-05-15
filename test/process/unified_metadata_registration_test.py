@@ -262,7 +262,7 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
     validate.execute(metadata_context=metadata_context)
     self.assertEqual(len(metadata_context.error_list), 1)
     validated_metadata_dict = metadata_context.validated_metadata_dict
-    self.assertEqual(len(validated_metadata_dict), 1)
+    self.assertEqual(len(validated_metadata_dict), 2)
     self.assertTrue(1 in validated_metadata_dict)
     self.assertFalse(validated_metadata_dict.get(1))
 
@@ -611,9 +611,9 @@ class TestUnifiedMetadataRegistrationB(unittest.TestCase):
       os.remove(self.dbname)
 
   @patch("igf_data.process.seqrun_processing.unified_metadata_registration.get_data_from_portal", return_value={
-      1: [{"project_igf_id": "IGFA001", "deliverable": "COSMX", "name": "User B", "email_id": "a@b.com", "username": "aaaa"}],
-      2: [{"project_igf_id": "IGFA002", "deliverable": "COSMX", "name": "User C", "email_id": "a@c.com"}],
-      3: [{"project_igf_id": "IGFA003", "deliverable": "COSMX", "name": "User D", "email_id": "a-c.com", "username": "ddd"}]})
+      1: [{"project_igf_id": "IGFA001", "deliverable": "COSMX", "name": "User BA", "email_id": "a@b.com", "username": "aaaa"}],
+      2: [{"project_igf_id": "IGFA002", "deliverable": "COSMX", "name": "User CQ", "email_id": "a@c.com"}],
+      3: [{"project_igf_id": "IGFA003", "deliverable": "COSMX", "name": "User DQ", "email_id": "a-c.com", "username": "ddd"}]})
   def test_UnifiedMetadataRegistration_execute(self, *args):
     metadata_registration = UnifiedMetadataRegistration(
       portal_config_file=self.portal_config_file,
@@ -624,7 +624,14 @@ class TestUnifiedMetadataRegistrationB(unittest.TestCase):
       default_project_user_email='c@c.com',
       samples_required=False,)
     metadata_registration.execute()
-    
+    metadata_context = \
+      metadata_registration.metadata_context
+    self.assertEqual(len(metadata_context.synced_metadata_dict), 3)
+    self.assertTrue(1 in metadata_context.synced_metadata_dict)
+    self.assertTrue(2 in metadata_context.synced_metadata_dict)
+    self.assertTrue(metadata_context.synced_metadata_dict.get(1))
+    self.assertFalse(metadata_context.synced_metadata_dict.get(2))
+    self.assertFalse(metadata_context.synced_metadata_dict.get(3))
 
 
 if __name__ == '__main__':

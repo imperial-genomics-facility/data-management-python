@@ -44,7 +44,7 @@ class MetadataContext:
     db_config_file: str,
     default_project_user_email: Optional[str] = None,
     metadata_fetched: Optional[bool] = False,
-    samples_required: Optional[bool] = False,
+    samples_required: bool = False,
     raw_metadata_dict: Dict[str, list] = {},
     checked_required_column_dict: Dict[str, bool] = {},
     validated_metadata_dict: Dict[str, bool] = {},
@@ -152,7 +152,7 @@ class CheckRawMetadataColumnsCommand(BaseCommand):
         raw_meatadata_dict = metadata_context.raw_metadata_dict
         for metadata_id, metadata_list in raw_meatadata_dict.items():
           metadata_df = pd.DataFrame(metadata_list)
-          metadata_df_columns = metadata_df.columns
+          metadata_df_columns = metadata_df.columns.tolist()
           column_check_errors = \
             self._check_columns(
               table_columns_dict=metadata_context.table_columns,
@@ -160,7 +160,7 @@ class CheckRawMetadataColumnsCommand(BaseCommand):
               sample_required=metadata_context.samples_required)
           if len(column_check_errors) > 0:
             checked_required_column_dict[metadata_id] = False
-            error_list.append(column_check_errors)
+            error_list.extend(column_check_errors)
           else:
             checked_required_column_dict[metadata_id] = True
         metadata_context.error_list.extend(error_list)
@@ -174,9 +174,9 @@ class CheckRawMetadataColumnsCommand(BaseCommand):
 class ValidateMetadataCommand(BaseCommand):
   @staticmethod
   def _validate_metadata(
-    metadata_id: int,
+    metadata_id: str,
     metadata_entry: List[Dict[str, Any]],
-    metadata_validation_schema: str) -> bool:
+    metadata_validation_schema: str) -> List[str]:
     """
     Validate the metadata against the schema.
 
@@ -247,6 +247,8 @@ class ValidateMetadataCommand(BaseCommand):
             validated_metadata_dict[metadata_id] = False
           else:
             validated_metadata_dict[metadata_id] = True
+        else:
+          validated_metadata_dict[metadata_id] = False
       metadata_context.validated_metadata_dict = validated_metadata_dict
       metadata_context.error_list.extend(error_list)
     except Exception as e:
@@ -302,7 +304,7 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
     project_user_metadata_list: List[Dict[str, str]],
     sample_metadata_list: List[Dict[str, str]],
     session_class: Any) \
-      -> Tuple[List[Dict[str, str]], List[Dict[str, str]], List[Dict[str, str]], List[Dict[str, str]]]:
+      -> Tuple[List[Dict[str, str]], List[Dict[str, str]], List[Dict[str, str]], List[Dict[str, str]], List[str]]:
     try:
       errors = list()
       # get unique project ids
@@ -323,7 +325,7 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
       base.start_session()
       project_query = \
         base.session.\
-          query(Project.project_igf_id).\
+          query(Project).\
           filter(Project.project_igf_id.in_(project_igf_ids))
       project_records = \
         base.fetch_records(
@@ -331,7 +333,7 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
           output_mode='object')
       user_email_query = \
         base.session.\
-          query(User.email_id).\
+          query(User).\
           filter(User.email_id.in_(user_emails))
       user_email_records = \
         base.fetch_records(
@@ -339,7 +341,7 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
           output_mode='object')
       user_username_query = \
         base.session.\
-          query(User.username).\
+          query(User).\
           filter(User.username.in_(user_usernames))
       user_username_records = \
         base.fetch_records(
@@ -348,7 +350,7 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
       if len(sample_igf_ids) > 0:
         sample_query = \
           base.session.\
-            query(Sample.sample_igf_id).\
+            query(Sample).\
             filter(Sample.sample_igf_id.in_(sample_igf_ids))
         sample_records = \
           base.fetch_records(
@@ -409,7 +411,7 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
     project_igf_id_col: str = 'project_igf_id',
     email_id_col: str = 'email_id',
     data_authority_column: str = 'data_authority') \
-      -> List[Dict[str, str]]:
+      -> List[Dict[Any, Any]]:
     """
     A function for updating project user metadata with data authority column and secondary user
 
@@ -447,7 +449,7 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
     user_metadata_list: List[Dict[str, str]],
     project_user_metadata_list: List[Dict[str, str]],
     sample_metadata_list: List[Dict[str, str]],
-    session_class: Any) -> Optional[bool]:
+    session_class: Any) -> Tuple[bool, List[str]]:
     """
     Register new metadata in the database.
 
@@ -586,7 +588,7 @@ class SyncMetadataCommand(BaseCommand):
             get_data_from_portal(
               url_suffix=metadata_url,
               portal_config_file=portal_config_file,
-              response_mode='post')
+              request_mode='post')
           time.sleep(2) # wait before next call
           synced_metadata_dict.update({metadata_id: True})
         else:
@@ -637,7 +639,7 @@ class UnifiedMetadataRegistration:
       SyncMetadataCommand()]
     self.chain_command = ChainCommand(self.commands)
 
-  def execute(self) -> None:
+  def execute(self) -> List[str]:
     try:
       self.chain_command.execute(self.metadata_context)
       error_list = self.metadata_context.error_list
