@@ -47,6 +47,7 @@ class MetadataContext:
     raw_metadata_dict: Dict[str, list] = {},
     checked_required_column_dict: Dict[str, bool] = {},
     validated_metadata_dict: Dict[str, bool] = {},
+    registered_metadata_dict: Dict[str, bool] = {},
     table_columns: Dict[str, list] = {
       "project": ["project_igf_id", "deliverable"],
       "project_user": ["project_igf_id", "email_id"],
@@ -59,6 +60,7 @@ class MetadataContext:
     self.sync_metadata_url_suffix = sync_metadata_url_suffix
     self.checked_required_column_dict = checked_required_column_dict
     self.validated_metadata_dict = validated_metadata_dict
+    self.registered_metadata_dict = registered_metadata_dict
     self.metadata_fetched = metadata_fetched
     self.metadata_validation_schema = metadata_validation_schema
     self.session_class = _get_db_session_class(db_config_file)
@@ -425,9 +427,10 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
     :param project_user_metadata_list: List of project user metadata
     :param sample_metadata_list: List of sample metadata
     :param session_class: Session class for the database
-    :return: True if registration is successful, None otherwise
+    :return: True if registration is successful, False otherwise and a list if errors
     """
     try:
+      errors = []
       base = \
         BaseAdaptor(**{'session_class': session_class})
       base.start_session()
@@ -453,18 +456,19 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
             autosave=False)
         base.commit_session()
         base.close_session()
-        return True
+        return True, errors
       except Exception as e:
         base.rollback_session()
         base.close_session()
-        raise ValueError(
-          f"Failed to commit session: {e}")
+        errors.append(e)
+        return False, errors
     except Exception as e:
       raise ValueError(
         f"Failed to register new metadata: {e}")
 
   def execute(self, metadata_context: MetadataContext) -> None:
     try:
+      errors = []
       validated_metadata_dict = \
         metadata_context.validated_metadata_dict
       raw_meatadata_dict = \
@@ -473,6 +477,9 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
         metadata_context.table_columns
       samples_required = \
         metadata_context.samples_required
+      secondary_user_email = \
+        metadata_context.default_project_user_email
+      registered_metadata_dict = dict()
       for metadata_id, validation_status in validated_metadata_dict.items():
         if validation_status:
           metadata_entry = \
@@ -498,6 +505,28 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
               project_user_metadata_list=project_user_metadata,
               sample_metadata_list=sample_metadata,
               session_class=metadata_context.session_class)
+          updated_project_user_metadata = []
+          if len(filtered_project_user_metadata) > 0:
+            updated_project_user_metadata = \
+              self._update_projectuser_metadata(
+                project_user_metadata_list=filtered_project_user_metadata,
+                secondary_user_email=secondary_user_email)
+          db_update_status, errors = \
+            self._register_new_metadata(
+              project_metadata_list=filtered_project_metadata,
+              user_metadata_list=filtered_user_metadata,
+              project_user_metadata_list=updated_project_user_metadata,
+              sample_metadata_list=filtered_sample_metadata,
+              session_class=metadata_context.session_class)
+          if not db_update_status:
+            registered_metadata_dict.update({metadata_id: False})
+          else:
+            registered_metadata_dict.update({metadata_id: True})
+          if len(errors) > 0:
+            metadata_context.error_list.extend(errors)
+        else:
+          registered_metadata_dict.update({metadata_id: False})
+      metadata_context.registered_metadata_dict = registered_metadata_dict
     except Exception as e:
       raise ValueError(
         f"Failed to split metadata: {e}")

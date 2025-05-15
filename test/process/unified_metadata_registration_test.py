@@ -49,7 +49,8 @@ class TestUnifiedMetadataRegistration(unittest.TestCase):
     base.start_session()
     ua = UserAdaptor(**{'session':base.session})
     user_data = [
-      {'name':'user1','email_id':'user1@ic.ac.uk','username':'user1'}]
+      {'name':'user1','email_id':'user1@ic.ac.uk','username':'user1'},
+       {'name':'C','email_id':'c@c.com','username':'c'}]
     ua.store_user_data(data=user_data)
     project_data = [{
       'project_igf_id':'IGFP0001_test_22-8-2017_rna'}]
@@ -382,19 +383,177 @@ class TestUnifiedMetadataRegistration(unittest.TestCase):
         db_config_file=self.db_config_file)
     check_and_register = \
       CheckAndRegisterMetadataCommand()
-    # status = \
-    #   check_and_register.\
-    #     _register_new_metadata(
-    #       project_metadata_list=[
-    #         {"project_igf_id": "IGFP0002_test_22-8-2017_rna"}],
-    #       user_metadata_list=[
-    #         {"name": "DB DB", "email_id": "d@b.com", "username": "db"}],
-    #       project_user_metadata_list=[
-    #         {"project_igf_id": "IGFP0002_test_22-8-2017_rna", "email_id": "d@b.com"}],
-    #       sample_metadata_list=[{'sample_igf_id': 'IGF00006', "project_igf_id": "IGFP0006_test_22-8-2017_rna"}],
-    #       session_class=session_class)
-    # self.assertEqual(status, True)
+    updated_project_user_metadata = \
+      check_and_register.\
+        _update_projectuser_metadata(
+          project_user_metadata_list=[
+            {"project_igf_id": "IGFP0002_test_22-8-2017_rna", "email_id": "d@b.com"}],
+          secondary_user_email='c@c.com')
+    status, _ = \
+      check_and_register.\
+        _register_new_metadata(
+          project_metadata_list=[
+            {"project_igf_id": "IGFP0002_test_22-8-2017_rna"}],
+          user_metadata_list=[
+            {"name": "DB DB", "email_id": "d@b.com", "username": "db"}],
+          project_user_metadata_list=updated_project_user_metadata,
+          sample_metadata_list=[
+            {'sample_igf_id': 'IGF00006', "project_igf_id": "IGFP0002_test_22-8-2017_rna"}],
+          session_class=session_class)
+    self.assertEqual(status, True)
+    updated_project_user_metadata = \
+      check_and_register.\
+        _update_projectuser_metadata(
+          project_user_metadata_list=[
+            {"project_igf_id": "IGFP0003_test_22-8-2017_rna", "email_id": "e@e.com"}],
+          secondary_user_email='c@c.com')
+    status, _ = \
+      check_and_register.\
+        _register_new_metadata(
+          project_metadata_list=[
+            {"project_igf_id": "IGFP0003_test_22-8-2017_rna"}],
+          user_metadata_list=[
+            {"name": "EE", "email_id": "e@e.com", "username": "ee"}],
+          project_user_metadata_list=updated_project_user_metadata,
+          sample_metadata_list=[],
+          session_class=session_class)
+    self.assertEqual(status, True)
+    base = \
+      BaseAdaptor(**{'session_class':self.session_class})
+    base.start_session()
+    query = \
+      base.session.\
+      query(Project.project_igf_id).\
+      filter(Project.project_igf_id=="IGFP0002_test_22-8-2017_rna")
+    records = \
+      base.fetch_records(query=query, output_mode="one_or_none")
+    self.assertIsNotNone(records)
+    query = \
+      base.session.\
+      query(Project.project_igf_id).\
+      filter(Project.project_igf_id=="IGFP0003_test_22-8-2017_rna")
+    records = \
+      base.fetch_records(query=query, output_mode="one_or_none")
+    self.assertIsNotNone(records)
+    query = \
+      base.session.\
+      query(User.email_id).\
+      filter(User.email_id=="d@b.com")
+    records = \
+      base.fetch_records(query=query, output_mode="one_or_none")
+    self.assertIsNotNone(records)
+    query = \
+      base.session.\
+      query(ProjectUser).\
+      join(Project, Project.project_id==ProjectUser.project_id).\
+      join(User, User.user_id==ProjectUser.user_id).\
+      filter(Project.project_igf_id=="IGFP0002_test_22-8-2017_rna").\
+      filter(ProjectUser.data_authority=='T').\
+      filter(User.email_id=="d@b.com")
+    records = \
+      base.fetch_records(query=query, output_mode="one_or_none")
+    self.assertIsNotNone(records)
+    query = \
+      base.session.\
+      query(ProjectUser).\
+      join(Project, Project.project_id==ProjectUser.project_id).\
+      join(User, User.user_id==ProjectUser.user_id).\
+      filter(Project.project_igf_id=="IGFP0002_test_22-8-2017_rna").\
+      filter(User.email_id=="c@c.com")
+    records = \
+      base.fetch_records(query=query, output_mode="one_or_none")
+    self.assertIsNotNone(records)
+    self.assertIsNone(records.data_authority)
+    query = \
+      base.session.\
+      query(Sample.sample_igf_id).\
+      join(Project, Project.project_id==Sample.project_id).\
+      filter(Project.project_igf_id=="IGFP0002_test_22-8-2017_rna").\
+      filter(Sample.sample_igf_id=='IGF00006')
+    records = \
+      base.fetch_records(query=query, output_mode="one_or_none")
+    self.assertIsNotNone(records)
 
+  def test_CheckAndRegisterMetadataCommand_execute(self):
+    session_class = \
+      _get_db_session_class(
+        db_config_file=self.db_config_file)
+    check_and_register = \
+      CheckAndRegisterMetadataCommand()
+    metadata_context = MetadataContext(
+      portal_config_file=self.portal_config_file,
+      fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
+      sync_metadata_url_suffix=self.sync_metadata_url_suffix,
+      metadata_validation_schema=self.metadata_validation_schema,
+      db_config_file=self.db_config_file,
+      default_project_user_email='c@c.com',
+      samples_required=False,
+      error_list=[],
+      raw_metadata_dict={
+        1: [{
+          "project_igf_id": "IGFP0004_test_22-8-2017_rna",
+          "deliverable": "COSMX",
+          "name": "Ga Ga",
+          "email_id": "g@g.com",
+          "username": "ggg"}],
+        2: [{
+          "project_igf_id": "IGF001",
+          "deliverable": "COSMX",
+          "name": "Ba Da",
+          "username": "aaa"}]},
+      validated_metadata_dict={1: True, 2: False})
+    check_and_register.\
+      execute(metadata_context=metadata_context)
+    self.assertEqual(len(metadata_context.registered_metadata_dict), 2)
+    self.assertTrue(metadata_context.registered_metadata_dict.get(1))
+    self.assertFalse(metadata_context.registered_metadata_dict.get(2))
+    base = \
+      BaseAdaptor(**{'session_class':self.session_class})
+    base.start_session()
+    query = \
+      base.session.\
+      query(Project.project_igf_id).\
+      filter(Project.project_igf_id=="IGFP0004_test_22-8-2017_rna")
+    records = \
+      base.fetch_records(query=query, output_mode="one_or_none")
+    self.assertIsNotNone(records)
+    query = \
+      base.session.\
+      query(Project).\
+      filter(Project.project_igf_id=="IGFP0004_test_22-8-2017_rna")
+    records = \
+      base.fetch_records(query=query, output_mode="one_or_none")
+    self.assertEqual(records.deliverable, 'COSMX')
+    self.assertIsNotNone(records)
+    query = \
+      base.session.\
+      query(User.email_id).\
+      filter(User.email_id=="g@g.com")
+    records = \
+      base.fetch_records(query=query, output_mode="one_or_none")
+    self.assertIsNotNone(records)
+    query = \
+      base.session.\
+      query(ProjectUser).\
+      join(Project, Project.project_id==ProjectUser.project_id).\
+      join(User, User.user_id==ProjectUser.user_id).\
+      filter(Project.project_igf_id=="IGFP0004_test_22-8-2017_rna").\
+      filter(ProjectUser.data_authority=='T').\
+      filter(User.email_id=="g@g.com")
+    records = \
+      base.fetch_records(query=query, output_mode="one_or_none")
+    self.assertIsNotNone(records)
+    query = \
+      base.session.\
+      query(ProjectUser).\
+      join(Project, Project.project_id==ProjectUser.project_id).\
+      join(User, User.user_id==ProjectUser.user_id).\
+      filter(Project.project_igf_id=="IGFP0004_test_22-8-2017_rna").\
+      filter(User.email_id=="c@c.com")
+    records = \
+      base.fetch_records(query=query, output_mode="one_or_none")
+    self.assertIsNotNone(records)
+    self.assertIsNone(records.data_authority)
 
 if __name__ == '__main__':
   unittest.main()
