@@ -146,6 +146,9 @@ def full_suite():
     TestDag39_project_cleanup_step3_utilsA)
   from .igf_airflow.test_dag1_calculate_hpc_worker_utils import (
     Test_dag1_calculate_hpc_worker_utils)
+  from .process.unified_metadata_registration_test import (
+    TestUnifiedMetadataRegistrationA,
+    TestUnifiedMetadataRegistrationB)
 
 
   return unittest.TestSuite([
@@ -288,6 +291,8 @@ def full_suite():
         TestDag37_project_cleanup_step1_utilsA,
         TestDag38_project_cleanup_step2_utilsA,
         TestDag39_project_cleanup_step3_utilsA,
-        Test_dag1_calculate_hpc_worker_utils
+        Test_dag1_calculate_hpc_worker_utils,
+        TestUnifiedMetadataRegistrationA,
+        TestUnifiedMetadataRegistrationB
       ]
     ])
