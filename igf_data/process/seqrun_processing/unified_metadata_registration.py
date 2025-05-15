@@ -304,12 +304,16 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
     session_class: Any) \
       -> Tuple[List[Dict[str, str]], List[Dict[str, str]], List[Dict[str, str]], List[Dict[str, str]]]:
     try:
+      errors = list()
       # get unique project ids
       project_igf_ids = \
         list(set([metadata['project_igf_id'] for metadata in project_metadata_list]))
       # get unique user names
       user_emails = \
         list(set([metadata['email_id'] for metadata in user_metadata_list]))
+      # get unique user usernames
+      user_usernames = \
+        list(set([metadata['username'] for metadata in user_metadata_list]))
       # get unique sample ids
       sample_igf_ids = \
         list(set([metadata['sample_igf_id'] for metadata in sample_metadata_list]))
@@ -333,6 +337,14 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
         base.fetch_records(
           query=user_email_query,
           output_mode='object')
+      user_username_query = \
+        base.session.\
+          query(User.username).\
+          filter(User.username.in_(user_usernames))
+      user_username_records = \
+        base.fetch_records(
+          query=user_username_query,
+          output_mode='object')
       if len(sample_igf_ids) > 0:
         sample_query = \
           base.session.\
@@ -349,12 +361,23 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
       filtered_project_metadata = \
         [metadata for metadata in project_metadata_list \
           if metadata['project_igf_id'] not in existing_project_igf_ids]
+      errors.append(
+        f"Skipping existing projects: {' ,'.join(existing_project_igf_ids)}" )
       # filter out existing user metadata
       existing_user_emails = \
         [record.email_id for record in user_email_records]
+      existing_user_usernames = \
+        [record.username for record in user_username_records]
       filtered_user_metadata = \
         [metadata for metadata in user_metadata_list \
           if metadata['email_id'] not in existing_user_emails]
+      filtered_user_metadata = \
+        [metadata for metadata in filtered_user_metadata \
+          if metadata['username'] not in existing_user_usernames]
+      errors.append(
+        f"Skipping existing emails {' ,'.join(existing_user_emails)}")
+      errors.append(
+        f"Skipping existing usernames {' ,'.join(existing_user_usernames)}")
       # filter out existing sample metadata
       filtered_sample_metadata = []
       if len(sample_igf_ids) > 0:
@@ -363,6 +386,8 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
         filtered_sample_metadata = \
           [metadata for metadata in sample_metadata_list \
             if metadata['sample_igf_id'] not in existing_sample_igf_ids]
+        errors.append(
+        f"Skipping existing samples {' ,'.join(existing_sample_igf_ids)}")
       # filter out existing project user metadata
       filtered_project_user_metadata = \
         [metadata for metadata in project_user_metadata_list \
@@ -371,7 +396,8 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
         filtered_project_metadata,
         filtered_user_metadata,
         filtered_project_user_metadata,
-        filtered_sample_metadata)
+        filtered_sample_metadata,
+        errors)
     except Exception as e:
       raise ValueError(
         f"Failed to check existing metadata: {e}")
@@ -471,7 +497,7 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
 
   def execute(self, metadata_context: MetadataContext) -> None:
     try:
-      errors = []
+      error_list = []
       validated_metadata_dict = \
         metadata_context.validated_metadata_dict
       raw_meatadata_dict = \
@@ -501,13 +527,16 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
           (filtered_project_metadata,
            filtered_user_metadata,
            filtered_project_user_metadata,
-           filtered_sample_metadata) = \
+           filtered_sample_metadata,
+           errors) = \
             self._check_and_filter_existing_metadata(
               project_metadata_list=project_metadata,
               user_metadata_list=user_metadata,
               project_user_metadata_list=project_user_metadata,
               sample_metadata_list=sample_metadata,
               session_class=metadata_context.session_class)
+          if len(errors) > 0:
+            error_list.extend(errors)
           updated_project_user_metadata = []
           if len(filtered_project_user_metadata) > 0:
             updated_project_user_metadata = \
@@ -526,9 +555,11 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
           else:
             registered_metadata_dict.update({metadata_id: True})
           if len(errors) > 0:
-            metadata_context.error_list.extend(errors)
+            error_list.extend(errors)
         else:
           registered_metadata_dict.update({metadata_id: False})
+      if len(error_list) > 0:
+        metadata_context.error_list.extend(error_list)
       metadata_context.registered_metadata_dict = registered_metadata_dict
     except Exception as e:
       raise ValueError(
@@ -566,6 +597,7 @@ class SyncMetadataCommand(BaseCommand):
       raise ValueError(
         f"Failed to fetch new metadata from portal: {e}")
 
+
 class ChainCommand:
   def __init__(self, commands: List[BaseCommand]) -> None:
     self.commands = commands
@@ -575,16 +607,27 @@ class ChainCommand:
       for command in self.commands:
         command.execute(metadata_context)
     except Exception as e:
-      raise
+      raise ValueError(f"Failed to execute command: error {e}")
+
 
 class UnifiedMetadataRegistration:
   def __init__(
     self,
     portal_config_file: str,
+    fetch_metadata_url_suffix: str,
+    sync_metadata_url_suffix: str,
+    metadata_validation_schema: str,
+    db_config_file: str,
+    default_project_user_email: str,
     samples_required: bool = False,
     ) -> None:
     self.metadata_context = MetadataContext(
       portal_config_file=portal_config_file,
+      fetch_metadata_url_suffix=fetch_metadata_url_suffix,
+      sync_metadata_url_suffix=sync_metadata_url_suffix,
+      metadata_validation_schema=metadata_validation_schema,
+      db_config_file=db_config_file,
+      default_project_user_email=default_project_user_email,
       samples_required=samples_required)
     self.commands = [
       FetchNewMetadataCommand(),
@@ -595,7 +638,9 @@ class UnifiedMetadataRegistration:
     self.chain_command = ChainCommand(self.commands)
 
   def execute(self) -> None:
-    """
-    Execute the unified metadata registration process.
-    """
-    self.chain_command.execute(self.metadata_contest)
+    try:
+      self.chain_command.execute(self.metadata_context)
+      error_list = self.metadata_context.error_list
+      return error_list
+    except Exception as e:
+      raise ValueError(f"Failed to fetch and register metadata: {e}")

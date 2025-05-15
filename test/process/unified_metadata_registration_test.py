@@ -25,7 +25,7 @@ from igf_data.process.seqrun_processing.unified_metadata_registration import (
   MetadataContext,
   _get_db_session_class)
 
-class TestUnifiedMetadataRegistration(unittest.TestCase):
+class TestUnifiedMetadataRegistrationA(unittest.TestCase):
   def setUp(self):
     self.portal_config_file = "test_config.json"
     self.fetch_metadata_url_suffix = "test_fetch_suffix"
@@ -323,7 +323,8 @@ class TestUnifiedMetadataRegistration(unittest.TestCase):
     (filtered_project_metadata,
      filtered_user_metadata,
      filtered_project_user_metadata,
-     filtered_sample_metadata) = \
+     filtered_sample_metadata,
+     _) = \
       check_and_register.\
         _check_and_filter_existing_metadata(
           project_metadata_list=[
@@ -575,6 +576,56 @@ class TestUnifiedMetadataRegistration(unittest.TestCase):
     self.assertTrue(2 in metadata_context.synced_metadata_dict)
     self.assertTrue(metadata_context.synced_metadata_dict.get(1))
     self.assertFalse(metadata_context.synced_metadata_dict.get(2))
+
+class TestUnifiedMetadataRegistrationB(unittest.TestCase):
+  def setUp(self):
+    self.portal_config_file = "test_config.json"
+    self.fetch_metadata_url_suffix = "test_fetch_suffix"
+    self.sync_metadata_url_suffix = "test_sync_suffix"
+    self.metadata_validation_schema = "data/validation_schema/minimal_metadata_validation.json"
+    self.db_config_file = 'data/dbconfig.json'
+    self.table_columns = {
+      "project": ["project_igf_id", "deliverable"],
+      "project_user": ["project_igf_id", "email_id"],
+      "user": ["name", "email_id", "username"],
+      "sample": ["sample_igf_id", "project_igf_id"]}
+    with open(self.db_config_file, 'r') as json_data:
+      dbparam = json.load(json_data)
+    base = BaseAdaptor(**dbparam)
+    self.engine = base.engine
+    self.dbname = dbparam['dbname']
+    if os.path.exists(self.dbname):
+      os.remove(self.dbname)
+    Base.metadata.create_all(self.engine)
+    self.session_class = base.session_class
+    base.start_session()
+    ua = UserAdaptor(**{'session':base.session})
+    user_data = [
+      {'name':'C','email_id':'c@c.com','username':'c'}]
+    ua.store_user_data(data=user_data)
+    base.close_session()
+
+  def tearDown(self):
+    Base.metadata.drop_all(self.engine)
+    if os.path.exists(self.dbname):
+      os.remove(self.dbname)
+
+  @patch("igf_data.process.seqrun_processing.unified_metadata_registration.get_data_from_portal", return_value={
+      1: [{"project_igf_id": "IGFA001", "deliverable": "COSMX", "name": "User B", "email_id": "a@b.com", "username": "aaaa"}],
+      2: [{"project_igf_id": "IGFA002", "deliverable": "COSMX", "name": "User C", "email_id": "a@c.com"}],
+      3: [{"project_igf_id": "IGFA003", "deliverable": "COSMX", "name": "User D", "email_id": "a-c.com", "username": "ddd"}]})
+  def test_UnifiedMetadataRegistration_execute(self, *args):
+    metadata_registration = UnifiedMetadataRegistration(
+      portal_config_file=self.portal_config_file,
+      fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
+      sync_metadata_url_suffix=self.sync_metadata_url_suffix,
+      metadata_validation_schema=self.metadata_validation_schema,
+      db_config_file=self.db_config_file,
+      default_project_user_email='c@c.com',
+      samples_required=False,)
+    metadata_registration.execute()
+    
+
 
 if __name__ == '__main__':
   unittest.main()
