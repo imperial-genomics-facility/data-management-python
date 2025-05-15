@@ -1,7 +1,7 @@
 import os, json, time
 from urllib.parse import urljoin
 import pandas as pd
-from typing import List, Dict, Any, Optional, Tuple
+from typing import List, Dict, Any, Optional, Tuple, Union
 from abc import ABC, abstractmethod
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
@@ -42,15 +42,15 @@ class MetadataContext:
     sync_metadata_url_suffix: str,
     metadata_validation_schema: str,
     db_config_file: str,
-    default_project_user_email: Optional[str] = None,
+    default_project_user_email: str,
     metadata_fetched: Optional[bool] = False,
     samples_required: bool = False,
-    raw_metadata_dict: Dict[str, list] = {},
+    raw_metadata_dict: Dict[str, List[Any]] = {},
     checked_required_column_dict: Dict[str, bool] = {},
     validated_metadata_dict: Dict[str, bool] = {},
     registered_metadata_dict: Dict[str, bool] = {},
     synced_metadata_dict: Dict[str, bool] = {},
-    table_columns: Dict[str, list] = {
+    table_columns: Dict[str, List[Any]] = {
       "project": ["project_igf_id", "deliverable"],
       "project_user": ["project_igf_id", "email_id"],
       "user": ["name", "email_id", "username"],
@@ -262,7 +262,7 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
     metadata_entry: List[Dict[str, str]],
     table_columns: Dict[str, list],
     samples_required: bool) \
-      -> Tuple[List[str], List[str], List[str], List[str]]:
+      -> Tuple[List[Dict[str, str]], List[Dict[str, str]], List[Dict[str, str]], List[Dict[str, str]]]:
     """
     Split the metadata into different tables.
     """

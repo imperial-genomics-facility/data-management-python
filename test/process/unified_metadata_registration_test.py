@@ -84,6 +84,7 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
       metadata_validation_schema=self.metadata_validation_schema,
       db_config_file=self.db_config_file,
+      default_project_user_email='c@c.com',
       )
     self.assertIsInstance(metadata_context, MetadataContext)
 
@@ -97,6 +98,7 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
       metadata_validation_schema=self.metadata_validation_schema,
       db_config_file=self.db_config_file,
+      default_project_user_email='c@c.com',
       )
     fetch_command.execute(metadata_context=metadata_context)
     self.assertFalse(
@@ -112,6 +114,7 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
       metadata_validation_schema=self.metadata_validation_schema,
       db_config_file=self.db_config_file,
+      default_project_user_email='c@c.com',
       )
     fetch_command.execute(metadata_context=metadata_context)
     self.assertTrue(
@@ -165,6 +168,7 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
       metadata_validation_schema=self.metadata_validation_schema,
       db_config_file=self.db_config_file,
+      default_project_user_email='c@c.com',
       metadata_fetched=True,
       raw_metadata_dict={}
       )
@@ -188,6 +192,7 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
       metadata_validation_schema=self.metadata_validation_schema,
       db_config_file=self.db_config_file,
+      default_project_user_email='c@c.com',
       metadata_fetched=True,
       raw_metadata_dict={1: [{"project_igf_id": "A", "deliverable": "COSMX", "name": "B", "email_id": "C", "username": "D"}]},
       samples_required=False)
@@ -245,6 +250,7 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
       metadata_validation_schema=self.metadata_validation_schema,
       db_config_file=self.db_config_file,
+      default_project_user_email='c@c.com',
       error_list=[],
       raw_metadata_dict={
         1: [{
@@ -274,6 +280,7 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
       metadata_validation_schema=self.metadata_validation_schema,
       db_config_file=self.db_config_file,
+      default_project_user_email='c@c.com',
       error_list=[],
       raw_metadata_dict={
         1: [{
