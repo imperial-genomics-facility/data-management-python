@@ -43,13 +43,13 @@ class MetadataContext:
     metadata_validation_schema: str,
     db_config_file: str,
     default_project_user_email: str,
-    metadata_fetched: Optional[bool] = False,
+    metadata_fetched: bool = False,
     samples_required: bool = False,
-    raw_metadata_dict: Dict[str, List[Any]] = {},
-    checked_required_column_dict: Dict[str, bool] = {},
-    validated_metadata_dict: Dict[str, bool] = {},
-    registered_metadata_dict: Dict[str, bool] = {},
-    synced_metadata_dict: Dict[str, bool] = {},
+    raw_metadata_dict: Dict[int, List[Any]] = {},
+    checked_required_column_dict: Dict[int, bool] = {},
+    validated_metadata_dict: Dict[int, bool] = {},
+    registered_metadata_dict: Dict[int, bool] = {},
+    synced_metadata_dict: Dict[int, bool] = {},
     table_columns: Dict[str, List[Any]] = {
       "project": ["project_igf_id", "deliverable"],
       "project_user": ["project_igf_id", "email_id"],
@@ -95,8 +95,12 @@ class FetchNewMetadataCommand(BaseCommand):
           url_suffix=fetch_metadata_url_suffix,
           portal_config_file=portal_config_file)
       if len(new_project_data_dict) > 0:
+        reformatted_project_data_dict = \
+          {int(k):v for k,v in new_project_data_dict.items()}
         metadata_context.raw_metadata_dict = new_project_data_dict
         metadata_context.metadata_fetched = True
+      else:
+        metadata_context.metadata_fetched = False
     except Exception as e:
       raise ValueError(
         f"Failed to fetch new metadata from portal: {e}")
@@ -174,7 +178,7 @@ class CheckRawMetadataColumnsCommand(BaseCommand):
 class ValidateMetadataCommand(BaseCommand):
   @staticmethod
   def _validate_metadata(
-    metadata_id: str,
+    metadata_id: int,
     metadata_entry: List[Dict[str, Any]],
     metadata_validation_schema: str) -> List[str]:
     """
