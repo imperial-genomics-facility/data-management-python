@@ -88,7 +88,7 @@ class Find_and_register_new_project_data_from_portal_db:
       ldap_server: Union[str, None] = None,
       setup_irods: Union[bool, None] = True,
       notify_user: Union[bool, None] = True,
-      default_user_email: str = 'igf@imperial.ac.uk',
+      default_user_email: str = '',
       project_lookup_column: str = 'project_igf_id',
       user_lookup_column: str = 'email_id',
       data_authority_column: str = 'data_authority',
