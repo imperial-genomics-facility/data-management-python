@@ -1328,6 +1328,8 @@ class Cosmx_slide(Base):
   cosmx_run = relationship('Cosmx_run')
   panel_info = Column(String(100), nullable=True)
   assay_type = Column(String(100), nullable=True)
+  version = Column(String(10), nullable=True)
+  attribute_value = Column(JSONType(), nullable=True)
   date_created = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp())
 
   def __repr__(self):
@@ -1352,7 +1354,6 @@ class Cosmx_fov(Base):
   cosmx_slide = relationship('Cosmx_slide')
   cosmx_run_id = Column(INTEGER(unsigned=True), ForeignKey('cosmx_run.cosmx_run_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
   cosmx_run = relationship('Cosmx_run')
-  transcript_per_cell_count = Column(INTEGER(unsigned=True), nullable=True)
   tissue_annotation = Column(String(100), nullable=True)
   tissue_ontology = Column(String(100), nullable=True)
   tissue_condition = Column(String(100), nullable=True)
