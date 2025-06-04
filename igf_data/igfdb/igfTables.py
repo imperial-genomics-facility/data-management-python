@@ -3,7 +3,7 @@ from igf_data.igfdb.datatype import JSONType
 from sqlalchemy.sql.functions import current_timestamp
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.dialects.mysql import INTEGER
+from sqlalchemy.dialects.mysql import INTEGER, DECIMAL
 from sqlalchemy import Column, String, Enum, TIMESTAMP, TEXT, ForeignKey, UniqueConstraint
 
 
@@ -1345,7 +1345,7 @@ class Cosmx_fov(Base):
   """
   __tablename__ = 'cosmx_fov'
   __table_args__ = (
-    UniqueConstraint('cosmx_fov_id', 'cosmx_fov_igf_id'),
+    UniqueConstraint('cosmx_fov_igf_id'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
 
   cosmx_fov_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
@@ -1364,6 +1364,31 @@ class Cosmx_fov(Base):
     '''
     return \
       f"cosmx_fov_igf_id = '{self.cosmx_fov_igf_id}'"
+
+class Cosmx_fov_rna_qc(Base):
+  """
+  """
+  __tablename__ = 'cosmx_fov_rna_qc'
+  __table_args__ = (
+    UniqueConstraint('cosmx_fov_igf_id'),
+    { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
+
+  cosmx_fov_rna_qc_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  cosmx_fov_id = Column(INTEGER(unsigned=True), ForeignKey('cosmx_fov.cosmx_fov_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  cosmx_fov = relationship('Cosmx_fov')
+  mean_transcript_per_cell = Column(DECIMAL(10, 2), nullable=True)
+  mean_unique_genes_per_cell = Column(DECIMAL(10, 2), nullable=True)
+  non_empty_cells = Column(INTEGER(unsigned=True), nullable=True)
+  non_empty_cells_pct = Column(DECIMAL(10, 2), nullable=True)
+  percentile_90_transcript_per_cell = Column(DECIMAL(10, 2), nullable=True)
+  percentile_10_transcript_per_cell = Column(DECIMAL(10, 2), nullable=True)
+
+  def __repr__(self):
+    '''
+    Display Cosmx_fov_rna_qc entry
+    '''
+    return \
+      f"cosmx_fov_igf_id = '{self.cosmx_fov_id}'"
 
 
 class Cosmx_slide_attribute(Base):
