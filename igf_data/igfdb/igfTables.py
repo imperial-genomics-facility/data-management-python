@@ -1354,9 +1354,6 @@ class Cosmx_fov(Base):
   cosmx_slide = relationship('Cosmx_slide')
   cosmx_run_id = Column(INTEGER(unsigned=True), ForeignKey('cosmx_run.cosmx_run_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
   cosmx_run = relationship('Cosmx_run')
-  tissue_annotation = Column(String(100), nullable=True)
-  tissue_ontology = Column(String(100), nullable=True)
-  tissue_condition = Column(String(100), nullable=True)
 
   def __repr__(self):
     '''
@@ -1364,6 +1361,30 @@ class Cosmx_fov(Base):
     '''
     return \
       f"cosmx_fov_igf_id = '{self.cosmx_fov_igf_id}'"
+
+
+class Cosmx_fov_annotation(Base):
+  """
+  """
+  __tablename__ = 'cosmx_fov_annotation'
+  __table_args__ = (
+    UniqueConstraint('cosmx_fov_igf_id'),
+    { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
+
+  cosmx_fov_annotation_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  cosmx_fov_id = Column(INTEGER(unsigned=True), ForeignKey('cosmx_fov.cosmx_fov_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  cosmx_fov = relationship('Cosmx_fov')
+  tissue_annotation = Column(String(100), nullable=True)
+  tissue_ontology = Column(String(100), nullable=True)
+  tissue_condition = Column(String(100), nullable=True)
+
+  def __repr__(self):
+    '''
+    Display Cosmx_fov_annotation entry
+    '''
+    return \
+      f"cosmx_fov_igf_id = '{self.cosmx_fov_id}'"
+
 
 class Cosmx_fov_rna_qc(Base):
   """
