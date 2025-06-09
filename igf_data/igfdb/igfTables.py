@@ -1368,7 +1368,7 @@ class Cosmx_fov_annotation(Base):
   """
   __tablename__ = 'cosmx_fov_annotation'
   __table_args__ = (
-    UniqueConstraint('cosmx_fov_igf_id'),
+    UniqueConstraint('cosmx_fov_id'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
 
   cosmx_fov_annotation_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
@@ -1383,7 +1383,7 @@ class Cosmx_fov_annotation(Base):
     Display Cosmx_fov_annotation entry
     '''
     return \
-      f"cosmx_fov_igf_id = '{self.cosmx_fov_id}'"
+      f"cosmx_fov_id = '{self.cosmx_fov_id}'"
 
 
 class Cosmx_fov_rna_qc(Base):
@@ -1391,7 +1391,7 @@ class Cosmx_fov_rna_qc(Base):
   """
   __tablename__ = 'cosmx_fov_rna_qc'
   __table_args__ = (
-    UniqueConstraint('cosmx_fov_igf_id'),
+    UniqueConstraint('cosmx_fov_id'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
 
   cosmx_fov_rna_qc_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
@@ -1409,7 +1409,7 @@ class Cosmx_fov_rna_qc(Base):
     Display Cosmx_fov_rna_qc entry
     '''
     return \
-      f"cosmx_fov_igf_id = '{self.cosmx_fov_id}'"
+      f"cosmx_fov_id = '{self.cosmx_fov_id}'"
 
 
 class Cosmx_fov_protein_qc(Base):
@@ -1417,7 +1417,7 @@ class Cosmx_fov_protein_qc(Base):
   """
   __tablename__ = 'cosmx_fov_protein_qc'
   __table_args__ = (
-    UniqueConstraint('cosmx_fov_igf_id'),
+    UniqueConstraint('cosmx_fov_id'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
 
   cosmx_fov_protein_qc_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
