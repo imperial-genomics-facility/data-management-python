@@ -54,7 +54,17 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
 
 
   def test_prepare_run_ftp_export(self):
-    assert False, "Test not implemented"
+    run_config = {
+      "cosmx_run_id": "A1", "export_directory_path": "A1_ftp"}
+    prep_export_data = \
+      prepare_run_ftp_export.function(run_entry=run_config, work_dir='/tmp')
+    assert isinstance(prep_export_data, dict)
+    assert "run_entry" in prep_export_data
+    assert "cosmx_ftp_export_name" in prep_export_data
+    assert prep_export_data["cosmx_ftp_export_name"] == "A1_ftp"
+    assert isinstance(prep_export_data["run_entry"], dict)
+    assert "export_dir" in prep_export_data["run_entry"]
+    assert prep_export_data["run_entry"]["export_dir"] == "/TEST_EXPORT_DIR/A1_ftp"
 
   def test_run_ftp_export(self):
     assert False, "Test not implemented"
