@@ -87,7 +87,13 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
 
 
   def test_extract_ftp_export(self):
-    assert False, "Test not implemented"
+    extract_cmd = \
+      extract_ftp_export.function(
+        export_dir="/TEST_EXPORT_DIR/A1_ftp",
+        work_dir="/tmp")
+    assert isinstance(extract_cmd, str)
+    assert "EXPORT_DIR=/TEST_EXPORT_DIR/A1_ftp" in extract_cmd
+    assert "WORK_DIR=/tmp" in extract_cmd
 
   def test_collect_extracted_data(self):
     assert False, "Test not implemented"

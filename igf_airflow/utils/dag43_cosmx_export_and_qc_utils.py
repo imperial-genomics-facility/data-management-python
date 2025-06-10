@@ -136,7 +136,7 @@ def prep_extract_ftp_export(run_entry: Dict[str, str]) -> Dict[str, Any]:
 def extract_ftp_export(export_dir: str, work_dir: str) -> str:
   try:
 
-    bash_cmd = """set -eo pipefail;
+    bash_cmd = f"""set -eo pipefail;
       EXPORT_DIR={export_dir}
       EXPORT_DIR_NAME=$(basename $EXPORT_DIR)
       WORK_DIR={work_dir}
