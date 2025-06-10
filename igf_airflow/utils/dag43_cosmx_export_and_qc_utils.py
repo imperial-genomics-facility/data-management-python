@@ -122,7 +122,6 @@ def run_ftp_export(cosmx_ftp_export_name: str) -> str:
 def prep_extract_ftp_export(run_entry: Dict[str, str]) -> Dict[str, Any]:
   try:
     export_dir = run_entry.get("export_dir")
-    work_dir = run_entry.get("work_dir")
     if not export_dir:
       raise KeyError("Missing export_dir in run_entry")
     return {'run_entry': run_entry, 'export_dir': export_dir}

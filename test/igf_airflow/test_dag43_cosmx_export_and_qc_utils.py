@@ -67,18 +67,24 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
     assert prep_export_data["run_entry"]["export_dir"] == "/TEST_EXPORT_DIR/A1_ftp"
 
   def test_run_ftp_export(self):
-    run_config = {
-      "cosmx_run_id": "A1",
-      "export_directory_path": "A1_ftp",
-      "export_dir": "/TEST_EXPORT_DIR/A1_ftp",
-      "work_dir": "/tmp"}
     bash_cmd = \
       run_ftp_export.function(cosmx_ftp_export_name="A1_ftp")
     assert isinstance(bash_cmd, str)
     assert "python TEST_SCRIPT -r TEST_PROFILE -q0 -s0 -f A1_ftp" in bash_cmd
 
   def test_prep_extract_ftp_export(self):
-    assert False, "Test not implemented"
+    run_config = {
+      "cosmx_run_id": "A1",
+      "export_directory_path": "A1_ftp",
+      "export_dir": "/TEST_EXPORT_DIR/A1_ftp",
+      "work_dir": "/tmp"}
+    extracted_data = \
+      prep_extract_ftp_export.function(run_entry=run_config)
+    assert isinstance(extracted_data, dict)
+    assert "run_entry" in extracted_data
+    assert "export_dir" in extracted_data
+    assert extracted_data["export_dir"] == "/TEST_EXPORT_DIR/A1_ftp"
+
 
   def test_extract_ftp_export(self):
     assert False, "Test not implemented"
