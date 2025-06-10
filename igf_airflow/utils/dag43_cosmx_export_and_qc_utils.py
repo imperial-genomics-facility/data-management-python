@@ -4,8 +4,10 @@ import shutil
 import logging
 import subprocess
 import pandas as pd
+from pathlib import Path
 from datetime import timedelta
-from airflow.models import Variable 
+from airflow.models import Variable
+from yaml import load, SafeLoader
 from igf_data.utils.bashutils import bash_script_wrapper
 from igf_data.utils.jupyter_nbconvert_wrapper import Notebook_runner
 from typing import (
@@ -42,13 +44,29 @@ MS_TEAMS_CONF = \
 DATABASE_CONFIG_FILE = \
   Variable.get('database_config_file', default_var=None)
 
+## COSMX CONFIG
+COSMX_EXPORT_DIR = \
+  Variable.get('cosmx_export_base_dir', default_var='/TEST_EXPORT_DIR/')
+COSMX_EXPORT_CONDA_ENV = \
+  Variable.get('cosmx_export_conda_env', default_var='TEST_ENV')
+COXMX_EXPORT_SCRIPT_PATH = \
+  Variable.get('cosmx_export_script_path', default_var='TEST_SCRIPT')
+COSMX_EXPORT_RCLONE_PROFILE = \
+  Variable.get('cosmx_export_rclone_profile', default_var='TEST_PROFILE')
 ## TASKS
 
 @task(multiple_outputs=False)
 def run_ftp_export_factory(design_file: str, work_dir: str) -> List[Dict[str, str]]:
   try:
-    design_data = [{}]
-    return design_data
+    with open(design_file, 'r') as fp:
+      design_data = load(fp, Loader=SafeLoader)
+    run_metadata = design_data.get("run_metadata")
+    if not run_metadata:
+      raise KeyError(
+        f"Missing run_metadata in file {design_file}")
+    if not isinstance(run_metadata, list):
+      raise TypeError(f"Expecting a list of run_meatadata, received {type(run_metadata)}")
+    return run_metadata
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
@@ -60,9 +78,13 @@ def run_ftp_export_factory(design_file: str, work_dir: str) -> List[Dict[str, st
 @task(multiple_outputs=True)
 def prepare_run_ftp_export(run_entry: Dict[str, str], work_dir: str) -> Dict[str, Any]:
   try:
-    exported_data = {}
-    run_cmd = ''
-    return {'run_entry': exported_data, 'run_cmd': run_cmd}
+    cosmx_ftp_export_name = run_entry.get("export_directory_path")
+    if COSMX_EXPORT_DIR is not None and cosmx_ftp_export_name is not None:
+        export_dir = os.path.join(COSMX_EXPORT_DIR, cosmx_ftp_export_name)
+    else:
+        raise KeyError('Missing COSMX_EXPORT_DIR or cosmx export_directory_path in for ftp transfer')
+    run_entry.update({'work_dir': work_dir, 'export_dir': export_dir})
+    return {'run_entry': run_entry, 'cosmx_ftp_export_name': cosmx_ftp_export_name}
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
@@ -72,10 +94,21 @@ def prepare_run_ftp_export(run_entry: Dict[str, str], work_dir: str) -> Dict[str
 
 ## BASH TASK
 @task.bash
-def run_ftp_export(run_cmd: str) -> str:
+def run_ftp_export(cosmx_ftp_export_name: str) -> str:
   try:
     bash_cmd = f"""set -eo pipefail;
-    {run_cmd}"""
+    ## MOVE TO COSMX EXPORT DIR
+    cd {COSMX_EXPORT_DIR};
+    ## ACTIVATE CONDA ON HPC
+    eval "$(~/anaconda3/bin/conda shell.bash hook)";
+    conda activate {COSMX_EXPORT_CONDA_ENV};
+    ## CHEKC AND REMOVE OLD EXPORT
+    if [-d {cosmx_ftp_export_name} ]; then
+      echo "Removing old export dir {cosmx_ftp_export_name}";
+      rm -rf {cosmx_ftp_export_name};
+    fi
+    ## RUN EXPORT SCRIPT
+    python {COXMX_EXPORT_SCRIPT_PATH} -r {COSMX_EXPORT_RCLONE_PROFILE} -q0 -s0 -f {cosmx_ftp_export_name}"""
     return bash_cmd
   except Exception as e:
     log.error(e)

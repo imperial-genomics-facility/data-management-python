@@ -4,6 +4,8 @@ import yaml
 import subprocess
 import unittest
 import pandas as pd
+from pathlib import Path
+from yaml import load, SafeLoader, dump, SafeDumper
 from igf_data.utils.fileutils import (
   get_temp_dir,
   remove_dir)
@@ -33,7 +35,23 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
     remove_dir(self.temp_dir)
 
   def test_run_ftp_export_factory(self):
-    assert False, "Test not implemented"
+    design_data = {
+      "run_metadata": [
+        {"cosmx_run_id": "A1", "export_directory_path": "A1_ftp"},
+        {"cosmx_run_id": "A2", "export_directory_path": "A2_ftp"}],
+      "analysis_metadata": {
+        "run_type": "RNA"}}
+    design_file = Path(self.temp_dir) / 'design.yaml'
+    with open(design_file, 'w') as fp:
+      fp.write(dump(design_data, Dumper=SafeDumper))
+    factory_data = run_ftp_export_factory.function(design_file=str(design_file), work_dir='/tmp')
+    assert isinstance (factory_data, list)
+    assert len(factory_data) == 2
+    assert "cosmx_run_id" in factory_data[0]
+    assert "export_directory_path" in factory_data[0]
+    assert factory_data[0]["cosmx_run_id"] == "A1"
+    assert factory_data[0]["export_directory_path"] == "A1_ftp"
+
 
   def test_prepare_run_ftp_export(self):
     assert False, "Test not implemented"
