@@ -99,7 +99,17 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
     assert False, "Test not implemented"
 
   def test_collect_all_slides(self):
-    assert False, "Test not implemented"
+    run_config = {
+      "cosmx_run_id": "A1",
+      "export_directory_path": "A1_ftp",
+      "export_dir": "/TEST_EXPORT_DIR/A1_ftp",
+      "work_dir": "/tmp"}
+    collected_data = \
+      collect_extracted_data.function(run_entry=run_config)
+    assert isinstance(collected_data, dict)
+    assert "cosmx_run_id" in collected_data
+    assert "export_dir" in collected_data
+    assert collected_data["export_dir"] == "/TEST_EXPORT_DIR/A1_ftp"
 
   def test_prep_validate_export_md5(self):
     assert False, "Test not implemented"

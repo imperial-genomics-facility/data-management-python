@@ -200,8 +200,8 @@ def extract_ftp_export(export_dir: str, work_dir: str) -> str:
 @task(multiple_outputs=False)
 def collect_extracted_data(run_entry: Dict[str, str]) -> Dict[str, str]:
   try:
-    extracted_data = {}
-    return extracted_data
+    ## TO DO: JUST A PLACE HOLDER FOR BASH TASK OUTPUT
+    return run_entry
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
