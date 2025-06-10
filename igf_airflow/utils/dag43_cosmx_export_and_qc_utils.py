@@ -56,12 +56,13 @@ def run_ftp_export_factory(design_file: str, work_dir: str) -> List[Dict[str, st
       message_prefix=str(e))
     raise ValueError(e)
 
-
-@task(multiple_outputs=False)
-def run_ftp_export(run_entry: Dict[str, str], work_dir: str) -> Dict[str, str]:
+## TASK
+@task(multiple_outputs=True)
+def prepare_run_ftp_export(run_entry: Dict[str, str], work_dir: str) -> Dict[str, Any]:
   try:
     exported_data = {}
-    return exported_data
+    run_cmd = ''
+    return {'run_entry': exported_data, 'run_cmd': run_cmd}
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
@@ -69,9 +70,50 @@ def run_ftp_export(run_entry: Dict[str, str], work_dir: str) -> Dict[str, str]:
       message_prefix=str(e))
     raise ValueError(e)
 
+## BASH TASK
+@task.bash
+def run_ftp_export(run_cmd: str) -> str:
+  try:
+    bash_cmd = f"""set -eo pipefail;
+    {run_cmd}"""
+    return bash_cmd
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=str(e))
+    raise ValueError(e)
 
+## TASK
+@task(multiple_outputs=True)
+def prep_extract_ftp_export(run_entry: Dict[str, str]) -> Dict[str, Any]:
+  try:
+    extracted_data = {}
+    run_cmd = ''
+    return {'run_entry': extracted_data, 'run_cmd': run_cmd}
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=str(e))
+    raise ValueError(e)
+
+@task.bash
+def extract_ftp_export(run_cmd: str) -> str:
+  try:
+    bash_cmd = f"""set -eo pipefail;
+    {run_cmd}"""
+    return bash_cmd
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=str(e))
+    raise ValueError(e)
+
+## TASK
 @task(multiple_outputs=False)
-def extract_ftp_export(run_entry: Dict[str, str]) -> Dict[str, str]:
+def collect_extracted_data(run_entry: Dict[str, str]) -> Dict[str, str]:
   try:
     extracted_data = {}
     return extracted_data
@@ -81,7 +123,6 @@ def extract_ftp_export(run_entry: Dict[str, str]) -> Dict[str, str]:
       ms_teams_conf=MS_TEAMS_CONF,
       message_prefix=str(e))
     raise ValueError(e)
-
 
 @task(multiple_outputs=False)
 def collect_all_slides(run_entry_list: Union[List[Dict[str, str]], Any]) -> Optional[List[Dict[str, str]]]:
@@ -94,12 +135,26 @@ def collect_all_slides(run_entry_list: Union[List[Dict[str, str]], Any]) -> Opti
       ms_teams_conf=MS_TEAMS_CONF,
       message_prefix=str(e))
 
-
-@task(multiple_outputs=False)
-def validate_export_md5(run_entry: Dict[str, str]) -> Dict[str, str]:
+@task(multiple_outputs=True)
+def prep_validate_export_md5(run_entry: Dict[str, str]) -> Dict[str, Any]:
   try:
     validated_data = {}
-    return validated_data
+    run_cmd = ''
+    return {'run_entry': validated_data, 'run_cmd': run_cmd}
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=str(e))
+    raise ValueError(e)
+
+
+@task(multiple_outputs=False)
+def validate_export_md5(run_cmd: str) -> str:
+  try:
+    bash_cmd = f"""set -eo pipefail;
+    {run_cmd}"""
+    return bash_cmd
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
