@@ -187,7 +187,9 @@ def extract_ftp_export(export_dir: str, work_dir: str) -> str:
         rm -rf $QC_DIR;
       fi
       mkdir $QC_DIR;
-      cp -r $EXPORT_DIR/$MD5SUM_DIR ."""
+      cp -r $EXPORT_DIR/$MD5SUM_DIR .
+      cp $EXPORT_DIR/*.RDS .;
+      cp $EXPORT_DIR/TileDB.tar.gz ."""
     return bash_cmd
   except Exception as e:
     log.error(e)
