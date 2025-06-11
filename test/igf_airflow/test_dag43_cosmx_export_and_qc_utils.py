@@ -96,9 +96,6 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
     assert "WORK_DIR=/tmp" in extract_cmd
 
   def test_collect_extracted_data(self):
-    assert False, "Test not implemented"
-
-  def test_collect_all_slides(self):
     run_config = {
       "cosmx_run_id": "A1",
       "export_directory_path": "A1_ftp",
@@ -111,7 +108,7 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
     assert "export_dir" in collected_data
     assert collected_data["export_dir"] == "/TEST_EXPORT_DIR/A1_ftp"
 
-  def test_prep_validate_export_md5(self):
+  def test_collect_all_slides(self):
     data_export_dir = Path(self.temp_dir) / 'export_1'
     flatfiles_dir = data_export_dir / 'FlatFiles'
     slide_1_dir = flatfiles_dir / 'slide1'
@@ -133,9 +130,26 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
     assert slide_data_list[0]["cosmx_run_id"] == "A1"
     assert slide_data_list[0]["slide_dir"] in ("slide1", "slide2")
 
+  def test_prep_validate_export_md5(self):
+    run_config = {
+      "cosmx_run_id": "A1",
+      "export_directory_path": "export_1",
+      "export_dir": "/TEST_EXPORT_DIR/export_1",
+      "work_dir": "/tmp"}
+    validated_data = \
+      prep_validate_export_md5.function(
+        run_entry=run_config)
+    assert isinstance(validated_data, dict)
+    assert "run_entry" in validated_data
+    assert "export_dir" in validated_data
+    assert validated_data["export_dir"] == "/TEST_EXPORT_DIR/export_1"
 
   def test_validate_export_md5(self):
-    assert False, "Test not implemented"
+    export_dir = "/TEST_EXPORT_DIR/export_1"
+    bash_cmd = \
+      validate_export_md5.function(export_dir=export_dir)
+    assert isinstance(bash_cmd, str)
+    assert "FLATFILE_DIR=/TEST_EXPORT_DIR/export_1/FlatFiles" in bash_cmd
 
   def test_generate_count_qc_report(self):
     assert False, "Test not implemented"

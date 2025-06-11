@@ -53,8 +53,9 @@ COXMX_EXPORT_SCRIPT_PATH = \
   Variable.get('cosmx_export_script_path', default_var='TEST_SCRIPT')
 COSMX_EXPORT_RCLONE_PROFILE = \
   Variable.get('cosmx_export_rclone_profile', default_var='TEST_PROFILE')
-## TASKS
 
+
+## TASKS
 @task(multiple_outputs=False)
 def run_ftp_export_factory(design_file: str, work_dir: str) -> List[Dict[str, str]]:
   try:
@@ -74,6 +75,7 @@ def run_ftp_export_factory(design_file: str, work_dir: str) -> List[Dict[str, st
       message_prefix=str(e))
     raise ValueError(e)
 
+
 ## TASK
 @task(multiple_outputs=True)
 def prepare_run_ftp_export(run_entry: Dict[str, str], work_dir: str) -> Dict[str, Any]:
@@ -91,6 +93,7 @@ def prepare_run_ftp_export(run_entry: Dict[str, str], work_dir: str) -> Dict[str
       ms_teams_conf=MS_TEAMS_CONF,
       message_prefix=str(e))
     raise ValueError(e)
+
 
 ## BASH TASK
 @task.bash
@@ -117,6 +120,7 @@ def run_ftp_export(cosmx_ftp_export_name: str) -> str:
       message_prefix=str(e))
     raise ValueError(e)
 
+
 ## TASK
 @task(multiple_outputs=True)
 def prep_extract_ftp_export(run_entry: Dict[str, str]) -> Dict[str, Any]:
@@ -132,6 +136,8 @@ def prep_extract_ftp_export(run_entry: Dict[str, str]) -> Dict[str, Any]:
       message_prefix=str(e))
     raise ValueError(e)
 
+
+## BASH TASK
 @task.bash
 def extract_ftp_export(export_dir: str, work_dir: str) -> str:
   try:
@@ -198,6 +204,43 @@ def extract_ftp_export(export_dir: str, work_dir: str) -> str:
       message_prefix=str(e))
     raise ValueError(e)
 
+
+## TASK
+@task(multiple_outputs=True)
+def prep_validate_export_md5(run_entry: Dict[str, str]) -> Dict[str, Any]:
+  try:
+    export_dir = run_entry.get("export_dir")
+    if not export_dir:
+      raise KeyError("Missing export_dir in run_entry")
+    return {'run_entry': run_entry, 'export_dir': export_dir}
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=str(e))
+    raise ValueError(e)
+
+
+## BASH TASK
+@task(multiple_outputs=False)
+def validate_export_md5(export_dir: str) -> str:
+  try:
+    bash_cmd = f"""set -eo pipefail;
+      FLATFILE_DIR={export_dir}/FlatFiles
+      """ + \
+      """FLATFILES_MD5=../md5sum/md5sum_flatFiles.csv
+      ## CHECK MD5
+      cd $FLATFILE_DIR
+      cat $FLATFILES_MD5 |awk -F',' '{print $1 " " $2}'|grep -v md5sum|md5sum -c"""
+    return bash_cmd
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=str(e))
+    raise ValueError(e)
+
+
 ## TASK
 @task(multiple_outputs=False)
 def collect_extracted_data(run_entry: Dict[str, str]) -> Dict[str, str]:
@@ -235,32 +278,10 @@ def collect_all_slides(run_entry_list: Union[List[Dict[str, str]], Any]) -> Opti
       ms_teams_conf=MS_TEAMS_CONF,
       message_prefix=str(e))
 
-@task(multiple_outputs=True)
-def prep_validate_export_md5(run_entry: Dict[str, str]) -> Dict[str, Any]:
-  try:
-    validated_data = {}
-    run_cmd = ''
-    return {'run_entry': validated_data, 'run_cmd': run_cmd}
-  except Exception as e:
-    log.error(e)
-    send_airflow_failed_logs_to_channels(
-      ms_teams_conf=MS_TEAMS_CONF,
-      message_prefix=str(e))
-    raise ValueError(e)
 
 
-@task(multiple_outputs=False)
-def validate_export_md5(run_cmd: str) -> str:
-  try:
-    bash_cmd = f"""set -eo pipefail;
-    {run_cmd}"""
-    return bash_cmd
-  except Exception as e:
-    log.error(e)
-    send_airflow_failed_logs_to_channels(
-      ms_teams_conf=MS_TEAMS_CONF,
-      message_prefix=str(e))
-    raise ValueError(e)
+
+
 
 
 @task(multiple_outputs=False)
