@@ -112,7 +112,27 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
     assert collected_data["export_dir"] == "/TEST_EXPORT_DIR/A1_ftp"
 
   def test_prep_validate_export_md5(self):
-    assert False, "Test not implemented"
+    data_export_dir = Path(self.temp_dir) / 'export_1'
+    flatfiles_dir = data_export_dir / 'FlatFiles'
+    slide_1_dir = flatfiles_dir / 'slide1'
+    slide_2_dir = flatfiles_dir / 'slide2'
+    os.makedirs(slide_1_dir)
+    os.makedirs(slide_2_dir)
+    run_config_list = [{
+      "cosmx_run_id": "A1",
+      "export_directory_path": "export_1",
+      "export_dir": data_export_dir,
+      "work_dir": "/tmp"}]
+    slide_data_list = \
+      collect_all_slides.function(
+        run_entry_list=run_config_list)
+    assert len(slide_data_list) == 2
+    assert isinstance(slide_data_list[0], dict)
+    assert "cosmx_run_id" in slide_data_list[0]
+    assert "slide_dir" in slide_data_list[0]
+    assert slide_data_list[0]["cosmx_run_id"] == "A1"
+    assert slide_data_list[0]["slide_dir"] in ("slide1", "slide2")
+
 
   def test_validate_export_md5(self):
     assert False, "Test not implemented"

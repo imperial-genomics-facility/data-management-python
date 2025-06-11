@@ -212,8 +212,21 @@ def collect_extracted_data(run_entry: Dict[str, str]) -> Dict[str, str]:
 @task(multiple_outputs=False)
 def collect_all_slides(run_entry_list: Union[List[Dict[str, str]], Any]) -> Optional[List[Dict[str, str]]]:
   try:
-    slide_data = [{}]
-    return slide_data
+    slide_data_list = list()
+    for run_entry in run_entry_list:
+      export_dir = run_entry.get("export_dir")
+      cosmx_run_id = run_entry.get("cosmx_run_id")
+      if not export_dir or not cosmx_run_id:
+        raise KeyError(f"Missing export_dir or cosmx_run_id in run_entry: {run_entry}")
+      ## CHECKING FLATFILES DIR
+      flat_file_dir = Path(export_dir) / "FlatFiles"
+      check_file_path(flat_file_dir)
+      for slide_dir_name in os.listdir(flat_file_dir):
+        slide_data_list.append({
+          "cosmx_run_id": cosmx_run_id,
+          "export_dir": export_dir,
+          "slide_dir": slide_dir_name})
+    return slide_data_list
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
