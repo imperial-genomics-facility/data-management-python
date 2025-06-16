@@ -278,12 +278,7 @@ def collect_all_slides(run_entry_list: Union[List[Dict[str, str]], Any]) -> Opti
       ms_teams_conf=MS_TEAMS_CONF,
       message_prefix=str(e))
 
-
-
-
-
-
-
+## TASK
 @task(multiple_outputs=False)
 def generate_count_qc_report(run_entry: Dict[str, str]) -> Dict[str, str]:
   try:
@@ -297,6 +292,7 @@ def generate_count_qc_report(run_entry: Dict[str, str]) -> Dict[str, str]:
     raise ValueError(e)
 
 
+## TASK
 @task(multiple_outputs=False)
 def generate_fov_qc_report(run_entry: Dict[str, str]) -> Dict[str, str]:
   try:
@@ -309,7 +305,7 @@ def generate_fov_qc_report(run_entry: Dict[str, str]) -> Dict[str, str]:
       message_prefix=str(e))
     raise ValueError(e)
 
-
+## TASK
 @task(multiple_outputs=False)
 def generate_db_data(qc_list: List[Dict[str, str]]) -> Dict[str, str]:
   try:
@@ -322,7 +318,7 @@ def generate_db_data(qc_list: List[Dict[str, str]]) -> Dict[str, str]:
       message_prefix=str(e))
     raise ValueError(e)
 
-
+## TASK
 @task(multiple_outputs=False)
 def copy_slide_data_to_globus(run_entry: Dict[str, str]) -> Dict[str, str]:
   try:
@@ -336,6 +332,7 @@ def copy_slide_data_to_globus(run_entry: Dict[str, str]) -> Dict[str, str]:
     raise ValueError(e)
 
 
+## TASK
 @task(multiple_outputs=False)
 def register_db_data(run_entry: Dict[str, str]) -> Dict[str, str]:
   try:
@@ -349,6 +346,7 @@ def register_db_data(run_entry: Dict[str, str]) -> Dict[str, str]:
     raise ValueError(e)
 
 
+## TASK
 @task(multiple_outputs=False)
 def collect_qc_reports_and_upload_to_portal(run_entry_list: Union[List[Dict[str, str]], Any]) -> Optional[bool]:
   try:
