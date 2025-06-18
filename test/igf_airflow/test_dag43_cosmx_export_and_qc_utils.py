@@ -94,6 +94,9 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
     assert isinstance(extract_cmd, str)
     assert "EXPORT_DIR=/TEST_EXPORT_DIR/A1_ftp" in extract_cmd
     assert "WORK_DIR=/tmp" in extract_cmd
+    assert r"find $RAWFILES_DIR -type f -exec chmod 600 {} \;" in extract_cmd
+    assert r"find $FLATFILES_DIR -type f -exec chmod 600 {} \;" in extract_cmd
+
 
   def test_collect_extracted_data(self):
     run_config = {

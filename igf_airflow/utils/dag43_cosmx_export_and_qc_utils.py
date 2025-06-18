@@ -142,60 +142,61 @@ def prep_extract_ftp_export(run_entry: Dict[str, str]) -> Dict[str, Any]:
 def extract_ftp_export(export_dir: str, work_dir: str) -> str:
   try:
 
-    bash_cmd = f"""set -eo pipefail;
-      EXPORT_DIR={export_dir}
-      EXPORT_DIR_NAME=$(basename $EXPORT_DIR)
-      WORK_DIR={work_dir}
-    """ + \
-    """cd $WORK_DIR
-      ## check for existing export dir and remove it
-      if [ -d $EXPORT_DIR_NAME ]; then
-          echo "Removing old export dir $EXPORT_DIR_NAME";
-          rm -rf $EXPORT_DIR_NAME;
-      fi
-      ## create new export dir
-      mkdir $EXPORT_DIR_NAME
-      cd $EXPORT_DIR_NAME
-      ## extract files
-      RAWFILES_DIR="RawFiles"
-      RAWFILES_ZIP="DecodedFiles.tar.gz"
-      FLATFILES_DIR="FlatFiles"
-      FLATFILES_ZIP="flatFiles.tar.gz"
-      QC_DIR="QC"
-      MD5SUM_DIR="md5sum"
-      umask 077
-      ## check if flatFiles.tar.gz is missing
-      if [ ! -f $EXPORT_DIR/$FLATFILES_ZIP ]; then
-          echo "Missing flatFiles.tar.gz"; exit 1;
-      fi
-      ## check if DecodedFiles.tar.gz is missing
-      if [ ! -f $EXPORT_DIR/$RAWFILES_ZIP ]; then
-        echo "Missing DecodedFiles.tar.gz"; exit 1;
-      fi
-      ## extract RawFiles
-      if [ -d $RAWFILES_DIR ]; then
-        rm -rf $RAWFILES_DIR;
-      fi
-      mkdir $RAWFILES_DIR;
-      tar -C $RAWFILES_DIR -xzf $EXPORT_DIR/$RAWFILES_ZIP;
-      find $RAWFILES_DIR -type d -exec chmod 700 {} \;
-      find $RAWFILES_DIR -type f -exec chmod 600 {} \;
-      ## extract FlatFiles
-      if [ -d $FLATFILES_DIR ]; then
-        rm -rf $FLATFILES_DIR;
-      fi
-      mkdir $FLATFILES_DIR
-      tar -C $FLATFILES_DIR -xzf $EXPORT_DIR/$FLATFILES_ZIP
-      find $FLATFILES_DIR -type d -exec chmod 700 {} \;
-      find $FLATFILES_DIR -type f -exec chmod 600 {} \;
-      ## create QC dir
-      if [ -d $QC_DIR ]; then
-        rm -rf $QC_DIR;
-      fi
-      mkdir $QC_DIR;
-      cp -r $EXPORT_DIR/$MD5SUM_DIR .
-      cp $EXPORT_DIR/*.RDS .;
-      cp $EXPORT_DIR/TileDB.tar.gz ."""
+    bash_cmd = \
+      f"""set -eo pipefail;
+        EXPORT_DIR={export_dir}
+        EXPORT_DIR_NAME=$(basename $EXPORT_DIR)
+        WORK_DIR={work_dir}
+      """ + \
+      """cd $WORK_DIR
+        ## check for existing export dir and remove it
+        if [ -d $EXPORT_DIR_NAME ]; then
+            echo "Removing old export dir $EXPORT_DIR_NAME";
+            rm -rf $EXPORT_DIR_NAME;
+        fi
+        ## create new export dir
+        mkdir $EXPORT_DIR_NAME
+        cd $EXPORT_DIR_NAME
+        ## extract files
+        RAWFILES_DIR="RawFiles"
+        RAWFILES_ZIP="DecodedFiles.tar.gz"
+        FLATFILES_DIR="FlatFiles"
+        FLATFILES_ZIP="flatFiles.tar.gz"
+        QC_DIR="QC"
+        MD5SUM_DIR="md5sum"
+        umask 077
+        ## check if flatFiles.tar.gz is missing
+        if [ ! -f $EXPORT_DIR/$FLATFILES_ZIP ]; then
+            echo "Missing flatFiles.tar.gz"; exit 1;
+        fi
+        ## check if DecodedFiles.tar.gz is missing
+        if [ ! -f $EXPORT_DIR/$RAWFILES_ZIP ]; then
+          echo "Missing DecodedFiles.tar.gz"; exit 1;
+        fi
+        ## extract RawFiles
+        if [ -d $RAWFILES_DIR ]; then
+          rm -rf $RAWFILES_DIR;
+        fi
+        mkdir $RAWFILES_DIR;
+        tar -C $RAWFILES_DIR -xzf $EXPORT_DIR/$RAWFILES_ZIP;
+        find $RAWFILES_DIR -type d -exec chmod 700 {} \\;
+        find $RAWFILES_DIR -type f -exec chmod 600 {} \\;
+        ## extract FlatFiles
+        if [ -d $FLATFILES_DIR ]; then
+            rm -rf $FLATFILES_DIR;
+        fi
+        mkdir $FLATFILES_DIR
+        tar -C $FLATFILES_DIR -xzf $EXPORT_DIR/$FLATFILES_ZIP
+        find $FLATFILES_DIR -type d -exec chmod 700 {} \\;
+        find $FLATFILES_DIR -type f -exec chmod 600 {} \\;
+        ## create QC dir
+        if [ -d $QC_DIR ]; then
+          rm -rf $QC_DIR;
+        fi
+        mkdir $QC_DIR;
+        cp -r $EXPORT_DIR/$MD5SUM_DIR .
+        cp $EXPORT_DIR/*.RDS .;
+        cp $EXPORT_DIR/TileDB.tar.gz ."""
     return bash_cmd
   except Exception as e:
     log.error(e)
