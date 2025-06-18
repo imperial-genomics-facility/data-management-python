@@ -96,7 +96,7 @@ def prepare_run_ftp_export(run_entry: Dict[str, str], work_dir: str) -> Dict[str
 
 
 ## BASH TASK
-@task.bash
+@task.bash(retries=0)
 def run_ftp_export(cosmx_ftp_export_name: str) -> str:
   try:
     bash_cmd = f"""set -eo pipefail;
@@ -138,7 +138,7 @@ def prep_extract_ftp_export(run_entry: Dict[str, str]) -> Dict[str, Any]:
 
 
 ## BASH TASK
-@task.bash
+@task.bash(retries=0)
 def extract_ftp_export(export_dir: str, work_dir: str) -> str:
   try:
 
@@ -223,7 +223,7 @@ def prep_validate_export_md5(run_entry: Dict[str, str]) -> Dict[str, Any]:
 
 
 ## BASH TASK
-@task(multiple_outputs=False)
+@task.bash(retries=0)
 def validate_export_md5(export_dir: str) -> str:
   try:
     bash_cmd = f"""set -eo pipefail;
@@ -255,8 +255,9 @@ def collect_extracted_data(run_entry: Dict[str, str]) -> Dict[str, str]:
       message_prefix=str(e))
     raise ValueError(e)
 
+
 @task(multiple_outputs=False)
-def collect_all_slides(run_entry_list: Union[List[Dict[str, str]], Any]) -> Optional[List[Dict[str, str]]]:
+def collect_all_slides(run_entry_list: Union[List[Dict[str, str]], Any]) -> List[Dict[str, str]]:
   try:
     slide_data_list = list()
     for run_entry in run_entry_list:
