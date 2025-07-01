@@ -15,13 +15,13 @@ module load anaconda3/personal
 source activate snakemake
 
 ## SET CACHE DIR
-export SNAKEMAKE_OUTPUT_CACHE=/project/tgu/resources/pipeline_resource/snakemake/cache_dir
+export SNAKEMAKE_OUTPUT_CACHE=/rds/general/project/genomics-facility-archive-2019/live/tgu/resources/pipeline_resource/snakemake/cache_dir
 
 ## SET PIPELINE CONF
-SNAKEFILE=/project/tgu/resources/pipeline_resource/snakemake/workflow/rna-seq-star-deseq2/workflow/Snakefile
-CONDA_PREFIX_DIR=/project/tgu/resources/pipeline_resource/snakemake/conda_prefix_dir
-SINGULARITY_PREFIX_DIR=/project/tgu/resources/pipeline_resource/snakemake/singularity_prefix_dir
-CLUSTER_CONFIG_JSON=/project/tgu/resources/pipeline_resource/snakemake/cluster_config/rna-seq-star-deseq2_cluster.json
+SNAKEFILE=/rds/general/project/genomics-facility-archive-2019/live/tgu/resources/pipeline_resource/snakemake/workflow/rna-seq-star-deseq2/workflow/Snakefile
+CONDA_PREFIX_DIR=/rds/general/project/genomics-facility-archive-2019/live/tgu/resources/pipeline_resource/snakemake/conda_prefix_dir
+SINGULARITY_PREFIX_DIR=/rds/general/project/genomics-facility-archive-2019/live/tgu/resources/pipeline_resource/snakemake/singularity_prefix_dir
+CLUSTER_CONFIG_JSON=/rds/general/project/genomics-facility-archive-2019/live/tgu/resources/pipeline_resource/snakemake/cluster_config/rna-seq-star-deseq2_cluster.json
 JOB_LIMIT=20
 
 ## GO TO WORKDIR
@@ -50,7 +50,7 @@ snakemake \
 ## module load anaconda3/personal
 ## source activate snakemake
 ## cd {{ SNAKEMAKE_WORK_DIR }}
-## export SNAKEFILE=/project/tgu/resources/pipeline_resource/snakemake/workflow/rna-seq-star-deseq2/workflow/Snakefile
+## export SNAKEFILE=/rds/general/project/genomics-facility-archive-2019/live/tgu/resources/pipeline_resource/snakemake/workflow/rna-seq-star-deseq2/workflow/Snakefile
 ## snakemake --snakefile $SNAKEFILE --configfile {{ CONFIG_YAML_PATH }} --unlock
 ##
 ##--------------------------------------------------------------------------------------

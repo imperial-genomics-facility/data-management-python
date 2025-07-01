@@ -15,7 +15,7 @@ module load anaconda3/personal
 source activate snakemake
 
 ## SET PIPELINE CONF
-SNAKEFILE=/project/tgu/resources/pipeline_resource/snakemake/workflow/rna-seq-star-deseq2/workflow/Snakefile
+SNAKEFILE=/rds/general/project/genomics-facility-archive-2019/live/tgu/resources/pipeline_resource/snakemake/workflow/rna-seq-star-deseq2/workflow/Snakefile
 
 
 ## GO TO WORKDIR
