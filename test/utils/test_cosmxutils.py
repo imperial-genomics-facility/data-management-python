@@ -21,10 +21,12 @@ class Analysisadaptor_test1(unittest.TestCase):
       os.remove(self.dbname)
     Base.metadata.create_all(self.engine)
 
+
   def tearDown(self):
     Base.metadata.drop_all(self.engine)
     if os.path.exists(self.dbname):
       os.remove(self.dbname)
+
 
   def test_check_and_register_cosmx_run(self):
     status = \
@@ -34,6 +36,7 @@ class Analysisadaptor_test1(unittest.TestCase):
         cosmx_platform_name='cosmx_platform_1',
         db_session_class=self.base.get_session_class())
     self.assertTrue(status)
+
 
   def test_check_and_register_cosmx_slide(self):
     status = \
@@ -45,6 +48,7 @@ class Analysisadaptor_test1(unittest.TestCase):
         slide_metadata=[{}])
     self.assertTrue(status)
 
+
   def test_create_or_update_cosmx_slide_fov(self):
     status = \
       create_or_update_cosmx_slide_fov(
@@ -52,6 +56,7 @@ class Analysisadaptor_test1(unittest.TestCase):
         fov_range='1-100',
         slide_type='RNA')
     self.assertTrue(status)
+
 
   def test_create_or_update_cosmx_slide_fov_annotation(self):
     status = \
@@ -62,6 +67,7 @@ class Analysisadaptor_test1(unittest.TestCase):
         tissue_ontology='ontology',
         species='HUMAN')
     self.assertTrue(status)
+
 
   def test_create_or_update_cosmx_slide_fov_count_qc(self):
     status = \

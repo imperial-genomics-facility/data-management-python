@@ -1295,7 +1295,7 @@ class Cosmx_run(Base):
   project_id = Column(INTEGER(unsigned=True), ForeignKey('project.project_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
   project = relationship('Project')
   cosmx_platform_id = Column(INTEGER(unsigned=True), ForeignKey('cosmx_platform.cosmx_platform_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
-  project = relationship('Cosmx_platform')
+  cosmx_platform = relationship('Cosmx_platform')
 
   def __repr__(self):
     '''
