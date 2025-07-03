@@ -1,3 +1,4 @@
+import json
 from typing import Dict, List
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from sqlalchemy.orm.session import Session, sessionmaker
@@ -16,7 +17,6 @@ from igf_data.igfdb.igfTables import (
 def check_and_register_cosmx_run(
     project_igf_id: str,
     cosmx_run_igf_id: str,
-    cosmx_platform_name: str,
     db_session_class: sessionmaker) \
       -> bool:
   """
@@ -66,26 +66,12 @@ def check_and_register_cosmx_run(
       base.close_session()
       raise ValueError(
         f"Project {project_igf_id} is not registered in DB")
-    ## step 3: check if the platform exists
-    platform_query = \
-      base.session.\
-        query(Cosmx_platform.cosmx_platform_id).\
-        filter(Cosmx_platform.cosmx_platform_name == cosmx_platform_name)
-    platform_id = \
-      base.fetch_records(
-        query=platform_query,
-        output_mode='one_or_none')
-    if platform_id is None:
-      base.close_session()
-      raise ValueError(
-        f"Cosmx platform {cosmx_platform_name} is not registered in DB")
-    ## step 4: register new cosmx run
+    ## step 3: register new cosmx run
     try:
       cosmx_run = \
         Cosmx_run(
           cosmx_run_igf_id=cosmx_run_igf_id,
-          project_id=project_id,
-          cosmx_platform_id=platform_id)
+          project_id=project_id[0])
       base.session.add(cosmx_run)
       base.session.flush()
       base.commit_session()
@@ -102,18 +88,84 @@ def check_and_register_cosmx_run(
 
 
 def check_and_register_cosmx_slide(
-  cosmx_run_id: str,
-  cosmx_slide_name: str,
+  cosmx_run_igf_id: str,
+  cosmx_slide_igf_id: str,
+  cosmx_platform_igf_id: str,
   panel_info: str,
   assay_type: str,
+  version: str,
+  db_session_class: sessionmaker,
   slide_metadata: List[Dict[str, str]]) -> bool:
   """
   """
   try:
     status = False
+    ## connect to database
+    base = BaseAdaptor(**{"session_class": db_session_class})
+    base.start_session()
+    ## step1: check if slide is registered
+    slide_query = \
+      base.session.\
+        query(Cosmx_slide.cosmx_slide_igf_id).\
+        filter(Cosmx_slide.cosmx_slide_igf_id == cosmx_slide_igf_id)
+    existing_slide = \
+      base.fetch_records(
+        query=slide_query,
+        output_mode='one_or_none')
+    if existing_slide is not None:
+      base.close_session()
+      return status
+    ## step2: check if run is registered
+    run_query = \
+      base.session.\
+        query(Cosmx_run.cosmx_run_id).\
+        filter(Cosmx_run.cosmx_run_igf_id == cosmx_run_igf_id)
+    cosmx_run_id = \
+      base.fetch_records(
+        query=run_query,
+        output_mode='one_or_none')
+    if cosmx_run_id is None:
+      base.close_session()
+      raise ValueError(
+        f"Cosmx run {cosmx_run_igf_id} is not in DB")
+    ## step3: check if platform is registered
+    platform_query = \
+      base.session.\
+        query(Cosmx_platform.cosmx_platform_id).\
+        filter(Cosmx_platform.cosmx_platform_igf_id == cosmx_platform_igf_id)
+    platform_id = \
+      base.fetch_records(
+        query=platform_query,
+        output_mode='one_or_none')
+    ## step4: check if the platform exists
+    if platform_id is None:
+      base.close_session()
+      raise ValueError(
+        f"Cosmx platform {cosmx_platform_igf_id} is not registered in DB")
+    ## step5: registrer new slide
+    try:
+      cosmx_slide = \
+        Cosmx_slide(
+          cosmx_slide_igf_id=cosmx_slide_igf_id,
+          cosmx_run_id=cosmx_run_id[0],
+          cosmx_platform_id=platform_id[0],
+          panel_info=panel_info,
+          assay_type=assay_type,
+          version=version,
+          slide_metadata=json.dumps(slide_metadata))
+      base.session.add(cosmx_slide)
+      base.session.flush()
+      base.commit_session()
+      base.close_session()
+      status = True
+    except Exception as e:
+      base.close_session()
+      raise ValueError(
+        f"Failed to load cosmx slide, error; {e}")
     return status
   except Exception as e:
-    raise ValueError(e)
+    raise ValueError(
+      f"Failed registering cosmx slide {cosmx_slide_igf_id}, error: {e}")
 
 
 def create_or_update_cosmx_slide_fov(

@@ -1294,8 +1294,7 @@ class Cosmx_run(Base):
   cosmx_run_name = Column(String(100), nullable=True)
   project_id = Column(INTEGER(unsigned=True), ForeignKey('project.project_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
   project = relationship('Project')
-  cosmx_platform_id = Column(INTEGER(unsigned=True), ForeignKey('cosmx_platform.cosmx_platform_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
-  cosmx_platform = relationship('Cosmx_platform')
+
 
   def __repr__(self):
     '''
@@ -1328,6 +1327,8 @@ class Cosmx_slide(Base):
   cosmx_slide_name = Column(String(100), nullable=True)
   cosmx_run_id = Column(INTEGER(unsigned=True), ForeignKey('cosmx_run.cosmx_run_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
   cosmx_run = relationship('Cosmx_run')
+  cosmx_platform_id = Column(INTEGER(unsigned=True), ForeignKey('cosmx_platform.cosmx_platform_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  cosmx_platform = relationship('Cosmx_platform')
   panel_info = Column(String(100), nullable=True)
   assay_type = Column(String(100), nullable=True)
   version = Column(String(10), nullable=True)
