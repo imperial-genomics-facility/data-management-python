@@ -1290,10 +1290,12 @@ class Cosmx_run(Base):
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
 
   cosmx_run_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
-  cosmx_run_igf_id = Column(String(100), nullable=False)
+  cosmx_run_igf_id = Column(String(200), nullable=False)
   cosmx_run_name = Column(String(100), nullable=True)
   project_id = Column(INTEGER(unsigned=True), ForeignKey('project.project_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
   project = relationship('Project')
+  cosmx_platform_id = Column(INTEGER(unsigned=True), ForeignKey('cosmx_platform.cosmx_platform_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  project = relationship('Cosmx_platform')
 
   def __repr__(self):
     '''
@@ -1329,7 +1331,7 @@ class Cosmx_slide(Base):
   panel_info = Column(String(100), nullable=True)
   assay_type = Column(String(100), nullable=True)
   version = Column(String(10), nullable=True)
-  attribute_value = Column(JSONType(), nullable=True)
+  slide_metadata = Column(JSONType(), nullable=True)
   date_created = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp())
 
   def __repr__(self):
@@ -1352,8 +1354,9 @@ class Cosmx_fov(Base):
   cosmx_fov_igf_id = Column(String(10), nullable=False)
   cosmx_slide_id = Column(INTEGER(unsigned=True), ForeignKey('cosmx_slide.cosmx_slide_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
   cosmx_slide = relationship('Cosmx_slide')
-  cosmx_run_id = Column(INTEGER(unsigned=True), ForeignKey('cosmx_run.cosmx_run_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
-  cosmx_run = relationship('Cosmx_run')
+  slide_type = Column(Enum('RNA', 'PROTEIN', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
+  # cosmx_run_id = Column(INTEGER(unsigned=True), ForeignKey('cosmx_run.cosmx_run_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  # cosmx_run = relationship('Cosmx_run')
 
   def __repr__(self):
     '''
@@ -1374,6 +1377,7 @@ class Cosmx_fov_annotation(Base):
   cosmx_fov_annotation_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   cosmx_fov_id = Column(INTEGER(unsigned=True), ForeignKey('cosmx_fov.cosmx_fov_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
   cosmx_fov = relationship('Cosmx_fov')
+  tissue_species = Column(Enum('HUMAN', 'MOUSE', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   tissue_annotation = Column(String(100), nullable=True)
   tissue_ontology = Column(String(100), nullable=True)
   tissue_condition = Column(String(100), nullable=True)
