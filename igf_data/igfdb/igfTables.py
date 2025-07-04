@@ -1348,11 +1348,11 @@ class Cosmx_fov(Base):
   """
   __tablename__ = 'cosmx_fov'
   __table_args__ = (
-    UniqueConstraint('cosmx_fov_igf_id'),
+    UniqueConstraint('cosmx_fov_name', 'cosmx_slide_id'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
 
   cosmx_fov_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
-  cosmx_fov_igf_id = Column(String(10), nullable=False)
+  cosmx_fov_name = Column(String(10), nullable=False)
   cosmx_slide_id = Column(INTEGER(unsigned=True), ForeignKey('cosmx_slide.cosmx_slide_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
   cosmx_slide = relationship('Cosmx_slide')
   slide_type = Column(Enum('RNA', 'PROTEIN', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
@@ -1364,7 +1364,7 @@ class Cosmx_fov(Base):
     Display Cosmx_fov entry
     '''
     return \
-      f"cosmx_fov_igf_id = '{self.cosmx_fov_igf_id}'"
+      f"cosmx_fov_name = '{self.cosmx_fov_name}'"
 
 
 class Cosmx_fov_annotation(Base):

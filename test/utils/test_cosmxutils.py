@@ -90,11 +90,45 @@ class Analysisadaptor_test1(unittest.TestCase):
 
 
   def test_create_or_update_cosmx_slide_fov(self):
+    base = BaseAdaptor(**{'session_class':self.base.get_session_class()})
+    base.start_session()
+    project = \
+      Project(project_igf_id="project1")
+    base.session.add(project)
+    base.session.flush()
+    base.session.commit()
+    cosmx_platform = \
+      Cosmx_platform(
+        cosmx_platform_igf_id='cosmx_platform_1')
+    base.session.add(cosmx_platform)
+    base.session.flush()
+    base.session.commit()
+    cosmx_run = \
+        Cosmx_run(
+          cosmx_run_igf_id='cosmx_run_1',
+          project_id=project.project_id)
+    base.session.add(cosmx_run)
+    base.session.flush()
+    base.session.commit()
+    cosmx_slide = \
+      Cosmx_slide(
+        cosmx_slide_igf_id='cosmx_slide_1',
+        panel_info='cosmx_panel_1',
+        assay_type='assay1',
+        version='1.0',
+        slide_metadata=[{"a": "b"}],
+        cosmx_run_id=cosmx_run.cosmx_run_id,
+        cosmx_platform_id=cosmx_platform.cosmx_platform_id)
+    base.session.add(cosmx_slide)
+    base.session.flush()
+    base.session.commit()
+    base.close_session()
     status = \
       create_or_update_cosmx_slide_fov(
-        cosmx_slide_name='cosmx_slide_1',
+        cosmx_slide_igf_id='cosmx_slide_1',
         fov_range='1-100',
-        slide_type='RNA')
+        slide_type='RNA',
+        db_session_class=self.base.get_session_class())
     self.assertTrue(status)
 
 

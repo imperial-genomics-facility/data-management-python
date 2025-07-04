@@ -1,4 +1,4 @@
-import json
+import json, re
 from typing import Dict, List
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from sqlalchemy.orm.session import Session, sessionmaker
@@ -152,7 +152,7 @@ def check_and_register_cosmx_slide(
           panel_info=panel_info,
           assay_type=assay_type,
           version=version,
-          slide_metadata=json.dumps(slide_metadata))
+          slide_metadata=slide_metadata)
       base.session.add(cosmx_slide)
       base.session.flush()
       base.commit_session()
@@ -168,17 +168,93 @@ def check_and_register_cosmx_slide(
       f"Failed registering cosmx slide {cosmx_slide_igf_id}, error: {e}")
 
 
+def fov_range_to_list(fov_range: str) -> List[int]:
+  """
+  A function to convert a range string like "1-4" to a list [1,2,3,4]
+
+  :param fov_range: A string or fov range like "1-100"
+  :returns: A list of integers
+  """
+  try:
+    range_list = list()
+    range_match = re.match(r'^(\d+)-(\d+)$', fov_range)
+    if range_match:
+      start, end = map(int, range_match.groups())
+      range_list = [i for i in range(start, end + 1)]
+    else:
+      raise ValueError(f"Incorrect range format.")
+    return range_list
+  except Exception as e:
+    raise ValueError(f"Failed to get a list from range {fov_range}")
+
+
 def create_or_update_cosmx_slide_fov(
-  cosmx_slide_name: str,
+  cosmx_slide_igf_id: str,
   fov_range: str,
-  slide_type: str) -> bool:
+  slide_type: str,
+  db_session_class: sessionmaker) -> bool:
   """
   """
   try:
     status = False
+    ## step1: get a list from fov range
+    fov_list = \
+      fov_range_to_list(
+        fov_range=fov_range)
+    if len(fov_list) == 0:
+      raise ValueError("No fov range found for slid {cosmx_slide_igf_id}")
+    ## check slide type
+    if slide_type not in ['RNA', 'PROTEIN']:
+      raise KeyError(f"Unknown slide type {slide_type}")
+    ## connect to database
+    base = BaseAdaptor(**{"session_class": db_session_class})
+    base.start_session()
+    ## step2: check if slide is registered
+    slide_query = \
+      base.session.\
+        query(Cosmx_slide.cosmx_slide_id).\
+        filter(Cosmx_slide.cosmx_slide_igf_id == cosmx_slide_igf_id)
+    cosmx_slide_id = \
+      base.fetch_records(
+        query=slide_query,
+        output_mode='one_or_none')
+    if cosmx_slide_id is None:
+      base.close_session()
+      raise ValueError(
+        f"Cosmx slide {cosmx_slide_igf_id} is not in DB")
+    ## step3: check if fov exists
+    fov_query = \
+      base.session.\
+      query(Cosmx_fov.cosmx_fov_name).\
+      join(Cosmx_slide, Cosmx_slide.cosmx_slide_id == Cosmx_fov.cosmx_slide_id).\
+      filter(Cosmx_slide.cosmx_slide_igf_id == cosmx_slide_igf_id).\
+      filter(Cosmx_fov.cosmx_fov_name.in_(fov_list))
+    existing_fov_records = \
+      base.fetch_records(query=fov_query, output_mode="object")
+    existing_fov_list = [
+      fov.cosmx_fov_name for fov in existing_fov_records]
+    ## step4: enter new fov records
+    try:
+      for fov_id in fov_list:
+        if fov_id not in existing_fov_list:
+          fov_entry = \
+            Cosmx_fov(
+              cosmx_fov_name=fov_id,
+              cosmx_slide_id=cosmx_slide_id[0],
+              slide_type=slide_type)
+          base.session.add(fov_entry)
+          base.session.flush()
+      base.session.commit()
+      base.close_session()
+      status = True
+    except Exception as e:
+      base.session.rollback()
+      base.close_session()
+      raise ValueError(e)
     return status
   except Exception as e:
-    raise ValueError(e)
+    raise ValueError(
+      f"Failed to create cosmx fov records, error: {e}")
 
 
 def create_or_update_cosmx_slide_fov_annotation(
