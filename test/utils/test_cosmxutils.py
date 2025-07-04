@@ -133,13 +133,59 @@ class Analysisadaptor_test1(unittest.TestCase):
 
 
   def test_create_or_update_cosmx_slide_fov_annotation(self):
+    base = BaseAdaptor(**{'session_class':self.base.get_session_class()})
+    base.start_session()
+    project = \
+      Project(project_igf_id="project1")
+    base.session.add(project)
+    base.session.flush()
+    base.session.commit()
+    cosmx_platform = \
+      Cosmx_platform(
+        cosmx_platform_igf_id='cosmx_platform_1')
+    base.session.add(cosmx_platform)
+    base.session.flush()
+    base.session.commit()
+    cosmx_run = \
+        Cosmx_run(
+          cosmx_run_igf_id='cosmx_run_1',
+          project_id=project.project_id)
+    base.session.add(cosmx_run)
+    base.session.flush()
+    base.session.commit()
+    cosmx_slide = \
+      Cosmx_slide(
+        cosmx_slide_igf_id='cosmx_slide_1',
+        panel_info='cosmx_panel_1',
+        assay_type='assay1',
+        version='1.0',
+        slide_metadata=[{"a": "b"}],
+        cosmx_run_id=cosmx_run.cosmx_run_id,
+        cosmx_platform_id=cosmx_platform.cosmx_platform_id)
+    base.session.add(cosmx_slide)
+    base.session.flush()
+    base.session.commit()
+    for i in range(1,11):
+      fov_entry = \
+        Cosmx_fov(
+          cosmx_slide_id=cosmx_slide.cosmx_slide_id,
+          cosmx_fov_name=i,
+          slide_type='RNA')
+      base.session.add(fov_entry)
+      base.session.flush()
+    base.session.commit()
+    fov_records = base.session.query(Cosmx_fov).all()
+    self.assertEqual(len(fov_records), 10)
+    base.close_session()
     status = \
       create_or_update_cosmx_slide_fov_annotation(
-        cosmx_slide_name='cosmx_slide_id',
-        fov_range='1-100',
+        cosmx_slide_igf_id='cosmx_slide_1',
+        fov_range='1-10',
         tissue_annotation='annotation',
         tissue_ontology='ontology',
-        species='HUMAN')
+        tissue_condition='tumor',
+        species='HUMAN',
+        db_session_class=self.base.get_session_class())
     self.assertTrue(status)
 
 

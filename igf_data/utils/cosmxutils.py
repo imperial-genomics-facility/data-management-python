@@ -258,18 +258,70 @@ def create_or_update_cosmx_slide_fov(
 
 
 def create_or_update_cosmx_slide_fov_annotation(
-  cosmx_slide_name: str,
+  cosmx_slide_igf_id: str,
   fov_range: str,
-  tissue_annotation: str,
-  tissue_ontology: str,
-  species: str) -> bool:
+  db_session_class: sessionmaker,
+  tissue_annotation: str = 'unknown',
+  tissue_ontology: str = 'unknown',
+  tissue_condition: str = 'unknown',
+  species: str = 'unknown') -> bool:
   """
   """
   try:
     status = False
+    ## step1: get a list from fov range
+    fov_list = \
+      fov_range_to_list(
+        fov_range=fov_range)
+    if len(fov_list) == 0:
+      raise ValueError("No fov range found for slid {cosmx_slide_igf_id}")
+    ## connect to database
+    base = BaseAdaptor(**{"session_class": db_session_class})
+    base.start_session()
+    ## step2: check if slide is registered
+    slide_fov_query = \
+      base.session.\
+        query(Cosmx_fov.cosmx_fov_id).\
+        join(Cosmx_slide, Cosmx_slide.cosmx_slide_id == Cosmx_fov.cosmx_slide_id).\
+        filter(Cosmx_slide.cosmx_slide_igf_id == cosmx_slide_igf_id).\
+        filter(Cosmx_fov.cosmx_fov_name.in_(fov_list))
+    fov_records = \
+      base.fetch_records(
+        query=slide_fov_query,
+        output_mode="object")
+    fov_id_list = [
+      fov.cosmx_fov_id for fov in fov_records]
+    ## step3: check if all fovs are present
+    if len(fov_id_list) == 0:
+      raise ValueError(
+        f"Cosmx slide {cosmx_slide_igf_id} and fov range {fov_range} is not in DB")
+    if len(fov_id_list) < len(fov_range):
+      base.close_session()
+      raise ValueError(
+        f"Not all fovs are present in db")
+    ## step4: add new annotation records
+    try:
+      for fov_id in fov_id_list:
+        fov_annotation = \
+          Cosmx_fov_annotation(
+            cosmx_fov_id=fov_id,
+            tissue_species=species,
+            tissue_annotation=tissue_annotation,
+            tissue_ontology=tissue_ontology,
+            tissue_condition=tissue_condition)
+        base.session.add(fov_annotation)
+        base.session.flush()
+      base.session.commit()
+      base.close_session()
+      status = True
+    except Exception as e:
+      base.session.rollback()
+      base.close_session()
+      raise ValueError(f"Failed to load data in DB, error: {e}")
     return status
   except Exception as e:
-    raise ValueError(e)
+    raise ValueError(
+      f"Failed to create cosmx annotation records, error: {e}")
 
 
 def create_or_update_cosmx_slide_fov_count_qc(
