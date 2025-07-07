@@ -1,7 +1,6 @@
 import json, re
+import pandas as pd
 from typing import Dict, List
-from igf_data.igfdb.baseadaptor import BaseAdaptor
-from sqlalchemy.orm.session import Session, sessionmaker
 from igf_data.igfdb.igfTables import (
   Cosmx_platform,
   Cosmx_run,
@@ -13,6 +12,17 @@ from igf_data.igfdb.igfTables import (
   Cosmx_fov_protein_qc,
   Cosmx_slide_attribute,
   Cosmx_fov_attribute)
+from jsonschema import (
+  Draft4Validator,
+  ValidationError)
+from igf_data.utils.fileutils import (
+  get_temp_dir,
+  remove_dir,
+  read_json_data,
+  check_file_path)
+from igf_data.igfdb.baseadaptor import BaseAdaptor
+from sqlalchemy.orm.session import Session, sessionmaker
+
 
 def check_and_register_cosmx_run(
     project_igf_id: str,
@@ -278,7 +288,19 @@ def create_or_update_cosmx_slide_fov_annotation(
     ## connect to database
     base = BaseAdaptor(**{"session_class": db_session_class})
     base.start_session()
-    ## step2: check if slide is registered
+    ## step2: check if slides and fovs are registered
+    slide_query = \
+      base.session.\
+        query(Cosmx_slide.cosmx_slide_id).\
+        filter(Cosmx_slide.cosmx_slide_igf_id == cosmx_slide_igf_id)
+    cosmx_slide_id = \
+      base.fetch_records(
+        query=slide_query,
+        output_mode='one_or_none')
+    if cosmx_slide_id is None:
+      base.close_session()
+      raise ValueError(
+        f"Cosmx slide {cosmx_slide_igf_id} is not in DB")
     slide_fov_query = \
       base.session.\
         query(Cosmx_fov.cosmx_fov_id).\
@@ -324,13 +346,156 @@ def create_or_update_cosmx_slide_fov_annotation(
       f"Failed to create cosmx annotation records, error: {e}")
 
 
+def validate_cosmx_count_file(
+  count_json_file: str,
+  validation_schema_json_file: str) -> List[str]:
+  """
+  A function for validation checking COSMX count files
+
+  :param count_json_file: AJSON file with COSMX count data
+  :param validation_schema_json_file: A JSON schema for validation checking
+  :returns: A list of validation errors
+  """
+  try:
+    error_list = []
+    schema = \
+      read_json_data(validation_schema_json_file)
+    if isinstance(schema, list):
+      schema = schema[0]
+    metadata_validator = \
+      Draft4Validator(schema)
+    with open(count_json_file, 'r') as fp:
+      json_count_data = json.load(fp)
+    validation_errors = \
+      sorted(
+        metadata_validator.iter_errors(json_count_data),
+        key=lambda e: e.path)
+    for err in validation_errors:
+      if isinstance(err, str):
+        error_list.append(err)
+      else:
+        if len(err.schema_path) > 2:
+          error_list.append(
+            f"{err.schema_path[2]}: {err.message}")
+        else:
+          error_list.append(
+            f"{err.message}")
+    return error_list
+  except Exception as e:
+    raise ValueError(
+      f"Validation failed for {count_json_file}, error: {e}")
+
+
 def create_or_update_cosmx_slide_fov_count_qc(
-  cosmx_slide_name: str,
-  slide_count_qc_csv: str) -> str:
+  cosmx_slide_igf_id: str,
+  fov_range: str,
+  slide_type: str,
+  db_session_class: sessionmaker,
+  slide_count_json_file: str,
+  rna_count_file_validation_schema: str,
+  protein_count_file_validation_schema: str,) -> bool:
   """
   """
   try:
-    slide_type = 'UNKNOWN'
-    return slide_type
+    status = False
+    ## step1: check slide type
+    if slide_type not in ['RNA', 'PROTEIN']:
+      raise KeyError(f"Unknown slide type {slide_type}")
+    ## step2: validate count columns
+    validation_errors = list()
+    if slide_type == 'RNA':
+      validation_errors = \
+        validate_cosmx_count_file(
+          count_json_file=slide_count_json_file,
+          validation_schema_json_file=rna_count_file_validation_schema)
+    elif slide_type == 'PROTEIN':
+      validation_errors = \
+        validate_cosmx_count_file(
+          count_json_file=slide_count_json_file,
+          validation_schema_json_file=protein_count_file_validation_schema)
+    if len(validation_errors) > 0:
+      raise ValueError(
+        f"Validation failed for {cosmx_slide_igf_id} - {slide_count_json_file}, \
+          errors: {', '.join(validation_errors)}")
+    ## step3: get a list from fov range
+    fov_list = \
+      fov_range_to_list(
+        fov_range=fov_range)
+    if len(fov_list) == 0:
+      raise ValueError("No fov range found for slid {cosmx_slide_igf_id}")
+    ## step4: open count json file and check if same fov's are in the file
+    count_df = \
+      pd.read_json(
+        slide_count_json_file)
+    count_file_fov_id_list = count_df['fov_id'].tolist()
+    unknown_fov = [ f_id
+      for f_id in count_file_fov_id_list
+        if f_id not in fov_list]
+    if len(unknown_fov) > 0:
+      raise ValueError(
+        f"Fov ids are not in range {fov_range}: {slide_count_json_file}")
+    ## connect to database
+    base = BaseAdaptor(**{"session_class": db_session_class})
+    base.start_session()
+    ## step5: check if slide is registered
+    slide_query = \
+      base.session.\
+        query(Cosmx_slide.cosmx_slide_id).\
+        filter(Cosmx_slide.cosmx_slide_igf_id == cosmx_slide_igf_id)
+    cosmx_slide_id = \
+      base.fetch_records(
+        query=slide_query,
+        output_mode='one_or_none')
+    if cosmx_slide_id is None:
+      base.close_session()
+      raise ValueError(
+        f"Cosmx slide {cosmx_slide_igf_id} is not in DB")
+    ## step6: check if fovs are registered
+    slide_fov_query = \
+      base.session.\
+        query(Cosmx_fov.cosmx_fov_id, Cosmx_fov.cosmx_fov_name).\
+        join(Cosmx_slide, Cosmx_slide.cosmx_slide_id == Cosmx_fov.cosmx_slide_id).\
+        filter(Cosmx_slide.cosmx_slide_igf_id == cosmx_slide_igf_id).\
+        filter(Cosmx_fov.cosmx_fov_name.in_(fov_list))
+    fov_records = \
+      base.fetch_records(
+        query=slide_fov_query,
+        output_mode="object")
+    fov_id_dict = {
+      fov.cosmx_fov_name: fov.cosmx_fov_id \
+        for fov in fov_records}
+    fov_id_list = list(fov_id_dict.values())
+    ## step7: check if all fovs are present
+    if len(fov_id_list) == 0:
+      raise ValueError(
+        f"Cosmx slide {cosmx_slide_igf_id} and fov range {fov_range} is not in DB")
+    if len(fov_id_list) < len(fov_range):
+      base.close_session()
+      raise ValueError(
+        f"Not all fovs are present in db")
+    ## step8: map fov ids
+    count_df['cosmx_fov_id'] = count_df['fov_id'].map(fov_id_dict)
+    del count_df['fov_id']
+    ## step9: load to db
+    try:
+      for row in count_df.to_dict(orient='records'):
+        if slide_type == 'RNA':
+          fov_entry = \
+            Cosmx_fov_rna_qc(*row)
+          base.session.add(fov_entry)
+          base.session.flush()
+        elif slide_type == 'PROTEIN':
+          fov_entry = \
+            Cosmx_fov_protein_qc(*row)
+          base.session.add(fov_entry)
+          base.session.flush()
+      base.session.commit()
+      base.close_session()
+      status = True
+    except Exception as e:
+      base.session.rollback()
+      base.close_session()
+      raise ValueError(f"Failed to load data in DB, error: {e}")
+    return status
   except Exception as e:
     raise ValueError(e)

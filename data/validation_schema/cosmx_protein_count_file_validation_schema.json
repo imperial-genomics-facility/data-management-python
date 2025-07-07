@@ -1,0 +1,49 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/json-schema-core.html#",
+    "id": "https://github.com/imperial-genomics-facility/data-management-python/tree/master/data/validation_schema/cosmx_protein_count_file_validation_schema.json#",
+    "title": "IGF COSMX PROTEIN count file validation schema",
+    "description": "Schema for validation of COSMX PROTEIN count file",
+    "type" : "array",
+    "version": "1.0.0",
+    "minItems": 1,
+    "uniqueItems": true,
+    "items": {
+        "type": "object",
+        "properties" : {
+            "fov_id" : {
+              "type" : "integer"
+            },
+            "mean_fluorescence_intensity" : {
+              "type" : "integer"
+            },
+            "mean_unique_genes_per_cell" : {
+              "type" : "number"
+            },
+            "number_non_empty_cells" : {
+              "type" : "integer"
+            },
+            "pct_non_empty_cells" : {
+              "type" : "number"
+            },
+            "percentile_90_transcript_per_cell" : {
+              "type" : "number"
+            },
+            "percentile_10_transcript_per_cell" : {
+              "type" : "number"
+            },
+            "fluorescence_intensity_mean_igg_control_intensity": {
+              "type" : "number"
+            }
+        },
+        "required": [
+          "fov_id",
+          "mean_fluorescence_intensity",
+          "mean_unique_genes_per_cell",
+          "number_non_empty_cells",
+          "pct_non_empty_cells",
+          "percentile_90_transcript_per_cell",
+          "percentile_10_transcript_per_cell",
+          "fluorescence_intensity_mean_igg_control_intensity"
+        ]
+    }
+}

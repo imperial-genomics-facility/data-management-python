@@ -19,7 +19,8 @@ from igf_data.utils.cosmxutils import (
   check_and_register_cosmx_slide,
   create_or_update_cosmx_slide_fov,
   create_or_update_cosmx_slide_fov_annotation,
-  create_or_update_cosmx_slide_fov_count_qc
+  create_or_update_cosmx_slide_fov_count_qc,
+  validate_cosmx_count_file
 )
 
 class Analysisadaptor_test1(unittest.TestCase):
@@ -189,12 +190,24 @@ class Analysisadaptor_test1(unittest.TestCase):
     self.assertTrue(status)
 
 
+  def test_validate_cosmx_count_file(self):
+    errors = \
+      validate_cosmx_count_file(
+        count_json_file='',
+        validation_schema_json_file='')
+
+
   def test_create_or_update_cosmx_slide_fov_count_qc(self):
     status = \
       create_or_update_cosmx_slide_fov_count_qc(
-        cosmx_slide_name='cosmx_slide_id',
-        slide_count_qc_csv='csv_file.csv')
-    self.assertEqual(status, 'RNA')
+        cosmx_slide_igf_id='',
+        fov_range='1-10',
+        slide_type='RNA',
+        db_session_class=self.base.get_session_class(),
+        slide_count_json_file='',
+        rna_count_file_validation_schema='',
+        protein_count_file_validation_schema='')
+    self.assertTrue(status)
 
 if __name__ == '__main__':
   unittest.main()
