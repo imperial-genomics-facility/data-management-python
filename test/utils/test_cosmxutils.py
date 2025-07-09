@@ -1,4 +1,6 @@
-import unittest, os
+import pandas as pd
+from decimal import Decimal
+import unittest, os, json
 from igf_data.igfdb.igfTables import Base
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
@@ -14,12 +16,15 @@ from igf_data.igfdb.igfTables import (
   Cosmx_fov_protein_qc,
   Cosmx_slide_attribute,
   Cosmx_fov_attribute)
+from igf_data.utils.fileutils import (
+  get_temp_dir,
+  remove_dir)
 from igf_data.utils.cosmxutils import (
   check_and_register_cosmx_run,
   check_and_register_cosmx_slide,
   create_or_update_cosmx_slide_fov,
   create_or_update_cosmx_slide_fov_annotation,
-  create_or_update_cosmx_slide_fov_count_qc,
+  create_cosmx_slide_fov_count_qc,
   validate_cosmx_count_file
 )
 
@@ -30,6 +35,7 @@ class Analysisadaptor_test1(unittest.TestCase):
     self.base = BaseAdaptor(**dbparam)
     self.engine = self.base.engine
     self.dbname = dbparam['dbname']
+    self.temp_dir = get_temp_dir()
     if os.path.exists(self.dbname):
       os.remove(self.dbname)
     Base.metadata.create_all(self.engine)
@@ -39,6 +45,7 @@ class Analysisadaptor_test1(unittest.TestCase):
     Base.metadata.drop_all(self.engine)
     if os.path.exists(self.dbname):
       os.remove(self.dbname)
+    remove_dir(self.temp_dir)
 
 
   def test_check_and_register_cosmx_run(self):
@@ -191,15 +198,50 @@ class Analysisadaptor_test1(unittest.TestCase):
 
 
   def test_validate_cosmx_count_file(self):
+    protein_count_dict = [{
+      "fov_id": 1,
+      "mean_fluorescence_intensity": "28941",
+      "mean_unique_genes_per_cell": "67",
+      "number_non_empty_cells": 2163,
+      "pct_non_empty_cells": "1.00",
+      "percentile_10_transcript_per_cell": "18412.52",
+      "percentile_90_transcript_per_cell": "42659.33",
+      "fluorescence_intensity_mean_igg_control_intensity": "95.681"}, {
+      "fov_id": 2,
+      "mean_fluorescence_intensity": "28941",
+      "mean_unique_genes_per_cell": "67",
+      "number_non_empty_cells": 2163,
+      "pct_non_empty_cells": "1.00",
+      "percentile_10_transcript_per_cell": "18412.52",
+      "percentile_90_transcript_per_cell": "42659.33",
+      "fluorescence_intensity_mean_igg_control_intensity": "95.681"}]
+    df = pd.DataFrame(protein_count_dict)
+    df = \
+      df.astype({
+      "fov_id": int,
+      "mean_fluorescence_intensity": int,
+      "mean_unique_genes_per_cell": int,
+      "number_non_empty_cells": int,
+      "pct_non_empty_cells": float,
+      "percentile_10_transcript_per_cell": float,
+      "percentile_90_transcript_per_cell": float,
+      "fluorescence_intensity_mean_igg_control_intensity": float})
+    protein_count_dict = df.to_dict(orient='records')
+    protein_count_file = \
+      os.path.join(self.temp_dir, 'protein_count.json')
+    with open(protein_count_file, 'w') as fp:
+      json.dump(protein_count_dict, fp)
     errors = \
       validate_cosmx_count_file(
-        count_json_file='',
-        validation_schema_json_file='')
+        count_json_file=protein_count_file,
+        validation_schema_json_file='data/validation_schema/cosmx_protein_count_file_validation_schema.json')
+    print(errors)
+    self.assertEqual(len(errors), 0)
 
 
   def test_create_or_update_cosmx_slide_fov_count_qc(self):
     status = \
-      create_or_update_cosmx_slide_fov_count_qc(
+      create_cosmx_slide_fov_count_qc(
         cosmx_slide_igf_id='',
         fov_range='1-10',
         slide_type='RNA',

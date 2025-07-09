@@ -1,5 +1,6 @@
 import json, re
 import pandas as pd
+from enum import Enum
 from typing import Dict, List
 from igf_data.igfdb.igfTables import (
   Cosmx_platform,
@@ -214,7 +215,7 @@ def create_or_update_cosmx_slide_fov(
     if len(fov_list) == 0:
       raise ValueError("No fov range found for slid {cosmx_slide_igf_id}")
     ## check slide type
-    if slide_type not in ['RNA', 'PROTEIN']:
+    if slide_type not in CosmxSlideType.__members__:
       raise KeyError(f"Unknown slide type {slide_type}")
     ## connect to database
     base = BaseAdaptor(**{"session_class": db_session_class})
@@ -385,8 +386,16 @@ def validate_cosmx_count_file(
     raise ValueError(
       f"Validation failed for {count_json_file}, error: {e}")
 
+class CosmxSlideType(Enum):
+  """
+  An enum class for CosMx slide types
 
-def create_or_update_cosmx_slide_fov_count_qc(
+  """
+  RNA = 'RNA'
+  PROTEIN = 'PROTEIN'
+
+
+def create_cosmx_slide_fov_count_qc(
   cosmx_slide_igf_id: str,
   fov_range: str,
   slide_type: str,
@@ -399,16 +408,16 @@ def create_or_update_cosmx_slide_fov_count_qc(
   try:
     status = False
     ## step1: check slide type
-    if slide_type not in ['RNA', 'PROTEIN']:
+    if slide_type not in CosmxSlideType.__members__:
       raise KeyError(f"Unknown slide type {slide_type}")
     ## step2: validate count columns
     validation_errors = list()
-    if slide_type == 'RNA':
+    if slide_type == CosmxSlideType.RNA:
       validation_errors = \
         validate_cosmx_count_file(
           count_json_file=slide_count_json_file,
           validation_schema_json_file=rna_count_file_validation_schema)
-    elif slide_type == 'PROTEIN':
+    elif slide_type == CosmxSlideType.PROTEIN:
       validation_errors = \
         validate_cosmx_count_file(
           count_json_file=slide_count_json_file,
@@ -473,18 +482,39 @@ def create_or_update_cosmx_slide_fov_count_qc(
       base.close_session()
       raise ValueError(
         f"Not all fovs are present in db")
-    ## step8: map fov ids
+    ## step8: check if the fov entries are present in the count qc table
+    fov_count_qc_entries = list()
+    if slide_type == CosmxSlideType.RNA:
+      fov_count_qc_entries = \
+        base.session.\
+          query(Cosmx_fov_rna_qc.cosmx_fov_id).\
+          filter(Cosmx_fov_rna_qc.cosmx_fov_id.in_(list(fov_id_dict.values()))).\
+          all()
+    elif slide_type == CosmxSlideType.PROTEIN:
+      fov_count_qc_entries = \
+        base.session.\
+          query(Cosmx_fov_protein_qc.cosmx_fov_id).\
+          filter(Cosmx_fov_protein_qc.cosmx_fov_id.in_(list(fov_id_dict.values()))).\
+          all()
+    ## its not safe to assume that user loaded only part of the records.
+    ## so we will not allow re-loading data if any record exists
+    if len(fov_count_qc_entries) > 0:
+      base.close_session()
+      raise ValueError(
+        f"FOV count qc records already exisis for slide {cosmx_slide_igf_id}. \
+          Clean up before loading again.")
+    ## step9: map fov ids
     count_df['cosmx_fov_id'] = count_df['fov_id'].map(fov_id_dict)
     del count_df['fov_id']
-    ## step9: load to db
+    ## step10: load to db
     try:
       for row in count_df.to_dict(orient='records'):
-        if slide_type == 'RNA':
+        if slide_type == CosmxSlideType.RNA:
           fov_entry = \
             Cosmx_fov_rna_qc(*row)
           base.session.add(fov_entry)
           base.session.flush()
-        elif slide_type == 'PROTEIN':
+        elif slide_type == CosmxSlideType.PROTEIN:
           fov_entry = \
             Cosmx_fov_protein_qc(*row)
           base.session.add(fov_entry)
