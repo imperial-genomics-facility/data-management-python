@@ -240,15 +240,96 @@ class Analysisadaptor_test1(unittest.TestCase):
 
 
   def test_create_or_update_cosmx_slide_fov_count_qc(self):
+    rna_count_dict = [{
+      "fov_id": 1,
+      "mean_transcript_per_cell": 102.25,
+      "mean_unique_genes_per_cell": 76.85,
+      "non_empty_cells": 1084,
+      "pct_non_empty_cells": 1.00,
+      "percentile_90_transcript_per_cell": 30.0,
+      "percentile_10_transcript_per_cell": 193.0,
+      "mean_negprobe_counts_per_cell": 0.293}, {
+      "fov_id": 2,
+      "mean_transcript_per_cell": 152.84,
+      "mean_unique_genes_per_cell": 108.64,
+      "non_empty_cells": 1715,
+      "pct_non_empty_cells": 1.00,
+      "percentile_10_transcript_per_cell": 289.0,
+      "percentile_90_transcript_per_cell": 48.4,
+      "mean_negprobe_counts_per_cell": 0.335}, {
+      "fov_id": 3,
+      "mean_transcript_per_cell": 91.13,
+      "mean_unique_genes_per_cell": 57.07,
+      "non_empty_cells": 2144,
+      "pct_non_empty_cells": 1.00,
+      "percentile_10_transcript_per_cell": 203.0,
+      "percentile_90_transcript_per_cell": 18.0,
+      "mean_negprobe_counts_per_cell": 0.193}, {
+      "fov_id": 4,
+      "mean_transcript_per_cell": 76.45,
+      "mean_unique_genes_per_cell": 46.86,
+      "non_empty_cells": 2512,
+      "pct_non_empty_cells": 1.00,
+      "percentile_10_transcript_per_cell": 151.0,
+      "percentile_90_transcript_per_cell": 22.0,
+      "mean_negprobe_counts_per_cell": 0.185}]
+    rna_count_file = \
+      os.path.join(self.temp_dir, 'rna_count.json')
+    with open(rna_count_file, 'w') as fp:
+      json.dump(rna_count_dict, fp)
+    base = BaseAdaptor(**{'session_class':self.base.get_session_class()})
+    base.start_session()
+    project = \
+      Project(project_igf_id="project1")
+    base.session.add(project)
+    base.session.flush()
+    base.session.commit()
+    cosmx_platform = \
+      Cosmx_platform(
+        cosmx_platform_igf_id='cosmx_platform_1')
+    base.session.add(cosmx_platform)
+    base.session.flush()
+    base.session.commit()
+    cosmx_run = \
+        Cosmx_run(
+          cosmx_run_igf_id='cosmx_run_1',
+          project_id=project.project_id)
+    base.session.add(cosmx_run)
+    base.session.flush()
+    base.session.commit()
+    cosmx_slide = \
+      Cosmx_slide(
+        cosmx_slide_igf_id='cosmx_slide_1',
+        panel_info='cosmx_panel_1',
+        assay_type='assay1',
+        version='1.0',
+        slide_metadata=[{"a": "b"}],
+        cosmx_run_id=cosmx_run.cosmx_run_id,
+        cosmx_platform_id=cosmx_platform.cosmx_platform_id)
+    base.session.add(cosmx_slide)
+    base.session.flush()
+    base.session.commit()
+    for i in range(1,5):
+      fov_entry = \
+        Cosmx_fov(
+          cosmx_slide_id=cosmx_slide.cosmx_slide_id,
+          cosmx_fov_name=i,
+          slide_type='RNA')
+      base.session.add(fov_entry)
+      base.session.flush()
+    base.session.commit()
+    fov_records = base.session.query(Cosmx_fov).all()
+    self.assertEqual(len(fov_records), 4)
+    base.close_session()
     status = \
       create_cosmx_slide_fov_count_qc(
-        cosmx_slide_igf_id='',
-        fov_range='1-10',
+        cosmx_slide_igf_id='cosmx_slide_1',
+        fov_range='1-4',
         slide_type='RNA',
         db_session_class=self.base.get_session_class(),
-        slide_count_json_file='',
-        rna_count_file_validation_schema='',
-        protein_count_file_validation_schema='')
+        slide_count_json_file=rna_count_file,
+        rna_count_file_validation_schema='data/validation_schema/cosmx_rna_count_file_validation_schema.json',
+        protein_count_file_validation_schema='data/validation_schema/cosmx_protein_count_file_validation_schema.json')
     self.assertTrue(status)
 
 if __name__ == '__main__':

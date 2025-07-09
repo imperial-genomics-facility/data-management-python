@@ -31,6 +31,9 @@
             "percentile_10_transcript_per_cell" : {
               "type" : "number"
             },
+            "mean_negprobe_counts_per_cell": {
+              "type" : "number"
+            }
         },
         "required": [
           "fov_id",
@@ -39,7 +42,8 @@
           "non_empty_cells",
           "pct_non_empty_cells",
           "percentile_90_transcript_per_cell",
-          "percentile_10_transcript_per_cell"
+          "percentile_10_transcript_per_cell",
+          "mean_negprobe_counts_per_cell"
         ]
     }
 }

@@ -1408,6 +1408,7 @@ class Cosmx_fov_rna_qc(Base):
   pct_non_empty_cells = Column(DECIMAL(10, 2), nullable=True)
   percentile_90_transcript_per_cell = Column(DECIMAL(10, 2), nullable=True)
   percentile_10_transcript_per_cell = Column(DECIMAL(10, 2), nullable=True)
+  mean_negprobe_counts_per_cell = Column(DECIMAL(10, 3), nullable=True)
 
   def __repr__(self):
     '''
