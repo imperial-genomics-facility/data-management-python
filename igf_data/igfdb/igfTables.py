@@ -1404,7 +1404,7 @@ class Cosmx_fov_rna_qc(Base):
   cosmx_fov = relationship('Cosmx_fov')
   mean_transcript_per_cell = Column(DECIMAL(10, 2), nullable=True)
   mean_unique_genes_per_cell = Column(DECIMAL(10, 2), nullable=True)
-  non_empty_cells = Column(INTEGER(unsigned=True), nullable=True)
+  number_non_empty_cells = Column(INTEGER(unsigned=True), nullable=True)
   pct_non_empty_cells = Column(DECIMAL(10, 2), nullable=True)
   percentile_90_transcript_per_cell = Column(DECIMAL(10, 2), nullable=True)
   percentile_10_transcript_per_cell = Column(DECIMAL(10, 2), nullable=True)
