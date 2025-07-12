@@ -32,6 +32,13 @@ from igf_airflow.utils.generic_airflow_utils import (
   get_per_sample_analysis_groups,
   collect_analysis_dir,
   parse_analysis_design_and_get_metadata)
+from igf_data.utils.cosmxutils import (
+  check_and_register_cosmx_run,
+  check_and_register_cosmx_slide,
+  create_or_update_cosmx_slide_fov,
+  create_or_update_cosmx_slide_fov_annotation,
+  create_cosmx_slide_fov_count_qc,
+  validate_cosmx_count_file)
 from airflow.operators.python import get_current_context
 from airflow.decorators import task
 
@@ -339,6 +346,40 @@ def copy_slide_data_to_globus(run_entry: Dict[str, str]) -> Dict[str, str]:
 def register_db_data(run_entry: Dict[str, str]) -> Dict[str, str]:
   try:
     registered_data = {}
+    ## step 1: register cosmx run
+    run_registration_status = \
+      check_and_register_cosmx_run(
+        project_igf_id='',
+        cosmx_run_igf_id='',
+        db_session_class=None)
+    ## step 2: register cosmx slide
+    slide_registration_status = \
+      check_and_register_cosmx_slide(
+        cosmx_run_igf_id='',
+        cosmx_slide_igf_id='',
+        cosmx_platform_igf_id='',
+        panel_info='',
+        assay_type='',
+        version='',
+        db_session_class=None,
+        slide_metadata=[])
+    ## step 3: fov registration
+    fov_registration_status = \
+      create_or_update_cosmx_slide_fov(
+        cosmx_slide_igf_id='',
+        fov_range='',
+        slide_type='',
+        db_session_class=None)
+    ## step 4: fov count qc registration
+    fov_count_registration_status = \
+      create_cosmx_slide_fov_count_qc(
+        cosmx_slide_igf_id='',
+        fov_range='',
+        slide_type='',
+        db_session_class=None,
+        slide_count_json_file='',
+        rna_count_file_validation_schema='',
+        protein_count_file_validation_schema='')
     return registered_data
   except Exception as e:
     log.error(e)
