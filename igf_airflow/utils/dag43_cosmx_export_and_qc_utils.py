@@ -139,7 +139,10 @@ def run_ftp_export(cosmx_ftp_export_name: str) -> str:
 
 ## TASK
 @task(multiple_outputs=True)
-def prep_extract_ftp_export(run_entry: Dict[str, str]) -> Dict[str, Any]:
+def prep_extract_ftp_export(
+  run_entry: Dict[str, str],
+  export_finished: Any) \
+    -> Dict[str, Any]:
   try:
     export_dir = run_entry.get("export_dir")
     if not export_dir:
@@ -224,7 +227,10 @@ def extract_ftp_export(export_dir: str, work_dir: str) -> str:
 
 ## TASK
 @task(multiple_outputs=True)
-def prep_validate_export_md5(run_entry: Dict[str, str]) -> Dict[str, Any]:
+def prep_validate_export_md5(
+  run_entry: Dict[str, str],
+  extract_finished: Any) \
+    -> Dict[str, Any]:
   try:
     export_dir = run_entry.get("export_dir")
     if not export_dir:
@@ -260,7 +266,10 @@ def validate_export_md5(export_dir: str) -> str:
 
 ## TASK
 @task(multiple_outputs=False)
-def collect_extracted_data(run_entry: Dict[str, str]) -> Dict[str, str]:
+def collect_extracted_data(
+  run_entry: Dict[str, str],
+  validation_finished: Any) \
+    -> Dict[str, str]:
   try:
     ## TO DO: JUST A PLACE HOLDER FOR BASH TASK OUTPUT
     return run_entry
@@ -298,6 +307,19 @@ def collect_all_slides(run_entry_list: Union[List[Dict[str, str]], Any]) -> List
 
 ## TASK
 @task(multiple_outputs=False)
+def match_slide_ids_with_project_id(slide_data_list):
+  try:
+    ## TO DO: VALIDATE SLIDE IDS
+    return slide_data_list
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=str(e))
+    raise ValueError(e)
+
+## TASK
+@task(multiple_outputs=False)
 def generate_count_qc_report(run_entry: Dict[str, str]) -> Dict[str, str]:
   try:
     count_qc_data = {}
@@ -323,18 +345,6 @@ def generate_fov_qc_report(run_entry: Dict[str, str]) -> Dict[str, str]:
       message_prefix=str(e))
     raise ValueError(e)
 
-## TASK
-@task(multiple_outputs=False)
-def generate_db_data(qc_list: List[Dict[str, str]]) -> Dict[str, str]:
-  try:
-    db_data = {}
-    return db_data
-  except Exception as e:
-    log.error(e)
-    send_airflow_failed_logs_to_channels(
-      ms_teams_conf=MS_TEAMS_CONF,
-      message_prefix=str(e))
-    raise ValueError(e)
 
 ## TASK
 @task(multiple_outputs=False)
@@ -400,9 +410,54 @@ def register_db_data(run_entry: Dict[str, str]) -> Dict[str, str]:
 
 ## TASK
 @task(multiple_outputs=False)
-def collect_qc_reports_and_upload_to_portal(run_entry_list: Union[List[Dict[str, str]], Any]) -> Optional[bool]:
+def collect_slide_metadata(
+  run_entry_lislide_entryst: Union[List[Dict[str, str]], Any],
+  matched_slide_ids: Any) \
+    -> Optional[bool]:
   try:
-    return True
+    return None
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=str(e))
+
+
+## TASK
+@task(multiple_outputs=False)
+def generate_additional_qc_report1(
+  slide_entry: Union[List[Dict[str, str]], Any]) \
+    -> Optional[bool]:
+  try:
+    return None
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=str(e))
+
+
+## TASK
+@task(multiple_outputs=False)
+def generate_additional_qc_report2(
+  slide_entry: Union[List[Dict[str, str]], Any]) \
+    -> Optional[bool]:
+  try:
+    return None
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=str(e))
+
+
+## TASK
+@task(multiple_outputs=False)
+def upload_reports_to_portal(
+    slide_entry: Union[List[Dict[str, str]], Any]) \
+      -> Optional[bool]:
+  try:
+    return None
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(

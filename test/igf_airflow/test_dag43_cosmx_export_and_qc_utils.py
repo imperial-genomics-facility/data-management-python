@@ -21,10 +21,12 @@ from igf_airflow.utils.dag43_cosmx_export_and_qc_utils import (
     validate_export_md5,
     generate_count_qc_report,
     generate_fov_qc_report,
-    generate_db_data,
     copy_slide_data_to_globus,
     register_db_data,
-    collect_qc_reports_and_upload_to_portal
+    collect_slide_metadata,
+    generate_additional_qc_report1,
+    generate_additional_qc_report2,
+    upload_reports_to_portal
 )
 
 class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
@@ -154,13 +156,13 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
     assert isinstance(bash_cmd, str)
     assert "FLATFILE_DIR=/TEST_EXPORT_DIR/export_1/FlatFiles" in bash_cmd
 
+  def test_collect_slide_metadata(self):
+    assert False, "Test not implemented"
+
   def test_generate_count_qc_report(self):
     assert False, "Test not implemented"
 
   def test_generate_fov_qc_report(self):
-    assert False, "Test not implemented"
-
-  def test_generate_db_data(self):
     assert False, "Test not implemented"
 
   def test_copy_slide_data_to_globus(self):
@@ -169,8 +171,15 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
   def test_register_db_data(self):
     assert False, "Test not implemented"
 
-  def test_collect_qc_reports_and_upload_to_portal(self):
-    assert False, "Test not implemented"
+  def test_generate_additional_qc_report1(self):
+    assert generate_additional_qc_report1([{}]) is not None
+
+  def test_generate_additional_qc_report2(self):
+    assert generate_additional_qc_report2([{}]) is not None
+
+  def test_upload_reports_to_portal(self):
+    assert upload_reports_to_portal([{}]) is not None
+
 
 if __name__=='__main__':
   unittest.main()
