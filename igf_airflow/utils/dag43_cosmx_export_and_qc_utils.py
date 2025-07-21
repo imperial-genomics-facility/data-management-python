@@ -69,11 +69,20 @@ def run_ftp_export_factory(design_file: str, work_dir: str) -> List[Dict[str, st
     with open(design_file, 'r') as fp:
       design_data = load(fp, Loader=SafeLoader)
     run_metadata = design_data.get("run_metadata")
+    ## check run entry
+    for entry in run_metadata:
+      if "cosmx_run_id" not in entry or \
+         "export_directory_path" not in entry:
+        raise KeyError(
+          f"Check design file {design_file} for missing \
+            cosmx_run_id or export_directory_path")
     if not run_metadata:
       raise KeyError(
         f"Missing run_metadata in file {design_file}")
     if not isinstance(run_metadata, list):
-      raise TypeError(f"Expecting a list of run_meatadata, received {type(run_metadata)}")
+      raise TypeError(
+        f"Expecting a list of run_meatadata, \
+          received {type(run_metadata)}")
     return run_metadata
   except Exception as e:
     log.error(e)
