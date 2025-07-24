@@ -338,6 +338,7 @@ def match_slide_ids_with_project_id(
       raise ValueError(
         'analysis_id not found in dag_run.conf')
     ## step 2: get project id of analysis
+    print(analysis_id)
     project_igf_id = \
       get_project_igf_id_for_analysis(
         analysis_id=analysis_id,

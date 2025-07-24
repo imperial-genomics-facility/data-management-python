@@ -2,10 +2,10 @@ import os
 import json
 import yaml
 import subprocess
-import unittest
+import unittest, pytest
 import pandas as pd
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch, MagicMock
 from yaml import load, SafeLoader, dump, SafeDumper
 from igf_data.utils.fileutils import (
   get_temp_dir,
@@ -181,32 +181,48 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
     assert isinstance(bash_cmd, str)
     assert "FLATFILE_DIR=/TEST_EXPORT_DIR/export_1/FlatFiles" in bash_cmd
 
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_project_igf_id_for_analysis", return_value="project1")
   @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_current_context")
-  def test_match_slide_ids_with_project_id(self, mock_context):
+  def test_match_slide_ids_with_project_id(self, mock_get_context, mock_project):
     base = BaseAdaptor(**{'session_class':self.base.get_session_class()})
     base.start_session()
     project = \
-      Project(project_igf_id="project1")
+      Project(project_id=1, project_igf_id="project1")
     base.session.add(project)
     base.session.flush()
     analysis = \
       Analysis(
+        analysis_id=1,
         analysis_type="test",
         analysis_name="test",
-        project_id=project.project_id)
+        project_id=1)
     base.session.add(analysis)
     base.session.flush()
     base.session.commit()
+    base.close_session()
+
+    # Setup Airflow context mock
+    mock_context = MagicMock()
+    mock_context.dag_run.conf.analysis_id = 1
+    mock_context.get.return_value = mock_context.dag_run
+    mock_context.dag_run.conf.get.return_value = 1
+    mock_get_context.return_value = mock_context
+
     slide_data_list = [
       {"cosmx_run_id": "test",
        "export_dir": "test",
        "slide_id": "project1_slideA"}]
-    mock_context.dag_run.get.return_value = 'a'
-    mock_context.dag_run.conf.get.return_value = 'a'
-    mock_context.dag_run.conf.analysis_id.get.return_value = analysis.analysis_id
     status = \
       match_slide_ids_with_project_id.function(slide_data_list)
     assert status
+    slide_data_list = [
+      {"cosmx_run_id": "test",
+       "export_dir": "test",
+       "slide_id": "project2_slideA"}]
+    with pytest.raises(ValueError):
+      status = \
+        match_slide_ids_with_project_id.function(slide_data_list)
+
 
   def test_collect_slide_metadata(self):
     assert False, "Test not implemented"
