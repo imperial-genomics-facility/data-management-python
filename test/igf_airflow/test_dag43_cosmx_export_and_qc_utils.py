@@ -5,10 +5,14 @@ import subprocess
 import unittest
 import pandas as pd
 from pathlib import Path
+from unittest.mock import patch
 from yaml import load, SafeLoader, dump, SafeDumper
 from igf_data.utils.fileutils import (
   get_temp_dir,
   remove_dir)
+from igf_data.igfdb.igfTables import Base
+from igf_data.igfdb.baseadaptor import BaseAdaptor
+from igf_data.utils.dbutils import read_dbconf_json
 from igf_airflow.utils.dag43_cosmx_export_and_qc_utils import (
     run_ftp_export_factory,
     prepare_run_ftp_export,
@@ -26,15 +30,31 @@ from igf_airflow.utils.dag43_cosmx_export_and_qc_utils import (
     collect_slide_metadata,
     generate_additional_qc_report1,
     generate_additional_qc_report2,
-    upload_reports_to_portal
+    upload_reports_to_portal,
+    match_slide_ids_with_project_id
+)
+from igf_data.igfdb.igfTables import (
+  Project,
+  Analysis
 )
 
 class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
   def setUp(self):
     self.temp_dir = get_temp_dir()
+    self.dbconfig = 'data/dbconfig.json'
+    dbparam = read_dbconf_json(self.dbconfig)
+    self.base = BaseAdaptor(**dbparam)
+    self.engine = self.base.engine
+    self.dbname = dbparam['dbname']
+    if os.path.exists(self.dbname):
+      os.remove(self.dbname)
+    Base.metadata.create_all(self.engine)
 
   def tearDown(self):
     remove_dir(self.temp_dir)
+    Base.metadata.drop_all(self.engine)
+    if os.path.exists(self.dbname):
+      os.remove(self.dbname)
 
   def test_run_ftp_export_factory(self):
     design_data = {
@@ -81,7 +101,9 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
       "export_dir": "/TEST_EXPORT_DIR/A1_ftp",
       "work_dir": "/tmp"}
     extracted_data = \
-      prep_extract_ftp_export.function(run_entry=run_config)
+      prep_extract_ftp_export.function(
+        run_entry=run_config,
+        export_finished=1)
     assert isinstance(extracted_data, dict)
     assert "run_entry" in extracted_data
     assert "export_dir" in extracted_data
@@ -107,7 +129,9 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
       "export_dir": "/TEST_EXPORT_DIR/A1_ftp",
       "work_dir": "/tmp"}
     collected_data = \
-      collect_extracted_data.function(run_entry=run_config)
+      collect_extracted_data.function(
+        run_entry=run_config,
+        validation_finished=1)
     assert isinstance(collected_data, dict)
     assert "cosmx_run_id" in collected_data
     assert "export_dir" in collected_data
@@ -131,9 +155,9 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
     assert len(slide_data_list) == 2
     assert isinstance(slide_data_list[0], dict)
     assert "cosmx_run_id" in slide_data_list[0]
-    assert "slide_dir" in slide_data_list[0]
+    assert "slide_id" in slide_data_list[0]
     assert slide_data_list[0]["cosmx_run_id"] == "A1"
-    assert slide_data_list[0]["slide_dir"] in ("slide1", "slide2")
+    assert slide_data_list[0]["slide_id"] in ("slide1", "slide2")
 
   def test_prep_validate_export_md5(self):
     run_config = {
@@ -143,7 +167,8 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
       "work_dir": "/tmp"}
     validated_data = \
       prep_validate_export_md5.function(
-        run_entry=run_config)
+        run_entry=run_config,
+        extract_finished=1)
     assert isinstance(validated_data, dict)
     assert "run_entry" in validated_data
     assert "export_dir" in validated_data
@@ -155,6 +180,33 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
       validate_export_md5.function(export_dir=export_dir)
     assert isinstance(bash_cmd, str)
     assert "FLATFILE_DIR=/TEST_EXPORT_DIR/export_1/FlatFiles" in bash_cmd
+
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_current_context")
+  def test_match_slide_ids_with_project_id(self, mock_context):
+    base = BaseAdaptor(**{'session_class':self.base.get_session_class()})
+    base.start_session()
+    project = \
+      Project(project_igf_id="project1")
+    base.session.add(project)
+    base.session.flush()
+    analysis = \
+      Analysis(
+        analysis_type="test",
+        analysis_name="test",
+        project_id=project.project_id)
+    base.session.add(analysis)
+    base.session.flush()
+    base.session.commit()
+    slide_data_list = [
+      {"cosmx_run_id": "test",
+       "export_dir": "test",
+       "slide_id": "project1_slideA"}]
+    mock_context.dag_run.get.return_value = 'a'
+    mock_context.dag_run.conf.get.return_value = 'a'
+    mock_context.dag_run.conf.analysis_id.get.return_value = analysis.analysis_id
+    status = \
+      match_slide_ids_with_project_id.function(slide_data_list)
+    assert status
 
   def test_collect_slide_metadata(self):
     assert False, "Test not implemented"

@@ -26,6 +26,7 @@ from igf_airflow.utils.dag22_bclconvert_demult_utils import (
   _create_output_from_jinja_template)
 from igf_airflow.utils.generic_airflow_utils import (
   get_project_igf_id_for_analysis,
+  get_project_igf_id_for_analysis,
   fetch_analysis_name_for_analysis_id,
   send_airflow_failed_logs_to_channels,
   send_airflow_pipeline_logs_to_channels,
@@ -297,7 +298,7 @@ def collect_all_slides(run_entry_list: Union[List[Dict[str, str]], Any]) -> List
         slide_data_list.append({
           "cosmx_run_id": cosmx_run_id,
           "export_dir": export_dir,
-          "slide_dir": slide_dir_name})
+          "slide_id": slide_dir_name})
     return slide_data_list
   except Exception as e:
     log.error(e)
@@ -305,18 +306,74 @@ def collect_all_slides(run_entry_list: Union[List[Dict[str, str]], Any]) -> List
       ms_teams_conf=MS_TEAMS_CONF,
       message_prefix=str(e))
 
+
 ## TASK
 @task(multiple_outputs=False)
-def match_slide_ids_with_project_id(slide_data_list):
+def match_slide_ids_with_project_id(
+  slide_data_list: List[Dict[str, str]]) -> bool:
+  """
+  A function for checking if slides are linked to correct projects
+
+  :param slide_data_list: A list of dictionaries containing 
+      * cosmx_run_id
+      * export_dir
+      * slide_id
+  :returns: True if all slide matches
+  :raises:
+    * ValueError if slide ids are different from project id
+    * KeyError if slide_id is not present in the slide_data_list elements
+  """
   try:
-    ## TO DO: VALIDATE SLIDE IDS
-    return slide_data_list
+    ## step 1: get analysis id
+    ### dag_run.conf should have analysis_id
+    context = get_current_context()
+    dag_run = context.get('dag_run')
+    analysis_id = None
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('analysis_id') is not None:
+      analysis_id = \
+        dag_run.conf.get('analysis_id')
+    if analysis_id is None:
+      raise ValueError(
+        'analysis_id not found in dag_run.conf')
+    ## step 2: get project id of analysis
+    project_igf_id = \
+      get_project_igf_id_for_analysis(
+        analysis_id=analysis_id,
+        dbconfig_file=DATABASE_CONFIG_FILE)
+    ## step 3: get slide ids and check if slide ids have same prefix as project ids
+    for entry in slide_data_list:
+      slide_id = entry.get("slide_id")
+      if slide_id is None:
+        raise KeyError(
+          "Missing slide_id in slide_data_list")
+      if project_igf_id not in slide_id:
+        raise ValueError(
+          f"Slide id {slide_id} not matching project id {project_igf_id}")
+    return True
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
       ms_teams_conf=MS_TEAMS_CONF,
       message_prefix=str(e))
     raise ValueError(e)
+
+
+## TASK
+@task(multiple_outputs=False)
+def collect_slide_metadata(
+  slide_entry: Union[List[Dict[str, str]], Any],
+  matched_slide_ids: Any) \
+    -> Optional[bool]:
+  try:
+    return None
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=str(e))
+
 
 ## TASK
 @task(multiple_outputs=False)
@@ -408,19 +465,7 @@ def register_db_data(run_entry: Dict[str, str]) -> Dict[str, str]:
     raise ValueError(e)
 
 
-## TASK
-@task(multiple_outputs=False)
-def collect_slide_metadata(
-  run_entry_lislide_entryst: Union[List[Dict[str, str]], Any],
-  matched_slide_ids: Any) \
-    -> Optional[bool]:
-  try:
-    return None
-  except Exception as e:
-    log.error(e)
-    send_airflow_failed_logs_to_channels(
-      ms_teams_conf=MS_TEAMS_CONF,
-      message_prefix=str(e))
+
 
 
 ## TASK
