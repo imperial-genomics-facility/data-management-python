@@ -1,29 +1,55 @@
 To: {% if send_email_to_user %}{{ customerEmail }}; {{ defaultUser }}{% else %}{{ defaultUser }}{% endif %}
-Subject: {{ projectName }} - Analysis data available for download
+Subject: Primary Analysis QC Available - Action Required for {{ projectName }}
 From: {{ defaultUser }}
 MIME-Version: 1.0
 Content-Type: text/plain
 
 Dear {{ customerName }}, {% if not send_email_to_user %}EMAIL FOR {{ customerEmail }}{% endif %}
 
-We would like to update you that the results from a recent analysis run "{{ analysisName }}" are now available for your project {{ projectName }}.
+We would like to update you that our wet-lab team has triggered a primary analysis run "{{ analysisName }}" for your project “{{ projectName }}”. New data files and quality control (QC) reports are now available for your review.
 
-Data access via Globus (FILES AVAILABLE FOR 30 DAYS):
-    - Have you already requested for a Globus collection for your project before?
-        - If YES, please check the existing collection for new data files.
-        - If NO, please let us know if we can share this data with you via Globus.
-            {% if hpcUser %}We need your approval before we can share this data with Globus username {{ customerUsername }}@ic.ac.uk.{% else %}Please send us your Globus username / Imperial College's username for this share.{% endif %}
+IGF Pipelines:
+  - https://imperial-genomics-facility.github.io/igf-pipeline-help/analyses_pipelines.html
 
-Please note that:
-    - Thses output files are from one iteration of data analysis pipeline run which may or may not be the final result set for your project. Feel free to contact us in you need any further information.
-    - You are responsible for long term storage of your data as we will keep these files only for a short period of time.
+How to access the data?
+  Data access via Globus (FILES AVAILABLE FOR 30 DAYS):
 
-Important links:
-    - Globus based transfer (LIMIT 30 DAYS):
-        https://imperial-genomics-facility.github.io/igf-pipeline-help/data_access.html#globus-based-transfer
+    Have you already requested for a Globus collection for your project before?
+    - If YES, please check the existing collection for new data files.
+    - If NO, please let us know if we can share this data with you via Globus.
+      {% if hpcUser %}We need your approval before we can share this data with Globus username {{ customerUsername }}@ic.ac.uk.{% else %}Please send us your Globus username / Imperial College's username for this share.{% endif %}
 
-    - Help docs for analysis pipelines:
-        https://imperial-genomics-facility.github.io/igf-pipeline-help/analyses_pipelines.html
+    Help page (by Imperial's RCS team):
+    - https://icl-rcs-user-guide.readthedocs.io/en/latest/rds/transferringdata/globus/
+
+What you need to do next?
+  - Transfer the primary analysis results to your HPC RDS storage.
+  - Review the QC reports.
+
+How to check QC reports?
+  - Download the MultiQC report or other QC summary metrics from Globus.
+  - Contact your bioinformatics team.
+  - Request to set-up a meeting with our bioinformatics team to know more about the QC results.
+
+Who will validate these QC reports?
+  Unfortunately, we can’t validate these QC reports as we don’t have all the required information for your samples (i.e., biological conditions or sample collection details). Currently, we are following a shared responsibility model to resolve this issue.
+
+  Our responsibilities:
+    - Run the analysis QC pipeline according to standard protocols and generate QC reports.
+    - Contact tech-support of the library kit provider after receiving your queries.
+
+  Your responsibilities:
+    - Review QC reports within the next 7-days.
+    - Communicate any concerns or questions promptly.
+
+What happens if you don't check QC reports or contact us?
+  - QC issues may go unaddressed, potentially affecting downstream analysis.
+
+How to configure these pipelines specifically for your project?
+  - Contact your bioinformatics team and send us their preferred pipeline version, analysis parameter and reference genome information.
+  - Request to set-up a meeting with our bioinformatics team to discuss about initial QC results and final set of parameters.
+
+You need to contact us within 7 days of receiving this email to address any QC issues.
 
 Subscribe to IGF mailing list for updates and announcements:
 https://mailman.ic.ac.uk/mailman/listinfo/igf-users
