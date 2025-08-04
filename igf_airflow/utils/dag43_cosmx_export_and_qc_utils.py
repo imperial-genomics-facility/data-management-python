@@ -61,6 +61,10 @@ COXMX_EXPORT_SCRIPT_PATH = \
   Variable.get('cosmx_export_script_path', default_var='TEST_SCRIPT')
 COSMX_EXPORT_RCLONE_PROFILE = \
   Variable.get('cosmx_export_rclone_profile', default_var='TEST_PROFILE')
+COSMX_QC_REPORT_IMAGE1 = \
+  Variable.get('cosmx_qc_report_image1', default_var='TEST_IMAGE')
+COSMX_SLIDE_METADATA_EXTRACTION_TEMPLATE = \
+  Variable.get('cosmx_slide_metadata_extraction_template', default_var='TEST_TEMPLATE')
 
 
 ## TASKS
@@ -338,7 +342,6 @@ def match_slide_ids_with_project_id(
       raise ValueError(
         'analysis_id not found in dag_run.conf')
     ## step 2: get project id of analysis
-    print(analysis_id)
     project_igf_id = \
       get_project_igf_id_for_analysis(
         analysis_id=analysis_id,
@@ -364,11 +367,94 @@ def match_slide_ids_with_project_id(
 ## TASK
 @task(multiple_outputs=False)
 def collect_slide_metadata(
-  slide_entry: Union[List[Dict[str, str]], Any],
-  matched_slide_ids: Any) \
-    -> Optional[bool]:
+  slide_entry: Dict[str, str],
+  matched_slide_ids: Any,
+  raw_files_dir_name: str = 'DecodedFiles',
+  flat_files_dir_name: str = 'FlatFiles',
+  metadata_json_file_name: str = 'slide_metadata.json') \
+    -> Dict[str, str]:
   try:
-    return None
+    ## step 1: get analysis id
+    ### dag_run.conf should have analysis_id
+    context = get_current_context()
+    dag_run = context.get('dag_run')
+    analysis_id = None
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get('analysis_id') is not None:
+      analysis_id = \
+        dag_run.conf.get('analysis_id')
+    if analysis_id is None:
+      raise ValueError(
+        'analysis_id not found in dag_run.conf')
+    ## step 2: get project id of analysis
+    project_igf_id = \
+      get_project_igf_id_for_analysis(
+        analysis_id=analysis_id,
+        dbconfig_file=DATABASE_CONFIG_FILE)
+    ## step 3: get slide_id
+    slide_id = slide_entry.get("slide_id")
+    if slide_id is None:
+      raise KeyError(
+        "Missing slide_id in slide_entry")
+    cosmx_run_id = slide_entry.get("cosmx_run_id")
+    if cosmx_run_id is None:
+      raise KeyError(
+        "Missing cosmx_run_id in slide_entry")
+    ## step 4: collect rawfiles dir
+    export_dir = slide_entry.get("export_dir")
+    if export_dir is None:
+      raise KeyError(
+        "Missing export_dir in slide_entry")
+    raw_files_dir = Path(export_dir) / raw_files_dir_name
+    ## step 5: collect flatfiles dir
+    flat_files_dir = Path(export_dir) / flat_files_dir_name
+    ## step 6: json output path
+    temp_dir = get_temp_dir(use_ephemeral_space=True)
+    metadata_json_file = Path(temp_dir) / metadata_json_file_name
+    ## step 7: run notebook and generate json file
+    input_list = [
+      COSMX_SLIDE_METADATA_EXTRACTION_TEMPLATE,
+      COSMX_QC_REPORT_IMAGE1,
+      raw_files_dir,
+      flat_files_dir,
+      temp_dir]
+    for f in input_list:
+      check_file_path(f)
+    container_bind_dir_list = [
+      export_dir,
+      temp_dir]
+    date_tag = get_date_stamp()
+    input_params = dict(
+      DATE_TAG=date_tag,
+      COSMX_PROJECT_NAME=project_igf_id,
+      COSMX_SLIDE_NAME=slide_id,
+      SLIDE_RAW_FILES_DIR=raw_files_dir,
+      SLIDE_FLAT_FILES_DIR=flat_files_dir,
+      JSON_OUTPUT_PATH=metadata_json_file)
+    nb = \
+      Notebook_runner(
+        template_ipynb_path=COSMX_SLIDE_METADATA_EXTRACTION_TEMPLATE,
+        output_dir=temp_dir,
+        input_param_map=input_params,
+        container_paths=container_bind_dir_list,
+        kernel='python3',
+        use_ephemeral_space=True,
+        singularity_options=['-C'],
+        allow_errors=False,
+        singularity_image_path=COSMX_QC_REPORT_IMAGE1,
+        timeout=120,
+        no_input=False)
+    output_notebook_path, _ = \
+      nb.execute_notebook_in_singularity()
+    ## step 8: update slide_entry dict
+    new_slide_entry = {
+      "cosmx_run_id": cosmx_run_id,
+      "slide_id": slide_id,
+      "export_dir": export_dir,
+      "slide_metadata_json": metadata_json_file,
+      "flatfiles_dir": flat_files_dir}
+    return new_slide_entry
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(

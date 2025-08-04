@@ -223,9 +223,38 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
       status = \
         match_slide_ids_with_project_id.function(slide_data_list)
 
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.COSMX_SLIDE_METADATA_EXTRACTION_TEMPLATE", return_value="project1")
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_project_igf_id_for_analysis", return_value="project1")
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.COSMX_SLIDE_METADATA_EXTRACTION_TEMPLATE", return_value="/tmp")
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.COSMX_QC_REPORT_IMAGE1", return_value="/tmp")
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.Notebook_runner")
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_current_context")
+  def test_collect_slide_metadata(self, mock_get_context, mock_nb_runner, *args):
+    # Setup Airflow context mock
+    mock_context = MagicMock()
+    mock_context.dag_run.conf.analysis_id = 1
+    mock_context.get.return_value = mock_context.dag_run
+    mock_context.dag_run.conf.get.return_value = 1
+    mock_get_context.return_value = mock_context
 
-  def test_collect_slide_metadata(self):
-    assert False, "Test not implemented"
+    mock_nb_context = MagicMock()
+    mock_nb_context.execute_notebook_in_singularity.return_value = ["test", "test"]
+    mock_nb_runner.return_value = mock_nb_context
+
+    os.makedirs(Path(self.temp_dir) / "DecodedFiles")
+    os.makedirs(Path(self.temp_dir) / "FlatFiles")
+    slide_entry = {
+      "cosmx_run_id": "cosmx_run_id",
+      "slide_id": "slide_id",
+      "export_dir": self.temp_dir,
+    }
+    new_slide_entry = \
+      collect_slide_metadata.function(
+        slide_entry=slide_entry,
+        matched_slide_ids=1)
+    assert "slide_metadata_json" in new_slide_entry
+    assert "flatfiles_dir" in new_slide_entry
+
 
   def test_generate_count_qc_report(self):
     assert False, "Test not implemented"
