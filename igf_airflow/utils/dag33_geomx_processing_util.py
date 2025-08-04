@@ -681,10 +681,10 @@ def build_qc_report_for_geomx(
       annotation_file_path]
     for f in input_list:
       check_file_path(f)
-      container_bind_dir_list = [
-        dcc_dir_path,
-        os.path.dirname(pkc_file_path),
-        os.path.dirname(annotation_file_path)]
+    container_bind_dir_list = [
+      dcc_dir_path,
+      os.path.dirname(pkc_file_path),
+      os.path.dirname(annotation_file_path)]
     date_tag = get_date_stamp()
     input_params = dict(
       DATE_TAG=date_tag,
