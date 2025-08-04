@@ -227,6 +227,7 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
   @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_project_igf_id_for_analysis", return_value="project1")
   @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.COSMX_SLIDE_METADATA_EXTRACTION_TEMPLATE", return_value="/tmp")
   @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.COSMX_QC_REPORT_IMAGE1", return_value="/tmp")
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.check_file_path")
   @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.Notebook_runner")
   @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_current_context")
   def test_collect_slide_metadata(self, mock_get_context, mock_nb_runner, *args):
