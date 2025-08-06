@@ -287,8 +287,34 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
       generate_count_qc_report.function(slide_entry=slide_entry)
     assert "json_output" in new_slide_entry
 
-  def test_generate_fov_qc_report(self):
-    assert False, "Test not implemented"
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf", return_value=[1, "project1"])
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.check_file_path")
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.copy_local_file")
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.COSMX_COUNT_FOV_REPORT_TEMPLATE", return_value="/tmp")
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.COSMX_QC_REPORT_IMAGE1", return_value="/tmp")
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.Notebook_runner")
+  def test_generate_fov_qc_report(self, mock_nb_runner, *args):
+    mock_nb_context = MagicMock()
+    mock_nb_context.execute_notebook_in_singularity.return_value = ["test", "test"]
+    mock_nb_runner.return_value = mock_nb_context
+    ## slide metadata file
+    slide_metadata_json = \
+      Path(self.temp_dir) / "metadata.json"
+    os.makedirs(Path(self.temp_dir) / "FlatFiles")
+    with open(slide_metadata_json, "w") as fp:
+      json.dump({"panel_name": "AAA"}, fp)
+
+    slide_entry = {
+      "cosmx_run_id": "cosmx_run_id",
+      "slide_id": "slide_id",
+      "export_dir": self.temp_dir,
+      "slide_metadata_json": slide_metadata_json
+    }
+    new_slide_entry = \
+      generate_fov_qc_report.function(slide_entry=slide_entry)
+    assert "slide_metadata_json" in new_slide_entry
+    assert new_slide_entry.get("slide_metadata_json") is not None
+    assert new_slide_entry.get("slide_metadata_json") == slide_metadata_json
 
   def test_copy_slide_data_to_globus(self):
     assert False, "Test not implemented"
