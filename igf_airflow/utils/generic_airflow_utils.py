@@ -29,6 +29,40 @@ from igf_data.igfdb.collectionadaptor import CollectionAdaptor
 log = logging.getLogger(__name__)
 
 
+def get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf(
+  database_config_file: str,
+  analysis_id_key: str = "analysis_id",
+  dag_run_key: str = "dag_run") -> Tuple[str, str]:
+  """
+  """
+  try:
+    ## step 1: get analysis id
+    ### dag_run.conf should have analysis_id
+    context = get_current_context()
+    dag_run = context.get(dag_run_key)
+    analysis_id = None
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get(analysis_id_key) is not None:
+      analysis_id = \
+        dag_run.conf.get(analysis_id_key)
+    if analysis_id is None:
+      raise ValueError(
+        'analysis_id not found in dag_run.conf')
+    ## step 2: get project id of analysis
+    project_igf_id = \
+      get_project_igf_id_for_analysis(
+        analysis_id=analysis_id,
+        dbconfig_file=database_config_file)
+    if project_igf_id is None:
+      raise ValueError(
+        f"No valid project_igf_id found for analysis {analysis_id}")
+    return analysis_id, project_igf_id
+  except Exception as e:
+    message = \
+      f"Failed to get analysis_id and project_igf_id, error: {e}"
+    log.error(message)
+    raise ValueError(message)
 
 
 def send_generic_logs_to_channels(
