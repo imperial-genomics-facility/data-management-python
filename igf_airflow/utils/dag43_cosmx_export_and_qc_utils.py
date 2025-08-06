@@ -618,7 +618,7 @@ def generate_fov_qc_report(
     metadata_json_file = slide_entry.get(metadata_json_key)
     if metadata_json_file is None:
       raise KeyError(
-        f"No metadata json file found fr slide {slide_id}")
+        f"No metadata json file found for slide {slide_id}")
     check_file_path(metadata_json_file)
     ## step 6: parse metadata json file and get panel info
     with open(metadata_json_file, 'r') as fp:
@@ -682,51 +682,75 @@ def generate_fov_qc_report(
     raise ValueError(e)
 
 
-
 ## TASK
 @task(multiple_outputs=False)
-def copy_slide_data_to_globus(run_entry: Dict[str, str]) -> Dict[str, str]:
+def register_db_data(
+  slide_entry: Dict[str, str],
+  report_files_dir_name: str = 'Reports',
+  metadata_json_key:str = "slide_metadata_json",
+  count_qc_json_output_key: str = "json_output") -> Dict[str, str]:
   try:
-    globus_data = {}
-    return globus_data
-  except Exception as e:
-    log.error(e)
-    send_airflow_failed_logs_to_channels(
-      ms_teams_conf=MS_TEAMS_CONF,
-      message_prefix=str(e))
-    raise ValueError(e)
+    new_slide_entry = {}
+    ## step 1: get analysis_id and project id
+    analysis_id, project_igf_id = \
+      get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf(
+        database_config_file=DATABASE_CONFIG_FILE)
+    ## step 2: get slide id and run id
+    slide_id = slide_entry.get("slide_id")
+    if slide_id is None:
+      raise KeyError(
+        "Missing slide_id in slide_entry")
+    cosmx_run_id = slide_entry.get("cosmx_run_id")
+    if cosmx_run_id is None:
+      raise KeyError(
+        "Missing cosmx_run_id in slide_entry")
+    ## step 3: get metadata json file
+    metadata_json_file = \
+      slide_entry.get(metadata_json_key)
+    if metadata_json_file is None:
+      raise KeyError(
+        f"No metadata json file found for slide {slide_id}")
+    check_file_path(metadata_json_file)
+    ## get count qc json file
+    count_qc_json_output_dir = \
+      slide_entry.get(count_qc_json_output_key)
+    if count_qc_json_output_dir is None:
+      raise KeyError(
+        f"No count QC json dir found for slide {slide_id}")
+    check_file_path(count_qc_json_output_dir)
+    ## parse metadata json file
+    ## fetch analysis description
+    ## parse fov anotation from analysis description
+    ## prep table data for db upload
+    ## load data to table
 
 
-## TASK
-@task(multiple_outputs=False)
-def register_db_data(run_entry: Dict[str, str]) -> Dict[str, str]:
-  try:
-    registered_data = {}
-    ## step 1: register cosmx run
+
+    ## step x: register cosmx run
     run_registration_status = \
       check_and_register_cosmx_run(
-        project_igf_id='',
-        cosmx_run_igf_id='',
+        project_igf_id=project_igf_id,
+        cosmx_run_igf_id=cosmx_run_id,
         db_session_class=None)
-    ## step 2: register cosmx slide
+    ## step x: register cosmx slide
     slide_registration_status = \
       check_and_register_cosmx_slide(
-        cosmx_run_igf_id='',
-        cosmx_slide_igf_id='',
+        cosmx_run_igf_id=cosmx_run_id,
+        cosmx_slide_igf_id=slide_id,
         cosmx_platform_igf_id='',
         panel_info='',
         assay_type='',
         version='',
         db_session_class=None,
         slide_metadata=[])
-    ## step 3: fov registration
+    ## step x: fov registration
     fov_registration_status = \
       create_or_update_cosmx_slide_fov(
         cosmx_slide_igf_id='',
         fov_range='',
         slide_type='',
         db_session_class=None)
-    ## step 4: fov count qc registration
+    ## step x: fov count qc registration
     fov_count_registration_status = \
       create_cosmx_slide_fov_count_qc(
         cosmx_slide_igf_id='',
@@ -736,7 +760,7 @@ def register_db_data(run_entry: Dict[str, str]) -> Dict[str, str]:
         slide_count_json_file='',
         rna_count_file_validation_schema='',
         protein_count_file_validation_schema='')
-    return registered_data
+    return new_slide_entry
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
@@ -745,7 +769,18 @@ def register_db_data(run_entry: Dict[str, str]) -> Dict[str, str]:
     raise ValueError(e)
 
 
-
+## TASK
+@task(multiple_outputs=False)
+def copy_slide_data_to_globus(slide_entry: Dict[str, str]) -> Dict[str, str]:
+  try:
+    new_slide_entry = {}
+    return new_slide_entry
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=str(e))
+    raise ValueError(e)
 
 
 ## TASK
