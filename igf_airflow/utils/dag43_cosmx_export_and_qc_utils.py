@@ -336,22 +336,25 @@ def match_slide_ids_with_project_id(
   try:
     ## step 1: get analysis id
     ### dag_run.conf should have analysis_id
-    context = get_current_context()
-    dag_run = context.get('dag_run')
-    analysis_id = None
-    if dag_run is not None and \
-       dag_run.conf is not None and \
-       dag_run.conf.get('analysis_id') is not None:
-      analysis_id = \
-        dag_run.conf.get('analysis_id')
-    if analysis_id is None:
-      raise ValueError(
-        'analysis_id not found in dag_run.conf')
+    # context = get_current_context()
+    # dag_run = context.get('dag_run')
+    # analysis_id = None
+    # if dag_run is not None and \
+    #    dag_run.conf is not None and \
+    #    dag_run.conf.get('analysis_id') is not None:
+    #   analysis_id = \
+    #     dag_run.conf.get('analysis_id')
+    # if analysis_id is None:
+    #   raise ValueError(
+    #     'analysis_id not found in dag_run.conf')
     ## step 2: get project id of analysis
-    project_igf_id = \
-      get_project_igf_id_for_analysis(
-        analysis_id=analysis_id,
-        dbconfig_file=DATABASE_CONFIG_FILE)
+    # project_igf_id = \
+    #   get_project_igf_id_for_analysis(
+    #     analysis_id=analysis_id,
+    #     dbconfig_file=DATABASE_CONFIG_FILE)
+    analysis_id, project_igf_id = \
+      get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf(
+        database_config_file=DATABASE_CONFIG_FILE)
     ## step 3: get slide ids and check if slide ids have same prefix as project ids
     for entry in slide_data_list:
       slide_id = entry.get("slide_id")
@@ -383,22 +386,25 @@ def collect_slide_metadata(
   try:
     ## step 1: get analysis id
     ### dag_run.conf should have analysis_id
-    context = get_current_context()
-    dag_run = context.get('dag_run')
-    analysis_id = None
-    if dag_run is not None and \
-       dag_run.conf is not None and \
-       dag_run.conf.get('analysis_id') is not None:
-      analysis_id = \
-        dag_run.conf.get('analysis_id')
-    if analysis_id is None:
-      raise ValueError(
-        'analysis_id not found in dag_run.conf')
+    # context = get_current_context()
+    # dag_run = context.get('dag_run')
+    # analysis_id = None
+    # if dag_run is not None and \
+    #    dag_run.conf is not None and \
+    #    dag_run.conf.get('analysis_id') is not None:
+    #   analysis_id = \
+    #     dag_run.conf.get('analysis_id')
+    # if analysis_id is None:
+    #   raise ValueError(
+    #     'analysis_id not found in dag_run.conf')
     ## step 2: get project id of analysis
-    project_igf_id = \
-      get_project_igf_id_for_analysis(
-        analysis_id=analysis_id,
-        dbconfig_file=DATABASE_CONFIG_FILE)
+    # project_igf_id = \
+    #   get_project_igf_id_for_analysis(
+    #     analysis_id=analysis_id,
+    #     dbconfig_file=DATABASE_CONFIG_FILE)
+    analysis_id, project_igf_id = \
+      get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf(
+        database_config_file=DATABASE_CONFIG_FILE)
     ## step 3: get slide_id
     slide_id = slide_entry.get("slide_id")
     if slide_id is None:

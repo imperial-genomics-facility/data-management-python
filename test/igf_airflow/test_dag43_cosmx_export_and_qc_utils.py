@@ -181,9 +181,10 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
     assert isinstance(bash_cmd, str)
     assert "FLATFILE_DIR=/TEST_EXPORT_DIR/export_1/FlatFiles" in bash_cmd
 
-  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_project_igf_id_for_analysis", return_value="project1")
-  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_current_context")
-  def test_match_slide_ids_with_project_id(self, mock_get_context, mock_project):
+  # @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_project_igf_id_for_analysis", return_value="project1")
+  # @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_current_context")
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf", return_value=[1, "project1"])
+  def test_match_slide_ids_with_project_id(self, *args):
     base = BaseAdaptor(**{'session_class':self.base.get_session_class()})
     base.start_session()
     project = \
@@ -202,11 +203,11 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
     base.close_session()
 
     # Setup Airflow context mock
-    mock_context = MagicMock()
-    mock_context.dag_run.conf.analysis_id = 1
-    mock_context.get.return_value = mock_context.dag_run
-    mock_context.dag_run.conf.get.return_value = 1
-    mock_get_context.return_value = mock_context
+    # mock_context = MagicMock()
+    # mock_context.dag_run.conf.analysis_id = 1
+    # mock_context.get.return_value = mock_context.dag_run
+    # mock_context.dag_run.conf.get.return_value = 1
+    # mock_get_context.return_value = mock_context
 
     slide_data_list = [
       {"cosmx_run_id": "test",
@@ -223,20 +224,21 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
       status = \
         match_slide_ids_with_project_id.function(slide_data_list)
 
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf", return_value=[1, "project1"])
   @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.COSMX_SLIDE_METADATA_EXTRACTION_TEMPLATE", return_value="project1")
   @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_project_igf_id_for_analysis", return_value="project1")
   @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.COSMX_SLIDE_METADATA_EXTRACTION_TEMPLATE", return_value="/tmp")
   @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.COSMX_QC_REPORT_IMAGE1", return_value="/tmp")
   @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.check_file_path")
   @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.Notebook_runner")
-  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_current_context")
-  def test_collect_slide_metadata(self, mock_get_context, mock_nb_runner, *args):
+  # @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_current_context")
+  def test_collect_slide_metadata(self, mock_nb_runner, *args):
     # Setup Airflow context mock
-    mock_context = MagicMock()
-    mock_context.dag_run.conf.analysis_id = 1
-    mock_context.get.return_value = mock_context.dag_run
-    mock_context.dag_run.conf.get.return_value = 1
-    mock_get_context.return_value = mock_context
+    # mock_context = MagicMock()
+    # mock_context.dag_run.conf.analysis_id = 1
+    # mock_context.get.return_value = mock_context.dag_run
+    # mock_context.dag_run.conf.get.return_value = 1
+    # mock_get_context.return_value = mock_context
 
     mock_nb_context = MagicMock()
     mock_nb_context.execute_notebook_in_singularity.return_value = ["test", "test"]
@@ -257,19 +259,20 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
     assert "flatfiles_dir" in new_slide_entry
 
 
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf", return_value=[1, "project1"])
   @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.COSMX_SLIDE_METADATA_EXTRACTION_TEMPLATE", return_value="project1")
   @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_project_igf_id_for_analysis", return_value="project1")
   @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.COSMX_COUNT_QC_REPORT_TEMPLATE", return_value="/tmp")
   @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.COSMX_QC_REPORT_IMAGE1", return_value="/tmp")
   @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.Notebook_runner")
-  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_current_context")
-  def test_generate_count_qc_report(self, mock_get_context, mock_nb_runner, *args):
+  # @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_current_context")
+  def test_generate_count_qc_report(self, mock_nb_runner, *args):
     # Setup Airflow context mock
-    mock_context = MagicMock()
-    mock_context.dag_run.conf.analysis_id = 1
-    mock_context.get.return_value = mock_context.dag_run
-    mock_context.dag_run.conf.get.return_value = 1
-    mock_get_context.return_value = mock_context
+    # mock_context = MagicMock()
+    # mock_context.dag_run.conf.analysis_id = 1
+    # mock_context.get.return_value = mock_context.dag_run
+    # mock_context.dag_run.conf.get.return_value = 1
+    # mock_get_context.return_value = mock_context
 
     mock_nb_context = MagicMock()
     mock_nb_context.execute_notebook_in_singularity.return_value = ["test", "test"]
