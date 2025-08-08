@@ -31,7 +31,10 @@ from igf_airflow.utils.dag43_cosmx_export_and_qc_utils import (
     generate_additional_qc_report1,
     generate_additional_qc_report2,
     upload_reports_to_portal,
-    match_slide_ids_with_project_id
+    match_slide_ids_with_project_id,
+    fetch_cosmx_metadata_info,
+    load_cosmx_data_to_db,
+    fetch_slide_annotations_from_design_file
 )
 from igf_data.igfdb.igfTables import (
   Project,
@@ -324,6 +327,47 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
 
   def test_register_db_data(self):
     assert False, "Test not implemented"
+
+  def test_fetch_slide_annotations_from_design_file(self):
+    design_file = Path(self.temp_dir) / "design1.yaml"
+    design_data = {
+      "run_metadata": [
+        {"cosmx_run_id": "IGF_PROJECT_ID_AND_RUN_ID",
+         "export_directory_path": "PATH_OF_DATA_EXPORT"}],
+      "analysis_metadata": {
+        "run_type": "RNA",
+        "annotation": [
+          {"cosmx_slide_id": "COSMX_SLIDE_ID_1",
+           "tissue_annotation": "TISSUE_ANNOTATION",
+           "tissue_ontology": "TISSUE_ONTOLOGY",
+           "tissue_condition": "TISSUE_CONDITION"}]}}
+    with open(design_file, "w") as fp:
+      json.dump(design_data, fp)
+    tissue_annotation, tissue_ontology, tissue_condition = \
+      fetch_slide_annotations_from_design_file(
+        design_file=design_file.as_posix(),
+        cosmx_slide_id="COSMX_SLIDE_ID_1")
+    assert tissue_annotation == "TISSUE_ANNOTATION"
+    design_data = {
+      "run_metadata": [
+        {"cosmx_run_id": "IGF_PROJECT_ID_AND_RUN_ID",
+         "export_directory_path": "PATH_OF_DATA_EXPORT"}],
+      "analysis_metadata": {
+        "run_type": "RNA"}}
+    with open(design_file, "w") as fp:
+      json.dump(design_data, fp)
+    tissue_annotation, tissue_ontology, tissue_condition = \
+      fetch_slide_annotations_from_design_file(
+        design_file=design_file.as_posix(),
+        cosmx_slide_id="COSMX_SLIDE_ID_1")
+    assert tissue_annotation == "UNKNOWN"
+
+  def test_load_cosmx_data_to_db(self):
+    assert False, "Test not implemented"
+
+  def test_fetch_cosmx_metadata_info(self):
+    assert False, "Test not implemented"
+
 
   def test_generate_additional_qc_report1(self):
     assert generate_additional_qc_report1([{}]) is not None

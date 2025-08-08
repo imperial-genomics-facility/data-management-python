@@ -681,51 +681,76 @@ def generate_fov_qc_report(
       message_prefix=str(e))
     raise ValueError(e)
 
-
-## TASK
-@task(multiple_outputs=False)
-def register_db_data(
-  slide_entry: Dict[str, str],
-  report_files_dir_name: str = 'Reports',
-  metadata_json_key:str = "slide_metadata_json",
-  count_qc_json_output_key: str = "json_output") -> Dict[str, str]:
+def fetch_slide_annotations_from_design_file(
+  design_file: str,
+  cosmx_slide_id: str,
+  analysis_metadata_key: str = "analysis_metadata",
+  annotation_key: str = "annotation",
+  cosmx_slide_id_key: str = "cosmx_slide_id",
+  tissue_annotation_key: str = "tissue_annotation",
+  tissue_ontology_key: str = "tissue_ontology",
+  tissue_condition_key: str = "tissue_condition") \
+    -> Tuple[str, str, str]:
   try:
-    new_slide_entry = {}
-    ## step 1: get analysis_id and project id
-    analysis_id, project_igf_id = \
-      get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf(
-        database_config_file=DATABASE_CONFIG_FILE)
-    ## step 2: get slide id and run id
-    slide_id = slide_entry.get("slide_id")
-    if slide_id is None:
-      raise KeyError(
-        "Missing slide_id in slide_entry")
-    cosmx_run_id = slide_entry.get("cosmx_run_id")
-    if cosmx_run_id is None:
-      raise KeyError(
-        "Missing cosmx_run_id in slide_entry")
-    ## step 3: get metadata json file
-    metadata_json_file = \
-      slide_entry.get(metadata_json_key)
-    if metadata_json_file is None:
-      raise KeyError(
-        f"No metadata json file found for slide {slide_id}")
-    check_file_path(metadata_json_file)
-    ## get count qc json file
-    count_qc_json_output_dir = \
-      slide_entry.get(count_qc_json_output_key)
-    if count_qc_json_output_dir is None:
-      raise KeyError(
-        f"No count QC json dir found for slide {slide_id}")
-    check_file_path(count_qc_json_output_dir)
-    ## parse metadata json file
-    ## fetch analysis description
-    ## parse fov anotation from analysis description
-    ## prep table data for db upload
-    ## load data to table
+    with open(design_file, 'r') as fp:
+      design_data = load(fp, Loader=SafeLoader)
+    analysis_metadata = design_data.get(analysis_metadata_key)
+    annotation = analysis_metadata.get(annotation_key)
+    if annotation is None:
+      return "UNKNOWN", "UNKNOWN", "UNKNOWN"
+    annotation_entry = \
+      [f for f in annotation \
+        if f.get(cosmx_slide_id_key) == cosmx_slide_id]
+    if len(annotation_entry) == 0:
+      return "UNKNOWN", "UNKNOWN", "UNKNOWN"
+    else:
+      annotation_entry = annotation_entry[0]
+    if not isinstance(annotation_entry, dict):
+      raise TypeError(
+        f"Expecting a dictionary, got {type(annotation_entry)}")
+    tissue_annotation = \
+      annotation_entry.get(tissue_annotation_key, "UNKNOWN")
+    tissue_ontology = \
+      annotation_entry.get(tissue_ontology_key, "UNKNOWN")
+    tissue_condition = \
+      annotation_entry.get(tissue_condition_key, "UNKNOWN")
+    return tissue_annotation, tissue_ontology, tissue_condition
+  except Exception as e:
+    raise ValueError(
+      f"Failed to get slide annotation, error: {e}")
 
 
+def fetch_cosmx_metadata_info(
+  cosmx_metadata_json: str) \
+    -> Tuple[str, str, str]:
+  try:
+    with open(cosmx_metadata_json, "r") as fp:
+      metadata_json_entry = \
+        json.load(fp)
+    fov_range = ''
+    cosmx_platform_igf_id = ''
+    panel_info = ''
+    assay_type = ''
+    version = ''
+    return fov_range, cosmx_platform_igf_id, panel_info, assay_type, version
+  except Exception as e:
+    raise ValueError(
+      f"Failed to get metadata, error: {e}")
 
+
+def load_cosmx_data_to_db(
+  project_igf_id: str,
+  db_config_file: str,
+  cosmx_run_id: str,
+  cosmx_slide_id: str,
+  cosmx_metadata_json: str,
+  cosmx_count_json_file: str,
+  tissue_annotation: str,
+  tissue_ontology: str,
+  tissue_condition: str,
+  rna_count_file_validation_schema: str,
+  protein_count_file_validation_schema: str) -> None:
+  try:
     ## step x: register cosmx run
     run_registration_status = \
       check_and_register_cosmx_run(
@@ -760,6 +785,64 @@ def register_db_data(
         slide_count_json_file='',
         rna_count_file_validation_schema='',
         protein_count_file_validation_schema='')
+  except Exception as e:
+    raise ValueError(
+      f"Failed to load data to db, error: {e}")
+
+
+## TASK
+@task(multiple_outputs=False)
+def register_db_data(
+  slide_entry: Dict[str, str],
+  design_file: str,
+  report_files_dir_name: str = 'Reports',
+  metadata_json_key:str = "slide_metadata_json",
+  count_qc_json_output_key: str = "json_output") -> Dict[str, str]:
+  try:
+    new_slide_entry = {}
+    ## step 1: get analysis_id and project id
+    analysis_id, project_igf_id = \
+      get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf(
+        database_config_file=DATABASE_CONFIG_FILE)
+    ## step 2: get slide id and run id
+    slide_id = slide_entry.get("slide_id")
+    if slide_id is None:
+      raise KeyError(
+        "Missing slide_id in slide_entry")
+    cosmx_run_id = slide_entry.get("cosmx_run_id")
+    if cosmx_run_id is None:
+      raise KeyError(
+        "Missing cosmx_run_id in slide_entry")
+    ## step 3: get metadata json file
+    metadata_json_file = \
+      slide_entry.get(metadata_json_key)
+    if metadata_json_file is None:
+      raise KeyError(
+        f"No metadata json file found for slide {slide_id}")
+    check_file_path(metadata_json_file)
+    ## get count qc json file
+    count_qc_json_output_dir = \
+      slide_entry.get(count_qc_json_output_key)
+    if count_qc_json_output_dir is None:
+      raise KeyError(
+        f"No count QC json dir found for slide {slide_id}")
+    check_file_path(count_qc_json_output_dir)
+    ## parse metadata json file
+    
+    ## check if required info is present
+    ## fetch analysis description
+    ## parse fov anotation from analysis description
+    tissue_annotation, tissue_ontology, tissue_condition = \
+      fetch_slide_annotations_from_design_file(
+        design_file=design_file,
+        cosmx_slide_id=slide_id)
+
+    ## prep table data for db upload
+    ## load data to table
+
+
+
+    
     return new_slide_entry
   except Exception as e:
     log.error(e)
