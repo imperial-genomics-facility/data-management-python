@@ -366,7 +366,65 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
     assert False, "Test not implemented"
 
   def test_fetch_cosmx_metadata_info(self):
-    assert False, "Test not implemented"
+    test_metadata_file = Path(self.temp_dir) / "test_slide_metadata.json"
+    test_metadata = {
+      "Run Number": "_xyz_abc.123",
+      "Instrument": "aabbcc",
+      "Expt Name": "ControlCenter",
+      "SW Version": "",
+      "FOV digits": "5",
+      "Folder Structure Version": "2",
+      "Analyte": "RNA",
+      "Readout": "v1.0",
+      "RNA nCoder file": "",
+      "SpotFiles": "true",
+      "Ch Order": "B, G, Y, R",
+      "Ch HDR  ": "1,1,1,1,8",
+      "Ch Thresh.": "2250,1500,1875,2250",
+      "SNR Filter": "false",
+      "SNR Thresh.": "2,2,2,2",
+      "Reg Ch": "G",
+      "Slot ID": "20250211_141001_S3",
+      "Cycles": "8",
+      "FOVs": "122",
+      "FOV Range": "1-122",
+      "Reporters": "27",
+      "Reporter ID": "1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47,49,51,53",
+      "Darks": "2",
+      "Dark ID": "26,54",
+      "Z-steps": "8",
+      "Z-step Size (um)": "0.8",
+      "NA": "1.1",
+      "Image Rows": "4256",
+      "Image Cols": "4256",
+      "Image Binning": "1",
+      "ImPixel_nm": "120.280945",
+      "Upsampling Rate": "10",
+      "Protein ZProj Method": "MAX",
+      "TrimEdgesPx": "0",
+      "BkgSubMethod": "DIRECT",
+      "ShadingMethod": "INSTRUMENT",
+      "LocalizationMethod": "MOMENT",
+      "BkgSubPrctl": "1",
+      "ImageCorrection": "false",
+      "RadialDistortionCorrection": "true",
+      "assay_type": "rna",
+      "version": "v6",
+      "Run_Tissue_name": "XXXXXX",
+      "Panel": "(1.1) (1.1) Human RNA Xk Discovery"}
+    with open(test_metadata_file, "w") as fp:
+      json.dump(test_metadata, fp)
+    fov_range, cosmx_platform_igf_id, panel_info, assay_type, version, metadata_json_entry = \
+      fetch_cosmx_metadata_info(
+        cosmx_metadata_json=test_metadata_file.as_posix())
+    assert fov_range == "1-122"
+    assert cosmx_platform_igf_id == "aabbcc"
+    assert panel_info == "(1.1) (1.1) Human RNA Xk Discovery"
+    assert assay_type == "rna"
+    assert version == "v6"
+    assert "Run_Tissue_name"  in metadata_json_entry
+    assert metadata_json_entry.get("Run_Tissue_name") == "XXXXXX"
+
 
 
   def test_generate_additional_qc_report1(self):

@@ -721,18 +721,47 @@ def fetch_slide_annotations_from_design_file(
 
 
 def fetch_cosmx_metadata_info(
-  cosmx_metadata_json: str) \
-    -> Tuple[str, str, str]:
+  cosmx_metadata_json: str,
+  platform_name_key: str = "Instrument",
+  fov_range_key: str = "FOV Range",
+  panel_info_key: str = "Panel",
+  version_key: str = "version",
+  assay_type_key: str = "assay_type") \
+    -> Tuple[str, str, str, str, str, Dict[str, str]]:
+  """
+  A function to fetch COSMX metadata from a json file
+
+  :param cosmx_metadata_json: Path to the COSMX metadata json file
+  :param platform_name_key: Key for the platform name in the json
+  :param fov_range_key: Key for the FOV range in the json
+  :param panel_info_key: Key for the panel information in the json
+  :param version_key: Key for the version in the json
+  :param assay_type_key: Key for the assay type in the json
+  :returns: A tuple containing:
+    - FOV range as a string
+    - COSMX platform IGF ID as a string
+    - Panel information as a string
+    - Assay type as a string
+    - Version as a string
+    - The entire metadata json entry as a dictionary
+  """
   try:
     with open(cosmx_metadata_json, "r") as fp:
       metadata_json_entry = \
         json.load(fp)
-    fov_range = ''
-    cosmx_platform_igf_id = ''
-    panel_info = ''
-    assay_type = ''
-    version = ''
-    return fov_range, cosmx_platform_igf_id, panel_info, assay_type, version
+    fov_range = metadata_json_entry.get(fov_range_key)
+    cosmx_platform_igf_id = metadata_json_entry.get(platform_name_key)
+    panel_info = metadata_json_entry.get(panel_info_key)
+    assay_type = metadata_json_entry.get(assay_type_key)
+    version = metadata_json_entry.get(version_key)
+    if fov_range is None or \
+       cosmx_platform_igf_id is None or \
+       panel_info is None or \
+       assay_type is None or \
+       version is None:
+      raise KeyError(
+        f"Missing required cosmx metadata in the slide json file {cosmx_metadata_json}")
+    return str(fov_range), str(cosmx_platform_igf_id), str(panel_info), str(assay_type), str(version), metadata_json_entry
   except Exception as e:
     raise ValueError(
       f"Failed to get metadata, error: {e}")
