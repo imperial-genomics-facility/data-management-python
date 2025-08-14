@@ -29,6 +29,9 @@ HPC_QUEUE_LIST = \
 REDIS_CONF_FILE = \
   Variable.get(
       'redis_conn_file', default_var=None)
+REDIS_ALLOWED_QUEUE_NAME_PREFIX_LIST= \
+  Variable.get(
+    'redis_allowed_queue_name_prefix_list', default_var=["hpc", "generic"])
 
 def get_celery_flower_workers(
       celery_flower_config_file: str,
@@ -77,11 +80,13 @@ def get_celery_flower_workers(
 
 
 def fetch_queue_list_from_redis_server(
-      redis_conf_file: str) -> List[dict]:
+      redis_conf_file: str,
+      redis_allowed_queue_name_prefix_list: List[str]) -> List[dict]:
   """
   A function for fetching pending job counts from redis db
 
   :param redis_conf_file: A json file containing redis_db as key and redis db connection URL as value
+  :param redis_allowed_queue_name_prefix_list: A list of allowed redis queue names
   :returns: A list of dictionaries with queue name as key and pending job counts as the value
   """
   try:
@@ -97,8 +102,11 @@ def fetch_queue_list_from_redis_server(
         queue = i.decode()
       else:
         queue = i
-      if not queue.startswith('_') and \
-         not queue.startswith('unacked'):
+      allowed_queue = False
+      for entry in redis_allowed_queue_name_prefix_list:
+        if queue.startswith(entry):
+          allowed_queue = True
+      if allowed_queue:
         q_len = r.llen(queue)
         queue_list.append({queue: q_len})
     return queue_list
@@ -625,7 +633,8 @@ def redis_queue_workers():
   try:
     queue_list = \
       fetch_queue_list_from_redis_server(
-        redis_conf_file=REDIS_CONF_FILE)
+        redis_conf_file=REDIS_CONF_FILE,
+        redis_allowed_queue_name_prefix_list=REDIS_ALLOWED_QUEUE_NAME_PREFIX_LIST)
     return queue_list
   except Exception as e:
     log.error(e)
