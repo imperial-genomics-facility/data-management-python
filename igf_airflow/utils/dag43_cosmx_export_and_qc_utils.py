@@ -772,8 +772,13 @@ def load_cosmx_data_to_db(
   db_config_file: str,
   cosmx_run_id: str,
   cosmx_slide_id: str,
-  cosmx_metadata_json: str,
+  cosmx_platform_id: str,
+  cosmx_slide_panel_info: str,
+  cosmx_slide_assay_type: str,
+  cosmx_slide_version: str,
+  cosmx_slide_metadata: Dict[str, str],
   cosmx_count_json_file: str,
+  cosmx_slide_fov_range: str,
   tissue_annotation: str,
   tissue_ontology: str,
   tissue_condition: str,
@@ -790,30 +795,31 @@ def load_cosmx_data_to_db(
     slide_registration_status = \
       check_and_register_cosmx_slide(
         cosmx_run_igf_id=cosmx_run_id,
-        cosmx_slide_igf_id=slide_id,
-        cosmx_platform_igf_id='',
-        panel_info='',
-        assay_type='',
-        version='',
+        cosmx_slide_igf_id=cosmx_slide_id,
+        cosmx_platform_igf_id=cosmx_platform_id,
+        panel_info=cosmx_slide_panel_info,
+        assay_type=cosmx_slide_assay_type,
+        version=cosmx_slide_version,
         db_session_class=None,
-        slide_metadata=[])
+        slide_metadata=cosmx_slide_metadata)
     ## step x: fov registration
     fov_registration_status = \
       create_or_update_cosmx_slide_fov(
-        cosmx_slide_igf_id='',
-        fov_range='',
-        slide_type='',
+        cosmx_slide_igf_id=cosmx_slide_id,
+        fov_range=cosmx_slide_fov_range,
+        slide_type=cosmx_slide_version,
         db_session_class=None)
     ## step x: fov count qc registration
     fov_count_registration_status = \
       create_cosmx_slide_fov_count_qc(
-        cosmx_slide_igf_id='',
-        fov_range='',
-        slide_type='',
+        cosmx_slide_igf_id=cosmx_slide_id,
+        fov_range=cosmx_slide_fov_range,
+        slide_type=cosmx_slide_version,
         db_session_class=None,
-        slide_count_json_file='',
-        rna_count_file_validation_schema='',
-        protein_count_file_validation_schema='')
+        slide_count_json_file=cosmx_count_json_file,
+        rna_count_file_validation_schema=rna_count_file_validation_schema,
+        protein_count_file_validation_schema=protein_count_file_validation_schema)
+    ## step x: annotate slide fovs
   except Exception as e:
     raise ValueError(
       f"Failed to load data to db, error: {e}")
@@ -857,15 +863,14 @@ def register_db_data(
         f"No count QC json dir found for slide {slide_id}")
     check_file_path(count_qc_json_output_dir)
     ## parse metadata json file
-    
-    ## check if required info is present
-    ## fetch analysis description
-    ## parse fov anotation from analysis description
+    fov_range, cosmx_platform_igf_id, panel_info, assay_type, version, metadata_json_entry = \
+      fetch_cosmx_metadata_info(
+        cosmx_metadata_json=metadata_json_file)
+    ## fetch analysis description and parse fov anotation from analysis description
     tissue_annotation, tissue_ontology, tissue_condition = \
       fetch_slide_annotations_from_design_file(
         design_file=design_file,
         cosmx_slide_id=slide_id)
-
     ## prep table data for db upload
     ## load data to table
 
