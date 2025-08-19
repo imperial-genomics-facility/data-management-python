@@ -73,7 +73,10 @@ COSMX_COUNT_QC_REPORT_TEMPLATE = \
   Variable.get('cosmx_count_qc_report_template', default_var='TEST_TEMPLATE')
 COSMX_COUNT_FOV_REPORT_TEMPLATE = \
   Variable.get('cosmx_count_fov_report_template', default_var='TEST_TEMPLATE')
-
+COSMX_RNA_COUNT_FILE_VALIDATION_SCHEMA = \
+  Variable.get('cosmx_rna_count_file_validation_schema', default_var='TEST_VAR')
+COSMX_PROTEIN_COUNT_FILE_VALIDATION_SCHEMA = \
+  Variable.get('cosmx_protein_count_file_validation_schema', default_var='TEST_VAR')
 
 ## TASKS
 @task(multiple_outputs=False)
@@ -485,7 +488,8 @@ def generate_count_qc_report(
   slide_entry: Dict[str, str],
   flat_files_dir_name: str = 'FlatFiles',
   report_files_dir_name: str = 'Reports',
-  metadata_json_key:str = "slide_metadata_json",) -> Dict[str, str]:
+  count_json_file_name: str = "slide_count_qc.json",
+  metadata_json_key: str = "slide_metadata_json",) -> Dict[str, str]:
   try:
     new_slide_entry = {}
     ## step 1: get analysis id
@@ -545,7 +549,8 @@ def generate_count_qc_report(
       COSMX_SLIDE_NAME=slide_id,
       SLIDE_FLAT_FILE_DIR=flat_files_dir,
       SLIDE_METADATA_JSON_FILE=metadata_json_file,
-      JSON_OUTPUT_DIR=temp_dir)
+      JSON_OUTPUT_DIR=temp_dir,
+      COUNT_JSON_FILE_NAME=count_json_file_name)
     nb = \
       Notebook_runner(
         template_ipynb_path=COSMX_COUNT_QC_REPORT_TEMPLATE,
@@ -574,7 +579,7 @@ def generate_count_qc_report(
       "slide_id": slide_id,
       "export_dir": export_dir,
       metadata_json_key: metadata_json_file,
-      "json_output": temp_dir,
+      "json_output": os.path.join(temp_dir, count_json_file_name),
       "flatfiles_dir": flat_files_dir}
     return new_slide_entry
   except Exception as e:
@@ -857,8 +862,8 @@ def register_db_data(
   slide_entry: Dict[str, str],
   design_file: str,
   report_files_dir_name: str = 'Reports',
-  metadata_json_key:str = "slide_metadata_json",
-  count_qc_json_output_key: str = "json_output") -> Dict[str, str]:
+  count_qc_json_output_key: str = "json_output",
+  metadata_json_key:str = "slide_metadata_json") -> Dict[str, str]:
   try:
     new_slide_entry = {}
     ## step 1: get analysis_id and project id
@@ -882,12 +887,12 @@ def register_db_data(
         f"No metadata json file found for slide {slide_id}")
     check_file_path(metadata_json_file)
     ## get count qc json file
-    count_qc_json_output_dir = \
+    count_qc_json_output = \
       slide_entry.get(count_qc_json_output_key)
-    if count_qc_json_output_dir is None:
+    if count_qc_json_output is None:
       raise KeyError(
         f"No count QC json dir found for slide {slide_id}")
-    check_file_path(count_qc_json_output_dir)
+    check_file_path(count_qc_json_output)
     ## parse metadata json file
     slide_metadata_info = \
       fetch_cosmx_metadata_info(
@@ -905,12 +910,27 @@ def register_db_data(
       fetch_slide_annotations_from_design_file(
         design_file=design_file,
         cosmx_slide_id=slide_id)
-    ## prep table data for db upload
+    ## prep table data for db upload and
     ## load data to table
-
-
-
-    
+    load_cosmx_data_to_db(
+      project_igf_id=project_igf_id,
+      db_config_file=DATABASE_CONFIG_FILE,
+      cosmx_run_id=cosmx_run_id,
+      cosmx_slide_id=str(slide_id),
+      cosmx_slide_name=str(run_tissue_name), ## slide name is run_tissue_name in the AtoMX output
+      cosmx_platform_id=str(cosmx_platform_igf_id),
+      cosmx_slide_panel_info=str(panel_info),
+      cosmx_slide_assay_type=str(assay_type),
+      cosmx_slide_version=str(version),
+      cosmx_slide_run_date=slide_run_date,
+      cosmx_slide_metadata=metadata_json_entry,
+      cosmx_count_json_file=count_qc_json_output,
+      cosmx_slide_fov_range=str(fov_range),
+      tissue_annotation=tissue_annotation,
+      tissue_ontology=tissue_ontology,
+      tissue_condition=tissue_condition,
+      rna_count_file_validation_schema=COSMX_RNA_COUNT_FILE_VALIDATION_SCHEMA,
+      protein_count_file_validation_schema=COSMX_PROTEIN_COUNT_FILE_VALIDATION_SCHEMA)
     return new_slide_entry
   except Exception as e:
     log.error(e)
