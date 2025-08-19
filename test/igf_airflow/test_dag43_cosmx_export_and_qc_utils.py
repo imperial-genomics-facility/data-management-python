@@ -415,17 +415,26 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
       "Panel": "(1.1) (1.1) Human RNA Xk Discovery"}
     with open(test_metadata_file, "w") as fp:
       json.dump(test_metadata, fp)
-    fov_range, cosmx_platform_igf_id, slide_name, slide_run_date, panel_info, assay_type, version, metadata_json_entry = \
+    slide_metadata_info = \
       fetch_cosmx_metadata_info(
         cosmx_metadata_json=test_metadata_file.as_posix())
+    fov_range = slide_metadata_info.get("fov_range")
+    cosmx_platform_igf_id = slide_metadata_info.get("cosmx_platform_igf_id")
+    run_tissue_name = slide_metadata_info.get("run_tissue_name")
+    slide_run_date = slide_metadata_info.get("slide_run_date")
+    panel_info = slide_metadata_info.get("panel_info")
+    assay_type = slide_metadata_info.get("assay_type")
+    version = slide_metadata_info.get("version")
+    metadata_json_entry = slide_metadata_info.get("metadata_json_entry")
     assert fov_range == "1-122"
     assert cosmx_platform_igf_id == "aabbcc"
     assert panel_info == "(1.1) (1.1) Human RNA Xk Discovery"
     assert assay_type == "rna"
     assert version == "v6"
+    assert isinstance(metadata_json_entry, dict)
     assert "Run_Tissue_name"  in metadata_json_entry
     assert metadata_json_entry.get("Run_Tissue_name") == "XXXXXX"
-    assert slide_name == "XXXXXX"
+    assert run_tissue_name == "XXXXXX"
     assert slide_run_date == parse("20250211141001")
 
 

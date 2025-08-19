@@ -731,7 +731,7 @@ def fetch_cosmx_metadata_info(
   panel_info_key: str = "Panel",
   version_key: str = "version",
   assay_type_key: str = "assay_type") \
-    -> Tuple[str, str, str, datetime, str, str, str, Dict[str, str]]:
+    -> Dict[str, Any]:
   """
   A function to fetch COSMX metadata from a json file
 
@@ -743,15 +743,15 @@ def fetch_cosmx_metadata_info(
   :param panel_info_key: Key for the panel information in the json
   :param version_key: Key for the version in the json
   :param assay_type_key: Key for the assay type in the json
-  :returns: A tuple containing:
-    - FOV range as a string
-    - COSMX platform IGF ID as a string
-    - COSMX slide name
-    - COSMX slide run date as datetime
-    - Panel information as a string
-    - Assay type as a string
-    - Version as a string
-    - The entire metadata json entry as a dictionary
+  :returns: A dictionary containing following keys:
+    - fov_range: FOV range as a string
+    - cosmx_platform_igf_id: COSMX platform IGF ID as a string
+    - run_tissue_name: COSMX slide name
+    - slide_run_date: COSMX slide run date as datetime
+    - panel_info: Panel information as a string
+    - assay_type: Assay type as a string
+    - version: Version as a string
+    - metadata_json_entry: The entire metadata json entry as a dictionary
   """
   try:
     with open(cosmx_metadata_json, "r") as fp:
@@ -776,16 +776,16 @@ def fetch_cosmx_metadata_info(
     ## convert slot id to slide run date using dateutil parser
     slide_run_date = \
       parse(slot_id.replace("_s3", "").replace("_", ""))
-    output_tuple = (
-      str(fov_range),
-      str(cosmx_platform_igf_id),
-      str(run_tissue_name),
-      slide_run_date,
-      str(panel_info),
-      str(assay_type),
-      str(version),
-      metadata_json_entry)
-    return output_tuple
+    output_dict = dict(
+      fov_range=fov_range,
+      cosmx_platform_igf_id=cosmx_platform_igf_id,
+      run_tissue_name=run_tissue_name,
+      slide_run_date=slide_run_date,
+      panel_info=panel_info,
+      assay_type=assay_type,
+      version=version,
+      metadata_json_entry=metadata_json_entry)
+    return output_dict
   except Exception as e:
     raise ValueError(
       f"Failed to get metadata, error: {e}")
@@ -889,9 +889,17 @@ def register_db_data(
         f"No count QC json dir found for slide {slide_id}")
     check_file_path(count_qc_json_output_dir)
     ## parse metadata json file
-    fov_range, cosmx_platform_igf_id, panel_info, assay_type, version, metadata_json_entry = \
+    slide_metadata_info = \
       fetch_cosmx_metadata_info(
         cosmx_metadata_json=metadata_json_file)
+    fov_range = slide_metadata_info.get("fov_range")
+    cosmx_platform_igf_id = slide_metadata_info.get("cosmx_platform_igf_id")
+    run_tissue_name = slide_metadata_info.get("run_tissue_name")
+    slide_run_date = slide_metadata_info.get("slide_run_date")
+    panel_info = slide_metadata_info.get("panel_info")
+    assay_type = slide_metadata_info.get("assay_type")
+    version = slide_metadata_info.get("version")
+    metadata_json_entry = slide_metadata_info.get("metadata_json_entry")
     ## fetch analysis description and parse fov anotation from analysis description
     tissue_annotation, tissue_ontology, tissue_condition = \
       fetch_slide_annotations_from_design_file(
