@@ -4,7 +4,7 @@ from sqlalchemy.sql.functions import current_timestamp
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.dialects.mysql import INTEGER, DECIMAL
-from sqlalchemy import Column, String, Enum, TIMESTAMP, TEXT, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, String, Enum, TIMESTAMP, TEXT, ForeignKey, UniqueConstraint, DATETIME
 
 
 Base = declarative_base()
@@ -1314,6 +1314,9 @@ class Cosmx_slide(Base):
   :param cosmx_run_id: A required integer id from cosmx_run table (foreign key)
   :param panel_info: A required string to specify panel information, allowed length 100
   :param assay_type: A required string to specify assay type, allowed length 100
+  :param version: Version info string, optional
+  :param slide_run_date: A datestamp for slide run date, required
+  :param slide_metadata: A JSON object containing all slide metadata, optional
   :param date_created: An optional timestamp column to record entry creation or modification time, default current timestamp
   """
 
@@ -1332,6 +1335,7 @@ class Cosmx_slide(Base):
   panel_info = Column(String(100), nullable=True)
   assay_type = Column(String(100), nullable=True)
   version = Column(String(10), nullable=True)
+  slide_run_date = Column(DATETIME(), nullable=False)
   slide_metadata = Column(JSONType(), nullable=True)
   date_created = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp())
 
