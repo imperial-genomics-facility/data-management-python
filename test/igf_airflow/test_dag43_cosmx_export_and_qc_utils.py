@@ -5,6 +5,7 @@ import subprocess
 import unittest, pytest
 import pandas as pd
 from pathlib import Path
+from dateutil.parser import parse
 from unittest.mock import patch, MagicMock
 from yaml import load, SafeLoader, dump, SafeDumper
 from igf_data.utils.fileutils import (
@@ -414,7 +415,7 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
       "Panel": "(1.1) (1.1) Human RNA Xk Discovery"}
     with open(test_metadata_file, "w") as fp:
       json.dump(test_metadata, fp)
-    fov_range, cosmx_platform_igf_id, panel_info, assay_type, version, metadata_json_entry = \
+    fov_range, cosmx_platform_igf_id, slide_name, slide_run_date, panel_info, assay_type, version, metadata_json_entry = \
       fetch_cosmx_metadata_info(
         cosmx_metadata_json=test_metadata_file.as_posix())
     assert fov_range == "1-122"
@@ -424,6 +425,8 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
     assert version == "v6"
     assert "Run_Tissue_name"  in metadata_json_entry
     assert metadata_json_entry.get("Run_Tissue_name") == "XXXXXX"
+    assert slide_name == "XXXXXX"
+    assert slide_run_date == parse("20250211141001")
 
 
 

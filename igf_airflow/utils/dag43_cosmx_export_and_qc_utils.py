@@ -6,9 +6,11 @@ import logging
 import subprocess
 import pandas as pd
 from pathlib import Path
-from datetime import timedelta
+from datetime import timedelta, datetime
 from airflow.models import Variable
 from yaml import load, SafeLoader
+from dateutil.tz import gettz
+from dateutil.parser import parse
 from igf_data.utils.bashutils import bash_script_wrapper
 from igf_data.utils.jupyter_nbconvert_wrapper import Notebook_runner
 from typing import (
@@ -724,22 +726,28 @@ def fetch_cosmx_metadata_info(
   cosmx_metadata_json: str,
   platform_name_key: str = "Instrument",
   fov_range_key: str = "FOV Range",
+  slot_id_key: str = "Slot ID",
+  run_tissue_name_key: str = "Run_Tissue_name",
   panel_info_key: str = "Panel",
   version_key: str = "version",
   assay_type_key: str = "assay_type") \
-    -> Tuple[str, str, str, str, str, Dict[str, str]]:
+    -> Tuple[str, str, str, datetime, str, str, str, Dict[str, str]]:
   """
   A function to fetch COSMX metadata from a json file
 
   :param cosmx_metadata_json: Path to the COSMX metadata json file
   :param platform_name_key: Key for the platform name in the json
   :param fov_range_key: Key for the FOV range in the json
+  :param slot_id_key: CosMX slide run date key in the json
+  :param run_tissue_name_key: CosMX slide run tissue name key
   :param panel_info_key: Key for the panel information in the json
   :param version_key: Key for the version in the json
   :param assay_type_key: Key for the assay type in the json
   :returns: A tuple containing:
     - FOV range as a string
     - COSMX platform IGF ID as a string
+    - COSMX slide name
+    - COSMX slide run date as datetime
     - Panel information as a string
     - Assay type as a string
     - Version as a string
@@ -754,14 +762,30 @@ def fetch_cosmx_metadata_info(
     panel_info = metadata_json_entry.get(panel_info_key)
     assay_type = metadata_json_entry.get(assay_type_key)
     version = metadata_json_entry.get(version_key)
+    slot_id = metadata_json_entry.get(slot_id_key)
+    run_tissue_name = metadata_json_entry.get(run_tissue_name_key)
     if fov_range is None or \
        cosmx_platform_igf_id is None or \
        panel_info is None or \
        assay_type is None or \
+       slot_id is None or \
+       run_tissue_name is None or \
        version is None:
       raise KeyError(
         f"Missing required cosmx metadata in the slide json file {cosmx_metadata_json}")
-    return str(fov_range), str(cosmx_platform_igf_id), str(panel_info), str(assay_type), str(version), metadata_json_entry
+    ## convert slot id to slide run date using dateutil parser
+    slide_run_date = \
+      parse(slot_id.replace("_s3", "").replace("_", ""))
+    output_tuple = (
+      str(fov_range),
+      str(cosmx_platform_igf_id),
+      str(run_tissue_name),
+      slide_run_date,
+      str(panel_info),
+      str(assay_type),
+      str(version),
+      metadata_json_entry)
+    return output_tuple
   except Exception as e:
     raise ValueError(
       f"Failed to get metadata, error: {e}")
@@ -772,10 +796,12 @@ def load_cosmx_data_to_db(
   db_config_file: str,
   cosmx_run_id: str,
   cosmx_slide_id: str,
+  cosmx_slide_name: str,
   cosmx_platform_id: str,
   cosmx_slide_panel_info: str,
   cosmx_slide_assay_type: str,
   cosmx_slide_version: str,
+  cosmx_slide_run_date: datetime,
   cosmx_slide_metadata: Dict[str, str],
   cosmx_count_json_file: str,
   cosmx_slide_fov_range: str,
