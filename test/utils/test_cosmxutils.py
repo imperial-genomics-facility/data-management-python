@@ -19,6 +19,7 @@ from igf_data.igfdb.igfTables import (
 from igf_data.utils.fileutils import (
   get_temp_dir,
   remove_dir)
+from datetime import datetime
 from igf_data.utils.cosmxutils import (
   check_and_register_cosmx_run,
   check_and_register_cosmx_slide,
@@ -88,12 +89,14 @@ class Analysisadaptor_test1(unittest.TestCase):
       check_and_register_cosmx_slide(
         cosmx_run_igf_id='cosmx_run_1',
         cosmx_slide_igf_id='cosmx_slide_1',
+        cosmx_slide_name='cosmx_slide_1',
+        slide_run_date=datetime.now(),
         panel_info='cosmx_panel_1',
         assay_type='assay1',
         version='1.0',
         cosmx_platform_igf_id='cosmx_platform_1',
         db_session_class=self.base.get_session_class(),
-        slide_metadata=[{"a": "b"}])
+        slide_metadata={"a": "b"})
     self.assertTrue(status)
 
 
@@ -121,10 +124,11 @@ class Analysisadaptor_test1(unittest.TestCase):
     cosmx_slide = \
       Cosmx_slide(
         cosmx_slide_igf_id='cosmx_slide_1',
+        cosmx_slide_name='cosmx_slide_1',
         panel_info='cosmx_panel_1',
         assay_type='assay1',
         version='1.0',
-        slide_metadata=[{"a": "b"}],
+        slide_metadata={"a": "b"},
         cosmx_run_id=cosmx_run.cosmx_run_id,
         cosmx_platform_id=cosmx_platform.cosmx_platform_id)
     base.session.add(cosmx_slide)
@@ -164,6 +168,7 @@ class Analysisadaptor_test1(unittest.TestCase):
     cosmx_slide = \
       Cosmx_slide(
         cosmx_slide_igf_id='cosmx_slide_1',
+        cosmx_slide_name='cosmx_slide_1',
         panel_info='cosmx_panel_1',
         assay_type='assay1',
         version='1.0',
@@ -300,10 +305,11 @@ class Analysisadaptor_test1(unittest.TestCase):
     cosmx_slide = \
       Cosmx_slide(
         cosmx_slide_igf_id='cosmx_slide_1',
+        cosmx_slide_name='cosmx_slide_1',
         panel_info='cosmx_panel_1',
         assay_type='assay1',
         version='1.0',
-        slide_metadata=[{"a": "b"}],
+        slide_metadata={"a": "b"},
         cosmx_run_id=cosmx_run.cosmx_run_id,
         cosmx_platform_id=cosmx_platform.cosmx_platform_id)
     base.session.add(cosmx_slide)

@@ -1335,7 +1335,7 @@ class Cosmx_slide(Base):
   panel_info = Column(String(100), nullable=True)
   assay_type = Column(String(100), nullable=True)
   version = Column(String(10), nullable=True)
-  slide_run_date = Column(DATETIME(), nullable=False)
+  slide_run_date = Column(DATETIME(), nullable=False, server_default=current_timestamp())
   slide_metadata = Column(JSONType(), nullable=True)
   date_created = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp())
 

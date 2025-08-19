@@ -21,6 +21,7 @@ from igf_data.utils.fileutils import (
   remove_dir,
   read_json_data,
   check_file_path)
+from datetime import datetime
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from sqlalchemy.orm.session import Session, sessionmaker
 
@@ -101,12 +102,14 @@ def check_and_register_cosmx_run(
 def check_and_register_cosmx_slide(
   cosmx_run_igf_id: str,
   cosmx_slide_igf_id: str,
+  cosmx_slide_name: str,
   cosmx_platform_igf_id: str,
   panel_info: str,
   assay_type: str,
+  slide_run_date: datetime,
   version: str,
   db_session_class: sessionmaker,
-  slide_metadata: List[Dict[str, str]]) -> bool:
+  slide_metadata: Dict[str, str]) -> bool:
   """
   """
   try:
@@ -158,11 +161,13 @@ def check_and_register_cosmx_slide(
       cosmx_slide = \
         Cosmx_slide(
           cosmx_slide_igf_id=cosmx_slide_igf_id,
+          cosmx_slide_name=cosmx_slide_name,
           cosmx_run_id=cosmx_run_id[0],
           cosmx_platform_id=platform_id[0],
           panel_info=panel_info,
           assay_type=assay_type,
           version=version,
+          slide_run_date=slide_run_date,
           slide_metadata=slide_metadata)
       base.session.add(cosmx_slide)
       base.session.flush()
