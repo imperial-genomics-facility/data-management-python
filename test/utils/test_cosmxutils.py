@@ -64,6 +64,14 @@ class Analysisadaptor_test1(unittest.TestCase):
         cosmx_run_igf_id='cosmx_run_1',
         db_session_class=self.base.get_session_class())
     self.assertTrue(status)
+    pa.start_session()
+    query = pa.session.query(Cosmx_run.cosmx_run_igf_id).filter(Cosmx_run.cosmx_run_igf_id=='cosmx_run_1')
+    results = pa.fetch_records(query=query, output_mode="one_or_none")
+    print(type(results))
+    self.assertEqual(len(results), 1)
+    self.assertEqual(results[0], 'cosmx_run_1')
+    self.assertIsNotNone(results)
+    pa.close_session()
 
 
   def test_check_and_register_cosmx_slide(self):
@@ -172,7 +180,7 @@ class Analysisadaptor_test1(unittest.TestCase):
         panel_info='cosmx_panel_1',
         assay_type='assay1',
         version='1.0',
-        slide_metadata=[{"a": "b"}],
+        slide_metadata={"a": "b"},
         cosmx_run_id=cosmx_run.cosmx_run_id,
         cosmx_platform_id=cosmx_platform.cosmx_platform_id)
     base.session.add(cosmx_slide)
