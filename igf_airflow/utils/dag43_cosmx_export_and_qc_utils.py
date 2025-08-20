@@ -911,13 +911,13 @@ def load_cosmx_data_to_db(
 def register_db_data(
   slide_entry: Dict[str, str],
   design_file: str,
-  report_files_dir_name: str = 'Reports',
   count_qc_json_output_key: str = "json_output",
   metadata_json_key:str = "slide_metadata_json") -> Dict[str, str]:
   try:
+    check_file_path(DATABASE_CONFIG_FILE)
     new_slide_entry = {}
     ## step 1: get analysis_id and project id
-    analysis_id, project_igf_id = \
+    _, project_igf_id = \
       get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf(
         database_config_file=DATABASE_CONFIG_FILE)
     ## step 2: get slide id and run id
@@ -953,6 +953,8 @@ def register_db_data(
     slide_run_date = slide_metadata_info.get("slide_run_date")
     panel_info = slide_metadata_info.get("panel_info")
     assay_type = slide_metadata_info.get("assay_type")
+    if assay_type is not None:
+      assay_type = assay_type.upper()
     version = slide_metadata_info.get("version")
     metadata_json_entry = slide_metadata_info.get("metadata_json_entry")
     ## fetch analysis description and parse fov anotation from analysis description
@@ -981,6 +983,11 @@ def register_db_data(
       tissue_condition=tissue_condition,
       rna_count_file_validation_schema=COSMX_RNA_COUNT_FILE_VALIDATION_SCHEMA,
       protein_count_file_validation_schema=COSMX_PROTEIN_COUNT_FILE_VALIDATION_SCHEMA)
+    new_slide_entry = {
+      "cosmx_run_id": cosmx_run_id,
+      "slide_id": slide_id,
+      "export_dir": slide_entry.get("export_dir"),
+      metadata_json_key: metadata_json_file}
     return new_slide_entry
   except Exception as e:
     log.error(e)

@@ -337,11 +337,211 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
     assert new_slide_entry.get("slide_metadata_json") is not None
     assert new_slide_entry.get("slide_metadata_json") == slide_metadata_json
 
+
   def test_copy_slide_data_to_globus(self):
     assert False, "Test not implemented"
 
-  def test_register_db_data(self):
-    assert False, "Test not implemented"
+
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf",
+         return_value=[1, "project1"])
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.DATABASE_CONFIG_FILE",
+         'data/dbconfig.json')
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.COSMX_RNA_COUNT_FILE_VALIDATION_SCHEMA",
+         'data/validation_schema/cosmx_rna_count_file_validation_schema.json')
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.COSMX_PROTEIN_COUNT_FILE_VALIDATION_SCHEMA",
+         'data/validation_schema/cosmx_protein_count_file_validation_schema.json')
+  def test_register_db_data(self, *args):
+    ## FOC COUNT QC JSON
+    rna_count_dict = [{
+      "fov_id": 1,
+      "mean_transcript_per_cell": 102.25,
+      "mean_unique_genes_per_cell": 76.85,
+      "number_non_empty_cells": 1084,
+      "pct_non_empty_cells": 1.00,
+      "percentile_90_transcript_per_cell": 30.0,
+      "percentile_10_transcript_per_cell": 193.0,
+      "mean_negprobe_counts_per_cell": 0.293}, {
+      "fov_id": 2,
+      "mean_transcript_per_cell": 152.84,
+      "mean_unique_genes_per_cell": 108.64,
+      "number_non_empty_cells": 1715,
+      "pct_non_empty_cells": 1.00,
+      "percentile_10_transcript_per_cell": 289.0,
+      "percentile_90_transcript_per_cell": 48.4,
+      "mean_negprobe_counts_per_cell": 0.335}, {
+      "fov_id": 3,
+      "mean_transcript_per_cell": 91.13,
+      "mean_unique_genes_per_cell": 57.07,
+      "number_non_empty_cells": 2144,
+      "pct_non_empty_cells": 1.00,
+      "percentile_10_transcript_per_cell": 203.0,
+      "percentile_90_transcript_per_cell": 18.0,
+      "mean_negprobe_counts_per_cell": 0.193}, {
+      "fov_id": 4,
+      "mean_transcript_per_cell": 76.45,
+      "mean_unique_genes_per_cell": 46.86,
+      "number_non_empty_cells": 2512,
+      "pct_non_empty_cells": 1.00,
+      "percentile_10_transcript_per_cell": 151.0,
+      "percentile_90_transcript_per_cell": 22.0,
+      "mean_negprobe_counts_per_cell": 0.185}]
+    rna_count_file = \
+      os.path.join(self.temp_dir, 'rna_count.json')
+    with open(rna_count_file, 'w') as fp:
+      json.dump(rna_count_dict, fp)
+    ## PROJECT AND PLATFORM
+    self.base.start_session()
+    project = \
+      Project(project_igf_id="project1")
+    self.base.session.add(project)
+    self.base.session.flush()
+    self.base.session.commit()
+    cosmx_platform = \
+      Cosmx_platform(
+        cosmx_platform_igf_id='cosmx_platform_1')
+    self.base.session.add(cosmx_platform)
+    self.base.session.flush()
+    self.base.session.commit()
+    self.base.close_session()
+    ## DESIGN FILE
+    design_file = Path(self.temp_dir) / "design1.yaml"
+    design_data = {
+      "run_metadata": [
+        {"cosmx_run_id": "cosmx_run_1",
+         "export_directory_path": "PATH_OF_DATA_EXPORT"}],
+      "analysis_metadata": {
+        "run_type": "RNA",
+        "annotation": [
+          {"cosmx_slide_id": "cosmx_slide_1",
+           "tissue_annotation": "annotation",
+           "tissue_ontology": "ontology",
+           "tissue_condition": "tumor"}]}}
+    with open(design_file, "w") as fp:
+      json.dump(design_data, fp)
+    ## SLIDE METADATA JSON
+    test_metadata_file = Path(self.temp_dir) / "test_slide_metadata.json"
+    test_metadata = {
+      "Run Number": "_xyz_abc.123",
+      "Instrument": "cosmx_platform_1",
+      "Expt Name": "ControlCenter",
+      "SW Version": "",
+      "FOV digits": "5",
+      "Folder Structure Version": "2",
+      "Analyte": "RNA",
+      "Readout": "v1.0",
+      "RNA nCoder file": "",
+      "SpotFiles": "true",
+      "Ch Order": "B, G, Y, R",
+      "Ch HDR  ": "1,1,1,1,8",
+      "Ch Thresh.": "2250,1500,1875,2250",
+      "SNR Filter": "false",
+      "SNR Thresh.": "2,2,2,2",
+      "Reg Ch": "G",
+      "Slot ID": "20250211_141001_S3",
+      "Cycles": "8",
+      "FOVs": "4",
+      "FOV Range": "1-4",
+      "Reporters": "27",
+      "Reporter ID": "1,3,5,7,9,11,13,15,17,19,21,23,25,27,29,31,33,35,37,39,41,43,45,47,49,51,53",
+      "Darks": "2",
+      "Dark ID": "26,54",
+      "Z-steps": "8",
+      "Z-step Size (um)": "0.8",
+      "NA": "1.1",
+      "Image Rows": "4256",
+      "Image Cols": "4256",
+      "Image Binning": "1",
+      "ImPixel_nm": "120.280945",
+      "Upsampling Rate": "10",
+      "Protein ZProj Method": "MAX",
+      "TrimEdgesPx": "0",
+      "BkgSubMethod": "DIRECT",
+      "ShadingMethod": "INSTRUMENT",
+      "LocalizationMethod": "MOMENT",
+      "BkgSubPrctl": "1",
+      "ImageCorrection": "false",
+      "RadialDistortionCorrection": "true",
+      "assay_type": "rna",
+      "version": "v6",
+      "Run_Tissue_name": "XXXXXX",
+      "Panel": "(1.1) (1.1) Human RNA Xk Discovery"}
+    with open(test_metadata_file, "w") as fp:
+      json.dump(test_metadata, fp)
+    slide_entry = {
+      "slide_id": "cosmx_slide_1",
+      "cosmx_run_id": "cosmx_run_1",
+      "slide_metadata_json": test_metadata_file,
+      "json_output": rna_count_file,
+      "export_dir": "EXPORT"
+    }
+    new_slide_entry = \
+      register_db_data.function(
+        slide_entry=slide_entry,
+        design_file=design_file)
+    assert "slide_id" in new_slide_entry
+    assert new_slide_entry.get("slide_id") == "cosmx_slide_1"
+    assert "export_dir" in new_slide_entry
+    assert new_slide_entry.get("export_dir") == "EXPORT"
+    assert "cosmx_run_id" in new_slide_entry
+    assert new_slide_entry.get("cosmx_run_id") == "cosmx_run_1"
+    self.base.start_session()
+    query = self.base.session.query(Cosmx_run.cosmx_run_igf_id).filter(Cosmx_run.cosmx_run_igf_id=='cosmx_run_1')
+    results = self.base.fetch_records(query=query, output_mode="one_or_none")
+    self.assertEqual(len(results), 1)
+    self.assertEqual(results[0], 'cosmx_run_1')
+    self.assertIsNotNone(results)
+    query = self.base.session.query(Cosmx_slide.cosmx_slide_igf_id).filter(Cosmx_slide.cosmx_slide_igf_id=='cosmx_slide_1')
+    results = self.base.fetch_records(query=query, output_mode="one_or_none")
+    self.assertEqual(len(results), 1)
+    self.assertEqual(results[0], 'cosmx_slide_1')
+    self.assertIsNotNone(results)
+    query = \
+      self.base.session.\
+        query(
+          Cosmx_slide.cosmx_slide_igf_id,
+          Cosmx_fov.cosmx_fov_name).\
+        join(Cosmx_fov, Cosmx_slide.cosmx_slide_id==Cosmx_fov.cosmx_slide_id).\
+        filter(Cosmx_slide.cosmx_slide_igf_id=='cosmx_slide_1').\
+        filter(Cosmx_fov.cosmx_fov_name==4)
+    results = self.base.fetch_records(query=query, output_mode="one_or_none")
+    self.assertEqual(len(results), 2)
+    self.assertEqual(results[0], 'cosmx_slide_1')
+    self.assertEqual(str(results[1]), '4')
+    self.assertIsNotNone(results)
+    query = \
+      self.base.session.\
+        query(
+          Cosmx_slide.cosmx_slide_igf_id,
+          Cosmx_fov.cosmx_fov_name,
+          Cosmx_fov_annotation.tissue_annotation).\
+        join(Cosmx_fov, Cosmx_slide.cosmx_slide_id==Cosmx_fov.cosmx_slide_id).\
+        join(Cosmx_fov_annotation, Cosmx_fov.cosmx_fov_id==Cosmx_fov_annotation.cosmx_fov_id).\
+        filter(Cosmx_slide.cosmx_slide_igf_id=='cosmx_slide_1').\
+        filter(Cosmx_fov.cosmx_fov_name==4)
+    results = self.base.fetch_records(query=query, output_mode="one_or_none")
+    self.assertIsNotNone(results)
+    self.assertEqual(len(results), 3)
+    self.assertEqual(results[0], 'cosmx_slide_1')
+    self.assertEqual(str(results[1]), '4')
+    self.assertEqual(results[2], 'annotation')
+    query = \
+      self.base.session.\
+        query(
+          Cosmx_slide.cosmx_slide_igf_id,
+          Cosmx_fov.cosmx_fov_name,
+          Cosmx_fov_rna_qc.mean_transcript_per_cell).\
+        join(Cosmx_fov, Cosmx_slide.cosmx_slide_id==Cosmx_fov.cosmx_slide_id).\
+        join(Cosmx_fov_rna_qc, Cosmx_fov.cosmx_fov_id==Cosmx_fov_rna_qc.cosmx_fov_id).\
+        filter(Cosmx_slide.cosmx_slide_igf_id=='cosmx_slide_1').\
+        filter(Cosmx_fov.cosmx_fov_name==4)
+    results = self.base.fetch_records(query=query, output_mode="one_or_none")
+    self.assertIsNotNone(results)
+    self.assertEqual(len(results), 3)
+    self.assertEqual(results[0], 'cosmx_slide_1')
+    self.assertEqual(str(results[1]), '4')
+    self.assertEqual(str(results[2]), '76.45')
+    self.base.close_session()
+
 
   def test_fetch_slide_annotations_from_design_file(self):
     design_file = Path(self.temp_dir) / "design1.yaml"
@@ -376,6 +576,7 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
         design_file=design_file.as_posix(),
         cosmx_slide_id="COSMX_SLIDE_ID_1")
     assert tissue_annotation == "UNKNOWN"
+
 
   def test_load_cosmx_data_to_db(self):
     rna_count_dict = [{
