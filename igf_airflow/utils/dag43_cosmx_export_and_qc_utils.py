@@ -12,6 +12,7 @@ from yaml import load, SafeLoader
 from dateutil.tz import gettz
 from dateutil.parser import parse
 from igf_data.utils.bashutils import bash_script_wrapper
+from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.utils.jupyter_nbconvert_wrapper import Notebook_runner
 from typing import (
   Any,
@@ -20,6 +21,7 @@ from typing import (
   Tuple,
   Union,
   Optional)
+from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.utils.fileutils import (
   check_file_path,
   copy_local_file,
@@ -816,41 +818,63 @@ def load_cosmx_data_to_db(
   rna_count_file_validation_schema: str,
   protein_count_file_validation_schema: str) -> None:
   try:
+    ## get db session class
+    dbconf = read_dbconf_json(db_config_file)
+    base = BaseAdaptor(**dbconf)
     ## step x: register cosmx run
     run_registration_status = \
       check_and_register_cosmx_run(
         project_igf_id=project_igf_id,
         cosmx_run_igf_id=cosmx_run_id,
-        db_session_class=None)
+        db_session_class=base.get_session_class())
+    if not run_registration_status:
+      log.warning(
+        f"Skipping CosMx run registration for {cosmx_run_id}")
     ## step x: register cosmx slide
     slide_registration_status = \
       check_and_register_cosmx_slide(
         cosmx_run_igf_id=cosmx_run_id,
         cosmx_slide_igf_id=cosmx_slide_id,
+        cosmx_slide_name=cosmx_slide_name,
+        slide_run_date=cosmx_slide_run_date,
         cosmx_platform_igf_id=cosmx_platform_id,
         panel_info=cosmx_slide_panel_info,
         assay_type=cosmx_slide_assay_type,
         version=cosmx_slide_version,
-        db_session_class=None,
+        db_session_class=base.get_session_class(),
         slide_metadata=cosmx_slide_metadata)
     ## step x: fov registration
     fov_registration_status = \
       create_or_update_cosmx_slide_fov(
         cosmx_slide_igf_id=cosmx_slide_id,
         fov_range=cosmx_slide_fov_range,
-        slide_type=cosmx_slide_version,
-        db_session_class=None)
+        slide_type=cosmx_slide_assay_type,
+        db_session_class=base.get_session_class())
     ## step x: fov count qc registration
     fov_count_registration_status = \
       create_cosmx_slide_fov_count_qc(
         cosmx_slide_igf_id=cosmx_slide_id,
         fov_range=cosmx_slide_fov_range,
-        slide_type=cosmx_slide_version,
-        db_session_class=None,
+        slide_type=cosmx_slide_assay_type,
+        db_session_class=base.get_session_class(),
         slide_count_json_file=cosmx_count_json_file,
         rna_count_file_validation_schema=rna_count_file_validation_schema,
         protein_count_file_validation_schema=protein_count_file_validation_schema)
     ## step x: annotate slide fovs
+    species_info = 'UNKNOWN'
+    if 'Human' in cosmx_slide_panel_info:
+      species_info = 'HUMAN'
+    elif 'Mouse' in cosmx_slide_panel_info:
+      species_info = 'MOUSE'
+    fov_annotation_status = \
+      create_or_update_cosmx_slide_fov_annotation(
+        cosmx_slide_igf_id=cosmx_slide_id,
+        fov_range=cosmx_slide_fov_range,
+        tissue_annotation=tissue_annotation,
+        tissue_ontology=tissue_ontology,
+        tissue_condition=tissue_condition,
+        species=species_info,
+        db_session_class=base.get_session_class())
   except Exception as e:
     raise ValueError(
       f"Failed to load data to db, error: {e}")
