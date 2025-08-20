@@ -817,11 +817,37 @@ def load_cosmx_data_to_db(
   tissue_condition: str,
   rna_count_file_validation_schema: str,
   protein_count_file_validation_schema: str) -> None:
+  """
+  A function to load COSMX data to the database
+
+  :param project_igf_id: Project IGF ID
+  :param db_config_file: Path to the database configuration file
+  :param cosmx_run_id: COSMX run ID
+  :param cosmx_slide_id: COSMX slide ID
+  :param cosmx_slide_name: COSMX slide name
+  :param cosmx_platform_id: COSMX platform IGF ID
+  :param cosmx_slide_panel_info: COSMX slide panel information
+  :param cosmx_slide_assay_type: COSMX slide assay type
+  :param cosmx_slide_version: COSMX slide version
+  :param cosmx_slide_run_date: COSMX slide run date as datetime object
+  :param cosmx_slide_metadata: COSMX slide metadata as a dictionary
+  :param cosmx_count_json_file: Path to the COSMX count JSON file
+  :param cosmx_slide_fov_range: COSMX slide FOV range as a string
+  :param tissue_annotation: Tissue annotation as a string
+  :param tissue_ontology: Tissue ontology as a string
+  :param tissue_condition: Tissue condition as a string
+  :param rna_count_file_validation_schema: Path to the RNA count file validation schema
+  :param protein_count_file_validation_schema: Path to the protein count file validation schema
+  :raises ValueError: If any error occurs during the process
+  :raises KeyError: If any required key is missing in the input parameters
+  :raises TypeError: If the type of any input parameter is incorrect
+  :returns: None
+  """
   try:
     ## get db session class
     dbconf = read_dbconf_json(db_config_file)
     base = BaseAdaptor(**dbconf)
-    ## step x: register cosmx run
+    ## step 1: register cosmx run
     run_registration_status = \
       check_and_register_cosmx_run(
         project_igf_id=project_igf_id,
@@ -830,7 +856,7 @@ def load_cosmx_data_to_db(
     if not run_registration_status:
       log.warning(
         f"Skipping CosMx run registration for {cosmx_run_id}")
-    ## step x: register cosmx slide
+    ## step 2: register cosmx slide
     slide_registration_status = \
       check_and_register_cosmx_slide(
         cosmx_run_igf_id=cosmx_run_id,
@@ -843,14 +869,14 @@ def load_cosmx_data_to_db(
         version=cosmx_slide_version,
         db_session_class=base.get_session_class(),
         slide_metadata=cosmx_slide_metadata)
-    ## step x: fov registration
+    ## step 3: fov registration
     fov_registration_status = \
       create_or_update_cosmx_slide_fov(
         cosmx_slide_igf_id=cosmx_slide_id,
         fov_range=cosmx_slide_fov_range,
         slide_type=cosmx_slide_assay_type,
         db_session_class=base.get_session_class())
-    ## step x: fov count qc registration
+    ## step 4: fov count qc registration
     fov_count_registration_status = \
       create_cosmx_slide_fov_count_qc(
         cosmx_slide_igf_id=cosmx_slide_id,
@@ -860,7 +886,7 @@ def load_cosmx_data_to_db(
         slide_count_json_file=cosmx_count_json_file,
         rna_count_file_validation_schema=rna_count_file_validation_schema,
         protein_count_file_validation_schema=protein_count_file_validation_schema)
-    ## step x: annotate slide fovs
+    ## step 5: annotate slide fovs
     species_info = 'UNKNOWN'
     if 'Human' in cosmx_slide_panel_info:
       species_info = 'HUMAN'
