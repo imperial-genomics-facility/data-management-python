@@ -1,9 +1,9 @@
 import datetime
-from igf_data.igfdb.datatype import JSONType
+from igf_data.igfdb.datatype import JSONType, DECIMALType
 from sqlalchemy.sql.functions import current_timestamp
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.dialects.mysql import INTEGER, DECIMAL
+from sqlalchemy.dialects.mysql import INTEGER
 from sqlalchemy import Column, String, Enum, TIMESTAMP, TEXT, ForeignKey, UniqueConstraint, DATETIME
 
 
@@ -1406,13 +1406,13 @@ class Cosmx_fov_rna_qc(Base):
   cosmx_fov_rna_qc_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   cosmx_fov_id = Column(INTEGER(unsigned=True), ForeignKey('cosmx_fov.cosmx_fov_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
   cosmx_fov = relationship('Cosmx_fov')
-  mean_transcript_per_cell = Column(DECIMAL(10, 2), nullable=True)
-  mean_unique_genes_per_cell = Column(DECIMAL(10, 2), nullable=True)
+  mean_transcript_per_cell = Column(DECIMALType(10, 2), nullable=True)
+  mean_unique_genes_per_cell = Column(DECIMALType(10, 2), nullable=True)
   number_non_empty_cells = Column(INTEGER(unsigned=True), nullable=True)
-  pct_non_empty_cells = Column(DECIMAL(10, 2), nullable=True)
-  percentile_90_transcript_per_cell = Column(DECIMAL(10, 2), nullable=True)
-  percentile_10_transcript_per_cell = Column(DECIMAL(10, 2), nullable=True)
-  mean_negprobe_counts_per_cell = Column(DECIMAL(10, 3), nullable=True)
+  pct_non_empty_cells = Column(DECIMALType(10, 2), nullable=True)
+  percentile_90_transcript_per_cell = Column(DECIMALType(10, 2), nullable=True)
+  percentile_10_transcript_per_cell = Column(DECIMALType(10, 2), nullable=True)
+  mean_negprobe_counts_per_cell = Column(DECIMALType(10, 3), nullable=True)
 
   def __repr__(self):
     '''
@@ -1436,10 +1436,10 @@ class Cosmx_fov_protein_qc(Base):
   mean_fluorescence_intensity = Column(INTEGER, nullable=True)
   mean_unique_genes_per_cell = Column(INTEGER, nullable=True)
   number_non_empty_cells = Column(INTEGER, nullable=True)
-  pct_non_empty_cells = Column(DECIMAL(10, 2), nullable=True)
-  percentile_10_fluorescence_intensity = Column(DECIMAL(10, 2), nullable=True)
-  percentile_90_fluorescence_intensity = Column(DECIMAL(10, 2), nullable=True)
-  fluorescence_intensity_mean_igg_control_intensity = Column(DECIMAL(10, 3), nullable=True)
+  pct_non_empty_cells = Column(DECIMALType(10, 2), nullable=True)
+  percentile_10_fluorescence_intensity = Column(DECIMALType(10, 2), nullable=True)
+  percentile_90_fluorescence_intensity = Column(DECIMALType(10, 2), nullable=True)
+  fluorescence_intensity_mean_igg_control_intensity = Column(DECIMALType(10, 3), nullable=True)
 
   def __repr__(self):
     '''
