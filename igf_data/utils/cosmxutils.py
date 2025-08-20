@@ -80,11 +80,11 @@ def check_and_register_cosmx_run(
         f"Project {project_igf_id} is not registered in DB")
     ## step 3: register new cosmx run
     try:
-      cosmx_run = \
+      cosmx_run1 = \
         Cosmx_run(
           cosmx_run_igf_id=cosmx_run_igf_id,
           project_id=project_id[0])
-      base.session.add(cosmx_run)
+      base.session.add(cosmx_run1)
       base.session.flush()
       base.commit_session()
       base.close_session()
@@ -412,17 +412,18 @@ def create_cosmx_slide_fov_count_qc(
   """
   try:
     status = False
+    slide_type = slide_type.upper()
     ## step1: check slide type
     if slide_type not in CosmxSlideType.__members__:
       raise KeyError(f"Unknown slide type {slide_type}")
     ## step2: validate count columns
     validation_errors = list()
-    if slide_type == CosmxSlideType.RNA:
+    if slide_type == CosmxSlideType.RNA.name:
       validation_errors = \
         validate_cosmx_count_file(
           count_json_file=slide_count_json_file,
           validation_schema_json_file=rna_count_file_validation_schema)
-    elif slide_type == CosmxSlideType.PROTEIN:
+    elif slide_type == CosmxSlideType.PROTEIN.name:
       validation_errors = \
         validate_cosmx_count_file(
           count_json_file=slide_count_json_file,
@@ -476,26 +477,26 @@ def create_cosmx_slide_fov_count_qc(
         query=slide_fov_query,
         output_mode="object")
     fov_id_dict = {
-      fov.cosmx_fov_name: fov.cosmx_fov_id \
+      int(fov.cosmx_fov_name): fov.cosmx_fov_id \
         for fov in fov_records}
     fov_id_list = list(fov_id_dict.values())
     ## step7: check if all fovs are present
     if len(fov_id_list) == 0:
       raise ValueError(
         f"Cosmx slide {cosmx_slide_igf_id} and fov range {fov_range} is not in DB")
-    if len(fov_id_list) < len(fov_range):
+    if len(fov_id_list) < len(fov_list):
       base.close_session()
       raise ValueError(
         f"Not all fovs are present in db")
     ## step8: check if the fov entries are present in the count qc table
     fov_count_qc_entries = list()
-    if slide_type == CosmxSlideType.RNA:
+    if slide_type == CosmxSlideType.RNA.name:
       fov_count_qc_entries = \
         base.session.\
           query(Cosmx_fov_rna_qc.cosmx_fov_id).\
           filter(Cosmx_fov_rna_qc.cosmx_fov_id.in_(list(fov_id_dict.values()))).\
           all()
-    elif slide_type == CosmxSlideType.PROTEIN:
+    elif slide_type == CosmxSlideType.PROTEIN.name:
       fov_count_qc_entries = \
         base.session.\
           query(Cosmx_fov_protein_qc.cosmx_fov_id).\
@@ -514,14 +515,14 @@ def create_cosmx_slide_fov_count_qc(
     ## step10: load to db
     try:
       for row in count_df.to_dict(orient='records'):
-        if slide_type == CosmxSlideType.RNA:
+        if slide_type == CosmxSlideType.RNA.name:
           fov_entry = \
-            Cosmx_fov_rna_qc(*row)
+            Cosmx_fov_rna_qc(**row)
           base.session.add(fov_entry)
           base.session.flush()
-        elif slide_type == CosmxSlideType.PROTEIN:
+        elif slide_type == CosmxSlideType.PROTEIN.name:
           fov_entry = \
-            Cosmx_fov_protein_qc(*row)
+            Cosmx_fov_protein_qc(**row)
           base.session.add(fov_entry)
           base.session.flush()
       base.session.commit()

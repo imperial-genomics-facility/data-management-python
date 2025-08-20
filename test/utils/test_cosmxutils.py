@@ -26,7 +26,8 @@ from igf_data.utils.cosmxutils import (
   create_or_update_cosmx_slide_fov,
   create_or_update_cosmx_slide_fov_annotation,
   create_cosmx_slide_fov_count_qc,
-  validate_cosmx_count_file
+  validate_cosmx_count_file,
+  CosmxSlideType
 )
 
 class Analysisadaptor_test1(unittest.TestCase):
@@ -67,7 +68,6 @@ class Analysisadaptor_test1(unittest.TestCase):
     pa.start_session()
     query = pa.session.query(Cosmx_run.cosmx_run_igf_id).filter(Cosmx_run.cosmx_run_igf_id=='cosmx_run_1')
     results = pa.fetch_records(query=query, output_mode="one_or_none")
-    print(type(results))
     self.assertEqual(len(results), 1)
     self.assertEqual(results[0], 'cosmx_run_1')
     self.assertIsNotNone(results)
@@ -106,6 +106,13 @@ class Analysisadaptor_test1(unittest.TestCase):
         db_session_class=self.base.get_session_class(),
         slide_metadata={"a": "b"})
     self.assertTrue(status)
+    pa.start_session()
+    query = pa.session.query(Cosmx_slide.cosmx_slide_igf_id).filter(Cosmx_slide.cosmx_slide_igf_id=='cosmx_slide_1')
+    results = pa.fetch_records(query=query, output_mode="one_or_none")
+    self.assertIsNotNone(results)
+    self.assertEqual(len(results), 1)
+    self.assertEqual(results[0], 'cosmx_slide_1')
+    pa.close_session()
 
 
   def test_create_or_update_cosmx_slide_fov(self):
@@ -150,6 +157,21 @@ class Analysisadaptor_test1(unittest.TestCase):
         slide_type='RNA',
         db_session_class=self.base.get_session_class())
     self.assertTrue(status)
+    base.start_session()
+    query = \
+      base.session.\
+        query(
+          Cosmx_slide.cosmx_slide_igf_id,
+          Cosmx_fov.cosmx_fov_name).\
+        join(Cosmx_fov, Cosmx_slide.cosmx_slide_id==Cosmx_fov.cosmx_slide_id).\
+        filter(Cosmx_slide.cosmx_slide_igf_id=='cosmx_slide_1').\
+        filter(Cosmx_fov.cosmx_fov_name==100)
+    results = base.fetch_records(query=query, output_mode="one_or_none")
+    self.assertIsNotNone(results)
+    self.assertEqual(len(results), 2)
+    self.assertEqual(results[0], 'cosmx_slide_1')
+    self.assertEqual(str(results[1]), '100')
+    base.close_session()
 
 
   def test_create_or_update_cosmx_slide_fov_annotation(self):
@@ -208,6 +230,24 @@ class Analysisadaptor_test1(unittest.TestCase):
         species='HUMAN',
         db_session_class=self.base.get_session_class())
     self.assertTrue(status)
+    base.start_session()
+    query = \
+      base.session.\
+        query(
+          Cosmx_slide.cosmx_slide_igf_id,
+          Cosmx_fov.cosmx_fov_name,
+          Cosmx_fov_annotation.tissue_annotation).\
+        join(Cosmx_fov, Cosmx_slide.cosmx_slide_id==Cosmx_fov.cosmx_slide_id).\
+        join(Cosmx_fov_annotation, Cosmx_fov.cosmx_fov_id==Cosmx_fov_annotation.cosmx_fov_id).\
+        filter(Cosmx_slide.cosmx_slide_igf_id=='cosmx_slide_1').\
+        filter(Cosmx_fov.cosmx_fov_name==10)
+    results = base.fetch_records(query=query, output_mode="one_or_none")
+    self.assertIsNotNone(results)
+    self.assertEqual(len(results), 3)
+    self.assertEqual(results[0], 'cosmx_slide_1')
+    self.assertEqual(str(results[1]), '10')
+    self.assertEqual(results[2], 'annotation')
+    base.close_session()
 
 
   def test_validate_cosmx_count_file(self):
@@ -217,16 +257,16 @@ class Analysisadaptor_test1(unittest.TestCase):
       "mean_unique_genes_per_cell": "67",
       "number_non_empty_cells": 2163,
       "pct_non_empty_cells": "1.00",
-      "percentile_10_transcript_per_cell": "18412.52",
-      "percentile_90_transcript_per_cell": "42659.33",
+      "percentile_10_fluorescence_intensity": "18412.52",
+      "percentile_90_fluorescence_intensity": "42659.33",
       "fluorescence_intensity_mean_igg_control_intensity": "95.681"}, {
       "fov_id": 2,
       "mean_fluorescence_intensity": "28941",
       "mean_unique_genes_per_cell": "67",
       "number_non_empty_cells": 2163,
       "pct_non_empty_cells": "1.00",
-      "percentile_10_transcript_per_cell": "18412.52",
-      "percentile_90_transcript_per_cell": "42659.33",
+      "percentile_10_fluorescence_intensity": "18412.52",
+      "percentile_90_fluorescence_intensity": "42659.33",
       "fluorescence_intensity_mean_igg_control_intensity": "95.681"}]
     df = pd.DataFrame(protein_count_dict)
     df = \
@@ -236,8 +276,8 @@ class Analysisadaptor_test1(unittest.TestCase):
       "mean_unique_genes_per_cell": int,
       "number_non_empty_cells": int,
       "pct_non_empty_cells": float,
-      "percentile_10_transcript_per_cell": float,
-      "percentile_90_transcript_per_cell": float,
+      "percentile_10_fluorescence_intensity": float,
+      "percentile_90_fluorescence_intensity": float,
       "fluorescence_intensity_mean_igg_control_intensity": float})
     protein_count_dict = df.to_dict(orient='records')
     protein_count_file = \
@@ -248,7 +288,6 @@ class Analysisadaptor_test1(unittest.TestCase):
       validate_cosmx_count_file(
         count_json_file=protein_count_file,
         validation_schema_json_file='data/validation_schema/cosmx_protein_count_file_validation_schema.json')
-    print(errors)
     self.assertEqual(len(errors), 0)
 
 
@@ -257,7 +296,7 @@ class Analysisadaptor_test1(unittest.TestCase):
       "fov_id": 1,
       "mean_transcript_per_cell": 102.25,
       "mean_unique_genes_per_cell": 76.85,
-      "non_empty_cells": 1084,
+      "number_non_empty_cells": 1084,
       "pct_non_empty_cells": 1.00,
       "percentile_90_transcript_per_cell": 30.0,
       "percentile_10_transcript_per_cell": 193.0,
@@ -265,7 +304,7 @@ class Analysisadaptor_test1(unittest.TestCase):
       "fov_id": 2,
       "mean_transcript_per_cell": 152.84,
       "mean_unique_genes_per_cell": 108.64,
-      "non_empty_cells": 1715,
+      "number_non_empty_cells": 1715,
       "pct_non_empty_cells": 1.00,
       "percentile_10_transcript_per_cell": 289.0,
       "percentile_90_transcript_per_cell": 48.4,
@@ -273,7 +312,7 @@ class Analysisadaptor_test1(unittest.TestCase):
       "fov_id": 3,
       "mean_transcript_per_cell": 91.13,
       "mean_unique_genes_per_cell": 57.07,
-      "non_empty_cells": 2144,
+      "number_non_empty_cells": 2144,
       "pct_non_empty_cells": 1.00,
       "percentile_10_transcript_per_cell": 203.0,
       "percentile_90_transcript_per_cell": 18.0,
@@ -281,7 +320,7 @@ class Analysisadaptor_test1(unittest.TestCase):
       "fov_id": 4,
       "mean_transcript_per_cell": 76.45,
       "mean_unique_genes_per_cell": 46.86,
-      "non_empty_cells": 2512,
+      "number_non_empty_cells": 2512,
       "pct_non_empty_cells": 1.00,
       "percentile_10_transcript_per_cell": 151.0,
       "percentile_90_transcript_per_cell": 22.0,
@@ -328,7 +367,7 @@ class Analysisadaptor_test1(unittest.TestCase):
         Cosmx_fov(
           cosmx_slide_id=cosmx_slide.cosmx_slide_id,
           cosmx_fov_name=i,
-          slide_type='RNA')
+          slide_type="RNA")
       base.session.add(fov_entry)
       base.session.flush()
     base.session.commit()
@@ -339,12 +378,30 @@ class Analysisadaptor_test1(unittest.TestCase):
       create_cosmx_slide_fov_count_qc(
         cosmx_slide_igf_id='cosmx_slide_1',
         fov_range='1-4',
-        slide_type='RNA',
+        slide_type="RNA",
         db_session_class=self.base.get_session_class(),
         slide_count_json_file=rna_count_file,
         rna_count_file_validation_schema='data/validation_schema/cosmx_rna_count_file_validation_schema.json',
         protein_count_file_validation_schema='data/validation_schema/cosmx_protein_count_file_validation_schema.json')
     self.assertTrue(status)
+    base.start_session()
+    query = \
+      base.session.\
+        query(
+          Cosmx_slide.cosmx_slide_igf_id,
+          Cosmx_fov.cosmx_fov_name,
+          Cosmx_fov_rna_qc.mean_transcript_per_cell).\
+        join(Cosmx_fov, Cosmx_slide.cosmx_slide_id==Cosmx_fov.cosmx_slide_id).\
+        join(Cosmx_fov_rna_qc, Cosmx_fov.cosmx_fov_id==Cosmx_fov_rna_qc.cosmx_fov_id).\
+        filter(Cosmx_slide.cosmx_slide_igf_id=='cosmx_slide_1').\
+        filter(Cosmx_fov.cosmx_fov_name==4)
+    results = base.fetch_records(query=query, output_mode="one_or_none")
+    self.assertIsNotNone(results)
+    self.assertEqual(len(results), 3)
+    self.assertEqual(results[0], 'cosmx_slide_1')
+    self.assertEqual(str(results[1]), '4')
+    self.assertEqual(str(results[2]), '76.45')
+    base.close_session()
 
 if __name__ == '__main__':
   unittest.main()
