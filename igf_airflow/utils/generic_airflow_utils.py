@@ -799,6 +799,7 @@ def copy_analysis_to_globus_dir(
       analysis_id: int,
       analysis_dir: str,
       date_tag: str,
+      globus_dir_list: list = [],
       ignore_dangling_symlinks: bool = True,
       analysis_dir_prefix: str = 'analysis') \
         -> str:
@@ -814,6 +815,7 @@ def copy_analysis_to_globus_dir(
   ignore_dangling_symlinks (bool): Ignore danglig symlink setting for `shutils.copytree`,
                                    default is True
   analysis_dir_prefix (str): Prefix for analysis directory, default is `analysis`
+  globus_dir_list (list): Optional globus directory list, default []
 
   Returns:
   target_dir_path (str)
@@ -840,11 +842,21 @@ def copy_analysis_to_globus_dir(
       os.path.join(
         globus_root_dir,
         project_igf_id,
-        analysis_dir_prefix,
-        pipeline_name,
-        analysis_name,
-        date_tag,
-        os.path.basename(analysis_dir))
+        analysis_dir_prefix)
+    if len(globus_dir_list) > 0:
+      target_dir_path = \
+        os.path.join(
+          target_dir_path,
+          *globus_dir_list,
+          os.path.basename(analysis_dir))
+    else:
+      target_dir_path = \
+        os.path.join(
+          target_dir_path,
+          pipeline_name,
+          analysis_name,
+          date_tag,
+          os.path.basename(analysis_dir))
     if os.path.exists(target_dir_path):
       raise ValueError(
         f"Globus target dir {target_dir_path} already present")
