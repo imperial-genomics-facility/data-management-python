@@ -153,7 +153,8 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
     collected_data = \
       collect_extracted_data.function(
         run_entry=run_config,
-        validation_finished=1)
+        validation_finished=1,
+        globus_copy_finished=1)
     assert isinstance(collected_data, dict)
     assert "cosmx_run_id" in collected_data
     assert "export_dir" in collected_data
@@ -201,7 +202,7 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
     bash_cmd = \
       validate_export_md5.function(export_dir=export_dir)
     assert isinstance(bash_cmd, str)
-    assert "FLATFILE_DIR=/TEST_EXPORT_DIR/export_1/FlatFiles" in bash_cmd
+    assert "FLATFILE_DIR=/TEST_EXPORT_DIR/export_1/flatFiles" in bash_cmd
 
   # @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_project_igf_id_for_analysis", return_value="project1")
   # @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_current_context")
@@ -300,7 +301,7 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
     mock_nb_context.execute_notebook_in_singularity.return_value = ["test", "test"]
     mock_nb_runner.return_value = mock_nb_context
 
-    os.makedirs(Path(self.temp_dir) / "FlatFiles")
+    os.makedirs(Path(self.temp_dir) / "flatFiles")
 
     slide_entry = {
       "cosmx_run_id": "cosmx_run_id",
@@ -326,7 +327,7 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
     ## slide metadata file
     slide_metadata_json = \
       Path(self.temp_dir) / "metadata.json"
-    os.makedirs(Path(self.temp_dir) / "FlatFiles")
+    os.makedirs(Path(self.temp_dir) / "flatFiles")
     with open(slide_metadata_json, "w") as fp:
       json.dump({"panel_name": "AAA"}, fp)
 
