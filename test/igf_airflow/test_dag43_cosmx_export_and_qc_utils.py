@@ -1,3 +1,5 @@
+# import sys
+# sys.path.append("/home/vmuser/github/data-management-python")
 import os
 import json
 import yaml
@@ -40,7 +42,8 @@ from igf_airflow.utils.dag43_cosmx_export_and_qc_utils import (
     validate_export_md5,
     generate_count_qc_report,
     generate_fov_qc_report,
-    copy_slide_data_to_globus,
+    copy_slide_reports_to_globus,
+    copy_export_dir_to_globus,
     register_db_data,
     collect_slide_metadata,
     generate_additional_qc_report1,
@@ -59,6 +62,7 @@ from igf_data.igfdb.igfTables import (
 class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
   def setUp(self):
     self.temp_dir = get_temp_dir()
+    # self.dbconfig = 'data-management-python/data/dbconfig.json'
     self.dbconfig = 'data/dbconfig.json'
     dbparam = read_dbconf_json(self.dbconfig)
     self.base = BaseAdaptor(**dbparam)
@@ -338,8 +342,67 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
     assert new_slide_entry.get("slide_metadata_json") == slide_metadata_json
 
 
-  def test_copy_slide_data_to_globus(self):
+  def test_copy_slide_reports_to_globus(self):
     assert False, "Test not implemented"
+
+
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf",
+         return_value=[1, "project1"])
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_date_stamp_for_file_name",
+         return_value="test_date")
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.DATABASE_CONFIG_FILE",
+         'data/dbconfig.json')
+  def test_copy_export_dir_to_globus(self, *args):
+    base = BaseAdaptor(**{'session_class':self.base.get_session_class()})
+    base.start_session()
+    project = \
+      Project(
+        project_id=1,
+        project_igf_id="project1")
+    base.session.add(project)
+    base.session.flush()
+    analysis = \
+      Analysis(
+        analysis_id=1,
+        analysis_type="test",
+        analysis_name="analysis1",
+        project_id=1)
+    base.session.add(analysis)
+    base.session.flush()
+    base.session.commit()
+    base.close_session()
+    export_dir = \
+      os.path.join(
+        self.temp_dir,
+        'AtoMx_export_1')
+    os.makedirs(
+      export_dir,
+      exist_ok=True)
+    globus_root_dir = \
+      os.path.join(
+        self.temp_dir,
+        'globus')
+    os.makedirs(
+      globus_root_dir,
+      exist_ok=True)
+    file_A = \
+      os.path.join(
+        export_dir,
+        'a.txt')
+    with open(file_A, 'w') as fp:
+      fp.write("AAA")
+    with patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.GLOBUS_ROOT_DIR", globus_root_dir):
+      target_dir_path = \
+        copy_export_dir_to_globus.function(
+          export_dir=export_dir)
+    expected_target_dir = \
+      os.path.join(
+        globus_root_dir,
+        "project1",
+        "analysis",
+        "test_date",
+        "AtoMx_export_1")
+    assert target_dir_path == expected_target_dir
 
 
   @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf",
@@ -792,3 +855,7 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
 
 if __name__=='__main__':
   unittest.main()
+  # a = Test_dag43_cosmx_export_and_qc_utilsA()
+  # a.setUp()
+  # a.test_copy_export_dir_to_globus()
+  # a.tearDown()

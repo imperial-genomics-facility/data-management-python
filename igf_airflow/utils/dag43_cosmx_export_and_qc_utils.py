@@ -26,6 +26,7 @@ from igf_data.utils.fileutils import (
   check_file_path,
   copy_local_file,
   get_temp_dir,
+  get_date_stamp_for_file_name,
   get_date_stamp)
 from igf_airflow.utils.dag22_bclconvert_demult_utils import (
   _create_output_from_jinja_template)
@@ -33,6 +34,7 @@ from igf_airflow.utils.generic_airflow_utils import (
   get_project_igf_id_for_analysis,
   get_project_igf_id_for_analysis,
   fetch_analysis_name_for_analysis_id,
+  copy_analysis_to_globus_dir,
   send_airflow_failed_logs_to_channels,
   send_airflow_pipeline_logs_to_channels,
   get_per_sample_analysis_groups,
@@ -57,7 +59,8 @@ MS_TEAMS_CONF = \
       'analysis_ms_teams_conf', default_var=None)
 DATABASE_CONFIG_FILE = \
   Variable.get('database_config_file', default_var=None)
-
+GLOBUS_ROOT_DIR = \
+  Variable.get("globus_root_dir", default_var=None)
 ## COSMX CONFIG
 COSMX_EXPORT_DIR = \
   Variable.get('cosmx_export_base_dir', default_var='/TEST_EXPORT_DIR/')
@@ -177,6 +180,10 @@ def prep_extract_ftp_export(
 ## BASH TASK
 @task.bash(retries=0)
 def extract_ftp_export(export_dir: str, work_dir: str) -> str:
+  """
+  Airflow task for extracting tar.gz files.
+  Currently not active as AtoMX export has changed to non-zipped output.
+  """
   try:
 
     bash_cmd = \
@@ -187,53 +194,54 @@ def extract_ftp_export(export_dir: str, work_dir: str) -> str:
       """ + \
       """cd $WORK_DIR
         ## check for existing export dir and remove it
-        if [ -d $EXPORT_DIR_NAME ]; then
-            echo "Removing old export dir $EXPORT_DIR_NAME";
-            rm -rf $EXPORT_DIR_NAME;
-        fi
+        # if [ -d $EXPORT_DIR_NAME ]; then
+        #     echo "Removing old export dir $EXPORT_DIR_NAME";
+        #     rm -rf $EXPORT_DIR_NAME;
+        # fi
         ## create new export dir
-        mkdir $EXPORT_DIR_NAME
-        cd $EXPORT_DIR_NAME
+        # mkdir $EXPORT_DIR_NAME
+        # cd $EXPORT_DIR_NAME
         ## extract files
-        RAWFILES_DIR="RawFiles"
+        RAWFILES_DIR="DecodedFiles"
         RAWFILES_ZIP="DecodedFiles.tar.gz"
-        FLATFILES_DIR="FlatFiles"
+        FLATFILES_DIR="flatFiles"
         FLATFILES_ZIP="flatFiles.tar.gz"
         QC_DIR="QC"
         MD5SUM_DIR="md5sum"
         umask 077
         ## check if flatFiles.tar.gz is missing
-        if [ ! -f $EXPORT_DIR/$FLATFILES_ZIP ]; then
-            echo "Missing flatFiles.tar.gz"; exit 1;
-        fi
+        # if [ ! -f $EXPORT_DIR/$FLATFILES_ZIP ]; then
+        #     echo "Missing flatFiles.tar.gz"; exit 1;
+        # fi
         ## check if DecodedFiles.tar.gz is missing
-        if [ ! -f $EXPORT_DIR/$RAWFILES_ZIP ]; then
-          echo "Missing DecodedFiles.tar.gz"; exit 1;
-        fi
+        # if [ ! -f $EXPORT_DIR/$RAWFILES_ZIP ]; then
+        #   echo "Missing DecodedFiles.tar.gz"; exit 1;
+        # fi
         ## extract RawFiles
-        if [ -d $RAWFILES_DIR ]; then
-          rm -rf $RAWFILES_DIR;
-        fi
-        mkdir $RAWFILES_DIR;
-        tar -C $RAWFILES_DIR -xzf $EXPORT_DIR/$RAWFILES_ZIP;
-        find $RAWFILES_DIR -type d -exec chmod 700 {} \\;
-        find $RAWFILES_DIR -type f -exec chmod 600 {} \\;
+        # if [ -d $RAWFILES_DIR ]; then
+        #   rm -rf $RAWFILES_DIR;
+        # fi
+        # mkdir $RAWFILES_DIR;
+        # tar -C $RAWFILES_DIR -xzf $EXPORT_DIR/$RAWFILES_ZIP;
+        # find $RAWFILES_DIR -type d -exec chmod 700 {} \\;
+        # find $RAWFILES_DIR -type f -exec chmod 600 {} \\;
         ## extract FlatFiles
-        if [ -d $FLATFILES_DIR ]; then
-            rm -rf $FLATFILES_DIR;
-        fi
-        mkdir $FLATFILES_DIR
-        tar -C $FLATFILES_DIR -xzf $EXPORT_DIR/$FLATFILES_ZIP
-        find $FLATFILES_DIR -type d -exec chmod 700 {} \\;
-        find $FLATFILES_DIR -type f -exec chmod 600 {} \\;
+        # if [ -d $FLATFILES_DIR ]; then
+        #     rm -rf $FLATFILES_DIR;
+        # fi
+        # mkdir $FLATFILES_DIR
+        # tar -C $FLATFILES_DIR -xzf $EXPORT_DIR/$FLATFILES_ZIP
+        # find $FLATFILES_DIR -type d -exec chmod 700 {} \\;
+        # find $FLATFILES_DIR -type f -exec chmod 600 {} \\;
         ## create QC dir
-        if [ -d $QC_DIR ]; then
-          rm -rf $QC_DIR;
-        fi
-        mkdir $QC_DIR;
-        cp -r $EXPORT_DIR/$MD5SUM_DIR .
-        cp $EXPORT_DIR/*.RDS .;
-        cp $EXPORT_DIR/TileDB.tar.gz ."""
+        # if [ -d $QC_DIR ]; then
+        #   rm -rf $QC_DIR;
+        # fi
+        # mkdir $QC_DIR;
+        # cp -r $EXPORT_DIR/$MD5SUM_DIR .
+        # cp $EXPORT_DIR/*.RDS .;
+        # cp $EXPORT_DIR/TileDB.tar.gz .
+      """
     return bash_cmd
   except Exception as e:
     log.error(e)
@@ -267,7 +275,7 @@ def prep_validate_export_md5(
 def validate_export_md5(export_dir: str) -> str:
   try:
     bash_cmd = f"""set -eo pipefail;
-      FLATFILE_DIR={export_dir}/FlatFiles
+      FLATFILE_DIR={export_dir}/flatFiles
       """ + \
       """FLATFILES_MD5=../md5sum/md5sum_flatFiles.csv
       ## CHECK MD5
@@ -283,10 +291,44 @@ def validate_export_md5(export_dir: str) -> str:
 
 
 ## TASK
+@task(multiple_outputs=True)
+def copy_export_dir_to_globus(
+  export_dir: str) \
+    -> str:
+  try:
+    if not export_dir:
+      raise KeyError("Missing export_dir in run_entry")
+    ## step 1: get analysis_id and project id
+    analysis_id, _ = \
+      get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf(
+        database_config_file=DATABASE_CONFIG_FILE)
+    ## step 2: copy export dir to globus
+    date_stamp = \
+      get_date_stamp_for_file_name()
+    target_dir_path = \
+      copy_analysis_to_globus_dir(
+        globus_root_dir=GLOBUS_ROOT_DIR,
+        dbconfig_file=DATABASE_CONFIG_FILE,
+        analysis_id=int(analysis_id),
+        analysis_dir=export_dir,
+        date_tag=date_stamp,
+        globus_dir_list=[date_stamp,],
+        analysis_dir_prefix='analysis')
+    return target_dir_path
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=str(e))
+    raise ValueError(e)
+
+
+## TASK
 @task(multiple_outputs=False)
 def collect_extracted_data(
   run_entry: Dict[str, str],
-  validation_finished: Any) \
+  validation_finished: Any,
+  globus_copy_finished: Any) \
     -> Dict[str, str]:
   try:
     ## TO DO: JUST A PLACE HOLDER FOR BASH TASK OUTPUT
@@ -386,7 +428,7 @@ def collect_slide_metadata(
   slide_entry: Dict[str, str],
   matched_slide_ids: Any,
   raw_files_dir_name: str = 'DecodedFiles',
-  flat_files_dir_name: str = 'FlatFiles',
+  flat_files_dir_name: str = 'flatFiles',
   metadata_json_key:str = "slide_metadata_json",
   metadata_json_file_name: str = 'slide_metadata.json') \
     -> Dict[str, str]:
@@ -488,8 +530,8 @@ def collect_slide_metadata(
 @task(multiple_outputs=False)
 def generate_count_qc_report(
   slide_entry: Dict[str, str],
-  flat_files_dir_name: str = 'FlatFiles',
-  report_files_dir_name: str = 'Reports',
+  flat_files_dir_name: str = 'flatFiles',
+  report_files_dir_name: str = 'reports',
   count_json_file_name: str = "slide_count_qc.json",
   metadata_json_key: str = "slide_metadata_json",) -> Dict[str, str]:
   try:
@@ -596,8 +638,8 @@ def generate_count_qc_report(
 @task(multiple_outputs=False)
 def generate_fov_qc_report(
   slide_entry: Dict[str, str],
-  flat_files_dir_name: str = 'FlatFiles',
-  report_files_dir_name: str = 'Reports',
+  flat_files_dir_name: str = 'flatFiles',
+  report_files_dir_name: str = 'reports',
   metadata_json_key:str = "slide_metadata_json",
   panel_name_key: str = 'panel_name'
 ) -> Dict[str, str]:
@@ -999,9 +1041,49 @@ def register_db_data(
 
 ## TASK
 @task(multiple_outputs=False)
-def copy_slide_data_to_globus(slide_entry: Dict[str, str]) -> Dict[str, str]:
+def copy_slide_reports_to_globus(
+  slide_entry: Dict[str, str],
+  report_files_dir_name: str = 'reports') -> Dict[str, str]:
   try:
     new_slide_entry = {}
+    ## step 1: get analysis_id and project id
+    analysis_id, project_igf_id = \
+      get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf(
+        database_config_file=DATABASE_CONFIG_FILE)
+    ## step 2: get slide id and run id
+    slide_id = slide_entry.get("slide_id")
+    if slide_id is None:
+      raise KeyError(
+        "Missing slide_id in slide_entry")
+    cosmx_run_id = slide_entry.get("cosmx_run_id")
+    if cosmx_run_id is None:
+      raise KeyError(
+        "Missing cosmx_run_id in slide_entry")
+    ## step 3: copy report dir globus
+    export_dir = slide_entry.get("export_dir")
+    if export_dir is None:
+      raise KeyError(
+        f"Missing export dir path for slide {slide_id}")
+    reports_dir = \
+      os.path.join(
+        export_dir,
+         report_files_dir_name)
+    date_stamp = \
+      get_date_stamp_for_file_name()
+    target_dir_path = \
+      copy_analysis_to_globus_dir(
+        globus_root_dir=GLOBUS_ROOT_DIR,
+        dbconfig_file=DATABASE_CONFIG_FILE,
+        analysis_id= int(analysis_id),
+        analysis_dir=reports_dir,
+        date_tag=date_stamp,
+        globus_dir_list=['slide1',],
+        analysis_dir_prefix='analysis')
+    new_slide_entry = {
+      "cosmx_run_id": cosmx_run_id,
+      "slide_id": slide_id,
+      "export_dir": slide_entry.get("export_dir"),
+      "reports_dir": reports_dir}
     return new_slide_entry
   except Exception as e:
     log.error(e)
