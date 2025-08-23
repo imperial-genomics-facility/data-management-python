@@ -312,6 +312,7 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
       generate_count_qc_report.function(slide_entry=slide_entry)
     assert "json_output" in new_slide_entry
 
+
   @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf", return_value=[1, "project1"])
   @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.check_file_path")
   @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.copy_local_file")
@@ -342,8 +343,76 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
     assert new_slide_entry.get("slide_metadata_json") == slide_metadata_json
 
 
-  def test_copy_slide_reports_to_globus(self):
-    assert False, "Test not implemented"
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf",
+         return_value=[1, "project1"])
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_date_stamp_for_file_name",
+         return_value="test_date")
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.DATABASE_CONFIG_FILE",
+         'data/dbconfig.json')
+  def test_copy_slide_reports_to_globus(self, *args):
+    base = BaseAdaptor(**{'session_class':self.base.get_session_class()})
+    base.start_session()
+    project = \
+      Project(
+        project_id=1,
+        project_igf_id="project1")
+    base.session.add(project)
+    base.session.flush()
+    analysis = \
+      Analysis(
+        analysis_id=1,
+        analysis_type="test",
+        analysis_name="analysis1",
+        project_id=1)
+    base.session.add(analysis)
+    base.session.flush()
+    base.session.commit()
+    base.close_session()
+    export_dir = \
+      os.path.join(
+        self.temp_dir,
+        'AtoMx_export_1')
+    reports_dir = \
+      os.path.join(
+        export_dir,
+        'reports')
+    os.makedirs(
+      reports_dir,
+      exist_ok=True)
+    globus_root_dir = \
+      os.path.join(
+        self.temp_dir,
+        'globus')
+    os.makedirs(
+      globus_root_dir,
+      exist_ok=True)
+    file_A = \
+      os.path.join(
+        reports_dir,
+        'a.txt')
+    with open(file_A, 'w') as fp:
+      fp.write("AAA")
+    slide_entry = {
+      "slide_id": "cosmx_slide_1",
+      "cosmx_run_id": "cosmx_run_1",
+      "export_dir": export_dir
+    }
+    expected_target_dir = \
+      os.path.join(
+        globus_root_dir,
+        "project1",
+        "analysis",
+        "cosmx_slide_1",
+        "test_date",
+        "reports")
+    with patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.GLOBUS_ROOT_DIR", globus_root_dir):
+      new_slide_entry = \
+        copy_slide_reports_to_globus.function(
+          slide_entry=slide_entry)
+      assert "reports_dir" in new_slide_entry
+      assert new_slide_entry.get("reports_dir") == reports_dir
+      assert "globus_dir" in new_slide_entry
+      assert new_slide_entry.get("globus_dir") == expected_target_dir
 
 
   @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf",

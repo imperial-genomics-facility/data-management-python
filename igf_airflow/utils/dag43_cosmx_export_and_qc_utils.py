@@ -1077,13 +1077,14 @@ def copy_slide_reports_to_globus(
         analysis_id= int(analysis_id),
         analysis_dir=reports_dir,
         date_tag=date_stamp,
-        globus_dir_list=['slide1',],
+        globus_dir_list=[slide_id, date_stamp],
         analysis_dir_prefix='analysis')
     new_slide_entry = {
       "cosmx_run_id": cosmx_run_id,
       "slide_id": slide_id,
       "export_dir": slide_entry.get("export_dir"),
-      "reports_dir": reports_dir}
+      "reports_dir": reports_dir,
+      "globus_dir": target_dir_path}
     return new_slide_entry
   except Exception as e:
     log.error(e)
