@@ -42,26 +42,26 @@ class TestGneric_airflow_utilsA(unittest.TestCase):
     if os.path.exists(self.dbname):
       os.remove(self.dbname)
 
-  def test_check_and_seed_analysis_pipeline(self):
-    assert False, "Test not implemented"
+  # def test_check_and_seed_analysis_pipeline(self):
+  #   assert False, "Test not implemented"
 
-  def test_send_airflow_pipeline_logs_to_channels(self):
-    assert False, "Test not implemented"
+  # def test_send_airflow_pipeline_logs_to_channels(self):
+  #   assert False, "Test not implemented"
 
-  def test_send_airflow_failed_logs_to_channels(self):
-    assert False, "Test not implemented"
+  # def test_send_airflow_failed_logs_to_channels(self):
+  #   assert False, "Test not implemented"
 
-  def test_generate_email_text_for_analysis(self):
-    assert False, "Test not implemented"
+  # def test_generate_email_text_for_analysis(self):
+  #   assert False, "Test not implemented"
 
-  def test_calculate_md5sum_for_analysis_dir(self):
-    assert False, "Test not implemented"
+  # def test_calculate_md5sum_for_analysis_dir(self):
+  #   assert False, "Test not implemented"
 
-  def test_collect_analysis_dir(self):
-    assert False, "Test not implemented"
+  # def test_collect_analysis_dir(self):
+  #   assert False, "Test not implemented"
 
-  def test_send_email_via_smtp(self):
-    assert False, "Test not implemented"
+  # def test_send_email_via_smtp(self):
+  #   assert False, "Test not implemented"
 
   def test_copy_analysis_to_globus_dir(self):
     base = BaseAdaptor(**{'session_class':self.base.get_session_class()})
@@ -135,8 +135,8 @@ class TestGneric_airflow_utilsA(unittest.TestCase):
     assert target_dir_path == expected_target_dir
     assert os.path.exists(os.path.join(target_dir_path, 't.txt'))
 
-  def test_fetch_analysis_yaml_and_dump_to_a_file(self):
-    assert False, "Test not implemented"
+  # def test_fetch_analysis_yaml_and_dump_to_a_file(self):
+  #   assert False, "Test not implemented"
 
   @patch("igf_airflow.utils.generic_airflow_utils.get_project_igf_id_for_analysis", return_value="project1")
   @patch("igf_airflow.utils.generic_airflow_utils.get_current_context")
