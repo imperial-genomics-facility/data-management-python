@@ -162,7 +162,7 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
 
   def test_collect_all_slides(self):
     data_export_dir = Path(self.temp_dir) / 'export_1'
-    flatfiles_dir = data_export_dir / 'FlatFiles'
+    flatfiles_dir = data_export_dir / 'flatFiles'
     slide_1_dir = flatfiles_dir / 'slide1'
     slide_2_dir = flatfiles_dir / 'slide2'
     os.makedirs(slide_1_dir)
