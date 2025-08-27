@@ -464,9 +464,9 @@ ALTER TABLE pipeline MODIFY pipeline_name VARCHAR(120) NOT NULL;
 
 ALTER TABLE pipeline_seed MODIFY seed_table ENUM('project','sample','experiment','run','file','seqrun','analysis','collection','unknown') NOT NULL DEFAULT 'unknown';
 
-ALTER TABLE project MODIFY project_igf_id VARCHAR(50) NOT NULL;
+ALTER TABLE project MODIFY project_igf_id VARCHAR(70) NOT NULL;
 
-ALTER TABLE user MODIFY email_id VARCHAR(40) NOT NULL;
+ALTER TABLE user MODIFY email_id VARCHAR(80) NOT NULL;
 
 DROP INDEX name ON user;
 
