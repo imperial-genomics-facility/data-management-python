@@ -84,8 +84,22 @@ COSMX_PROTEIN_COUNT_FILE_VALIDATION_SCHEMA = \
   Variable.get('cosmx_protein_count_file_validation_schema', default_var='TEST_VAR')
 
 ## TASKS
-@task(multiple_outputs=False)
-def run_ftp_export_factory(design_file: str, work_dir: str) -> List[Dict[str, str]]:
+@task(
+  task_id="run_ftp_export_factory",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_16G',
+  multiple_outputs=False)
+def run_ftp_export_factory(
+  design_file: str,
+  work_dir: str) -> List[Dict[str, str]]:
+  """
+  A factory function for creating ftp export tasks for multiple runs
+
+  :param design_file: Path to the design file
+  :param work_dir: Working directory for the export tasks
+  :returns: A list of dictionaries containing run entries
+  """
   try:
     with open(design_file, 'r') as fp:
       design_data = load(fp, Loader=SafeLoader)
@@ -114,8 +128,22 @@ def run_ftp_export_factory(design_file: str, work_dir: str) -> List[Dict[str, st
 
 
 ## TASK
-@task(multiple_outputs=True)
-def prepare_run_ftp_export(run_entry: Dict[str, str], work_dir: str) -> Dict[str, Any]:
+@task(
+  task_id="prepare_run_ftp_export",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_16G',
+  multiple_outputs=True)
+def prepare_run_ftp_export(
+  run_entry: Dict[str, str],
+  work_dir: str) -> Dict[str, Any]:
+  """
+  A function for preparing ftp export task
+
+  :param run_entry: A dictionary containing run entry
+  :param work_dir: Working directory for the export tasks
+  :returns: A dictionary containing updated run_entry and export name
+  """
   try:
     cosmx_ftp_export_name = run_entry.get("export_directory_path")
     if COSMX_EXPORT_DIR is not None and cosmx_ftp_export_name is not None:
@@ -133,8 +161,18 @@ def prepare_run_ftp_export(run_entry: Dict[str, str], work_dir: str) -> Dict[str
 
 
 ## BASH TASK
-@task.bash(retries=0)
+@task.bash(
+  task_id="run_ftp_export",
+  retry_delay=timedelta(minutes=5),
+  queue='hpc_16G',
+  retries=0)
 def run_ftp_export(cosmx_ftp_export_name: str) -> str:
+  """
+  Airflow task for running ftp export
+
+  :param cosmx_ftp_export_name: Name of the export directory
+  :returns: Bash command string for running ftp export
+  """
   try:
     bash_cmd = f"""set -eo pipefail;
     ## MOVE TO COSMX EXPORT DIR
@@ -159,11 +197,23 @@ def run_ftp_export(cosmx_ftp_export_name: str) -> str:
 
 
 ## TASK
-@task(multiple_outputs=True)
+@task(
+  task_id="prep_extract_ftp_export",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_16G',
+  multiple_outputs=True)
 def prep_extract_ftp_export(
   run_entry: Dict[str, str],
   export_finished: Any) \
     -> Dict[str, Any]:
+  """
+  Airflow task for preparing ftp export extraction
+
+  :param run_entry: A dictionary containing run entry
+  :param export_finished: Placeholder for export finished task
+  :returns: A dictionary containing updated run_entry and export_dir
+  """
   try:
     export_dir = run_entry.get("export_dir")
     if not export_dir:
@@ -178,14 +228,17 @@ def prep_extract_ftp_export(
 
 
 ## BASH TASK
-@task.bash(retries=0)
+@task.bash(
+  task_id="extract_ftp_export",
+  retry_delay=timedelta(minutes=5),
+  queue='hpc_16G',
+  retries=0)
 def extract_ftp_export(export_dir: str, work_dir: str) -> str:
   """
   Airflow task for extracting tar.gz files.
   Currently not active as AtoMX export has changed to non-zipped output.
   """
   try:
-
     bash_cmd = \
       f"""set -eo pipefail;
         EXPORT_DIR={export_dir}
@@ -252,11 +305,23 @@ def extract_ftp_export(export_dir: str, work_dir: str) -> str:
 
 
 ## TASK
-@task(multiple_outputs=True)
+@task(
+  task_id="prep_validate_export_md5",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_16G',
+  multiple_outputs=True)
 def prep_validate_export_md5(
   run_entry: Dict[str, str],
   extract_finished: Any) \
     -> Dict[str, Any]:
+  """
+  Airflow task for preparing ftp export extraction
+
+  :param run_entry: A dictionary containing run entry
+  :param extract_finished: Placeholder for extract finished task
+  :returns: A dictionary containing updated run_entry and export_dir
+  """
   try:
     export_dir = run_entry.get("export_dir")
     if not export_dir:
@@ -271,8 +336,18 @@ def prep_validate_export_md5(
 
 
 ## BASH TASK
-@task.bash(retries=0)
+@task.bash(
+  task_id="validate_export_md5",
+  retry_delay=timedelta(minutes=5),
+  queue='hpc_16G',
+  retries=0)
 def validate_export_md5(export_dir: str) -> str:
+  """
+  Airflow task for validating md5sum of extracted files
+
+  :param export_dir: Path to the export directory
+  :returns: Bash command string for validating md5sum
+  """
   try:
     bash_cmd = f"""set -eo pipefail;
       FLATFILE_DIR={export_dir}/flatFiles
@@ -291,10 +366,21 @@ def validate_export_md5(export_dir: str) -> str:
 
 
 ## TASK
-@task(multiple_outputs=True)
+@task(
+  task_id="copy_export_dir_to_globus",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_16G',
+  multiple_outputs=True)
 def copy_export_dir_to_globus(
   export_dir: str) \
     -> str:
+  """
+  A function for copying export dir to globus
+
+  :param export_dir: Path to the export directory
+  :returns: Path to the target directory in globus
+  """
   try:
     if not export_dir:
       raise KeyError("Missing export_dir in run_entry")
@@ -324,14 +410,27 @@ def copy_export_dir_to_globus(
 
 
 ## TASK
-@task(multiple_outputs=False)
+@task(
+  task_id="collect_extracted_data",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_16G',
+  multiple_outputs=False)
 def collect_extracted_data(
   run_entry: Dict[str, str],
   validation_finished: Any,
   globus_copy_finished: Any) \
     -> Dict[str, str]:
+  """
+  A function for collecting extracted data
+
+  :param run_entry: A dictionary containing run entry
+  :param validation_finished: Placeholder for validation finished task
+  :param globus_copy_finished: Placeholder for globus copy finished task
+  :returns: The input run_entry dictionary
+  """
   try:
-    ## TO DO: JUST A PLACE HOLDER FOR BASH TASK OUTPUT
+    # TO DO: JUST A PLACE HOLDER FOR BASH TASK OUTPUT
     return run_entry
   except Exception as e:
     log.error(e)
@@ -340,9 +439,23 @@ def collect_extracted_data(
       message_prefix=str(e))
     raise ValueError(e)
 
+
 # collecting all slide info
-@task(multiple_outputs=False)
-def collect_all_processed_slides(slide_entry_list: List[Dict[str, str]]) -> List[Dict[str, str]]:
+@task(
+  task_id="collect_all_processed_slides",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_16G',
+  multiple_outputs=False)
+def collect_all_processed_slides(
+  slide_entry_list: List[Dict[str, str]]) \
+    -> List[Dict[str, str]]:
+  """
+  A function for collecting all slide entries
+
+  :param slide_entry_list: A list of dictionaries containing slide entries
+  :returns: The input slide_entry_list
+  """
   try:
     return slide_entry_list
   except Exception as e:
@@ -352,8 +465,24 @@ def collect_all_processed_slides(slide_entry_list: List[Dict[str, str]]) -> List
       message_prefix=str(e))
 
 
-@task(multiple_outputs=False)
-def collect_all_slides(run_entry_list: Union[List[Dict[str, str]], Any]) -> List[Dict[str, str]]:
+@task(
+  task_id="collect_all_slides",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_16G',
+  multiple_outputs=False)
+def collect_all_slides(
+  run_entry_list: Union[List[Dict[str, str]], Any]) \
+    -> List[Dict[str, str]]:
+  """
+  A function for collecting all slide ids from all runs
+
+  :param run_entry_list: A list of dictionaries containing run entries
+  :returns: A list of dictionaries containing 
+      * cosmx_run_id
+      * export_dir
+      * slide_id
+  """
   try:
     slide_data_list = list()
     for run_entry in run_entry_list:
@@ -378,7 +507,12 @@ def collect_all_slides(run_entry_list: Union[List[Dict[str, str]], Any]) -> List
 
 
 ## TASK
-@task(multiple_outputs=False)
+@task(
+  task_id="match_slide_ids_with_project_id",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_16G',
+  multiple_outputs=False)
 def match_slide_ids_with_project_id(
   slide_data_list: List[Dict[str, str]]) -> bool:
   """
@@ -394,25 +528,7 @@ def match_slide_ids_with_project_id(
     * KeyError if slide_id is not present in the slide_data_list elements
   """
   try:
-    ## step 1: get analysis id
-    ### dag_run.conf should have analysis_id
-    # context = get_current_context()
-    # dag_run = context.get('dag_run')
-    # analysis_id = None
-    # if dag_run is not None and \
-    #    dag_run.conf is not None and \
-    #    dag_run.conf.get('analysis_id') is not None:
-    #   analysis_id = \
-    #     dag_run.conf.get('analysis_id')
-    # if analysis_id is None:
-    #   raise ValueError(
-    #     'analysis_id not found in dag_run.conf')
-    ## step 2: get project id of analysis
-    # project_igf_id = \
-    #   get_project_igf_id_for_analysis(
-    #     analysis_id=analysis_id,
-    #     dbconfig_file=DATABASE_CONFIG_FILE)
-    analysis_id, project_igf_id = \
+    _, project_igf_id = \
       get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf(
         database_config_file=DATABASE_CONFIG_FILE)
     ## step 3: get slide ids and check if slide ids have same prefix as project ids
@@ -434,7 +550,12 @@ def match_slide_ids_with_project_id(
 
 
 ## TASK
-@task(multiple_outputs=False)
+@task(
+  task_id="collect_slide_metadata",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_16G',
+  multiple_outputs=False)
 def collect_slide_metadata(
   slide_entry: Dict[str, str],
   matched_slide_ids: Any,
@@ -443,26 +564,27 @@ def collect_slide_metadata(
   metadata_json_key:str = "slide_metadata_json",
   metadata_json_file_name: str = 'slide_metadata.json') \
     -> Dict[str, str]:
+  """
+  A function for collecting slide metadata
+
+  :param slide_entry: A dictionary containing
+      * cosmx_run_id
+      * export_dir
+      * slide_id
+  :param matched_slide_ids: Placeholder for matched slide ids task
+  :param raw_files_dir_name: Name of the raw files directory
+  :param flat_files_dir_name: Name of the flat files directory
+  :param metadata_json_key: Key name for storing metadata json path in output dictionary
+  :param metadata_json_file_name: Name of the metadata json file
+  :returns: A dictionary containing
+      * cosmx_run_id
+      * export_dir
+      * slide_id
+      * slide_metadata_json
+      * flatfiles_dir
+  """
   try:
-    ## step 1: get analysis id
-    ### dag_run.conf should have analysis_id
-    # context = get_current_context()
-    # dag_run = context.get('dag_run')
-    # analysis_id = None
-    # if dag_run is not None and \
-    #    dag_run.conf is not None and \
-    #    dag_run.conf.get('analysis_id') is not None:
-    #   analysis_id = \
-    #     dag_run.conf.get('analysis_id')
-    # if analysis_id is None:
-    #   raise ValueError(
-    #     'analysis_id not found in dag_run.conf')
-    ## step 2: get project id of analysis
-    # project_igf_id = \
-    #   get_project_igf_id_for_analysis(
-    #     analysis_id=analysis_id,
-    #     dbconfig_file=DATABASE_CONFIG_FILE)
-    analysis_id, project_igf_id = \
+    _, project_igf_id = \
       get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf(
         database_config_file=DATABASE_CONFIG_FILE)
     ## step 3: get slide_id
@@ -538,34 +660,42 @@ def collect_slide_metadata(
 
 
 ## TASK
-@task(multiple_outputs=False)
+@task(
+  task_id="generate_count_qc_report",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_16G',
+  multiple_outputs=False)
 def generate_count_qc_report(
   slide_entry: Dict[str, str],
   flat_files_dir_name: str = 'flatFiles',
   report_files_dir_name: str = 'reports',
   count_json_file_name: str = "slide_count_qc.json",
   metadata_json_key: str = "slide_metadata_json",) -> Dict[str, str]:
+  """
+  A function for generating count qc report
+  
+  :param slide_entry: A dictionary containing
+      * cosmx_run_id
+      * export_dir
+      * slide_id
+      * slide_metadata_json
+      * flatfiles_dir
+  :param flat_files_dir_name: Name of the flat files directory
+  :param report_files_dir_name: Name of the report files directory
+  :param count_json_file_name: Name of the count qc json file
+  :param metadata_json_key: Key name for storing metadata json path in input dictionary
+  :returns: A dictionary containing
+      * cosmx_run_id
+      * export_dir
+      * slide_id
+      * slide_metadata_json
+      * json_output
+      * flatfiles_dir
+  """
   try:
     new_slide_entry = {}
-    ## step 1: get analysis id
-    ### dag_run.conf should have analysis_id
-    # context = get_current_context()
-    # dag_run = context.get('dag_run')
-    # analysis_id = None
-    # if dag_run is not None and \
-    #    dag_run.conf is not None and \
-    #    dag_run.conf.get('analysis_id') is not None:
-    #   analysis_id = \
-    #     dag_run.conf.get('analysis_id')
-    # if analysis_id is None:
-    #   raise ValueError(
-    #     'analysis_id not found in dag_run.conf')
-    # ## step 2: get project id of analysis
-    # project_igf_id = \
-    #   get_project_igf_id_for_analysis(
-    #     analysis_id=analysis_id,
-    #     dbconfig_file=DATABASE_CONFIG_FILE)
-    analysis_id, project_igf_id = \
+    _, project_igf_id = \
       get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf(
         database_config_file=DATABASE_CONFIG_FILE)
     ## step 3: get slide_id
@@ -646,7 +776,12 @@ def generate_count_qc_report(
 
 
 ## TASK
-@task(multiple_outputs=False)
+@task(
+  task_id="generate_fov_qc_report",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_16G',
+  multiple_outputs=False)
 def generate_fov_qc_report(
   slide_entry: Dict[str, str],
   flat_files_dir_name: str = 'flatFiles',
@@ -654,11 +789,30 @@ def generate_fov_qc_report(
   metadata_json_key:str = "slide_metadata_json",
   panel_name_key: str = 'panel_name'
 ) -> Dict[str, str]:
+  """
+  A function for generating fov qc report
+
+  :param slide_entry: A dictionary containing
+      * cosmx_run_id
+      * export_dir
+      * slide_id
+      * slide_metadata_json
+      * flatfiles_dir
+  :param flat_files_dir_name: Name of the flat files directory
+  :param report_files_dir_name: Name of the report files directory
+  :param metadata_json_key: Key name for storing metadata json path in input dictionary
+  :param panel_name_key: Key name for storing panel name in metadata json file
+  :returns: A dictionary containing
+      * cosmx_run_id
+      * export_dir
+      * slide_id
+      * slide_metadata_json
+      * flatfiles_dir"""
   try:
     new_slide_entry = {}
     ## step 1: get analysis id
     ## step 2: get project id of analysis
-    analysis_id, project_igf_id = \
+    _, project_igf_id = \
       get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf(
         database_config_file=DATABASE_CONFIG_FILE)
     ## step 3: get slide_id
@@ -743,6 +897,7 @@ def generate_fov_qc_report(
       message_prefix=str(e))
     raise ValueError(e)
 
+
 def fetch_slide_annotations_from_design_file(
   design_file: str,
   cosmx_slide_id: str,
@@ -753,6 +908,21 @@ def fetch_slide_annotations_from_design_file(
   tissue_ontology_key: str = "tissue_ontology",
   tissue_condition_key: str = "tissue_condition") \
     -> Tuple[str, str, str]:
+  """
+  A function to fetch slide annotations from design file
+  
+  :param design_file: Path to the design yaml file
+  :param cosmx_slide_id: CosMX slide id
+  :param analysis_metadata_key: Key for the analysis metadata in the design file
+  :param annotation_key: Key for the annotation in the analysis metadata
+  :param cosmx_slide_id_key: Key for the CosMX slide id in the annotation
+  :param tissue_annotation_key: Key for the tissue annotation in the annotation
+  :param tissue_ontology_key: Key for the tissue ontology in the annotation
+  :param tissue_condition_key: Key for the tissue condition in the annotation
+  :returns: A tuple containing
+    - tissue_annotation: Tissue annotation as a string
+    - tissue_ontology: Tissue ontology as a string
+    - tissue_condition: Tissue condition as a string"""
   try:
     with open(design_file, 'r') as fp:
       design_data = load(fp, Loader=SafeLoader)
@@ -960,12 +1130,36 @@ def load_cosmx_data_to_db(
 
 
 ## TASK
-@task(multiple_outputs=False)
+@task(
+  task_id="register_db_data",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_16G',
+  multiple_outputs=False)
 def register_db_data(
   slide_entry: Dict[str, str],
   design_file: str,
   count_qc_json_output_key: str = "json_output",
   metadata_json_key:str = "slide_metadata_json") -> Dict[str, str]:
+  """
+  A function for registering data to the database
+
+  :param slide_entry: A dictionary containing
+      * cosmx_run_id
+      * export_dir
+      * slide_id
+      * slide_metadata_json
+      * json_output
+      * flatfiles_dir
+  :param design_file: Path to the design yaml file
+  :param count_qc_json_output_key: Key name for storing count qc json path in input dictionary
+  :param metadata_json_key: Key name for storing metadata json path in input dictionary
+  :returns: A dictionary containing
+      * cosmx_run_id
+      * slide_id
+      * export_dir
+      * slide_metadata_json
+  """
   try:
     check_file_path(DATABASE_CONFIG_FILE)
     new_slide_entry = {}
@@ -1051,14 +1245,35 @@ def register_db_data(
 
 
 ## TASK
-@task(multiple_outputs=False)
+@task(
+  task_id="copy_slide_reports_to_globus",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_16G',
+  multiple_outputs=False)
 def copy_slide_reports_to_globus(
   slide_entry: Dict[str, str],
   report_files_dir_name: str = 'reports') -> Dict[str, str]:
+  """
+  A function for copying slide reports to globus
+
+  :param slide_entry: A dictionary containing
+      * cosmx_run_id
+      * export_dir
+      * slide_id
+      * slide_metadata_json
+  :param report_files_dir_name: Name of the report files directory
+  :returns: A dictionary containing
+      * cosmx_run_id
+      * slide_id
+      * export_dir
+      * reports_dir
+      * globus_dir
+  """
   try:
     new_slide_entry = {}
     ## step 1: get analysis_id and project id
-    analysis_id, project_igf_id = \
+    analysis_id, _ = \
       get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf(
         database_config_file=DATABASE_CONFIG_FILE)
     ## step 2: get slide id and run id
@@ -1106,7 +1321,12 @@ def copy_slide_reports_to_globus(
 
 
 ## TASK
-@task(multiple_outputs=False)
+@task(
+  task_id="generate_additional_qc_report1",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_16G',
+  multiple_outputs=False)
 def generate_additional_qc_report1(
   slide_entry: Union[List[Dict[str, str]], Any]) \
     -> Optional[bool]:
@@ -1120,7 +1340,12 @@ def generate_additional_qc_report1(
 
 
 ## TASK
-@task(multiple_outputs=False)
+@task(
+  task_id="generate_additional_qc_report2",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_16G',
+  multiple_outputs=False)
 def generate_additional_qc_report2(
   slide_entry: Union[List[Dict[str, str]], Any]) \
     -> Optional[bool]:
@@ -1134,7 +1359,12 @@ def generate_additional_qc_report2(
 
 
 ## TASK
-@task(multiple_outputs=False)
+@task(
+  task_id="upload_reports_to_portal",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_16G',
+  multiple_outputs=False)
 def upload_reports_to_portal(
     slide_entry: Union[List[Dict[str, str]], Any]) \
       -> Optional[bool]:
