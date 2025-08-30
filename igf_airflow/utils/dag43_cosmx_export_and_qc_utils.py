@@ -145,13 +145,29 @@ def prepare_run_ftp_export(
   :returns: A dictionary containing updated run_entry and export name
   """
   try:
-    cosmx_ftp_export_name = run_entry.get("export_directory_path")
-    if COSMX_EXPORT_DIR is not None and cosmx_ftp_export_name is not None:
-        export_dir = os.path.join(COSMX_EXPORT_DIR, cosmx_ftp_export_name)
+    cosmx_ftp_export_name = \
+      run_entry.get("export_directory_path")
+    if COSMX_EXPORT_DIR is not None and \
+       cosmx_ftp_export_name is not None:
+        cosmx_ftp_export_name = \
+          cosmx_ftp_export_name.\
+            replace("-", "").\
+            replace(".", "") # fix for AtoMx bug
+        export_dir = \
+          os.path.join(
+            COSMX_EXPORT_DIR,
+            cosmx_ftp_export_name)
     else:
-        raise KeyError('Missing COSMX_EXPORT_DIR or cosmx export_directory_path in for ftp transfer')
-    run_entry.update({'work_dir': work_dir, 'export_dir': export_dir})
-    return {'run_entry': run_entry, 'cosmx_ftp_export_name': cosmx_ftp_export_name}
+        raise KeyError(
+          'Missing COSMX_EXPORT_DIR or cosmx'
+          + ' export_directory_path in for ftp transfer')
+    run_entry.update({
+      'work_dir': work_dir,
+      'export_dir': export_dir})
+    output_dict = {
+      'run_entry': run_entry,
+      'cosmx_ftp_export_name': cosmx_ftp_export_name}
+    return output_dict
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(

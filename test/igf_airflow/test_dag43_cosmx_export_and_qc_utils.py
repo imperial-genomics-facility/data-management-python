@@ -99,7 +99,7 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
 
   def test_prepare_run_ftp_export(self):
     run_config = {
-      "cosmx_run_id": "A1", "export_directory_path": "A1_ftp"}
+      "cosmx_run_id": "A1", "export_directory_path": "A-1_ftp"}
     prep_export_data = \
       prepare_run_ftp_export.function(run_entry=run_config, work_dir='/tmp')
     assert isinstance(prep_export_data, dict)
