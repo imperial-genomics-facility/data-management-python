@@ -192,6 +192,8 @@ def run_ftp_export(cosmx_ftp_export_name: str) -> str:
   try:
     bash_cmd = f"""set -eo pipefail;
     ## MOVE TO COSMX EXPORT DIR
+    ## CREATE IT IF NOT EXISTS
+    mkdir -p {COSMX_EXPORT_DIR};
     cd {COSMX_EXPORT_DIR};
     ## ACTIVATE CONDA ON HPC
     eval "$(~/anaconda3/bin/conda shell.bash hook)";
