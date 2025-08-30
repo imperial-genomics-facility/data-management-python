@@ -948,7 +948,7 @@ def fetch_slide_annotations_from_design_file(
       return "UNKNOWN", "UNKNOWN", "UNKNOWN"
     annotation_entry = \
       [f for f in annotation \
-        if f.get(cosmx_slide_id_key) == cosmx_slide_id]
+        if f.get(cosmx_slide_id_key).replace("-", "").replace(".", "") == cosmx_slide_id]
     if len(annotation_entry) == 0:
       return "UNKNOWN", "UNKNOWN", "UNKNOWN"
     else:

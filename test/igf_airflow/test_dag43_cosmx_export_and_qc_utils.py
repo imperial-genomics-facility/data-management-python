@@ -685,7 +685,7 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
       "analysis_metadata": {
         "run_type": "RNA",
         "annotation": [
-          {"cosmx_slide_id": "COSMX_SLIDE_ID_1",
+          {"cosmx_slide_id": "COSMX_S.LIDE_I-D_1",
            "tissue_annotation": "TISSUE_ANNOTATION",
            "tissue_ontology": "TISSUE_ONTOLOGY",
            "tissue_condition": "TISSUE_CONDITION"}]}}
