@@ -750,7 +750,8 @@ def generate_count_qc_report(
       check_file_path(f)
     container_bind_dir_list = [
       export_dir,
-      temp_dir]
+      temp_dir,
+      os.path.dirname(metadata_json_file)]
     date_tag = get_date_stamp()
     input_params = dict(
       DATE_TAG=date_tag,
