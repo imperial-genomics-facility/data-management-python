@@ -735,7 +735,8 @@ def generate_count_qc_report(
     if export_dir is None:
       raise KeyError(
         "Missing export_dir in slide_entry")
-    flat_files_dir = Path(export_dir) / flat_files_dir_name
+    flat_files_dir = Path(export_dir) / flat_files_dir_name / slide_id
+    flat_files_dir = flat_files_dir.as_posix()
     ## step 5: collect metadata json path
     metadata_json_file = slide_entry.get(metadata_json_key)
     ## step 6: run notebook and generate report
