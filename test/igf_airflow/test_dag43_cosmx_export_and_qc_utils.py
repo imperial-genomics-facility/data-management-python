@@ -30,6 +30,7 @@ from igf_data.igfdb.igfTables import (
 from igf_data.igfdb.igfTables import Base
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.utils.dbutils import read_dbconf_json
+import igf_airflow.utils.dag43_cosmx_export_and_qc_utils
 from igf_airflow.utils.dag43_cosmx_export_and_qc_utils import (
     run_ftp_export_factory,
     prepare_run_ftp_export,
@@ -470,7 +471,7 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
         globus_root_dir,
         "project1",
         "analysis",
-        "test_date",
+        "analysis1",
         "AtoMx_export_1")
     assert target_dir_path == expected_target_dir
 

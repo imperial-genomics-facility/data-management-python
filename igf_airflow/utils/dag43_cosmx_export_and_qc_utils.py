@@ -407,16 +407,18 @@ def copy_export_dir_to_globus(
       get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf(
         database_config_file=DATABASE_CONFIG_FILE)
     ## step 2: copy export dir to globus
-    date_stamp = \
-      get_date_stamp_for_file_name()
+    analysis_name = \
+      fetch_analysis_name_for_analysis_id(
+        analysis_id=analysis_id,
+        dbconfig_file=DATABASE_CONFIG_FILE)
     target_dir_path = \
       copy_analysis_to_globus_dir(
         globus_root_dir=GLOBUS_ROOT_DIR,
         dbconfig_file=DATABASE_CONFIG_FILE,
-        analysis_id=int(analysis_id),
+        analysis_id=analysis_id,
         analysis_dir=export_dir,
-        date_tag=date_stamp,
-        globus_dir_list=[date_stamp,],
+        date_tag='',
+        globus_dir_list=[analysis_name,],
         analysis_dir_prefix='analysis')
     return target_dir_path
   except Exception as e:
