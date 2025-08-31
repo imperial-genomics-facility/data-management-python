@@ -687,7 +687,7 @@ def collect_slide_metadata(
   task_id="generate_count_qc_report",
   retry_delay=timedelta(minutes=5),
   retries=4,
-  queue='hpc_16G',
+  queue='hpc_64G',
   multiple_outputs=False)
 def generate_count_qc_report(
   slide_entry: Dict[str, str],
@@ -805,7 +805,7 @@ def generate_count_qc_report(
   task_id="generate_fov_qc_report",
   retry_delay=timedelta(minutes=5),
   retries=4,
-  queue='hpc_16G',
+  queue='hpc_64G',
   multiple_outputs=False)
 def generate_fov_qc_report(
   slide_entry: Dict[str, str],
