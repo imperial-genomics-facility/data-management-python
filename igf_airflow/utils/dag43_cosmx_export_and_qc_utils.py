@@ -772,7 +772,7 @@ def generate_count_qc_report(
         singularity_options=['-C'],
         allow_errors=False,
         singularity_image_path=COSMX_QC_REPORT_IMAGE1,
-        timeout=120,
+        timeout=3600,
         no_input=False)
     output_notebook, _ = \
       nb.execute_notebook_in_singularity()
@@ -896,7 +896,7 @@ def generate_fov_qc_report(
         singularity_options=['-C'],
         allow_errors=False,
         singularity_image_path=COSMX_QC_REPORT_IMAGE1,
-        timeout=1200,
+        timeout=3600,
         no_input=False)
     output_notebook, _ = \
       nb.execute_notebook_in_singularity()
