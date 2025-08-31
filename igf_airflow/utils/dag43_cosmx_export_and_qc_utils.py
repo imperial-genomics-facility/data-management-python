@@ -622,11 +622,14 @@ def collect_slide_metadata(
       raise KeyError(
         "Missing export_dir in slide_entry")
     raw_files_dir = Path(export_dir) / raw_files_dir_name / slide_id
+    raw_files_dir = raw_files_dir.as_posix()
     ## step 5: collect flatfiles dir
     flat_files_dir = Path(export_dir) / flat_files_dir_name / slide_id
+    flat_files_dir = flat_files_dir.as_posix()
     ## step 6: json output path
     temp_dir = get_temp_dir(use_ephemeral_space=True)
     metadata_json_file = Path(temp_dir) / metadata_json_file_name
+    metadata_json_file = metadata_json_file.as_posix()
     ## step 7: run notebook and generate json file
     input_list = [
       COSMX_SLIDE_METADATA_EXTRACTION_TEMPLATE,
