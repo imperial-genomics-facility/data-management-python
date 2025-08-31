@@ -302,7 +302,7 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
     mock_nb_context.execute_notebook_in_singularity.return_value = ["test", "test"]
     mock_nb_runner.return_value = mock_nb_context
 
-    os.makedirs(Path(self.temp_dir) / "flatFiles")
+    os.makedirs(Path(self.temp_dir) / "flatFiles" / "slide_id")
 
     slide_entry = {
       "cosmx_run_id": "cosmx_run_id",
