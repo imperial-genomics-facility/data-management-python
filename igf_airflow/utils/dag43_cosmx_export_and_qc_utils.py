@@ -389,7 +389,7 @@ def validate_export_md5(export_dir: str) -> str:
   retry_delay=timedelta(minutes=5),
   retries=4,
   queue='hpc_16G',
-  multiple_outputs=True)
+  multiple_outputs=False)
 def copy_export_dir_to_globus(
   export_dir: str) \
     -> str:
@@ -694,7 +694,7 @@ def generate_count_qc_report(
   metadata_json_key: str = "slide_metadata_json",) -> Dict[str, str]:
   """
   A function for generating count qc report
-  
+
   :param slide_entry: A dictionary containing
       * cosmx_run_id
       * export_dir
@@ -930,7 +930,7 @@ def fetch_slide_annotations_from_design_file(
     -> Tuple[str, str, str]:
   """
   A function to fetch slide annotations from design file
-  
+
   :param design_file: Path to the design yaml file
   :param cosmx_slide_id: CosMX slide id
   :param analysis_metadata_key: Key for the analysis metadata in the design file
