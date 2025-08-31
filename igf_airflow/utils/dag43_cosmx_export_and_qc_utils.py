@@ -621,9 +621,9 @@ def collect_slide_metadata(
     if export_dir is None:
       raise KeyError(
         "Missing export_dir in slide_entry")
-    raw_files_dir = Path(export_dir) / raw_files_dir_name
+    raw_files_dir = Path(export_dir) / raw_files_dir_name / slide_id
     ## step 5: collect flatfiles dir
-    flat_files_dir = Path(export_dir) / flat_files_dir_name
+    flat_files_dir = Path(export_dir) / flat_files_dir_name / slide_id
     ## step 6: json output path
     temp_dir = get_temp_dir(use_ephemeral_space=True)
     metadata_json_file = Path(temp_dir) / metadata_json_file_name
