@@ -404,8 +404,8 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
         globus_root_dir,
         "project1",
         "analysis",
+        "analysis1",
         "cosmx_slide_1",
-        "test_date",
         "reports")
     with patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.GLOBUS_ROOT_DIR", globus_root_dir):
       new_slide_entry = \

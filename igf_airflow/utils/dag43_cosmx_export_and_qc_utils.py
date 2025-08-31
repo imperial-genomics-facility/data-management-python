@@ -1296,6 +1296,10 @@ def copy_slide_reports_to_globus(
     analysis_id, _ = \
       get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf(
         database_config_file=DATABASE_CONFIG_FILE)
+    analysis_name = \
+      fetch_analysis_name_for_analysis_id(
+        analysis_id=analysis_id,
+        dbconfig_file=DATABASE_CONFIG_FILE)
     ## step 2: get slide id and run id
     slide_id = slide_entry.get("slide_id")
     if slide_id is None:
@@ -1322,8 +1326,8 @@ def copy_slide_reports_to_globus(
         dbconfig_file=DATABASE_CONFIG_FILE,
         analysis_id= int(analysis_id),
         analysis_dir=reports_dir,
-        date_tag=date_stamp,
-        globus_dir_list=[slide_id, date_stamp],
+        date_tag='',
+        globus_dir_list=[analysis_name, slide_id],
         analysis_dir_prefix='analysis')
     new_slide_entry = {
       "cosmx_run_id": cosmx_run_id,
