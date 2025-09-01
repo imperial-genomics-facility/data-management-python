@@ -776,7 +776,8 @@ def generate_count_qc_report(
     output_notebook, _ = \
       nb.execute_notebook_in_singularity()
     ## step 7: copy report to reports dir
-    report_dir = Path(export_dir) / report_files_dir_name
+    report_dir = \
+      Path(export_dir) / report_files_dir_name / slide_id
     os.makedirs(report_dir, exist_ok=True)
     target_notebook_path = \
       report_dir / os.path.basename(output_notebook)
@@ -900,7 +901,7 @@ def generate_fov_qc_report(
     output_notebook, _ = \
       nb.execute_notebook_in_singularity()
     ## step 8: copy report to reports dir
-    report_dir = Path(export_dir) / report_files_dir_name
+    report_dir = Path(export_dir) / report_files_dir_name / slide_id
     os.makedirs(report_dir, exist_ok=True)
     target_notebook_path = \
       report_dir / os.path.basename(output_notebook)
