@@ -759,8 +759,7 @@ def generate_count_qc_report(
       COSMX_SLIDE_NAME=slide_id,
       SLIDE_FLAT_FILE_DIR=flat_files_dir,
       SLIDE_METADATA_JSON_FILE=metadata_json_file,
-      JSON_OUTPUT_DIR=temp_dir,
-      COUNT_JSON_FILE_NAME=count_json_file_name)
+      JSON_OUTPUT_FILE=os.path.join(temp_dir, count_json_file_name))
     nb = \
       Notebook_runner(
         template_ipynb_path=COSMX_COUNT_QC_REPORT_TEMPLATE,
