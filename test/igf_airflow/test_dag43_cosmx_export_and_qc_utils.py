@@ -330,7 +330,7 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
       Path(self.temp_dir) / "metadata.json"
     os.makedirs(Path(self.temp_dir) / "flatFiles")
     with open(slide_metadata_json, "w") as fp:
-      json.dump({"panel_name": "AAA"}, fp)
+      json.dump({"Panel": "AAA"}, fp)
 
     slide_entry = {
       "cosmx_run_id": "cosmx_run_id",

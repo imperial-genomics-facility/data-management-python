@@ -812,7 +812,7 @@ def generate_fov_qc_report(
   flat_files_dir_name: str = 'flatFiles',
   report_files_dir_name: str = 'reports',
   metadata_json_key:str = "slide_metadata_json",
-  panel_name_key: str = 'panel_name'
+  panel_name_key: str = 'Panel'
 ) -> Dict[str, str]:
   """
   A function for generating fov qc report
