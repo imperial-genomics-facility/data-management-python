@@ -893,7 +893,7 @@ def generate_fov_qc_report(
         container_paths=container_bind_dir_list,
         kernel='R',
         use_ephemeral_space=True,
-        singularity_options=['-C'],
+        singularity_options=['-C', '--no-home'],
         allow_errors=False,
         singularity_image_path=COSMX_QC_REPORT_IMAGE1,
         timeout=3600,
