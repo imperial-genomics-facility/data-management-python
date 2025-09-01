@@ -890,7 +890,7 @@ def generate_fov_qc_report(
         output_dir=temp_dir,
         input_param_map=input_params,
         container_paths=container_bind_dir_list,
-        kernel='r',
+        kernel='R',
         use_ephemeral_space=True,
         singularity_options=['-C'],
         allow_errors=False,
