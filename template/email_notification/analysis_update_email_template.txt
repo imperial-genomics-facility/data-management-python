@@ -32,7 +32,7 @@ How to check QC reports?
   - Request to set-up a meeting with our bioinformatics team to know more about the QC results.
 
 Who will validate these QC reports?
-  Unfortunately, we can’t validate these QC reports as we don’t have all the required information for your samples (i.e., biological conditions or sample collection details). Currently, we are following a shared responsibility model to resolve this issue.
+  Unfortunately, we can't validate these QC reports as we don't have all the required information for your samples (i.e., biological conditions or sample collection details). Currently, we are following a shared responsibility model to resolve this issue.
 
   Our responsibilities:
     - Run the analysis QC pipeline according to standard protocols and generate QC reports.
@@ -42,7 +42,7 @@ Who will validate these QC reports?
     - Review QC reports within the next 7-days.
     - Communicate any concerns or questions promptly.
 
-What happens if you don't check QC reports or contact us?
+What happens if you do not check QC reports or contact us?
   - QC issues may go unaddressed, potentially affecting downstream analysis.
 
 How to configure these pipelines specifically for your project?
