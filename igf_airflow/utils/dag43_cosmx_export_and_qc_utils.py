@@ -870,7 +870,7 @@ def generate_fov_qc_report(
     input_list = [
       COSMX_COUNT_FOV_REPORT_TEMPLATE,
       COSMX_QC_REPORT_IMAGE1,
-      flat_files_dir,
+      flat_files_dir.as_posix(),
       temp_dir]
     for f in input_list:
       check_file_path(f)
@@ -882,7 +882,7 @@ def generate_fov_qc_report(
       DATE_TAG=date_tag,
       COSMX_PROJECT_NAME=project_igf_id,
       COSMX_SLIDE_NAME=slide_id,
-      SLIDE_FLAT_FILE_DIR=flat_files_dir,
+      SLIDE_FLAT_FILE_DIR=flat_files_dir.as_posix(),
       SLIDE_METADATA_JSON_FILE=metadata_json_file,
       PANEL_NAME=panel_name)
     nb = \
@@ -913,7 +913,7 @@ def generate_fov_qc_report(
       "slide_id": slide_id,
       "export_dir": export_dir,
       metadata_json_key: metadata_json_file,
-      "flatfiles_dir": flat_files_dir}
+      "flatfiles_dir": flat_files_dir.as_posix()}
     return new_slide_entry
   except Exception as e:
     log.error(e)
