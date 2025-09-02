@@ -782,7 +782,9 @@ def generate_count_qc_report(
     target_notebook_path = \
       report_dir / os.path.basename(output_notebook)
     copy_local_file(
-      output_notebook, target_notebook_path.as_posix())
+      output_notebook,
+      target_notebook_path.as_posix(),
+      force=True)
     ## step 8: return new slide entry
     new_slide_entry = {
       "cosmx_run_id": cosmx_run_id,
@@ -906,7 +908,9 @@ def generate_fov_qc_report(
     target_notebook_path = \
       report_dir / os.path.basename(output_notebook)
     copy_local_file(
-      output_notebook, target_notebook_path.as_posix())
+      output_notebook,
+      target_notebook_path.as_posix(),
+      force=True)
     ## step 9: return new slide entry
     new_slide_entry = {
       "cosmx_run_id": cosmx_run_id,
