@@ -58,6 +58,8 @@ def check_and_register_cosmx_run(
         base.fetch_records(
           query=run_project_query,
           output_mode='one_or_none')
+      if isinstance(existing_project_igf_id, tuple):
+        existing_project_igf_id = existing_project_igf_id[0]
       if project_igf_id != existing_project_igf_id:
         base.close_session()
         raise ValueError(
