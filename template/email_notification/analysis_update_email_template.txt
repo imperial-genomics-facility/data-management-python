@@ -6,7 +6,7 @@ Content-Type: text/plain
 
 Dear {{ customerName }}, {% if not send_email_to_user %}EMAIL FOR {{ customerEmail }}{% endif %}
 
-We would like to update you that our wet-lab team has triggered a primary analysis run "{{ analysisName }}" for your project “{{ projectName }}”. New data files and quality control (QC) reports are now available for your review.
+We would like to update you that our wet-lab team has triggered a primary analysis run "{{ analysisName }}" for your project "{{ projectName }}". New data files and quality control (QC) reports are now available for your review.
 
 IGF Pipelines:
   - https://imperial-genomics-facility.github.io/igf-pipeline-help/analyses_pipelines.html
