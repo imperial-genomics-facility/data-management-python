@@ -54,12 +54,12 @@ def check_and_register_cosmx_run(
           query(Project.project_igf_id).\
           join(Cosmx_run, Cosmx_run.project_id == Project.project_id).\
           filter(Cosmx_run.cosmx_run_igf_id == cosmx_run_igf_id)
-      existing_project_igf_id = \
+      existing_project_row = \
         base.fetch_records(
           query=run_project_query,
           output_mode='one_or_none')
-      if isinstance(existing_project_igf_id, tuple):
-        existing_project_igf_id = existing_project_igf_id[0]
+      existing_project_igf_id = \
+        existing_project_row.project_igf_id
       if project_igf_id != existing_project_igf_id:
         base.close_session()
         raise ValueError(
