@@ -74,16 +74,19 @@ class Test_dag1_calculate_hpc_worker_utils(unittest.TestCase):
   @patch('igf_airflow.utils.dag1_calculate_hpc_worker_utils.redis')
   def test_fetch_queue_list_from_redis_server(self,redis_mock):
     r = redis_mock.from_url.return_value
-    r.keys.return_value = {'A': 'a', 'B': 'b', 'unacked1': 'c', '_unacked2': 'd'}
+    r.keys.return_value = {'A1': 'a', 'B1': 'b', 'unacked1': 'c', '_unacked2': 'd'}
     r.llen.side_effect = [1,2]
     temp_dir = get_temp_dir()
     redis_config_file = os.path.join(temp_dir, 'redis_config.json')
     with open(redis_config_file, 'w') as json_data:
       json.dump({'redis_db': 'A'}, json_data)
-    queue_list = fetch_queue_list_from_redis_server(redis_config_file)
+    queue_list = \
+      fetch_queue_list_from_redis_server(
+        redis_config_file,
+        redis_allowed_queue_name_prefix_list=["A", "B"])
     self.assertEqual(len(queue_list), 2)
-    self.assertEqual(queue_list[0], {'A':1})
-    self.assertEqual(queue_list[1], {'B':2})
+    self.assertEqual(queue_list[0], {'A1':1})
+    self.assertEqual(queue_list[1], {'B1':2})
 
   def test_calculate_scale_out_scale_in_ops(self):
     input_data = [ {'queue_name':'hpc_4G','hpc_r':9,'hpc_q':0,'task_r':9,'task_i':0,'queued':7},
@@ -390,7 +393,7 @@ class Test_dag1_calculate_hpc_worker_utils(unittest.TestCase):
       self.assertEqual(worker_list[0]['worker_id'], 'worker1')
 
   @patch('igf_airflow.utils.dag1_calculate_hpc_worker_utils.fetch_queue_list_from_redis_server',
-         return_value=[{'A':1}])
+         return_value=[{'hpc_4G': 1}])
   def test_redis_queue_workers(self, *args):
     redis_db_conf = os.path.join(self.temp_dir, 'redis_db_conf.json')
     with open(redis_db_conf, 'w') as json_data:
@@ -398,7 +401,7 @@ class Test_dag1_calculate_hpc_worker_utils(unittest.TestCase):
     with patch("igf_airflow.utils.dag1_calculate_hpc_worker_utils.REDIS_CONF_FILE", redis_db_conf):
       queue_list = redis_queue_workers.function()
       self.assertEqual(len(queue_list), 1)
-      self.assertEqual(queue_list[0], {'A':1})
+      self.assertEqual(queue_list[0], {'hpc_4G':1})
 
   @patch('igf_airflow.utils.dag1_calculate_hpc_worker_utils.combine_celery_and_hpc_worker_info',
          return_value=['A', 'B'])
