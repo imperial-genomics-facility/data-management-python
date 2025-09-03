@@ -1383,9 +1383,9 @@ class Cosmx_fov_annotation(Base):
   cosmx_fov_id = Column(INTEGER(unsigned=True), ForeignKey('cosmx_fov.cosmx_fov_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
   cosmx_fov = relationship('Cosmx_fov')
   tissue_species = Column(Enum('HUMAN', 'MOUSE', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
-  tissue_annotation = Column(String(100), nullable=True)
-  tissue_ontology = Column(String(100), nullable=True)
-  tissue_condition = Column(String(100), nullable=True)
+  tissue_annotation = Column(String(200), nullable=True)
+  tissue_ontology = Column(String(200), nullable=True)
+  tissue_condition = Column(String(200), nullable=True)
 
   def __repr__(self):
     '''

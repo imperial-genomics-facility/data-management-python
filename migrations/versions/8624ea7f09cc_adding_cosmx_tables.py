@@ -85,9 +85,9 @@ def upgrade():
     sa.Column('cosmx_fov_annotation_id', mysql.INTEGER(unsigned=True), nullable=False),
     sa.Column('cosmx_fov_id', mysql.INTEGER(unsigned=True), nullable=False),
     sa.Column('tissue_species', sa.Enum('HUMAN', 'MOUSE', 'UNKNOWN'), server_default='UNKNOWN', nullable=False),
-    sa.Column('tissue_annotation', sa.String(length=100), nullable=True),
-    sa.Column('tissue_ontology', sa.String(length=100), nullable=True),
-    sa.Column('tissue_condition', sa.String(length=100), nullable=True),
+    sa.Column('tissue_annotation', sa.String(length=200), nullable=True),
+    sa.Column('tissue_ontology', sa.String(length=200), nullable=True),
+    sa.Column('tissue_condition', sa.String(length=200), nullable=True),
     sa.ForeignKeyConstraint(['cosmx_fov_id'], ['cosmx_fov.cosmx_fov_id'], onupdate='CASCADE', ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('cosmx_fov_annotation_id'),
     sa.UniqueConstraint('cosmx_fov_id'),
@@ -138,9 +138,14 @@ def upgrade():
     mysql_engine='InnoDB'
     )
     op.drop_table('history')
+    op.alter_column('project', 'deliverable',
+               existing_type=mysql.ENUM('FASTQ', 'ALIGNMENT', 'ANALYSIS'),
+               type_=sa.Enum('FASTQ', 'ALIGNMENT', 'ANALYSIS', 'COSMX'),
+               existing_nullable=False,
+               existing_server_default=sa.text("'FASTQ'"))
     op.alter_column('experiment', 'platform_name',
                existing_type=mysql.ENUM('HISEQ2500', 'HISEQ4000', 'MISEQ', 'NEXTSEQ', 'NEXTSEQ2000', 'NOVASEQ6000', 'NANOPORE_MINION', 'DNBSEQ-G400', 'DNBSEQ-G50', 'DNBSEQ-T7', 'SEQUEL2', 'UNKNOWN'),
-               type_=sa.Enum('HISEQ2500', 'HISEQ4000', 'MISEQ', 'NEXTSEQ', 'NANOPORE_MINION', 'NOVASEQ6000', 'DNBSEQ-G400', 'DNBSEQ-G50', 'DNBSEQ-T7', 'NEXTSEQ2000', 'SEQUEL2', 'UNKNOWN'),
+               type_=sa.Enum('HISEQ2500', 'HISEQ4000', 'MISEQ', 'NEXTSEQ', 'NEXTSEQ2000', 'NOVASEQ6000', 'NANOPORE_MINION', 'DNBSEQ-G400', 'DNBSEQ-G50', 'DNBSEQ-T7', 'SEQUEL2', 'UNKNOWN'),
                existing_nullable=False,
                existing_server_default=sa.text("'UNKNOWN'"))
     op.alter_column('pipeline', 'pipeline_name',
@@ -180,6 +185,11 @@ def downgrade():
                type_=mysql.ENUM('project', 'sample', 'experiment', 'run', 'file', 'seqrun', 'collection', 'analysis', 'unknown'),
                existing_nullable=False,
                existing_server_default=sa.text("'unknown'"))
+    op.alter_column('project', 'deliverable',
+               existing_type=mysql.ENUM('FASTQ', 'ALIGNMENT', 'ANALYSIS', 'COSMX'),
+               type_=sa.Enum('FASTQ', 'ALIGNMENT', 'ANALYSIS'),
+               existing_nullable=False,
+               existing_server_default=sa.text("'FASTQ'"))
     op.alter_column('pipeline', 'pipeline_name',
                existing_type=sa.String(length=120),
                type_=mysql.VARCHAR(length=50),

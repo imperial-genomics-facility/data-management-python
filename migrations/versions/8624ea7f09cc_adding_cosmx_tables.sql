@@ -408,9 +408,9 @@ CREATE TABLE cosmx_fov_annotation (
     cosmx_fov_annotation_id INTEGER UNSIGNED NOT NULL AUTO_INCREMENT, 
     cosmx_fov_id INTEGER UNSIGNED NOT NULL, 
     tissue_species ENUM('HUMAN','MOUSE','UNKNOWN') NOT NULL DEFAULT 'UNKNOWN', 
-    tissue_annotation VARCHAR(100), 
-    tissue_ontology VARCHAR(100), 
-    tissue_condition VARCHAR(100), 
+    tissue_annotation VARCHAR(200), 
+    tissue_ontology VARCHAR(200), 
+    tissue_condition VARCHAR(200), 
     PRIMARY KEY (cosmx_fov_annotation_id), 
     FOREIGN KEY(cosmx_fov_id) REFERENCES cosmx_fov (cosmx_fov_id) ON DELETE CASCADE ON UPDATE CASCADE, 
     UNIQUE (cosmx_fov_id)
@@ -458,9 +458,11 @@ CREATE TABLE cosmx_fov_rna_qc (
 
 DROP TABLE history;
 
-ALTER TABLE experiment MODIFY platform_name ENUM('HISEQ2500','HISEQ4000','MISEQ','NEXTSEQ','NANOPORE_MINION','NOVASEQ6000','DNBSEQ-G400','DNBSEQ-G50','DNBSEQ-T7','NEXTSEQ2000','SEQUEL2','UNKNOWN') NOT NULL DEFAULT 'UNKNOWN';
+--ALTER TABLE experiment MODIFY platform_name ENUM('HISEQ2500','HISEQ4000','MISEQ','NEXTSEQ','NANOPORE_MINION','NOVASEQ6000','DNBSEQ-G400','DNBSEQ-G50','DNBSEQ-T7','NEXTSEQ2000','SEQUEL2','UNKNOWN') NOT NULL DEFAULT 'UNKNOWN';
 
 ALTER TABLE pipeline MODIFY pipeline_name VARCHAR(120) NOT NULL;
+
+ALTER TABLE project MODIFY deliverable ENUM('FASTQ', 'ALIGNMENT', 'ANALYSIS', 'COSMX') NOT NULL DEFAULT 'FASTQ';
 
 ALTER TABLE pipeline_seed MODIFY seed_table ENUM('project','sample','experiment','run','file','seqrun','analysis','collection','unknown') NOT NULL DEFAULT 'unknown';
 
