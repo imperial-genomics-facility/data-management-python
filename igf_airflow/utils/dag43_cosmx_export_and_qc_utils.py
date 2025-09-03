@@ -82,6 +82,8 @@ COSMX_RNA_COUNT_FILE_VALIDATION_SCHEMA = \
   Variable.get('cosmx_rna_count_file_validation_schema', default_var='TEST_VAR')
 COSMX_PROTEIN_COUNT_FILE_VALIDATION_SCHEMA = \
   Variable.get('cosmx_protein_count_file_validation_schema', default_var='TEST_VAR')
+COSMX_REPORTS_DIR = \
+  Variable.get('cosmx_reports_dir_on_hpc', default_var='TEST_VAR')
 
 ## TASKS
 @task(
@@ -1400,10 +1402,38 @@ def generate_additional_qc_report2(
   queue='hpc_16G',
   multiple_outputs=False)
 def upload_reports_to_portal(
-    slide_entry: Union[List[Dict[str, str]], Any]) \
-      -> Optional[bool]:
+    slide_entry: Dict[str, str]) \
+      -> Dict[str, str]:
   try:
-    return None
+    slide_id = slide_entry.get("slide_id")
+    reports_dir = slide_entry.get("reports_dir")
+    if reports_dir is None or \
+       slide_id is None:
+      raise KeyError(f"Missing slide_id or reports dir path")
+    ## step 1: get analysis_id and project id
+    _, project_igf_id = \
+      get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf(
+        database_config_file=DATABASE_CONFIG_FILE)
+    target_path = \
+      os.path.join(
+        COSMX_REPORTS_DIR,
+        project_igf_id,
+        slide_id)
+    os.makedirs(
+      target_path,
+      exist_ok=True)
+    copy_local_file(
+      reports_dir,
+      target_path,
+      force=True)
+    new_slide_entry = {
+      "cosmx_run_id": slide_entry.get("cosmx_run_id"),
+      "slide_id": slide_id,
+      "export_dir": slide_entry.get("export_dir"),
+      "reports_dir": reports_dir,
+      "hpc_reports_dir": target_path,
+      "globus_dir": slide_entry.get("globus_dir")}
+    return new_slide_entry
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(

@@ -53,7 +53,8 @@ from igf_airflow.utils.dag43_cosmx_export_and_qc_utils import (
     match_slide_ids_with_project_id,
     fetch_cosmx_metadata_info,
     load_cosmx_data_to_db,
-    fetch_slide_annotations_from_design_file
+    fetch_slide_annotations_from_design_file,
+    upload_reports_to_portal
 )
 from igf_data.igfdb.igfTables import (
   Project,
@@ -921,8 +922,58 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
   def test_generate_additional_qc_report2(self):
     assert generate_additional_qc_report2([{}]) is not None
 
-  def test_upload_reports_to_portal(self):
-    assert upload_reports_to_portal([{}]) is not None
+
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf",
+         return_value=[1, "project1"])
+  @patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.DATABASE_CONFIG_FILE",
+         'data/dbconfig.json')
+  def test_upload_reports_to_portal(self, *ARGS):
+    # base = BaseAdaptor(**{'session_class':self.base.get_session_class()})
+    # base.start_session()
+    # project = \
+    #   Project(
+    #     project_id=1,
+    #     project_igf_id="project1")
+    # base.session.add(project)
+    # base.session.flush()
+    # analysis = \
+    #   Analysis(
+    #     analysis_id=1,
+    #     analysis_type="test",
+    #     analysis_name="analysis1",
+    #     project_id=1)
+    # base.session.add(analysis)
+    # base.session.flush()
+    # base.session.commit()
+    # base.close_session()
+    hpc_reports_dir = \
+      os.path.join(
+        self.temp_dir,
+        'COSMX_REPORTS')
+    os.makedirs(hpc_reports_dir, exist_ok=True)
+    reports_dir = \
+      os.path.join(
+        self.temp_dir,
+        'reports')
+    os.makedirs(reports_dir, exist_ok=True)
+    file_A = \
+      os.path.join(
+        reports_dir,
+        'a.txt')
+    with open(file_A, 'w') as fp:
+      fp.write("AAA")
+    slide_entry = {
+      "slide_id": "cosmx_slide_1",
+      "reports_dir": reports_dir
+    }
+    with patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.COSMX_REPORTS_DIR", hpc_reports_dir):
+      new_slide_entry = \
+        upload_reports_to_portal.function(
+          slide_entry=slide_entry)
+    assert "hpc_reports_dir" in new_slide_entry
+    assert new_slide_entry.get("hpc_reports_dir") == os.path.join(hpc_reports_dir, "project1", "cosmx_slide_1")
+    assert os.path.exists(os.path.join(hpc_reports_dir, "project1", "cosmx_slide_1", "a.txt"))
+
 
 
 if __name__=='__main__':
