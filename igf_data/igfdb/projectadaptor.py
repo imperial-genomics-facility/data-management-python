@@ -186,7 +186,7 @@ class ProjectAdaptor(BaseAdaptor):
         required_user_column,
         axis=1,
         inplace=True)
-      data_authotiry_dict = {True:'T'}                                          # create a mapping dictionary for data authority value
+      data_authotiry_dict = {True:'T', False: ''}                                          # create a mapping dictionary for data authority value
       data[data_authority_column] = \
         data[data_authority_column].\
         map(data_authotiry_dict)                                                # add value for data authority

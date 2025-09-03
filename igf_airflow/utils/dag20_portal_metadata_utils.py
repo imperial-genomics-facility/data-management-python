@@ -1,11 +1,13 @@
 import os, re, logging
 import pandas as pd
 from airflow.models import Variable
+from igf_data.utils.dbutils import  read_json_data
 from igf_data.utils.fileutils import get_temp_dir
 from igf_data.utils.fileutils import remove_dir
 from igf_data.utils.fileutils import copy_local_file
 from igf_data.utils.fileutils import copy_remote_file
 from igf_airflow.logging.upload_log_msg import send_log_to_channels
+from igf_airflow.utils.generic_airflow_utils import send_airflow_failed_logs_to_channels
 from igf_portal.metadata_utils import get_db_data_and_create_json_dump
 from igf_portal.metadata_utils import get_raw_metadata_from_lims_and_load_to_portal
 from igf_portal.metadata_utils import _gzip_json_file
@@ -17,8 +19,9 @@ from igf_data.utils.fileutils import check_file_path
 from igf_data.utils.singularity_run_wrapper import singularity_run
 from igf_data.process.metadata_reformat.reformat_metadata_file import Reformat_metadata_file
 from igf_data.process.seqrun_processing.find_and_process_new_project_data_from_portal_db import Find_and_register_new_project_data_from_portal_db
+from igf_data.process.seqrun_processing.unified_metadata_registration import UnifiedMetadataRegistration
 
-
+log = logging.getLogger(__name__)
 
 
 DATABASE_CONFIG_FILE = \
@@ -33,15 +36,82 @@ EMAIL_TEMPLATE = \
   Variable.get('user_account_creation_template', default_var=None)
 EMAIL_CONF = \
   Variable.get("email_config", default_var=None)
+PORTAL_FETCH_MANUAL_METADATA_URL_SUFFIX = \
+  Variable.get("portal_fetch_manual_metadata_url_suffix", default_var=None)
+PORTAL_SYNC_MANUAL_METADATA_URL_SUFFIX = \
+  Variable.get("portal_sync_manaul_metadata_url_suffix", default_var=None)
+MANUAL_METADATA_VALIDATION_SCHEMA = \
+  Variable.get("manual_metadata_validation_schema", default_var=None)
+
+
+def _parse_default_user_email_from_email_config(
+  email_config_file: str,
+  default_user_email_key: str = "default_user_email") -> str:
+  try:
+    email_id = ''
+    email_config = \
+        read_json_data(email_config_file)
+    if isinstance(email_config, list):
+        email_config = email_config[0]
+    email_id = \
+      email_config.get(default_user_email_key)
+    if email_id is None or email_id == '':
+      raise KeyError(f"Missing {default_user_email_key} in {email_config_file}")
+    return email_id
+  except Exception as e:
+    raise ValueError(
+      f"Failed to get default user email from config file; {e}")
+
+
+def fetch_validated_manual_metadata_from_portal_and_load_func(**context):
+  try:
+    default_project_user_email = \
+      _parse_default_user_email_from_email_config(EMAIL_CONF)
+    metadata_registration = UnifiedMetadataRegistration(
+      portal_config_file=IGF_PORTAL_CONF,
+      fetch_metadata_url_suffix=PORTAL_FETCH_MANUAL_METADATA_URL_SUFFIX,
+      sync_metadata_url_suffix=PORTAL_SYNC_MANUAL_METADATA_URL_SUFFIX,
+      metadata_validation_schema=MANUAL_METADATA_VALIDATION_SCHEMA,
+      db_config_file=DATABASE_CONFIG_FILE,
+      default_project_user_email=default_project_user_email,
+      samples_required=False,)
+    error_list = \
+      metadata_registration.execute()
+    if len(error_list) > 0:
+      message = \
+        f"List of errors while getting manual metadata: {' ,'.join(error_list)}"
+      send_airflow_failed_logs_to_channels(
+        ms_teams_conf=MS_TEAMS_CONF,
+        message_prefix=message)
+  except Exception as e:
+    log.error(e)
+    message = \
+      'Failed metadata dump, error: {0}'.\
+        format(e)
+    send_airflow_failed_logs_to_channels(
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=message)
+    raise ValueError(e)
+    # send_log_to_channels(
+    #   slack_conf=SLACK_CONF,
+    #   ms_teams_conf=MS_TEAMS_CONF,
+    #   task_id=context['task'].task_id,
+    #   dag_id=context['task'].dag_id,
+    #   comment=message,
+    #   reaction='fail')
+    # raise
 
 
 def fetch_validated_metadata_from_portal_and_load_func(**context):
   try:
+    default_project_user_email = \
+      _parse_default_user_email_from_email_config(EMAIL_CONF)
     fa = \
       Find_and_register_new_project_data_from_portal_db(
         portal_db_conf_file=IGF_PORTAL_CONF,
         dbconfig=DATABASE_CONFIG_FILE,
         user_account_template=EMAIL_TEMPLATE,
+        default_user_email=default_project_user_email,
         log_slack=True,
         slack_config=SLACK_CONF,
         check_hpc_user=False,
@@ -53,18 +123,22 @@ def fetch_validated_metadata_from_portal_and_load_func(**context):
         email_config_json=EMAIL_CONF)
     fa.process_project_data_and_account()
   except Exception as e:
-    logging.error(e)
+    # logging.error(e)
     message = \
-      'Failed metadata dump, error: {0}'.\
-        format(e)
-    send_log_to_channels(
-      slack_conf=SLACK_CONF,
+      f'Failed metadata dump, error: {e}'
+    # send_log_to_channels(
+    #   slack_conf=SLACK_CONF,
+    #   ms_teams_conf=MS_TEAMS_CONF,
+    #   task_id=context['task'].task_id,
+    #   dag_id=context['task'].dag_id,
+    #   comment=message,
+    #   reaction='fail')
+    # raise
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
       ms_teams_conf=MS_TEAMS_CONF,
-      task_id=context['task'].task_id,
-      dag_id=context['task'].dag_id,
-      comment=message,
-      reaction='fail')
-    raise
+      message_prefix=message)
+    raise ValueError(e)
 
 
 def get_metadata_dump_from_pipeline_db_func(**context):
@@ -83,18 +157,22 @@ def get_metadata_dump_from_pipeline_db_func(**context):
       key=xcom_key,
       value=temp_metadata_dump_json)
   except Exception as e:
-    logging.error(e)
+    # logging.error(e)
     message = \
-      'Failed metadata dump, error: {0}'.\
-        format(e)
-    send_log_to_channels(
-      slack_conf=SLACK_CONF,
+      f'Failed metadata dump, error: {e}'
+    # send_log_to_channels(
+    #   slack_conf=SLACK_CONF,
+    #   ms_teams_conf=MS_TEAMS_CONF,
+    #   task_id=context['task'].task_id,
+    #   dag_id=context['task'].dag_id,
+    #   comment=message,
+    #   reaction='fail')
+    # raise
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
       ms_teams_conf=MS_TEAMS_CONF,
-      task_id=context['task'].task_id,
-      dag_id=context['task'].dag_id,
-      comment=message,
-      reaction='fail')
-    raise
+      message_prefix=message)
+    raise ValueError(e)
 
 
 def upload_metadata_to_portal_db_func(**context):
@@ -119,18 +197,22 @@ def upload_metadata_to_portal_db_func(**context):
       url_suffix=data_load_url)
     os.remove(json_dump_file)
   except Exception as e:
-    logging.error(e)
+    # logging.error(e)
     message = \
-      'Failed to upload metadata to portal db, error: {0}'.\
-        format(e)
-    send_log_to_channels(
-      slack_conf=SLACK_CONF,
+      f'Failed to upload metadata to portal db, error: {e}'
+    # send_log_to_channels(
+    #   slack_conf=SLACK_CONF,
+    #   ms_teams_conf=MS_TEAMS_CONF,
+    #   task_id=context['task'].task_id,
+    #   dag_id=context['task'].dag_id,
+    #   comment=message,
+    #   reaction='fail')
+    # raise
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
       ms_teams_conf=MS_TEAMS_CONF,
-      task_id=context['task'].task_id,
-      dag_id=context['task'].dag_id,
-      comment=message,
-      reaction='fail')
-    raise
+      message_prefix=message)
+    raise ValueError(e)
 
 
 def copy_remote_file_to_hpc_func(**context):
@@ -171,18 +253,23 @@ def copy_remote_file_to_hpc_func(**context):
       key=xcom_key,
       value=dest_path)
   except Exception as e:
-    logging.error(e)
+    # logging.error(e)
     message = \
-      "Failed to copy remote file, error: {0}".\
-        format(e)
-    send_log_to_channels(
-      slack_conf=SLACK_CONF,
+      f"Failed to copy remote file, error: {e}"
+    # send_log_to_channels(
+    #   slack_conf=SLACK_CONF,
+    #   ms_teams_conf=MS_TEAMS_CONF,
+    #   task_id=context['task'].task_id,
+    #   dag_id=context['task'].dag_id,
+    #   comment=message,
+    #   reaction='fail')
+    # raise
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
       ms_teams_conf=MS_TEAMS_CONF,
-      task_id=context['task'].task_id,
-      dag_id=context['task'].dag_id,
-      comment=message,
-      reaction='fail')
-    raise
+      message_prefix=message)
+    raise ValueError(e)
+
 
 def _get_all_known_projects(db_conf_file):
   try:
@@ -222,18 +309,22 @@ def get_known_projects_func(**context):
       key=xcom_key,
       value=project_list_file)
   except Exception as e:
-    logging.error(e)
+    # logging.error(e)
     message = \
-      "Failed to get known project list, error: {0}".\
-        format(e)
-    send_log_to_channels(
-      slack_conf=SLACK_CONF,
+      f"Failed to get known project list, error: {e}"
+    # send_log_to_channels(
+    #   slack_conf=SLACK_CONF,
+    #   ms_teams_conf=MS_TEAMS_CONF,
+    #   task_id=context['task'].task_id,
+    #   dag_id=context['task'].dag_id,
+    #   comment=message,
+    #   reaction='fail')
+    # raise
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
       ms_teams_conf=MS_TEAMS_CONF,
-      task_id=context['task'].task_id,
-      dag_id=context['task'].dag_id,
-      comment=message,
-      reaction='fail')
-    raise
+      message_prefix=message)
+    raise ValueError(e)
 
 
 def create_raw_metadata_for_new_projects_func(**context):
@@ -317,18 +408,22 @@ def create_raw_metadata_for_new_projects_func(**context):
       key=xcom_key,
       value=work_dir)
   except Exception as e:
-    logging.error(e)
+    # logging.error(e)
     message = \
-      "Failed to get new metadata files, error: {0}".\
-        format(e)
-    send_log_to_channels(
-      slack_conf=SLACK_CONF,
+      "Failed to get new metadata files, error: {e}"
+    # send_log_to_channels(
+    #   slack_conf=SLACK_CONF,
+    #   ms_teams_conf=MS_TEAMS_CONF,
+    #   task_id=context['task'].task_id,
+    #   dag_id=context['task'].dag_id,
+    #   comment=message,
+    #   reaction='fail')
+    # raise
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
       ms_teams_conf=MS_TEAMS_CONF,
-      task_id=context['task'].task_id,
-      dag_id=context['task'].dag_id,
-      comment=message,
-      reaction='fail')
-    raise
+      message_prefix=message)
+    raise ValueError(e)
 
 
 def _reformat_metadata_files(input_dir):
@@ -396,18 +491,22 @@ def get_formatted_metadata_files_func(**context):
       key=xcom_key,
       value=raw_metadata_dir)
   except Exception as e:
-    logging.error(e)
+    # logging.error(e)
     message = \
-      "Failed to get formatted metadata files, error: {0}".\
-        format(e)
-    send_log_to_channels(
-      slack_conf=SLACK_CONF,
+      f"Failed to get formatted metadata files, error: {e}"
+    # send_log_to_channels(
+    #   slack_conf=SLACK_CONF,
+    #   ms_teams_conf=MS_TEAMS_CONF,
+    #   task_id=context['task'].task_id,
+    #   dag_id=context['task'].dag_id,
+    #   comment=message,
+    #   reaction='fail')
+    # raise
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
       ms_teams_conf=MS_TEAMS_CONF,
-      task_id=context['task'].task_id,
-      dag_id=context['task'].dag_id,
-      comment=message,
-      reaction='fail')
-    raise
+      message_prefix=message)
+    raise ValueError(e)
 
 
 def upload_raw_metadata_to_portal_func(**context):
@@ -426,16 +525,20 @@ def upload_raw_metadata_to_portal_func(**context):
       metadata_dir=formatted_metadata,
       portal_conf_file=IGF_PORTAL_CONF)
   except Exception as e:
-    logging.error(e)
+    # logging.error(e)
     message = \
-      "Failed to upload raw metadata to portal, error: {0}".\
-        format(e)
-    send_log_to_channels(
-      slack_conf=SLACK_CONF,
+      f"Failed to upload raw metadata to portal, error: {e}"
+    # send_log_to_channels(
+    #   slack_conf=SLACK_CONF,
+    #   ms_teams_conf=MS_TEAMS_CONF,
+    #   task_id=context['task'].task_id,
+    #   dag_id=context['task'].dag_id,
+    #   comment=message,
+    #   reaction='fail')
+    # raise
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
       ms_teams_conf=MS_TEAMS_CONF,
-      task_id=context['task'].task_id,
-      dag_id=context['task'].dag_id,
-      comment=message,
-      reaction='fail')
-    raise
+      message_prefix=message)
+    raise ValueError(e)
 

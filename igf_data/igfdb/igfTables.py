@@ -1,10 +1,10 @@
 import datetime
-from igf_data.igfdb.datatype import JSONType
+from igf_data.igfdb.datatype import JSONType, DECIMALType
 from sqlalchemy.sql.functions import current_timestamp
 from sqlalchemy.orm import relationship
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.dialects.mysql import INTEGER
-from sqlalchemy import Column, String, Enum, TIMESTAMP, TEXT, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, String, Enum, TIMESTAMP, TEXT, ForeignKey, UniqueConstraint, DATETIME
 
 
 Base = declarative_base()
@@ -24,6 +24,7 @@ class Project(Base):
     * FASTQ
     * ALIGNMENT
     * ANALYSIS
+    * COSMX
 
   :param status: An enum list for project status, default ACTIVE, allowed entries are
 
@@ -42,11 +43,11 @@ class Project(Base):
   start_timestamp = Column(TIMESTAMP(), nullable=True, server_default=current_timestamp())
   description = Column(TEXT())
   status = Column(Enum('ACTIVE', 'FINISHED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
-  deliverable = Column(Enum('FASTQ', 'ALIGNMENT', 'ANALYSIS'), server_default='FASTQ')
-  projectuser = relationship('ProjectUser', backref="project")
-  sample = relationship('Sample', backref="project")
-  experiment = relationship('Experiment', backref="project")
-  project_attribute = relationship('Project_attribute', backref="project")
+  deliverable = Column(Enum('FASTQ', 'ALIGNMENT', 'ANALYSIS', 'COSMX'), server_default='FASTQ')
+  #projectuser = relationship('ProjectUser', backref="project")
+  #sample = relationship('Sample', backref="project")
+  #experiment = relationship('Experiment', backref="project")
+  #project_attribute = relationship('Project_attribute', backref="project")
 
   def __repr__(self):
     '''
@@ -93,7 +94,6 @@ class User(Base):
   '''
   __tablename__ = 'user'
   __table_args__ = (
-    UniqueConstraint('name'),
     UniqueConstraint('username'),
     UniqueConstraint('email_id'),
     { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
@@ -112,7 +112,7 @@ class User(Base):
   password = Column(String(129))
   encryption_salt = Column(String(129))
   ht_password = Column(String(40))
-  projectuser = relationship('ProjectUser', backref="user")
+  #projectuser = relationship('ProjectUser', backref="user")
 
   def __repr__(self):
     '''
@@ -153,7 +153,9 @@ class ProjectUser(Base):
 
   project_user_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   project_id = Column(INTEGER(unsigned=True), ForeignKey("project.project_id", onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  project = relationship('Project')
   user_id = Column(INTEGER(unsigned=True), ForeignKey("user.user_id", onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  user = relationship('User')
   data_authority = Column(Enum('T'))
 
   def __repr__(self):
@@ -231,8 +233,9 @@ class Sample(Base):
   cell_line = Column(String(50))
   date_created = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp())
   project_id = Column(INTEGER(unsigned=True), ForeignKey('project.project_id', onupdate="CASCADE", ondelete="SET NULL"))
-  experiment = relationship('Experiment', backref="sample")
-  sample_attribute = relationship('Sample_attribute', backref="sample")
+  project = relationship('Project')
+  #experiment = relationship('Experiment', backref="sample")
+  #sample_attribute = relationship('Sample_attribute', backref="sample")
 
   def __repr__(self):
     '''
@@ -303,8 +306,8 @@ class Platform(Base):
   software_name = Column(Enum('RTA','UNKNOWN'), nullable=False)
   software_version = Column(String(20), nullable=False, server_default='UNKNOWN')
   date_created = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now )
-  seqrun = relationship('Seqrun', backref="platform")
-  flowcell_rule = relationship('Flowcell_barcode_rule', backref="platform")
+  #seqrun = relationship('Seqrun', backref="platform")
+  #flowcell_rule = relationship('Flowcell_barcode_rule', backref="platform")
 
   def __repr__(self):
     '''
@@ -346,6 +349,7 @@ class Flowcell_barcode_rule(Base):
 
   flowcell_rule_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   platform_id = Column(INTEGER(unsigned=True), ForeignKey('platform.platform_id', onupdate="CASCADE", ondelete="SET NULL"))
+  platform = relationship('Platform')
   flowcell_type = Column(String(50), nullable=False)
   index_1 = Column(Enum('NO_CHANGE','REVCOMP','UNKNOWN'), nullable=False, server_default='UNKNOWN')
   index_2 = Column(Enum('NO_CHANGE','REVCOMP','UNKNOWN'), nullable=False, server_default='UNKNOWN')
@@ -386,9 +390,10 @@ class Seqrun(Base):
   date_created = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
   flowcell_id = Column(String(20), nullable=False)
   platform_id = Column(INTEGER(unsigned=True), ForeignKey('platform.platform_id', onupdate="CASCADE", ondelete="SET NULL"))
-  run = relationship('Run', backref="seqrun")
-  seqrun_stats = relationship('Seqrun_stats', backref="seqrun")
-  seqrun_attribute = relationship('Seqrun_attribute', backref='seqrun')
+  platform = relationship('Platform')
+  #run = relationship('Run', backref="seqrun")
+  #seqrun_stats = relationship('Seqrun_stats', backref="seqrun")
+  #seqrun_attribute = relationship('Seqrun_attribute', backref='seqrun')
 
   def __repr__(self):
     '''
@@ -424,6 +429,7 @@ class Seqrun_stats(Base):
 
   seqrun_stats_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   seqrun_id = Column(INTEGER(unsigned=True), ForeignKey('seqrun.seqrun_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  seqrun = relationship('Seqrun')
   lane_number = Column(Enum('1', '2', '3', '4', '5', '6', '7', '8'), nullable=False)
   bases_mask = Column(String(20))
   undetermined_barcodes = Column(JSONType)
@@ -619,7 +625,9 @@ class Experiment(Base):
   experiment_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   experiment_igf_id = Column(String(40), nullable=False)
   project_id = Column(INTEGER(unsigned=True), ForeignKey('project.project_id', onupdate="CASCADE", ondelete="SET NULL"))
+  project = relationship('Project')
   sample_id = Column(INTEGER(unsigned=True), ForeignKey('sample.sample_id', onupdate="CASCADE", ondelete="SET NULL"))
+  sample = relationship('Sample')
   library_name = Column(String(50), nullable=False)
   library_source = Column(Enum('GENOMIC', 'TRANSCRIPTOMIC' ,'GENOMIC_SINGLE_CELL', 'METAGENOMIC', 'METATRANSCRIPTOMIC',
                                'TRANSCRIPTOMIC_SINGLE_CELL', 'SYNTHETIC', 'VIRAL_RNA', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
@@ -646,8 +654,8 @@ class Experiment(Base):
   platform_name = Column(Enum('HISEQ2500', 'HISEQ4000', 'MISEQ', 'NEXTSEQ', 'NANOPORE_MINION', 'NOVASEQ6000',
                               'DNBSEQ-G400', 'DNBSEQ-G50', 'DNBSEQ-T7', 'NEXTSEQ2000', 'SEQUEL2',
                               'UNKNOWN'), nullable=False, server_default='UNKNOWN')
-  experiment = relationship('Run', backref='experiment')
-  experiment_attribute = relationship('Experiment_attribute', backref='experiment')
+  #experiment = relationship('Run', backref='experiment')
+  #experiment_attribute = relationship('Experiment_attribute', backref='experiment')
 
   def __repr__(self):
     '''
@@ -696,11 +704,13 @@ class Run(Base):
   run_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   run_igf_id = Column(String(70), nullable=False)
   experiment_id = Column(INTEGER(unsigned=True), ForeignKey('experiment.experiment_id', onupdate="CASCADE", ondelete="SET NULL"))
+  experiment = relationship('Experiment')
   seqrun_id = Column(INTEGER(unsigned=True), ForeignKey('seqrun.seqrun_id', onupdate="CASCADE", ondelete="SET NULL"))
+  seqrun = relationship('Seqrun')
   status = Column(Enum('ACTIVE', 'FAILED', 'WITHDRAWN'), nullable=False, server_default='ACTIVE')
   lane_number = Column(Enum('1', '2', '3', '4', '5', '6', '7', '8'), nullable=False)
   date_created = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp())
-  run_attribute = relationship('Run_attribute', backref='run')
+  #run_attribute = relationship('Run_attribute', backref='run')
 
   def __repr__(self):
     '''
@@ -733,6 +743,7 @@ class Analysis(Base):
 
   analysis_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   project_id = Column(INTEGER(unsigned=True), ForeignKey('project.project_id', onupdate="CASCADE", ondelete="SET NULL"))
+  project = relationship('Project')
   analysis_name = Column(String(120), nullable=False)
   analysis_type = Column(String(120), nullable=False)
   analysis_description = Column(JSONType)
@@ -771,8 +782,8 @@ class Collection(Base):
   type = Column(String(150), nullable=False)
   table = Column(Enum('sample', 'experiment', 'run', 'file', 'project', 'seqrun', 'analysis', 'unknown'), nullable=False, server_default='unknown')
   date_stamp = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
-  collection_group = relationship('Collection_group', backref='collection')
-  collection_attribute = relationship('Collection_attribute', backref='collection')
+  #collection_group = relationship('Collection_group', backref='collection')
+  #collection_attribute = relationship('Collection_attribute', backref='collection')
 
   def __repr__(self):
     '''
@@ -825,8 +836,8 @@ class File(Base):
   size = Column(String(15))
   date_created = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp())
   date_updated = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now )
-  collection_group = relationship('Collection_group', backref='file')
-  file_attribute = relationship('File_attribute', backref='file')
+  #collection_group = relationship('Collection_group', backref='file')
+  #file_attribute = relationship('File_attribute', backref='file')
 
   def __repr__(self):
     '''
@@ -859,7 +870,9 @@ class Collection_group(Base):
 
   collection_group_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
   collection_id = Column(INTEGER(unsigned=True), ForeignKey('collection.collection_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  collection = relationship('Collection')
   file_id = Column(INTEGER(unsigned=True), ForeignKey('file.file_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  file = relationship('File')
 
   def __repr__(self):
     '''
@@ -905,7 +918,7 @@ class Pipeline(Base):
   pipeline_type = Column(Enum('EHIVE', 'AIRFLOW', 'NEXTFLOW', 'UNKNOWN'), nullable=False, server_default='EHIVE')
   is_active = Column(Enum('Y', 'N'), nullable=False, server_default='Y')
   date_stamp = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
-  pipeline_seed = relationship('Pipeline_seed', backref='pipeline')
+  #pipeline_seed = relationship('Pipeline_seed', backref='pipeline')
 
   def __repr__(self):
     '''
@@ -952,6 +965,7 @@ class Pipeline_seed(Base):
   seed_id = Column(INTEGER(unsigned=True), nullable=False)
   seed_table = Column(Enum('project','sample','experiment','run','file','seqrun','analysis','collection','unknown'), nullable=False, server_default='unknown')
   pipeline_id = Column(INTEGER(unsigned=True), ForeignKey('pipeline.pipeline_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  pipeline = relationship('Pipeline')
   status = Column(Enum('SEEDED', 'RUNNING', 'FINISHED', 'FAILED', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
   date_stamp = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
 
@@ -967,57 +981,57 @@ class Pipeline_seed(Base):
       "status = '{self.status}'," \
       "date_stamp = '{self.date_stamp}')".format(self=self)
 
-class History(Base):
+# class History(Base):
 
-  '''
-  A table for loading history information
+#   '''
+#   A table for loading history information
 
-  :param log_id: An integer id for history table
-  :param log_type: A required enum value to specify log type, allowed values are
+#   :param log_id: An integer id for history table
+#   :param log_type: A required enum value to specify log type, allowed values are
 
-    * CREATED
-    * MODIFIED
-    * DELETED
+#     * CREATED
+#     * MODIFIED
+#     * DELETED
 
-  :param table_name: A required enum value to specify table information, allowed values are
+#   :param table_name: A required enum value to specify table information, allowed values are
 
-    * PROJECT
-    * USER
-    * SAMPLE
-    * EXPERIMENT
-    * RUN
-    * COLLECTION
-    * FILE
-    * PLATFORM
-    * PROJECT_ATTRIBUTE
-    * EXPERIMENT_ATTRIBUTE
-    * COLLECTION_ATTRIBUTE
-    * SAMPLE_ATTRIBUTE
-    * RUN_ATTRIBUTE
-    * FILE_ATTRIBUTE
+#     * PROJECT
+#     * USER
+#     * SAMPLE
+#     * EXPERIMENT
+#     * RUN
+#     * COLLECTION
+#     * FILE
+#     * PLATFORM
+#     * PROJECT_ATTRIBUTE
+#     * EXPERIMENT_ATTRIBUTE
+#     * COLLECTION_ATTRIBUTE
+#     * SAMPLE_ATTRIBUTE
+#     * RUN_ATTRIBUTE
+#     * FILE_ATTRIBUTE
 
-  :param log_date: An optional timestamp column to record file creation or modification time, default current timestamp
-  :param message: An optional text field to specify message
-  '''
-  __tablename__ = 'history'
-  __table_args__ = ( { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
+#   :param log_date: An optional timestamp column to record file creation or modification time, default current timestamp
+#   :param message: An optional text field to specify message
+#   '''
+#   __tablename__ = 'history'
+#   __table_args__ = ( { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8' })
 
-  log_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
-  log_type = Column(Enum('CREATED', 'MODIFIED', 'DELETED'), nullable=False)
-  table_name = Column(Enum('PROJECT', 'USER', 'SAMPLE', 'EXPERIMENT', 'RUN', 'COLLECTION', 'FILE', 'PLATFORM', 'PROJECT_ATTRIBUTE', 'EXPERIMENT_ATTRIBUTE', 'COLLECTION_ATTRIBUTE', 'SAMPLE_ATTRIBUTE', 'RUN_ATTRIBUTE', 'FILE_ATTRIBUTE'), nullable=False)
-  log_date = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
-  message = Column(TEXT())
+#   log_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+#   log_type = Column(Enum('CREATED', 'MODIFIED', 'DELETED'), nullable=False)
+#   table_name = Column(Enum('PROJECT', 'USER', 'SAMPLE', 'EXPERIMENT', 'RUN', 'COLLECTION', 'FILE', 'PLATFORM', 'PROJECT_ATTRIBUTE', 'EXPERIMENT_ATTRIBUTE', 'COLLECTION_ATTRIBUTE', 'SAMPLE_ATTRIBUTE', 'RUN_ATTRIBUTE', 'FILE_ATTRIBUTE'), nullable=False)
+#   log_date = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now)
+#   message = Column(TEXT())
 
-  def __repr__(self):
-    '''
-    Display History entry
-    '''
-    return \
-      "History(log_id = '{self.log_id}'," \
-      "log_type = '{self.log_type}'," \
-      "table_name = '{self.table_name}'," \
-      "log_date = '{self.log_date}'," \
-      "message = '{self.message}')".format(self=self)
+#   def __repr__(self):
+#     '''
+#     Display History entry
+#     '''
+#     return \
+#       "History(log_id = '{self.log_id}'," \
+#       "log_type = '{self.log_type}'," \
+#       "table_name = '{self.table_name}'," \
+#       "log_date = '{self.log_date}'," \
+#       "message = '{self.message}')".format(self=self)
 
 
 class Project_attribute(Base):
@@ -1039,6 +1053,7 @@ class Project_attribute(Base):
   attribute_name = Column(String(50))
   attribute_value = Column(String(50))
   project_id = Column(INTEGER(unsigned=True), ForeignKey('project.project_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  project = relationship('Project')
 
   def __repr__(self):
     '''
@@ -1070,6 +1085,7 @@ class Experiment_attribute(Base):
   attribute_name = Column(String(30))
   attribute_value = Column(String(50))
   experiment_id = Column(INTEGER(unsigned=True), ForeignKey('experiment.experiment_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  experiment = relationship('Experiment')
 
   def __repr__(self):
     '''
@@ -1101,6 +1117,7 @@ class Collection_attribute(Base):
   attribute_name = Column(String(200))
   attribute_value = Column(String(200))
   collection_id = Column(INTEGER(unsigned=True), ForeignKey('collection.collection_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  collection = relationship('Collection')
 
   def __repr__(self):
     '''
@@ -1132,6 +1149,7 @@ class Sample_attribute(Base):
   attribute_name = Column(String(50))
   attribute_value = Column(String(50))
   sample_id = Column(INTEGER(unsigned=True), ForeignKey('sample.sample_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  sample = relationship('Sample')
 
   def __repr__(self):
     '''
@@ -1162,6 +1180,7 @@ class Seqrun_attribute(Base):
   attribute_name = Column(String(50))
   attribute_value = Column(String(100))
   seqrun_id = Column(INTEGER(unsigned=True), ForeignKey('seqrun.seqrun_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  seqrun = relationship('Seqrun')
 
 
 class Run_attribute(Base):
@@ -1183,6 +1202,7 @@ class Run_attribute(Base):
   attribute_name = Column(String(30))
   attribute_value = Column(String(50))
   run_id = Column(INTEGER(unsigned=True), ForeignKey('run.run_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  run = relationship('Run')
 
   def __repr__(self):
     '''
@@ -1214,6 +1234,7 @@ class File_attribute(Base):
   attribute_name = Column(String(30))
   attribute_value = Column(String(50))
   file_id = Column(INTEGER(unsigned=True), ForeignKey('file.file_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  file = relationship('File')
 
   def __repr__(self):
     '''
@@ -1224,3 +1245,260 @@ class File_attribute(Base):
       "attribute_name = '{self.attribute_name}'," \
       "attribute_value = '{self.attribute_value}'," \
       "file_id = '{self.file_id}')".format(self=self)
+
+## COSMX TABLES
+class Cosmx_platform(Base):
+  """
+  A table for loading COSMX platform information
+
+  :param cosmx_platform_id: An integer id for cosmx_platform table
+  :param cosmx_platform_igf_id: A required string as COSMX platform id specific to IGF team, allowed length 20
+  :param cosmx_platform_name: An optional string to specify COSMX platform name, allowed length 20
+  :param date_created: An optional timestamp column to record entry creation or modification time, default current timestamp
+  """
+
+  __tablename__ = 'cosmx_platform'
+  __table_args__ = (
+    UniqueConstraint('cosmx_platform_igf_id'),
+    { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
+
+  cosmx_platform_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  cosmx_platform_igf_id = Column(String(20), nullable=False)
+  cosmx_platform_name = Column(String(20), nullable=True)
+  date_created = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp(), onupdate=datetime.datetime.now )
+
+  def __repr__(self):
+    '''
+    Display Cosmx_platform entry
+    '''
+    return \
+      f"cosmx_platform_igf_id = '{self.cosmx_platform_igf_id}'"
+
+
+class Cosmx_run(Base):
+  """
+  A table for loading COSMX run information
+
+  :param cosmx_run_id: An integer id for cosmx_run table
+  :param cosmx_run_igf_id: A required string as COSMX run id specific to IGF team, allowed length 100
+  :param cosmx_run_name: An optional string to specify COSMX run name, allowed length 100
+  """
+
+  __tablename__ = 'cosmx_run'
+  __table_args__ = (
+    UniqueConstraint('cosmx_run_igf_id'),
+    { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
+
+  cosmx_run_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  cosmx_run_igf_id = Column(String(200), nullable=False)
+  cosmx_run_name = Column(String(100), nullable=True)
+  project_id = Column(INTEGER(unsigned=True), ForeignKey('project.project_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  project = relationship('Project')
+
+
+  def __repr__(self):
+    '''
+    Display Cosmx_run entry
+    '''
+    return \
+      f"cosmx_run_igf_id = '{self.cosmx_run_igf_id}'"
+
+
+class Cosmx_slide(Base):
+  """
+  A table for loading COSMX slide information
+
+  :param cosmx_slide_id: An integer id for cosmx_slide table
+  :param cosmx_slide_igf_id: A required string as COSMX slide id specific to IGF team, allowed length 100
+  :param cosmx_slide_name: An optional string to specify COSMX slide name, allowed length 100
+  :param cosmx_run_id: A required integer id from cosmx_run table (foreign key)
+  :param panel_info: A required string to specify panel information, allowed length 100
+  :param assay_type: A required string to specify assay type, allowed length 100
+  :param version: Version info string, optional
+  :param slide_run_date: A datestamp for slide run date, required
+  :param slide_metadata: A JSON object containing all slide metadata, optional
+  :param date_created: An optional timestamp column to record entry creation or modification time, default current timestamp
+  """
+
+  __tablename__ = 'cosmx_slide'
+  __table_args__ = (
+    UniqueConstraint('cosmx_slide_igf_id'),
+    { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
+
+  cosmx_slide_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  cosmx_slide_igf_id = Column(String(100), nullable=False)
+  cosmx_slide_name = Column(String(100), nullable=True)
+  cosmx_run_id = Column(INTEGER(unsigned=True), ForeignKey('cosmx_run.cosmx_run_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  cosmx_run = relationship('Cosmx_run')
+  cosmx_platform_id = Column(INTEGER(unsigned=True), ForeignKey('cosmx_platform.cosmx_platform_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  cosmx_platform = relationship('Cosmx_platform')
+  panel_info = Column(String(100), nullable=True)
+  assay_type = Column(String(100), nullable=True)
+  version = Column(String(10), nullable=True)
+  slide_run_date = Column(DATETIME(), nullable=False, server_default=current_timestamp())
+  slide_metadata = Column(JSONType(), nullable=True)
+  date_created = Column(TIMESTAMP(), nullable=False, server_default=current_timestamp())
+
+  def __repr__(self):
+    '''
+    Display Cosmx_slide entry
+    '''
+    return \
+      f"cosmx_slide_igf_id = '{self.cosmx_slide_igf_id}'"
+
+
+class Cosmx_fov(Base):
+  """
+  """
+  __tablename__ = 'cosmx_fov'
+  __table_args__ = (
+    UniqueConstraint('cosmx_fov_name', 'cosmx_slide_id'),
+    { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
+
+  cosmx_fov_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  cosmx_fov_name = Column(String(10), nullable=False)
+  cosmx_slide_id = Column(INTEGER(unsigned=True), ForeignKey('cosmx_slide.cosmx_slide_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  cosmx_slide = relationship('Cosmx_slide')
+  slide_type = Column(Enum('RNA', 'PROTEIN', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
+  # cosmx_run_id = Column(INTEGER(unsigned=True), ForeignKey('cosmx_run.cosmx_run_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  # cosmx_run = relationship('Cosmx_run')
+
+  def __repr__(self):
+    '''
+    Display Cosmx_fov entry
+    '''
+    return \
+      f"cosmx_fov_name = '{self.cosmx_fov_name}'"
+
+
+class Cosmx_fov_annotation(Base):
+  """
+  """
+  __tablename__ = 'cosmx_fov_annotation'
+  __table_args__ = (
+    UniqueConstraint('cosmx_fov_id'),
+    { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
+
+  cosmx_fov_annotation_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  cosmx_fov_id = Column(INTEGER(unsigned=True), ForeignKey('cosmx_fov.cosmx_fov_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  cosmx_fov = relationship('Cosmx_fov')
+  tissue_species = Column(Enum('HUMAN', 'MOUSE', 'UNKNOWN'), nullable=False, server_default='UNKNOWN')
+  tissue_annotation = Column(String(200), nullable=True)
+  tissue_ontology = Column(String(200), nullable=True)
+  tissue_condition = Column(String(200), nullable=True)
+
+  def __repr__(self):
+    '''
+    Display Cosmx_fov_annotation entry
+    '''
+    return \
+      f"cosmx_fov_id = '{self.cosmx_fov_id}'"
+
+
+class Cosmx_fov_rna_qc(Base):
+  """
+  """
+  __tablename__ = 'cosmx_fov_rna_qc'
+  __table_args__ = (
+    UniqueConstraint('cosmx_fov_id'),
+    { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
+
+  cosmx_fov_rna_qc_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  cosmx_fov_id = Column(INTEGER(unsigned=True), ForeignKey('cosmx_fov.cosmx_fov_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  cosmx_fov = relationship('Cosmx_fov')
+  mean_transcript_per_cell = Column(DECIMALType(10, 2), nullable=True)
+  mean_unique_genes_per_cell = Column(DECIMALType(10, 2), nullable=True)
+  number_non_empty_cells = Column(INTEGER(unsigned=True), nullable=True)
+  pct_non_empty_cells = Column(DECIMALType(10, 2), nullable=True)
+  percentile_90_transcript_per_cell = Column(DECIMALType(10, 2), nullable=True)
+  percentile_10_transcript_per_cell = Column(DECIMALType(10, 2), nullable=True)
+  mean_negprobe_counts_per_cell = Column(DECIMALType(10, 3), nullable=True)
+
+  def __repr__(self):
+    '''
+    Display Cosmx_fov_rna_qc entry
+    '''
+    return \
+      f"cosmx_fov_id = '{self.cosmx_fov_id}'"
+
+
+class Cosmx_fov_protein_qc(Base):
+  """
+  """
+  __tablename__ = 'cosmx_fov_protein_qc'
+  __table_args__ = (
+    UniqueConstraint('cosmx_fov_id'),
+    { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
+
+  cosmx_fov_protein_qc_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  cosmx_fov_id = Column(INTEGER(unsigned=True), ForeignKey('cosmx_fov.cosmx_fov_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  cosmx_fov = relationship('Cosmx_fov')
+  mean_fluorescence_intensity = Column(INTEGER, nullable=True)
+  mean_unique_genes_per_cell = Column(INTEGER, nullable=True)
+  number_non_empty_cells = Column(INTEGER, nullable=True)
+  pct_non_empty_cells = Column(DECIMALType(10, 2), nullable=True)
+  percentile_10_fluorescence_intensity = Column(DECIMALType(10, 2), nullable=True)
+  percentile_90_fluorescence_intensity = Column(DECIMALType(10, 2), nullable=True)
+  fluorescence_intensity_mean_igg_control_intensity = Column(DECIMALType(10, 3), nullable=True)
+
+  def __repr__(self):
+    '''
+    Display Cosmx_fov_protein_qc entry
+    '''
+    return \
+      f"cosmx_fov_igf_id = '{self.cosmx_fov_id}'"
+
+
+class Cosmx_slide_attribute(Base):
+  """
+  A table for loading COSMX slide attributes
+
+  :param cosmx_slide_attribute_id: An integer id for cosmx_slide_attribute table
+  :param attribute_name: An optional string attribute name, allowed length 200
+  :param attribute_value: An optional json attribute value
+  :param cosmx_slide_id: An integer id from cosmx_slide table (foreign key)
+  """
+  __tablename__ = 'cosmx_slide_attribute'
+  __table_args__ = (
+    UniqueConstraint('cosmx_slide_id', 'attribute_name'),
+    { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
+
+  cosmx_slide_attribute_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  attribute_name = Column(String(200), nullable=False)
+  attribute_value = Column(JSONType(), nullable=True)
+  cosmx_slide_id = Column(INTEGER(unsigned=True), ForeignKey('cosmx_slide.cosmx_slide_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  cosmx_slide = relationship('Cosmx_slide')
+
+  def __repr__(self):
+    '''
+    Display Cosmx_slide_attribute entry
+    '''
+    return \
+      f"attribute_name = '{self.attribute_name}'"
+
+class Cosmx_fov_attribute(Base):
+  """
+  A table for loading COSMX fov attributes
+
+  :param cosmx_fov_attribute_id: An integer id for cosmx_fov_attribute table
+  :param attribute_name: An optional string attribute name, allowed length 200
+  :param attribute_value: An optional json attribute value
+  :param cosmx_fov_id: An integer id from cosmx_fov table (foreign key)
+  """
+  __tablename__ = 'cosmx_fov_attribute'
+  __table_args__ = (
+    UniqueConstraint('cosmx_fov_id', 'attribute_name'),
+    { 'mysql_engine':'InnoDB', 'mysql_charset':'utf8'  })
+
+  cosmx_fov_attribute_id = Column(INTEGER(unsigned=True), primary_key=True, nullable=False)
+  attribute_name = Column(String(200), nullable=False)
+  attribute_value = Column(JSONType(), nullable=True)
+  cosmx_fov_id = Column(INTEGER(unsigned=True), ForeignKey('cosmx_fov.cosmx_fov_id', onupdate="CASCADE", ondelete="CASCADE"), nullable=False)
+  cosmx_fov = relationship('Cosmx_fov')
+
+  def __repr__(self):
+    '''
+    Display Cosmx_fov_attribute entry
+    '''
+    return \
+      f"attribute_name = '{self.attribute_name}'"

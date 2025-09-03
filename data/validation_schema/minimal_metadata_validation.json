@@ -1,0 +1,55 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "id": "https://github.com/imperial-genomics-facility/data-management-python/tree/master/data/validation_schema/milimal_metadata_validation.json#",
+    "title": "IGF minimal metadata validation schema",
+    "description": "Schema for validation of minimal metadata input file",
+    "type" : "array",
+    "version": "1.0.0",
+    "minItems": 1,
+    "uniqueItems": true,
+    "items": {
+        "type": "object",
+        "properties" : {
+            "project_igf_id" : {
+              "type" : "string",
+              "pattern": "^IGF[a-zA-Z0-9-_]+$",
+              "maxLength": 50
+            },
+            "deliverable" : {
+              "type" : "string",
+              "enum" : ["FASTQ",
+                        "COSMX"]
+            },
+            "name" : {
+              "type" : "string",
+              "pattern": "^\\w+\\s\\w+\\s?\\w+?$",
+              "maxLength": 30
+            },
+            "username" : {
+              "type" : "string",
+              "pattern": "^\\S+$|^$",
+              "maxLength": 20
+            },
+            "email_id" : {
+              "type" : "string",
+              "pattern": "\\S+\\@\\S+\\.\\w+",
+              "maxLength": 40
+            },
+            "sample_igf_id" : {
+              "type" : "string",
+              "pattern": "^IGF[a-zA-Z0-9-_]+$",
+              "maxLength": 20
+            },
+            "species_name" : {
+              "type" : "string",
+              "maxLength": 50
+            }
+        },
+        "required": [
+          "project_igf_id",
+          "deliverable",
+          "name",
+          "email_id",
+          "username"]
+    }
+}
