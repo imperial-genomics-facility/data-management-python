@@ -1326,7 +1326,8 @@ def copy_slide_reports_to_globus(
     reports_dir = \
       os.path.join(
         export_dir,
-         report_files_dir_name)
+         report_files_dir_name,
+         slide_id)
     date_stamp = \
       get_date_stamp_for_file_name()
     target_dir_path = \
@@ -1336,7 +1337,7 @@ def copy_slide_reports_to_globus(
         analysis_id= int(analysis_id),
         analysis_dir=reports_dir,
         date_tag='',
-        globus_dir_list=[analysis_name, slide_id],
+        globus_dir_list=[analysis_name, report_files_dir_name],
         analysis_dir_prefix='analysis')
     new_slide_entry = {
       "cosmx_run_id": cosmx_run_id,

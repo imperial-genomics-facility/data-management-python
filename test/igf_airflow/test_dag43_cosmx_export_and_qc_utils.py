@@ -377,7 +377,8 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
     reports_dir = \
       os.path.join(
         export_dir,
-        'reports')
+        'reports',
+        "cosmx_slide_1")
     os.makedirs(
       reports_dir,
       exist_ok=True)
@@ -405,8 +406,8 @@ class Test_dag43_cosmx_export_and_qc_utilsA(unittest.TestCase):
         "project1",
         "analysis",
         "analysis1",
-        "cosmx_slide_1",
-        "reports")
+        "reports",
+        "cosmx_slide_1")
     with patch("igf_airflow.utils.dag43_cosmx_export_and_qc_utils.GLOBUS_ROOT_DIR", globus_root_dir):
       new_slide_entry = \
         copy_slide_reports_to_globus.function(
