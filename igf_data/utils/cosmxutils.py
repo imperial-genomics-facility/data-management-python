@@ -274,7 +274,7 @@ def create_or_update_cosmx_slide_fov(
       for fov_id in new_items:
         fov_entry = \
           Cosmx_fov(
-            cosmx_fov_name=fov_id,
+            cosmx_fov_name=str(fov_id),
             cosmx_slide_id=cosmx_slide_id,
             slide_type=slide_type)
         base.session.add(fov_entry)
