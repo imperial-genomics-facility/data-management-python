@@ -236,14 +236,16 @@ def create_or_update_cosmx_slide_fov(
       base.session.\
         query(Cosmx_slide.cosmx_slide_id).\
         filter(Cosmx_slide.cosmx_slide_igf_id == cosmx_slide_igf_id)
-    cosmx_slide_id = \
+    cosmx_slide_entry = \
       base.fetch_records(
         query=slide_query,
         output_mode='one_or_none')
-    if cosmx_slide_id is None:
+    if cosmx_slide_entry is None:
       base.close_session()
       raise ValueError(
         f"Cosmx slide {cosmx_slide_igf_id} is not in DB")
+    cosmx_slide_id = \
+      cosmx_slide_entry.cosmx_slide_id
     ## step3: check if fov exists
     fov_query = \
       base.session.\
@@ -263,16 +265,29 @@ def create_or_update_cosmx_slide_fov(
     # [
       # fov.cosmx_fov_name for fov in existing_fov_records]
     ## step4: enter new fov records
+    new_items = \
+      list(
+        set(fov_list).\
+          difference(
+            set(existing_fov_list)))
     try:
-      for fov_id in fov_list:
-        if fov_id not in existing_fov_list:
-          fov_entry = \
-            Cosmx_fov(
-              cosmx_fov_name=fov_id,
-              cosmx_slide_id=cosmx_slide_id[0],
-              slide_type=slide_type)
-          base.session.add(fov_entry)
-          base.session.flush()
+      for fov_id in new_items:
+        fov_entry = \
+          Cosmx_fov(
+            cosmx_fov_name=fov_id,
+            cosmx_slide_id=cosmx_slide_id,
+            slide_type=slide_type)
+        base.session.add(fov_entry)
+        base.session.flush()
+      # for fov_id in fov_list:
+      #   if fov_id not in existing_fov_list:
+      #     fov_entry = \
+      #       Cosmx_fov(
+      #         cosmx_fov_name=fov_id,
+      #         cosmx_slide_id=cosmx_slide_id[0],
+      #         slide_type=slide_type)
+      #     base.session.add(fov_entry)
+      #     base.session.flush()
       base.session.commit()
       base.close_session()
       status = True
