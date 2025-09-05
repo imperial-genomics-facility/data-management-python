@@ -202,7 +202,7 @@ def fov_range_to_list(fov_range: str) -> List[int]:
     range_match = re.match(r'^(\d+)-(\d+)$', fov_range)
     if range_match:
       start, end = map(int, range_match.groups())
-      range_list = [i for i in range(start, end + 1)]
+      range_list = [int(i) for i in range(start, end + 1)]
     else:
       raise ValueError(f"Incorrect range format.")
     return range_list
@@ -261,7 +261,7 @@ def create_or_update_cosmx_slide_fov(
        "cosmx_fov_name" not in existing_fov_records.columns:
       raise KeyError("Failed to get cosmx_fov_name from db")
     existing_fov_list = \
-      existing_fov_records["cosmx_fov_name"].values.tolist()
+      existing_fov_records["cosmx_fov_name"].astype(int).values.tolist()
     # [
       # fov.cosmx_fov_name for fov in existing_fov_records]
     ## step4: enter new fov records
