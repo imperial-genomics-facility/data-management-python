@@ -65,18 +65,19 @@ def _parse_default_user_email_from_email_config(
 
 def fetch_validated_manual_metadata_from_portal_and_load_func(**context):
   try:
-    default_project_user_email = \
-      _parse_default_user_email_from_email_config(EMAIL_CONF)
-    metadata_registration = UnifiedMetadataRegistration(
-      portal_config_file=IGF_PORTAL_CONF,
-      fetch_metadata_url_suffix=PORTAL_FETCH_MANUAL_METADATA_URL_SUFFIX,
-      sync_metadata_url_suffix=PORTAL_SYNC_MANUAL_METADATA_URL_SUFFIX,
-      metadata_validation_schema=MANUAL_METADATA_VALIDATION_SCHEMA,
-      db_config_file=DATABASE_CONFIG_FILE,
-      default_project_user_email=default_project_user_email,
-      samples_required=False,)
-    error_list = \
-      metadata_registration.execute()
+    # default_project_user_email = \
+    #   _parse_default_user_email_from_email_config(EMAIL_CONF)
+    # metadata_registration = UnifiedMetadataRegistration(
+    #   portal_config_file=IGF_PORTAL_CONF,
+    #   fetch_metadata_url_suffix=PORTAL_FETCH_MANUAL_METADATA_URL_SUFFIX,
+    #   sync_metadata_url_suffix=PORTAL_SYNC_MANUAL_METADATA_URL_SUFFIX,
+    #   metadata_validation_schema=MANUAL_METADATA_VALIDATION_SCHEMA,
+    #   db_config_file=DATABASE_CONFIG_FILE,
+    #   default_project_user_email=default_project_user_email,
+    #   samples_required=False,)
+    # error_list = \
+    #   metadata_registration.execute()
+    error_list = list()
     if len(error_list) > 0:
       message = \
         f"List of errors while getting manual metadata: {' ,'.join(error_list)}"
