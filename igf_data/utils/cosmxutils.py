@@ -196,7 +196,7 @@ def fov_range_to_list(fov_range: str) -> List[int]:
   try:
     range_list = list()
     if "," in fov_range:
-      range_list = fov_range.split(",")
+      range_list = fov_range.strip().split(",")
       range_list = [int(i) for i in range_list]
       return range_list
     range_match = re.match(r'^(\d+)-(\d+)$', fov_range)
@@ -252,9 +252,16 @@ def create_or_update_cosmx_slide_fov(
       filter(Cosmx_slide.cosmx_slide_igf_id == cosmx_slide_igf_id).\
       filter(Cosmx_fov.cosmx_fov_name.in_(fov_list))
     existing_fov_records = \
-      base.fetch_records(query=fov_query, output_mode="object")
-    existing_fov_list = [
-      fov.cosmx_fov_name for fov in existing_fov_records]
+      base.fetch_records(
+        query=fov_query,
+        output_mode="dataframe")
+    if not isinstance(existing_fov_records, pd.DataFrame) or \
+       "cosmx_fov_name" not in existing_fov_records.columns:
+      raise KeyError("Failed to get cosmx_fov_name from db")
+    existing_fov_list = \
+      existing_fov_records["cosmx_fov_name"].values.tolist()
+    # [
+      # fov.cosmx_fov_name for fov in existing_fov_records]
     ## step4: enter new fov records
     try:
       for fov_id in fov_list:
@@ -296,7 +303,7 @@ def create_or_update_cosmx_slide_fov_annotation(
       fov_range_to_list(
         fov_range=fov_range)
     if len(fov_list) == 0:
-      raise ValueError("No fov range found for slid {cosmx_slide_igf_id}")
+      raise ValueError("No fov range found for slide {cosmx_slide_igf_id}")
     ## connect to database
     base = BaseAdaptor(**{"session_class": db_session_class})
     base.start_session()
@@ -322,14 +329,18 @@ def create_or_update_cosmx_slide_fov_annotation(
     fov_records = \
       base.fetch_records(
         query=slide_fov_query,
-        output_mode="object")
-    fov_id_list = [
-      fov.cosmx_fov_id for fov in fov_records]
+        output_mode="dataframe")
+    if not isinstance(fov_records, pd.DataFrame) or \
+       "cosmx_fov_id" not in fov_records.columns:
+      raise KeyError("Missing cosmx_fov_id in db records")
+    fov_id_list = fov_records["cosmx_fov_id"].values.tolist()
+    # [
+    # fov.cosmx_fov_id for fov in fov_records]
     ## step3: check if all fovs are present
     if len(fov_id_list) == 0:
       raise ValueError(
         f"Cosmx slide {cosmx_slide_igf_id} and fov range {fov_range} is not in DB")
-    if len(fov_id_list) < len(fov_range):
+    if len(fov_id_list) < len(fov_list):
       base.close_session()
       raise ValueError(
         f"Not all fovs are present in db")
