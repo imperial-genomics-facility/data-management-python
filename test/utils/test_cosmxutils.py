@@ -27,7 +27,8 @@ from igf_data.utils.cosmxutils import (
   create_or_update_cosmx_slide_fov_annotation,
   create_cosmx_slide_fov_count_qc,
   validate_cosmx_count_file,
-  CosmxSlideType
+  CosmxSlideType,
+  fov_range_to_list
 )
 
 class Analysisadaptor_test1(unittest.TestCase):
@@ -402,6 +403,17 @@ class Analysisadaptor_test1(unittest.TestCase):
     self.assertEqual(str(results[1]), '4')
     self.assertEqual(str(results[2]), '76.45')
     base.close_session()
+
+  def test_fov_range_to_list(self):
+    range_list = fov_range_to_list(fov_range="1-10")
+    assert isinstance(range_list, list)
+    assert len(range_list) == 10
+    assert 10 in range_list
+    range_list = fov_range_to_list(fov_range="1,2,3,4,5")
+    assert isinstance(range_list, list)
+    assert len(range_list) == 5
+    assert 5 in range_list
+
 
 if __name__ == '__main__':
   unittest.main()

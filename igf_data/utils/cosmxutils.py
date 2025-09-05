@@ -195,6 +195,10 @@ def fov_range_to_list(fov_range: str) -> List[int]:
   """
   try:
     range_list = list()
+    if "," in fov_range:
+      range_list = fov_range.split(",")
+      range_list = [int(i) for i in range_list]
+      return range_list
     range_match = re.match(r'^(\d+)-(\d+)$', fov_range)
     if range_match:
       start, end = map(int, range_match.groups())
