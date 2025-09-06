@@ -183,7 +183,7 @@ def prepare_run_ftp_export(
   task_id="run_ftp_export",
   retry_delay=timedelta(minutes=5),
   queue='hpc_16G',
-  retries=0)
+  retries=4)
 def run_ftp_export(cosmx_ftp_export_name: str) -> str:
   """
   Airflow task for running ftp export
