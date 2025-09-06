@@ -46,7 +46,7 @@ def upgrade():
     sa.Column('cosmx_slide_name', sa.String(length=100), nullable=True),
     sa.Column('cosmx_run_id', mysql.INTEGER(unsigned=True), nullable=False),
     sa.Column('cosmx_platform_id', mysql.INTEGER(unsigned=True), nullable=False),
-    sa.Column('panel_info', sa.String(length=100), nullable=True),
+    sa.Column('panel_info', sa.String(length=200), nullable=True),
     sa.Column('assay_type', sa.String(length=100), nullable=True),
     sa.Column('version', sa.String(length=10), nullable=True),
     sa.Column('slide_run_date', sa.DATETIME(), server_default=sa.text('CURRENT_TIMESTAMP'), nullable=False),
