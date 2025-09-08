@@ -372,7 +372,7 @@ CREATE TABLE cosmx_slide (
     cosmx_slide_name VARCHAR(100), 
     cosmx_run_id INTEGER UNSIGNED NOT NULL, 
     cosmx_platform_id INTEGER UNSIGNED NOT NULL, 
-    panel_info VARCHAR(100), 
+    panel_info VARCHAR(200), 
     assay_type VARCHAR(100), 
     version VARCHAR(10), 
     slide_run_date DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, 

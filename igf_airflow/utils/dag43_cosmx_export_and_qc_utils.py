@@ -154,7 +154,8 @@ def prepare_run_ftp_export(
         cosmx_ftp_export_name = \
           cosmx_ftp_export_name.\
             replace("-", "").\
-            replace(".", "") # fix for AtoMx bug
+            replace(".", "").\
+            replace(" ", "") # fix for AtoMx bug
         export_dir = \
           os.path.join(
             COSMX_EXPORT_DIR,
@@ -183,7 +184,7 @@ def prepare_run_ftp_export(
   task_id="run_ftp_export",
   retry_delay=timedelta(minutes=5),
   queue='hpc_16G',
-  retries=0)
+  retries=4)
 def run_ftp_export(cosmx_ftp_export_name: str) -> str:
   """
   Airflow task for running ftp export
@@ -963,7 +964,7 @@ def fetch_slide_annotations_from_design_file(
       return "UNKNOWN", "UNKNOWN", "UNKNOWN"
     annotation_entry = \
       [f for f in annotation \
-        if f.get(cosmx_slide_id_key).replace("-", "").replace(".", "") == cosmx_slide_id]
+        if f.get(cosmx_slide_id_key).replace("-", "").replace(".", "").replace(" ", "") == cosmx_slide_id]
     if len(annotation_entry) == 0:
       return "UNKNOWN", "UNKNOWN", "UNKNOWN"
     else:

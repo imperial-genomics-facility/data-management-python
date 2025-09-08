@@ -196,13 +196,13 @@ def fov_range_to_list(fov_range: str) -> List[int]:
   try:
     range_list = list()
     if "," in fov_range:
-      range_list = fov_range.split(",")
+      range_list = fov_range.strip().split(",")
       range_list = [int(i) for i in range_list]
       return range_list
     range_match = re.match(r'^(\d+)-(\d+)$', fov_range)
     if range_match:
       start, end = map(int, range_match.groups())
-      range_list = [i for i in range(start, end + 1)]
+      range_list = [int(i) for i in range(start, end + 1)]
     else:
       raise ValueError(f"Incorrect range format.")
     return range_list
@@ -236,14 +236,16 @@ def create_or_update_cosmx_slide_fov(
       base.session.\
         query(Cosmx_slide.cosmx_slide_id).\
         filter(Cosmx_slide.cosmx_slide_igf_id == cosmx_slide_igf_id)
-    cosmx_slide_id = \
+    cosmx_slide_entry = \
       base.fetch_records(
         query=slide_query,
         output_mode='one_or_none')
-    if cosmx_slide_id is None:
+    if cosmx_slide_entry is None:
       base.close_session()
       raise ValueError(
         f"Cosmx slide {cosmx_slide_igf_id} is not in DB")
+    cosmx_slide_id = \
+      cosmx_slide_entry.cosmx_slide_id
     ## step3: check if fov exists
     fov_query = \
       base.session.\
@@ -252,20 +254,29 @@ def create_or_update_cosmx_slide_fov(
       filter(Cosmx_slide.cosmx_slide_igf_id == cosmx_slide_igf_id).\
       filter(Cosmx_fov.cosmx_fov_name.in_(fov_list))
     existing_fov_records = \
-      base.fetch_records(query=fov_query, output_mode="object")
-    existing_fov_list = [
-      fov.cosmx_fov_name for fov in existing_fov_records]
+      base.fetch_records(
+        query=fov_query,
+        output_mode="dataframe")
+    if not isinstance(existing_fov_records, pd.DataFrame) or \
+       "cosmx_fov_name" not in existing_fov_records.columns:
+      raise KeyError("Failed to get cosmx_fov_name from db")
+    existing_fov_list = \
+      existing_fov_records["cosmx_fov_name"].astype(int).values.tolist()
     ## step4: enter new fov records
+    new_items = \
+      list(
+        set(fov_list).\
+          difference(
+            set(existing_fov_list)))
     try:
-      for fov_id in fov_list:
-        if fov_id not in existing_fov_list:
-          fov_entry = \
-            Cosmx_fov(
-              cosmx_fov_name=fov_id,
-              cosmx_slide_id=cosmx_slide_id[0],
-              slide_type=slide_type)
-          base.session.add(fov_entry)
-          base.session.flush()
+      for fov_id in new_items:
+        fov_entry = \
+          Cosmx_fov(
+            cosmx_fov_name=str(fov_id),
+            cosmx_slide_id=cosmx_slide_id,
+            slide_type=slide_type)
+        base.session.add(fov_entry)
+        base.session.flush()
       base.session.commit()
       base.close_session()
       status = True
@@ -296,7 +307,7 @@ def create_or_update_cosmx_slide_fov_annotation(
       fov_range_to_list(
         fov_range=fov_range)
     if len(fov_list) == 0:
-      raise ValueError("No fov range found for slid {cosmx_slide_igf_id}")
+      raise ValueError("No fov range found for slide {cosmx_slide_igf_id}")
     ## connect to database
     base = BaseAdaptor(**{"session_class": db_session_class})
     base.start_session()
@@ -322,14 +333,16 @@ def create_or_update_cosmx_slide_fov_annotation(
     fov_records = \
       base.fetch_records(
         query=slide_fov_query,
-        output_mode="object")
-    fov_id_list = [
-      fov.cosmx_fov_id for fov in fov_records]
+        output_mode="dataframe")
+    if not isinstance(fov_records, pd.DataFrame) or \
+       "cosmx_fov_id" not in fov_records.columns:
+      raise KeyError("Missing cosmx_fov_id in db records")
+    fov_id_list = fov_records["cosmx_fov_id"].values.tolist()
     ## step3: check if all fovs are present
     if len(fov_id_list) == 0:
       raise ValueError(
         f"Cosmx slide {cosmx_slide_igf_id} and fov range {fov_range} is not in DB")
-    if len(fov_id_list) < len(fov_range):
+    if len(fov_id_list) < len(fov_list):
       base.close_session()
       raise ValueError(
         f"Not all fovs are present in db")
