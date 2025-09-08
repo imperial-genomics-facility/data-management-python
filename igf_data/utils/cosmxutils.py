@@ -262,8 +262,6 @@ def create_or_update_cosmx_slide_fov(
       raise KeyError("Failed to get cosmx_fov_name from db")
     existing_fov_list = \
       existing_fov_records["cosmx_fov_name"].astype(int).values.tolist()
-    # [
-      # fov.cosmx_fov_name for fov in existing_fov_records]
     ## step4: enter new fov records
     new_items = \
       list(
@@ -279,15 +277,6 @@ def create_or_update_cosmx_slide_fov(
             slide_type=slide_type)
         base.session.add(fov_entry)
         base.session.flush()
-      # for fov_id in fov_list:
-      #   if fov_id not in existing_fov_list:
-      #     fov_entry = \
-      #       Cosmx_fov(
-      #         cosmx_fov_name=fov_id,
-      #         cosmx_slide_id=cosmx_slide_id[0],
-      #         slide_type=slide_type)
-      #     base.session.add(fov_entry)
-      #     base.session.flush()
       base.session.commit()
       base.close_session()
       status = True
@@ -349,8 +338,6 @@ def create_or_update_cosmx_slide_fov_annotation(
        "cosmx_fov_id" not in fov_records.columns:
       raise KeyError("Missing cosmx_fov_id in db records")
     fov_id_list = fov_records["cosmx_fov_id"].values.tolist()
-    # [
-    # fov.cosmx_fov_id for fov in fov_records]
     ## step3: check if all fovs are present
     if len(fov_id_list) == 0:
       raise ValueError(
