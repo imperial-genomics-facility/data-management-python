@@ -42,7 +42,7 @@ def fetch_raw_analysis_queue_func(**context):
     new_raw_analysis = \
       get_data_from_portal(
         portal_config_file=IGF_PORTAL_CONF,
-        url_suffix='/api/v1/raw_analysis/search_new_analysis')
+        url_suffix='/api/v1/raw_analysis_v2/search_new_analysis')
     new_raw_analysis_list = \
       new_raw_analysis.get('new_analysis')
     ti.xcom_push(
@@ -71,6 +71,7 @@ def fetch_raw_analysis_queue_func(**context):
 def process_raw_analysis_queue_func(**context):
   try:
     ti = context["ti"]
+    message = ""
     new_raw_analysis_list_key = \
       context['params'].\
         get("new_raw_analysis_list_key", "new_raw_analysis_list")
@@ -112,7 +113,7 @@ def process_raw_analysis_queue_func(**context):
             dbconf_json=DATABASE_CONFIG_FILE)
         if pipeline_reg:
           message += \
-          f". Pipeline is ready: {analysis_name}"
+            f". Pipeline is ready: {analysis_name}"
         ## 4. mark raw analysis as synched on portal
         mark_project_synched_on_portal(
           raw_analysis_id=raw_analysis_id,
@@ -165,7 +166,7 @@ def fetch_raw_analysis_yaml_data(
     raw_analysis_data = \
       get_data_from_portal(
         portal_config_file=igf_portal_conf,
-        url_suffix=f'/api/v1/raw_analysis/get_raw_analysis_data/{raw_analysis_id}',
+        url_suffix=f'/api/v1/raw_analysis_v2/get_raw_analysis_data/{raw_analysis_id}',
         request_mode='post')
     time.sleep(10)
     project_id = raw_analysis_data.get('project_id')
@@ -191,7 +192,7 @@ def mark_project_synched_on_portal(
     _ = \
       get_data_from_portal(
         portal_config_file=igf_portal_conf,
-        url_suffix=f'/api/v1/raw_analysis/mark_analysis_synched/{raw_analysis_id}',
+        url_suffix=f'/api/v1/raw_analysis_v2/mark_analysis_synched/{raw_analysis_id}',
         request_mode='post')
     time.sleep(10)
   except Exception as e:
