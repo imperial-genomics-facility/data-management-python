@@ -235,7 +235,7 @@ def register_analysis_in_db(
         raise TypeError(
           "Expecting a yaml string or dictionary, " + \
           f"but got {type(analysis_yaml)}")
-      ## store new analysis
+      ## store new analysis -
       data = [{
         "project_igf_id": project_igf_id,
         "analysis_type": analysis_type,
