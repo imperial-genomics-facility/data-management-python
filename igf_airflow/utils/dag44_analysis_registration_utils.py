@@ -15,6 +15,7 @@ from yaml import load, SafeLoader
 from airflow.decorators import task
 from datetime import timedelta, datetime
 from airflow.models import Variable
+from airflow.operators.python import get_current_context
 from igf_portal.api_utils import get_data_from_portal
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.igfdb.baseadaptor import BaseAdaptor
@@ -58,8 +59,29 @@ IGFPORTAL_RAW_ANALYSIS_SYNC_URI = \
     retries=4,
     queue='hpc_4G',
     multiple_outputs=False)
-def find_raw_metadata_id():
-    return {"raw_metadata_id": 1}
+def find_raw_metadata_id(
+    raw_analysis_id_tag: str = "raw_analysis_id",
+    dag_run_key: str = "dag_run") \
+      -> Dict[str, int]:
+  try:
+    ### dag_run.conf should have raw_analysis_id
+    context = get_current_context()
+    dag_run = context.get(dag_run_key)
+    raw_analysis_id = None
+    if dag_run is not None and \
+       dag_run.conf is not None and \
+       dag_run.conf.get(raw_analysis_id_tag) is not None:
+      raw_analysis_id = \
+        dag_run.conf.get(raw_analysis_id_tag)
+    if raw_analysis_id is None:
+      raise ValueError(
+        'raw_analysis_id not found in dag_run.conf')
+    return {raw_analysis_id_tag: raw_analysis_id}
+  except Exception as e:
+    message = \
+      f"Failed to get raw_analysis_id, error: {e}"
+    log.error(message)
+    raise ValueError(message)
 
 ## TASK - fetch raw analysis metadata from portal
 @task(
