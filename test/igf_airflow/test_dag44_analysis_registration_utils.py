@@ -218,7 +218,6 @@ class Test_dag44_analysis_registration_utilsA(unittest.TestCase):
       raw_analysis_id=1,
       registration_status=True)
     mock_get_data_from_portal.called_once()
-    
 
 if __name__=='__main__':
   unittest.main()
