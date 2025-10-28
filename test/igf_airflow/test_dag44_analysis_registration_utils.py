@@ -210,8 +210,15 @@ class Test_dag44_analysis_registration_utilsA(unittest.TestCase):
     aa.close_session()
     assert analysis_id is not None
 
-  def test_mark_metadata_synced_on_portal(self):
-    assert False, "Test not implemented"
+  @patch("igf_airflow.utils.dag44_analysis_registration_utils.get_data_from_portal")
+  @patch("igf_airflow.utils.dag44_analysis_registration_utils.send_airflow_pipeline_logs_to_channels")
+  @patch("igf_airflow.utils.dag44_analysis_registration_utils.send_airflow_failed_logs_to_channels")
+  def test_mark_metadata_synced_on_portal(self, mock_get_data_from_portal, *args):
+    mark_metadata_synced_on_portal.function(
+      raw_analysis_id=1,
+      registration_status=True)
+    mock_get_data_from_portal.called_once()
+    
 
 if __name__=='__main__':
   unittest.main()

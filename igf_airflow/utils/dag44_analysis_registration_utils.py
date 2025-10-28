@@ -194,7 +194,7 @@ def check_raw_metadata_in_db(
       return {valid_raw_metadata_file_tag: ""}
   except Exception as e:
     message = \
-      f"Failed to fetch raw_analysis_metadata, error: {e}"
+      f"Failed to check existing raw_analysis_metadata, error: {e}"
     log.error(message)
     send_airflow_failed_logs_to_channels(
       ms_teams_conf=MS_TEAMS_CONF,
@@ -306,7 +306,7 @@ def register_raw_analysis_metadata_in_db(valid_raw_metadata_file):
     return {"status": status}
   except Exception as e:
     message = \
-      f"Failed to fetch raw_analysis_metadata, error: {e}"
+      f"Failed to register raw_analysis_metadata, error: {e}"
     log.error(message)
     send_airflow_failed_logs_to_channels(
       ms_teams_conf=MS_TEAMS_CONF,
@@ -320,12 +320,28 @@ def register_raw_analysis_metadata_in_db(valid_raw_metadata_file):
     retries=4,
     queue='hpc_4G',
     multiple_outputs=False)
-def mark_metadata_synced_on_portal(raw_metadata_id, registration_status):
+def mark_metadata_synced_on_portal(raw_analysis_id, registration_status):
   try:
-    return {"status": True}
+    if registration_status:
+      _ = \
+        get_data_from_portal(
+          portal_config_file=IGF_PORTAL_CONF,
+          url_suffix=f'/api/v1/raw_analysis_v2/mark_analysis_synched/{raw_analysis_id}',
+          request_mode='post')
+      message = \
+        f"Registration is successful for raw analysis {raw_analysis_id}"
+      send_airflow_pipeline_logs_to_channels(
+        ms_teams_conf=MS_TEAMS_CONF,
+        message_prefix=str(message))
+    else:
+      message = \
+        f"Registration is not successful for raw analysis {raw_analysis_id}"
+      send_airflow_failed_logs_to_channels(
+        ms_teams_conf=MS_TEAMS_CONF,
+        message_prefix=str(message))
   except Exception as e:
     message = \
-      f"Failed to fetch raw_analysis_metadata, error: {e}"
+      f"Failed to mark raw analysis as synced on portal, error: {e}"
     log.error(message)
     send_airflow_failed_logs_to_channels(
       ms_teams_conf=MS_TEAMS_CONF,
