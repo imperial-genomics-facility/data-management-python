@@ -5,6 +5,7 @@ from typing import (
   Tuple,
   Union,
   Optional)
+import os
 import json
 import time
 import shutil
@@ -16,6 +17,12 @@ from airflow.decorators import task
 from datetime import timedelta, datetime
 from airflow.models import Variable
 from airflow.operators.python import get_current_context
+from igf_data.utils.fileutils import (
+  check_file_path,
+  copy_local_file,
+  get_temp_dir,
+  get_date_stamp_for_file_name,
+  get_date_stamp)
 from igf_portal.api_utils import get_data_from_portal
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.igfdb.baseadaptor import BaseAdaptor
@@ -81,17 +88,50 @@ def find_raw_metadata_id(
     message = \
       f"Failed to get raw_analysis_id, error: {e}"
     log.error(message)
+    send_airflow_failed_logs_to_channels(
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=str(message))
     raise ValueError(message)
 
 ## TASK - fetch raw analysis metadata from portal
 @task(
     task_id="fetch_raw_metadata_from_portal",
-    retry_delay=timedelta(minutes=5),
-    retries=4,
+    retries=0,
     queue='hpc_4G',
     multiple_outputs=False)
-def fetch_raw_metadata_from_portal(raw_metadata_id):
-    return {"raw_metadata_file": "raw_metadata.json"}
+def fetch_raw_metadata_from_portal(
+  raw_analysis_id: int,
+  raw_metadata_file_tag: str = "raw_metadata_file") -> Dict[str, str]:
+  try:
+    raw_analysis_data = \
+      get_data_from_portal(
+        portal_config_file=IGF_PORTAL_CONF,
+        url_suffix=f'{IGFPORTAL_RAW_ANALYSIS_FETCH_URI}/{raw_analysis_id}',
+        request_mode='post')
+    project_id = raw_analysis_data.get('project_id')
+    pipeline_id = raw_analysis_data.get('pipeline_id')
+    analysis_name = raw_analysis_data.get('analysis_name')
+    analysis_yaml = raw_analysis_data.get('analysis_yaml')
+    if project_id is None or \
+       pipeline_id is None or \
+       analysis_name is None or \
+       analysis_yaml is None:
+      raise KeyError(
+        f"Missing required data for raw analysis entry {raw_analysis_id}")
+    temp_dir = get_temp_dir()
+    raw_metadata_json_file = \
+      os.path.join(temp_dir, "raw_metadata.json")
+    with open(raw_metadata_json_file, "w") as fp:
+      json.dump(raw_analysis_data, fp)
+    return {raw_metadata_file_tag: raw_metadata_json_file}
+  except Exception as e:
+    message = \
+      f"Failed to fetch raw_analysis_metadata, error: {e}"
+    log.error(message)
+    send_airflow_failed_logs_to_channels(
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=str(message))
+    raise ValueError(message)
 
 ## TASK - check raw metadata in db
 @task(
@@ -101,7 +141,16 @@ def fetch_raw_metadata_from_portal(raw_metadata_id):
     queue='hpc_4G',
     multiple_outputs=False)
 def check_raw_metadata_in_db(raw_metadata_file):
+  try:
     return {"valid_raw_metadata_file": "raw_metadata.json"}
+  except Exception as e:
+    message = \
+      f"Failed to fetch raw_analysis_metadata, error: {e}"
+    log.error(message)
+    send_airflow_failed_logs_to_channels(
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=str(message))
+    raise ValueError(message)
 
 ## TASK - register raw metadata in db
 @task(
@@ -111,7 +160,16 @@ def check_raw_metadata_in_db(raw_metadata_file):
     queue='hpc_4G',
     multiple_outputs=False)
 def register_raw_metadata_in_db(valid_raw_metadata_file):
+  try:
     return {"status": True}
+  except Exception as e:
+    message = \
+      f"Failed to fetch raw_analysis_metadata, error: {e}"
+    log.error(message)
+    send_airflow_failed_logs_to_channels(
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=str(message))
+    raise ValueError(message)
 
 ## TASK - mark raw metadata as synced on portal
 @task(
@@ -121,4 +179,13 @@ def register_raw_metadata_in_db(valid_raw_metadata_file):
     queue='hpc_4G',
     multiple_outputs=False)
 def mark_metadata_synced_on_portal(raw_metadata_id, registration_status):
+  try:
     return {"status": True}
+  except Exception as e:
+    message = \
+      f"Failed to fetch raw_analysis_metadata, error: {e}"
+    log.error(message)
+    send_airflow_failed_logs_to_channels(
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=str(message))
+    raise ValueError(message)

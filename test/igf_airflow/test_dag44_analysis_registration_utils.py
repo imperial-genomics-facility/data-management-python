@@ -1,3 +1,4 @@
+import os
 import unittest
 from unittest.mock import patch, MagicMock
 from igf_data.utils.fileutils import (
@@ -29,8 +30,12 @@ class Test_dag44_analysis_registration_utilsA(unittest.TestCase):
     assert "raw_analysis_id" in raw_analysis_info
     assert raw_analysis_info.get("raw_analysis_id") == 1
 
-  def test_fetch_raw_metadata_from_portal(self):
-    assert False, "Test not implemented"
+  @patch("igf_airflow.utils.dag44_analysis_registration_utils.get_data_from_portal",
+         return_value={'project_id': 1, 'pipeline_id': 2, 'analysis_name': 'a', 'analysis_yaml': 'b:'})
+  def test_fetch_raw_metadata_from_portal(self, *args):
+    raw_metadata_info = \
+      fetch_raw_metadata_from_portal.function(raw_analysis_id=1)
+    assert "raw_metadata_file" in raw_metadata_info
 
   def test_check_raw_metadata_in_db(self):
     assert False, "Test not implemented"
