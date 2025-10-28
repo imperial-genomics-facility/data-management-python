@@ -1,45 +1,23 @@
-from typing import (
-  Any,
-  List,
-  Dict,
-  Tuple,
-  Union,
-  Optional)
+from typing import Dict
 import os
 import json
-import time
-import shutil
 import logging
-import subprocess
-from pathlib import Path
 from yaml import load, SafeLoader
 from airflow.decorators import task
-from datetime import timedelta, datetime
+from datetime import timedelta
 from airflow.models import Variable
 from airflow.operators.python import get_current_context
 from igf_data.utils.fileutils import (
   check_file_path,
-  copy_local_file,
-  get_temp_dir,
-  get_date_stamp_for_file_name,
-  get_date_stamp)
+  get_temp_dir)
 from igf_portal.api_utils import get_data_from_portal
 from igf_data.utils.dbutils import read_dbconf_json
-from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
 from igf_data.igfdb.analysisadaptor import AnalysisAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_airflow.utils.generic_airflow_utils import (
-  get_project_igf_id_for_analysis,
-  get_project_igf_id_for_analysis,
-  fetch_analysis_name_for_analysis_id,
-  copy_analysis_to_globus_dir,
   send_airflow_failed_logs_to_channels,
-  send_airflow_pipeline_logs_to_channels,
-  get_per_sample_analysis_groups,
-  collect_analysis_dir,
-  parse_analysis_design_and_get_metadata,
-  get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf)
+  send_airflow_pipeline_logs_to_channels)
 
 log = logging.getLogger(__name__)
 
