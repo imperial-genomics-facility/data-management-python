@@ -201,6 +201,76 @@ def check_raw_metadata_in_db(
       message_prefix=str(message))
     raise ValueError(message)
 
+## FUNC
+def register_analysis_in_db(
+      project_id: int,
+      pipeline_id: int,
+      analysis_name: str,
+      analysis_yaml: str,
+      dbconf_json: str) -> bool:
+  try:
+    ## check another time is analysis is registered
+    status = \
+      check_registered_analysis_in_db(
+        project_id=project_id,
+        analysis_name=analysis_name,
+        dbconf_json=dbconf_json)
+    if not status:
+      return False
+    else:
+      dbparams = \
+        read_dbconf_json(dbconf_json)
+      aa = AnalysisAdaptor(**dbparams)
+      aa.start_session()
+      pr = ProjectAdaptor(**{'session': aa.session})
+      pl = PipelineAdaptor(**{'session': aa.session})
+      ## fetch project
+      project = \
+        pr.fetch_project_records_igf_id(
+        project_igf_id=project_id,
+        target_column_name='project_id',
+        output_mode='one_or_none')
+      if project is None:
+        raise ValueError(
+          f'Failed to get any valid project for id {project_id}')
+      project_igf_id = \
+        project.project_igf_id
+      pipeline = \
+        pl.fetch_pipeline_records_pipeline_name(
+          pipeline_name=pipeline_id,
+          target_column_name='pipeline_id',
+          output_mode='one_or_none')
+      if pipeline is None:
+        raise ValueError(
+          f'Failed to get any valid pipeline for id {pipeline_id}')
+      analysis_type = \
+        pipeline.pipeline_name
+      ## convert yaml to json
+      if isinstance(analysis_yaml, str):
+        analysis_json = \
+          json.dumps(
+            load(analysis_yaml, Loader=SafeLoader))
+      elif isinstance(analysis_yaml, dict):
+        analysis_json = \
+          json.dumps(analysis_yaml)
+      else:
+        raise TypeError(
+          f"Expecting a yaml string or dictionary, " + \
+          f"but got {type(analysis_yaml)}")
+      ## store new analysis
+      data = [{
+        "project_igf_id": project_igf_id,
+        "analysis_type": analysis_type,
+        "analysis_name": analysis_name,
+        "analysis_description": analysis_json}]
+      aa.store_analysis_data(data)
+      aa.close_session()
+      return True
+  except Exception as e:
+    raise ValueError(
+      f"Failed to register raw analysis data, error: {e}")
+
+
 ## TASK - register raw metadata in db
 @task(
     task_id="register_raw_metadata_in_db",
@@ -208,9 +278,32 @@ def check_raw_metadata_in_db(
     retries=4,
     queue='hpc_4G',
     multiple_outputs=False)
-def register_raw_metadata_in_db(valid_raw_metadata_file):
+def register_raw_analysis_metadata_in_db(valid_raw_metadata_file):
   try:
-    return {"status": True}
+    if valid_raw_metadata_file == "":
+      return {"status": False}
+    else:
+      check_file_path(valid_raw_metadata_file)
+      with open(valid_raw_metadata_file, "r") as fp:
+        raw_analysis_data = json.load(fp)
+      project_id = raw_analysis_data.get('project_id')
+      pipeline_id = raw_analysis_data.get('pipeline_id')
+      analysis_name = raw_analysis_data.get('analysis_name')
+      analysis_yaml = raw_analysis_data.get('analysis_yaml')
+      if project_id is None or \
+         pipeline_id is None or \
+         analysis_name is None or \
+         analysis_yaml is None:
+        raise KeyError(
+          f"Missing required data for raw analysis entry file {valid_raw_metadata_file}")
+      status = \
+        register_analysis_in_db(
+        project_id=project_id,
+        pipeline_id=pipeline_id,
+        analysis_name=analysis_name,
+        analysis_yaml=analysis_yaml,
+        dbconf_json=DATABASE_CONFIG_FILE)
+    return {"status": status}
   except Exception as e:
     message = \
       f"Failed to fetch raw_analysis_metadata, error: {e}"

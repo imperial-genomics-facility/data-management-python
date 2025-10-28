@@ -1,5 +1,6 @@
 import os
 import json
+import pytest
 import unittest
 from unittest.mock import patch, MagicMock
 from igf_data.utils.fileutils import (
@@ -16,7 +17,8 @@ from igf_airflow.utils.dag44_analysis_registration_utils import (
     check_registered_analysis_in_db,
     fetch_raw_metadata_from_portal,
     check_raw_metadata_in_db,
-    register_raw_metadata_in_db,
+    register_analysis_in_db,
+    register_raw_analysis_metadata_in_db,
     mark_metadata_synced_on_portal)
 
 class Test_dag44_analysis_registration_utilsA(unittest.TestCase):
@@ -134,8 +136,79 @@ class Test_dag44_analysis_registration_utilsA(unittest.TestCase):
     assert "valid_raw_metadata_file" in valid_raw_metadata_info
     assert valid_raw_metadata_info.get("valid_raw_metadata_file") == json_file_2
 
-  def test_register_raw_metadata_in_db(self):
-    assert False, "Test not implemented"
+  def test_register_analysis_in_db(self):
+    status = \
+      register_analysis_in_db(
+        project_id=1,
+        pipeline_id=1,
+        analysis_name='analysis_1',
+        analysis_yaml='a:',
+        dbconf_json=self.dbconfig)
+    assert status is False
+    status = \
+      register_analysis_in_db(
+        project_id=2,
+        pipeline_id=1,
+        analysis_name='analysis_2',
+        analysis_yaml='a:',
+        dbconf_json=self.dbconfig)
+    assert status is True
+    aa = \
+      AnalysisAdaptor(**{'session_class': self.session_class})
+    aa.start_session()
+    analysis_id = \
+      aa.check_analysis_record_by_analysis_name_and_project_id(
+        analysis_name='analysis_2',
+        project_id=2)
+    aa.close_session()
+    assert analysis_id is not None
+    with pytest.raises(Exception):
+      status = \
+        register_analysis_in_db(
+          project_id=3,
+          pipeline_id=2,
+          analysis_name='analysis_1',
+          analysis_yaml='new_data',
+          dbconf_json=self.dbconfig)
+
+
+  @patch("igf_airflow.utils.dag44_analysis_registration_utils.DATABASE_CONFIG_FILE", "data/dbconfig.json")
+  def test_register_raw_analysis_metadata_in_db(self, *args):
+    json_file_1 = \
+      os.path.join(self.temp_dir, "file1.json")
+    with open(json_file_1, "w") as fp:
+      json.dump({
+        'project_id': 1,
+        'analysis_name': 'analysis_1',
+        'pipeline_id': 1,
+        'analysis_yaml': 'b:'}, fp)
+    json_file_2 = \
+      os.path.join(self.temp_dir, "file2.json")
+    with open(json_file_2, "w") as fp:
+      json.dump({
+        'project_id': 2,
+        'analysis_name': 'analysis_2',
+        'pipeline_id': 1,
+        'analysis_yaml': 'b:'}, fp)
+    status_info = \
+      register_raw_analysis_metadata_in_db.function(
+        valid_raw_metadata_file=json_file_1)
+    assert "status" in status_info
+    assert status_info.get("status") is False
+    status_info = \
+      register_raw_analysis_metadata_in_db.function(
+        valid_raw_metadata_file=json_file_2)
+    assert "status" in status_info
+    assert status_info.get("status") is True
+    aa = \
+      AnalysisAdaptor(**{'session_class': self.session_class})
+    aa.start_session()
+    analysis_id = \
+      aa.check_analysis_record_by_analysis_name_and_project_id(
+        analysis_name='analysis_2',
+        project_id=2)
+    aa.close_session()
+    assert analysis_id is not None
 
   def test_mark_metadata_synced_on_portal(self):
     assert False, "Test not implemented"
