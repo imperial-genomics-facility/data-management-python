@@ -133,6 +133,31 @@ def fetch_raw_metadata_from_portal(
       message_prefix=str(message))
     raise ValueError(message)
 
+
+## FUNC
+def check_registered_analysis_in_db(
+      project_id: int,
+      analysis_name: str,
+      dbconf_json: str) -> bool:
+  try:
+    dbparams = \
+      read_dbconf_json(dbconf_json)
+    aa = AnalysisAdaptor(**dbparams)
+    aa.start_session()
+    analysis_id = \
+      aa.check_analysis_record_by_analysis_name_and_project_id(
+        analysis_name=analysis_name,
+        project_id=project_id)
+    aa.close_session()
+    if analysis_id is not None:
+      return False
+    else:
+      return True
+  except Exception as e:
+    raise ValueError(
+      f"Failed to register raw analysis data, error: {e}")
+
+
 ## TASK - check raw metadata in db
 @task(
     task_id="check_raw_metadata_in_db",
@@ -140,9 +165,33 @@ def fetch_raw_metadata_from_portal(
     retries=4,
     queue='hpc_4G',
     multiple_outputs=False)
-def check_raw_metadata_in_db(raw_metadata_file):
+def check_raw_metadata_in_db(
+  raw_metadata_file: str,
+  valid_raw_metadata_file_tag: str = "valid_raw_metadata_file") \
+    -> Dict[str, str]:
   try:
-    return {"valid_raw_metadata_file": "raw_metadata.json"}
+    check_file_path(raw_metadata_file)
+    with open(raw_metadata_file, "r") as fp:
+      raw_analysis_data = json.load(fp)
+    project_id = raw_analysis_data.get('project_id')
+    pipeline_id = raw_analysis_data.get('pipeline_id')
+    analysis_name = raw_analysis_data.get('analysis_name')
+    analysis_yaml = raw_analysis_data.get('analysis_yaml')
+    if project_id is None or \
+       pipeline_id is None or \
+       analysis_name is None or \
+       analysis_yaml is None:
+      raise KeyError(
+        f"Missing required data for raw analysis entry file {raw_metadata_file}")
+    analysis_reg = \
+      check_registered_analysis_in_db(
+        project_id=project_id,
+        analysis_name=analysis_name,
+        dbconf_json=DATABASE_CONFIG_FILE)
+    if analysis_reg:
+      return {valid_raw_metadata_file_tag: raw_metadata_file}
+    else:
+      return {valid_raw_metadata_file_tag: ""}
   except Exception as e:
     message = \
       f"Failed to fetch raw_analysis_metadata, error: {e}"
