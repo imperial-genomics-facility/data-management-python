@@ -66,7 +66,7 @@ class Test_dag44_analysis_registration_utilsA(unittest.TestCase):
       'seed_table': 'analysis'}]
     pl.create_pipeline_seed(pipeline_seed_data)
     base.close_session()
-  
+
   def tearDown(self):
     remove_dir(self.temp_dir)
     Base.metadata.drop_all(self.engine)

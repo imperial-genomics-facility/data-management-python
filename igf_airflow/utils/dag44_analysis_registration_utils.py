@@ -233,7 +233,7 @@ def register_analysis_in_db(
           json.dumps(analysis_yaml)
       else:
         raise TypeError(
-          f"Expecting a yaml string or dictionary, " + \
+          "Expecting a yaml string or dictionary, " + \
           f"but got {type(analysis_yaml)}")
       ## store new analysis
       data = [{
