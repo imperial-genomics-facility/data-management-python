@@ -85,7 +85,7 @@ def fetch_raw_metadata_from_portal(
       get_data_from_portal(
         portal_config_file=IGF_PORTAL_CONF,
         url_suffix=f'{IGFPORTAL_RAW_ANALYSIS_FETCH_URI}/{raw_analysis_id}',
-        request_mode='post')
+        request_mode='get')
     project_id = raw_analysis_data.get('project_id')
     pipeline_id = raw_analysis_data.get('pipeline_id')
     analysis_name = raw_analysis_data.get('analysis_name')

@@ -167,7 +167,7 @@ def fetch_raw_analysis_yaml_data(
       get_data_from_portal(
         portal_config_file=igf_portal_conf,
         url_suffix=f'/api/v1/raw_analysis_v2/get_raw_analysis_data/{raw_analysis_id}',
-        request_mode='post')
+        request_mode='get')
     time.sleep(10)
     project_id = raw_analysis_data.get('project_id')
     pipeline_id = raw_analysis_data.get('pipeline_id')
