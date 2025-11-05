@@ -236,6 +236,21 @@ def register_analysis_in_db(
         "analysis_name": analysis_name,
         "analysis_description": analysis_json}]
       aa.store_analysis_data(data)
+      ## fetch analysis id
+      analysis_id = \
+        aa.check_analysis_record_by_analysis_name_and_project_id(
+          analysis_name=analysis_name,
+          project_id=project_id,
+          output_mode='one_or_none')
+      if analysis_id is None:
+        raise ValueError(
+          f"No analysis id found for {analysis_name}")
+      ## create pipeline seed status for analysis id and pipeline id
+      data = [{
+        'pipeline_id': pipeline_id,
+        'seed_id': analysis_id[0],
+        'seed_table': 'analysis'}]
+      pl.create_pipeline_seed(data)
       aa.close_session()
       return True
   except Exception as e:
