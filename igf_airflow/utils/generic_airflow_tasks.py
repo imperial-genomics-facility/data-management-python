@@ -219,13 +219,15 @@ def mark_analysis_failed(
   queue='hpc_4G')
 def send_email_to_user(
       send_email: bool = True,
-      email_user_key: str = 'username') -> None:
+      email_user_key: str = 'username',
+      analysis_email_template: str = ANALYSES_EMAIL_CONFIG) -> None:
   """
   An Airflow task for sending email to registered users for updating analysis pipeline status
 
   Parameters:
   send_email (bool): A toggle for sending email to primary user if "True" (default) or fall back to default user if "False"
   email_user_key (str): Key for the default user as mentioned in the email config file, default is 'username'
+  analysis_email_template (str): A template for email, default is ANALYSES_EMAIL_CONFIG
   """
   try:
     ## dag_run.conf should have analysis_id
@@ -254,7 +256,7 @@ def send_email_to_user(
     email_text_file, receivers = \
       generate_email_text_for_analysis(
         analysis_id=analysis_id,
-        template_path=ANALYSES_EMAIL_CONFIG,
+        template_path=analysis_email_template,
         dbconfig_file=DATABASE_CONFIG_FILE,
         default_email_user=default_email_user,
         send_email_to_user=send_email)
