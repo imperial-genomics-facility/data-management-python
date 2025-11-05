@@ -81,16 +81,15 @@ class Test_dag44_analysis_registration_utilsA(unittest.TestCase):
     mock_context.get.return_value = mock_context.dag_run
     mock_context.dag_run.conf.get.return_value = 1
     mock_get_context.return_value = mock_context
-    raw_analysis_info = find_raw_metadata_id.function()
-    assert "raw_analysis_id" in raw_analysis_info
-    assert raw_analysis_info.get("raw_analysis_id") == 1
+    raw_analysis_id = find_raw_metadata_id.function()
+    assert raw_analysis_id == 1
 
   @patch("igf_airflow.utils.dag44_analysis_registration_utils.get_data_from_portal",
          return_value={'project_id': 1, 'pipeline_id': 2, 'analysis_name': 'a', 'analysis_yaml': 'b:'})
   def test_fetch_raw_metadata_from_portal(self, *args):
-    raw_metadata_info = \
+    raw_metadata_file = \
       fetch_raw_metadata_from_portal.function(raw_analysis_id=1)
-    assert "raw_metadata_file" in raw_metadata_info
+    assert os.path.exists(raw_metadata_file)
 
 
   def test_check_registered_analysis_in_db(self):
@@ -125,16 +124,14 @@ class Test_dag44_analysis_registration_utilsA(unittest.TestCase):
         'analysis_name': 'analysis_2',
         'pipeline_id': 1,
         'analysis_yaml': 'b:'}, fp)
-    valid_raw_metadata_info = \
+    valid_raw_metadata_file = \
       check_raw_metadata_in_db.function(
         raw_metadata_file=json_file_1)
-    assert "valid_raw_metadata_file" in valid_raw_metadata_info
-    assert valid_raw_metadata_info.get("valid_raw_metadata_file") == ""
-    valid_raw_metadata_info = \
+    assert valid_raw_metadata_file == ""
+    valid_raw_metadata_file = \
       check_raw_metadata_in_db.function(
         raw_metadata_file=json_file_2)
-    assert "valid_raw_metadata_file" in valid_raw_metadata_info
-    assert valid_raw_metadata_info.get("valid_raw_metadata_file") == json_file_2
+    assert valid_raw_metadata_file == json_file_2
 
   def test_register_analysis_in_db(self):
     status = \
@@ -190,16 +187,14 @@ class Test_dag44_analysis_registration_utilsA(unittest.TestCase):
         'analysis_name': 'analysis_2',
         'pipeline_id': 1,
         'analysis_yaml': 'b:'}, fp)
-    status_info = \
+    status = \
       register_raw_analysis_metadata_in_db.function(
         valid_raw_metadata_file=json_file_1)
-    assert "status" in status_info
-    assert status_info.get("status") is False
-    status_info = \
+    assert status is False
+    status = \
       register_raw_analysis_metadata_in_db.function(
         valid_raw_metadata_file=json_file_2)
-    assert "status" in status_info
-    assert status_info.get("status") is True
+    assert status is True
     aa = \
       AnalysisAdaptor(**{'session_class': self.session_class})
     aa.start_session()

@@ -42,12 +42,11 @@ IGFPORTAL_RAW_ANALYSIS_SYNC_URI = \
     task_id="find_raw_metadata_id",
     retry_delay=timedelta(minutes=5),
     retries=4,
-    queue='hpc_4G',
-    multiple_outputs=False)
+    queue='hpc_4G')
 def find_raw_metadata_id(
     raw_analysis_id_tag: str = "raw_analysis_id",
     dag_run_key: str = "dag_run") \
-      -> Dict[str, int]:
+      -> int:
   try:
     ### dag_run.conf should have raw_analysis_id
     context = get_current_context()
@@ -61,7 +60,7 @@ def find_raw_metadata_id(
     if raw_analysis_id is None:
       raise ValueError(
         'raw_analysis_id not found in dag_run.conf')
-    return {raw_analysis_id_tag: raw_analysis_id}
+    return int(raw_analysis_id)
   except Exception as e:
     message = \
       f"Failed to get raw_analysis_id, error: {e}"
@@ -74,12 +73,10 @@ def find_raw_metadata_id(
 ## TASK - fetch raw analysis metadata from portal
 @task(
     task_id="fetch_raw_metadata_from_portal",
-    retries=0,
-    queue='hpc_4G',
-    multiple_outputs=False)
+    retries=1,
+    queue='hpc_4G')
 def fetch_raw_metadata_from_portal(
-  raw_analysis_id: int,
-  raw_metadata_file_tag: str = "raw_metadata_file") -> Dict[str, str]:
+  raw_analysis_id: int) -> str:
   try:
     raw_analysis_data = \
       get_data_from_portal(
@@ -101,7 +98,7 @@ def fetch_raw_metadata_from_portal(
       os.path.join(temp_dir, "raw_metadata.json")
     with open(raw_metadata_json_file, "w") as fp:
       json.dump(raw_analysis_data, fp)
-    return {raw_metadata_file_tag: raw_metadata_json_file}
+    return raw_metadata_json_file
   except Exception as e:
     message = \
       f"Failed to fetch raw_analysis_metadata, error: {e}"
@@ -141,12 +138,10 @@ def check_registered_analysis_in_db(
     task_id="check_raw_metadata_in_db",
     retry_delay=timedelta(minutes=5),
     retries=4,
-    queue='hpc_4G',
-    multiple_outputs=False)
+    queue='hpc_4G')
 def check_raw_metadata_in_db(
-  raw_metadata_file: str,
-  valid_raw_metadata_file_tag: str = "valid_raw_metadata_file") \
-    -> Dict[str, str]:
+  raw_metadata_file: str) \
+    -> str:
   try:
     check_file_path(raw_metadata_file)
     with open(raw_metadata_file, "r") as fp:
@@ -166,10 +161,9 @@ def check_raw_metadata_in_db(
         project_id=project_id,
         analysis_name=analysis_name,
         dbconf_json=DATABASE_CONFIG_FILE)
-    if analysis_reg:
-      return {valid_raw_metadata_file_tag: raw_metadata_file}
-    else:
-      return {valid_raw_metadata_file_tag: ""}
+    if not analysis_reg:
+      raw_metadata_file = ""
+    return raw_metadata_file
   except Exception as e:
     message = \
       f"Failed to check existing raw_analysis_metadata, error: {e}"
@@ -256,10 +250,10 @@ def register_analysis_in_db(
     retries=4,
     queue='hpc_4G',
     multiple_outputs=False)
-def register_raw_analysis_metadata_in_db(valid_raw_metadata_file):
+def register_raw_analysis_metadata_in_db(valid_raw_metadata_file: str) -> bool:
   try:
     if valid_raw_metadata_file == "":
-      return {"status": False}
+      return False
     else:
       check_file_path(valid_raw_metadata_file)
       with open(valid_raw_metadata_file, "r") as fp:
@@ -281,7 +275,7 @@ def register_raw_analysis_metadata_in_db(valid_raw_metadata_file):
         analysis_name=analysis_name,
         analysis_yaml=analysis_yaml,
         dbconf_json=DATABASE_CONFIG_FILE)
-    return {"status": status}
+    return status
   except Exception as e:
     message = \
       f"Failed to register raw_analysis_metadata, error: {e}"
@@ -296,9 +290,10 @@ def register_raw_analysis_metadata_in_db(valid_raw_metadata_file):
     task_id="mark_metadata_synced_on_portal",
     retry_delay=timedelta(minutes=5),
     retries=4,
-    queue='hpc_4G',
-    multiple_outputs=False)
-def mark_metadata_synced_on_portal(raw_analysis_id, registration_status):
+    queue='hpc_4G')
+def mark_metadata_synced_on_portal(
+  raw_analysis_id: int,
+  registration_status: bool) -> None:
   try:
     if registration_status:
       _ = \
