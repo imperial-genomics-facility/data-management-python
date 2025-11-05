@@ -1,3 +1,4 @@
+import os
 import logging
 import pandas as pd
 from typing import Any
@@ -80,6 +81,7 @@ def _get_cellranger_sample_group(
 def prepare_cellranger_flex_script(
   design_dict: dict,
   work_dir: str,
+  analysis_design_tag: str = "analysis_design",
   cellranger_group_name: str = 'cellranger_group',
   required_tag_name: str = 'feature_types',
   required_tag_value: str = 'Gene Expression') -> dict:
@@ -89,7 +91,8 @@ def prepare_cellranger_flex_script(
   """
   try:
     ## get sample metadata
-    design_file = design_dict.get('analysis_design')
+    design_file = \
+      design_dict.get(analysis_design_tag)
     check_file_path(design_file)
     with open(design_file, 'r') as fp:
       input_design_yaml = fp.read()
@@ -98,11 +101,33 @@ def prepare_cellranger_flex_script(
           input_design_yaml=input_design_yaml)
     if sample_metadata is None or \
        analysis_metadata is None:
-      raise KeyError("Missing sample or analysis metadata")
+      raise KeyError(
+        "Missing sample or analysis metadata")
     ## check if only one sample group is present or not
     sample_groups = \
       _get_cellranger_sample_group(
         sample_metadata=sample_metadata)
+    ## check if correct number of sample groups are present
+    ## reset sample group if more than one groups are present
+    if len(sample_groups) == 0:
+      raise ValueError(
+        "No sample group has been found, file: " + \
+        f"{design_file}")
+    sample_group = \
+        sample_groups[0]
+    library_csv_file, run_script_file = \
+      prepare_cellranger_run_dir_and_script_file(
+        sample_group=str(sample_group),
+        work_dir=work_dir,
+        output_dir=os.path.join(work_dir, str(sample_group)),
+        design_file=design_file,
+        db_config_file=DATABASE_CONFIG_FILE,
+        run_script_template=CELLRANGER_MULTI_SCRIPT_TEMPLATE)
+    analysis_script_info = {
+      "sample_group": sample_group,
+      "run_script": run_script_file,
+      "output_dir": os.path.join(work_dir, sample_group)}
+    return analysis_script_info
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
