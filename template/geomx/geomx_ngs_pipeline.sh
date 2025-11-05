@@ -1,6 +1,8 @@
 #!/bin/bash
 
 set -eo pipefail
+eval "$(~/anaconda3/bin/conda shell.bash hook)"
+source activate expect
 
 cd {{ WORK_DIR }}
 
@@ -17,4 +19,4 @@ script=$(cat << EOF
   expect "*All done*"
 EOF
 )
-/usr/bin/expect -c "$script"
+expect -c "$script"
