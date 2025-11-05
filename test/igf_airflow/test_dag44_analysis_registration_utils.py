@@ -156,9 +156,18 @@ class Test_dag44_analysis_registration_utilsA(unittest.TestCase):
     analysis_id = \
       aa.check_analysis_record_by_analysis_name_and_project_id(
         analysis_name='analysis_2',
-        project_id=2)
-    aa.close_session()
+        project_id=2,
+        output_mode='one_or_none')
     assert analysis_id is not None
+    pl = PipelineAdaptor(**{'session': aa.session})
+    pipe_seed = \
+      pl.fetch_pipeline_seed(
+        pipeline_id=1,
+        seed_id=analysis_id[0],
+        seed_table='analysis',
+        output_mode='one_or_none')
+    assert pipe_seed is not None
+    aa.close_session()
     with pytest.raises(Exception):
       status = \
         register_analysis_in_db(
