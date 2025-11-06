@@ -31,7 +31,6 @@ from airflow.decorators import task
 
 log = logging.getLogger(__name__)
 
-SLACK_CONF = Variable.get('analysis_slack_conf',default_var=None)
 MS_TEAMS_CONF = Variable.get('analysis_ms_teams_conf',default_var=None)
 HPC_SSH_KEY_FILE = Variable.get('hpc_ssh_key_file', default_var=None)
 DATABASE_CONFIG_FILE = Variable.get('database_config_file', default_var=None)
@@ -112,7 +111,6 @@ def get_analysis_group_list(
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
-      slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       message_prefix=e)
     raise ValueError(e)
@@ -137,7 +135,7 @@ def prepare_cellranger_script(sample_group: str, design_dict: dict) -> dict:
        analysis_metadata is None:
       raise KeyError("Missing sample or analysis metadata")
     work_dir = get_temp_dir(use_ephemeral_space=True)
-    library_csv_file, run_script_file = \
+    _, run_script_file = \
       prepare_cellranger_run_dir_and_script_file(
         sample_group=str(sample_group),
         work_dir=work_dir,
@@ -153,7 +151,6 @@ def prepare_cellranger_script(sample_group: str, design_dict: dict) -> dict:
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
-      slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       message_prefix=e)
     raise ValueError(e)
@@ -320,7 +317,6 @@ def run_cellranger_script(
             Remove it to continue!""")
     try:
       send_airflow_pipeline_logs_to_channels(
-        slack_conf=SLACK_CONF,
         ms_teams_conf=MS_TEAMS_CONF,
         message_prefix=\
           f"Started Cellranger for sample: {sample_group}, script: {run_script}")
@@ -334,7 +330,6 @@ def run_cellranger_script(
     ## check output dir exists
     check_file_path(output_dir)
     send_airflow_pipeline_logs_to_channels(
-        slack_conf=SLACK_CONF,
         ms_teams_conf=MS_TEAMS_CONF,
         message_prefix=\
           f"Finished Cellranger for sample: {sample_group}")
@@ -342,7 +337,6 @@ def run_cellranger_script(
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
-      slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       message_prefix=e)
     raise ValueError(e)
@@ -450,7 +444,6 @@ def run_single_sample_scanpy(
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
-      slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       message_prefix=e)
     raise ValueError(e)
@@ -570,54 +563,10 @@ def move_single_sample_result_to_main_work_dir(
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
-      slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       message_prefix=e)
     raise ValueError(e)
 
-
-# ## TASK
-# @task.branch(
-#   task_id="collect_and_branch",
-#   retry_delay=timedelta(minutes=5),
-#   retries=4,
-#   queue='hpc_4G')
-# def collect_and_branch(
-#       merge_step='configure_cellranger_aggr_run',
-#       skip_step='calculate_md5sum_for_main_work_dir') \
-#         -> list:
-#   try:
-#     cellranger_output_dict = dict()
-#     context = get_current_context()
-#     ti = context.get('ti')
-#     all_lazy_task_ids = \
-#       context['task'].\
-#       get_direct_relative_ids(upstream=True)
-#     lazy_xcom = ti.xcom_pull(task_ids=all_lazy_task_ids)
-#     for entry in lazy_xcom:
-#       sample_group = entry.get("sample_group")
-#       cellranger_output_dir = entry.get("cellranger_output_dir")
-#       if sample_group is not None and \
-#          cellranger_output_dir is not None:
-#         ## skipping failed runs
-#         cellranger_output_dict.update(
-#           {sample_group: cellranger_output_dir})
-#     if len(cellranger_output_dict) == 0:
-#       raise ValueError(f"No cellranger output found")
-#     elif len(cellranger_output_dict) == 1:
-#       return [skip_step]
-#     else:
-#       ti.xcom_push(
-#         key='cellranger_output_dict',
-#         value=cellranger_output_dict)
-#       return [merge_step]
-#   except Exception as e:
-#     log.error(e)
-#     send_airflow_failed_logs_to_channels(
-#       slack_conf=SLACK_CONF,
-#       ms_teams_conf=MS_TEAMS_CONF,
-#       message_prefix=e)
-#     raise ValueError(e)
 
 @task(
   task_id="configure_cellranger_aggr_run",
@@ -642,48 +591,9 @@ def configure_cellranger_aggr_run(
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
-      slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       message_prefix=e)
     raise ValueError(e)
-
-# ## TASK
-# @task(
-#   task_id="configure_cellranger_aggr_run",
-#   retry_delay=timedelta(minutes=5),
-#   retries=4,
-#   queue='hpc_4G')
-# def configure_cellranger_aggr_run(
-#       xcom_pull_task_ids: str = 'collect_and_branch',
-#       xcom_pull_task_key: str = 'cellranger_output_dict') \
-#         -> dict:
-#   try:
-#     cellranger_output_dict = dict()
-#     context = get_current_context()
-#     ti = context.get('ti')
-#     cellranger_output_dict = \
-#       ti.xcom_pull(
-#         task_ids=xcom_pull_task_ids,
-#         key=xcom_pull_task_key)
-#     if cellranger_output_dict is None or \
-#        (isinstance(cellranger_output_dict, dict) and len(cellranger_output_dict)) == 0:
-#       raise ValueError(f"No cellranger output found")
-#     elif len(cellranger_output_dict) == 1:
-#       raise ValueError(f"Single cellranger output found. Can't merge it!")
-#     else:
-#       output_dict = \
-#         configure_cellranger_aggr(
-#           run_script_template=CELLRANGER_AGGR_SCRIPT_TEMPLATE,
-#           cellranger_output_dict=cellranger_output_dict)
-#       return output_dict
-#   except Exception as e:
-#     log.error(e)
-#     send_airflow_failed_logs_to_channels(
-#       slack_conf=SLACK_CONF,
-#       ms_teams_conf=MS_TEAMS_CONF,
-#       message_prefix=e)
-#     raise ValueError(e)
-
 
 
 def configure_cellranger_aggr(
@@ -743,10 +653,6 @@ def configure_cellranger_aggr(
 def run_cellranger_aggr_script(
       script_dict: dict) -> str:
   try:
-    # skip_aggr = script_dict.get('skip_aggr')
-    # if skip_aggr is not None and skip_aggr:
-    #   return {'output_dir': None, 'skip_aggr': True}
-    sample_name = script_dict.get('sample_name')
     run_script = script_dict.get('run_script')
     output_dir = script_dict.get('output_dir')
     try:
@@ -763,7 +669,6 @@ def run_cellranger_aggr_script(
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
-      slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       message_prefix=e)
     raise ValueError(e)
@@ -779,12 +684,6 @@ def merged_scanpy_report(
       cellranger_aggr_output_dir: str,
       design_dict: dict) -> dict:
   try:
-    # skip_aggr = \
-    #   cellranger_aggr_output_dict.get('skip_aggr')
-    # cellranger_aggr_output_dir = \
-    #   cellranger_aggr_output_dict.get('output_dir')
-    # if skip_aggr is not None and skip_aggr:
-    #   return {'skip_aggr': skip_aggr}
     sample_group = "ALL"
     design_file = design_dict.get('analysis_design')
     check_file_path(design_file)
@@ -835,21 +734,6 @@ def merged_scanpy_report(
         'outs',
         'scanpy')
     os.makedirs(scanpy_dir, exist_ok=True)
-    ## set count matrix dir
-    # aggr_filtered_feature_bc_matrix_dir = \
-    #   os.path.join(
-    #     cellranger_aggr_counts_dir,
-    #     'filtered_feature_bc_matrix')
-    # multi_sample_filtered_feature_bc_matrix_dir = \
-    #   os.path.join(
-    #     cellranger_aggr_counts_dir,
-    #     'sample_filtered_feature_bc_matrix')
-    ## create a symlink if the multi style sample_filtered_feature_bc_matrix dir not pesent
-    # if os.path.exists(aggr_filtered_feature_bc_matrix_dir) and \
-    #    not os.path.exists(multi_sample_filtered_feature_bc_matrix_dir):
-    #   os.symlink(
-    #     aggr_filtered_feature_bc_matrix_dir,
-    #     multi_sample_filtered_feature_bc_matrix_dir)
     output_notebook_path, scanpy_h5ad = \
       prepare_and_run_scanpy_notebook(
         project_igf_id=project_igf_id,
@@ -882,7 +766,6 @@ def merged_scanpy_report(
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
-      slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       message_prefix=e)
     raise ValueError(e)
@@ -900,10 +783,6 @@ def move_aggr_result_to_main_work_dir(
       scanpy_aggr_output_dict: dict
       ) -> dict:
   try:
-    # skip_aggr = \
-    #   scanpy_aggr_output_dict.get('skip_aggr')
-    # if skip_aggr is not None and skip_aggr:
-    #   return main_work_dir
     check_file_path(main_work_dir)
     cellranger_output_dir = \
       scanpy_aggr_output_dict.get("cellranger_output_dir")
@@ -925,7 +804,6 @@ def move_aggr_result_to_main_work_dir(
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
-      slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       message_prefix=e)
     raise ValueError(e)
@@ -968,7 +846,6 @@ def load_cellranger_results_to_db(
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
-      slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       message_prefix=e)
     raise ValueError(e)
@@ -991,7 +868,6 @@ def decide_aggr(
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
-      slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       message_prefix=e)
     raise ValueError(e)

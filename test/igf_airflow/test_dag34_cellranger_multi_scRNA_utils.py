@@ -278,7 +278,6 @@ class TestDag34_cellranger_multi_scRNA_utilA(unittest.TestCase):
     with open(library_csv_file, 'r') as fp:
       for i in fp:
         if i.startswith('['):
-          data_list = list()
           ge_start = False
           lib_start = False
         if ge_start:
@@ -333,7 +332,6 @@ class TestDag34_cellranger_multi_scRNA_utilA(unittest.TestCase):
               sample_group='grp1',
               design_dict=design_dict)
         script_file = output_dict.get("run_script")
-        output_dir = output_dict.get("output_dir")
         sample_group = output_dict.get("sample_group")
         self.assertTrue(os.path.exists(script_file))
         with open(script_file, 'r') as fp:

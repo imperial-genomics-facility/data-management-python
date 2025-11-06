@@ -220,7 +220,6 @@ class Test_dag46_scRNA_10X_flex_utilsA(unittest.TestCase):
   def test_get_cellranger_sample_group(self):
     design_json = load(self.design_yaml, Loader=SafeLoader)
     sample_metadata = design_json.get("sample_metadata")
-    analysis_metadata = design_json.get("analysis_metadata")
     sample_groups = \
       _get_cellranger_sample_group(
         sample_metadata=sample_metadata)
@@ -252,7 +251,6 @@ class Test_dag46_scRNA_10X_flex_utilsA(unittest.TestCase):
               work_dir=work_dir,
               design_dict=design_dict)
         script_file = output_dict.get("run_script")
-        output_dir = output_dict.get("output_dir")
         sample_group = output_dict.get("sample_group")
         assert os.path.exists(script_file)
         with open(script_file, 'r') as fp:
