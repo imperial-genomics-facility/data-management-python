@@ -260,7 +260,3 @@ class Test_dag46_scRNA_10X_flex_utilsA(unittest.TestCase):
 
 if __name__=='__main__':
   unittest.main()
-  
-
-
-  
