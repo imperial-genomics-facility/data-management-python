@@ -224,7 +224,7 @@ class Test_dag46_scRNA_10X_flex_utilsA(unittest.TestCase):
       _get_cellranger_sample_group(
         sample_metadata=sample_metadata)
     assert len(sample_groups) == 1
-    sample_metadata.update({"IGFsampleA": {  
+    sample_metadata.update({"IGFsampleA": {
       "feature_types": "Gene Expression",
       "cellranger_group": "grp2"}
     })
@@ -233,7 +233,7 @@ class Test_dag46_scRNA_10X_flex_utilsA(unittest.TestCase):
       sample_groups = \
       _get_cellranger_sample_group(
         sample_metadata=sample_metadata)
-      
+
   def test_prepare_cellranger_flex_script(self):
     design_dict = {
       "analysis_design": self.yaml_file}
