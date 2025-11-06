@@ -113,7 +113,7 @@ def prepare_cellranger_flex_script(
         f"{design_file}")
     sample_group = \
         sample_groups[0]
-    library_csv_file, run_script_file = \
+    _, run_script_file = \
       prepare_cellranger_run_dir_and_script_file(
         sample_group=str(sample_group),
         work_dir=work_dir,
