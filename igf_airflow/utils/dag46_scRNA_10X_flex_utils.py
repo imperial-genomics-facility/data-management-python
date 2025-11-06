@@ -81,7 +81,7 @@ def prepare_cellranger_flex_script(
   cellranger_group_name: str = 'cellranger_group',
   required_tag_name: str = 'feature_types',
   required_tag_value: str = 'Gene Expression') -> dict:
-  
+
   """
   Create cellranger flex script
   """
