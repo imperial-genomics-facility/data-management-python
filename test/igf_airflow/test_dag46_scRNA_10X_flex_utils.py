@@ -11,13 +11,10 @@ from igf_airflow.utils.dag46_scRNA_10X_flex_utils import (
     prepare_cellranger_flex_script)
 from igf_data.igfdb.igfTables import Base
 from igf_data.igfdb.baseadaptor import BaseAdaptor
-from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
-from igf_data.igfdb.analysisadaptor import AnalysisAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.igfdb.platformadaptor import PlatformAdaptor
 from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
 from igf_data.igfdb.sampleadaptor import SampleAdaptor
-from igf_data.igfdb.useradaptor import UserAdaptor
 from igf_data.igfdb.experimentadaptor import ExperimentAdaptor
 from igf_data.igfdb.runadaptor import RunAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor

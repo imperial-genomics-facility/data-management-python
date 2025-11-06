@@ -1,20 +1,13 @@
 import os
-import json
-import yaml
-import zipfile
 import unittest
 import pandas as pd
 from unittest.mock import patch
-from yaml import Loader, Dumper
 from igf_data.igfdb.igfTables import Base
 from igf_data.igfdb.baseadaptor import BaseAdaptor
-from igf_data.igfdb.pipelineadaptor import PipelineAdaptor
-from igf_data.igfdb.analysisadaptor import AnalysisAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.igfdb.platformadaptor import PlatformAdaptor
 from igf_data.igfdb.seqrunadaptor import SeqrunAdaptor
 from igf_data.igfdb.sampleadaptor import SampleAdaptor
-from igf_data.igfdb.useradaptor import UserAdaptor
 from igf_data.igfdb.experimentadaptor import ExperimentAdaptor
 from igf_data.igfdb.runadaptor import RunAdaptor
 from igf_data.igfdb.collectionadaptor import CollectionAdaptor
@@ -22,7 +15,6 @@ from igf_data.igfdb.fileadaptor import FileAdaptor
 from igf_data.utils.dbutils import read_dbconf_json
 from igf_data.utils.fileutils import (
   get_temp_dir,
-  check_file_path,
   remove_dir)
 from igf_airflow.utils.dag26_snakemake_rnaseq_utils import (
     parse_analysis_design_and_get_metadata)
