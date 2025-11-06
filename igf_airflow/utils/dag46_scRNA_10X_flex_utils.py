@@ -5,20 +5,13 @@ from typing import Any
 from datetime import timedelta
 from airflow.models import Variable
 from airflow.decorators import task
-from airflow.operators.python import get_current_context
 from igf_airflow.utils.generic_airflow_utils import (
   send_airflow_failed_logs_to_channels)
 from igf_data.utils.fileutils import (
-  check_file_path,
-  copy_local_file,
-  get_temp_dir,
-  get_date_stamp)
+  check_file_path)
 from igf_airflow.utils.dag34_cellranger_multi_scRNA_utils import (
   prepare_cellranger_run_dir_and_script_file,
-  parse_analysis_design_and_get_metadata,
-  get_project_igf_id_for_analysis,
-  fetch_analysis_name_for_analysis_id,
-  prepare_and_run_scanpy_notebook)
+  parse_analysis_design_and_get_metadata)
 
 log = logging.getLogger(__name__)
 
