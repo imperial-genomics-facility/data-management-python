@@ -64,7 +64,7 @@ def find_raw_metadata_id(
   retries=1,
   queue='hpc_4G',
   multiple_outputs=False)
-def register_metadata_from_portal(raw_metadata_id: int):
+def register_metadata_from_portal(raw_metadata_id: int) -> None:
   try:
     default_project_user_email = \
       _parse_default_user_email_from_email_config(EMAIL_CONF)
