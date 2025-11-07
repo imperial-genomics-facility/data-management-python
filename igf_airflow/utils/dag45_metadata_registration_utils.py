@@ -33,21 +33,21 @@ DATABASE_CONFIG_FILE = \
 def find_raw_metadata_id(
     raw_metadata_id_tag: str = "raw_metadata_id",
     dag_run_key: str = "dag_run") \
-      -> dict[str, int]:
+      -> int:
   try:
     ### dag_run.conf should have raw_analysis_id
     context = get_current_context()
     dag_run = context.get(dag_run_key)
-    raw_analysis_id = None
+    raw_metadata_id = None
     if dag_run is not None and \
        dag_run.conf is not None and \
        dag_run.conf.get(raw_metadata_id_tag) is not None:
       raw_metadata_id = \
         dag_run.conf.get(raw_metadata_id_tag)
-    if raw_analysis_id is None:
+    if raw_metadata_id is None:
       raise ValueError(
         'raw_metadata_id not found in dag_run.conf')
-    return {raw_metadata_id_tag: raw_metadata_id}
+    return raw_metadata_id
   except Exception as e:
     message = \
       f"Failed to get raw_metadata_id, error: {e}"
