@@ -12,7 +12,7 @@ class Test_dag45_metadata_registration_utilsA(unittest.TestCase):
 
   def tearDown(self):
     pass
-  
+
   @patch("igf_airflow.utils.dag45_metadata_registration_utils.get_current_context")
   def test_find_raw_metadata_id(self, mock_get_context):
     # Setup Airflow context mock
