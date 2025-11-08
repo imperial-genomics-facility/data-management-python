@@ -223,6 +223,8 @@ def full_suite():
     Test_dag45_metadata_registration_utilsA)
   from .igf_airflow.test_dag46_scRNA_10X_flex_utils import (
     Test_dag46_scRNA_10X_flex_utilsA)
+  from .igf_airflow.test_dag44_analysis_registration_utils import (
+    Test_dag44_analysis_registration_utilsA)
 
 
   return unittest.TestSuite([
@@ -369,6 +371,7 @@ def full_suite():
         TestUnifiedMetadataRegistrationA,
         TestUnifiedMetadataRegistrationB,
         Test_dag46_scRNA_10X_flex_utilsA,
-        Test_dag45_metadata_registration_utilsA
+        Test_dag45_metadata_registration_utilsA,
+        Test_dag44_analysis_registration_utilsA
       ]
     ])
