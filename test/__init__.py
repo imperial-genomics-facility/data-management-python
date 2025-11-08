@@ -219,6 +219,8 @@ def full_suite():
   from .process.unified_metadata_registration_test import (
     TestUnifiedMetadataRegistrationA,
     TestUnifiedMetadataRegistrationB)
+  from .igf_airflow.test_dag45_metadata_registration_utils import (
+    Test_dag45_metadata_registration_utilsA)
   from .igf_airflow.test_dag46_scRNA_10X_flex_utils import (
     Test_dag46_scRNA_10X_flex_utilsA)
 
@@ -366,6 +368,7 @@ def full_suite():
         Test_dag1_calculate_hpc_worker_utils,
         TestUnifiedMetadataRegistrationA,
         TestUnifiedMetadataRegistrationB,
-        Test_dag46_scRNA_10X_flex_utilsA
+        Test_dag46_scRNA_10X_flex_utilsA,
+        Test_dag45_metadata_registration_utilsA
       ]
     ])
