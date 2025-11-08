@@ -1,12 +1,23 @@
 import pandas as pd
-import unittest,json,os,shutil
-from igf_data.igfdb.igfTables import Base, Project, User, Sample, ProjectUser, Project_attribute
+import unittest
+import json
+import os
+from unittest.mock import patch
+from igf_data.igfdb.igfTables import (
+  Base,
+  Project,
+  User,
+  Sample,
+  ProjectUser)
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
 from igf_data.igfdb.useradaptor import UserAdaptor
 from igf_data.igfdb.sampleadaptor import SampleAdaptor
-from igf_data.utils.fileutils import get_temp_dir, remove_dir
-from igf_data.process.seqrun_processing.find_and_process_new_project_data_from_portal_db import Find_and_register_new_project_data_from_portal_db
+from igf_data.utils.fileutils import (
+  get_temp_dir,
+  remove_dir)
+from igf_data.process.seqrun_processing.find_and_process_new_project_data_from_portal_db import (
+  Find_and_register_new_project_data_from_portal_db)
 
 class Find_and_register_new_project_data_from_portal_db_test1(unittest.TestCase):
   def setUp(self):
@@ -112,6 +123,62 @@ class Find_and_register_new_project_data_from_portal_db_test1(unittest.TestCase)
     self.assertTrue('name' in user_data.columns)
     self.assertTrue('email_id' in user_data.columns)
     self.assertEqual(user_data['email_id'].values[0], 'user2@ic.ac.uk')
+
+  @patch("igf_data.process.seqrun_processing.find_and_process_new_project_data_from_portal_db.get_data_from_portal")
+  def test_get_new_project_data_from_portal(self, mock_context):
+    project_data = [
+      {'project_igf_id':'IGFP0002_test_23-5-2017_rna',
+       'name':'user2',
+       'email_id':'user2@ic.ac.uk',
+       'sample_igf_id':'IGF00006'},
+      {'project_igf_id':'IGFP0003_test_24-8-2017_rna',
+       'name':'user2',
+       'email_id':'user2@ic.ac.uk',
+       'sample_igf_id':'IGF00007',
+       'barcode_check':'OFF'},
+      {'sample_igf_id':'IGF00001',
+       'project_igf_id':'IGFP0001_test_22-8-2017_rna',
+       'name':'user1',
+       'email_id':'user1@ic.ac.uk'}]
+    fa1 = \
+      Find_and_register_new_project_data_from_portal_db(
+        portal_db_conf_file=self.portal_conf_file,
+        dbconfig=self.dbconfig,
+        user_account_template='template/email_notification/send_new_account_info.txt',
+        log_slack=False,
+        default_user_email='admin@email.com',
+        setup_irods=False,
+        notify_user=False)
+    fa1._get_new_project_data_from_portal()
+    mock_context.assert_called_once()
+
+  @patch("igf_data.process.seqrun_processing.find_and_process_new_project_data_from_portal_db.get_data_from_portal")
+  def test_mark_portal_db_as_synced(self, mock_context):
+    project_data = [
+      {'project_igf_id':'IGFP0002_test_23-5-2017_rna',
+       'name':'user2',
+       'email_id':'user2@ic.ac.uk',
+       'sample_igf_id':'IGF00006'},
+      {'project_igf_id':'IGFP0003_test_24-8-2017_rna',
+       'name':'user2',
+       'email_id':'user2@ic.ac.uk',
+       'sample_igf_id':'IGF00007',
+       'barcode_check':'OFF'},
+      {'sample_igf_id':'IGF00001',
+       'project_igf_id':'IGFP0001_test_22-8-2017_rna',
+       'name':'user1',
+       'email_id':'user1@ic.ac.uk'}]
+    fa2 = \
+      Find_and_register_new_project_data_from_portal_db(
+        portal_db_conf_file=self.portal_conf_file,
+        dbconfig=self.dbconfig,
+        user_account_template='template/email_notification/send_new_account_info.txt',
+        log_slack=False,
+        default_user_email='admin@email.com',
+        setup_irods=False,
+        notify_user=False)
+    fa2._mark_portal_db_as_synced()
+    mock_context.assert_called_once()
 
   def test_check_and_register_data(self):
     project_data = [

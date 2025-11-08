@@ -28,6 +28,11 @@ from igf_portal.api_utils import get_data_from_portal
 from io import StringIO
 import smtplib
 
+IGFPORTAL_RAW_METADATA_DOWNLOAD_ALL_URL = "/api/v1/raw_metadata/download_ready_metadata"
+IGFPORTAL_RAW_METADATA_MARK_ALL_SYNCED_URL = "/api/v1/raw_metadata/mark_ready_metadata_as_synced"
+IGFPORTAL_RAW_METADATA_DOWNLOAD_ENTRY_URL = "/api/v1/raw_metadata/get_raw_metadata"
+IGFPORTAL_RAW_METADATA_MARK_ENTRY_SYNCED_URL = "/api/v1/raw_metadata/mark_ready_metadata_as_synced"
+
 
 def send_email_via_smtp(
       sender: str,
@@ -81,6 +86,7 @@ class Find_and_register_new_project_data_from_portal_db:
       user_account_template: str,
       portal_db_conf_file: str,
       log_slack: bool = True,
+      raw_metadata_id: Union[int, None] = None,
       slack_config: Union[str, None] = None,
       check_hpc_user: bool = False,
       hpc_user: Union[str, None] = None,
@@ -104,6 +110,7 @@ class Find_and_register_new_project_data_from_portal_db:
         self.user_lookup_column = user_lookup_column
         self.sample_lookup_column = sample_lookup_column
         self.data_authority_column = data_authority_column
+        self.raw_metadata_id = raw_metadata_id
         self.log_slack = log_slack
         dbparams = read_dbconf_json(dbconfig)
         base = BaseAdaptor(**dbparams)
@@ -121,13 +128,15 @@ class Find_and_register_new_project_data_from_portal_db:
         if log_slack and slack_config is None:
           raise ValueError('Missing slack config file')
         elif log_slack and slack_config:
-          self.igf_slack = IGF_slack(slack_config=slack_config)
+          self.igf_slack = \
+            IGF_slack(slack_config=slack_config)
         if check_hpc_user and \
            (hpc_user is None or \
            hpc_address is None or \
            ldap_server is None):
           raise ValueError(
-            f'Hpc user {hpc_user} address {hpc_address}, and ldap server {ldap_server} needed for hpc check')
+            f"Hpc user {hpc_user} address {hpc_address}," + \
+            f"and ldap server {ldap_server} needed for hpc check")
       except Exception as e:
         raise ValueError(
           f'Init failed, error: {e}')
@@ -171,10 +180,16 @@ class Find_and_register_new_project_data_from_portal_db:
   def _get_new_project_data_from_portal(self) \
         -> Any:
     try:
-      res = \
-        get_data_from_portal(
-          url_suffix="/api/v1/raw_metadata/download_ready_metadata",
-          portal_config_file=self.portal_db_conf_file)
+      if self.raw_metadata_id is None:
+        res = \
+          get_data_from_portal(
+            url_suffix=IGFPORTAL_RAW_METADATA_DOWNLOAD_ALL_URL,
+            portal_config_file=self.portal_db_conf_file)
+      else:
+        res = \
+          get_data_from_portal(
+            url_suffix=f"{IGFPORTAL_RAW_METADATA_DOWNLOAD_ENTRY_URL}/{self.raw_metadata_id}",
+            portal_config_file=self.portal_db_conf_file)
       return res
     except Exception as e:
       raise ValueError(
@@ -184,10 +199,16 @@ class Find_and_register_new_project_data_from_portal_db:
   def _mark_portal_db_as_synced(self) \
         -> Any:
     try:
-      res = \
-        get_data_from_portal(
-          url_suffix="/api/v1/raw_metadata/mark_ready_metadata_as_synced",
-          portal_config_file=self.portal_db_conf_file)
+      if self.raw_metadata_id is None:
+        res = \
+          get_data_from_portal(
+            url_suffix=IGFPORTAL_RAW_METADATA_MARK_ALL_SYNCED_URL,
+            portal_config_file=self.portal_db_conf_file)
+      else:
+        res = \
+          get_data_from_portal(
+            url_suffix=f"{IGFPORTAL_RAW_METADATA_MARK_ENTRY_SYNCED_URL}/{self.raw_metadata_id}",
+            portal_config_file=self.portal_db_conf_file)
       return res
     except Exception as e:
       raise ValueError(e)
@@ -245,11 +266,16 @@ class Find_and_register_new_project_data_from_portal_db:
           required_project_user_columns)
       project_user_data = \
         project_info_data.loc[:, project_user_data_columns]                     # get data for project user table
-      required_sample_columns = \
-        list(set(project_info_data.columns).\
-                difference(set(list(project_data)+\
-                               list(user_data)+\
-                               list(project_user_data))))                       # all remaining column goes to sample tables
+      required_sample_columns = list(
+        set(project_info_data.columns)
+        .difference(
+          set(
+            list(project_data) + \
+            list(user_data) + \
+            list(project_user_data)
+          )
+        )
+      )                                             # all remaining column goes to sample tables
       required_sample_columns.\
         append('project_igf_id')
       sample_data = \
