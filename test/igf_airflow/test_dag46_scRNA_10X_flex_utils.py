@@ -8,7 +8,8 @@ from igf_data.utils.fileutils import (
 from yaml import load, SafeLoader
 from igf_airflow.utils.dag46_scRNA_10X_flex_utils import (
     _get_cellranger_sample_group,
-    prepare_cellranger_flex_script)
+    prepare_cellranger_flex_script,
+    flex_sample_factory)
 from igf_data.igfdb.igfTables import Base
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
@@ -257,6 +258,30 @@ class Test_dag46_scRNA_10X_flex_utilsA(unittest.TestCase):
           data = fp.read()
         assert sample_group == "grp1"
         assert "--id=grp1" in data
+
+  def test_flex_sample_factory(self):
+    cellranger_output_dir = \
+      os.path.join(
+        self.temp_dir,
+        'cellranger_output_dir',
+        'outs',
+        'per_sample_outs')
+    os.makedirs(
+      cellranger_output_dir,
+      exist_ok=True)
+    for sample_id in ['SAMPLE1', 'SAMPLE2']:
+      os.makedirs(
+        os.path.join(
+          cellranger_output_dir,
+          sample_id),
+        exist_ok=True)
+    sample_list = \
+      flex_sample_factory.function(
+        cellranger_output_dir=os.path.join(
+          self.temp_dir,
+          'cellranger_output_dir'))
+    assert len(sample_list) == 2
+    assert "SAMPLE1" in sample_list
 
 if __name__=='__main__':
   unittest.main()

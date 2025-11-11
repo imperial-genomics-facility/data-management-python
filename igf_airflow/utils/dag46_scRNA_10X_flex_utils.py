@@ -134,3 +134,35 @@ def prepare_cellranger_flex_script(
       ms_teams_conf=MS_TEAMS_CONF,
       message_prefix=e)
     raise ValueError(e)
+
+
+## TASK
+@task(
+  task_id="flex_sample_factory",
+  retry_delay=timedelta(minutes=5),
+  retries=4,
+  queue='hpc_4G')
+def flex_sample_factory(
+  cellranger_output_dir: str) \
+    -> list[str]:
+  try:
+    ## set cellranger counts dir
+    cellranger_counts_dir = \
+      os.path.join(
+        cellranger_output_dir,
+        'outs',
+        'per_sample_outs')
+    check_file_path(cellranger_counts_dir)
+    ## get dirs
+    sample_list = \
+      os.listdir(cellranger_counts_dir)
+    if len(sample_list) == 0:
+      raise ValueError(
+        f"Missing flex output in path: {cellranger_counts_dir}")
+    return sample_list
+  except Exception as e:
+    log.error(e)
+    send_airflow_failed_logs_to_channels(
+      ms_teams_conf=MS_TEAMS_CONF,
+      message_prefix=e)
+    raise ValueError(e)
