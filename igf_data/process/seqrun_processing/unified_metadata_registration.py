@@ -37,6 +37,7 @@ def _get_db_session_class(db_config_file: str) -> Any:
 class MetadataContext:
   def __init__(
     self,
+    raw_cosmx_metadata_id: int,
     portal_config_file: str,
     fetch_metadata_url_suffix: str,
     sync_metadata_url_suffix: str,
@@ -57,6 +58,7 @@ class MetadataContext:
       "sample": ["sample_igf_id", "project_igf_id"]},
     error_list: List[str] = []) \
       -> None:
+    self.raw_cosmx_metadata_id = raw_cosmx_metadata_id
     self.portal_config_file = portal_config_file
     self.fetch_metadata_url_suffix = fetch_metadata_url_suffix
     self.sync_metadata_url_suffix = sync_metadata_url_suffix
@@ -90,9 +92,13 @@ class FetchNewMetadataCommand(BaseCommand):
     try:
       portal_config_file = metadata_context.portal_config_file
       fetch_metadata_url_suffix = metadata_context.fetch_metadata_url_suffix
+      fetch_url = urljoin(
+        fetch_metadata_url_suffix,
+        str(metadata_context.raw_cosmx_metadata_id)
+      )
       new_project_data_dict = \
         get_data_from_portal(
-          url_suffix=fetch_metadata_url_suffix,
+          url_suffix=fetch_url,
           portal_config_file=portal_config_file)
       if len(new_project_data_dict) > 0:
         reformatted_project_data_dict = \

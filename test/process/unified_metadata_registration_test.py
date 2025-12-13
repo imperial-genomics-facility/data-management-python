@@ -27,6 +27,7 @@ from igf_data.process.seqrun_processing.unified_metadata_registration import (
 
 class TestUnifiedMetadataRegistrationA(unittest.TestCase):
   def setUp(self):
+    self.raw_cosmx_metadata_id = 1
     self.portal_config_file = "test_config.json"
     self.fetch_metadata_url_suffix = "test_fetch_suffix"
     self.sync_metadata_url_suffix = "test_sync_suffix"
@@ -79,6 +80,7 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
 
   def test_MetadataContext(self):
     metadata_context = MetadataContext(
+      raw_cosmx_metadata_id=self.raw_cosmx_metadata_id,
       portal_config_file=self.portal_config_file,
       fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
@@ -93,6 +95,7 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
     fetch_command = FetchNewMetadataCommand()
     self.assertIsInstance(fetch_command, FetchNewMetadataCommand)
     metadata_context = MetadataContext(
+      raw_cosmx_metadata_id=self.raw_cosmx_metadata_id,
       portal_config_file=self.portal_config_file,
       fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
