@@ -112,6 +112,7 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
     fetch_command = FetchNewMetadataCommand()
     self.assertIsInstance(fetch_command, FetchNewMetadataCommand)
     metadata_context = MetadataContext(
+      raw_cosmx_metadata_id=self.raw_cosmx_metadata_id,
       portal_config_file=self.portal_config_file,
       fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
@@ -166,6 +167,7 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
 
   def test_CheckRawMetadataColumnsCommand_execute(self):
     metadata_context = MetadataContext(
+      raw_cosmx_metadata_id=self.raw_cosmx_metadata_id,
       portal_config_file=self.portal_config_file,
       fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
@@ -190,6 +192,7 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
     self.assertEqual(metadata_context.checked_required_column_dict.get(2), False)
     self.assertEqual(len(metadata_context.error_list), 1)
     metadata_context = MetadataContext(
+      raw_cosmx_metadata_id=self.raw_cosmx_metadata_id,
       portal_config_file=self.portal_config_file,
       fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
@@ -248,6 +251,7 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
   def test_ValidateMetadataCommand_execute(self):
     validate = ValidateMetadataCommand()
     metadata_context = MetadataContext(
+      raw_cosmx_metadata_id=self.raw_cosmx_metadata_id,
       portal_config_file=self.portal_config_file,
       fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
@@ -278,6 +282,7 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
 
   def test_CheckAndRegisterMetadataCommand_split_metadata(self):
     metadata_context = MetadataContext(
+      raw_cosmx_metadata_id=self.raw_cosmx_metadata_id,
       portal_config_file=self.portal_config_file,
       fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
@@ -492,6 +497,7 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
     check_and_register = \
       CheckAndRegisterMetadataCommand()
     metadata_context = MetadataContext(
+      raw_cosmx_metadata_id=self.raw_cosmx_metadata_id,
       portal_config_file=self.portal_config_file,
       fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
@@ -570,6 +576,7 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
   @patch("igf_data.process.seqrun_processing.unified_metadata_registration.get_data_from_portal", return_value=True)
   def test_SyncMetadataCommand_execute(self, *args):
     metadata_context = MetadataContext(
+      raw_cosmx_metadata_id=self.raw_cosmx_metadata_id,
       portal_config_file=self.portal_config_file,
       fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
