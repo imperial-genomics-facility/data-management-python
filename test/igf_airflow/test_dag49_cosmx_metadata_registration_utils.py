@@ -1,6 +1,3 @@
-import os
-import json
-import pytest
 import unittest
 from igf_data.utils.fileutils import (
   get_temp_dir,

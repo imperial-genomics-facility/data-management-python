@@ -1,7 +1,4 @@
-import os
 import logging
-import pandas as pd
-from typing import Any
 from datetime import timedelta
 from airflow.models import Variable
 from airflow.decorators import task
