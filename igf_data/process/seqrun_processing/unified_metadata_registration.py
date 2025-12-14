@@ -625,6 +625,7 @@ class ChainCommand:
 class UnifiedMetadataRegistration:
   def __init__(
     self,
+    raw_cosmx_metadata_id: int,
     portal_config_file: str,
     fetch_metadata_url_suffix: str,
     sync_metadata_url_suffix: str,
@@ -634,6 +635,7 @@ class UnifiedMetadataRegistration:
     samples_required: bool = False,
     ) -> None:
     self.metadata_context = MetadataContext(
+      raw_cosmx_metadata_id=raw_cosmx_metadata_id,
       portal_config_file=portal_config_file,
       fetch_metadata_url_suffix=fetch_metadata_url_suffix,
       sync_metadata_url_suffix=sync_metadata_url_suffix,

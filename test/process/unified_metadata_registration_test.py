@@ -626,6 +626,7 @@ class TestUnifiedMetadataRegistrationB(unittest.TestCase):
       3: [{"project_igf_id": "IGFA003", "deliverable": "COSMX", "name": "User DQ", "email_id": "a-c.com", "username": "ddd"}]})
   def test_UnifiedMetadataRegistration_execute(self, *args):
     metadata_registration = UnifiedMetadataRegistration(
+      raw_cosmx_metadata_id=1,
       portal_config_file=self.portal_config_file,
       fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
       sync_metadata_url_suffix=self.sync_metadata_url_suffix,
