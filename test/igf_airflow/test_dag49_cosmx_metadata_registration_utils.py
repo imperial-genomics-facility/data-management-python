@@ -33,12 +33,15 @@ class Test_dag49_cosmx_metadata_registration_utilsA(unittest.TestCase):
   @patch("igf_airflow.utils.dag49_cosmx_metadata_registration_utils.IGF_PORTAL_CONF", "test.conf")
   @patch("igf_airflow.utils.dag49_cosmx_metadata_registration_utils.METADATA_VALIDATION_SCHEMA", "test.json")
   @patch("igf_airflow.utils.dag49_cosmx_metadata_registration_utils.DEFAULT_EMAIL", "c@c.org")
-  @patch("igf_airflow.utils.dag49_cosmx_metadata_registration_utils.register_cosmx_metadata")
-  def test_register_cosmx_metadata(self, mock_register_cosmx_metadata, *args):
+  @patch("igf_airflow.utils.dag49_cosmx_metadata_registration_utils.UnifiedMetadataRegistration")
+  def test_register_cosmx_metadata(self, mock_class, *args):
+    mock_instance = MagicMock()
+    mock_instance.execute.return_value = None
+    mock_class.return_value = mock_instance
     register_cosmx_metadata.function(
       raw_cosmx_metadata_id=1
     )
-    assert mock_register_cosmx_metadata.called_once()
+    mock_instance.execute.assert_called_once()
 
 if __name__=='__main__':
   unittest.main()
