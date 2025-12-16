@@ -13,7 +13,7 @@
             "project_igf_id" : {
               "type" : "string",
               "pattern": "^IGF[a-zA-Z0-9-_]+$",
-              "maxLength": 50
+              "maxLength": 70
             },
             "deliverable" : {
               "type" : "string",
@@ -23,7 +23,7 @@
             "name" : {
               "type" : "string",
               "pattern": "^\\w+\\s\\w+\\s?\\w+?$",
-              "maxLength": 30
+              "maxLength": 40
             },
             "username" : {
               "type" : "string",
