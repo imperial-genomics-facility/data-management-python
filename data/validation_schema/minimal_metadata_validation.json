@@ -4,7 +4,7 @@
     "title": "IGF minimal metadata validation schema",
     "description": "Schema for validation of minimal metadata input file",
     "type" : "array",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "minItems": 1,
     "uniqueItems": true,
     "items": {
@@ -17,8 +17,10 @@
             },
             "deliverable" : {
               "type" : "string",
-              "enum" : ["FASTQ",
-                        "COSMX"]
+              "enum" : [
+                "FASTQ",
+                "COSMX"
+              ]
             },
             "name" : {
               "type" : "string",
