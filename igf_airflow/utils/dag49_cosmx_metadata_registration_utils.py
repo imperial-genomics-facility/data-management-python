@@ -33,11 +33,11 @@ SYNC_METADATA_URL_SUFFIX = Variable.get(
   default_var='/api/v1/raw_cosmx_metadata/mark_ready_metadata_as_synced'
 )
 METADATA_VALIDATION_SCHEMA = Variable.get(
-  'igf_portal_conf',
+  'manual_metadata_validation_schema',
   default_var=None
 )
 DEFAULT_EMAIL = Variable.get(
-  'default_email',
+  'default_email_user',
   default_var=None
 )
 
