@@ -51,7 +51,8 @@
           "project_igf_id",
           "deliverable",
           "name",
-          "email_id"
+          "email_id",
+          "username"
         ]
     }
 }
