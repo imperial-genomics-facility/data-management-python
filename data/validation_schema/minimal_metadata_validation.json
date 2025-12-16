@@ -49,7 +49,7 @@
           "project_igf_id",
           "deliverable",
           "name",
-          "email_id",
-          "username"]
+          "email_id"
+        ]
     }
 }
