@@ -215,7 +215,7 @@ uc-micro-py==1.0.3
 universal_pathlib==0.2.5
 urllib3==2.2.3
 vine==5.1.0
-virtualenv==20.28.0
+virtualenv==20.36.1
 watchtower==3.3.1
 wcwidth==0.2.13
 webencodings==0.5.1

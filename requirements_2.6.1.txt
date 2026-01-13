@@ -171,7 +171,7 @@ uc-micro-py==1.0.2
 unicodecsv==0.14.1
 urllib3==1.26.16
 vine==5.0.0
-virtualenv==20.23.0
+virtualenv==20.36.1
 wcwidth==0.2.6
 webencodings==0.5.1
 websocket-client==1.5.2
