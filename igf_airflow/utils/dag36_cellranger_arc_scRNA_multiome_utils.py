@@ -589,7 +589,8 @@ def merged_scanpy_report_for_arc(
         analysis_name=analysis_name,
         cellranger_group_id=str(sample_group),
         cellranger_counts_dir=cellranger_aggr_counts_dir,
-        scanpy_config=scanpy_config)
+        scanpy_config=scanpy_config,
+        large_data=True)
     target_notebook = \
       os.path.join(
         scanpy_dir,

@@ -457,6 +457,7 @@ def prepare_and_run_scanpy_notebook(
       scanpy_config: dict,
       timeout: int = 1200,
       kernel_name: str = 'python',
+      large_data: bool = False,
       allow_errors: bool = False) -> Tuple[str, str]:
   try:
     scanpy_h5ad = \
@@ -483,7 +484,8 @@ def prepare_and_run_scanpy_notebook(
       'MITO_PREFIX': scanpy_config.get('MITO_PREFIX') or 'MT-',
       'RUN_CELLCYCLE_SCORE': scanpy_config.get('RUN_CELLCYCLE_SCORE') or False,
       'S_GENES':s_genes,
-      'G2M_GENES': g2m_genes
+      'G2M_GENES': g2m_genes,
+      'LARGE_DATA': large_data
     }
     ## update input params and check paths
     singularity_image = \
@@ -740,7 +742,8 @@ def merged_scanpy_report(
         analysis_name=analysis_name,
         cellranger_group_id=str(sample_group),
         cellranger_counts_dir=cellranger_aggr_counts_dir,
-        scanpy_config=scanpy_config)
+        scanpy_config=scanpy_config,
+        large_data=True)
     target_notebook = \
       os.path.join(
         scanpy_dir,
