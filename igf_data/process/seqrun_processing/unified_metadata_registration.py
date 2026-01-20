@@ -1,4 +1,5 @@
 import os, json, time
+from io import StringIO
 from urllib.parse import urljoin
 import pandas as pd
 from typing import List, Dict, Any, Optional, Tuple, Union
@@ -158,8 +159,9 @@ class CheckRawMetadataColumnsCommand(BaseCommand):
       error_list = []
       if metadata_context.metadata_fetched:
         raw_meatadata_dict = metadata_context.raw_metadata_dict
-        for metadata_id, metadata_list in raw_meatadata_dict.items():
-          metadata_df = pd.DataFrame(metadata_list)
+        for metadata_id, metadata_csv in raw_meatadata_dict.items():
+          csvStringIO = StringIO(metadata_csv)
+          metadata_df = pd.read_csv(csvStringIO, header=0)
           metadata_df_columns = metadata_df.columns.tolist()
           column_check_errors = \
             self._check_columns(
@@ -202,10 +204,12 @@ class ValidateMetadataCommand(BaseCommand):
         schema[0]
       metadata_validator = \
         Draft4Validator(schema)
-      json_data = \
-        pd.DataFrame(metadata_entry).\
-          fillna('').\
-          to_dict(orient='records')
+      csvStringIO = StringIO(metadata_entry)
+      json_data = (
+        pd.read_csv(csvStringIO, header=0)
+        .fillna('')
+        .to_dict(orient='records')
+      )
       validation_errors = \
         sorted(
           metadata_validator.iter_errors(json_data),
@@ -279,10 +283,12 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
       sample_metadata_list = []
       user_metadata_list = []
       project_user_metadata = []
-      metadata_df = pd.DataFrame(metadata_entry)
-      metadata_df = \
-        metadata_df.fillna('').\
-        drop_duplicates()
+      csvStringIO = StringIO(metadata_entry)
+      metadata_df = (
+        pd.read_csv(csvStringIO, header=0)
+        .fillna('')
+        .drop_duplicates()
+      )
       for table_name, table_column_list in table_columns.items():
         if table_name == 'project':
           project_metadata_list.extend(
