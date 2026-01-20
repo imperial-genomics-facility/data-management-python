@@ -101,8 +101,6 @@ class FetchNewMetadataCommand(BaseCommand):
           url_suffix=fetch_url,
           portal_config_file=portal_config_file)
       if len(new_project_data_dict) > 0:
-        reformatted_project_data_dict = \
-          {int(k):v for k,v in new_project_data_dict.items()}
         metadata_context.raw_metadata_dict = new_project_data_dict
         metadata_context.metadata_fetched = True
       else:
