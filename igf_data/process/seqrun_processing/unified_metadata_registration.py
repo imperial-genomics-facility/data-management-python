@@ -281,7 +281,10 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
     metadata_entry: List[Dict[str, str]],
     table_columns: Dict[str, list],
     samples_required: bool) \
-      -> Tuple[List[Dict[str, str]], List[Dict[str, str]], List[Dict[str, str]], List[Dict[str, str]]]:
+      -> Tuple[List[Dict[str, str]],
+         List[Dict[str, str]],
+         List[Dict[str, str]],
+         List[Dict[str, str]]]:
     """
     Split the metadata into different tables.
     """
@@ -412,15 +415,17 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
         errors.append(
         f"Skipping existing samples {' ,'.join(existing_sample_igf_ids)}")
       # filter out existing project user metadata
-      filtered_project_user_metadata = \
-        [metadata for metadata in project_user_metadata_list \
-          if metadata['project_igf_id'] not in existing_project_igf_ids]
+      filtered_project_user_metadata = [
+        metadata for metadata in project_user_metadata_list \
+          if metadata['project_igf_id'] not in existing_project_igf_ids
+      ]
       return (
         filtered_project_metadata,
         filtered_user_metadata,
         filtered_project_user_metadata,
         filtered_sample_metadata,
-        errors)
+        errors
+      )
     except Exception as e:
       raise ValueError(
         f"Failed to check existing metadata: {e}")
@@ -448,8 +453,10 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
       # don't update if data authority column is already present
       if data_authority_column not in df.columns:
         # add data authority column and set first user as the data authority
-        df[data_authority_column] = \
-          df[email_id_col] == df.groupby(project_igf_id_col)[email_id_col].transform('first')
+        df[data_authority_column] = (
+          df[email_id_col] == df.groupby(project_igf_id_col)[email_id_col]
+          .transform('first')
+        )
       # add secondary user
       merged_df = \
         pd.concat([
