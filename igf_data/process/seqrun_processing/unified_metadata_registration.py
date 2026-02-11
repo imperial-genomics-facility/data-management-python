@@ -250,19 +250,20 @@ class ValidateMetadataCommand(BaseCommand):
         metadata_context.metadata_validation_schema
       for metadata_id, validation_status in checked_required_column_dict.items():
         if validation_status:
-          metadata_entry = \
-            raw_meatadata_dict.get(metadata_id)
+          metadata_entry = raw_meatadata_dict.get(
+            metadata_id)
           if not metadata_entry:
             raise ValueError(
               f"Metadata entry not found for ID: {metadata_id}")
-          validation_error = \
-            self._validate_metadata(
-              metadata_id=metadata_id,
-              metadata_entry=metadata_entry,
-              metadata_validation_schema=metadata_validation_schema)
+          validation_error = self._validate_metadata(
+            metadata_id=metadata_id,
+            metadata_entry=metadata_entry,
+            metadata_validation_schema=metadata_validation_schema)
           if len(validation_error) > 0:
             error_list.append(validation_error)
             validated_metadata_dict[metadata_id] = False
+            raise ValueError(
+              f"Metadata validation failed, errors: {validation_error}")
           else:
             validated_metadata_dict[metadata_id] = True
         else:
