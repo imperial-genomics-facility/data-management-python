@@ -106,6 +106,9 @@ class FetchNewMetadataCommand(BaseCommand):
         metadata_context.metadata_fetched = True
       else:
         metadata_context.metadata_fetched = False
+        raise KeyError(
+          f"No metadata found on portal for id \
+            {str(metadata_context.raw_cosmx_metadata_id)}")
     except Exception as e:
       raise ValueError(
         f"Failed to fetch new metadata from portal: {e}")
