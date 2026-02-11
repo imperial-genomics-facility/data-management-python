@@ -174,6 +174,9 @@ class CheckRawMetadataColumnsCommand(BaseCommand):
           if len(column_check_errors) > 0:
             checked_required_column_dict[metadata_id] = False
             error_list.extend(column_check_errors)
+            raise ValueError(
+              f"Failed required column checks, \
+                errors: {column_check_errors}")
           else:
             checked_required_column_dict[metadata_id] = True
         metadata_context.error_list.extend(error_list)
