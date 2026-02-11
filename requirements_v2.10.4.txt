@@ -5,7 +5,7 @@ airbyte-api==0.52.1
 alembic==1.14.0
 amqp==5.3.1
 anyio==4.7.0
-apache-airflow==2.10.4
+apache-airflow==3.0.6
 apache-airflow-providers-airbyte==4.0.0
 apache-airflow-providers-amazon==9.1.0
 apache-airflow-providers-apache-spark==4.11.3
