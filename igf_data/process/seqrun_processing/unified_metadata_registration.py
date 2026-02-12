@@ -2,7 +2,7 @@ import os, json, time
 from io import StringIO
 from urllib.parse import urljoin
 import pandas as pd
-from typing import List, Dict, Any, Optional, Tuple, Union
+from typing import Any
 from abc import ABC, abstractmethod
 from igf_data.igfdb.baseadaptor import BaseAdaptor
 from igf_data.igfdb.projectadaptor import ProjectAdaptor
@@ -13,16 +13,15 @@ from igf_portal.api_utils import get_data_from_portal
 from igf_data.igfdb.igfTables import (
   Project,
   User,
-  Sample,
-  ProjectUser)
+  Sample
+)
 from jsonschema import (
-  Draft4Validator,
-  ValidationError)
+  Draft4Validator
+)
 from igf_data.utils.fileutils import (
-  get_temp_dir,
-  remove_dir,
   read_json_data,
-  check_file_path)
+  check_file_path
+)
 
 def _get_db_session_class(db_config_file: str) -> Any:
   try:
@@ -48,18 +47,18 @@ class MetadataContext:
     metadata_fetched: bool = False,
     samples_required: bool = False,
     fetched_metadata_dict: dict[str, int] = {},
-    raw_metadata_dict: Dict[int, List[Any]] = {},
-    checked_required_column_dict: Dict[int, bool] = {},
-    validated_metadata_dict: Dict[int, bool] = {},
-    registered_metadata_dict: Dict[int, bool] = {},
-    synced_metadata_dict: Dict[int, bool] = {},
-    table_columns: Dict[str, List[Any]] = {
+    raw_metadata_dict: dict[int, list[Any]] = {},
+    checked_required_column_dict: dict[int, bool] = {},
+    validated_metadata_dict: dict[int, bool] = {},
+    registered_metadata_dict: dict[int, bool] = {},
+    synced_metadata_dict: dict[int, bool] = {},
+    table_columns: dict[str, list[Any]] = {
       "project": ["project_igf_id", "deliverable"],
       "project_user": ["project_igf_id", "email_id"],
       "user": ["name", "email_id", "username"],
       "sample": ["sample_igf_id", "project_igf_id"]},
-    error_list: List[str] = []) \
-      -> None:
+    error_list: list[str] = []
+    ) -> None:
     self.raw_cosmx_metadata_id = raw_cosmx_metadata_id
     self.portal_config_file = portal_config_file
     self.fetch_metadata_url_suffix = fetch_metadata_url_suffix
@@ -117,7 +116,8 @@ class FetchNewMetadataCommand(BaseCommand):
         )
     except Exception as e:
       raise ValueError(
-        f"Failed to fetch new metadata from portal: {e}")
+        f"Failed to fetch new metadata from portal: {e}"
+      )
 
 
 class CheckRawMetadataColumnsCommand(BaseCommand):
@@ -126,10 +126,10 @@ class CheckRawMetadataColumnsCommand(BaseCommand):
   """
   @staticmethod
   def _check_columns(
-    table_columns_dict: Dict[str, list],
-    metadata_columns: List[str],
+    table_columns_dict: dict[str, list],
+    metadata_columns: list[str],
     sample_required: bool,
-    sample_column_name: str = 'sample') -> List[str]:
+    sample_column_name: str = 'sample') -> list[str]:
     """
     Match the columns in the metadata with the required columns.
 
@@ -142,8 +142,11 @@ class CheckRawMetadataColumnsCommand(BaseCommand):
     try:
       error_list = []
       for table_name, table_column_list in table_columns_dict.items():
-        matched_columns = \
-          len(set(table_column_list).intersection(set(metadata_columns))) == len(set(table_column_list))
+        matched_columns = len(
+          set(table_column_list)
+          .intersection(
+            set(metadata_columns))
+          ) == len(set(table_column_list))
         if not matched_columns:
           if table_name != sample_column_name:
             error_list.append(
@@ -158,7 +161,8 @@ class CheckRawMetadataColumnsCommand(BaseCommand):
       return error_list
     except Exception as e:
       raise ValueError(
-        f"Failed to check columns in metadata: {e}")
+        f"Failed to check columns in metadata: {e}"
+      )
 
   def execute(self, metadata_context: MetadataContext) -> None:
     """
@@ -195,7 +199,8 @@ class CheckRawMetadataColumnsCommand(BaseCommand):
           checked_required_column_dict
     except Exception as e:
       raise ValueError(
-        f"Failed to check metadata fields: {e}")
+        f"Failed to check metadata fields: {e}"
+      )
 
 
 class ValidateMetadataCommand(BaseCommand):
@@ -215,9 +220,9 @@ class ValidateMetadataCommand(BaseCommand):
     """
     try:
       error_list = []
-      schema = \
-        read_json_data(
-          metadata_validation_schema)
+      schema = read_json_data(
+        metadata_validation_schema
+      )
       schema = schema[0]
       metadata_validator = Draft4Validator(schema)
       csvStringIO = StringIO(metadata_entry)
@@ -243,7 +248,8 @@ class ValidateMetadataCommand(BaseCommand):
       return error_list
     except Exception as e:
       raise ValueError(
-        f"Failed to validate metadata {metadata_id}: {e}")
+        f"Failed to validate metadata {metadata_id}: {e}"
+      )
 
   def execute(self, metadata_context: MetadataContext) -> None:
     """
@@ -252,26 +258,20 @@ class ValidateMetadataCommand(BaseCommand):
     try:
       error_list = []
       validated_metadata_dict = {}
-      checked_required_column_dict = \
-        metadata_context.checked_required_column_dict
-      raw_meatadata_dict = \
-        metadata_context.raw_metadata_dict
-      metadata_validation_schema = \
-        metadata_context.metadata_validation_schema
-      for metadata_id, validation_status in checked_required_column_dict.items():
+      checked_required = metadata_context.checked_required_column_dict
+      raw_meatadata_dict = metadata_context.raw_metadata_dict
+      validation_schema = metadata_context.metadata_validation_schema
+      for metadata_id, validation_status in checked_required.items():
         if validation_status:
-          metadata_entry = raw_meatadata_dict.get(
-            metadata_id)
+          metadata_entry = raw_meatadata_dict.get(metadata_id)
           if not metadata_entry:
             raise ValueError(
               f"Metadata entry not found for ID: {metadata_id}")
-          # csvStringIO = StringIO(metadata_entry)
-          # metadata_df = pd.read_csv(csvStringIO, header=0)
-          # metadata_dict = metadata_df.to_dict(orient="records")
           validation_error = self._validate_metadata(
             metadata_id=metadata_id,
             metadata_entry=metadata_entry,
-            metadata_validation_schema=metadata_validation_schema)
+            metadata_validation_schema=validation_schema
+          )
           if len(validation_error) > 0:
             error_list.append(validation_error)
             validated_metadata_dict[metadata_id] = False
@@ -285,19 +285,22 @@ class ValidateMetadataCommand(BaseCommand):
       metadata_context.error_list.extend(error_list)
     except Exception as e:
       raise ValueError(
-        f"Failed to validate metadata: {e}")
+        f"Failed to validate metadata: {e}"
+      )
 
 
 class CheckAndRegisterMetadataCommand(BaseCommand):
   @staticmethod
   def _split_metadata(
-    metadata_entry: List[Dict[str, str]],
-    table_columns: Dict[str, list],
-    samples_required: bool) \
-      -> Tuple[List[Dict[str, str]],
-         List[Dict[str, str]],
-         List[Dict[str, str]],
-         List[Dict[str, str]]]:
+    metadata_entry: list[dict[str, str]],
+    table_columns: dict[str, list],
+    samples_required: bool
+    ) -> tuple[
+      list[dict[str, str]],
+      list[dict[str, str]],
+      list[dict[str, str]],
+      list[dict[str, str]]
+    ]:
     """
     Split the metadata into different tables.
     """
@@ -332,105 +335,150 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
         sample_metadata_list)
     except Exception as e:
       raise ValueError(
-        f"Failed to check existing metadata: {e}")
+        f"Failed to check existing metadata: {e}"
+      )
 
   @staticmethod
   def _check_and_filter_existing_metadata(
-    project_metadata_list: List[Dict[str, str]],
-    user_metadata_list: List[Dict[str, str]],
-    project_user_metadata_list: List[Dict[str, str]],
-    sample_metadata_list: List[Dict[str, str]],
-    session_class: Any) \
-      -> Tuple[List[Dict[str, str]], List[Dict[str, str]], List[Dict[str, str]], List[Dict[str, str]], List[str]]:
+    project_metadata_list: list[dict[str, str]],
+    user_metadata_list: list[dict[str, str]],
+    project_user_metadata_list: list[dict[str, str]],
+    sample_metadata_list: list[dict[str, str]],
+    session_class: Any
+  ) -> tuple[
+    list[dict[str, str]],
+    list[dict[str, str]],
+    list[dict[str, str]],
+    list[dict[str, str]],
+    list[str]
+  ]:
     try:
       errors = list()
       # get unique project ids
-      project_igf_ids = \
-        list(set([metadata['project_igf_id'] for metadata in project_metadata_list]))
+      project_igf_ids = list(
+        set([
+          metadata['project_igf_id']
+          for metadata in project_metadata_list
+        ])
+      )
       # get unique user names
-      user_emails = \
-        list(set([metadata['email_id'] for metadata in user_metadata_list]))
+      user_emails = list(
+        set([
+          metadata['email_id']
+          for metadata in user_metadata_list
+        ])
+      )
       # get unique user usernames
-      user_usernames = \
-        list(set([metadata['username'] for metadata in user_metadata_list]))
+      user_usernames = list(
+        set([
+          metadata['username']
+          for metadata in user_metadata_list
+        ])
+      )
       # get unique sample ids
-      sample_igf_ids = \
-        list(set([metadata['sample_igf_id'] for metadata in sample_metadata_list]))
+      sample_igf_ids = list(
+        set([
+          metadata['sample_igf_id']
+          for metadata in sample_metadata_list
+        ])
+      )
       ## 
-      base = \
-        BaseAdaptor(**{'session_class': session_class})
+      base = BaseAdaptor(
+        **{'session_class': session_class}
+      )
       base.start_session()
-      project_query = \
-        base.session.\
-          query(Project).\
-          filter(Project.project_igf_id.in_(project_igf_ids))
-      project_records = \
-        base.fetch_records(
-          query=project_query,
-          output_mode='object')
-      user_email_query = \
-        base.session.\
-          query(User).\
-          filter(User.email_id.in_(user_emails))
-      user_email_records = \
-        base.fetch_records(
-          query=user_email_query,
-          output_mode='object')
-      user_username_query = \
-        base.session.\
-          query(User).\
-          filter(User.username.in_(user_usernames))
-      user_username_records = \
-        base.fetch_records(
-          query=user_username_query,
-          output_mode='object')
+      project_query = (
+        base.session
+        .query(Project)
+        .filter(Project.project_igf_id.in_(project_igf_ids))
+      )
+      project_records = base.fetch_records(
+        query=project_query,
+        output_mode='object'
+      )
+      user_email_query = (
+        base.session
+        .query(User)
+        .filter(User.email_id.in_(user_emails))
+      )
+      user_email_records = base.fetch_records(
+        query=user_email_query,
+        output_mode='object'
+      )
+      user_username_query = (
+        base.session
+        .query(User)
+        .filter(User.username.in_(user_usernames))
+      )
+      user_username_records = base.fetch_records(
+        query=user_username_query,
+        output_mode='object'
+      )
       if len(sample_igf_ids) > 0:
-        sample_query = \
-          base.session.\
-            query(Sample).\
-            filter(Sample.sample_igf_id.in_(sample_igf_ids))
-        sample_records = \
-          base.fetch_records(
-            query=sample_query,
-            output_mode='object')
+        sample_query = (
+          base.session
+          .query(Sample)
+          .filter(Sample.sample_igf_id.in_(sample_igf_ids))
+        )
+        sample_records = base.fetch_records(
+          query=sample_query,
+          output_mode='object'
+        )
       base.close_session()
       # filter out existing project metadata
-      existing_project_igf_ids = \
-        [record.project_igf_id for record in project_records]
-      filtered_project_metadata = \
-        [metadata for metadata in project_metadata_list \
-          if metadata['project_igf_id'] not in existing_project_igf_ids]
+      existing_project_igf_ids = [
+        record.project_igf_id
+        for record in project_records
+      ]
+      filtered_project_metadata = [
+        metadata for metadata in project_metadata_list
+        if metadata['project_igf_id'] not in existing_project_igf_ids
+      ]
       errors.append(
-        f"Skipping existing projects: {' ,'.join(existing_project_igf_ids)}" )
+        "Skipping existing projects: " +
+        ' ,'.join(existing_project_igf_ids)
+      )
       # filter out existing user metadata
-      existing_user_emails = \
-        [record.email_id for record in user_email_records]
-      existing_user_usernames = \
-        [record.username for record in user_username_records]
-      filtered_user_metadata = \
-        [metadata for metadata in user_metadata_list \
-          if metadata['email_id'] not in existing_user_emails]
-      filtered_user_metadata = \
-        [metadata for metadata in filtered_user_metadata \
-          if metadata['username'] not in existing_user_usernames]
+      existing_user_emails = [
+        record.email_id for record in user_email_records
+      ]
+      existing_user_usernames = [
+        record.username for record in user_username_records
+      ]
+      filtered_user_metadata = [
+        metadata for metadata in user_metadata_list
+        if metadata['email_id'] not in existing_user_emails
+      ]
+      filtered_user_metadata = [
+        metadata for metadata in filtered_user_metadata
+        if metadata['username'] not in existing_user_usernames
+      ]
       errors.append(
-        f"Skipping existing emails {' ,'.join(existing_user_emails)}")
+        "Skipping existing emails " +
+        ' ,'.join(existing_user_emails)
+      )
       errors.append(
-        f"Skipping existing usernames {' ,'.join(existing_user_usernames)}")
+        "Skipping existing usernames " +
+        ' ,'.join(existing_user_usernames)
+      )
       # filter out existing sample metadata
       filtered_sample_metadata = []
       if len(sample_igf_ids) > 0:
-        existing_sample_igf_ids = \
-          [record.sample_igf_id for record in sample_records]
-        filtered_sample_metadata = \
-          [metadata for metadata in sample_metadata_list \
-            if metadata['sample_igf_id'] not in existing_sample_igf_ids]
+        existing_sample_igf_ids = [
+          record.sample_igf_id for record in sample_records
+        ]
+        filtered_sample_metadata = [
+          metadata for metadata in sample_metadata_list
+          if metadata['sample_igf_id'] not in existing_sample_igf_ids
+        ]
         errors.append(
-        f"Skipping existing samples {' ,'.join(existing_sample_igf_ids)}")
+          "Skipping existing samples " +
+          ' ,'.join(existing_sample_igf_ids)
+        )
       # filter out existing project user metadata
       filtered_project_user_metadata = [
-        metadata for metadata in project_user_metadata_list \
-          if metadata['project_igf_id'] not in existing_project_igf_ids
+        metadata for metadata in project_user_metadata_list
+        if metadata['project_igf_id'] not in existing_project_igf_ids
       ]
       return (
         filtered_project_metadata,
@@ -441,16 +489,17 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
       )
     except Exception as e:
       raise ValueError(
-        f"Failed to check existing metadata: {e}")
+        f"Failed to check existing metadata: {e}"
+      )
 
   @staticmethod
   def _update_projectuser_metadata(
-    project_user_metadata_list: List[Dict[str, str]],
+    project_user_metadata_list: list[dict[str, str]],
     secondary_user_email: str,
     project_igf_id_col: str = 'project_igf_id',
     email_id_col: str = 'email_id',
-    data_authority_column: str = 'data_authority') \
-      -> List[Dict[Any, Any]]:
+    data_authority_column: str = 'data_authority'
+  ) -> list[dict[Any, Any]]:
     """
     A function for updating project user metadata with data authority column and secondary user
 
@@ -471,26 +520,28 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
           .transform('first')
         )
       # add secondary user
-      merged_df = \
-        pd.concat([
-          df,
-          pd.DataFrame([{
-            project_igf_id_col: project,
-            email_id_col: secondary_user_email,
-            data_authority_column: False}
-              for project in df[project_igf_id_col].unique().tolist()])])
+      merged_df = pd.concat([
+        df,
+        pd.DataFrame([{
+          project_igf_id_col: project,
+          email_id_col: secondary_user_email,
+          data_authority_column: False}
+          for project in df[project_igf_id_col].unique().tolist()
+        ])
+      ])
       return merged_df.to_dict(orient="records")
     except Exception as e:
       raise ValueError(
-        f"Failed to update project user metadata: {e}")
+        f"Failed to update project user metadata: {e}"
+      )
 
   @staticmethod
   def _register_new_metadata(
-    project_metadata_list: List[Dict[str, str]],
-    user_metadata_list: List[Dict[str, str]],
-    project_user_metadata_list: List[Dict[str, str]],
-    sample_metadata_list: List[Dict[str, str]],
-    session_class: Any) -> Tuple[bool, List[str]]:
+    project_metadata_list: list[dict[str, str]],
+    user_metadata_list: list[dict[str, str]],
+    project_user_metadata_list: list[dict[str, str]],
+    sample_metadata_list: list[dict[str, str]],
+    session_class: Any) -> tuple[bool, list[str]]:
     """
     Register new metadata in the database.
 
@@ -503,8 +554,9 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
     """
     try:
       errors = []
-      base = \
-        BaseAdaptor(**{'session_class': session_class})
+      base = BaseAdaptor(
+        **{'session_class': session_class}
+      )
       base.start_session()
       pa = ProjectAdaptor(**{'session': base.session})
       ua = UserAdaptor(**{'session': base.session})
@@ -536,7 +588,8 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
         return False, errors
     except Exception as e:
       raise ValueError(
-        f"Failed to register new metadata: {e}")
+        f"Failed to register new metadata: {e}"
+      )
 
   def execute(self, metadata_context: MetadataContext) -> None:
     try:
@@ -606,7 +659,8 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
       metadata_context.registered_metadata_dict = registered_metadata_dict
     except Exception as e:
       raise ValueError(
-        f"Failed to split metadata: {e}")
+        f"Failed to split metadata: {e}"
+      )
 
 
 class SyncMetadataCommand(BaseCommand):
@@ -651,7 +705,7 @@ class SyncMetadataCommand(BaseCommand):
 
 
 class ChainCommand:
-  def __init__(self, commands: List[BaseCommand]) -> None:
+  def __init__(self, commands: list[BaseCommand]) -> None:
     self.commands = commands
 
   def execute(self, metadata_context: MetadataContext) -> None: 
@@ -659,7 +713,9 @@ class ChainCommand:
       for command in self.commands:
         command.execute(metadata_context)
     except Exception as e:
-      raise ValueError(f"Failed to execute command: error {e}")
+      raise ValueError(
+        f"Failed to execute command: error {e}"
+      )
 
 
 class UnifiedMetadataRegistration:
@@ -691,10 +747,12 @@ class UnifiedMetadataRegistration:
       SyncMetadataCommand()]
     self.chain_command = ChainCommand(self.commands)
 
-  def execute(self) -> List[str]:
+  def execute(self) -> list[str]:
     try:
       self.chain_command.execute(self.metadata_context)
       error_list = self.metadata_context.error_list
       return error_list
     except Exception as e:
-      raise ValueError(f"Failed to fetch and register metadata: {e}")
+      raise ValueError(
+        f"Failed to fetch and register metadata: {e}"
+      )
