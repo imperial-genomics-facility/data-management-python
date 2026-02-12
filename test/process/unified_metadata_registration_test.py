@@ -146,6 +146,10 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
       metadata_context.raw_metadata_dict,
       {"A": '[{"project_igf_id": "A"}]'}
     )
+    self.assertEqual(
+      metadata_context.fetched_metadata_dict,
+      {"A": 1}
+    )
 
 
   def test_CheckRawMetadataColumnsCommand_check_columns(self):
@@ -615,9 +619,9 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
     self.assertIsNotNone(records)
 
   def test_CheckAndRegisterMetadataCommand_execute(self):
-    session_class = \
-      _get_db_session_class(
-        db_config_file=self.db_config_file)
+    _ = _get_db_session_class(
+      db_config_file=self.db_config_file
+    )
     check_and_register = \
       CheckAndRegisterMetadataCommand()
     metadata_context = MetadataContext(
@@ -699,7 +703,10 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
     self.assertIsNone(records.data_authority)
 
 
-  @patch("igf_data.process.seqrun_processing.unified_metadata_registration.get_data_from_portal", return_value=True)
+  @patch(
+    "igf_data.process.seqrun_processing.unified_metadata_registration.get_data_from_portal",
+    return_value=True
+  )
   def test_SyncMetadataCommand_execute(self, *args):
     metadata_context = MetadataContext(
       raw_cosmx_metadata_id=self.raw_cosmx_metadata_id,
@@ -711,14 +718,30 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
       default_project_user_email='c@c.com',
       samples_required=False,
       error_list=[],
-      registered_metadata_dict={1: True, 2: False})
+      fetched_metadata_dict={1:True, 2: True},
+      registered_metadata_dict={1: True})
     sync_metadata = SyncMetadataCommand()
     sync_metadata.execute(metadata_context=metadata_context)
-    self.assertEqual(len(metadata_context.synced_metadata_dict), 2)
+    self.assertEqual(len(metadata_context.synced_metadata_dict), 1)
     self.assertTrue(1 in metadata_context.synced_metadata_dict)
-    self.assertTrue(2 in metadata_context.synced_metadata_dict)
+    # self.assertTrue(2 in metadata_context.synced_metadata_dict)
     self.assertTrue(metadata_context.synced_metadata_dict.get(1))
-    self.assertFalse(metadata_context.synced_metadata_dict.get(2))
+    # self.assertFalse(metadata_context.synced_metadata_dict.get(2))
+    metadata_context = MetadataContext(
+      raw_cosmx_metadata_id=self.raw_cosmx_metadata_id,
+      portal_config_file=self.portal_config_file,
+      fetch_metadata_url_suffix=self.fetch_metadata_url_suffix,
+      sync_metadata_url_suffix=self.sync_metadata_url_suffix,
+      metadata_validation_schema=self.metadata_validation_schema,
+      db_config_file=self.db_config_file,
+      default_project_user_email='c@c.com',
+      samples_required=False,
+      error_list=[],
+      fetched_metadata_dict={1:True},
+      registered_metadata_dict={1: False})
+    with self.assertRaises(Exception):
+      sync_metadata = SyncMetadataCommand()
+      sync_metadata.execute(metadata_context=metadata_context)
 
 class TestUnifiedMetadataRegistrationB(unittest.TestCase):
   def setUp(self):
@@ -753,20 +776,20 @@ class TestUnifiedMetadataRegistrationB(unittest.TestCase):
     if os.path.exists(self.dbname):
       os.remove(self.dbname)
 
-  @patch(
-    "igf_data.process.seqrun_processing.unified_metadata_registration.get_data_from_portal",
-    return_value={
-      "A": pd.DataFrame([{
-            "project_igf_id": "IGFA001",
-            "deliverable": "COSMX",
-            "name": "User BA",
-            "email_id": "a@b.com",
-            "username": "aaaa"}]
-          ).to_csv(index=False)
-    }
-  )
+  # @patch(
+  #   "igf_data.process.seqrun_processing.unified_metadata_registration.get_data_from_portal",
+  #   return_value={
+  #     "A": "B"
+  #   }
+  # )
       # 2: [{"project_igf_id": "IGFA002", "deliverable": "COSMX", "name": "User CQ", "email_id": "a@c.com"}],
       # 3: [{"project_igf_id": "IGFA003", "deliverable": "COSMX", "name": "User DQ", "email_id": "a-c.com", "username": "ddd"}]})
+  @patch(
+    "igf_data.process.seqrun_processing.unified_metadata_registration.get_data_from_portal",
+    return_value={"A": "project_igf_id,deliverable,name," +
+                       "email_id,username\n" +
+                       "IGF001,COSMX,Ba Da,c@d.com,aaa"}
+  )
   def test_UnifiedMetadataRegistration_execute(self, *args):
     metadata_registration = UnifiedMetadataRegistration(
       raw_cosmx_metadata_id=1,

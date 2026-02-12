@@ -47,6 +47,7 @@ class MetadataContext:
     default_project_user_email: str,
     metadata_fetched: bool = False,
     samples_required: bool = False,
+    fetched_metadata_dict: dict[str, int] = {},
     raw_metadata_dict: Dict[int, List[Any]] = {},
     checked_required_column_dict: Dict[int, bool] = {},
     validated_metadata_dict: Dict[int, bool] = {},
@@ -66,6 +67,7 @@ class MetadataContext:
     self.checked_required_column_dict = checked_required_column_dict
     self.validated_metadata_dict = validated_metadata_dict
     self.registered_metadata_dict = registered_metadata_dict
+    self.fetched_metadata_dict = fetched_metadata_dict
     self.synced_metadata_dict = synced_metadata_dict
     self.metadata_fetched = metadata_fetched
     self.metadata_validation_schema = metadata_validation_schema
@@ -104,6 +106,9 @@ class FetchNewMetadataCommand(BaseCommand):
       if len(new_project_data_dict) > 0:
         metadata_context.raw_metadata_dict = new_project_data_dict
         metadata_context.metadata_fetched = True
+        fetched_projects = list(new_project_data_dict.keys())
+        metadata_context.fetched_metadata_dict = {
+          fetched_projects[0]: metadata_context.raw_cosmx_metadata_id}
       else:
         metadata_context.metadata_fetched = False
         raise ValueError(
@@ -611,29 +616,38 @@ class SyncMetadataCommand(BaseCommand):
     """
     try:
       synced_metadata_dict = dict()
-      portal_config_file = \
-        metadata_context.portal_config_file
-      sync_metadata_url_suffix = \
-        metadata_context.sync_metadata_url_suffix
-      registered_metadata_dict = \
-        metadata_context.registered_metadata_dict
+      portal_config_file = metadata_context.portal_config_file
+      sync_metadata_url_suffix = metadata_context.sync_metadata_url_suffix
+      registered_metadata_dict = metadata_context.registered_metadata_dict
+      fetched_metadata_dict = metadata_context.fetched_metadata_dict
       for metadata_id, metadata_status in registered_metadata_dict.items():
-        if metadata_status:
-          metadata_url = urljoin(sync_metadata_url_suffix, str(metadata_id))
-          _ = \
-            get_data_from_portal(
-              url_suffix=metadata_url,
-              portal_config_file=portal_config_file,
-              request_mode='post')
-          time.sleep(2) # wait before next call
-          synced_metadata_dict.update({metadata_id: True})
-        else:
-          synced_metadata_dict.update({metadata_id: False})
-      metadata_context.synced_metadata_dict = \
-        synced_metadata_dict
+        if metadata_id not in fetched_metadata_dict:
+          raise ValueError(
+            f"Cosmx Metadata {metadata_id} is not fetched"
+          )
+        if not metadata_status:
+          raise ValueError(
+            f"Metadata {metadata_id} can not be marked synced on " +
+             "portal as its not registered"
+            )
+        cosmx_raw_metadata = fetched_metadata_dict.get(metadata_id)
+        metadata_url = urljoin(
+          sync_metadata_url_suffix,
+          str(cosmx_raw_metadata)
+        )
+        _ = get_data_from_portal(
+          url_suffix=metadata_url,
+          portal_config_file=portal_config_file,
+          request_mode='post'
+        )
+        synced_metadata_dict.update({
+          metadata_id: True}
+        )
+      metadata_context.synced_metadata_dict = synced_metadata_dict
     except Exception as e:
       raise ValueError(
-        f"Failed to fetch new metadata from portal: {e}")
+        f"Failed to fetch new metadata from portal: {e}"
+      )
 
 
 class ChainCommand:
