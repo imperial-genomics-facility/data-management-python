@@ -221,7 +221,7 @@ class Test_dag44_analysis_registration_utilsA(unittest.TestCase):
     mark_metadata_synced_on_portal.function(
       raw_analysis_id=1,
       registration_status=True)
-    mock_get_data_from_portal.called_once()
+    mock_get_data_from_portal.assert_called_once()
 
 if __name__=='__main__':
   unittest.main()
