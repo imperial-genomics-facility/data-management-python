@@ -97,18 +97,19 @@ class FetchNewMetadataCommand(BaseCommand):
         fetch_metadata_url_suffix,
         str(metadata_context.raw_cosmx_metadata_id)
       )
-      new_project_data_dict = \
-        get_data_from_portal(
-          url_suffix=fetch_url,
-          portal_config_file=portal_config_file)
+      new_project_data_dict = get_data_from_portal(
+        url_suffix=fetch_url,
+        portal_config_file=portal_config_file
+      )
       if len(new_project_data_dict) > 0:
         metadata_context.raw_metadata_dict = new_project_data_dict
         metadata_context.metadata_fetched = True
       else:
         metadata_context.metadata_fetched = False
-        raise KeyError(
-          f"No metadata found on portal for id \
-            {str(metadata_context.raw_cosmx_metadata_id)}")
+        raise ValueError(
+          "No metadata found on portal for id " +
+          str(metadata_context.raw_cosmx_metadata_id)
+        )
     except Exception as e:
       raise ValueError(
         f"Failed to fetch new metadata from portal: {e}")
@@ -141,10 +142,14 @@ class CheckRawMetadataColumnsCommand(BaseCommand):
         if not matched_columns:
           if table_name != sample_column_name:
             error_list.append(
-              f"Missing required columns in {table_name} table: {table_column_list}")
+              f"Missing required columns in {table_name} table: " +
+              ",".join(table_column_list)
+            )
           if table_name == sample_column_name and sample_required:
             error_list.append(
-              f"Missing required columns in {table_name} table: {table_column_list}")
+              f"Missing required columns in {table_name} table: " +
+              ",".join(table_column_list)
+            )
       return error_list
     except Exception as e:
       raise ValueError(
@@ -166,17 +171,18 @@ class CheckRawMetadataColumnsCommand(BaseCommand):
           csvStringIO = StringIO(metadata_csv)
           metadata_df = pd.read_csv(csvStringIO, header=0)
           metadata_df_columns = metadata_df.columns.tolist()
-          column_check_errors = \
-            self._check_columns(
-              table_columns_dict=metadata_context.table_columns,
-              metadata_columns=metadata_df_columns,
-              sample_required=metadata_context.samples_required)
+          column_check_errors = self._check_columns(
+            table_columns_dict=metadata_context.table_columns,
+            metadata_columns=metadata_df_columns,
+            sample_required=metadata_context.samples_required
+          )
           if len(column_check_errors) > 0:
             checked_required_column_dict[metadata_id] = False
             error_list.extend(column_check_errors)
             raise ValueError(
-              f"Failed required column checks, \
-                errors: {column_check_errors}")
+              "Failed required column checks, errors: " +
+              ",".join(column_check_errors)
+            )
           else:
             checked_required_column_dict[metadata_id] = True
         metadata_context.error_list.extend(error_list)
@@ -190,9 +196,10 @@ class CheckRawMetadataColumnsCommand(BaseCommand):
 class ValidateMetadataCommand(BaseCommand):
   @staticmethod
   def _validate_metadata(
-    metadata_id: int,
-    metadata_entry: List[Dict[str, Any]],
-    metadata_validation_schema: str) -> List[str]:
+    metadata_id: str,
+    metadata_entry: str,
+    metadata_validation_schema: str
+  ) -> list[str]:
     """
     Validate the metadata against the schema.
 
@@ -206,20 +213,18 @@ class ValidateMetadataCommand(BaseCommand):
       schema = \
         read_json_data(
           metadata_validation_schema)
-      schema = \
-        schema[0]
-      metadata_validator = \
-        Draft4Validator(schema)
+      schema = schema[0]
+      metadata_validator = Draft4Validator(schema)
       csvStringIO = StringIO(metadata_entry)
       json_data = (
         pd.read_csv(csvStringIO, header=0)
         .fillna('')
         .to_dict(orient='records')
       )
-      validation_errors = \
-        sorted(
-          metadata_validator.iter_errors(json_data),
-          key=lambda e: e.path)
+      validation_errors = sorted(
+        metadata_validator.iter_errors(json_data),
+        key=lambda e: e.path
+      )
       for err in validation_errors:
         if isinstance(err, str):
           error_list.append(err)
@@ -255,6 +260,9 @@ class ValidateMetadataCommand(BaseCommand):
           if not metadata_entry:
             raise ValueError(
               f"Metadata entry not found for ID: {metadata_id}")
+          # csvStringIO = StringIO(metadata_entry)
+          # metadata_df = pd.read_csv(csvStringIO, header=0)
+          # metadata_dict = metadata_df.to_dict(orient="records")
           validation_error = self._validate_metadata(
             metadata_id=metadata_id,
             metadata_entry=metadata_entry,
