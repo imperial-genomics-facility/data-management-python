@@ -318,16 +318,24 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
       for table_name, table_column_list in table_columns.items():
         if table_name == 'project':
           project_metadata_list.extend(
-            metadata_df[table_column_list].to_dict(orient='records'))
+            metadata_df[table_column_list]
+            .to_dict(orient='records')
+          )
         elif table_name == 'sample' and samples_required:
           sample_metadata_list.extend(
-            metadata_df[table_column_list].to_dict(orient='records'))
+            metadata_df[table_column_list]
+            .to_dict(orient='records')
+          )
         elif table_name == 'user':
           user_metadata_list.extend(
-            metadata_df[table_column_list].to_dict(orient='records'))
+            metadata_df[table_column_list]
+            .to_dict(orient='records')
+          )
         elif table_name == 'project_user':
           project_user_metadata.extend(
-            metadata_df[table_column_list].to_dict(orient='records'))
+            metadata_df[table_column_list]
+            .to_dict(orient='records')
+          )
       return (
         project_metadata_list,
         user_metadata_list,
