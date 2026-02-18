@@ -55,7 +55,7 @@ class MetadataContext:
     table_columns: dict[str, list[Any]] = {
       "project": ["project_igf_id", "deliverable"],
       "project_user": ["project_igf_id", "email_id"],
-      "user": ["name", "email_id", "username"],
+      "user": ["name", "email_id", "username", "category"],
       "sample": ["sample_igf_id", "project_igf_id"]},
     error_list: list[str] = []
     ) -> None:
