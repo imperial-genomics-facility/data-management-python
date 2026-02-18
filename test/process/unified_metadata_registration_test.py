@@ -790,8 +790,8 @@ class TestUnifiedMetadataRegistrationB(unittest.TestCase):
   @patch(
     "igf_data.process.seqrun_processing.unified_metadata_registration.get_data_from_portal",
     return_value={"A": "project_igf_id,deliverable,name," +
-                       "email_id,username\n" +
-                       "IGF001,COSMX,Ba Da,c@d.com,aaa"}
+                       "email_id,username,category\n" +
+                       "IGF001,COSMX,Ba Da,c@d.com,aaa,HPC_USER"}
   )
   def test_UnifiedMetadataRegistration_execute(self, *args):
     metadata_registration = UnifiedMetadataRegistration(
