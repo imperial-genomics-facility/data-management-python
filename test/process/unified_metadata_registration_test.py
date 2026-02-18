@@ -373,6 +373,7 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
           "name": "Ga Ga",
           "email_id": "g@g.com",
           "username": "ggg",
+          "category": "HPC_USER",
           "sample_igf_id": "AAA"}])
           .to_csv(index=False)
       },
@@ -640,12 +641,14 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
           "deliverable": "COSMX",
           "name": "Ga Ga",
           "email_id": "g@g.com",
+          "category": "HPC_USER",
           "username": "ggg"}])
           .to_csv(index=False),
         2: pd.DataFrame([{
           "project_igf_id": "IGF001",
           "deliverable": "COSMX",
           "name": "Ba Da",
+          "category": "HPC_USER",
           "username": "aaa"}])
           .to_csv(index=False)},
       validated_metadata_dict={1: True, 2: False})
