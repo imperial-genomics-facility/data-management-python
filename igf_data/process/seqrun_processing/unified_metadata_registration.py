@@ -692,7 +692,7 @@ class SyncMetadataCommand(BaseCommand):
         _ = get_data_from_portal(
           url_suffix=metadata_url,
           portal_config_file=portal_config_file,
-          request_mode='post'
+          request_mode='get'
         )
         synced_metadata_dict.update({
           metadata_id: True}
