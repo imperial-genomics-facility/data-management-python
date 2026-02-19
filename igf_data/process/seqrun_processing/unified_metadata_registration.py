@@ -55,7 +55,7 @@ class MetadataContext:
     table_columns: dict[str, list[Any]] = {
       "project": ["project_igf_id", "deliverable"],
       "project_user": ["project_igf_id", "email_id"],
-      "user": ["name", "email_id", "username"],
+      "user": ["name", "email_id", "username", "category"],
       "sample": ["sample_igf_id", "project_igf_id"]},
     error_list: list[str] = []
     ) -> None:
@@ -318,16 +318,24 @@ class CheckAndRegisterMetadataCommand(BaseCommand):
       for table_name, table_column_list in table_columns.items():
         if table_name == 'project':
           project_metadata_list.extend(
-            metadata_df[table_column_list].to_dict(orient='records'))
+            metadata_df[table_column_list]
+            .to_dict(orient='records')
+          )
         elif table_name == 'sample' and samples_required:
           sample_metadata_list.extend(
-            metadata_df[table_column_list].to_dict(orient='records'))
+            metadata_df[table_column_list]
+            .to_dict(orient='records')
+          )
         elif table_name == 'user':
           user_metadata_list.extend(
-            metadata_df[table_column_list].to_dict(orient='records'))
+            metadata_df[table_column_list]
+            .to_dict(orient='records')
+          )
         elif table_name == 'project_user':
           project_user_metadata.extend(
-            metadata_df[table_column_list].to_dict(orient='records'))
+            metadata_df[table_column_list]
+            .to_dict(orient='records')
+          )
       return (
         project_metadata_list,
         user_metadata_list,
@@ -692,7 +700,7 @@ class SyncMetadataCommand(BaseCommand):
         _ = get_data_from_portal(
           url_suffix=metadata_url,
           portal_config_file=portal_config_file,
-          request_mode='post'
+          request_mode='get'
         )
         synced_metadata_dict.update({
           metadata_id: True}

@@ -253,8 +253,8 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
     #        '"username": "D", "sample_igf_id": "E"}]'
     # }
     metadata_context.raw_metadata_dict = {
-      "A": "project_igf_id,deliverable,name,email_id,username,sample_igf_id\n" +
-           "A,FASTQ,B,C,D,E"
+      "A": "project_igf_id,deliverable,name,email_id,username,category,sample_igf_id\n" +
+           "A,FASTQ,B,C,D,HPC_USER,E"
     }
     metadata_context.samples_required = True
     CheckRawMetadataColumnsCommand().execute(
@@ -284,8 +284,8 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
       default_project_user_email='c@c.com',
       metadata_fetched=True,
       raw_metadata_dict={"A": "project_igf_id,deliverable,name," +
-                              "email_id,username\n" +
-                              "A,FASTQ,B,C,D"
+                              "email_id,username,category\n" +
+                              "A,FASTQ,B,C,D,HPC_USER"
                          },
       samples_required=False)
     CheckRawMetadataColumnsCommand().execute(
@@ -308,24 +308,24 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
     validate = ValidateMetadataCommand()
     errors = validate._validate_metadata(
       metadata_entry="project_igf_id,deliverable,name," +
-                     "email_id,username,sample_igf_id\n" +
-                     "IGF001,COSMX,Ba Da,c@d.com,aaa,IGF001",
+                     "email_id,username,category,sample_igf_id\n" +
+                     "IGF001,COSMX,Ba Da,c@d.com,aaa,HPC_USER,IGF001",
       metadata_validation_schema=self.metadata_validation_schema,
       metadata_id="A"
     )
     self.assertEqual(len(errors), 0)
     errors = validate._validate_metadata(
       metadata_entry="project_igf_id,deliverable,name," +
-                     "email_id,username\n" +
-                     "IGF001,COSMX,Ba Da,c@d.com,aaa",
+                     "email_id,username,category\n" +
+                     "IGF001,COSMX,Ba Da,c@d.com,aaa,HPC_USER",
       metadata_validation_schema=self.metadata_validation_schema,
       metadata_id="A"
     )
     self.assertEqual(len(errors), 0)
     errors = validate._validate_metadata(
       metadata_entry="project_igf_id,deliverable,name," +
-                     "email_id,username\n" +
-                     "IGF001,COSMX,Ba Da,c-d.com,aaa",
+                     "email_id,username,category\n" +
+                     "IGF001,COSMX,Ba Da,c-d.com,aaa,HPC_USER",
       metadata_validation_schema=self.metadata_validation_schema,
       metadata_id=1
     )
@@ -343,8 +343,8 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
       default_project_user_email='c@c.com',
       error_list=[],
       raw_metadata_dict={
-        "A": "project_igf_id,deliverable,name,email_id,username\n" +
-             "IGF001,COSMX,Ba Da,c-d.com,aaa"
+        "A": "project_igf_id,deliverable,name,email_id,username,category\n" +
+             "IGF001,COSMX,Ba Da,c-d.com,aaa,HPC_USER"
         },
       checked_required_column_dict={"A": True})
     with self.assertRaises(Exception):
@@ -373,6 +373,7 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
           "name": "Ga Ga",
           "email_id": "g@g.com",
           "username": "ggg",
+          "category": "HPC_USER",
           "sample_igf_id": "AAA"}])
           .to_csv(index=False)
       },
@@ -640,12 +641,14 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
           "deliverable": "COSMX",
           "name": "Ga Ga",
           "email_id": "g@g.com",
+          "category": "HPC_USER",
           "username": "ggg"}])
           .to_csv(index=False),
         2: pd.DataFrame([{
           "project_igf_id": "IGF001",
           "deliverable": "COSMX",
           "name": "Ba Da",
+          "category": "HPC_USER",
           "username": "aaa"}])
           .to_csv(index=False)},
       validated_metadata_dict={1: True, 2: False})
@@ -787,8 +790,8 @@ class TestUnifiedMetadataRegistrationB(unittest.TestCase):
   @patch(
     "igf_data.process.seqrun_processing.unified_metadata_registration.get_data_from_portal",
     return_value={"A": "project_igf_id,deliverable,name," +
-                       "email_id,username\n" +
-                       "IGF001,COSMX,Ba Da,c@d.com,aaa"}
+                       "email_id,username,category\n" +
+                       "IGF001,COSMX,Ba Da,c@d.com,aaa,HPC_USER"}
   )
   def test_UnifiedMetadataRegistration_execute(self, *args):
     metadata_registration = UnifiedMetadataRegistration(
