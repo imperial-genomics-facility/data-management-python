@@ -253,8 +253,8 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
     #        '"username": "D", "sample_igf_id": "E"}]'
     # }
     metadata_context.raw_metadata_dict = {
-      "A": "project_igf_id,deliverable,name,email_id,username,sample_igf_id\n" +
-           "A,FASTQ,B,C,D,E"
+      "A": "project_igf_id,deliverable,name,email_id,username,category,sample_igf_id\n" +
+           "A,FASTQ,B,C,D,HPC_USER,E"
     }
     metadata_context.samples_required = True
     CheckRawMetadataColumnsCommand().execute(
