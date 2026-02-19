@@ -94,9 +94,9 @@ class FetchNewMetadataCommand(BaseCommand):
     try:
       portal_config_file = metadata_context.portal_config_file
       fetch_metadata_url_suffix = metadata_context.fetch_metadata_url_suffix
-      fetch_url = urljoin(
-        fetch_metadata_url_suffix,
-        str(metadata_context.raw_cosmx_metadata_id)
+      fetch_url = (
+        f"{fetch_metadata_url_suffix}/{str(metadata_context.raw_cosmx_metadata_id)}"
+        .replace("//", "/")
       )
       new_project_data_dict = get_data_from_portal(
         url_suffix=fetch_url,
@@ -693,9 +693,9 @@ class SyncMetadataCommand(BaseCommand):
              "portal as its not registered"
             )
         cosmx_raw_metadata = fetched_metadata_dict.get(metadata_id)
-        metadata_url = urljoin(
-          sync_metadata_url_suffix,
-          str(cosmx_raw_metadata)
+        metadata_url = (
+          f"{sync_metadata_url_suffix}/{str(cosmx_raw_metadata)}"
+          .replace("//", "/")
         )
         _ = get_data_from_portal(
           url_suffix=metadata_url,
