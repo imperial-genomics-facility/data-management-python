@@ -284,8 +284,8 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
       default_project_user_email='c@c.com',
       metadata_fetched=True,
       raw_metadata_dict={"A": "project_igf_id,deliverable,name," +
-                              "email_id,username\n" +
-                              "A,FASTQ,B,C,D"
+                              "email_id,username,category\n" +
+                              "A,FASTQ,B,C,D,HPC_USER"
                          },
       samples_required=False)
     CheckRawMetadataColumnsCommand().execute(
@@ -308,24 +308,24 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
     validate = ValidateMetadataCommand()
     errors = validate._validate_metadata(
       metadata_entry="project_igf_id,deliverable,name," +
-                     "email_id,username,sample_igf_id\n" +
-                     "IGF001,COSMX,Ba Da,c@d.com,aaa,IGF001",
+                     "email_id,username,category,sample_igf_id\n" +
+                     "IGF001,COSMX,Ba Da,c@d.com,aaa,HPC_USER,IGF001",
       metadata_validation_schema=self.metadata_validation_schema,
       metadata_id="A"
     )
     self.assertEqual(len(errors), 0)
     errors = validate._validate_metadata(
       metadata_entry="project_igf_id,deliverable,name," +
-                     "email_id,username\n" +
-                     "IGF001,COSMX,Ba Da,c@d.com,aaa",
+                     "email_id,username,category\n" +
+                     "IGF001,COSMX,Ba Da,c@d.com,aaa,HPC_USER",
       metadata_validation_schema=self.metadata_validation_schema,
       metadata_id="A"
     )
     self.assertEqual(len(errors), 0)
     errors = validate._validate_metadata(
       metadata_entry="project_igf_id,deliverable,name," +
-                     "email_id,username\n" +
-                     "IGF001,COSMX,Ba Da,c-d.com,aaa",
+                     "email_id,username,category\n" +
+                     "IGF001,COSMX,Ba Da,c-d.com,aaa,HPC_USER",
       metadata_validation_schema=self.metadata_validation_schema,
       metadata_id=1
     )
@@ -343,8 +343,8 @@ class TestUnifiedMetadataRegistrationA(unittest.TestCase):
       default_project_user_email='c@c.com',
       error_list=[],
       raw_metadata_dict={
-        "A": "project_igf_id,deliverable,name,email_id,username\n" +
-             "IGF001,COSMX,Ba Da,c-d.com,aaa"
+        "A": "project_igf_id,deliverable,name,email_id,username,category\n" +
+             "IGF001,COSMX,Ba Da,c-d.com,aaa,HPC_USER"
         },
       checked_required_column_dict={"A": True})
     with self.assertRaises(Exception):
