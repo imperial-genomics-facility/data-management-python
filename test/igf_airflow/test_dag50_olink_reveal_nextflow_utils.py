@@ -1,13 +1,10 @@
 import os
 import unittest
-import pytest
-import csv
 from unittest.mock import patch
 from pathlib import Path
 from igf_data.utils.fileutils import (
   get_temp_dir,
   remove_dir)
-from yaml import load, SafeLoader, dump, SafeDumper
 from igf_airflow.utils.dag50_olink_reveal_nextflow_utils import (
     prepare_olink_nextflow_script,
     run_olink_nextflow_script

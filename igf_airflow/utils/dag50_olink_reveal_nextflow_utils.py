@@ -1,7 +1,5 @@
 import os
 import logging
-import pandas as pd
-from typing import Any
 from pathlib import Path
 from datetime import timedelta
 from airflow.models import Variable
@@ -12,8 +10,6 @@ from igf_data.utils.fileutils import (
 from igf_airflow.utils.generic_airflow_utils import (
     get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf,
     send_airflow_failed_logs_to_channels,
-    send_airflow_pipeline_logs_to_channels,
-    collect_analysis_dir,
     parse_analysis_design_and_get_metadata,
     _create_output_from_jinja_template
 )
