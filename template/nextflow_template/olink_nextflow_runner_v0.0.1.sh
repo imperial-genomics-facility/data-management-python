@@ -10,7 +10,7 @@ export NXF_OPTS='-Xms1g -Xmx4g'
 cd {{ WORKDIR }}
 
 $NEXTFLOW_EXE run /rds/general/project/genomics-facility-archive-2019/live/OLINK_DATA/olink_reveal_npx_and_qc_pipeline/main.nf \
-  -with-tower $NEXTFLOW_TOWER \
+  -with-tower "$NEXTFLOW_TOWER" \
   -resume \
   -profile singularity \
   --outdir {{ WORKDIR }}/results \
