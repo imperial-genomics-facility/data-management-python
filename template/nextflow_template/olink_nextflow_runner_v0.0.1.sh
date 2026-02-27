@@ -1,3 +1,6 @@
+## INPUT:
+# * WORKDIR
+# * CONFIG_FILE
 ## ENVS
 source /rds/general/project/genomics-facility-archive-2019/live/tgu/resources/pipeline_resource/nextflow/env.sh
 
