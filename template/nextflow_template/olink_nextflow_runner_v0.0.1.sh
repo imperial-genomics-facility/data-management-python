@@ -1,5 +1,5 @@
 ## ENVS
-source /rds/general/project/genomics-facility-archive-2019/live/tgu/resources/pipeline_resource/nextflow/curioseeker_env.sh
+source /rds/general/project/genomics-facility-archive-2019/live/tgu/resources/pipeline_resource/nextflow/env.sh
 
 export TMPDIR=$EPHEMERAL
 export NXF_OPTS='-Xms1g -Xmx4g'
@@ -10,9 +10,9 @@ $NEXTFLOW_EXE run /rds/general/project/genomics-facility-archive-2019/live/OLINK
   -with-tower $NEXTFLOW_TOWER \
   -resume \
   -profile singularity \
-  --outdir {{ OUTPUT_DIR }} \
+  --outdir {{ WORKDIR }}/results \
   -work-dir {{ WORKDIR }}/work \
-  -with-report {{ OUTPUT_DIR }}/report.html \
-  -with-dag  {{ OUTPUT_DIR }}/dag.html \
-  -with-timeline {{ OUTPUT_DIR }}/timeline.html \
+  -with-report {{ WORKDIR }}/results/report.html \
+  -with-dag  {{ WORKDIR }}/results/dag.html \
+  -with-timeline {{ WORKDIR }}/results/timeline.html \
   -config {{ CONFIG_FILE }}

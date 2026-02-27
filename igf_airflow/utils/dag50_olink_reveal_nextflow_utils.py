@@ -41,6 +41,11 @@ def prepare_olink_nextflow_script(
       work_dir: str
     ) -> str:
   try:
+    ## read design
+    ## prepare plate_design_csv
+    ## get project name
+    ## render conf
+    ## render runner script
     pass
   except Exception as e:
     log.error(e)
