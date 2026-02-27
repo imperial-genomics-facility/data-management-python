@@ -46,7 +46,7 @@ def prepare_olink_nextflow_script(
       design_dict: dict,
       work_dir: str,
       analysis_design_key: str = "analysis_design",
-      seqrun_metadata_key: str = "seqrun_design",
+      seqrun_metadata_key: str = "seqrun_metadata",
       run_base_dir_key: str = "run_base_dir",
       reveal_fixed_lod_csv_key: str = "reveal_fixed_lod_csv",
       sample_type_key: str = "sample_type",
@@ -105,8 +105,8 @@ def prepare_olink_nextflow_script(
         type(plate_design_csv)
       )
     plate_design_file = Path(work_dir) / plate_design_csv_file
-    with open(plate_design_file, "w") as fp:
-      fp.write("\n".join(plate_design_csv_file))
+    with open(plate_design_file.as_posix(), "w") as fp:
+      fp.write("\n".join(plate_design_csv))
     ## get project name
     _, project_name = get_analysis_id_and_project_igf_id_from_airflow_dagrun_conf(
       DATABASE_CONFIG_FILE
@@ -115,7 +115,7 @@ def prepare_olink_nextflow_script(
     nf_conf_file = Path(work_dir) / os.path.basename(OLINK_NEXTFLOW_CONF_TEMPLATE)
     _create_output_from_jinja_template(
       template_file=OLINK_NEXTFLOW_CONF_TEMPLATE,
-      output_file=nf_conf_file,
+      output_file=nf_conf_file.as_posix(),
       autoescape_list=['xml', 'html'],
       data=dict(
         RUN_ID=seqrun_list[0],
@@ -132,7 +132,7 @@ def prepare_olink_nextflow_script(
     nf_script_file = Path(work_dir) / os.path.basename(OLINK_NEXTFLOW_RUNNER_TEMPLATE)
     _create_output_from_jinja_template(
       template_file=OLINK_NEXTFLOW_RUNNER_TEMPLATE,
-      output_file=nf_script_file,
+      output_file=nf_script_file.as_posix(),
       autoescape_list=['xml', 'html'],
       data=dict(
         CONFIG_FILE=nf_conf_file,
@@ -156,7 +156,7 @@ def prepare_olink_nextflow_script(
 def run_olink_nextflow_script(run_script: str):
   try:
     bash_cmd = f"""set -eo pipefail;
-      bash {{ run_script }}"""
+bash { run_script }"""
     return bash_cmd
   except Exception as e:
     log.error(e)
