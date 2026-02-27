@@ -1,3 +1,4 @@
+#!/bin/bash
 ## INPUT:
 # * WORKDIR
 # * CONFIG_FILE
