@@ -1,0 +1,51 @@
+To: {% if send_email_to_user %}{{ customerEmail }}; {{ defaultUser }}{% else %}{{ defaultUser }}{% endif %}
+Subject: COSMX slide export and QC Available for {{ projectName }}
+From: {{ defaultUser }}
+MIME-Version: 1.0
+Content-Type: text/plain
+
+Dear {{ customerName }}, {% if not send_email_to_user %}EMAIL FOR {{ customerEmail }}{% endif %}
+
+We would like to inform you that our wet‑lab team has completed the export of the COSMX slides for your project "{{ projectName }}". The data files and corresponding quality control (QC) reports are now available for your review.
+
+Next steps
+  - Please transfer and back up the exported datasets to your HPC RDS storage.
+  - Review the QC reports and confirm that everything is in order.
+
+Important notes
+  - COSMX slides can be exported only once.
+  - The exported files will remain available on Globus for 30 days and will then be removed.
+  - For future or repeated exports, you will need to either:
+    - run exports and QC checks independently, or
+    - request an AtoMx standalone account for long‑term access and data management.
+
+Our AtoMx account may require cleanup of older slides in the future to make space for new projects.
+
+Accessing your data
+  Data access via Globus (FILES AVAILABLE FOR 30 DAYS):
+
+    Have you already requested for a Globus collection for your project before?
+    - If YES, please check the existing collection for new data files.
+    - If NO, please let us know if we can share this data with you via Globus.
+      {% if hpcUser %}We need your approval before we can share this data with Globus username {{ customerUsername }}@ic.ac.uk.{% else %}Please send us your Globus username / Imperial College's username for this share.{% endif %}
+
+    Helpful guide from Imperial RCS team:
+    - https://icl-rcs-user-guide.readthedocs.io/en/latest/rds/transferringdata/globus/
+
+Please contact us within 7 days if you encounter any QC issues or have questions about the data.
+
+Subscribe to IGF mailing list for updates and announcements:
+https://mailman.ic.ac.uk/mailman/listinfo/igf-users
+
+Kind regards
+Imperial BRC Genomics Facility
+
+Imperial College London
+Burlington Danes Building
+Hammersmith Hospital Campus
+Du Cane Road
+London, W12 0NN
+United Kingdom
+phone +44 (0)20 7594 6521
+Twitter https://twitter.com/ImperialGF
+www.imperial.ac.uk/genomicsfacility
