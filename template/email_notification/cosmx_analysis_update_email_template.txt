@@ -6,7 +6,7 @@ Content-Type: text/plain
 
 Dear {{ customerName }}, {% if not send_email_to_user %}EMAIL FOR {{ customerEmail }}{% endif %}
 
-We would like to inform you that our wet‑lab team has completed the export of the COSMX slides for your project “projectName”. The data files and corresponding quality control (QC) reports are now available for your review.
+We would like to inform you that our wet‑lab team has completed the export of the COSMX slides for your project “{{ projectName }}”. The data files and corresponding quality control (QC) reports are now available for your review.
 
 Next steps
   - Please transfer and back up the exported datasets to your HPC RDS storage.
