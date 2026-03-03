@@ -147,7 +147,8 @@ def prepare_olink_nextflow_script(
 @task.bash(
   task_id="run_olink_nextflow_script",
   retry_delay=timedelta(minutes=5),
-  queue='hpc_16G',
+  queue='hpc_8G4t72hr',
+  pool='batch_job',
   retries=4)
 def run_olink_nextflow_script(run_script: str):
   try:
