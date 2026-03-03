@@ -12,7 +12,8 @@
 ##  * WORKDIR: Work dir path
 
 ## IMPORT ENV
-source /rds/general/project/genomics-facility-archive-2019/live/tgu/resources/pipeline_resource/nextflow/env.sh
+#source /rds/general/project/genomics-facility-archive-2019/live/tgu/resources/pipeline_resource/nextflow/env.sh
+source /rds/general/project/genomics-facility-archive-2019/live/PIPELINE_RESOURCES/NEXTFLOW_REF/NEXTFLOW_ENV/env.sh
 
 cd {{ WORKDIR }}
 
