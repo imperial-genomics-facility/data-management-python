@@ -118,6 +118,8 @@ def prepare_olink_nextflow_script(
         RUN_BASE_DIR=run_base_dir,
         PLATE_DESIGN_CSV=plate_design_file,
         PROJECT_NAME=project_name,
+        REVEAL_FIXED_LOD_CSV=reveal_fixed_lod_csv,
+        PANEL_DATA_ARCHIVE=panelDataArchive,
         SAMPLE_TYPE=sample_type,
         DATA_ANALYSIS_REF_IDS=dataAnalysisRefIds,
         INDEX_PLATE=indexPlate,
