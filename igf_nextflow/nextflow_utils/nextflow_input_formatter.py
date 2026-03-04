@@ -414,7 +414,7 @@ def prepare_nfcore_smrnaseq_input(
     nextflow_params_list.\
       append(f"--outdir {os.path.join(work_dir, 'results')}")
     nextflow_params_list.\
-      append(f"-work-dir {work_dir}")
+      append(f"-work-dir {os.path.join(work_dir, 'work')}")
     nextflow_params_list.\
       append(f"-with-report {os.path.join(work_dir, 'results', 'report.html')}")
     nextflow_params_list.\
@@ -608,7 +608,7 @@ def prepare_nfcore_rnaseq_input(
     nextflow_params_list.\
       append(f"--outdir {os.path.join(work_dir, 'results')}")
     nextflow_params_list.\
-      append(f"-work-dir {work_dir}")
+      append(f"-work-dir {os.path.join(work_dir, 'work')}")
     nextflow_params_list.\
       append('-resume')
     nextflow_params_list.\
@@ -797,7 +797,7 @@ def prepare_nfcore_methylseq_input(
       nextflow_params_list.\
         append(f"--outdir {os.path.join(work_dir, 'results')}")
       nextflow_params_list.\
-        append(f"-work-dir {work_dir}")
+        append(f"-work-dir {os.path.join(work_dir, 'work')}")
       nextflow_params_list.\
         append('-resume')
       nextflow_params_list.\
@@ -1043,7 +1043,7 @@ def prepare_nfcore_sarek_input(
     nextflow_params_list.\
       append(f"--outdir {os.path.join(work_dir, 'results')}")
     nextflow_params_list.\
-      append(f"-work-dir {work_dir}")
+      append(f"-work-dir {os.path.join(work_dir, 'work')}")
     nextflow_params_list.\
       append('-resume')
     nextflow_params_list.\
@@ -1256,7 +1256,7 @@ def prepare_nfcore_ampliseq_input(
     nextflow_params_list.\
       append(f'--metadata {metadata_file}')
     nextflow_params_list.\
-      append(f"-work-dir {work_dir}")
+      append(f"-work-dir {os.path.join(work_dir, 'work')}")
     nextflow_params_list.\
       append(f"--outdir {os.path.join(work_dir, 'results')}")
     nextflow_params_list.\
@@ -1627,7 +1627,7 @@ def prepare_nfcore_atacseq_input(
     nextflow_params_list.\
       append('-resume')
     nextflow_params_list.\
-      append(f"-work-dir {work_dir}")
+      append(f"-work-dir {os.path.join(work_dir, 'work')}")
     nextflow_params_list.\
       append(f"-with-report {os.path.join(work_dir, 'results', 'report.html')}")
     nextflow_params_list.\
@@ -1828,7 +1828,7 @@ def prepare_nfcore_chipseq_input(
     nextflow_params_list.\
       append('-resume')
     nextflow_params_list.\
-      append(f"-work-dir {work_dir}")
+      append(f"-work-dir {os.path.join(work_dir, 'work')}")
     nextflow_params_list.\
       append(f"-with-report {os.path.join(work_dir, 'results', 'report.html')}")
     nextflow_params_list.\
@@ -2030,7 +2030,7 @@ def prepare_nfcore_cutandrun_input(
     nextflow_params_list.\
       append('-resume')
     nextflow_params_list.\
-      append(f"-work-dir {work_dir}")
+      append(f"-work-dir {os.path.join(work_dir, 'work')}")
     nextflow_params_list.\
       append(f"-with-report {os.path.join(work_dir, 'results', 'report.html')}")
     nextflow_params_list.\

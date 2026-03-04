@@ -350,7 +350,7 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
       "--three_prime_adapter AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC"
     check_work_dir = False
     work_dir_path = \
-      f"-work-dir {work_dir}"
+      f"-work-dir {os.path.join(work_dir, 'work')}"
     check_output_dir = False
     output_dir = \
       f"--outdir {os.path.join(work_dir, 'results')}"
@@ -400,7 +400,7 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
       "--three_prime_adapter AGATCGGAAGAGCACACGTCTGAACTCCAGTCAC"
     check_work_dir = False
     work_dir_path = \
-      f"-work-dir {work_dir}"
+      f"-work-dir {os.path.join(work_dir, 'work')}"
     check_output_dir = False
     output_dir = \
       f"--outdir {os.path.join(work_dir, 'results')}"
@@ -522,7 +522,7 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
       "--aligner star_rsem"
     check_work_dir = False
     work_dir_path = \
-      f"-work-dir {work_dir}"
+      f"-work-dir {os.path.join(work_dir, 'work')}"
     check_output_dir = False
     output_dir = \
       f"--outdir {os.path.join(work_dir, 'results')}"
@@ -572,7 +572,7 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
       "--aligner star_rsem"
     check_work_dir = False
     work_dir_path = \
-      f"-work-dir {work_dir}"
+      f"-work-dir {os.path.join(work_dir, 'work')}"
     check_output_dir = False
     output_dir = \
       f"--outdir {os.path.join(work_dir, 'results')}"
@@ -670,7 +670,7 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
       "--aligner bismark"
     check_work_dir = False
     work_dir_path = \
-      f"-work-dir {work_dir}"
+      f"-work-dir {os.path.join(work_dir, 'work')}"
     check_output_dir = False
     output_dir = \
       f"--outdir {os.path.join(work_dir, 'results')}"
@@ -714,7 +714,7 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
       "--aligner bismark"
     check_work_dir = False
     work_dir_path = \
-      f"-work-dir {work_dir}"
+      f"-work-dir {os.path.join(work_dir, 'work')}"
     check_output_dir = False
     output_dir = \
       f"--outdir {os.path.join(work_dir, 'results')}"
@@ -871,7 +871,7 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
       "--step mapping"
     check_work_dir = False
     work_dir_path = \
-      f"-work-dir {work_dir}"
+      f"-work-dir {os.path.join(work_dir, 'work')}"
     check_output_dir = False
     output_dir = \
       f"--outdir {os.path.join(work_dir, 'results')}"
@@ -921,7 +921,7 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
       "--step mapping"
     check_work_dir = False
     work_dir_path = \
-      f"-work-dir {work_dir}"
+      f"-work-dir {os.path.join(work_dir, 'work')}"
     check_output_dir = False
     output_dir = \
       f"--outdir {os.path.join(work_dir, 'results')}"
@@ -1039,7 +1039,7 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
       "--FW_primer GTGYCAGCMGCCGCGGTAA"
     check_work_dir = False
     work_dir_path = \
-      f"-work-dir {work_dir}"
+      f"-work-dir {os.path.join(work_dir, 'work')}"
     check_output_dir = False
     output_dir = \
       f"--outdir {os.path.join(work_dir, 'results')}"
@@ -1095,7 +1095,7 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
       "--FW_primer GTGYCAGCMGCCGCGGTAA"
     check_work_dir = False
     work_dir_path = \
-      f"-work-dir {work_dir}"
+      f"-work-dir {os.path.join(work_dir, 'work')}"
     check_output_dir = False
     output_dir = \
       f"--outdir {os.path.join(work_dir, 'results')}"
@@ -1205,7 +1205,7 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
       "--genome GRCh38"
     check_work_dir = False
     work_dir_path = \
-      f"-work-dir {work_dir}"
+      f"-work-dir {os.path.join(work_dir, 'work')}"
     check_output_dir = False
     output_dir = \
       f"--outdir {os.path.join(work_dir, 'results')}"
@@ -1255,7 +1255,7 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
       "--genome GRCh38"
     check_work_dir = False
     work_dir_path = \
-      f"-work-dir {work_dir}"
+      f"-work-dir {os.path.join(work_dir, 'work')}"
     check_output_dir = False
     output_dir = \
       f"--outdir {os.path.join(work_dir, 'results')}"
@@ -1363,7 +1363,7 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
       "--genome GRCh38"
     check_work_dir = False
     work_dir_path = \
-      f"-work-dir {work_dir}"
+      f"-work-dir {os.path.join(work_dir, 'work')}"
     check_output_dir = False
     output_dir = \
       f"--outdir {os.path.join(work_dir, 'results')}"
@@ -1413,7 +1413,7 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
       "--genome GRCh38"
     check_work_dir = False
     work_dir_path = \
-      f"-work-dir {work_dir}"
+      f"-work-dir {os.path.join(work_dir, 'work')}"
     check_output_dir = False
     output_dir = \
       f"--outdir {os.path.join(work_dir, 'results')}"
@@ -1526,7 +1526,7 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
       "--genome GRCh38"
     check_work_dir = False
     work_dir_path = \
-      f"-work-dir {work_dir}"
+      f"-work-dir {os.path.join(work_dir, 'work')}"
     check_output_dir = False
     output_dir = \
       f"--outdir {os.path.join(work_dir, 'results')}"
@@ -1576,7 +1576,7 @@ class Prepare_nfcore_input_testA(unittest.TestCase):
       "--genome GRCh38"
     check_work_dir = False
     work_dir_path = \
-      f"-work-dir {work_dir}"
+      f"-work-dir {os.path.join(work_dir, 'work')}"
     check_output_dir = False
     output_dir = \
       f"--outdir {os.path.join(work_dir, 'results')}"
