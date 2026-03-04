@@ -33,7 +33,7 @@ $NEXTFLOW_EXE run $CURIOSEEKER_SOFTWARE_PATH/curioseeker-v3.0.0/main.nf \
   --igenomes_base $CURIOSEEKER_IGENOME_PATH \
   --input {{ SAMPLESHEET_CSV }} \
   --outdir {{ OUTPUT_DIR }} \
-  -work-dir {{ WORKDIR }} \
+  -work-dir {{ WORKDIR }}/work \
   -with-report {{ OUTPUT_DIR }}/report.html \
   -with-dag  {{ OUTPUT_DIR }}/dag.html \
   -with-timeline {{ OUTPUT_DIR }}/timeline.html \
