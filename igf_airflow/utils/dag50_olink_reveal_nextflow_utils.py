@@ -37,7 +37,8 @@ OLINK_NEXTFLOW_RUNNER_TEMPLATE = Variable.get(
   task_id="prepare_olink_nextflow_script",
   retry_delay=timedelta(minutes=5),
   retries=4,
-  queue='hpc_4G')
+  queue='hpc_4G',
+  multiple_outputs=False)
 def prepare_olink_nextflow_script(
       design_dict: dict,
       work_dir: str,
