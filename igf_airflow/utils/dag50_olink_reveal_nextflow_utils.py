@@ -138,7 +138,7 @@ def prepare_olink_nextflow_script(
         WORKDIR=work_dir
       )
     )
-    return nf_script_file
+    return nf_script_file.as_posix()
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
