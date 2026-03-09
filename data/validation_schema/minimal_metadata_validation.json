@@ -24,7 +24,7 @@
             },
             "name" : {
               "type" : "string",
-              "pattern": "^\\w+\\s\\w+\\s?\\w+?$",
+              "pattern": "^\\w+[,]?\\s\\w+\\s?\\w+?$",
               "maxLength": 40
             },
             "username" : {
