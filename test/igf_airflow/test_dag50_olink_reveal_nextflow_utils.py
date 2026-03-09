@@ -77,19 +77,21 @@ analysis_metadata:
     assert len(csv_data.split("\n")) == 5
     assert "well_id;sample_id;sample_type\nA1;A200;SAMPLE" in csv_data
     assert "G11;Olink_external_control1;NEGATIVE_CONTROL" in csv_data
+    run_cmd = analysis_script_conf["run_cmd"]
+    assert run_cmd == f"""set -eo pipefail;
+## Move to the script dir
+cd {os.path.dirname(analysis_script)} ;
+chmod u+x {analysis_script} ;
+bash {analysis_script} ;"""
 
 
 
   def test_run_olink_nextflow_script(self):
     script_file = "/tmp/t.sh"
     analysis_cmd = run_olink_nextflow_script.function(
-      script_file
+      run_cmd="echo test"
     )
-    assert analysis_cmd == f"""set -eo pipefail;
-## Move to the script dir
-cd {os.path.dirname(script_file)} ;
-chmod u+x {script_file} ;
-bash {script_file} ;"""
+    assert analysis_cmd == "echo test"
 
 if __name__=='__main__':
   unittest.main()
