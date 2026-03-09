@@ -156,6 +156,8 @@ def prepare_olink_nextflow_script(
 def run_olink_nextflow_script(run_script: str):
   try:
     bash_cmd = f"""set -eo pipefail;
+cd { os.path.dirname(run_script) };
+chmod u+x { run_script };
 bash { run_script }"""
     return bash_cmd
   except Exception as e:
