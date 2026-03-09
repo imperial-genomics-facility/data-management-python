@@ -38,7 +38,7 @@ OLINK_NEXTFLOW_RUNNER_TEMPLATE = Variable.get(
   retry_delay=timedelta(minutes=5),
   retries=4,
   queue='hpc_4G',
-  multiple_outputs=False)
+  multiple_outputs=True)
 def prepare_olink_nextflow_script(
       design_dict: dict,
       work_dir: str,
@@ -138,7 +138,7 @@ def prepare_olink_nextflow_script(
         WORKDIR=work_dir
       )
     )
-    return nf_script_file.as_posix()
+    return {"run_script": nf_script_file.as_posix()}
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
@@ -153,13 +153,14 @@ def prepare_olink_nextflow_script(
   queue='hpc_8G4t72hr',
   pool='batch_job',
   retries=4)
-def run_olink_nextflow_script(run_script: str):
+def run_olink_nextflow_script(run_script: str) -> str:
   try:
     script_dir = os.path.dirname(run_script)
     bash_cmd = f"""set -eo pipefail;
-cd {script_dir};
-chmod u+x {run_script};
-bash {run_script}"""
+## Move to the script dir
+cd {script_dir} ;
+chmod u+x {run_script} ;
+bash {run_script} ;"""
     return bash_cmd
   except Exception as e:
     log.error(e)
