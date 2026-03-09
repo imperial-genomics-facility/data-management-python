@@ -157,6 +157,7 @@ def run_olink_nextflow_script(run_script: str) -> str:
   try:
     script_dir = os.path.dirname(run_script)
     bash_cmd = f"""set -eo pipefail;
+## Move to the script dir
 cd {script_dir} ;
 chmod u+x {run_script} ;
 bash {run_script} ;"""

@@ -85,7 +85,11 @@ analysis_metadata:
     analysis_cmd = run_olink_nextflow_script.function(
       script_file
     )
-    assert analysis_cmd == f"set -eo pipefail;\ncd {os.path.dirname(script_file)};\nchmod u+x {script_file};\nbash {script_file}"
+    assert analysis_cmd == f"""set -eo pipefail;
+## Move to the script dir
+cd {os.path.dirname(script_file)} ;
+chmod u+x {script_file} ;
+bash {script_file} ;"""
 
 if __name__=='__main__':
   unittest.main()
