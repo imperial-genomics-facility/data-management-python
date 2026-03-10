@@ -78,9 +78,10 @@ analysis_metadata:
     assert "well_id;sample_id;sample_type\nA1;A200;SAMPLE" in csv_data
     assert "G11;Olink_external_control1;NEGATIVE_CONTROL" in csv_data
     run_cmd = analysis_script_conf["run_cmd"]
+    script_path = os.path.dirname(analysis_script)
     assert run_cmd == f"""set -eo pipefail;
 ## Move to the script dir
-cd {os.path.dirname(analysis_script)} ;
+cd {script_path} ;
 chmod u+x {analysis_script} ;
 bash {analysis_script} ;"""
 
