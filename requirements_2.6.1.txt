@@ -9,7 +9,7 @@ apache-airflow-providers-ssh==3.7.0
 apache-airflow-providers-cncf-kubernetes==7.0.0
 apache-airflow-providers-common-sql==1.5.1
 apache-airflow-providers-ftp==3.4.1
-apache-airflow-providers-http==4.4.1
+apache-airflow-providers-http==6.0.0
 apache-airflow-providers-imap==3.2.1
 apache-airflow-providers-postgres==5.5.0
 apache-airflow-providers-redis==3.2.0
