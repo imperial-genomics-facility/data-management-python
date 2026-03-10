@@ -52,7 +52,7 @@ def prepare_olink_nextflow_script(
       plate_design_csv_key: str = "plate_design_csv",
       indexPlate_key: str = "indexPlate",
       plate_design_csv_file: str = "plate_design.csv"
-    ) -> str:
+    ) -> dict[str, str]:
   try:
     ## read design and get sample metadata
     design_file = \
@@ -138,7 +138,14 @@ def prepare_olink_nextflow_script(
         WORKDIR=work_dir
       )
     )
-    return {"run_script": nf_script_file.as_posix()}
+    run_script = nf_script_file.as_posix()
+    script_dir = os.path.dirname(run_script)
+    run_cmd = f"""set -eo pipefail;
+## Move to the script dir
+cd {script_dir} ;
+chmod u+x {run_script} ;
+bash {run_script} ;"""
+    return {"run_script": run_script, "run_cmd": run_cmd}
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
@@ -153,15 +160,9 @@ def prepare_olink_nextflow_script(
   queue='hpc_8G4t72hr',
   pool='batch_job',
   retries=4)
-def run_olink_nextflow_script(run_script: str) -> str:
+def run_olink_nextflow_script(run_cmd: str) -> str:
   try:
-    script_dir = os.path.dirname(run_script)
-    bash_cmd = f"""set -eo pipefail;
-## Move to the script dir
-cd {script_dir} ;
-chmod u+x {run_script} ;
-bash {run_script} ;"""
-    return bash_cmd
+    return run_cmd
   except Exception as e:
     log.error(e)
     send_airflow_failed_logs_to_channels(
