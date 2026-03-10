@@ -80,7 +80,6 @@ analysis_metadata:
     run_cmd = analysis_script_conf["run_cmd"]
     script_path = os.path.dirname(analysis_script)
     assert run_cmd == f"""set -eo pipefail;
-## Move to the script dir
 cd {script_path} ;
 chmod u+x {analysis_script} ;
 bash {analysis_script} ;"""
