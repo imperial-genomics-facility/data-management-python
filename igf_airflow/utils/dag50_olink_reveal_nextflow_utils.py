@@ -139,7 +139,7 @@ def prepare_olink_nextflow_script(
       )
     )
     run_script = nf_script_file.as_posix()
-    script_dir = os.path.basename(run_script)
+    script_dir = os.path.dirname(run_script)
     run_cmd = f"""set -eo pipefail;
 ## Move to the script dir
 cd {script_dir} ;
