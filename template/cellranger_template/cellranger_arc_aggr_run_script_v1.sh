@@ -18,7 +18,7 @@
 ##
 
 ## IMPORT ENV
-source /rds/general/project/genomics-facility-archive-2019/live/tgu/resources/pipeline_resource/cellranger/env.sh
+source /rds/general/project/genomics-facility-archive-2019/live/PIPELINE_RESOURCES/CELLRANGER_ENV/env.sh
 
 cd {{ WORKDIR }}
 
