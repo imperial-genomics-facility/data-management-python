@@ -351,7 +351,10 @@ def run_cellranger_script(
 def run_single_sample_scanpy(
       sample_group: str,
       cellranger_output_dir: str,
-      design_dict: dict) -> dict:
+      design_dict: dict,
+      count_dir: str = "count",
+      feature_bc_matrix_name: str = "sample_filtered_feature_bc_matrix.h5"
+    ) -> dict:
   try:
     ## set cellranger counts dir
     cellranger_counts_dir = \
@@ -359,8 +362,17 @@ def run_single_sample_scanpy(
         cellranger_output_dir,
         'outs',
         'per_sample_outs',
-        sample_group,
-        'count')
+        sample_group)
+    if not os.path.exists(
+      os.path.join(
+        cellranger_counts_dir,
+        feature_bc_matrix_name
+      )
+    ):
+      cellranger_counts_dir = os.path.join(
+        cellranger_counts_dir,
+        count_dir
+      )
     ## set scanpy dir
     scanpy_output_dir = \
       os.path.join(
