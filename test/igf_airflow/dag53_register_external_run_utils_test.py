@@ -1,5 +1,4 @@
 import os
-import json
 import unittest
 from unittest.mock import patch, MagicMock
 
@@ -20,7 +19,7 @@ class Test_dag53_register_external_run_utils(unittest.TestCase):
   @patch(f"{MODULE}.send_airflow_failed_logs_to_channels")
   @patch(f"{MODULE}.upload_files_to_portal")
   @patch(f"{MODULE}._load_interop_overview_data_to_seqrun_attribute")
-  @patch(f"{MODULE}.get_temp_dir", return_value="/tmp/test_temp")
+  @patch(f"{MODULE}.get_temp_dir", return_value="/test_temp")
   @patch(f"{MODULE}.RunInfo_xml")
   @patch(f"{MODULE}.register_new_seqrun_to_db")
   @patch(f"{MODULE}._load_interop_data_to_db")

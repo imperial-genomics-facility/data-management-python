@@ -1,4 +1,5 @@
 import os
+import json
 import logging
 from datetime import timedelta
 from airflow.models import Variable
@@ -16,7 +17,6 @@ from igf_portal.api_utils import upload_files_to_portal
 from igf_data.utils.fileutils import (
   get_temp_dir
 )
-import os, json
 from igf_data.illumina.runinfo_xml import RunInfo_xml
 
 log = logging.getLogger(__name__)
