@@ -231,6 +231,9 @@ def full_suite():
   from .igf_airflow.test_dag50_olink_reveal_nextflow_utils import (
     Test_dag50_olink_reveal_nextflow_utilsA
   )
+  from .igf_airflow.dag53_register_external_run_utils_test import (
+    Test_dag53_register_external_run_utils
+  )
 
 
   return unittest.TestSuite([
@@ -380,6 +383,7 @@ def full_suite():
         Test_dag45_metadata_registration_utilsA,
         Test_dag44_analysis_registration_utilsA,
         Test_dag49_cosmx_metadata_registration_utilsA,
-        Test_dag50_olink_reveal_nextflow_utilsA
+        Test_dag50_olink_reveal_nextflow_utilsA,
+        Test_dag53_register_external_run_utils
       ]
     ])
