@@ -140,5 +140,43 @@ class Test_dag54_metadata_rehydrate_utilsA(unittest.TestCase):
     assert "AAABBBC_something.csv" in os.listdir(new_metadata_dir)
     assert "AAABBB_something.csv" not in os.listdir(new_metadata_dir)
 
+  @patch(f"{MODULE_PATH}.get_current_context")
+  @patch(f"{MODULE_PATH}.DATABASE_CONFIG_FILE", 'data/dbconfig.json')
+  def test_get_current_metadata_files_func(self, mock_context):
+    mock_dagrun = MagicMock()
+    mock_dagrun.dag_run.conf.project_id = 2
+    mock_dagrun.get.return_value = mock_dagrun.dag_run
+    mock_dagrun.dag_run.conf.get.return_value = 2
+    mock_context.return_value = mock_dagrun
+    metadata_dir = os.path.join(self.temp_dir, "metadat1")
+    os.makedirs(metadata_dir, exist_ok=True)
+    with open(os.path.join(metadata_dir, "AAABBB_something.csv"), "w") as fp:
+      fp.write("A")
+    with open(os.path.join(metadata_dir, "AAABBBC_something.csv"), "w") as fp:
+      fp.write("A")
+    project1 = Project(
+      project_id=1,
+      project_igf_id="AAABBB"
+    )
+    project2 = Project(
+      project_id=2,
+      project_igf_id="AAABBBC"
+    )
+    base = BaseAdaptor(
+      **{"session_class": self.session_class}
+    )
+    base.start_session()
+    base.session.add(project1)
+    base.session.add(project2)
+    base.session.flush()
+    base.session.commit()
+    base.close_session()
+    result_dict = get_current_metadata_files_func.function(
+      metadata_dir=metadata_dir
+    )
+    assert "metadata_dir" in result_dict
+
+
+
 if __name__=='__main__':
   unittest.main()
