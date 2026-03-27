@@ -1,5 +1,4 @@
 import os
-import json
 import logging
 from datetime import timedelta
 from airflow.models import Variable
@@ -8,17 +7,10 @@ from airflow.operators.python import get_current_context
 from igf_airflow.utils.generic_airflow_utils import (
     send_airflow_failed_logs_to_channels,
 )
-from igf_airflow.utils.dag25_copy_seqruns_to_hpc_utils import (
-    _create_interop_report,
-    _load_interop_data_to_db,
-    _load_interop_overview_data_to_seqrun_attribute,
-    register_new_seqrun_to_db)
-from igf_portal.api_utils import upload_files_to_portal
 from igf_data.utils.fileutils import (
   get_temp_dir,
   copy_local_file
 )
-from igf_data.illumina.runinfo_xml import RunInfo_xml
 from igf_airflow.utils.dag20_portal_metadata_utils import (
   _get_all_known_projects
 )
@@ -98,7 +90,7 @@ def _remove_target_project_from_list(
   task_id="get_known_projects_func",
   retry_delay=timedelta(minutes=5),
   retries=4,
-  queue='hpc_4G',  
+  queue='hpc_4G',
   multiple_outputs=True)
 def get_known_projects_func(
   xcom_key: str = 'known_projects',
