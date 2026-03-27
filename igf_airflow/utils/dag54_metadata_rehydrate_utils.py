@@ -156,7 +156,7 @@ def _find_and_move_metadata_for_current_project(
   task_id="get_current_metadata_files_func",
   retry_delay=timedelta(minutes=5),
   retries=4,
-  queue='hpc_4G',  
+  queue='hpc_4G',
   multiple_outputs=True)
 def get_current_metadata_files_func(
   metadata_dir: str,
