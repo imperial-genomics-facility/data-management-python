@@ -664,7 +664,7 @@ def bcl_convert_run_func(**context):
       bcl_num_compression_threads=1,
       bcl_num_decompression_threads=1,
       bcl_num_parallel_tiles=1,
-      tiles='110[1-5]'
+      tiles='110[1-3]'
     )
     check_file_path(
       os.path.join(
