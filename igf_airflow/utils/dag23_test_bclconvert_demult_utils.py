@@ -564,103 +564,127 @@ def bcl_convert_run_func(**context):
   try:
     ti = context.get('ti')
     dag_run = context.get('dag_run')
-    demult_dir_key = \
-      context['params'].\
-      get(
+    demult_dir_key = (
+      context['params']
+      .get(
         'demult_dir_key',
         'demult_dir')
-    demult_info_key = \
-      context['params'].\
-      get(
+    )
+    demult_info_key = (
+      context['params']
+      .get(
         'demult_info_key',
         'demult_info')
-    formatted_samplesheet_xcom_key = \
-      context['params'].\
-      get(
+    )
+    formatted_samplesheet_xcom_key = (
+      context['params']
+      .get(
         'formatted_samplesheet_xcom_key',
         'formatted_samplesheet_data')
-    formatted_samplesheet_xcom_task = \
-      context['params'].\
-      get(
+    )
+    formatted_samplesheet_xcom_task = (
+      context['params']
+      .get(
         'formatted_samplesheet_xcom_task',
         'get_formatted_samplesheets')
-    samplesheet_index = \
-      context['params'].\
-      get('samplesheet_index')
-    index_column = \
-      context['params'].\
-      get('index_column', 'index')
-    lane_column = \
-      context['params'].\
-      get('lane_column', 'lane')
-    filtered_df = \
-      _fetch_formatted_samplesheet_info_from_task_instance(
-        ti=ti,
-        samplesheet_index=samplesheet_index,
-        index_column=index_column,
-        samplesheet_key=formatted_samplesheet_xcom_key,
-        samplesheet_task=formatted_samplesheet_xcom_task)
+    )
+    samplesheet_index = (
+      context['params']
+      .get('samplesheet_index')
+    )
+    index_column = (
+      context['params']
+      .get('index_column', 'index')
+    )
+    lane_column = (
+      context['params']
+      .get('lane_column', 'lane')
+    )
+    filtered_df = _fetch_formatted_samplesheet_info_from_task_instance(
+      ti=ti,
+      samplesheet_index=samplesheet_index,
+      index_column=index_column,
+      samplesheet_key=formatted_samplesheet_xcom_key,
+      samplesheet_task=formatted_samplesheet_xcom_task
+    )
     lane_id = filtered_df[lane_column].values[0]
     if str(lane_id) != 'all':
       lane_id = int(lane_id)
     else:
       lane_id = 0
-    mod_samplesheet_xcom_key = \
-      context['params'].\
-      get(
+    mod_samplesheet_xcom_key = (
+      context['params']
+      .get(
         'mod_samplesheet_xcom_key',
         'mod_samplesheet')
-    mod_samplesheet_xcom_task = \
-      context['params'].\
-      get('mod_samplesheet_xcom_task')
-    samplesheet_file = \
-      ti.xcom_pull(
-        task_ids=mod_samplesheet_xcom_task,
-        key=mod_samplesheet_xcom_key)
-    check_file_path(samplesheet_file)
+    )
+    mod_samplesheet_xcom_task = (
+      context['params']
+      .get('mod_samplesheet_xcom_task')
+    )
+    samplesheet_file = ti.xcom_pull(
+      task_ids=mod_samplesheet_xcom_task,
+      key=mod_samplesheet_xcom_key
+    )
+    check_file_path(
+      samplesheet_file
+    )
     seqrun_id = None
-    if dag_run is not None and \
-       dag_run.conf is not None and \
-       dag_run.conf.get('seqrun_id') is not None:
-      seqrun_id = \
-        dag_run.conf.get('seqrun_id')
+    if (
+      dag_run is not None and
+      dag_run.conf is not None and
+      dag_run.conf.get('seqrun_id') is not None
+    ):
+      seqrun_id = dag_run.conf.get(
+        'seqrun_id'
+      )
     if seqrun_id is None:
-      raise ValueError('seqrun_id is not found in dag_run.conf')
+      raise ValueError(
+        'seqrun_id is not found in dag_run.conf'
+      )
     # seqrun path
-    seqrun_path = \
-      os.path.join(HPC_SEQRUN_BASE_PATH, seqrun_id)
-    temp_dir = \
-      get_temp_dir(use_ephemeral_space=True)
-    demult_dir = \
-      os.path.join(
-        temp_dir,
-        'demult')
-    cmd = \
-      bclconvert_singularity_wrapper(
-        image_path=BCLCONVERT_IMAGE,
-        input_dir=seqrun_path,
-        output_dir=demult_dir,
-        lane_id=lane_id,
-        samplesheet_file=samplesheet_file,
-        bcl_num_conversion_threads=1,
-        bcl_num_compression_threads=1,
-        bcl_num_decompression_threads=1,
-        bcl_num_parallel_tiles=1,
-        first_tile_only=True)
+    seqrun_path = os.path.join(
+      HPC_SEQRUN_BASE_PATH,
+      seqrun_id
+    )
+    temp_dir = get_temp_dir(
+      use_ephemeral_space=True
+    )
+    demult_dir = os.path.join(
+      temp_dir,
+      'demult'
+    )
+    _ = bclconvert_singularity_wrapper(
+      image_path=BCLCONVERT_IMAGE,
+      input_dir=seqrun_path,
+      output_dir=demult_dir,
+      lane_id=lane_id,
+      samplesheet_file=samplesheet_file,
+      bcl_num_conversion_threads=1,
+      bcl_num_compression_threads=1,
+      bcl_num_decompression_threads=1,
+      bcl_num_parallel_tiles=1,
+      tiles='110[1-3]'
+    )
     check_file_path(
       os.path.join(
         demult_dir,
         'Reports',
-        'Demultiplex_Stats.csv'))
+        'Demultiplex_Stats.csv'
+      )
+    )
     ti.xcom_push(
       key=demult_dir_key,
-      value=demult_dir)
+      value=demult_dir
+    )
     demult_info = {
       index_column: samplesheet_index,
-      'demult_dir': demult_dir}
+      'demult_dir': demult_dir
+    }
     ti.xcom_push(
       key=demult_info_key,
-      value=demult_info)
+      value=demult_info
+    )
   except Exception as e:
     log.error(e)
     ti = context.get('ti')
@@ -669,16 +693,18 @@ def bcl_convert_run_func(**context):
       f"dag_id={ti.dag_id}",
       f"run_id={ti.run_id}",
       f"task_id={ti.task_id}",
-      f"attempt={ti.try_number}.log"]
-    message = \
-      f"Error: {e}, Log: {os.path.join(*log_file_path)}"
+      f"attempt={ti.try_number}.log"
+    ]
+    message = f"Error: {e}," + \
+      f"Log: {os.path.join(*log_file_path)}"
     send_log_to_channels(
       slack_conf=SLACK_CONF,
       ms_teams_conf=MS_TEAMS_CONF,
       task_id=context['task'].task_id,
       dag_id=context['task'].dag_id,
       comment=message,
-      reaction='fail')
+      reaction='fail'
+    )
     raise
 
 def _fetch_formatted_samplesheet_info_from_task_instance(

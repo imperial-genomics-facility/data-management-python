@@ -4318,10 +4318,12 @@ def bclconvert_singularity_wrapper(
       bcl_num_decompression_threads: int = 1,
       bcl_num_parallel_tiles: int = 1,
       lane_id : int = 0,
-      tile_id_list: tuple = (),
+      tiles: str|None = None,
+      exclude_tiles: str|None = None,
       first_tile_only: bool = False,
-      dry_run: bool = False) \
-      -> str:
+      dry_run: bool = False,
+      additional_params: dict[str, str]| None = None
+    ) -> str:
   try:
     check_file_path(image_path)
     check_file_path(input_dir)
@@ -4331,39 +4333,55 @@ def bclconvert_singularity_wrapper(
     temp_dir = get_temp_dir(use_ephemeral_space=True)
     bclconvert_cmd = [
       "bcl-convert",
-      "--bcl-input-directory", input_dir,
-      "--output-directory", output_dir,
-      "--sample-sheet", samplesheet_file,
-      "--bcl-num-conversion-threads", str(bcl_num_conversion_threads),
-      "--bcl-num-compression-threads", str(bcl_num_compression_threads),
-      "--bcl-num-decompression-threads", str(bcl_num_decompression_threads),
-      "--bcl-num-parallel-tiles", str(bcl_num_parallel_tiles),
-      "--bcl-sampleproject-subdirectories", "true",
-      "--strict-mode", "true"]
+      f"--bcl-input-directory {str(input_dir)}",
+      f"--output-directory {str(output_dir)}",
+      f"--sample-sheet {str(samplesheet_file)}",
+      f"--bcl-num-conversion-threads {str(bcl_num_conversion_threads)}",
+      f"--bcl-num-compression-threads {str(bcl_num_compression_threads)}",
+      f"--bcl-num-decompression-threads {str(bcl_num_decompression_threads)}",
+      f"--bcl-num-parallel-tiles {str(bcl_num_parallel_tiles)}",
+      "--bcl-sampleproject-subdirectories true",
+      "--strict-mode true"
+    ]
     if first_tile_only:
-      bclconvert_cmd.\
-        extend(["--first-tile-only", "true"])
+      bclconvert_cmd.append(
+        "--first-tile-only true"
+      )
     if lane_id > 0:
-      bclconvert_cmd.\
-        extend(["--bcl-only-lane", str(lane_id)])
-    if len(tile_id_list) > 0:
-      bclconvert_cmd.\
-        extend(["--tiles", ",".join(tile_id_list)])
-    bclconvert_cmd = \
-      ' '.join(bclconvert_cmd)
+      bclconvert_cmd.append(
+        f"--bcl-only-lane {str(lane_id)}",
+      )
+    if tiles is not None:
+      bclconvert_cmd.append(
+        f"--tiles {str(tiles)}"
+      )
+    if exclude_tiles is not None:
+      bclconvert_cmd.append(
+        f"--exclude-tiles {str(exclude_tiles)}"
+      )
+    if additional_params is not None:
+      for key, val in additional_params.items():
+        bclconvert_cmd.append(
+          f"{str(key)} {str(val)}"
+        )
+    bclconvert_cmd = ' '.join(bclconvert_cmd)
     bind_paths = [
       f'{temp_dir}:/var/log',
       os.path.dirname(samplesheet_file),
       input_dir,
-      os.path.dirname(output_dir)]
+      os.path.dirname(output_dir)
+    ]
     cmd = execute_singuarity_cmd(
       image_path=image_path,
       command_string=bclconvert_cmd,
       bind_dir_list=bind_paths,
-      dry_run=dry_run)
+      dry_run=dry_run
+    )
     return cmd
-  except:
-    raise
+  except Exception as e:
+    raise ValueError(
+      f"Failed with error: {e}"
+    )
 
 def run_bclconvert_func(**context):
   try:
