@@ -654,7 +654,7 @@ def bcl_convert_run_func(**context):
       temp_dir,
       'demult'
     )
-    cmd = bclconvert_singularity_wrapper(
+    _ = bclconvert_singularity_wrapper(
       image_path=BCLCONVERT_IMAGE,
       input_dir=seqrun_path,
       output_dir=demult_dir,

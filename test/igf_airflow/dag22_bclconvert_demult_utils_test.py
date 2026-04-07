@@ -330,7 +330,7 @@ class Dag22_bclconvert_demult_utils_testC(unittest.TestCase):
         output_dir=self.output_dir,
         samplesheet_file=self.samplesheet_file,
         lane_id=1,
-        tile_id_list=('s_1_1102', 's_1_1103'),
+        tiles='s_1_1102,s_1_1103',
         dry_run=True)
     self.assertTrue('--tiles s_1_1102,s_1_1103' in cmd)
 
